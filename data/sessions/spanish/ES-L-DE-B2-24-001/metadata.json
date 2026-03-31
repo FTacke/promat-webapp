@@ -1,0 +1,116 @@
+{
+  "person_id": "P-0001",
+  "session_id": "ES-L-DE-B2-24-001",
+  "target_language": "es",
+  "speaker_type": "learner",
+  "level_code": "B2",
+  "level_self": "B2",
+  "recording_year": 2024,
+  "recording_date": null,
+  "context": "baseline",
+  "standard_variety": null,
+  "notes": "Repository placeholder only. No real research data.",
+  "tasks": [
+    {
+      "task_type": "isolated_speech",
+      "label": "Isolierte Aussprache (Wortliste)",
+      "source_file": "source/isolated_speech.wav",
+      "alignment_file": "alignment/isolated_speech.TextGrid",
+      "derived_file": "derived/isolated_speech.mp3"
+    },
+    {
+      "task_type": "connected_speech",
+      "label": "Zusammenhängende Aussprache (Text/Sätze)",
+      "source_file": "source/connected_speech.wav",
+      "alignment_file": "alignment/connected_speech.TextGrid",
+      "derived_file": "derived/connected_speech.mp3"
+    },
+    {
+      "task_type": "interview",
+      "label": "Interview (kurze Reflexion)",
+      "source_file": "source/interview.wav",
+      "alignment_file": "alignment/interview.TextGrid",
+      "derived_file": "derived/interview.mp3"
+    }
+  ],
+  "files": [
+    {
+      "path": "metadata.json",
+      "file_role": "metadata",
+      "format": "json",
+      "status": "checked"
+    },
+    {
+      "path": "source/isolated_speech.wav",
+      "file_role": "audio_source",
+      "format": "wav",
+      "status": "processed"
+    },
+    {
+      "path": "source/connected_speech.wav",
+      "file_role": "audio_source",
+      "format": "wav",
+      "status": "processed"
+    },
+    {
+      "path": "source/interview.wav",
+      "file_role": "audio_source",
+      "format": "wav",
+      "status": "processed"
+    },
+    {
+      "path": "alignment/isolated_speech.TextGrid",
+      "file_role": "textgrid",
+      "format": "textgrid",
+      "status": "aligned"
+    },
+    {
+      "path": "alignment/connected_speech.TextGrid",
+      "file_role": "textgrid",
+      "format": "textgrid",
+      "status": "aligned"
+    },
+    {
+      "path": "alignment/interview.TextGrid",
+      "file_role": "textgrid",
+      "format": "textgrid",
+      "status": "aligned"
+    },
+    {
+      "path": "derived/isolated_speech.mp3",
+      "file_role": "audio_mp3",
+      "format": "mp3",
+      "status": "processed"
+    },
+    {
+      "path": "derived/connected_speech.mp3",
+      "file_role": "audio_mp3",
+      "format": "mp3",
+      "status": "processed"
+    },
+    {
+      "path": "derived/interview.mp3",
+      "file_role": "audio_mp3",
+      "format": "mp3",
+      "status": "processed"
+    },
+    {
+      "path": "items/isolated_speech/001_casa.mp3",
+      "file_role": "items_audio",
+      "format": "mp3",
+      "status": "processed"
+    },
+    {
+      "path": "items/isolated_speech/002_perro.mp3",
+      "file_role": "items_audio",
+      "format": "mp3",
+      "status": "processed"
+    },
+    {
+      "path": "items/connected_speech/001.mp3",
+      "file_role": "items_audio",
+      "format": "mp3",
+      "status": "processed"
+    }
+  ]
+}

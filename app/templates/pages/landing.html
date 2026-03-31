@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="landing-page pm-content pm-content--landing" aria-labelledby="landing-wordmark">
+  {% set wordmark_parts = app_display_name.rsplit(' ', 1) %}
+
+  <section class="landing-hero">
+    <h1 id="landing-wordmark" class="landing-wordmark">
+      {% if wordmark_parts | length > 1 %}
+      <span class="landing-wordmark__base">{{ wordmark_parts[0] }}</span>
+      <span class="landing-wordmark__accent">{{ wordmark_parts[1] }}</span>
+      {% else %}
+      <span class="landing-wordmark__base">{{ app_display_name }}</span>
+      {% endif %}
+    </h1>
+
+    <p class="landing-intro">{{ promat_page.intro }}</p>
+
+    {% if promat_page.more_link %}
+    <a class="landing-more promat-inline-link promat-inline-link--subtle" href="{{ promat_page.more_link.href }}">{{ promat_page.more_link.label }}</a>
+    {% endif %}
+  </section>
+
+  <section class="landing-grid" aria-label="Zentrale Einstiege">
+    {% for card in promat_page.landing_cards | default([]) %}
+    <a class="landing-card pm-card pm-card--entry pm-card--entry-{{ card.entry_kind }} pm-card--with-image" href="{{ card.href }}">
+      <div class="pm-card__image">
+        <img src="{{ url_for('static', filename=card.image_asset) }}" alt="{{ card.image_alt }}">
+      </div>
+      <div class="pm-card__body">
+        <h2 class="pm-card__title">{{ card.title }}</h2>
+        <p class="pm-card__text">{{ card.text }}</p>
+        <span class="pm-card__action">{{ card.link_label }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </section>
+</article>
+{% endblock %}

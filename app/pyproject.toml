@@ -1,0 +1,43 @@
+[project]
+name = "promat_web"
+version = "1.0.0"
+description = "PROMAT bootstrap web application."
+authors = [
+  { name = "Felix Tacke", email = "felix.tacke@uni-marburg.de" }
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = { text = "MIT" }
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+  "pytest-dotenv>=0.5",
+  "ruff>=0.5",
+  "mypy>=1.10",
+  "flask-testing>=0.8"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["LOKAL", "data", "media", "static", "templates"]
+addopts = "-v -m \"not live and not e2e and not data\""
+filterwarnings = [
+  'ignore:Accessing argon2\.__version__ is deprecated.*:DeprecationWarning:passlib\.handlers\.argon2'
+]
+markers = [
+  "live: requires external services / live endpoints",
+  "data: requires large runtime data files",
+  "e2e: end-to-end / long running"
+]
+
+[tool.ruff]
+line-length = 140
+src = ["src/app"]
+
+[tool.ruff.lint]
+extend-select = ["E", "F"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E402"]

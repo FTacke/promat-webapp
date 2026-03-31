@@ -1,0 +1,19 @@
+# Top-level runtime dependencies for CO.RA.PAN web app
+# Source of truth. Regenerate requirements.txt with:
+#   uv pip compile requirements.in -o requirements.txt
+
+Flask
+Flask-Caching
+Flask-JWT-Extended
+Flask-Limiter
+SQLAlchemy
+passlib
+bcrypt
+httpx
+imageio-ffmpeg
+pydub
+python-dotenv
+requests
+gunicorn
+psycopg2-binary
+argon2-cffi

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }}" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  {% if promat_page.hero_links %}
+  <nav class="promat-page__actions pm-reading pm-stack--inline" aria-label="Schnellzugriffe">
+    {% for link in promat_page.hero_links %}
+    <a class="promat-inline-link promat-inline-link--{{ link.variant | default('subtle') }}" href="{{ link.href }}">{{ link.label }}</a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+
+  {% if promat_page.corpus_cards %}
+  <section class="pm-feature-band" aria-label="Sprachbereiche">
+    <div class="pm-card-grid">
+      {% for card in promat_page.corpus_cards %}
+      <a class="pm-card pm-card--corpus {{ card.modifier }}" href="{{ card.href }}">
+        <div class="pm-card__body">
+          <h2 class="pm-card__title">{{ card.title }}</h2>
+          {% if card.meta %}
+          <div class="pm-card__meta">{{ card.meta }}</div>
+          {% endif %}
+          <p class="pm-card__text">{{ card.text }}</p>
+          <div class="pm-card__action">{{ card.action_label }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if promat_page.feature_cards %}
+  <section class="pm-feature-band pm-grid pm-grid--feature{{ ' pm-grid--selection' if promat_page.feature_cards[0].variant | default('') == 'selection' else '' }}" aria-label="Einstiege">
+    {% for card in promat_page.feature_cards %}
+    {% if card.href %}
+    <a class="pm-card pm-card--{{ card.variant | default('interactive') }}" href="{{ card.href }}">
+      {% if card.eyebrow %}
+      <p class="pm-card__eyebrow">{{ card.eyebrow }}</p>
+      {% endif %}
+      <h2 class="pm-card__title">{{ card.title }}</h2>
+      <p class="pm-card__text">{{ card.text }}</p>
+      <span class="pm-card__link">{{ card.link_label | default('Mehr lesen') }}</span>
+    </a>
+    {% else %}
+    <article class="pm-card pm-card--{{ card.variant | default('interactive') }}">
+      {% if card.eyebrow %}
+      <p class="pm-card__eyebrow">{{ card.eyebrow }}</p>
+      {% endif %}
+      <h2 class="pm-card__title">{{ card.title }}</h2>
+      <p class="pm-card__text">{{ card.text }}</p>
+    </article>
+    {% endif %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <div class="promat-page__sections">
+    {% for section in promat_page.sections | default([]) %}
+    <section class="promat-content-section">
+      {% if section.heading or section.paragraphs or section.bullets %}
+      <div class="promat-content-block pm-panel pm-reading">
+        {% if section.heading %}
+        <h2 class="promat-content-block__title pm-panel__title">{{ section.heading }}</h2>
+        {% endif %}
+        {% for paragraph in section.paragraphs | default([]) %}
+        <p class="promat-content-block__text">{{ paragraph }}</p>
+        {% endfor %}
+        {% if section.bullets %}
+        <ul class="promat-content-block__list">
+          {% for bullet in section.bullets %}
+          <li>{{ bullet }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if section.meta_cards %}
+      <div class="pm-feature-band">
+        <div class="pm-grid pm-grid--meta">
+          {% for card in section.meta_cards %}
+          <article class="pm-card pm-card--material">
+            <h3 class="pm-card__title">{{ card.title }}</h3>
+            <p class="pm-card__text">{{ card.text }}</p>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</article>
+{% endblock %}

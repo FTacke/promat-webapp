@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:15
+    container_name: promat-db-prod
+    environment:
+      POSTGRES_USER: promat_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: promat_auth
+    volumes:
+      - promat_postgres_prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "promat_app", "-d", "promat_auth"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: always
+
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: promat-web-prod
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:6000:5000"
+    environment:
+      FLASK_ENV: production
+      FLASK_DEBUG: "false"
+      FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?FLASK_SECRET_KEY is required}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
+      AUTH_DATABASE_URL: postgresql+psycopg2://promat_app:${POSTGRES_PASSWORD}@db:5432/promat_auth
+      PROMAT_RUNTIME_ROOT: ${PROMAT_RUNTIME_ROOT:-/app}
+      PROMAT_PUBLIC_ROOT: ${PROMAT_PUBLIC_ROOT:-/app/public}
+      APP_REPOSITORY_URL: ${APP_REPOSITORY_URL:-}
+      APP_RELEASE_TAG: ${APP_RELEASE_TAG:-}
+      APP_RELEASE_URL: ${APP_RELEASE_URL:-}
+      AUTH_HASH_ALGO: argon2
+    volumes:
+      - /srv/webapps/promat/data:/app/data
+      - /srv/webapps/promat/public:/app/public
+      - /srv/webapps/promat/logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: always
+
+volumes:
+  promat_postgres_prod:
+    name: promat_postgres_prod

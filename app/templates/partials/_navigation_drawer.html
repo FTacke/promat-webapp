@@ -1,0 +1,65 @@
+{% set user_name = g.user %}
+{% set user_role = g.role %}
+{% set is_authenticated = user_name is not none %}
+{% set role_value = user_role.value if user_role else '' %}
+
+{% macro panel_content(panel) -%}
+  <div class="promat-panel__inner pm-panel__inner {{ 'promat-panel__inner--language' if panel['context_mode'] == 'language' else '' }}">
+    {% if panel['context_mode'] != 'none' %}
+    <div class="promat-panel__context {{ 'promat-panel__context--language' if panel['context_mode'] == 'language' else '' }}" data-section="{{ panel['section_key'] }}">
+      {% if panel['context_mode'] == 'language' %}
+      <div class="promat-panel__language-header pm-panel__language-header">
+        <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="Zur Sprachwahl">
+          <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--back" aria-hidden="true"></span>
+          <p class="promat-panel__language-title">{{ panel['context_title'] }}</p>
+        </a>
+      </div>
+      {% else %}
+      <div class="promat-panel__section-header pm-panel__section-header">
+        <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--section" aria-hidden="true"></span>
+        <p class="promat-panel__section-title">{{ panel['section_label'] }}</p>
+      </div>
+      {% if panel['language_label'] %}
+      <p class="promat-panel__context-line promat-panel__context-line--accent">{{ panel['language_label'] }}</p>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <nav class="promat-panel__nav" aria-label="Bereichsnavigation">
+      {% for item in panel['items'] %}
+      <a href="{{ item.href }}"
+         class="promat-panel__link pm-nav__item {{ 'is-active pm-nav__item--active' if panel['active_slug'] == item.page_slug else '' }}"
+         aria-current="{{ 'page' if panel['active_slug'] == item.page_slug else 'false' }}">{{ item.label }}</a>
+      {% endfor %}
+    </nav>
+
+    {% if is_authenticated %}
+    <div class="promat-panel__footer">
+      <a href="{{ url_for('auth.account_page') }}" class="promat-panel__footer-link">Interner Bereich</a>
+      {% if role_value == 'admin' %}
+      <a href="{{ url_for('admin.dashboard') }}" class="promat-panel__footer-link">Dashboard</a>
+      {% endif %}
+      <a href="{{ url_for('auth.logout_any') }}"
+         data-logout="fetch"
+         data-logout-url="{{ url_for('auth.logout_any') }}"
+         data-logout-method="POST"
+         class="promat-panel__footer-link">Logout</a>
+    </div>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+<dialog id="navigation-drawer-modal" class="promat-panel-dialog" aria-label="Seitenpanel">
+  <div class="promat-panel promat-panel--modal">
+    {% if promat_panel is defined %}
+      {{ panel_content(promat_panel) }}
+    {% endif %}
+  </div>
+</dialog>
+
+<aside id="navigation-drawer-standard" class="promat-panel promat-panel--standard" role="navigation" aria-label="Seitenpanel" data-element="nav-drawer-standard">
+  {% if promat_panel is defined %}
+    {{ panel_content(promat_panel) }}
+  {% endif %}
+</aside>

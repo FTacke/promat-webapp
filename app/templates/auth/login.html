@@ -1,0 +1,93 @@
+{% extends "_md3_skeletons/auth_login_skeleton.html" %}
+
+{% block page_title %}{{ format_page_title('Login') }}{% endblock %}
+
+{% set auth_heading = 'Login' %}
+{% set auth_intro = 'Melden Sie sich an, um den geschützten Bereich von PROMAT zu nutzen.' %}
+{% set auth_breadcrumbs = [
+  { 'label': 'Start', 'href': url_for('public.landing_page'), 'current': false },
+  { 'label': 'Login', 'href': none, 'current': true },
+] %}
+
+{% block auth_body %}
+<article class="md3-card md3-card--outlined md3-auth-card login-card">
+  <div class="md3-card__content">
+
+          <!-- Error Messages (if any) -->
+          {# Global form error banner (MD3, compact inline) #}
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="md3-alert md3-alert--error md3-alert--inline md3-alert--field" role="alert" aria-live="assertive">
+                <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">error</span>
+                <div class="md3-alert__content">
+                  <p class="md3-alert__title">Error</p>
+                  {% for category, message in messages %}
+                    <p class="md3-alert__text">{{ message }}</p>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          <!-- Login Form - Standard HTML POST (no HTMX) -->
+          <form id="login-form" 
+              class="md3-auth-form" 
+              method="post" 
+              action="{{ url_for('auth.login_post') }}"
+              novalidate>
+            
+            <!-- Username Field -->
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input 
+                type="text" 
+                class="md3-outlined-textfield__input" 
+                name="username" 
+                id="login-username"
+                autocomplete="username" 
+                required
+                aria-label="Benutzername"
+                minlength="1"
+                maxlength="50">
+              <label class="md3-outlined-textfield__label" for="login-username">Benutzername oder E-Mail</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+            </div>
+
+            <!-- Password Field -->
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input 
+                type="password" 
+                class="md3-outlined-textfield__input" 
+                name="password" 
+                id="login-password"
+                autocomplete="current-password" 
+                required
+                aria-label="Passwort"
+                minlength="1">
+              <label class="md3-outlined-textfield__label" for="login-password">Passwort</label>
+              <span class="md3-outlined-textfield__outline">
+                <span class="md3-outlined-textfield__outline-start"></span>
+                <span class="md3-outlined-textfield__outline-notch"></span>
+                <span class="md3-outlined-textfield__outline-end"></span>
+              </span>
+            </div>
+
+            <div class="md3-row--between md3-actions">
+               <a class="md3-button md3-button--text" href="{{ url_for('auth.password_forgot_page') }}">Passwort vergessen?</a>
+               <button type="submit" class="md3-button md3-button--filled">
+                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">login</span>
+                Login
+              </button>
+            </div>
+
+            <!-- Hidden next URL (for redirect after login) -->
+            {% if next %}
+              <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+          </form>
+  </div>
+</article>
+{% endblock %}

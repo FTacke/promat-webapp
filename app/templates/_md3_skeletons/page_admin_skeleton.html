@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% set overview_intro = self.overview_intro() | trim %}
+<div class="md3-page">
+  <header class="md3-page__header">
+    <div class="md3-hero md3-hero--card md3-hero__container">
+      <div class="md3-hero__icon" aria-hidden="true"><span class="material-symbols-rounded">{% block overview_icon %}dashboard{% endblock %}</span></div>
+      <div class="md3-hero__content">
+        <p class="md3-body-small md3-hero__eyebrow">{% block overview_eyebrow %}Admin{% endblock %}</p>
+        <h1 class="md3-headline-medium md3-hero__title">{% block overview_heading %}{% endblock %}</h1>
+        {% if overview_intro %}
+        <p class="md3-body-medium md3-hero__intro">{{ overview_intro }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="md3-page__main md3-stack--page">
+    {% block overview_body %}{% endblock %}
+  </div>
+</div>
+{% block overview_after %}{% endblock %}
+{% endblock %}

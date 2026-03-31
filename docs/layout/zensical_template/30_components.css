@@ -1,0 +1,272 @@
+/* ==========================================================================
+   30_components.css – Component overrides (admonitions, tabs, nav, …)
+   Zensical defaults are intentionally preserved.
+   Add only targeted, well-justified rules when required.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Icon Variables: hoermal Audio-Icon
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* --------------------------------------------------------------------------
+   Icon variables → migriert nach 40_custom.css (:root-Block)
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+   doc-chapter-meta – Byline / Kapitel-Meta unter dem ersten H1
+   Injiziert durch overrides/partials/content.html (Jinja2-Template).
+   Quelle: YAML-Frontmatter (authors, peer_review, created, last_modified).
+   Keine Inline-Styles; alle Werte via Design-Tokens.
+
+   HTML-Struktur:
+     <div class="doc-chapter-meta" role="note" aria-label="Kapitelmetadaten">
+       <div class="doc-chapter-meta__byline">
+         <span class="doc-chapter-meta__name">…</span>
+         …
+       </div>
+       <div class="doc-chapter-meta__details">  ← optional, responsives 2-Spalten-Grid
+         <div class="doc-chapter-meta__peer">Peer Review: …</div>      ← links, wrappable
+         <div class="doc-chapter-meta__dates">                          ← rechts, nowrap-Spalte
+           <div class="doc-chapter-meta__created">Erstellt: …</div>  ← optional
+           <div class="doc-chapter-meta__modified">Geändert: …</div>  ← optional
+         </div>
+       </div>
+     </div>
+   -------------------------------------------------------------------------- */
+
+/* Wrapper */
+.md-typeset .doc-chapter-meta {
+  margin-top:     14px;
+  margin-bottom:  32px;
+  padding-bottom: 14px;
+  border-bottom:  1px solid var(--hairline-color);
+  font-family:    var(--book-font-ui);
+}
+
+/* ── Byline (Autor:innen) ─────────────────────────────────── */
+.md-typeset .doc-chapter-meta__byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  row-gap: 0.15em;
+
+  font-size: 0.9em;          /* ~18px bei 20px base */
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--book-fg);
+  opacity: 0.78;             /* minimal stärker */
+  max-width: 45ch;
+}
+
+/* ── Details (Peer Review, Letzte Änderung) ───────────────── */
+.md-typeset .doc-chapter-meta__details {
+  margin-top: 0.8rem;
+
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.25em 1.2rem;
+
+  font-size: 0.85em;         /* ~17px */
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--book-fg-muted);
+  opacity: 0.55;
+}
+
+/* Desktop: 2 Spalten – Peer links (wrap), Datum rechts (nowrap) */
+@media (min-width: 640px) {
+  .md-typeset .doc-chapter-meta__details {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
+/* Peer Review: kann umbrechen */
+.md-typeset .doc-chapter-meta__peer {
+  min-width: 0;        /* wichtig für Grid-Wrap */
+  white-space: normal;
+  max-width: 42ch;
+}
+
+/* Letzte Änderung: kein Zeilenumbruch, auf Desktop rechtsbündig */
+.md-typeset .doc-chapter-meta__modified {
+  white-space: nowrap;
+  opacity:     0.45;
+}
+
+@media (min-width: 640px) {
+  .md-typeset .doc-chapter-meta__modified {
+    text-align: right;
+  }
+}
+
+/* ── Datumsblock (Erstellt / Geändert) ───────────────────────── */
+/* Wrapper: beide Datumszeilen rechtsbündig gestapelt; kein Umbruch */
+
+.md-typeset .doc-chapter-meta__dates {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;   /* rechtsbündig im Datumsblock */
+  white-space: nowrap;     /* verhindert Umbruch in der Datumsspalte */
+  padding-right: 0.25rem;
+}
+
+/* Erstellt-Datum */
+
+.md-typeset .doc-chapter-meta__created {
+  white-space: nowrap;
+}
+
+/* ── Namen: innerhalb des Namens nicht trennen; zwischen Namen umbrechen ─ */
+
+.md-typeset .doc-chapter-meta__name {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.md-typeset .doc-chapter-meta__name:not(:last-child)::after {
+  content:     ", ";
+  white-space: pre;
+}
+
+/* ── .doc-chapter-meta__detail – obsolet (ersetzt durch .peer / .modified) ─ */
+
+/* ── Separator (nur noch intern, kein dediziertes Element nötig) ─ */
+
+.md-typeset .doc-chapter-meta__sep {
+  user-select: none;
+}
+
+/* --------------------------------------------------------------------------
+   Breadcrumb (md-path) – deaktiviert
+   ────────────────────────────────────────────────────────────────────────── */
+
+.md-path,
+.md-path:not([hidden]) {
+  display: none !important;
+}
+
+
+/* --------------------------------------------------------------------------
+   Admonition: hoermal → migriert nach 40_custom.css (Container + Icon + Audio-Layout)
+   -------------------------------------------------------------------------- */
+
+/* --------------------------------------------------------------------------
+  Header Brand Title – Zweifarbig: Desktop ≥ 960px
+  Drawer-Branding wird darunter separat gespiegelt.
+  ────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 960px) {
+  .md-header .site-title {
+    display: flex;
+    flex-direction: column;
+    align-items: baseline;
+    font-size: 0.8rem;
+    gap: 0.15rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .md-header .site-title__line1 { color: var(--book-fg); }
+  .md-header .site-title__main { color: var(--book-fg); }
+  .md-header .site-title__accent { color: var(--book-title-accent-dark); }
+}
+
+body[data-md-color-scheme="slate"] .md-header .site-title__accent {
+  color: var(--book-title-accent);
+}
+
+/* Drawer-Nav-Titel: denselben Brand-Block wie im Header rendern.
+   Das Label enthält zusätzlich einen rohen site_name-Textknoten; der bleibt
+   im DOM, wird visuell aber ausgeblendet, damit kein Duplikat erscheint. */
+@media (max-width: 76.234375em) {
+  .md-nav .md-nav__title[for="__drawer"] {
+    align-items: center;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .md-nav .md-nav__title[for="__drawer"] > .md-logo {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    margin: 0;
+  }
+}
+
+.md-nav__title[for="__drawer"] > .md-logo {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
+.md-nav__title[for="__drawer"] .site-title {
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  gap: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.md-nav__title[for="__drawer"] .site-title__line1,
+.md-nav__title[for="__drawer"] .site-title__main {
+  color: var(--book-fg);
+}
+
+.md-nav__title[for="__drawer"] .site-title__accent {
+  color: var(--book-title-accent-dark);
+}
+
+body[data-md-color-scheme="slate"] .md-nav__title[for="__drawer"] .site-title__accent {
+  color: var(--book-title-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Header Title Spacer + Ellipsis
+   Spacer (.md-header__title) immer im Flex-Layout behalten (schiebt Controls
+   nach rechts). Ellipsis (Duplikat-Titel) nur auf Desktop ausblenden.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.md-header__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Mobile/Tablet: ellipsis (Site/Page-Title) sichtbar */
+.md-header__title .md-header__ellipsis {
+  display: block;
+}
+
+/* Desktop ≥ 960px: Duplikat-Titel ausblenden, .site-title übernimmt Branding */
+@media (min-width: 960px) {
+  .md-header__title .md-header__ellipsis {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Header Search – Desktop nur Lupe, Mobile/Tablet unverändert
+   ────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 960px) {
+  /* Zensical blendet die Lupe auf Desktop aus (@media min-width:60em → display:none).
+     Wir setzen sie wieder ein – nur die Lupe, kein Textchip. */
+  .md-header .md-header__button[for="__search"] {
+    display: inline-flex !important;
+  }
+
+  /* "Suche"-Text-Chip (md-search__button) verstecken – nur Lupe soll bleiben. */
+  .md-header .md-search__button {
+    display: none !important;
+  }
+}

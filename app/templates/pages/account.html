@@ -1,0 +1,27 @@
+{% extends '_md3_skeletons/page_text_skeleton.html' %}
+
+{% block page_title %}{{ format_page_title('Interner Bereich') }}{% endblock %}
+
+{% set text_page_aria_label = 'Interner Bereich' %}
+{% set text_page_icon = 'lock' %}
+{% set text_page_eyebrow = 'Geschützt' %}
+{% set text_page_heading = 'Interner Bereich' %}
+{% set text_page_intro = 'Diese Seite prüft die Trennung zwischen öffentlichen und geschützten Bereichen.' %}
+
+{% block text_page_body %}
+<section class="md3-text-section">
+  <p class="md3-body-large">
+    Sie sind angemeldet{% if user and user.username %} als <strong>{{ user.username }}</strong>{% endif %}.
+    Damit ist die geschützte Basis für spätere PROMAT-Funktionen aktiv.
+  </p>
+</section>
+
+<section class="md3-text-section">
+  <h2 class="md3-title-large md3-section-title md3-text-heading">Aktiver Bootstrap-Umfang</h2>
+  <ul class="md3-body-large md3-text-list">
+    <li>Login und Logout über JWT-Cookies</li>
+    <li>geschützte Route mit serverseitiger Absicherung</li>
+    <li>vorbereitete Admin-Erweiterung</li>
+  </ul>
+</section>
+{% endblock %}

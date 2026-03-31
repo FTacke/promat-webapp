@@ -1,0 +1,24 @@
+<div class="promat-footer" data-element="site-footer">
+  <div class="promat-footer__content">
+    <div class="promat-footer__row promat-footer__row--primary">
+      <p class="promat-footer__title">{{ footer_logo_alt }}</p>
+      <p class="promat-footer__version">
+        <a href="{{ footer_release_url }}"
+           class="promat-footer__link"
+           target="_blank"
+           rel="noopener noreferrer">{{ footer_release_label }}</a>
+      </p>
+    </div>
+
+    <div class="promat-footer__row promat-footer__row--secondary">
+      <p class="promat-footer__meta">© {{ footer_meta_year }} {{ institution_name }} · <a href="{{ footer_partner_url }}" class="promat-footer__link" target="_blank" rel="noopener noreferrer">{{ footer_partner_label }}</a> · {{ footer_copyright_holder }}</p>
+
+      <nav class="promat-footer__nav" aria-label="Rechtliches">
+        <a href="{{ url_for('public.impressum_page') }}" class="promat-footer__link">Impressum</a>
+        <a href="{{ url_for('public.privacy_page') }}" class="promat-footer__link">Datenschutz</a>
+      </nav>
+    </div>
+
+    <!-- BUILD {{ config.get('APP_BUILD_ID', 'dev') }} -->
+  </div>
+</div>

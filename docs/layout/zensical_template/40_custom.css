@@ -1,0 +1,944 @@
+/* ==========================================================================
+   40_custom.css – Projektspezifische Stile: Custom Components
+   
+   NUR projektspezifische Sonderfälle – keine Tokens, keine generische Typo.
+   Tokens   → 00_tokens.css
+   Typo     → 10_typography.css
+   Layout   → 20_book.css
+   Kompon.  → 30_components.css
+   
+   Ladereihenfolge: 00 → 10 → 20 → 30 → 40
+   ========================================================================== */
+/* ──────────────────────────────────────────────────────────────────────────
+   HEADING PERMALINKS
+   ────────────────────────────────────────────────────────────────────────── */
+
+.md-typeset h1 .headerlink,
+.md-typeset h1 a.headerlink {
+  display: none;
+}
+
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .md-typeset h2 .headerlink,
+  .md-typeset h2 a.headerlink,
+  .md-typeset h3 .headerlink,
+  .md-typeset h3 a.headerlink,
+  .md-typeset h4 .headerlink,
+  .md-typeset h4 a.headerlink {
+    position: absolute;
+    font-size: 0.75em;
+    left: -1.45rem;
+    top: 0.4rem;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .md-typeset h2:hover .headerlink,
+  .md-typeset h2:hover a.headerlink,
+  .md-typeset h3:hover .headerlink,
+  .md-typeset h3:hover a.headerlink,
+  .md-typeset h4:hover .headerlink,
+  .md-typeset h4:hover a.headerlink {
+    opacity: 0.55;
+  }
+}
+
+@media (max-width: 767px) {
+  .md-typeset h2,
+  .md-typeset h3,
+  .md-typeset h4 {
+    padding-right: 1.6em;
+  }
+
+  .md-typeset h2 .headerlink,
+  .md-typeset h2 a.headerlink,
+  .md-typeset h3 .headerlink,
+  .md-typeset h3 a.headerlink,
+  .md-typeset h4 .headerlink,
+  .md-typeset h4 a.headerlink {
+    position: absolute;
+    right: 0;
+    top: 0.2em;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0.45;
+  }
+}
+
+/* Blockquotes */
+[dir] .md-typeset blockquote {
+  margin: 1.2em 0;
+  padding-left: 1.1em;
+  border-left: 3px solid color-mix(in srgb, var(--book-accent) 30%, transparent);
+  background: none;
+  font-size: 0.95em;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--book-fg) 85%, transparent);
+}
+
+[dir] .md-typeset blockquote p {
+  margin: 0 0 0.6em 0;
+}
+
+[dir] .md-typeset blockquote p:last-child {
+  margin-bottom: 0;
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+/* Inline highlight: IMPULS */
+.md-typeset .impuls {
+  margin: 1rem 0 1rem 1.4rem;
+  padding: 0;
+  background: transparent;
+  font-size: 0.95em;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--book-fg) 88%, var(--book-bg));
+  position: relative;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .impuls {
+  color: color-mix(in srgb, var(--book-fg) 88%, var(--book-surface-1));
+}
+
+.md-typeset .impuls::before {
+  content: "›";
+  position: absolute;
+  left: -1.1rem;
+  top: -0.05em;
+  color: color-mix(in srgb, var(--book-fg) 55%, var(--book-bg));
+  font-weight: 600;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .impuls::before {
+  color: color-mix(in srgb, var(--book-fg) 55%, var(--book-surface-1));
+}
+
+.md-typeset .impuls > p:first-child { font-weight: 500; }
+.md-typeset .impuls > p { margin: 0 0 0.5em 0; }
+.md-typeset .impuls > p:last-child { margin-bottom: 0; }
+
+@media (max-width: 600px) {
+  .md-typeset .impuls { margin-left: 0.8rem; }
+  .md-typeset .impuls::before { left: -0.9rem; }
+}
+
+/* Custom admonitions */
+:root {
+  --md-typeset-hoermal-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15 9a3 3 0 0 1 0 6"/><path d="M17.5 6.5a6 6 0 0 1 0 11"/></svg>');
+  --md-typeset-expand-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>');
+  --md-typeset-context-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>');
+  --md-typeset-tip-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>');
+  --md-typeset-praxis-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>');
+  --md-typeset-oton-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>');
+  --md-typeset-regel-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>');
+  --md-typeset-cite-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>');
+  --md-typeset-copy-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>');
+  --md-typeset-check-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>');
+  --md-typeset-weiterlesen-icon: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>');
+}
+
+.md-typeset .admonition.hoermal,
+.md-typeset details.hoermal {
+  background: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-hoermal));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-left: 4px solid var(--book-adm-hoermal);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.hoermal,
+body[data-md-color-scheme="slate"] .md-typeset details.hoermal {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-adm-tint-dark), var(--book-adm-hoermal));
+  border-color: rgba(255, 255, 255, 0.08);
+  border-left-color: var(--book-adm-hoermal);
+}
+
+.md-typeset .admonition.hoermal {
+  --md-admonition-icon: var(--md-typeset-hoermal-icon);
+}
+
+.md-typeset .admonition.hoermal > .admonition-title,
+.md-typeset details.hoermal > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .hoermal > .admonition-title:before,
+.md-typeset .hoermal > summary:before {
+  background-color: var(--book-adm-hoermal);
+  -webkit-mask-image: var(--md-typeset-hoermal-icon);
+  mask-image: var(--md-typeset-hoermal-icon);
+}
+
+.md-typeset .admonition.expand,
+.md-typeset details.expand {
+  background: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-expand));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-left: 4px solid var(--book-adm-expand);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.expand,
+body[data-md-color-scheme="slate"] .md-typeset details.expand {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-adm-tint-dark), var(--book-adm-expand));
+  border-color: rgba(255, 255, 255, 0.08);
+  border-left-color: var(--book-adm-expand);
+}
+
+.md-typeset .admonition.expand {
+  --md-admonition-icon: var(--md-typeset-expand-icon);
+}
+
+.md-typeset .admonition.expand > .admonition-title,
+.md-typeset details.expand > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .expand > .admonition-title:before,
+.md-typeset .expand > summary:before {
+  background-color: var(--book-adm-expand);
+  -webkit-mask-image: var(--md-typeset-expand-icon);
+  mask-image: var(--md-typeset-expand-icon);
+}
+
+.md-typeset .hoermal > .admonition-title::before,
+.md-typeset .hoermal > summary::before {
+  transform: translateY(0.06em);
+}
+
+.md-typeset .expand > .admonition-title::before,
+.md-typeset .expand > summary::before {
+  transform: translateY(0.06em);
+}
+
+
+/* --------------------------------------------------------------------------
+   hoermal – Audio layouts
+   Zwei Muster:
+   1) .audio-comparison + .audio-pair  → paarige Gegenüberstellungen
+   2) .audio-grid                      → gleichrangige Beispielsammlungen
+   -------------------------------------------------------------------------- */
+
+/* ==========================================================================
+   1) Pair wrapper: mehrere Vergleiche untereinander
+   ========================================================================== */
+
+.md-typeset .admonition.hoermal .audio-comparison,
+.md-typeset details.hoermal .audio-comparison {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.1rem 1.4rem;
+  margin-top: 0.9rem;
+  align-items: stretch;
+}
+
+@media (min-width: 720px) {
+  .md-typeset .admonition.hoermal .audio-comparison,
+  .md-typeset details.hoermal .audio-comparison {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Each pair becomes its own responsive 2-col unit */
+.md-typeset .admonition.hoermal .audio-pair,
+.md-typeset details.hoermal .audio-pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.1rem 1.4rem;
+  align-items: stretch;
+}
+
+@media (min-width: 720px) {
+  .md-typeset .admonition.hoermal .audio-pair,
+  .md-typeset details.hoermal .audio-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+  2) Flat grid: gleichrangige Einzelbeispiele (z.B. Länderbeispiele)
+   ========================================================================== */
+
+.md-typeset .admonition.hoermal .audio-grid,
+.md-typeset details.hoermal .audio-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.1rem 1.4rem;
+  margin-top: 0.9rem;
+  align-items: stretch;
+}
+
+@media (min-width: 720px) {
+  .md-typeset .admonition.hoermal .audio-grid,
+  .md-typeset details.hoermal .audio-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   Shared block styling
+   ========================================================================== */
+
+.md-typeset .admonition.hoermal .audio-block,
+.md-typeset details.hoermal .audio-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+  padding-bottom: 1.4rem; /* Platz für Quellen-ID unten */
+}
+
+/* Label */
+.md-typeset .admonition.hoermal .audio-label,
+.md-typeset details.hoermal .audio-label {
+  font-family: var(--book-font-ui);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-size: 0.85em;
+  line-height: 1.35;
+  margin: 0 0 0.35rem 0;
+}
+
+/* Legacy h4 */
+.md-typeset .admonition.hoermal .audio-block h4,
+.md-typeset details.hoermal .audio-block h4 {
+  font-family: var(--book-font-ui);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-size: 0.85em;
+  line-height: 1.35;
+  margin: 0 0 0.35rem 0;
+}
+
+/* Example box base */
+.md-typeset .admonition.hoermal .example,
+.md-typeset .admonition.hoermal .example-ipa,
+.md-typeset details.hoermal .example,
+.md-typeset details.hoermal .example-ipa {
+  position: relative;
+  display: block;
+  font-size: 0.92em;
+  font-weight: 500;
+  line-height: 1.5;
+  opacity: 0.9;
+  margin: 0 0 0.55rem 0;
+  flex: 1 1 auto;
+  background: color-mix(in srgb, var(--book-bg) 92%, var(--book-border));
+  border: 1px solid color-mix(in srgb, var(--book-border) 70%, transparent);
+  border-radius: 0.35rem;
+}
+
+/* Normale Beispiele mit Platz für Token-ID */
+.md-typeset .admonition.hoermal .example,
+.md-typeset details.hoermal .example {
+  padding: 0.45rem 0.6rem 1.5rem 0.6rem;
+  font-family: var(--book-font-body);
+}
+
+/* IPA-Beispiele ohne zusätzlichen Leerraum unten */
+.md-typeset .admonition.hoermal .example-ipa,
+.md-typeset details.hoermal .example-ipa {
+  padding: 0.45rem 0.6rem;
+  font-family: "Noto Sans", "Inter", var(--book-font-body), sans-serif;
+}
+
+/* Example text */
+.md-typeset .admonition.hoermal .example-text,
+.md-typeset details.hoermal .example-text {
+  display: block;
+}
+
+/* Default examples: normal book type */
+.md-typeset .admonition.hoermal .example,
+.md-typeset details.hoermal .example {
+  font-family: var(--book-font-body);
+}
+
+/* IPA examples: dedicated fallback stack */
+.md-typeset .admonition.hoermal .example-ipa,
+.md-typeset details.hoermal .example-ipa {
+  font-family: "Noto Sans", "Inter", var(--book-font-body), sans-serif;
+}
+
+.md-typeset .admonition.hoermal .ipa,
+.md-typeset details.hoermal .ipa {
+  font-family: "Noto Sans", "Inter", var(--book-font-body), sans-serif;
+  margin-left: 0.08em;
+}
+
+/* Quellen-/Token-ID */
+.md-typeset .admonition.hoermal .token-id,
+.md-typeset details.hoermal .token-id {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.4rem;
+  display: block;
+  text-align: right;
+  font-size: 0.85em;
+  color: var(--md-default-fg-color--light);
+  opacity: 0.95;
+  line-height: 1;
+}
+
+/* Dark mode */
+body[data-md-color-scheme="slate"] .md-typeset .admonition.hoermal .example,
+body[data-md-color-scheme="slate"] .md-typeset .admonition.hoermal .example-ipa,
+body[data-md-color-scheme="slate"] .md-typeset details.hoermal .example,
+body[data-md-color-scheme="slate"] .md-typeset details.hoermal .example-ipa {
+  background: color-mix(in srgb, var(--book-surface-1) 88%, var(--book-border));
+  border-color: color-mix(in srgb, rgba(255,255,255,0.14) 70%, transparent);
+}
+
+/* Audio controls stay aligned at the bottom */
+.md-typeset .admonition.hoermal .audio-block audio,
+.md-typeset details.hoermal .audio-block audio {
+  display: block;
+  width: 100%;
+  margin: 0;
+  margin-top: auto;
+}
+
+/* Source line */
+.md-typeset .admonition.hoermal .audio-source,
+.md-typeset details.hoermal .audio-source {
+  margin-top: 0.9rem;
+  font-size: 0.85em;
+  opacity: 0.7;
+  text-align: right;
+  font-style: normal;
+}
+
+/* WebKit timeline fill fix – scoped */
+.md-typeset .admonition.hoermal audio::-webkit-media-controls-timeline,
+.md-typeset details.hoermal audio::-webkit-media-controls-timeline {
+  flex: 1;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   LITERATUR: Literaturabschnitte etwas kleiner
+   ────────────────────────────────────────────────────────────────────────── */
+
+div.literatur {
+  font-size: .85em;
+  line-height: 1.35;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   CITE: Zitationskasten (Kapitel / Buch)
+   Variante: !!! cite "Dieses Kapitel zitieren" / !!! cite "Dieses Buch zitieren"
+   Klassen: .admonition.cite  (details.cite für künftige ??? cite-Variante)
+   Design: buchig, papierfarben, kein Akzentstreifen links
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Basis-Container: kein border-left-Akzent, einheitlicher Rahmen */
+.md-typeset .admonition.cite,
+.md-typeset details.cite {
+  background: color-mix(in srgb, white 94%, var(--book-adm-cite));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.4rem;
+  box-shadow: none;
+  margin-top: 3rem;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.cite,
+body[data-md-color-scheme="slate"] .md-typeset details.cite {
+  background: color-mix(in srgb, var(--book-surface-1) 86%, var(--book-adm-cite));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Icon: Anführungszeichen via mask-image */
+.md-typeset .admonition.cite {
+  --md-admonition-icon: var(--md-typeset-cite-icon);
+}
+
+.md-typeset .admonition.cite > .admonition-title,
+.md-typeset details.cite > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+  position: relative;
+  padding-right: 2.4rem;
+}
+
+.md-typeset .admonition-title code,
+.md-typeset summary code {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.md-typeset .cite > .admonition-title:before,
+.md-typeset .cite > summary:before {
+  -webkit-mask-image: var(--md-typeset-cite-icon);
+  mask-image: var(--md-typeset-cite-icon);
+  background-color: color-mix(in srgb, var(--book-fg) 60%, var(--book-adm-cite));
+}
+
+/* Copy-Button: oben rechts im Title */
+.cite-copy-btn {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cite-copy-btn:hover {
+  opacity: 1;
+}
+
+.cite-copy-btn::before {
+  content: '';
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  background-color: var(--book-fg);
+  -webkit-mask-image: var(--md-typeset-copy-icon);
+  mask-image: var(--md-typeset-copy-icon);
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+/* Visuelles Feedback: Icon-Wechsel auf Check beim Kopieren */
+.cite-copy-btn.is-copied::before {
+  -webkit-mask-image: var(--md-typeset-check-icon);
+  mask-image: var(--md-typeset-check-icon);
+  opacity: 1;
+}
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   SUMMARY: Zusammenfassungsabschnitt (section-like, kein Kasten-Look)
+   Variante: !!! summary "Zusammenfassung"
+   Kein Icon, transparenter Hintergrund, nur feiner Rahmen
+   ────────────────────────────────────────────────────────────────────────── */
+
+.md-typeset .admonition.summary,
+.md-typeset details.summary {
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.4rem;
+  padding: 1.1rem 1.2rem 1rem;
+  margin: 2.4rem 0 2.4rem;
+  box-shadow: none;
+}
+
+.md-typeset .admonition.summary > .admonition-title + *,
+.md-typeset details.summary > summary + * {
+  margin-top: 0;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.summary,
+body[data-md-color-scheme="slate"] .md-typeset details.summary {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.md-typeset .admonition.summary > .admonition-title,
+.md-typeset details.summary > summary {
+  background: transparent;
+  padding: 0;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  border: 0;
+}
+
+/* Kein Icon */
+.md-typeset .summary > .admonition-title:before,
+.md-typeset .summary > summary:before {
+  display: none;
+}
+
+.md-typeset .admonition.summary > :not(.admonition-title) {
+  margin-left: 0;
+}
+
+
+/* ── TIP: Hinweis / didaktischer Tipp ─────────────────────────────────────── */
+
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  background: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-tip));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.tip,
+body[data-md-color-scheme="slate"] .md-typeset details.tip {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-adm-tint-dark), var(--book-adm-tip));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.md-typeset .admonition.tip {
+  --md-admonition-icon: var(--md-typeset-tip-icon);
+}
+
+.md-typeset .admonition.tip > .admonition-title,
+.md-typeset details.tip > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .tip > .admonition-title:before,
+.md-typeset .tip > summary:before {
+  background-color: var(--book-adm-tip);
+  -webkit-mask-image: var(--md-typeset-tip-icon);
+  mask-image: var(--md-typeset-tip-icon);
+}
+
+
+/* ── CONTEXT: Hintergrundinformation / theoretischer Kontext ───────────── */
+
+.md-typeset .admonition.context,
+.md-typeset details.context {
+  background: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-context));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.context,
+body[data-md-color-scheme="slate"] .md-typeset details.context {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-adm-tint-dark), var(--book-adm-context));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.md-typeset .admonition.context {
+  --md-admonition-icon: var(--md-typeset-context-icon);
+}
+
+.md-typeset .admonition.context > .admonition-title,
+.md-typeset details.context > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .context > .admonition-title:before,
+.md-typeset .context > summary:before {
+  background-color: var(--book-adm-context);
+  -webkit-mask-image: var(--md-typeset-context-icon);
+  mask-image: var(--md-typeset-context-icon);
+}
+
+
+/* ── PRAXIS: Unterrichtspraktische Hinweise und Aufgaben ──────────────── */
+
+.md-typeset .admonition.praxis,
+.md-typeset details.praxis {
+  background: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-praxis));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.praxis,
+body[data-md-color-scheme="slate"] .md-typeset details.praxis {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-adm-tint-dark), var(--book-adm-praxis));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.md-typeset .admonition.praxis {
+  --md-admonition-icon: var(--md-typeset-praxis-icon);
+}
+
+.md-typeset .admonition.praxis > .admonition-title,
+.md-typeset details.praxis > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .praxis > .admonition-title:before,
+.md-typeset .praxis > summary:before {
+  background-color: var(--book-adm-praxis);
+  -webkit-mask-image: var(--md-typeset-praxis-icon);
+  mask-image: var(--md-typeset-praxis-icon);
+}
+
+
+/* ── REGEL: Regeln, Hinweise, Merkboxen ────────────────────────────────── */
+
+.md-typeset .admonition.regel,
+.md-typeset details.regel {
+  background: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-regel));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.regel,
+body[data-md-color-scheme="slate"] .md-typeset details.regel {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-adm-tint-dark), var(--book-adm-regel));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.md-typeset .admonition.regel {
+  --md-admonition-icon: var(--md-typeset-regel-icon);
+}
+
+.md-typeset .admonition.regel > .admonition-title,
+.md-typeset details.regel > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .regel > .admonition-title:before,
+.md-typeset .regel > summary:before {
+  background-color: var(--book-adm-regel);
+  -webkit-mask-image: var(--md-typeset-regel-icon);
+  mask-image: var(--md-typeset-regel-icon);
+}
+
+
+/* ── OTON: Stimmen, Erfahrungsberichte, Zitate aus der Praxis ────────── */
+
+.md-typeset .admonition.oton,
+.md-typeset details.oton {
+  background: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-oton));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.oton,
+body[data-md-color-scheme="slate"] .md-typeset details.oton {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-adm-tint-dark), var(--book-adm-oton));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.md-typeset .admonition.oton {
+  --md-admonition-icon: var(--md-typeset-oton-icon);
+}
+
+.md-typeset .admonition.oton > .admonition-title,
+.md-typeset details.oton > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .oton > .admonition-title:before,
+.md-typeset .oton > summary:before {
+  background-color: var(--book-adm-oton);
+  -webkit-mask-image: var(--md-typeset-oton-icon);
+  mask-image: var(--md-typeset-oton-icon);
+}
+
+/* ── WEITERLESEN: Vertiefende Lektüre / Literaturhinweise am Kapitelende ───── */
+
+.md-typeset .admonition.weiterlesen,
+.md-typeset details.weiterlesen {
+  background: color-mix(in srgb, var(--book-bg) var(--book-weiterlesen-tint-light), var(--book-paper));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-left: 3px solid var(--book-adm-weiterlesen);
+  border-radius: 0.4rem;
+  box-shadow: none;
+}
+
+body[data-md-color-scheme="slate"] .md-typeset .admonition.weiterlesen,
+body[data-md-color-scheme="slate"] .md-typeset details.weiterlesen {
+  background: color-mix(in srgb, var(--book-surface-1) var(--book-weiterlesen-tint-dark), #ffffff);
+  border-color: rgba(255, 255, 255, 0.08);
+  border-left-color: var(--book-adm-weiterlesen);
+}
+
+.md-typeset .admonition.weiterlesen {
+  --md-admonition-icon: var(--md-typeset-weiterlesen-icon);
+}
+
+.md-typeset .admonition.weiterlesen > .admonition-title,
+.md-typeset details.weiterlesen > summary {
+  color: var(--book-fg);
+  font-weight: 500;
+}
+
+.md-typeset .weiterlesen > .admonition-title:before,
+.md-typeset .weiterlesen > summary:before {
+  background-color: var(--book-adm-weiterlesen);
+  -webkit-mask-image: var(--md-typeset-weiterlesen-icon);
+  mask-image: var(--md-typeset-weiterlesen-icon);
+}
+
+/* ─────────────────────────────────────────────────────────
+   FIGCAPTION – Bild- und Kartenunterschriften
+   Verwendung: <div class="figcaption" markdown>…</div>
+   ───────────────────────────────────────────────────────── */
+
+.md-typeset .figcaption {
+  font-size: 0.78em;
+  line-height: 1.45;
+
+  margin-top: 0.0rem;
+  margin-bottom: 1.4rem;
+
+  color: color-mix(in srgb, var(--book-fg) 65%, transparent);
+
+  max-width: 52rem;
+}
+
+/* erster Satz leicht hervorgehoben */
+.md-typeset .figcaption > p:first-child strong {
+  font-weight: 600;
+}
+
+/* Fußnotenzeichen nicht zu groß */
+.md-typeset .figcaption sup {
+  font-size: 0.75em;
+}
+
+/* Dark Mode */
+body[data-md-color-scheme="slate"] .md-typeset .figcaption {
+  color: color-mix(in srgb, var(--book-fg) 82%, transparent);
+}
+
+/* ── Standard-Admonitions (minimal / unverändert – Basis-Styles in 20_book.css) ─ */
+
+
+/* ─────────────────────────────────────────────────────────
+   Literaturverzeichnis – buchtypografisch (ohne Bullets)
+   Struktur: <div class="literatur"><ul><li>…</li></ul></div>
+   ───────────────────────────────────────────────────────── */
+
+.md-typeset .literatur {
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+.md-typeset .literatur ul,
+.md-typeset .literatur ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.md-typeset .literatur li {
+  margin: 0 0 0.25rem 0;
+  text-indent: -1.0rem;
+}
+
+.md-typeset .literatur li:last-child {
+  margin-bottom: 0;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Abkürzungsliste vor Literaturverzeichnis
+   Struktur: <div class="literatur-abkuerzungen"><ul><li>…</li></ul></div>
+   ───────────────────────────────────────────────────────── */
+
+.md-typeset .literatur-abkuerzungen {
+  font-size: 0.88em;
+  line-height: 1.45;
+  margin: 0 0 0.9rem 0;
+}
+
+.md-typeset .literatur-abkuerzungen ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.md-typeset .literatur-abkuerzungen li {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  column-gap: 0.5rem;
+  margin: 0 0 0.18rem 0;
+}
+
+.md-typeset .literatur-abkuerzungen li:last-child {
+  margin-bottom: 0;
+}
+
+.md-typeset .literatur-abkuerzungen li code {
+  font-size: 0.95em;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-family: var(--md-code-font-family, var(--md-text-font-family));
+}
+
+.md-typeset .literatur-abkuerzungen {
+  font-size: 0.88em;
+  line-height: 1.45;
+  margin: 0 0 0.9rem 0;
+
+  text-indent: -1.0rem;
+}
+
+.md-typeset .literatur-abkuerzungen ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.md-typeset .literatur-abkuerzungen li {
+  margin: 0 0 0.18rem 0;
+}
+
+.md-typeset .literatur-abkuerzungen li:last-child {
+  margin-bottom: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/*  doc-chapter-meta: Responsive Dates Alignment + Unified Brightness       */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+/* Mobile default: Dates linksbündig (wirkt ruhiger/lesbarer) */
+.md-typeset .doc-chapter-meta__dates {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+
+  align-items: flex-start;
+  text-align: left;
+
+  /* Einheitliche Helligkeit für Erstellt + Geändert */
+  opacity: 0.45;
+}
+
+/* Desktop: Dates rechtsbündig */
+@media (min-width: 640px) {
+  .md-typeset .doc-chapter-meta__dates {
+    align-items: flex-end;
+    text-align: right;
+  }
+}
+
+/* Beide Zeilen nicht umbrechen */
+.md-typeset .doc-chapter-meta__created,
+.md-typeset .doc-chapter-meta__modified {
+  white-space: nowrap;
+}
+
+/* Falls irgendwo noch eine Sonder-Opacity auf __modified existiert: neutralisieren,
+   damit "Erstellt" und "Geändert" exakt gleich hell sind. */
+.md-typeset .doc-chapter-meta__modified {
+  opacity: 1;
+}
+
+

@@ -1,0 +1,212 @@
+/* ==========================================================================
+   20_book.css – Micro-overrides: background/color bridge + editorial chrome
+   Only rules that Zensical does NOT already cover via its own theming.
+   EDIT ONLY THIS FILE IN docs/. Never edit site/ – it is build output.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Background + base text – bridge book tokens into Zensical's shell
+   -------------------------------------------------------------------------- */
+
+body {
+  background-color: var(--book-bg);
+  color:            var(--book-fg);
+}
+
+.md-main {
+  background-color: var(--book-bg);
+}
+
+/* --------------------------------------------------------------------------
+   Content layout
+   - Mobile: Material-Defaults respektieren (kein Quetschen)
+   - Tablet/Desktop: kontrollierter Abstand zur Navigation
+   -------------------------------------------------------------------------- */
+
+/* .md-content NICHT manipulieren – Grid in Ruhe lassen */
+.md-content {
+  margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────────
+   Mobile (Default)
+   → Material-Theme-Padding beibehalten
+   ───────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .md-content__inner {
+    padding-left: revert;
+    padding-right: revert;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Tablet
+   ───────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) {
+  .md-content__inner {
+    padding-left: 1.6rem;
+    padding-right: 1.6rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   Large Desktop – „buchiger“ Abstand
+   ───────────────────────────────────────────────────────── */
+
+@media (min-width: 1200px) {
+  .md-content__inner {
+    padding-left: 2.2rem;
+    padding-right: 2.0rem;
+  }
+}
+
+/* Satzspiegel robust (deckt beide DOM-Varianten ab) */
+:where(
+  article.md-content__inner.md-typeset,          /* Variante A */
+  .md-content__inner > article.md-typeset        /* Variante B */
+) {
+  max-width: 80ch;
+  margin-inline: auto;
+}
+
+/* Mobile: volle Breite innerhalb der Padding-Logik */
+@media (max-width: 767px) {
+  :where(
+    article.md-content__inner.md-typeset,
+    .md-content__inner > article.md-typeset
+  ) {
+    max-width: 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Secondary sidebar (right-hand TOC) – always hidden, independent of zoom.
+   Multiple selectors for robustness across Zensical versions.
+   -------------------------------------------------------------------------- */
+.md-sidebar--secondary,
+.md-sidebar[data-md-component="toc"],
+[data-md-component="toc"] {
+  display: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Left navigation – calm, book-like. Inter font stays (set by Zensical).
+   NO display:none hacks – collapsible handled entirely by Zensical/Material
+   toggle mechanism (checkbox + label). Only colors + visual structure here.
+   -------------------------------------------------------------------------- */
+
+/* Normalize list/item margins – prevents gaps between top-level chapters */
+.md-nav--primary .md-nav__list {
+  margin:  0;
+  padding: 0;
+}
+
+.md-nav--primary .md-nav__item {
+  margin: 0;
+}
+
+/* Default: muted */
+.md-nav--primary .md-nav__link {
+  margin: 0;
+  color:  var(--book-muted);
+}
+
+/* Hover/Focus: text only, no background */
+.md-nav--primary .md-nav__link:hover,
+.md-nav--primary .md-nav__link:focus {
+  color:      var(--book-fg);
+  background: transparent !important;
+}
+
+/* Active: accent + weight, no pill */
+.md-nav--primary .md-nav__item--active > .md-nav__link,
+.md-nav--primary .md-nav__link--active {
+  color:       var(--book-accent) !important;
+  background:  transparent !important;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Subnav visual structure – indent + guide line (no display rules)
+   -------------------------------------------------------------------------- */
+.md-nav--primary .md-nav__item .md-nav__list {
+  margin-left:  0.75rem;
+  padding-left: 0.0rem;
+  border-left:  1px solid var(--book-border);
+}
+
+/* Subnav links: slightly smaller */
+.md-nav--primary .md-nav__item .md-nav__list .md-nav__link {
+  font-size: 0.95em;
+}
+
+/* Active subnav link */
+.md-nav--primary .md-nav__item .md-nav__list .md-nav__item--active > .md-nav__link,
+.md-nav--primary .md-nav__item .md-nav__list .md-nav__link--active {
+  color:       var(--book-accent) !important;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Chevron for collapsible parent items.
+   The native md-nav__icon (rendered by Zensical inside the label) handles
+   the chevron display and rotation via:
+     .md-nav__item--nested .md-nav__toggle:checked ~ .md-nav__link .md-nav__icon:after { transform:rotate(90deg) }
+   No custom ::after needed; adding one would create a second/duplicate chevron.
+   -------------------------------------------------------------------------- */
+
+/* Tint the native chevron icon to match the book palette */
+.md-nav--primary .md-nav__item--nested > .md-nav__link .md-nav__icon {
+  color: var(--book-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Header – remove drop shadow, add a single hairline border
+   -------------------------------------------------------------------------- */
+.md-header {
+  box-shadow:    none !important;
+  border-bottom: 1px solid var(--book-border);
+}
+
+/* --------------------------------------------------------------------------
+   Links – book color scheme + NYT-style underline
+   -------------------------------------------------------------------------- */
+.md-typeset a {
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.15em;
+  text-decoration-skip-ink: auto;
+}
+
+.md-typeset a:hover {
+  color: var(--book-link-hover);
+}
+
+/* --------------------------------------------------------------------------
+   Admonitions + Details – calmer look, legible body text
+   -------------------------------------------------------------------------- */
+
+/* Body text: moderate increase from ~0.64rem default to 0.74rem */
+.md-typeset .admonition,
+.md-typeset details {
+  font-size:   0.78rem;
+  line-height: 1.65;
+  background:  var(--book-surface-1);
+  border:      1px solid var(--book-border);
+  box-shadow:  none;
+}
+
+/* Title: keep existing size, only set a clean line-height + UI font */
+.md-typeset .admonition-title,
+.md-typeset summary {
+  font-family: var(--book-font-ui);
+}
+
+/* Standard admonitions – subtle tint (custom types fully handled in 40_custom.css) */
+.md-typeset .admonition.note    { background: color-mix(in srgb, var(--book-surface-1) 92%, var(--book-adm-note)); }
+.md-typeset .admonition.info    { background: color-mix(in srgb, var(--book-surface-1) 92%, var(--book-adm-info)); }
+.md-typeset .admonition.success { background: color-mix(in srgb, var(--book-surface-1) 92%, var(--book-adm-success)); }
+.md-typeset .admonition.warning { background: color-mix(in srgb, var(--book-surface-1) 92%, var(--book-adm-warning)); }
+.md-typeset .admonition.danger  { background: color-mix(in srgb, var(--book-surface-1) 92%, var(--book-adm-danger)); }
+

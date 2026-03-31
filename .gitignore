@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+app/.env
+app/.env.local
+app/.env.*.local
+
+# Runtime and generated data
+logs/
+tmp/
+data/*
+!data/.gitkeep
+!data/README.md
+!data/research.db
+!data/config/
+!data/db/
+!data/sessions/
+data/config/*
+!data/config/.gitkeep
+data/db/*
+!data/db/.gitkeep
+data/sessions/*
+!data/sessions/.gitkeep
+!data/sessions/spanish/
+data/sessions/spanish/*
+!data/sessions/spanish/.gitkeep
+!data/sessions/spanish/ES-L-DE-B2-24-001/
+!data/sessions/spanish/ES-L-DE-B2-24-001/**
+secure/*
+!secure/.gitkeep
+!secure/README.md
+public/*
+!public/.gitkeep
+!public/README.md

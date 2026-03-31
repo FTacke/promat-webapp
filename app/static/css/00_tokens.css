@@ -1,0 +1,492 @@
+/* PROMAT canonical design tokens */
+
+:root {
+  --book-accent: #2b4460;
+  --book-accent-2: #4e95d9;
+  --book-title-accent: #7ab0e8;
+  --book-title-accent-dark: #2f6fb3;
+  --promat-wordmark-accent: #a15a95;
+  --promat-wordmark-accent-rgb: 161 90 149;
+  --book-radius: 14px;
+  --book-radius-sm: 8px;
+  --book-shadow: none;
+  --book-shadow-md: none;
+  --book-focus: 0 0 0 3px rgba(78, 149, 217, 0.35);
+  --book-adm-tint-light: 93%;
+  --book-adm-tint-dark: 90%;
+  --book-paper: #fbfaf8;
+
+  --book-font-body: "Source Serif 4", Georgia, "Times New Roman", "Noto Serif", serif;
+  --book-font-ui: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --book-font-code: "JetBrains Mono", "Cascadia Code", "Fira Code", Consolas, "Liberation Mono", ui-monospace, monospace;
+
+  --promat-primary: var(--book-accent);
+  --promat-secondary: var(--book-accent-2);
+  --promat-primary-rgb: 43 68 96;
+  --promat-secondary-rgb: 78 149 217;
+
+  --promat-font-ui: var(--book-font-ui);
+  --promat-font-content: var(--book-font-body);
+
+  --promat-text-xs: 0.8125rem;
+  --promat-text-sm: 0.9375rem;
+  --promat-text-md: 1rem;
+  --promat-text-lg: 1.125rem;
+  --promat-text-xl: 1.375rem;
+  --promat-text-2xl: 1.8rem;
+  --promat-text-3xl: clamp(2.2rem, 2rem + 0.5vw, 2.75rem);
+
+  --promat-leading-ui: 1.45;
+  --promat-leading-content: 1.75;
+  --promat-leading-tight: 1;
+
+  --promat-space-1: 0.25rem;
+  --promat-space-2: 0.5rem;
+  --promat-space-3: 0.75rem;
+  --promat-space-4: 1rem;
+  --promat-space-5: 1.5rem;
+  --promat-space-6: 2rem;
+  --promat-space-7: 3rem;
+  --promat-space-8: 4rem;
+  --promat-space-9: 5rem;
+
+  --promat-radius-sm: 0.45rem;
+  --promat-radius-md: 0.8rem;
+  --promat-radius-lg: 1.25rem;
+
+  --pm-surface-neutral: transparent;
+  --pm-surface-paper: color-mix(in srgb, var(--book-surface-1) 34%, var(--book-bg));
+  --pm-surface-raised: color-mix(in srgb, #ffffff 10%, var(--book-bg));
+  --pm-surface-tinted: color-mix(in srgb, var(--book-bg) 82%, var(--book-surface-1));
+  --pm-surface-selection: color-mix(in srgb, var(--book-bg) 93%, var(--book-accent));
+  --pm-surface-material: color-mix(in srgb, var(--book-bg) 76%, var(--book-paper));
+  --pm-surface-interactive: color-mix(in srgb, var(--book-bg) 88%, var(--book-surface-1));
+  --pm-surface-hover: color-mix(in srgb, var(--book-bg) 78%, var(--book-surface-1));
+  --pm-surface-accent-hover: color-mix(in srgb, var(--book-bg) 95%, var(--promat-wordmark-accent));
+  --pm-surface-accent-soft: color-mix(in srgb, var(--book-bg) 91%, var(--promat-wordmark-accent));
+  --pm-surface-footer: color-mix(in srgb, var(--book-bg) 86%, var(--book-surface-1));
+  --pm-surface-context: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-context));
+  --pm-surface-regel: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-regel));
+  --pm-surface-tip: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-tip));
+  --pm-surface-praxis: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-praxis));
+  --pm-surface-oton: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-oton));
+  --pm-surface-expand: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-expand));
+  --pm-surface-hoermal: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-hoermal));
+  --pm-surface-weiterlesen: color-mix(in srgb, var(--book-bg) 90%, var(--book-paper));
+  --pm-surface-cite: color-mix(in srgb, var(--book-bg) 32%, var(--book-adm-cite));
+
+  --pm-border-default: var(--book-border);
+  --pm-border-fine: color-mix(in srgb, var(--book-border) 78%, transparent);
+  --pm-border-strong: var(--book-border-strong);
+  --pm-border-subtle: color-mix(in srgb, var(--book-border) 70%, transparent);
+  --pm-border-rail-expand: var(--book-adm-expand);
+  --pm-border-rail-hoermal: var(--book-adm-hoermal);
+  --pm-border-rail-weiterlesen: var(--book-adm-weiterlesen);
+
+  --pm-radius-sm: 7px;
+  --pm-radius-container: 8px;
+  --pm-radius-pill: 24px;
+
+  --pm-space-xs: 12px;
+  --pm-space-sm: 16px;
+  --pm-space-text: 20px;
+  --pm-space-container: 24px;
+  --pm-space-grid: 28px;
+  --pm-space-lg: 32px;
+  --pm-space-xl: 48px;
+  --pm-space-xxl: 60px;
+
+  --pm-type-brand-family: var(--book-font-ui);
+  --pm-type-brand-size: clamp(1.2rem, 1.08rem + 0.32vw, 1.42rem);
+  --pm-type-brand-line: 1;
+  --pm-type-brand-tracking: -0.015em;
+  --pm-type-brand-weight: 700;
+
+  --pm-type-nav-family: var(--book-font-ui);
+  --pm-type-nav-size: 1rem;
+  --pm-type-nav-line: 1.3;
+  --pm-type-nav-tracking: 0.005em;
+  --pm-type-nav-weight: 500;
+
+  --pm-type-panel-family: var(--book-font-ui);
+  --pm-type-panel-size: 0.95rem;
+  --pm-type-panel-line: 1.35;
+  --pm-type-panel-tracking: 0;
+  --pm-type-panel-weight: 500;
+
+  --pm-type-meta-family: var(--book-font-ui);
+  --pm-type-meta-size: 0.82rem;
+  --pm-type-meta-line: 1.35;
+  --pm-type-meta-tracking: 0.02em;
+  --pm-type-meta-weight: 500;
+  --pm-type-breadcrumb-family: var(--pm-type-meta-family);
+  --pm-type-breadcrumb-size: var(--pm-type-meta-size);
+  --pm-type-breadcrumb-line: var(--pm-type-meta-line);
+  --pm-type-breadcrumb-tracking: var(--pm-type-meta-tracking);
+  --pm-type-breadcrumb-weight: var(--pm-type-meta-weight);
+  --pm-type-footer-title-size: 0.98rem;
+  --pm-type-footer-title-line: 1.2;
+  --pm-type-footer-title-weight: 600;
+  --pm-type-footer-meta-size: var(--pm-type-meta-size);
+  --pm-type-footer-meta-line: 1.45;
+  --pm-type-footer-meta-weight: var(--pm-type-meta-weight);
+  --pm-type-footer-version-size: var(--pm-type-meta-size);
+  --pm-type-footer-version-line: 1.2;
+  --pm-type-footer-version-weight: 500;
+
+  --pm-type-display-family: var(--book-font-ui);
+  --pm-type-display-size: clamp(2.2rem, 2rem + 0.5vw, 2.75rem);
+  --pm-type-display-line: 1;
+  --pm-type-display-tracking: -0.03em;
+  --pm-type-display-weight: 600;
+
+  --pm-type-reading-family: var(--book-font-body);
+  --pm-type-reading-size: clamp(1.03rem, 1rem + 0.1vw, 1.1rem);
+  --pm-type-reading-line: 1.72;
+  --pm-type-reading-tracking: 0;
+  --pm-type-reading-weight: 400;
+  --pm-type-intro-family: var(--pm-type-meta-family);
+  --pm-type-intro-size: clamp(0.98rem, 0.96rem + 0.08vw, 1.04rem);
+  --pm-type-intro-line: 1.55;
+  --pm-type-intro-tracking: 0.004em;
+  --pm-type-intro-weight: 450;
+  --pm-type-reading-h2-size: clamp(1.52rem, 1.42rem + 0.26vw, 1.84rem);
+  --pm-type-reading-h2-line: 1.3;
+  --pm-type-reading-h2-tracking: -0.012em;
+  --pm-type-reading-h2-weight: 600;
+  --pm-type-reading-h3-size: clamp(1.18rem, 1.14rem + 0.18vw, 1.34rem);
+  --pm-type-reading-h3-line: 1.38;
+  --pm-type-reading-h3-tracking: -0.006em;
+  --pm-type-reading-h3-weight: 600;
+  --pm-type-reading-eyebrow-size: 0.93rem;
+  --pm-type-reading-eyebrow-line: 1.45;
+  --pm-type-reading-eyebrow-tracking: 0.02em;
+  --pm-type-reading-eyebrow-weight: 600;
+
+  --pm-type-card-family: var(--book-font-body);
+  --pm-type-card-title-size: clamp(1.08rem, 1.04rem + 0.12vw, 1.16rem);
+  --pm-type-card-title-line: 1.35;
+  --pm-type-card-title-tracking: -0.008em;
+  --pm-type-card-title-weight: 600;
+  --pm-type-card-body-size: 1rem;
+  --pm-type-card-body-line: 1.62;
+  --pm-type-card-body-tracking: 0;
+  --pm-type-card-body-weight: 400;
+  --pm-type-card-link-family: var(--book-font-body);
+  --pm-type-card-link-size: 0.98rem;
+  --pm-type-card-link-line: 1.42;
+  --pm-type-card-link-tracking: 0;
+  --pm-type-card-link-weight: 600;
+  --pm-type-card-eyebrow-size: 0.88rem;
+  --pm-type-card-eyebrow-line: 1.4;
+  --pm-type-card-eyebrow-tracking: 0.02em;
+  --pm-type-card-eyebrow-weight: 600;
+
+  --pm-type-flow-size: var(--pm-type-reading-size);
+  --pm-type-flow-line: calc(var(--pm-type-reading-size) * var(--pm-type-reading-line));
+  --pm-type-container-size: var(--pm-type-card-body-size);
+  --pm-type-container-line: calc(var(--pm-type-card-body-size) * var(--pm-type-card-body-line));
+  --pm-type-container-title-size: var(--pm-type-card-title-size);
+  --pm-type-container-title-line: calc(var(--pm-type-card-title-size) * var(--pm-type-card-title-line));
+  --pm-focus-ring: var(--book-focus);
+  --pm-shadow-card-subtle: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  --pm-nav-item-min-height: 2.45rem;
+  --pm-nav-item-padding-y: 0.52rem;
+  --pm-nav-item-padding-x: 0.72rem;
+  --pm-nav-item-radius: 10px;
+  --pm-nav-state-hover-bg: var(--pm-surface-accent-hover);
+  --pm-nav-state-hover-border: transparent;
+  --pm-nav-state-active-bg: var(--pm-surface-accent-soft);
+  --pm-nav-state-active-border: transparent;
+  --pm-nav-state-active-line: transparent;
+  --pm-nav-state-active-text: var(--pm-text-accent);
+  --pm-text-accent: var(--promat-wordmark-accent);
+  --pm-text-intro: var(--book-muted);
+  --pm-breadcrumb-text: var(--book-muted);
+  --pm-breadcrumb-current-text: var(--book-fg);
+  --pm-breadcrumb-separator: color-mix(in srgb, var(--book-muted) 48%, transparent);
+  --pm-breadcrumb-link-hover: var(--promat-wordmark-accent);
+  --pm-panel-stack-gap: var(--pm-space-lg);
+  --pm-panel-stack-gap-compact: var(--pm-space-sm);
+  --pm-panel-context-gap: var(--promat-space-2);
+  --pm-panel-context-gap-compact: var(--promat-space-1);
+  --pm-panel-context-padding-bottom: var(--pm-space-sm);
+  --pm-panel-context-padding-bottom-compact: var(--promat-space-2);
+  --pm-panel-context-title-gap: var(--promat-space-2);
+  --pm-panel-context-title-min-height: 1.55rem;
+  --pm-panel-context-rule-color: var(--pm-border-subtle);
+  --pm-content-header-breadcrumb-gap: var(--promat-space-2);
+  --pm-content-header-breadcrumb-item-gap: var(--promat-space-2);
+  --pm-content-header-breadcrumb-title-gap: var(--pm-space-sm);
+  --pm-content-header-title-intro-gap: var(--promat-space-3);
+  --pm-content-header-padding-bottom: var(--pm-space-container);
+  --pm-content-header-actions-gap: var(--pm-space-sm);
+  --pm-reading-paragraph-gap: var(--promat-space-3);
+  --pm-reading-heading-gap-before-h2: var(--pm-space-container);
+  --pm-reading-heading-gap-after-h2: var(--promat-space-2);
+  --pm-reading-heading-gap-before-h3: var(--pm-space-text);
+  --pm-reading-heading-gap-after-h3: var(--promat-space-2);
+  --pm-reading-list-item-gap: var(--promat-space-2);
+  --pm-shell-inline-hover-padding-y: 0.34rem;
+  --pm-shell-inline-hover-padding-x: 0.5rem;
+  --pm-shell-inline-hover-radius: var(--pm-nav-item-radius);
+
+  --pm-icon-size-sm: 0.95rem;
+  --pm-icon-size-md: 1rem;
+  --pm-icon-size-lg: 1.1rem;
+  --pm-icon-stroke-color: currentColor;
+  --pm-icon-menu: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>');
+  --pm-icon-theme-light: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>');
+  --pm-icon-theme-dark: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4"/><path d="M21 5h-4"/></svg>');
+  --pm-icon-login: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>');
+  --pm-icon-account: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20a6 6 0 0 1 12 0"/></svg>');
+  --pm-icon-back: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/><path d="M9 12h10"/></svg>');
+  --pm-icon-language: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"/><path d="M3 12h18"/><path d="M12 3a14.5 14.5 0 0 1 4 9 14.5 14.5 0 0 1-4 9 14.5 14.5 0 0 1-4-9 14.5 14.5 0 0 1 4-9Z"/></svg>');
+  --pm-icon-project: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v8A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/><path d="M3 9h18"/></svg>');
+  --pm-icon-research: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 11h4"/><path d="M9 8h6"/></svg>');
+  --pm-icon-teaching: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M12 7v14"/><path d="M3 18V5a2 2 0 0 1 2-2h7"/><path d="M21 18V5a2 2 0 0 0-2-2h-7"/><path d="M3 18a2 2 0 0 0 2 2h7"/><path d="M21 18a2 2 0 0 1-2 2h-7"/></svg>');
+  --pm-icon-start: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10.5V20h14v-9.5"/></svg>');
+  --pm-icon-legal: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>');
+
+  --pm-layout-reading-width: 72ch;
+  --pm-layout-feature-width: var(--promat-content-width);
+  --pm-layout-section-gap: var(--pm-space-xl);
+
+  --promat-shell-gap: var(--pm-space-xl);
+  --promat-shell-inline-padding: var(--promat-content-offset);
+  --promat-shell-axis-offset: var(--pm-space-xs);
+  --pm-topbar-row-gap: 0.32rem;
+  --pm-topbar-padding-top: 0.72rem;
+  --pm-topbar-padding-bottom: 0;
+  --pm-topbar-primary-min-height: 2.9rem;
+  --pm-topbar-secondary-min-height: 1.85rem;
+  --pm-topbar-link-offset-bottom: 0.18rem;
+  --pm-topbar-active-line-thickness: 2px;
+  --pm-footer-margin-top: var(--pm-space-xxl);
+  --pm-footer-padding-y: var(--pm-space-container);
+  --pm-footer-row-gap: var(--promat-space-2);
+  --pm-footer-column-gap: var(--pm-space-container);
+  --pm-footer-nav-gap: var(--promat-space-2);
+  --promat-topbar-height-desktop: 7.3rem;
+  --promat-topbar-height-mobile: 4.55rem;
+  --promat-topbar-height: var(--promat-topbar-height-desktop);
+  --promat-topbar-blur: 0.4rem;
+  --promat-topbar-z-index: 4;
+  --promat-panel-width: 14.5rem;
+  --promat-content-width: 60rem;
+  --promat-reading-width: var(--pm-layout-reading-width);
+  --promat-content-offset: clamp(1rem, 2vw, 2rem);
+  --promat-shell-max-width: calc(var(--promat-panel-width) + var(--promat-content-width) + var(--promat-shell-gap) + (2 * var(--promat-shell-inline-padding)));
+
+  --promat-transition-fast: 160ms ease;
+  --promat-transition-slow: 240ms ease;
+}
+
+@media (min-width: 980px) {
+  :root {
+    --promat-shell-inline-padding: max(var(--promat-content-offset), var(--pm-space-container));
+  }
+}
+
+@media (max-width: 979px) {
+  :root {
+    --promat-topbar-height: var(--promat-topbar-height-mobile);
+    --promat-shell-axis-offset: 0px;
+  }
+}
+
+:root,
+html[data-theme="light"],
+html[data-theme="auto"][data-system-dark="false"] {
+  --book-bg: #f7f6f3;
+  --book-surface-1: #eeecea;
+  --book-surface-2: #e3e0db;
+  --book-fg: #1c1c1c;
+  --book-muted: #5a5855;
+  --book-border: #d5d2cc;
+  --book-border-strong: #bcb9b4;
+  --book-accent-strong: #3a5a7a;
+  --nav-active-bg: rgba(43, 68, 96, 0.1);
+  --nav-hover-bg: rgba(43, 68, 96, 0.06);
+  --code-bg: #ece9e4;
+  --code-inline-bg: rgba(0, 0, 0, 0.05);
+  --book-link: #2b4460;
+  --book-link-hover: #4e95d9;
+  --book-link-dark: #1e324a;
+  --hairline-color: rgba(0, 0, 0, 0.08);
+  --book-adm-info: #1a6d8e;
+  --book-adm-note: #2b4460;
+  --book-adm-success: #27a577;
+  --book-adm-warning: #8a5f18;
+  --book-adm-danger: #8a2020;
+  --book-adm-details: #4e95d9;
+  --book-adm-context: #2b5f78;
+  --book-adm-regel: #2e6440;
+  --book-adm-tip: #1e7a4e;
+  --book-adm-praxis: #7a4e18;
+  --book-adm-hoermal: #4f6b88;
+  --book-adm-expand: #3f6a72;
+  --book-adm-expand-tint: #d9d4c8;
+  --book-adm-oton: #7a2e52;
+  --book-adm-cite: #e6eaeb;
+  --book-adm-weiterlesen: #1c1a20;
+  --promat-topbar-bg-solid: rgba(253, 252, 252, 0.94);
+  --promat-topbar-bg-blur: rgba(253, 252, 252, 0.7);
+}
+
+html[data-theme="dark"],
+html[data-theme="auto"][data-system-dark="true"] {
+  --book-bg: #1a1d22;
+  --book-surface-1: #20242b;
+  --book-surface-2: #262b34;
+  --book-fg: #e7e9ee;
+  --book-muted: rgba(231, 233, 238, 0.74);
+  --book-border: rgba(255, 255, 255, 0.1);
+  --book-border-strong: rgba(255, 255, 255, 0.16);
+  --book-accent: #7ab0e8;
+  --book-accent-strong: #9cc9f3;
+  --book-accent-2: #5a9fd4;
+  --nav-active-bg: rgba(122, 176, 232, 0.14);
+  --nav-hover-bg: rgba(122, 176, 232, 0.09);
+  --code-bg: #15171c;
+  --code-inline-bg: rgba(255, 255, 255, 0.06);
+  --book-link: #7ab0e8;
+  --book-link-hover: #a8ccf0;
+  --book-link-dark: #5a96d8;
+  --hairline-color: rgba(255, 255, 255, 0.08);
+  --book-adm-info: #5ab0d0;
+  --book-adm-note: #7ab0e8;
+  --book-adm-success: #3dbf8a;
+  --book-adm-warning: #c49040;
+  --book-adm-danger: #c45050;
+  --book-adm-details: #7ab0e8;
+  --book-adm-context: #5a9ab8;
+  --book-adm-regel: #5aa870;
+  --book-adm-tip: #4aad78;
+  --book-adm-praxis: #c48840;
+  --book-adm-hoermal: #82a4c7;
+  --book-adm-expand: #9a88c4;
+  --book-adm-expand-tint: #3a3832;
+  --book-adm-oton: #c078a0;
+  --book-adm-cite: #706e6c;
+  --book-adm-weiterlesen: #c8c6d4;
+  --promat-topbar-bg-solid: rgba(26, 29, 34, 0.94);
+  --promat-topbar-bg-blur: rgba(26, 29, 34, 0.72);
+  --pm-nav-state-hover-bg: var(--pm-surface-accent-hover);
+  --pm-nav-state-hover-border: transparent;
+  --pm-nav-state-active-bg: var(--pm-surface-accent-soft);
+  --pm-nav-state-active-border: transparent;
+  --pm-nav-state-active-line: transparent;
+}
+
+:root {
+  --promat-bg: var(--book-bg);
+  --promat-surface: var(--book-surface-1);
+  --promat-surface-strong: var(--book-surface-2);
+  --promat-surface-raised: var(--pm-surface-raised);
+  --promat-panel-surface: var(--book-bg);
+  --promat-fg: var(--book-fg);
+  --promat-fg-soft: var(--book-muted);
+  --promat-outline: color-mix(in srgb, var(--book-border) 72%, transparent);
+  --promat-outline-strong: var(--book-border-strong);
+  --promat-hairline: var(--hairline-color);
+  --promat-link: var(--book-link);
+  --promat-link-hover: var(--book-link-hover);
+  --promat-focus: var(--book-accent-2);
+  --promat-selection: color-mix(in srgb, var(--book-bg) 84%, var(--book-accent));
+  --promat-shadow-soft: none;
+  --promat-shadow-panel: none;
+  --promat-workbench-tint: var(--pm-surface-interactive);
+  --promat-material-tint: var(--pm-surface-material);
+  --app-theme-color: var(--book-bg);
+  --promat-on-primary: #ffffff;
+  --promat-primary-container: color-mix(in srgb, var(--book-accent) 14%, var(--pm-surface-paper));
+  --promat-on-primary-container: var(--book-fg);
+  --promat-secondary-container: color-mix(in srgb, var(--book-accent-2) 16%, var(--pm-surface-paper));
+  --promat-on-secondary-container: var(--book-fg);
+
+  --space-1: var(--promat-space-1);
+  --space-2: var(--promat-space-2);
+  --space-3: var(--promat-space-3);
+  --space-4: var(--promat-space-4);
+  --space-5: var(--promat-space-5);
+  --space-6: var(--promat-space-6);
+  --space-8: var(--promat-space-7);
+  --space-10: var(--promat-space-8);
+  --space-12: var(--promat-space-9);
+
+  --radius-sm: var(--promat-radius-sm);
+  --radius-md: var(--promat-radius-md);
+  --radius-lg: var(--promat-radius-lg);
+
+  --elev-1: var(--promat-shadow-soft);
+  --elev-2: var(--promat-shadow-soft);
+  --elev-3: var(--promat-shadow-panel);
+  --elev-4: var(--promat-shadow-panel);
+  --elev-5: var(--promat-shadow-panel);
+
+  --md-sys-color-primary: var(--promat-primary);
+  --md-sys-color-on-primary: var(--promat-on-primary);
+  --md-sys-color-primary-container: var(--promat-primary-container);
+  --md-sys-color-on-primary-container: var(--promat-on-primary-container);
+  --md-sys-color-secondary: var(--book-accent-2);
+  --md-sys-color-on-secondary: var(--promat-on-primary);
+  --md-sys-color-secondary-container: var(--promat-secondary-container);
+  --md-sys-color-on-secondary-container: var(--promat-on-secondary-container);
+  --md-sys-color-background: var(--promat-bg);
+  --md-sys-color-on-background: var(--promat-fg);
+  --md-sys-color-surface: var(--promat-surface);
+  --md-sys-color-on-surface: var(--promat-fg);
+  --md-sys-color-surface-bright: var(--promat-surface-raised);
+  --md-sys-color-surface-variant: var(--promat-surface-strong);
+  --md-sys-color-on-surface-variant: var(--promat-fg-soft);
+  --md-sys-color-outline: var(--promat-outline-strong);
+  --md-sys-color-outline-variant: var(--promat-outline);
+  --md-sys-color-surface-container-lowest: var(--promat-surface-raised);
+  --md-sys-color-surface-container-low: color-mix(in srgb, var(--promat-surface) 76%, var(--promat-surface-raised));
+  --md-sys-color-surface-container: var(--promat-surface-strong);
+  --md-sys-color-surface-container-high: color-mix(in srgb, var(--promat-surface-strong) 82%, var(--promat-surface-raised));
+  --md-sys-color-surface-container-highest: color-mix(in srgb, var(--promat-surface-strong) 70%, var(--promat-outline));
+  --md-sys-color-error: #b75548;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: color-mix(in srgb, #b75548 18%, var(--promat-surface-raised));
+  --md-sys-color-on-error-container: var(--promat-fg);
+  --md-sys-color-warning: #9b6d28;
+  --md-sys-color-on-warning: #ffffff;
+  --md-sys-color-warning-container: color-mix(in srgb, #9b6d28 18%, var(--promat-surface-raised));
+  --md-sys-color-on-warning-container: var(--promat-fg);
+  --md-sys-color-info: var(--promat-primary);
+  --md-sys-color-on-info: var(--promat-on-primary);
+  --md-sys-color-info-container: color-mix(in srgb, var(--promat-primary) 18%, var(--promat-surface-raised));
+  --md-sys-color-on-info-container: var(--promat-fg);
+  --md-sys-color-success: #5d7b53;
+  --md-sys-color-on-success: #ffffff;
+  --md-sys-color-success-container: color-mix(in srgb, #5d7b53 18%, var(--promat-surface-raised));
+  --md-sys-color-on-success-container: var(--promat-fg);
+  --md-sys-color-inverse-surface: var(--promat-fg);
+  --md-sys-color-inverse-on-surface: var(--promat-surface-raised);
+
+  --md-sys-typescale-base-font-family: var(--book-font-ui);
+  --md-sys-typescale-base-font-weight-regular: 400;
+  --md-sys-typescale-base-font-weight-medium: 500;
+  --md-sys-typescale-headline-medium-font-family: var(--book-font-ui);
+  --md-sys-typescale-headline-medium-font-weight: 600;
+  --md-sys-typescale-headline-medium-font-size: clamp(1.75rem, 1.45rem + 0.5vw, 2.15rem);
+  --md-sys-typescale-headline-medium-line-height: 1.16;
+  --md-sys-typescale-title-large-font-family: var(--book-font-ui);
+  --md-sys-typescale-title-large-font-size: 1.125rem;
+  --md-sys-typescale-body-large-font-family: var(--book-font-body);
+  --md-sys-typescale-body-large-line-height: 1.7;
+  --md-sys-typescale-body-medium-font-family: var(--book-font-body);
+  --md-sys-typescale-body-medium-line-height: 1.68;
+  --md-sys-typescale-label-large-font-family: var(--book-font-ui);
+  --md-sys-typescale-label-medium-font-family: var(--book-font-ui);
+  --md-sys-typescale-label-small-font-family: var(--book-font-ui);
+
+  --app-background: var(--book-bg);
+  --app-color-login-bg: var(--md-sys-color-surface-container-low);
+  --app-textfield-label-bg: var(--md-sys-color-surface);
+  --drawer-width: var(--promat-panel-width);
+  --text-page-max-width: var(--promat-reading-width);
+}

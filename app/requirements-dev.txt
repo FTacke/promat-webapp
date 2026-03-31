@@ -1,0 +1,18 @@
+# Locked development dependencies for reproducible dev/test setup.
+#
+# Source file: requirements-dev.in
+# Preferred regeneration command (requires uv):
+#   uv pip compile requirements-dev.in -o requirements-dev.txt
+
+-r requirements.txt
+
+flask-testing==0.8.1
+iniconfig==2.1.0
+mypy==1.18.2
+mypy_extensions==1.1.0
+pathspec==0.12.1
+pluggy==1.6.0
+pygments==2.19.2
+pytest==8.4.2
+pytest-dotenv==0.5.2
+ruff==0.13.1

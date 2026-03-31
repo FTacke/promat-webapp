@@ -1,0 +1,26 @@
+<header class="pm-content-header pm-reading" aria-labelledby="{{ content_header.title_id | default('promat-page-title') }}">
+  {% if content_header.breadcrumbs %}
+  <nav class="pm-breadcrumb" aria-label="Pfad">
+    <ol class="pm-breadcrumb__list">
+      {% for item in content_header.breadcrumbs %}
+      <li class="pm-breadcrumb__item{{ ' is-current' if item.current else '' }}">
+        {% if item.href and not item.current %}
+        <a href="{{ item.href }}" class="pm-breadcrumb__link">{{ item.label }}</a>
+        {% else %}
+        <span class="pm-breadcrumb__link pm-breadcrumb__link--current"{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</span>
+        {% endif %}
+        {% if not loop.last %}
+        <span class="pm-breadcrumb__separator" aria-hidden="true">&gt;</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  {% endif %}
+
+  <h1 id="{{ content_header.title_id | default('promat-page-title') }}" class="promat-page__title pm-content-header__title">{{ content_header.title }}</h1>
+
+  {% if content_header.intro %}
+  <p class="promat-page__intro pm-content-header__intro">{{ content_header.intro }}</p>
+  {% endif %}
+</header>

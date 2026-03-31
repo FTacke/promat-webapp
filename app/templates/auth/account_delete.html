@@ -1,0 +1,42 @@
+{% extends "_md3_skeletons/auth_profile_skeleton.html" %}
+
+{% block page_title %}{{ format_page_title('Account löschen') }}{% endblock %}
+
+{% set auth_icon = 'delete_forever' %}
+{% set auth_eyebrow = 'Konto' %}
+{% set auth_heading = 'Account löschen' %}
+
+{% block auth_body %}
+<article class="md3-card md3-card--outlined md3-auth-card">
+      <header class="md3-card__header">
+        <h2 class="md3-title-large">Bestätigung erforderlich</h2>
+        <p class="md3-body-small">Dies ist eine irreversible Aktion</p>
+      </header>
+      <div class="md3-card__content">
+        <p class="md3-body-medium">Das Löschen ist irreversibel. Bitte geben Sie Ihr Passwort ein, um zu bestätigen.</p>
+        <form id="del" class="md3-auth-form" novalidate>
+          <div class="md3-outlined-textfield md3-outlined-textfield--block">
+            <input id="pw" name="password" type="password" class="md3-outlined-textfield__input" required aria-label="Passwort" />
+            <label class="md3-outlined-textfield__label" for="pw">Passwort</label>
+            <div class="md3-outlined-textfield__outline">
+              <div class="md3-outlined-textfield__outline-start"></div>
+              <div class="md3-outlined-textfield__outline-notch"></div>
+              <div class="md3-outlined-textfield__outline-end"></div>
+            </div>
+          </div>
+          <div class="md3-actions">
+            <a href="{{ url_for('auth.account_profile_page') }}" class="md3-button md3-button--text">Abbrechen</a>
+            <button type="submit" class="md3-button md3-button--filled md3-button--danger">
+              <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">delete_forever</span>
+              Löschen
+            </button>
+          </div>
+        </form>
+        <div id="status" class="md3-form-status" role="status" aria-live="polite"></div>
+      </div>
+    </article>
+{% endblock %}
+
+{% block auth_after %}
+<script type="module" src="{{ url_for('static', filename='js/auth/account_delete.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,19 @@
+services:
+  promat_auth_db:
+    image: postgres:15
+    container_name: promat_auth_db
+    environment:
+      POSTGRES_USER: promat_auth
+      POSTGRES_PASSWORD: promat_auth
+      POSTGRES_DB: promat_auth
+    ports:
+      - "54321:5432"
+    volumes:
+      - ./data/db/postgres_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "promat_auth", "-d", "promat_auth"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
