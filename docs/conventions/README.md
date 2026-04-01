@@ -28,6 +28,16 @@ Dies ist die aktive Kurzform der verbindlichen Repo-Konventionen. Wenn diese Dat
 
 - Verbindliche Task-Typen: `isolated_speech`, `connected_speech`, `interview`.
 - Verbindliche Verarbeitungsstufen: `raw`, `source`, `alignment`, `derived`, `items`.
+- `raw/` enthaelt nur unbearbeitete Original-WAVs.
+- `source/` enthaelt bearbeitete Arbeits-WAVs und ist die Basis fuer Annotation, spaetere Alignment-JSON und spaetere Splits.
+- `derived/` enthaelt abgeleitete Gesamtdateien fuer die Webapp, z. B. MP3.
+- `alignment/` enthaelt TextGrid plus reduzierte JSON-Segmentdaten der Gesamtaufnahme; diese JSON gehoert nicht unter `items/`.
+- `items/{task}/` enthaelt nur Split-MP3s.
+- Beispiele fuer interne Split-Dateien sind `items/isolated_speech/es_wordlist_001.mp3` und `items/connected_speech/es_text_002.mp3`.
+- Interne Split-Dateinamen basieren auf stabiler `item_id`; laengere Namen mit `session_id` und Label sind Sache der spaeteren Download-Logik.
+- Die aktuellen spanischen Dev-Beispiel-WAVs sind fachlich `source` und nicht `raw`.
+- Fuer die aktuellen spanischen Dev-Beispielsessions liegen keine echten `raw`-Dateien vor.
+- Die spaetere Pipeline lautet `TextGrid -> alignment JSON -> item splits`; geschnitten wird aus `source/{task}.wav`, und `silent`-Intervalle gehen nicht in die reduzierte Alignment-JSON ein.
 - Keine sensiblen Daten in Dateinamen, Slugs oder öffentlichen Assets.
 
 ## Datenräume

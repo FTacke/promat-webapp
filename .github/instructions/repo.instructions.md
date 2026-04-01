@@ -5,5 +5,16 @@
 - `app/` is the only application source root.
 - `data/`, `public/`, and `secure/` are runtime boundaries and stay outside the versioned app core.
 - `AUTH_DATABASE_URL`, `PROMAT_RUNTIME_ROOT`, and `PROMAT_PUBLIC_ROOT` are the canonical runtime variables.
+- `raw/` is only for untouched original WAV masters; `source/` is for processed working WAVs; `derived/` is for webapp-facing derivatives.
+- Alignment JSON for a whole recording belongs under `alignment/{task}.json`. `items/{task}/` is reserved for split MP3s only.
+- Internal split filenames must use stable `item_id`s. Longer filenames with `session_id` plus labels are for later download/UI logic, not canonical session storage.
+- Current Dev example WAVs are processed `source` audio and must not be written into `raw/` as fake masters.
+- Research-data architecture must stay as close as possible between Dev and Prod. Do not add Dev-only fallback databases, SQLite side paths, or parallel storage structures without an explicit documented decision.
+- PostgreSQL is the binding database strategy for research-data work. If auth and server-adjacent workflows already use PostgreSQL, extend that stack instead of introducing SQLite or a second local DB path.
+- Before changing DB tables, schemas, seeds, import paths, or local Dev setup, inspect the existing PostgreSQL compose/env/migration wiring and the current Dev-mode data expectations first.
+- Do not create a second data store, DB file, or temporary seed mechanism when an existing structure can be extended.
+- Dev test data may be fictional, but must respect the real project model: canonical `person_id` and `session_id` formats and the session filesystem under `data/sessions/{language}/{session_id}/`.
+- Future split pipelines should run from `TextGrid -> alignment JSON -> item splits` and cut from `source/{task}.wav`, not from MP3.
+- Repo-level decisions about database strategy, filesystem structure, and import paths must be written back into `.github` instructions in the same run so later agent work inherits them immediately.
 - Do not reintroduce old German technical slugs, legacy public routes, or old runtime path names.
 - The bootstrap stays free of search and corpus-engine integrations until they are intentionally introduced.

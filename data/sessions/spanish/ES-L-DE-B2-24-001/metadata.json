@@ -9,7 +9,7 @@
   "recording_date": null,
   "context": "baseline",
   "standard_variety": null,
-  "notes": "Repository placeholder only. No real research data.",
+  "notes": "Repository placeholder only. No real research data. Source WAVs are processed working copies; raw masters are not included.",
   "tasks": [
     {
       "task_type": "isolated_speech",
@@ -95,19 +95,19 @@
       "status": "processed"
     },
     {
-      "path": "items/isolated_speech/001_casa.mp3",
+      "path": "items/isolated_speech/es_wordlist_001.mp3",
       "file_role": "items_audio",
       "format": "mp3",
       "status": "processed"
     },
     {
-      "path": "items/isolated_speech/002_perro.mp3",
+      "path": "items/isolated_speech/es_wordlist_002.mp3",
       "file_role": "items_audio",
       "format": "mp3",
       "status": "processed"
     },
     {
-      "path": "items/connected_speech/001.mp3",
+      "path": "items/connected_speech/es_text_001.mp3",
       "file_role": "items_audio",
       "format": "mp3",
       "status": "processed"

@@ -234,6 +234,10 @@
   box-shadow: var(--pm-card-shadow);
 }
 
+.pm-card--corpus-research:hover {
+  border-top-color: var(--promat-wordmark-accent);
+}
+
 .pm-card--lang-es:hover {
   border-top-color: var(--pm-card-accent-color);
 }

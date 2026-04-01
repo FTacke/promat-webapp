@@ -55,18 +55,25 @@ if (-not $SkipInstall) {
 	Write-Host 'Hinweis: Python-Abhaengigkeiten bitte in der aktiven Umgebung mit requirements.txt installieren.' -ForegroundColor Yellow
 }
 
-$python = Get-Command python -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $python) {
-	throw 'Python wurde nicht gefunden. Bitte eine Python-Umgebung aktivieren.'
+$workspacePython = Join-Path $workspaceRoot '.venv\Scripts\python.exe'
+if (Test-Path $workspacePython) {
+	$pythonSource = $workspacePython
+}
+else {
+	$python = Get-Command python -ErrorAction SilentlyContinue | Select-Object -First 1
+	if (-not $python) {
+		throw 'Python wurde nicht gefunden. Bitte eine Python-Umgebung aktivieren.'
+	}
+	$pythonSource = $python.Source
 }
 
-& $python.Source (Join-Path $appRoot 'scripts\apply_auth_migration.py') --engine postgres $(if ($ResetAuth) { '--reset' })
+& $pythonSource (Join-Path $appRoot 'scripts\apply_auth_migration.py') --engine postgres $(if ($ResetAuth) { '--reset' })
 if ($LASTEXITCODE -ne 0) {
 	throw 'Auth-Migration fehlgeschlagen.'
 }
 
 if ($StartAdminPassword) {
-	& $python.Source (Join-Path $appRoot 'scripts\create_initial_admin.py') --password $StartAdminPassword
+	& $pythonSource (Join-Path $appRoot 'scripts\create_initial_admin.py') --password $StartAdminPassword
 	if ($LASTEXITCODE -ne 0) {
 		throw 'Initialer Admin konnte nicht angelegt werden.'
 	}

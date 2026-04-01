@@ -24,8 +24,8 @@ FILE_ROLES: tuple[str, ...] = (
     "audio_source",
     "audio_mp3",
     "textgrid",
+    "alignment_json",
     "items_audio",
-    "items_json",
     "metadata",
 )
 

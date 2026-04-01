@@ -937,27 +937,55 @@ Alle zu einer Session gehörigen Dateien werden in einem gemeinsamen Session-Ord
 * werden nie überschrieben
 * Master-Dateien
 
+Normativ:
+
+* `raw/` enthält ausschließlich unbearbeitete Original-WAVs aus der Aufnahme
+
 #### `source/`
 
 * bereinigte WAV-Dateien
 * Arbeitsbasis für Annotation und weitere Verarbeitung
 * z. B. standardisierte Pausen, entfernte Störgeräusche
 
+Normativ:
+
+* `source/` enthält bearbeitete Arbeits-WAVs mit standardisierten Pausen, Normalisierung oder vergleichbaren Vorverarbeitungsschritten
+
 #### `alignment/`
 
 * TextGrid
 * Annotationen
-* ggf. weitere Alignments oder JSON-basierte Segmentdaten
+* reduzierte, webapp-taugliche JSON-basierte Segmentdaten der Gesamtaufnahme
+
+Beispiele:
+
+```text
+/alignment/isolated_speech.TextGrid
+/alignment/isolated_speech.json
+```
+
+Normativ:
+
+* Alignment-JSON gehört logisch zur Alignment-Ebene der Gesamtaufnahme und nie unter `items/`
 
 #### `derived/`
 
 * abgeleitete Dateien für die Webapp
 * z. B. MP3-Dateien
 
+Normativ:
+
+* `derived/` enthält daraus abgeleitete Webformate der Gesamtaufnahme, insbesondere MP3
+
 #### `items/`
 
 * gesplittete Item-Dateien
 * z. B. Einzel-MP3s für Vergleichs- und Analysewerkzeuge
+* keine Alignment-JSON-Dateien
+
+Normativ:
+
+* `items/{task}/` enthält nur gesplittete Einzel-MP3s
 
 #### `metadata.json`
 
@@ -977,6 +1005,7 @@ Beispiele:
 /source/interview.wav
 
 /alignment/isolated_speech.TextGrid
+/alignment/isolated_speech.json
 /alignment/connected_speech.TextGrid
 /alignment/interview.TextGrid
 
@@ -988,10 +1017,21 @@ Beispiele:
 Für Items:
 
 ```text
-/items/isolated_speech/001_casa.mp3
-/items/isolated_speech/002_perro.mp3
-/items/connected_speech/001.mp3
+/items/isolated_speech/es_wordlist_001.mp3
+/items/isolated_speech/es_wordlist_002.mp3
+/items/connected_speech/es_text_002.mp3
 ```
+
+Regeln:
+
+* interne Split-Dateinamen basieren auf stabiler `item_id`, nicht auf langen Textlabels
+* längere Dateinamen wie `ES-L-DE-B1-26-001_es_wordlist_001_mesa.mp3` sind für Download- oder UI-Logik sinnvoll, aber nicht die interne Pflichtbenennung im Session-Ordner
+
+Hinweis für aktuelle Dev-Beispieldaten:
+
+* die vorhandenen spanischen Beispiel-WAVs sind de facto `source` und nicht `raw`
+* sie liegen deshalb fachlich korrekt unter `source/isolated_speech.wav`
+* für diese Beispielsessions liegen aktuell keine echten `raw`-Dateien vor
 
 ---
 
@@ -1004,8 +1044,8 @@ audio_raw
 audio_source
 audio_mp3
 textgrid
+alignment_json
 items_audio
-items_json
 metadata
 ```
 
@@ -1030,7 +1070,42 @@ final
 
 ---
 
-## 23. Items für Vergleichstools
+## 23. Alignment-JSON und Items für Vergleichstools
+
+### Alignment-JSON der Gesamtaufnahme
+
+`alignment/{task}.json` beschreibt die Segmente der Gesamtaufnahme in reduzierter, webapp-tauglicher Form.
+
+Eigenschaften:
+
+* logisch Teil der Alignment-Ebene, nicht der Items-Ebene
+* enthält keine redundanten Session-Metadaten; diese bleiben in `metadata.json`
+* enthält nur sprechbezogene Segmente; Pausenintervalle wie `silent` werden nicht übernommen
+* dient später für synchronisierte Textanzeige, App-Logik und Item-Splitting
+
+Empfohlene Pipeline:
+
+```text
+TextGrid -> alignment JSON -> Item-Splits
+```
+
+Regeln:
+
+* spätere Split-Skripte nutzen `alignment/{task}.json` als kanonische Segmentquelle
+* spätere Split-Skripte schneiden aus `/source/{task}.wav`, nicht aus MP3-Dateien
+* `silent`-Intervalle werden nicht in die reduzierte Alignment-JSON übernommen
+
+### Beispielhafte Item-Felder in der Alignment-JSON
+
+```text
+item_id
+item_number
+text
+start_time
+end_time
+duration
+audio_file
+```
 
 ### `item`
 
@@ -1048,13 +1123,14 @@ session_id
 item_id
 start_time
 end_time
-file
+audio_file
 ```
 
 Regel:
 
 * Items sollen stabile `item_id`s erhalten
-* `item_id` ist von konkreten Dateinamen getrennt zu führen
+* interne Item-Dateinamen folgen der `item_id`, z. B. `es_wordlist_001.mp3`
+* längere Download-Dateinamen können `session_id` + `item_id` + Label kombinieren, ohne die interne Speicherung zu verändern
 * Vergleichstools arbeiten auf Basis von `item_id` + `session_id`
 
 ---
@@ -1068,8 +1144,12 @@ Regel:
 * Routing bleibt englisch und sprachneutral
 * `person_id` verknüpft Personen über mehrere Sessions hinweg
 * `session_id` beschreibt konkrete Aufnahmen
-* `raw` bleibt unverändert
-* `source`, `derived` und `items` sind verarbeitete bzw. ableitbare Daten
+* `raw` enthält ausschließlich unveränderte Master-WAVs
+* `source` enthält bearbeitete Arbeitsfassungen für Annotation, Alignment-JSON und spätere Splits
+* `alignment` enthält TextGrid und reduzierte Alignment-JSON der Gesamtaufnahme
+* `derived` enthält abgeleitete Gesamtdateien für die Webapp
+* `items` enthält nur Split-MP3s
+* aktuelle Dev-Beispiel-WAVs sind `source`-Audio und keine `raw`-Masterdateien
 * freie Inhalte werden bewusst nach `/public/` exportiert
 * die Webapp greift nie auf `/secure/` zu
 
