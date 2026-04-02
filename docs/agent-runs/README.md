@@ -1,6 +1,6 @@
 # Agent Runs
 
-Dieser Bereich enthält die laufende, aktive Chronik substantieller Agent- oder Maintainer-Runs.
+Dieser Bereich enthält die nicht-normative Chronik substantieller Agent- oder Maintainer-Runs.
 
 ## Wann ein Eintrag nötig ist
 
@@ -25,4 +25,4 @@ Dieser Bereich enthält die laufende, aktive Chronik substantieller Agent- oder 
 - offene Punkte
 - nächste sinnvolle Schritte
 
-Bootstrap-, Setup- und Governance-Runs werden zusätzlich in `../start/` vermerkt.
+Run-Logs sind nie Source of Truth. Aktive Regeln gehören immer in `../spec/`.

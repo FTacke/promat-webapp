@@ -24,7 +24,7 @@ Was sollte stattdessen gelten?
 
 ## Relevante Source of Truth
 
-- betroffene Spezifikations- oder Governance-Dateien
+- betroffene Datei(en) unter `docs/spec/` oder relevante Governance-Dateien
 
 ## Zusatzkontext
 

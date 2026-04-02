@@ -1,27 +1,9 @@
 # PROMAT Repository Guidance
 
-- `docs/PROMAT_ Plattform-, Daten- und Filestruktur.md` is the binding source of truth for target architecture, routing, data model, and filesystem semantics.
-- Root `AGENTS.md` operationalizes repo-wide behavior; scoped `AGENTS.md` files add local rules.
+- `docs/spec/platform-data-files.md`, `docs/spec/research-access.md`, and `docs/spec/intake-workbook.md` are the binding sources of truth.
+- Root `AGENTS.md` and scoped `AGENTS.md` files govern how changes are made, not the factual product rules themselves.
+- Update existing spec files before creating any new active documentation.
+- ADRs document why a durable choice was made; runbooks document repeatable procedures; run logs are never normative.
 - `app/` is the only application source root.
-- `data/`, `public/`, and `secure/` are runtime boundaries and stay outside the versioned app core.
-- `AUTH_DATABASE_URL`, `PROMAT_RUNTIME_ROOT`, and `PROMAT_PUBLIC_ROOT` are the canonical runtime variables.
-- User-visible German UI text must use real umlauts and `ß`. Do not normalize visible German strings to `ae`, `oe`, `ue`, or `ss` unless the string is technical-only and never shown to users.
-- `raw/` is only for untouched original WAV masters; `source/` is for processed working WAVs; `derived/` is for webapp-facing derivatives.
-- Alignment JSON for a whole recording belongs under `alignment/{task}.json`. `items/{task}/` is reserved for split MP3s only.
-- Internal split filenames must use stable `item_id`s. Longer filenames with `session_id` plus labels are for later download/UI logic, not canonical session storage.
-- Current Dev example WAVs are processed `source` audio and must not be written into `raw/` as fake masters.
-- Research-data architecture must stay as close as possible between Dev and Prod. Do not add Dev-only fallback databases, SQLite side paths, or parallel storage structures without an explicit documented decision.
-- PostgreSQL is the binding database strategy for research-data work. If auth and server-adjacent workflows already use PostgreSQL, extend that stack instead of introducing SQLite or a second local DB path.
-- Before changing DB tables, schemas, seeds, import paths, or local Dev setup, inspect the existing PostgreSQL compose/env/migration wiring and the current Dev-mode data expectations first.
-- Do not create a second data store, DB file, or temporary seed mechanism when an existing structure can be extended.
-- Dev test data may be fictional, but must respect the real project model: canonical `person_id` and `session_id` formats and the session filesystem under `data/sessions/{language}/{session_id}/`.
-- Canonical research IDs are `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` and `session_id = {person_id}-{YYYY}-S{NN}`. Do not use legacy formats that encode level, L1, or standard variety directly into the session identifier.
-- Active speaker markers are only `L` and `N`, matching `learner` and `native_speaker`; `H` and `heritage_speaker` are not active standards.
-- Active technical research task keys are `wordlist`, `text`, and `interview`. Do not reintroduce `isolated_speech` or `connected_speech` outside clearly historical context.
-- Intake workbook end state is binding for import work: `speaker_type` belongs to `Research_Person`; `Research_Session_Intake` starts with `person_id`, `session_ref`, `session_id`; `session_id` stays empty in intake; `Exposure` links through `person_id` plus `session_ref`; `Vocabularies` stays a broad worksheet, not a normalized field-value sheet.
-- Active technical vocabulary casing is binding: `target_language` uses `es`/`fr`/`en`/`de`, `standard_variety` uses lowercase snake_case with `fr_ch_std` and `de_ch_std`, `unknown` stays lowercase, and `l1_code` stays uppercase.
-- `speakers` is always person-based, `recordings` stays session-/task-based, and native-speaker comparison profiles must keep a strict one-person-one-session invariant.
-- Future split pipelines should run from `TextGrid -> alignment JSON -> item splits` and cut from `source/{task}.wav`, not from MP3.
-- Repo-level decisions about database strategy, filesystem structure, and import paths must be written back into `.github` instructions in the same run so later agent work inherits them immediately.
-- Do not reintroduce old German technical slugs, legacy public routes, or old runtime path names.
-- The bootstrap stays free of search and corpus-engine integrations until they are intentionally introduced.
+- Keep `data/`, `public/`, and `secure/` strictly separated.
+- Do not create shadow documentation buckets, parallel import contracts, or ad hoc source-of-truth notes.

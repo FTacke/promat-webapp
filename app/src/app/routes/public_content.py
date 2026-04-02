@@ -563,7 +563,7 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                 {
                     "heading": "Interview zur Aussprache",
                     "paragraphs": [
-                        "Halbgeleitete Gesprächspassagen mit spontaner Aussprache werden als eigener Task-Typ interview geführt.",
+                        "Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.",
                     ],
                 },
                 {
@@ -627,7 +627,7 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                 {
                     "heading": "Interview zur Aussprache",
                     "paragraphs": [
-                        "Halbgeleitete Gesprächssituationen mit spontaner Aussprache unter dem Task-Key interview.",
+                        "Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.",
                     ],
                 },
             ],

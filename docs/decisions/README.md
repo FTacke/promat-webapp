@@ -2,6 +2,8 @@
 
 Dieser Bereich enthält nur dauerhafte, repo-weite oder bereichsübergreifende Architekturentscheidungen.
 
+Die aktuellen Regeln stehen nicht hier, sondern in `docs/spec/`.
+
 ## Wann ein ADR sinnvoll ist
 
 - wenn eine neue dauerhafte Struktur eingeführt wird
@@ -14,4 +16,4 @@ Dieser Bereich enthält nur dauerhafte, repo-weite oder bereichsübergreifende A
 - reine Inhalts- oder Textänderungen
 - selbsterklärende Bugfixes ohne neue Architekturwirkung
 
-Verwende `_template.md` und verlinke den zugehörigen Run-Log.
+Verwende `_template.md`, verlinke den zugehörigen Run-Log und nenne die betroffenen Spec-Dateien.

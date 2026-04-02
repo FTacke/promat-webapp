@@ -36,5 +36,5 @@ PROMAT verwendet für den aktiven Research-Zugang verbindlich diese Regeln:
 ## Referenzen
 
 - `docs/agent-runs/2026-04-02_person-based-research-access-09.md`
-- `docs/PROMAT_ Plattform-, Daten- und Filestruktur.md`
-- `docs/research_pages/promat_recordings_speakers.md`
+- `docs/spec/platform-data-files.md`
+- `docs/spec/research-access.md`

@@ -1,137 +1,45 @@
 # PROMAT Repo Governance
 
-Dieses Dokument operationalisiert die verbindliche PROMAT-Spezifikation. Es ersetzt die Spezifikation nicht, sondern macht sie für Repo-Arbeit, Agent-Runs und kollaborative Änderungen unmittelbar anwendbar.
+## Binding Sources
 
-## Zweck und Prioritäten
+For active PROMAT rules, consult these files first:
 
-- PROMAT ist ein schlanker, strukturell sauberer Bootstrap für Pronunciation Matters.
-- Vorrang haben Architekturklarheit, konsistente Begriffe, sichere Datenpfade und minimale Seiteneffekte.
-- Änderungen sollen das Repo verständlicher machen, nicht nur kurzfristig lauffähig.
+1. `docs/spec/platform-data-files.md`
+2. `docs/spec/research-access.md`
+3. `docs/spec/intake-workbook.md`
+4. relevant scoped `AGENTS.md`
+5. runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `app/infra/docker-compose.prod.yml`
 
-## Verbindliche Quellen
+`docs/spec/` is the only active source of truth for current factual rules.
 
-Für Zielarchitektur und Begriffe ist bindend:
+## Core Repo Rules
 
-1. `docs/PROMAT_ Plattform-, Daten- und Filestruktur.md`
-2. aktive Runtime-Wiring-Dateien: `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, `app/infra/docker-compose.prod.yml`
-3. dieses `AGENTS.md` und relevante scoped `AGENTS.md`
-4. aktive Repo-Dokumentation unter `docs/architecture/`, `docs/conventions/`, `docs/runbooks/`, `docs/decisions/`
-5. `README.md` als Kurzüberblick
+- `app/` is the only application source root.
+- `data/`, `public/`, and `secure/` keep their strict runtime boundaries.
+- Technical keys, slugs, routes, field names, and controlled vocabularies stay English.
+- User-visible German text stays separable from technical keys and uses real umlauts and `ß`.
+- Do not reintroduce old German technical slugs, legacy runtime paths, or old public routes.
+- Do not introduce Dev-only shadow architectures or fallback data stores.
 
-Historische Run-Logs unter `docs/start/` und `docs/agent-runs/` erklären Entscheidungen, überschreiben aber keine aktive Architektur.
+## Documentation Rules
 
-## Architekturprinzipien
+- Update an existing file under `docs/spec/` before creating any new active documentation.
+- Do not place active rules in run logs, ADRs, folder READMEs, or ad hoc notes.
+- ADRs in `docs/decisions/` explain why a decision was taken; they do not replace current specs.
+- Runbooks in `docs/runbooks/` document repeatable procedures only.
+- Run logs in `docs/agent-runs/` are non-normative work journals only.
+- Delete or merge obsolete documentation instead of preserving shadow copies.
 
-- `app/` ist der einzige versionierte Application-Source-Root.
-- `data/` ist der geschützte Forschungsdatenraum.
-- `public/` ist der ausschließlich explizit freigegebene öffentliche Asset-Raum.
-- `secure/` ist Klardatenraum und bleibt außerhalb der Webapp.
-- `scripts/` enthält wiederholbare Import-, Export- und Pipeline-Schritte, nicht implizite Laufzeitlogik.
-- Das Repo bleibt frei von Search-, BlackLab-, Atlas-, Player- und Editor-Residuen, solange diese nicht bewusst als neuer Architekturstand eingeführt und dokumentiert werden.
+## Change Discipline
 
-## Routing- und Sprachprinzipien
+- If routing, data paths, IDs, vocabularies, research-access logic, or intake rules change, update the relevant file in `docs/spec/` in the same run.
+- If a durable architectural decision is accepted, add or update an ADR in `docs/decisions/`.
+- If a repeatable workflow changes, add or update the relevant runbook in `docs/runbooks/`.
+- Every substantive run adds one entry under `docs/agent-runs/`.
 
-- Öffentliches Routing folgt dem Schema `/{ui_lang}/{section}/{corpus_language}/{page}`.
-- Technische Slugs, Keys, Datenfelder und Controlled Vocabularies sind immer Englisch.
-- Sichtbare UI-Labels bleiben aktuell Deutsch, müssen aber lokalisierbar bleiben.
-- `speakers` ist personbasiert; `recordings` bleibt session- und taskbasiert.
-- In sichtbaren deutschen UI-Texten sind echte Umlaute und `ß` zu verwenden. Ersetzungen wie `ae`, `oe`, `ue` oder `ss` sind nur in technischen, nicht user-visible Kontexten zulässig.
-- Alte deutsche technische Slugs und Altpfade dürfen nicht wieder eingeführt werden.
-- UI-Sprache und technische Routing-Sprache dürfen nicht vermischt werden.
+## No-Go
 
-## Daten- und Filesystem-Prinzipien
-
-- `person_id` identifiziert Personen stabil innerhalb eines sprach- bzw. korpusgebundenen ID-Raums.
-- `session_id` identifiziert konkrete Aufnahmen.
-- Kanonische Formate sind `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` und `session_id = {person_id}-{YYYY}-S{NN}`.
-- Aktive `speaker_type`-Werte sind nur `learner` und `native_speaker`; die zugehörigen aktiven ID-Marker sind nur `L` und `N`.
-- `session_id` enthält genau `person_id`, vierstelliges Aufnahmejahr und zweistellige Session-Nummer; Level, L1 und Standardvarietät gehören in Metadaten, nicht in die ID.
-- Session-Daten liegen unter `data/sessions/{language}/{session_id}/`.
-- Die Session-Unterstruktur ist `raw/`, `source/`, `alignment/`, `derived/`, `items/` plus `metadata.json`.
-- Technische Task-Typen sind `wordlist`, `text`, `interview`.
-- Aktive technische Vokabular-Cases bleiben gemischt, aber eindeutig: `target_language` ist `es`/`fr`/`en`/`de`, `standard_variety` ist lowercase snake_case, `unknown` bleibt lowercase, `l1_code` bleibt uppercase.
-- Der aktive Intake-Vertrag bleibt: `Research_Session_Intake` beginnt mit `person_id`, `session_ref`, `session_id`; `session_id` bleibt leer; `Exposure` verknüpft über `person_id` plus `session_ref`; `Vocabularies` bleibt ein breites Blatt.
-- Native-Speaker-Vergleichsprofile sind ein Sonderfall: pro nativer `person_id` genau eine Session.
-- Sensible Informationen gehören weder in Dateinamen noch in Pfade, Slugs oder öffentliche Assets.
-
-## Unantastbare Webapp-Grenzen
-
-- Die Webapp greift nie direkt auf `secure/` zu.
-- Öffentliche Assets werden nie direkt aus `data/` ausgeliefert.
-- `AUTH_DATABASE_URL` ist die einzige gültige Auth/Core-DB-Variable.
-- `PROMAT_RUNTIME_ROOT` und `PROMAT_PUBLIC_ROOT` sind die kanonischen Runtime-Grenzen.
-- Daten-, Public- und Secure-Logik werden nicht in denselben Pfaden, Helpers oder Views vermischt.
-
-## Dev/Prod-Parität
-
-- Dev und Prod sollen dieselbe Architektur, dieselben Begriffe, dieselben Route-Schemata und dieselbe Datenlogik verwenden.
-- Unterschiede zwischen Dev und Prod dürfen nur infrastrukturnah sein, nicht begrifflich oder strukturell.
-- Dev-only Sonderstrukturen, Sonderrouten oder Sonderbegriffe sind unzulässig.
-- Jede akzeptierte Abweichung muss in `docs/architecture/dev-prod-parity.md` und im jeweiligen Run-Log erklärt werden.
-- Provisorische Lösungen müssen als provisorisch markiert werden und eine Abbaurichtung benennen.
-
-## Regeln für Refactors
-
-- Refactors beheben die Ursache, nicht nur Symptome.
-- Öffentliche oder repo-interne Namensänderungen erfolgen nicht still; Code, Skripte, Doku und Konfiguration müssen im selben Run nachgezogen werden.
-- Legacy wird entweder vollständig entfernt oder explizit als Übergang dokumentiert. Halbe Wiederbelebungen sind unzulässig.
-- Vor Strukturänderungen sind Referenzen repo-weit zu prüfen.
-
-## Regeln für Datenpfade
-
-- Pfade werden nicht frei im Code erfunden, sondern aus den kanonischen Runtime- und Config-Dateien abgeleitet.
-- Keine neuen Ad-hoc-Ordner außerhalb von `app/`, `data/`, `public/`, `secure/`, `scripts/`, `docs/`, `.github/` ohne dokumentierte Entscheidung.
-- `raw`, `source`, `alignment`, `derived` und `items` behalten ihre semantische Trennung.
-
-## Öffentliche vs. geschützte Inhalte
-
-- `public/` enthält nur bewusst freigegebene Inhalte.
-- `data/` bleibt geschützt, auch wenn einzelne Inhalte später öffentlich exportiert werden.
-- Export nach `public/` ist ein expliziter Prozessschritt, keine implizite Folge eines View- oder Script-Laufs.
-- Keine Klardaten, Re-Identifikationsinformationen oder sensiblen Metadaten in öffentliche Dateien oder öffentlich erreichbare Routen.
-
-## Dokumentationspflicht nach jedem Run
-
-- Jeder substanzielle Agent- oder Maintainer-Run erzeugt einen Eintrag unter `docs/agent-runs/` nach Template.
-- Bootstrap-, Setup-, Governance- oder Repo-Struktur-Runs aktualisieren zusätzlich `docs/start/`.
-- Dauerhafte Architekturentscheidungen kommen nach `docs/decisions/`.
-- Wiederholbare Dev/Prod-Abläufe kommen nach `docs/runbooks/`.
-- Aktive Regeln werden in `docs/conventions/` oder `docs/architecture/` aktualisiert, nicht als Schattennotiz in irgendeinem Einzeldokument.
-
-## Regeln für Abschlussberichte
-
-- Abschlussberichte nennen mindestens Ziel, geänderte Bereiche, Architekturwirkung, Verifikation, offene Punkte und nächste sinnvolle Schritte.
-- Abweichungen von der Spezifikation oder von der Dev/Prod-Parität müssen explizit genannt werden.
-- Nicht ausgeführte Prüfungen oder Tests werden offen benannt.
-
-## Regeln für Legacy-Bereinigung
-
-- Gelöschte Legacy-Pfade, Variablen und Slugs werden nicht reaktiviert.
-- Neue Logik darf nicht an alte Alias-Pfade oder alte Begriffe gehängt werden.
-- Historische Dokumente bleiben als Historie bestehen, dürfen aber nicht als aktive Anleitung behandelt werden.
-
-## Benennungen und technische Sprache
-
-- Ein technisches Konzept hat genau einen bevorzugten Namen.
-- Verbindliche technische Standards sind unter anderem `project`, `research`, `teaching`, `sample`, `person_id`, `session_id`, `wordlist`, `text`, `interview`, `raw`, `source`, `alignment`, `derived`, `items`.
-- Alte Ausdrücke wie `isolated_speech`, `connected_speech` und `reflexion` sind keine aktiven technischen Standards mehr.
-- UI-Labels dürfen deutsch sein; technische Keys dürfen es nicht.
-
-## Minimales, sauberes Arbeiten
-
-- Nutze wenige starke Dateien statt verteilter Schattenregeln.
-- Ergänze bestehende Strukturen, statt parallele Alternativstrukturen zu bauen.
-- Halte Änderungen klein, zusammenhängend und repo-weit konsistent.
-- Wenn ein Bereich eine engere Regel braucht, nutze ein scoped `AGENTS.md` statt das Root-Dokument aufzublähen.
-
-## No-Go-Liste
-
-- Keine deutschen technischen Slugs oder Keys neu einführen.
-- Keine alten Routen, Pfade oder Variablennamen reaktivieren.
-- Keine Webapp-Zugriffe auf `secure/`.
-- Keine direkten öffentlichen Auslieferungen aus `data/`.
-- Keine stillen Architekturentscheidungen ohne Doku.
-- Keine ad-hoc-Ordner oder neue Schattenstruktur außerhalb des definierten Layouts.
-- Keine verstreute, sich widersprechende Doppeldokumentation.
-- Keine Vermischung von UI-Sprache und technischer Sprache.
-- Keine dev-only Notlösungen ohne dokumentierte Begründung und Abbaurichtung.
+- No new shadow documentation buckets.
+- No silent architecture decisions without spec updates.
+- No webapp access to `secure/`.
+- No direct public delivery from `data/`.

@@ -1,5 +1,9 @@
 # Runbook: Titel
 
+## Zugehörige Spezifikation
+
+- betroffene Datei unter `docs/spec/`
+
 ## Zweck
 
 Wofür dieses Runbook gebraucht wird.

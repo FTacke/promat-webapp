@@ -14,9 +14,11 @@ Welche strukturelle Änderung wird vorgeschlagen?
 
 Welches Problem oder welche Drift soll verhindert werden?
 
-## Betroffene Source of Truth
+## Betroffene Spec-Dateien
 
-- `docs/PROMAT_ Plattform-, Daten- und Filestruktur.md`
+- `docs/spec/platform-data-files.md`
+- `docs/spec/research-access.md`
+- `docs/spec/intake-workbook.md`
 - weitere betroffene Governance- oder Runtime-Dateien
 
 ## Auswirkungen

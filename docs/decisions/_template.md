@@ -25,4 +25,4 @@ Die verbindlich gewählte Lösung.
 ## Referenzen
 
 - zugehöriger Run-Log
-- relevante Source-of-Truth-Dokumente
+- betroffene Dateien unter `docs/spec/`

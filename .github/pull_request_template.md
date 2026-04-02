@@ -8,7 +8,7 @@ Kurze Beschreibung des Changes und des gelösten Problems.
 
 ## Verbindliche Quellen
 
-- [ ] `docs/PROMAT_ Plattform-, Daten- und Filestruktur.md` geprüft
+- [ ] relevante Datei(en) unter `docs/spec/` geprüft
 - [ ] root `AGENTS.md` geprüft
 - [ ] relevante scoped `AGENTS.md` geprüft
 
@@ -19,8 +19,8 @@ Kurze Beschreibung des Changes und des gelösten Problems.
 
 ## Dokumentation
 
+- [ ] `docs/spec/` aktualisiert, falls aktive Regeln betroffen sind
 - [ ] `docs/agent-runs/` aktualisiert
-- [ ] `docs/start/` aktualisiert, falls Bootstrap/Setup/Governance/Repo-Struktur betroffen ist
 - [ ] `docs/decisions/` aktualisiert, falls eine dauerhafte Entscheidung getroffen wurde
 - [ ] `docs/runbooks/` aktualisiert, falls ein wiederholbarer Ablauf geändert wurde
 

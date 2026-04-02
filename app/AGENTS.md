@@ -4,53 +4,18 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 
 ## Scope
 
-- `src/app/` enthält die Flask-Anwendung und deren Runtime-Wiring.
-- `templates/` enthält den Single-Shell-Aufbau.
-- `static/` enthält das gemeinsame UI-System.
-- `migrations/` enthält auth-nahe SQL-Migrationen.
+- `src/app/` enthält die Flask-Anwendung und das Runtime-Wiring.
+- `templates/` und `static/` bilden das UI-System.
 
-## Routing und Sprache
+## Regeln
 
-- Öffentliche Routen bleiben ui-lang-präfixiert und technisch englisch.
-- Technische Section-, Language- und Page-Slugs bleiben englisch.
-- Sichtbare Labels, Breadcrumbs und Navigationseinträge dürfen deutsch sein, müssen aber von technischen Keys getrennt bleiben.
-- In sichtbaren deutschen UI-Texten innerhalb von Templates, Seitentiteln, Buttons, Filtern, Sample-Beispielen und Leerzuständen sind echte Umlaute und `ß` zu verwenden. ASCII-Umschriften wie `ae`, `oe`, `ue` oder `ss` sind dort unzulässig.
-- Alte deutsche Routen oder Alias-Slugs werden nicht wieder eingeführt.
-
-## Datenzugriff und Runtime-Grenzen
-
-- Verwende `PROMAT_RUNTIME_ROOT` und `PROMAT_PUBLIC_ROOT` als einzige kanonische Runtime-Grenzen.
-- Leite Pfade über `src/app/runtime_paths.py` und `src/app/config/__init__.py` ab, nicht über freie Stringpfade.
-- `speakers` bleibt personbasiert; `recordings` bleibt session- und taskbasiert.
-- `person_id` und `session_id` folgen den kanonischen Formaten `{CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` und `{person_id}-{YYYY}-S{NN}`.
-- Kein View, Helper oder Script in `app/` greift direkt auf `secure/` zu.
-- Öffentliche Inhalte kommen nur aus `public/`, nicht direkt aus `data/`.
-
-## Technische Begriffe
-
-- Verbindliche Task-Keys sind `wordlist`, `text`, `interview`.
-- Verbindliche Datenbegriffe sind unter anderem `person_id`, `session_id`, `speaker_type`, `target_language`, `file_role`, `standard_variety`.
-- Aktive App-Werte bleiben konsistent: `speaker_type` nur `learner`/`native_speaker`, ID-Marker nur `L`/`N`, `target_language` lowercase und `standard_variety` lowercase snake_case mit `fr_ch_std` bzw. `de_ch_std` statt `ch_std`.
-- Native-Speaker-Vergleichsprofile behalten genau eine Session pro `person_id`; Multi-Session-Aggregation gilt nur für nicht-native Personenprofile.
-- Alte Begriffe wie `isolated_speech`, `connected_speech` oder `reflexion` dürfen nicht als neue technische Standards eingebaut werden.
-
-## Template- und UI-Regeln
-
-- `templates/base.html` bleibt die gemeinsame Shell.
-- UI-Labels und Textstruktur dürfen angepasst werden, aber nicht über technische Slugs oder Dateipfade gesteuert werden.
-- Badge-, Chip- und Task-Benennungen sollen aus bestehenden UI-Mustern konsolidiert werden, statt parallele Varianten einzuführen.
-- Keine verdeckte Vermischung von Forschungszugang, öffentlichem Materialraum und Sample-Logik in denselben Komponenten.
-
-## Refactor-Regeln
-
-- Route-, Helper- oder Config-Refactors müssen Templates, Skripte, Tests und Doku mitziehen.
-- Entferne Legacy konsistent oder lasse sie explizit dokumentiert. Keine halbaktiven Aliasse.
-- Suche repo-weit nach Referenzen, bevor du technische Namen änderst.
+- Implement application behavior against `docs/spec/`, not against older local notes or deleted doc paths.
+- If routing, research-access behavior, IDs, vocabularies, or runtime boundaries change, update the relevant file in `docs/spec/` in the same run.
+- Use `PROMAT_RUNTIME_ROOT` and `PROMAT_PUBLIC_ROOT` as the only runtime boundaries.
+- Do not access `secure/` from web-facing runtime code.
+- Do not serve public content directly from `data/`.
 
 ## No-Go
 
-- Keine neuen deutschen technischen Slugs.
-- Keine direkten `secure/`- oder `data/`-Dateizugriffe aus Web-Views für öffentliche Auslieferung.
-- Keine neue App-Quelle außerhalb von `app/`.
-- Keine Reanimation von Search-, BlackLab-, Atlas-, Player- oder Editor-Abhängigkeiten.
-- Keine harte Kopplung von UI-Texten an technische Keys.
+- No new German technical slugs.
+- No shadow docs inside `app/` for active architecture or product rules.

@@ -103,7 +103,7 @@ RESEARCH_TASKS: tuple[ResearchTaskDefinition, ...] = (
         long_label_en="Interview",
         short_label_de="Interview",
         short_label_en="Interview",
-        description_de="Halbgeleitete Gesprächssituation mit spontaner Aussprache.",
+        description_de="Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.",
         description_en="Semi-guided conversation with spontaneous pronunciation.",
     ),
 )

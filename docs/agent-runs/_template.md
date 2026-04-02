@@ -8,7 +8,7 @@ Kurze Beschreibung des Arbeitsziels.
 
 ## Consulted Sources
 
-- `docs/PROMAT_ Plattform-, Daten- und Filestruktur.md`
+- relevante Dateien unter `docs/spec/`
 - weitere aktiv konsultierte Governance- oder Runtime-Dateien
 
 ## Geänderte Bereiche
