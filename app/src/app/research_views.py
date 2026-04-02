@@ -173,21 +173,23 @@ def _build_exposure_row(session: SessionRecord, ui_lang: str) -> dict[str, Any]:
                     "note": entry.exposure_notes or "",
                 }
             )
-        return {"label": label, "entries": entries}
+        return {"label": label, "kind": "exposure", "entries": entries}
 
     if session.stays_in_target_country is False:
         return {
             "label": label,
+            "kind": "exposure",
             "value": "Keine erfassten Sprachaufenthalte" if ui_lang == "de" else "No recorded stays in the target-language country",
         }
 
     if session.stays_in_target_country is True:
         return {
             "label": label,
+            "kind": "exposure",
             "value": "Erfasst, ohne Detailangaben" if ui_lang == "de" else "Recorded without detailed stay information",
         }
 
-    return {"label": label, "value": "Nicht erfasst" if ui_lang == "de" else "Not recorded"}
+    return {"label": label, "kind": "exposure", "value": "Nicht erfasst" if ui_lang == "de" else "Not recorded"}
 
 
 def _uses_native_filters(selected_group: str) -> bool:

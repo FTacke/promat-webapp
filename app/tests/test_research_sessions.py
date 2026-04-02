@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from flask import Flask
+from flask import Flask, g
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -17,6 +17,7 @@ os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app.config.data_conventions import build_person_id, build_session_id, parse_person_id, parse_session_id
+from app import register_context_processors
 from app.research_views import build_recordings_page, build_speaker_profile_page, build_speakers_page
 from app.routes.public import blueprint as public_blueprint
 from app.research_sessions import (
@@ -48,8 +49,20 @@ def runtime_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 @pytest.fixture
 def url_app() -> Flask:
-    app = Flask(__name__)
+    app_root = Path(__file__).resolve().parents[1]
+    app = Flask(
+        __name__,
+        template_folder=str(app_root / "templates"),
+        static_folder=str(app_root / "static"),
+    )
     app.config["SERVER_NAME"] = "promat.test"
+    register_context_processors(app)
+
+    @app.before_request
+    def _set_test_auth_context() -> None:
+        g.user = None
+        g.role = None
+
     app.register_blueprint(public_blueprint)
     return app
 
@@ -352,6 +365,35 @@ def test_profile_page_supports_single_exposure_entry_without_note(runtime_env: P
     assert exposure_row["entries"] == [{"text": "Spain · 3 Monate · Studium", "note": ""}]
 
 
+def test_profile_page_uses_compact_exposure_fallback_when_no_entries_exist(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0004-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0004",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A1",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[],
+            stays_in_target_country=False,
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0004", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
+    assert exposure_row["kind"] == "exposure"
+    assert exposure_row["value"] == "Keine erfassten Sprachaufenthalte"
+    assert "entries" not in exposure_row
+
+
 def test_profile_page_preserves_long_exposure_note_for_wrapping(runtime_env: Path, url_app: Flask) -> None:
     session_id = "ES-L-0005-2026-S01"
     long_note = "Längerer Freitext zur Reise, der bewusst mehrere Wortgruppen enthält und in schmaleren Layouts sauber umbrechen soll."
@@ -379,6 +421,40 @@ def test_profile_page_preserves_long_exposure_note_for_wrapping(runtime_env: Pat
     assert page is not None
     exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
     assert exposure_row["entries"] == [{"text": "Spain · 4 Monate · Arbeit", "note": long_note}]
+
+
+def test_research_profile_renders_exposure_entries_with_grouped_markup(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0006-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0006",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+            exposure_entries=[
+                {"country": "Spain", "duration_months": 5, "type": "study", "exposure_notes": "Semester in Salamanca."},
+                {"country": "Mexico", "duration_months": 1, "type": "travel", "exposure_notes": ""},
+            ],
+        ),
+    )
+
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/speakers/ES-L-0006?session={session_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'pm-profile-metadata__list pm-profile-metadata__list--exposure' in html
+    assert html.count('pm-profile-metadata__list-item pm-profile-metadata__list-item--exposure') == 2
+    assert 'pm-profile-metadata__entry pm-profile-metadata__entry--exposure' in html
+    assert 'pm-profile-metadata__entry-line pm-profile-metadata__entry-summary' in html
+    assert 'pm-profile-metadata__note pm-profile-metadata__entry-note' in html
+    assert 'Semester in Salamanca.' in html
 
 
 def test_recordings_page_combines_session_and_person_in_leading_column(runtime_env: Path, url_app: Flask) -> None:

@@ -915,6 +915,24 @@ textarea:focus-visible {
   align-content: start;
 }
 
+.pm-profile-metadata__rich--exposure {
+  gap: 0;
+}
+
+.pm-profile-metadata__list--exposure {
+  gap: 1rem;
+}
+
+.pm-profile-metadata__list-item--exposure {
+  gap: 0;
+}
+
+.pm-profile-metadata__entry--exposure {
+  display: grid;
+  gap: 0.18rem;
+  align-content: start;
+}
+
 .pm-profile-metadata__entry-line {
   margin: 0;
   font-size: 0.95rem;
@@ -930,6 +948,14 @@ textarea:focus-visible {
   line-height: 1.38;
   max-width: 34ch;
   overflow-wrap: anywhere;
+}
+
+.pm-profile-metadata__entry-note {
+  margin-left: 0;
+  padding-left: 0.78rem;
+  font-size: 0.79rem;
+  line-height: 1.42;
+  max-width: 38ch;
 }
 
 .pm-profile-metadata__value {

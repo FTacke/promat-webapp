@@ -51,17 +51,19 @@
 
           <div class="pm-profile-metadata__grid">
             {% for row in session.rows %}
-            <div class="pm-profile-metadata__row">
+            <div class="pm-profile-metadata__row{{ ' pm-profile-metadata__row--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">
               <p class="pm-profile-metadata__label">{{ row.label }}</p>
               {% if row.entries is defined and row.entries %}
-              <div class="pm-profile-metadata__rich">
-                <ul class="pm-profile-metadata__list">
+              <div class="pm-profile-metadata__rich{{ ' pm-profile-metadata__rich--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">
+                <ul class="pm-profile-metadata__list{{ ' pm-profile-metadata__list--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">
                   {% for item in row.entries %}
-                  <li class="pm-profile-metadata__list-item">
-                    <p class="pm-profile-metadata__entry-line">{{ item.text }}</p>
-                    {% if item.note %}
-                    <p class="pm-profile-metadata__note">{{ item.note }}</p>
-                    {% endif %}
+                  <li class="pm-profile-metadata__list-item{{ ' pm-profile-metadata__list-item--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">
+                    <div class="pm-profile-metadata__entry{{ ' pm-profile-metadata__entry--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">
+                      <p class="pm-profile-metadata__entry-line{{ ' pm-profile-metadata__entry-summary' if row.kind is defined and row.kind == 'exposure' else '' }}">{{ item.text }}</p>
+                      {% if item.note %}
+                      <p class="pm-profile-metadata__note{{ ' pm-profile-metadata__entry-note' if row.kind is defined and row.kind == 'exposure' else '' }}">{{ item.note }}</p>
+                      {% endif %}
+                    </div>
                   </li>
                   {% endfor %}
                 </ul>
