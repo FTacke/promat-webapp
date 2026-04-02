@@ -12,6 +12,7 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 - Implement application behavior against `docs/spec/`, not against older local notes or deleted doc paths.
 - If routing, research-access behavior, IDs, vocabularies, or runtime boundaries change, update the relevant file in `docs/spec/` in the same run.
 - If shared app-shell or sidebar-navigation rules change, update `docs/spec/platform-data-files.md` in the same run.
+- If a shared layout element changes on a real page and `sample` showcases it, update `templates/pages/sample_page.html` in the same run.
 - Use `PROMAT_RUNTIME_ROOT` and `PROMAT_PUBLIC_ROOT` as the only runtime boundaries.
 - Do not access `secure/` from web-facing runtime code.
 - Do not serve public content directly from `data/`.

@@ -193,6 +193,9 @@
   --pm-type-card-eyebrow-line: 1.4;
   --pm-type-card-eyebrow-tracking: 0.02em;
   --pm-type-card-eyebrow-weight: 600;
+  --pm-card-max-inline: 22rem;
+  --pm-card-max-inline-selection: 20rem;
+  --pm-card-max-inline-entry: 24rem;
 
   --pm-type-flow-size: var(--pm-type-reading-size);
   --pm-type-flow-line: calc(var(--pm-type-reading-size) * var(--pm-type-reading-line));

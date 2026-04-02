@@ -298,6 +298,63 @@ def _render_legal_page(page_key: str) -> str:
     return _render_promat_page(page=page, panel=panel, page_name="legal", ui_lang=ui_lang)
 
 
+def _sample_speaker_cards(ui_lang: str) -> list[dict[str, Any]]:
+    profile_label = "Profil öffnen" if ui_lang == "de" else "Open profile"
+    recordings_label = "Aufzeichnungen" if ui_lang == "de" else "Recordings"
+    recording_links_aria_label = "Direktlinks zu Aufzeichnungen" if ui_lang == "de" else "Direct links to recordings"
+    learner_eyebrow = "Lernende" if ui_lang == "de" else "Learner"
+    native_eyebrow = "Native Speaker" if ui_lang == "de" else "Native speaker"
+    selected_session_label = "Ausgewählte Session" if ui_lang == "de" else "Selected session"
+
+    return [
+        {
+            "person_id": "ES-L-0001",
+            "eyebrow": learner_eyebrow,
+            "selected_session_label": selected_session_label,
+            "selected_session_id": "ES-L-0001-2027-S02",
+            "meta_rows": [
+                {"label": "Sessions" if ui_lang == "de" else "Sessions", "value": "2"},
+                {"label": "Niveaus" if ui_lang == "de" else "Levels", "value": "A1, A2"},
+                {"label": "L1", "value": "DE"},
+                {"label": "Sprachaufenthalte" if ui_lang == "de" else "Stays", "value": "Teilweise" if ui_lang == "de" else "Partial"},
+                {"label": "Aufnahmejahre" if ui_lang == "de" else "Recording years", "value": "2026–2027"},
+            ],
+            "profile_href": "#sample-research-profile-title",
+            "profile_label": profile_label,
+            "recordings_label": recordings_label,
+            "recording_links_aria_label": recording_links_aria_label,
+            "task_links": [
+                {"label": "Wortliste" if ui_lang == "de" else "Wordlist", "href": "#sample-research-task-panels-title"},
+                {"label": "Text", "href": "#sample-research-task-panels-title"},
+                {"label": "Interview", "href": "#sample-research-task-panels-title"},
+            ],
+            "accent_modifier": "b1",
+        },
+        {
+            "person_id": "ES-N-0001",
+            "eyebrow": native_eyebrow,
+            "selected_session_label": selected_session_label,
+            "selected_session_id": "ES-N-0001-2026-S01",
+            "meta_rows": [
+                {"label": "Standardvarietät" if ui_lang == "de" else "Standard variety", "value": "ES_STD"},
+                {"label": "Herkunftsland" if ui_lang == "de" else "Origin country", "value": "Spain"},
+                {"label": "Herkunftsregion" if ui_lang == "de" else "Origin region", "value": "Andalusia"},
+                {"label": "Geschlecht" if ui_lang == "de" else "Gender", "value": "männlich" if ui_lang == "de" else "male"},
+                {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": "2026"},
+            ],
+            "profile_href": "#sample-research-profile-title",
+            "profile_label": profile_label,
+            "recordings_label": recordings_label,
+            "recording_links_aria_label": recording_links_aria_label,
+            "task_links": [
+                {"label": "Wortliste" if ui_lang == "de" else "Wordlist", "href": "#sample-research-task-panels-title"},
+                {"label": "Text", "href": "#sample-research-task-panels-title"},
+            ],
+            "accent_modifier": "native",
+        },
+    ]
+
+
 @blueprint.get("/")
 def landing_page():
     return _redirect(url_for("public.localized_landing_page", ui_lang=DEFAULT_UI_LANGUAGE))
@@ -319,13 +376,24 @@ def localized_landing_page(ui_lang: str):
 @blueprint.get("/<ui_lang>/sample")
 def sample_page(ui_lang: str):
     ui_lang = _require_ui_lang(ui_lang)
+    landing_page = build_start_page(ui_lang)
+    research_select_page = build_research_select_page(ui_lang)
+    teaching_select_page = build_teaching_select_page(ui_lang)
+    research_feature_page = build_research_language_root_page(ui_lang, "french") or {}
+    teaching_feature_page = build_teaching_language_root_page(ui_lang, "spanish") or {}
     page = {
         "title": "Sample",
         "template": "pages/sample_page.html",
         "intro": (
-            "Visueller Prüfstand für ruhige Corpus Cards, sachliche Info-Panels und das "
-            "bestehende Admonition-System."
+            "Visueller Prüfstand für die aktuell produktiv genutzten Layout-Elemente. Sample folgt "
+            "den realen Seiten und dient nicht als eigenständiges Vorbild."
         ),
+        "sample_landing_cards": _linkify(landing_page.get("landing_cards", []), ui_lang),
+        "sample_research_cards": _linkify(research_select_page.get("corpus_cards", []), ui_lang),
+        "sample_teaching_cards": _linkify(teaching_select_page.get("corpus_cards", []), ui_lang),
+        "sample_research_feature_cards": _linkify(research_feature_page.get("feature_cards", []), ui_lang),
+        "sample_teaching_feature_cards": _linkify(teaching_feature_page.get("feature_cards", []), ui_lang),
+        "sample_speaker_cards": _sample_speaker_cards(ui_lang),
     }
     panel = _panel_config(
         section_key="sample",

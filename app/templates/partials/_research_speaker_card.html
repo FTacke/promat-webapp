@@ -1,0 +1,35 @@
+{% macro render_speaker_card(card) -%}
+<article class="pm-card pm-card--interactive pm-speaker-card pm-speaker-card--{{ card.accent_modifier }}">
+  <a class="pm-speaker-card__body" href="{{ card.profile_href }}">
+    <div class="pm-speaker-card__header">
+      <p class="pm-speaker-card__eyebrow">{{ card.eyebrow }}</p>
+      <p class="pm-speaker-card__person">{{ card.person_id }}</p>
+      <p class="pm-speaker-card__session">
+        <span class="pm-speaker-card__session-label">{{ card.selected_session_label }}</span>
+        <span class="pm-speaker-card__session-id">{{ card.selected_session_id }}</span>
+      </p>
+    </div>
+    <div class="pm-speaker-card__meta">
+      {% for row in card.meta_rows %}
+      <div class="pm-speaker-card__meta-item">
+        <p class="pm-speaker-card__meta-label">{{ row.label }}</p>
+        <p class="pm-speaker-card__meta-value">{{ row.value }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </a>
+  <footer class="pm-speaker-card__footer">
+    <div class="pm-speaker-card__footer-section pm-speaker-card__footer-section--recordings">
+      <p class="pm-speaker-card__task-label">{{ card.recordings_label }}</p>
+      <div class="pm-speaker-card__tasks" aria-label="{{ card.recording_links_aria_label }}">
+        {% for task_link in card.task_links %}
+        <a class="pm-speaker-task-link" href="{{ task_link.href }}">{{ task_link.label }}</a>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="pm-speaker-card__footer-section pm-speaker-card__footer-section--actions">
+      <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-speaker-card__profile-link" href="{{ card.profile_href }}">{{ card.profile_label }}</a>
+    </div>
+  </footer>
+</article>
+{%- endmacro %}

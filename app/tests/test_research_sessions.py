@@ -646,6 +646,37 @@ def test_sample_page_uses_shared_inner_shell_renderer(url_app: Flask) -> None:
     assert 'pages/sample_page.html' not in html
 
 
+def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Zur Forschung →' in html
+    assert 'Zum Unterricht →' in html
+    assert 'Spanisch-Korpus' in html
+    assert 'Französisch-Korpus' in html
+    assert 'Korpus öffnen →' in html
+    assert 'Materialien öffnen →' in html
+    assert 'Aktuell keine erfassten Learner-Sessions im Bestand.' in html
+
+
+def test_sample_page_uses_current_research_component_patterns(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'pm-speaker-card__footer-section--recordings' in html
+    assert 'pm-speaker-card__footer-section--actions' in html
+    assert 'pm-speaker-card__match' not in html
+    assert 'Aufzeichnung (Sprecher:in)' in html
+    assert 'Zugeordnete Sessions' in html
+    assert 'Niveau / Varietät' not in html
+
+
 def test_recordings_page_combines_session_and_person_in_leading_column(runtime_env: Path, url_app: Flask) -> None:
     learner_session = "ES-L-0001-2026-S01"
     native_session = "ES-N-0001-2026-S01"

@@ -71,6 +71,9 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .landing-grid > .landing-card {
   min-height: 100%;
+  width: min(100%, var(--pm-card-max-inline-entry));
+  max-width: var(--pm-card-max-inline-entry);
+  justify-self: center;
 }
 
 .pm-reading {
@@ -375,6 +378,23 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .pm-card-grid > .pm-card {
   min-height: 100%;
+  width: min(100%, var(--pm-card-max-inline));
+  max-width: var(--pm-card-max-inline);
+  justify-self: center;
+}
+
+.pm-grid--feature > .pm-card,
+.pm-grid--meta > .pm-card,
+.promat-card-grid--feature > .pm-card,
+.promat-card-grid--meta > .pm-card {
+  width: min(100%, var(--pm-card-max-inline));
+  max-width: var(--pm-card-max-inline);
+  justify-self: center;
+}
+
+.pm-grid--selection > .pm-card {
+  width: min(100%, var(--pm-card-max-inline-selection));
+  max-width: var(--pm-card-max-inline-selection);
 }
 
 .pm-panel-grid {

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_research_speaker_card.html' import render_speaker_card %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -9,209 +10,98 @@
 
   <section class="pm-sample-section" aria-labelledby="sample-entry-cards-title">
     <div class="pm-sample-section__header pm-reading">
-      <h2 id="sample-entry-cards-title" class="pm-sample-section__title">Landing Entry Cards</h2>
-      <p class="pm-sample-section__intro">Eigenstaendiger Landing-Typ mit flachem Bildstreifen, kurzem Teaser und ruhigem CTA-Akzent. Die Varianten sind hier direkt fuer Auswahl und Vergleich ausgestellt.</p>
+      <h2 id="sample-entry-cards-title" class="pm-sample-section__title">Landing Cards</h2>
+      <p class="pm-sample-section__intro">Sample zeigt hier exakt den aktuellen Landing-Kartentyp der Startseite: zwei bildgestützte Einstiege, keine Variantenwand und keine experimentellen Altformen.</p>
     </div>
 
-    <div class="pm-entry-showcase">
-      <section class="pm-entry-showcase__variant" aria-labelledby="sample-entry-variant-a">
-        <div class="pm-entry-showcase__heading">
-          <p id="sample-entry-variant-a" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Variante A · Drei Karten mit Bild</p>
-          <p class="pm-entry-showcase__note">Standardgruppe fuer Projekt, Forschung und Unterricht unter einem zentral gedachten Markenanker.</p>
+    <section class="landing-grid" aria-label="Landing Cards">
+      {% for card in promat_page.sample_landing_cards %}
+      <a class="landing-card pm-card pm-card--entry pm-card--entry-{{ card.entry_kind }} pm-card--with-image" href="{{ card.href }}">
+        <div class="pm-card__image">
+          <img src="{{ url_for('static', filename=card.image_asset) }}" alt="{{ card.image_alt }}">
         </div>
-
-        <div class="pm-card-grid pm-card-grid--entry pm-card-grid--entry-three" aria-label="Landing Entry Cards Dreiergruppe">
-          <a class="pm-card pm-card--entry pm-card--entry-project pm-card--with-image" href="{{ url_for('public.project_home', ui_lang=ui_lang | default('de')) }}">
-            <div class="pm-card__image">
-              <img src="{{ url_for('static', filename='img/cards/projekt_01.jpg') }}" alt="Studioaufnahme mit Mikrofon als Projektmotiv fuer PROMAT">
-            </div>
-            <div class="pm-card__body">
-              <h3 class="pm-card__title">Projekt</h3>
-              <p class="pm-card__text">Ein Einstieg in Idee, Aufbau und Zugang der PROMAT-Plattform.</p>
-              <div class="pm-card__action">Öffnen &rarr;</div>
-            </div>
-          </a>
-
-          <a class="pm-card pm-card--entry pm-card--entry-research pm-card--with-image" href="{{ url_for('public.research_home', ui_lang=ui_lang | default('de')) }}">
-            <div class="pm-card__image">
-              <img src="{{ url_for('static', filename='img/cards/forschung_01.png') }}" alt="Forschungssituation mit Besprechung und Audioanalyse auf einem Laptop">
-            </div>
-            <div class="pm-card__body">
-              <h3 class="pm-card__title">Forschung</h3>
-              <p class="pm-card__text">Ein kuratierter Zugang zu Korpora, Analyse und wissenschaftlicher Nutzung.</p>
-              <div class="pm-card__action">Öffnen &rarr;</div>
-            </div>
-          </a>
-
-          <a class="pm-card pm-card--entry pm-card--entry-teaching pm-card--with-image" href="{{ url_for('public.teaching_home', ui_lang=ui_lang | default('de')) }}">
-            <div class="pm-card__image">
-              <img src="{{ url_for('static', filename='img/cards/unterricht_01.png') }}" alt="Unterrichtssituation im Klassenraum als Motiv fuer Lehrmaterialien">
-            </div>
-            <div class="pm-card__body">
-              <h3 class="pm-card__title">Unterricht</h3>
-              <p class="pm-card__text">Ein Zugang zu Materialien, Phänomenbeschreibungen und Unterrichtspraxis.</p>
-              <div class="pm-card__action">Öffnen &rarr;</div>
-            </div>
-          </a>
+        <div class="pm-card__body">
+          <h2 class="pm-card__title">{{ card.title }}</h2>
+          <p class="pm-card__text">{{ card.text }}</p>
+          <span class="pm-card__action">{{ card.link_label }}</span>
         </div>
-      </section>
-
-      <section class="pm-entry-showcase__variant" aria-labelledby="sample-entry-variant-b">
-        <div class="pm-entry-showcase__heading">
-          <p id="sample-entry-variant-b" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Variante B · Zwei Karten mit Bild</p>
-          <p class="pm-entry-showcase__note">Reduzierte Landing-Gruppe ohne vorgeschalteten Projektzugang, aber mit derselben CTA-Logik.</p>
-        </div>
-
-        <div class="pm-card-grid pm-card-grid--entry pm-card-grid--entry-two" aria-label="Landing Entry Cards Zweiergruppe">
-          <a class="pm-card pm-card--entry pm-card--entry-research pm-card--with-image" href="{{ url_for('public.research_home', ui_lang=ui_lang | default('de')) }}">
-            <div class="pm-card__image">
-              <img src="{{ url_for('static', filename='img/cards/forschung_01.png') }}" alt="Forschungssituation mit Besprechung und Audioanalyse auf einem Laptop">
-            </div>
-            <div class="pm-card__body">
-              <h3 class="pm-card__title">Forschung</h3>
-              <p class="pm-card__text">Ein strukturierter Zugang zu Daten, Vergleichsachsen und Analyseperspektiven.</p>
-              <div class="pm-card__action">Öffnen &rarr;</div>
-            </div>
-          </a>
-
-          <a class="pm-card pm-card--entry pm-card--entry-teaching pm-card--with-image" href="{{ url_for('public.teaching_home', ui_lang=ui_lang | default('de')) }}">
-            <div class="pm-card__image">
-              <img src="{{ url_for('static', filename='img/cards/unterricht_01.png') }}" alt="Unterrichtssituation im Klassenraum als Motiv fuer Lehrmaterialien">
-            </div>
-            <div class="pm-card__body">
-              <h3 class="pm-card__title">Unterricht</h3>
-              <p class="pm-card__text">Ein direkter Einstieg in Materialien, Beschreibungen und Praxisformate.</p>
-              <div class="pm-card__action">Öffnen &rarr;</div>
-            </div>
-          </a>
-        </div>
-      </section>
-
-      <section class="pm-entry-showcase__variant pm-entry-showcase__variant--compare" aria-label="Landing Entry Cards Projektvergleich">
-        <div class="pm-entry-showcase__compare">
-          <div class="pm-entry-showcase__candidate" aria-labelledby="sample-entry-variant-c">
-            <div class="pm-entry-showcase__heading">
-              <p id="sample-entry-variant-c" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Variante C · Projektkarte Standard</p>
-              <p class="pm-entry-showcase__note">Bevorzugte Grundform fuer den Landing-Einstieg mit Bildstreifen, Titel, Teaser und CTA.</p>
-            </div>
-
-            <a class="pm-card pm-card--entry pm-card--entry-project pm-card--with-image" href="{{ url_for('public.project_home', ui_lang=ui_lang | default('de')) }}">
-              <div class="pm-card__image">
-                <img src="{{ url_for('static', filename='img/cards/projekt_01.jpg') }}" alt="Studioaufnahme mit Mikrofon als Projektmotiv fuer PROMAT">
-              </div>
-              <div class="pm-card__body">
-                <h3 class="pm-card__title">Projekt</h3>
-                <p class="pm-card__text">Ein Einstieg in Idee, Aufbau und Zugang der PROMAT-Plattform.</p>
-                <div class="pm-card__action">Öffnen &rarr;</div>
-              </div>
-            </a>
-          </div>
-
-          <div class="pm-entry-showcase__candidate pm-entry-showcase__candidate--experimental" aria-labelledby="sample-entry-variant-d">
-            <div class="pm-entry-showcase__heading">
-              <p id="sample-entry-variant-d" class="pm-entry-showcase__label pm-entry-showcase__label--accent">Variante D · Projektkarte mit Overlay-Titel</p>
-              <p class="pm-entry-showcase__note">Sonderfall als Testvariante. Sichtbar und vergleichbar, aber nicht die Standardform.</p>
-            </div>
-
-            <a class="pm-card pm-card--entry pm-card--entry-project pm-card--with-image is-overlay" href="{{ url_for('public.project_home', ui_lang=ui_lang | default('de')) }}">
-              <div class="pm-card__image">
-                <img src="{{ url_for('static', filename='img/cards/projekt_01.jpg') }}" alt="Studioaufnahme mit Mikrofon als Projektmotiv fuer PROMAT">
-                <h3 class="pm-card__title">Projekt</h3>
-              </div>
-              <div class="pm-card__body">
-                <p class="pm-card__text">Ein Einstieg in Idee, Aufbau und Zugang der PROMAT-Plattform.</p>
-                <div class="pm-card__action">Öffnen &rarr;</div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </section>
-    </div>
+      </a>
+      {% endfor %}
+    </section>
   </section>
 
   <section class="pm-sample-section" aria-labelledby="sample-corpus-research-title">
     <div class="pm-sample-section__header pm-reading">
-      <h2 id="sample-corpus-research-title" class="pm-sample-section__title">Corpus Cards · Forschung</h2>
-      <p class="pm-sample-section__intro">Die Forschungskarten bleiben neutral, textnah und leicht raised. Sie arbeiten nur mit Surface, Border und minimalem Shadow, nicht mit sprachspezifischer Farbe.</p>
+      <h2 id="sample-corpus-research-title" class="pm-sample-section__title">Kartenfamilien im Ist-Zustand</h2>
+      <p class="pm-sample-section__intro">Die hier gezeigten Korpus- und Auswahlkarten werden aus den aktuellen Buildern der übrigen Webapp gespeist. Sample folgt damit den produktiven Seiten statt umgekehrt.</p>
     </div>
 
-    <div class="pm-card-grid" aria-label="Corpus Cards Forschung">
-      <a class="pm-card pm-card--corpus pm-card--corpus-research" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='spanish', page_slug='design') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Spanisch</h3>
-          <div class="pm-card__meta">Projekt-Leitung: Prof. Marín</div>
-          <p class="pm-card__text">120 Aufnahmen, 85 Stunden, annotiert mit Transkripten und Metadaten.</p>
-          <div class="pm-card__action">Korpus öffnen →</div>
+    <div class="pm-entry-showcase">
+      <section class="pm-entry-showcase__variant" aria-labelledby="sample-research-corpus-variant">
+        <div class="pm-entry-showcase__heading">
+          <p id="sample-research-corpus-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Korpus-Karten · Forschung</p>
+          <p class="pm-entry-showcase__note">Direkt aus der aktuellen Research-Auswahlseite übernommen, inklusive Projektleitungen und datengetriebener Learner-Session-Zählung.</p>
         </div>
-      </a>
-
-      <a class="pm-card pm-card--corpus pm-card--corpus-research" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='french', page_slug='design') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Französisch</h3>
-          <div class="pm-card__meta">Projekt-Leitung: Prof. Delorme</div>
-          <p class="pm-card__text">96 Interviews, 68 Stunden, kuratiert für Rhythmus, Register und Aussprachestandards.</p>
-          <div class="pm-card__action">Korpus öffnen →</div>
+        <div class="pm-card-grid" aria-label="Korpus-Karten Forschung">
+          {% for card in promat_page.sample_research_cards %}
+          <a class="pm-card pm-card--corpus {{ card.modifier }}" href="{{ card.href }}">
+            <div class="pm-card__body">
+              <h3 class="pm-card__title">{{ card.title }}</h3>
+              {% if card.meta %}
+              <div class="pm-card__meta">{{ card.meta }}</div>
+              {% endif %}
+              <p class="pm-card__text">{{ card.text }}</p>
+              <div class="pm-card__action">{{ card.action_label }}</div>
+            </div>
+          </a>
+          {% endfor %}
         </div>
-      </a>
+      </section>
 
-      <a class="pm-card pm-card--corpus pm-card--corpus-research" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='german', page_slug='design') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Deutsch als Fremdsprache</h3>
-          <div class="pm-card__meta">Projekt-Leitung: Dr. Hamid</div>
-          <p class="pm-card__text">74 Lernerkorpora mit Vergleichsaufnahmen, Unterrichtskontexten und ausgewählten Annotationen.</p>
-          <div class="pm-card__action">Korpus öffnen →</div>
+      <section class="pm-entry-showcase__variant" aria-labelledby="sample-teaching-corpus-variant">
+        <div class="pm-entry-showcase__heading">
+          <p id="sample-teaching-corpus-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Korpus-Karten · Unterricht</p>
+          <p class="pm-entry-showcase__note">Direkt aus der aktuellen Teaching-Auswahlseite übernommen, inklusive der ruhigen Sprachakzente pro Karte.</p>
         </div>
-      </a>
-
-      <a class="pm-card pm-card--corpus pm-card--corpus-research" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='english', page_slug='design') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Englisch</h3>
-          <div class="pm-card__meta">Projekt-Leitung: Prof. Reeves</div>
-          <p class="pm-card__text">88 Stunden Vergleichsmaterial zu Akzentprofilen, Intonation und intelligibility-orientierten Standards.</p>
-          <div class="pm-card__action">Korpus öffnen →</div>
+        <div class="pm-card-grid" aria-label="Korpus-Karten Unterricht">
+          {% for card in promat_page.sample_teaching_cards %}
+          <a class="pm-card pm-card--corpus {{ card.modifier }}" href="{{ card.href }}">
+            <div class="pm-card__body">
+              <h3 class="pm-card__title">{{ card.title }}</h3>
+              <p class="pm-card__text">{{ card.text }}</p>
+              <div class="pm-card__action">{{ card.action_label }}</div>
+            </div>
+          </a>
+          {% endfor %}
         </div>
-      </a>
-    </div>
-  </section>
+      </section>
 
-  <section class="pm-sample-section" aria-labelledby="sample-corpus-teaching-title">
-    <div class="pm-sample-section__header pm-reading">
-      <h2 id="sample-corpus-teaching-title" class="pm-sample-section__title">Corpus Cards · Lehre</h2>
-      <p class="pm-sample-section__intro">Die Lehrkarten teilen dieselbe ruhige Raised-Surface wie die Forschung und differenzieren sich nur über einen gedämpften Sprachakzent und die CTA-Farbe.</p>
-    </div>
-
-    <div class="pm-card-grid" aria-label="Corpus Cards Lehre">
-      <a class="pm-card pm-card--corpus pm-card--lang-es" href="{{ url_for('public.teaching_language_root', ui_lang=ui_lang | default('de'), language_slug='spanish') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Spanisch</h3>
-          <p class="pm-card__text">Materialien zu Aussprache, Variation und Unterrichtspraxis im plurizentrischen Spanisch.</p>
-          <div class="pm-card__action">Materialien öffnen →</div>
+      <section class="pm-entry-showcase__variant" aria-labelledby="sample-selection-cards-variant">
+        <div class="pm-entry-showcase__heading">
+          <p id="sample-selection-cards-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Auswahlkarten auf Sprach-Unterseiten</p>
+          <p class="pm-entry-showcase__note">Die Auswahlkarten spiegeln die produktiven `pm-card--selection`-Grids der Sprach-Landingpages. Auch als Einzelkarte bleiben sie im Grid begrenzt.</p>
         </div>
-      </a>
 
-      <a class="pm-card pm-card--corpus pm-card--lang-fr" href="{{ url_for('public.teaching_language_root', ui_lang=ui_lang | default('de'), language_slug='french') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Französisch</h3>
-          <p class="pm-card__text">Unterrichtsbausteine zu Prosodie, Hörwahrnehmung und frankophonen Variationslagen.</p>
-          <div class="pm-card__action">Materialien öffnen →</div>
-        </div>
-      </a>
+        <section class="pm-feature-band pm-grid pm-grid--feature pm-grid--selection" aria-label="Research-Auswahlkarten">
+          {% for card in promat_page.sample_research_feature_cards %}
+          <a class="pm-card pm-card--{{ card.variant | default('selection') }}" href="{{ card.href }}">
+            <h3 class="pm-card__title">{{ card.title }}</h3>
+            <p class="pm-card__text">{{ card.text }}</p>
+            <span class="pm-card__link">{{ card.link_label }}</span>
+          </a>
+          {% endfor %}
+        </section>
 
-      <a class="pm-card pm-card--corpus pm-card--lang-de" href="{{ url_for('public.teaching_language_root', ui_lang=ui_lang | default('de'), language_slug='german') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Deutsch als Fremdsprache</h3>
-          <p class="pm-card__text">Materialien zu Wahrnehmung, Produktion und Rückmeldung in internationalen Lernkontexten.</p>
-          <div class="pm-card__action">Materialien öffnen →</div>
-        </div>
-      </a>
-
-      <a class="pm-card pm-card--corpus pm-card--lang-en" href="{{ url_for('public.teaching_language_root', ui_lang=ui_lang | default('de'), language_slug='english') }}">
-        <div class="pm-card__body">
-          <h3 class="pm-card__title">Englisch</h3>
-          <p class="pm-card__text">Aufgaben für intelligibility, Akzentwahrnehmung und Unterrichtspraxis im internationalen Englisch.</p>
-          <div class="pm-card__action">Materialien öffnen →</div>
-        </div>
-      </a>
+        <section class="pm-feature-band pm-grid pm-grid--feature pm-grid--selection" aria-label="Teaching-Auswahlkarten">
+          {% for card in promat_page.sample_teaching_feature_cards %}
+          <a class="pm-card pm-card--{{ card.variant | default('selection') }}" href="{{ card.href }}">
+            <h3 class="pm-card__title">{{ card.title }}</h3>
+            <p class="pm-card__text">{{ card.text }}</p>
+            <span class="pm-card__link">{{ card.link_label }}</span>
+          </a>
+          {% endfor %}
+        </section>
+      </section>
     </div>
   </section>
 
@@ -253,98 +143,20 @@
   <section class="pm-sample-section" aria-labelledby="sample-research-patterns-title">
     <div class="pm-sample-section__header pm-reading">
       <h2 id="sample-research-patterns-title" class="pm-sample-section__title">Research-Workbench-Muster</h2>
-      <p class="pm-sample-section__intro">Diese Dummys spiegeln die geschärfte Research-Hierarchie: ruhigere Aufzeichnungslinks auf Speaker-Cards, kleinere getönte Filter-Chips, klarere Badge-Regeln und ein vertikal aufgebautes Profil mit getrenntem Aufzeichnungsbereich.</p>
+      <p class="pm-sample-section__intro">Die gezeigten Dummys folgen jetzt der aktuellen Research-UI: personzentrierte Speaker-Cards ohne Match-Note, sessionbasierte Recordings-Tabelle und Profil-Container mit Session-Zählung im Kopfbereich.</p>
     </div>
 
     <div class="pm-sample-research-showcase">
       <section class="pm-sample-research-showcase__row" aria-labelledby="sample-research-speaker-cards-title">
         <div class="pm-entry-showcase__heading pm-reading">
           <p id="sample-research-speaker-cards-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Speaker Cards · Lernende und Native Speaker</p>
-          <p class="pm-entry-showcase__note">Die Karten sind jetzt personzentriert: Person-ID zuerst, ausgewählte Session nur sekundär, Match-Hinweis bei aktivem Filter und ruhige Links in das Profil oder in die Aufzeichnungen der ausgewählten Session.</p>
+          <p class="pm-entry-showcase__note">Diese Karten nutzen exakt dasselbe Markup wie die produktive Sprecher:innen-Seite.</p>
         </div>
 
         <div class="pm-speaker-grid" aria-label="Research Speaker Cards Dummys">
-          <article class="pm-card pm-card--interactive pm-speaker-card pm-speaker-card--b1">
-            <a class="pm-speaker-card__body" href="#sample-research-profile-title">
-              <div class="pm-speaker-card__header">
-                <p class="pm-speaker-card__eyebrow">Lernende</p>
-                <p class="pm-speaker-card__person">ES-L-0001</p>
-                <p class="pm-speaker-card__session"><span class="pm-speaker-card__session-label">Ausgewählte Session:</span> ES-L-0001-2027-S02</p>
-                <p class="pm-speaker-card__match">Treffer über 2027 · A2</p>
-              </div>
-              <div class="pm-speaker-card__meta">
-                <div>
-                  <p class="pm-speaker-card__meta-label">Sessions</p>
-                  <p class="pm-speaker-card__meta-value">2</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">Niveaus</p>
-                  <p class="pm-speaker-card__meta-value">A1, A2</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">L1</p>
-                  <p class="pm-speaker-card__meta-value">DE</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">Sprachaufenthalte</p>
-                  <p class="pm-speaker-card__meta-value">Teilweise</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">Aufnahmejahre</p>
-                  <p class="pm-speaker-card__meta-value">2026–2027</p>
-                </div>
-              </div>
-            </a>
-            <footer class="pm-speaker-card__footer">
-              <p class="pm-speaker-card__task-label">Aufzeichnungen</p>
-              <div class="pm-speaker-card__tasks" aria-label="Aufzeichnungslinks Lernende">
-                <a class="pm-speaker-task-link" href="#sample-research-task-panels-title">Wortliste</a>
-                <a class="pm-speaker-task-link" href="#sample-research-task-panels-title">Text</a>
-                <a class="pm-speaker-task-link" href="#sample-research-task-panels-title">Interview</a>
-              </div>
-              <a class="pm-research-inline-action pm-speaker-card__profile-link" href="#sample-research-profile-title">Profil öffnen</a>
-            </footer>
-          </article>
-
-          <article class="pm-card pm-card--interactive pm-speaker-card pm-speaker-card--native">
-            <a class="pm-speaker-card__body" href="#sample-research-profile-title">
-              <div class="pm-speaker-card__header">
-                <p class="pm-speaker-card__eyebrow">Native Speaker</p>
-                <p class="pm-speaker-card__person">ES-N-0001</p>
-                <p class="pm-speaker-card__session"><span class="pm-speaker-card__session-label">Ausgewählte Session:</span> ES-N-0001-2026-S01</p>
-              </div>
-              <div class="pm-speaker-card__meta">
-                <div>
-                  <p class="pm-speaker-card__meta-label">Standardvarietät</p>
-                  <p class="pm-speaker-card__meta-value">ES_STD</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">Herkunftsland</p>
-                  <p class="pm-speaker-card__meta-value">Spain</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">Geschlecht</p>
-                  <p class="pm-speaker-card__meta-value">männlich</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">Herkunftsregion</p>
-                  <p class="pm-speaker-card__meta-value">Andalusia</p>
-                </div>
-                <div>
-                  <p class="pm-speaker-card__meta-label">Aufnahmejahr</p>
-                  <p class="pm-speaker-card__meta-value">2026</p>
-                </div>
-              </div>
-            </a>
-            <footer class="pm-speaker-card__footer">
-              <p class="pm-speaker-card__task-label">Aufzeichnungen</p>
-              <div class="pm-speaker-card__tasks" aria-label="Aufzeichnungslinks Native Speaker">
-                <a class="pm-speaker-task-link" href="#sample-research-task-panels-title">Wortliste</a>
-                <a class="pm-speaker-task-link" href="#sample-research-task-panels-title">Text</a>
-              </div>
-              <a class="pm-research-inline-action pm-speaker-card__profile-link" href="#sample-research-profile-title">Profil öffnen</a>
-            </footer>
-          </article>
+          {% for card in promat_page.sample_speaker_cards %}
+          {{ render_speaker_card(card) }}
+          {% endfor %}
         </div>
       </section>
 
@@ -379,7 +191,7 @@
       <section class="pm-sample-research-showcase__row" aria-labelledby="sample-research-task-panels-title">
         <div class="pm-entry-showcase__heading pm-reading">
           <p id="sample-research-task-panels-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Task-Panels, Status und Tabelle in Recordings</p>
-          <p class="pm-entry-showcase__note">`recordings` bleibt sessionbasiert, zeigt aber Person, Session und Taskbezug jetzt expliziter in derselben Zeile.</p>
+          <p class="pm-entry-showcase__note">Die Tabelle folgt der aktuellen produktiven Struktur: erste Spalte kombiniert Session-ID und Person-Link, die restlichen Spalten bleiben reduzierte Vergleichsachsen.</p>
         </div>
 
         <div class="pm-task-panel-grid" aria-label="Research Task Panels Dummys">
@@ -395,7 +207,7 @@
           </a>
           <a class="pm-task-panel" href="#sample-research-task-panels-title">
             <span class="pm-task-panel__label">Interview</span>
-            <span class="pm-task-panel__description">Reflexion über Aussprache im Interview.</span>
+            <span class="pm-task-panel__description">Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.</span>
             <span class="pm-task-panel__count">18 Aufnahmen</span>
           </a>
         </div>
@@ -412,48 +224,54 @@
 
         <div class="pm-research-table-wrap pm-container">
           <table class="pm-research-table">
+            <colgroup>
+              <col class="pm-research-table__col--recording">
+              <col class="pm-research-table__col--speaker-type">
+              <col class="pm-research-table__col--level">
+              <col class="pm-research-table__col--l1">
+              <col class="pm-research-table__col--gender">
+              <col class="pm-research-table__col--stay">
+              <col class="pm-research-table__col--action">
+            </colgroup>
             <thead>
               <tr>
-                <th scope="col">Person</th>
-                <th scope="col">Session</th>
-                <th scope="col">Sprechergruppe</th>
-                <th scope="col">Niveau / Varietät</th>
-                <th scope="col">L1 / Herkunft</th>
-                <th scope="col">Geschlecht</th>
-                <th scope="col">Sprachaufenthalte</th>
-                <th scope="col" class="pm-research-table__action-col">Aktion</th>
+                <th scope="col" class="pm-research-table__head--recording">Aufzeichnung (Sprecher:in)</th>
+                <th scope="col" class="pm-research-table__head--speaker-type">Sprechergruppe</th>
+                <th scope="col" class="pm-research-table__head--level">Niveau</th>
+                <th scope="col" class="pm-research-table__head--l1">L1</th>
+                <th scope="col" class="pm-research-table__head--gender">Geschlecht</th>
+                <th scope="col" class="pm-research-table__head--stay">Sprachaufenthalte</th>
+                <th scope="col" class="pm-research-table__head--action pm-research-table__action-col">Aktion</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td data-label="Person"><a class="pm-research-inline-action" href="#sample-research-profile-title">ES-L-0001</a></td>
-                <td data-label="Session">
-                  <div class="pm-research-session-cell">
-                    <span class="pm-research-session-cell__primary">ES-L-0001-2027-S02</span>
-                    <span class="pm-research-session-cell__secondary">2027</span>
+                <td class="pm-research-table__cell--recording" data-label="Aufzeichnung (Sprecher:in)">
+                  <div class="pm-research-recording-cell">
+                    <span class="pm-research-recording-cell__session-id">ES-L-0001-2027-S02</span>
+                    <a class="pm-research-recording-cell__person-link" href="#sample-research-profile-title">ES-L-0001</a>
                   </div>
                 </td>
-                <td data-label="Sprechergruppe">Lernende</td>
-                <td data-label="Niveau / Varietät">A2</td>
-                <td data-label="L1 / Herkunft">DE</td>
-                <td data-label="Geschlecht">weiblich</td>
-                <td data-label="Sprachaufenthalte">Ja</td>
-                <td class="pm-research-table__action" data-label="Aktion"><a class="pm-research-inline-action" href="#sample-research-task-panels-title">Wortliste</a></td>
+                <td class="pm-research-table__cell--speaker-type" data-label="Sprechergruppe">Lernende</td>
+                <td class="pm-research-table__cell--level" data-label="Niveau">A2</td>
+                <td class="pm-research-table__cell--l1" data-label="L1">DE</td>
+                <td class="pm-research-table__cell--gender" data-label="Geschlecht">weiblich</td>
+                <td class="pm-research-table__cell--stay" data-label="Sprachaufenthalte">Ja</td>
+                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion"><a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="#sample-research-task-panels-title">Wortliste</a></td>
               </tr>
               <tr>
-                <td data-label="Person"><a class="pm-research-inline-action" href="#sample-research-profile-title">ES-N-0001</a></td>
-                <td data-label="Session">
-                  <div class="pm-research-session-cell">
-                    <span class="pm-research-session-cell__primary">ES-N-0001-2026-S01</span>
-                    <span class="pm-research-session-cell__secondary">2026</span>
+                <td class="pm-research-table__cell--recording" data-label="Aufzeichnung (Sprecher:in)">
+                  <div class="pm-research-recording-cell">
+                    <span class="pm-research-recording-cell__session-id">ES-N-0001-2026-S01</span>
+                    <a class="pm-research-recording-cell__person-link" href="#sample-research-profile-title">ES-N-0001</a>
                   </div>
                 </td>
-                <td data-label="Sprechergruppe">Native Speaker</td>
-                <td data-label="Niveau / Varietät">ES_STD</td>
-                <td data-label="L1 / Herkunft">Spain</td>
-                <td data-label="Geschlecht">männlich</td>
-                <td data-label="Sprachaufenthalte">-</td>
-                <td class="pm-research-table__action" data-label="Aktion"><a class="pm-research-inline-action" href="#sample-research-task-panels-title">Text</a></td>
+                <td class="pm-research-table__cell--speaker-type" data-label="Sprechergruppe">Native Speaker</td>
+                <td class="pm-research-table__cell--level" data-label="Niveau"></td>
+                <td class="pm-research-table__cell--l1" data-label="L1"></td>
+                <td class="pm-research-table__cell--gender" data-label="Geschlecht">männlich</td>
+                <td class="pm-research-table__cell--stay" data-label="Sprachaufenthalte">-</td>
+                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion"><a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="#sample-research-task-panels-title">Text</a></td>
               </tr>
             </tbody>
           </table>
@@ -463,7 +281,7 @@
       <section class="pm-sample-research-showcase__row" aria-labelledby="sample-research-profile-title">
         <div class="pm-entry-showcase__heading pm-reading">
           <p id="sample-research-profile-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Personenseite mit Session-Containern</p>
-          <p class="pm-entry-showcase__note">Oben stehen nur stabile Persondaten. Darunter folgen die Sessions dieser Person als eigene Container, jeweils mit direktem Aufzeichnungsbereich; die ausgewählte Session ist zusätzlich markiert.</p>
+          <p class="pm-entry-showcase__note">Der Kopfbereich zeigt jetzt Session-Zählung statt ausgewählter Session; darunter folgen die Session-Container im aktuellen Produktionsaufbau.</p>
         </div>
 
         <div class="pm-profile-layout">
@@ -471,7 +289,10 @@
             <div class="pm-profile-hero">
               <div class="pm-profile-hero__header">
                 <p class="pm-profile-hero__title">ES-L-0001</p>
-                <p class="pm-profile-hero__session">Ausgewählte Session: ES-L-0001-2027-S02</p>
+                <p class="pm-profile-hero__session">
+                  <span class="pm-profile-hero__session-label">Zugeordnete Sessions</span>
+                  <span class="pm-profile-hero__session-value">2</span>
+                </p>
               </div>
               <div class="pm-profile-badge-row">
                 <span class="pm-profile-badge">Lernende</span>
@@ -644,7 +465,10 @@
             <div class="pm-profile-hero">
               <div class="pm-profile-hero__header">
                 <p class="pm-profile-hero__title">ES-N-0001</p>
-                <p class="pm-profile-hero__session">Ausgewählte Session: ES-N-0001-2026-S01</p>
+                <p class="pm-profile-hero__session">
+                  <span class="pm-profile-hero__session-label">Zugeordnete Sessions</span>
+                  <span class="pm-profile-hero__session-value">1</span>
+                </p>
               </div>
               <div class="pm-profile-badge-row">
                 <span class="pm-profile-badge">Native Speaker</span>

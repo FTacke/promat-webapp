@@ -54,6 +54,12 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - The sidebar begins with a permanent area header: section icon, section title, and a subtle divider.
 - Language-context pages keep their language back-link and language title below that permanent area header, not instead of it.
 
+## Sample Surface
+
+- `sample` is a showcase for current, already accepted layout elements of the webapp.
+- `sample` never defines the target UI for product pages; it mirrors the current implementation on real pages.
+- If an active layout element is changed on a real page and `sample` contains that element, `sample` must be updated in the same run.
+
 ## Runtime Boundaries
 
 - `AUTH_DATABASE_URL` is the canonical auth/core database variable.
