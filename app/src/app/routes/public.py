@@ -7,6 +7,12 @@ from typing import Any
 from flask import Blueprint, abort, jsonify, make_response, render_template, request, url_for
 from sqlalchemy import text
 
+from ..research_views import (
+    build_player_stub_page,
+    build_recordings_page,
+    build_speaker_profile_page,
+    build_speakers_page,
+)
 from .public_content import (
     DEFAULT_UI_LANGUAGE,
     LEGAL_PAGES,
@@ -240,7 +246,7 @@ def _render_promat_page(
 ) -> str:
     page_context = dict(page)
     layout = page_context.get("layout", "reading")
-    page_context["content_header"] = _build_content_header(page_context, panel, page_name, ui_lang)
+    page_context["content_header"] = page_context.get("content_header") or _build_content_header(page_context, panel, page_name, ui_lang)
     page_context["hero_links"] = _linkify(page_context.get("hero_links", []), ui_lang)
     page_context["feature_cards"] = _linkify(page_context.get("feature_cards", []), ui_lang)
     page_context["corpus_cards"] = _linkify(page_context.get("corpus_cards", []), ui_lang)
@@ -248,7 +254,7 @@ def _render_promat_page(
     if page_context.get("more_link"):
         page_context["more_link"] = _linkify([page_context["more_link"]], ui_lang)[0]
 
-    template_name = "pages/promat_page.html"
+    template_name = page_context.get("template") or "pages/promat_page.html"
     render_top_app_bar = True
     render_navigation_drawer = True
     shell_class = None
@@ -478,7 +484,12 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
         abort(404)
 
     language = get_language(canonical_language_slug)
-    page = build_research_page(ui_lang, canonical_language_slug, canonical_page_slug)
+    if canonical_language_slug == "spanish" and canonical_page_slug == "recordings":
+        page = build_recordings_page(ui_lang, canonical_language_slug, request.args)
+    elif canonical_language_slug == "spanish" and canonical_page_slug == "speakers":
+        page = build_speakers_page(ui_lang, canonical_language_slug, request.args)
+    else:
+        page = build_research_page(ui_lang, canonical_language_slug, canonical_page_slug)
     if page is None or language is None:
         abort(404)
 
@@ -487,6 +498,70 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
         section_key="research",
         section_label=get_section_label("research", ui_lang),
         active_slug=canonical_page_slug,
+        language_label=language_label,
+        context_mode="language",
+        context_title=language_label,
+        context_root_href=url_for(
+            "public.research_language_root",
+            ui_lang=ui_lang,
+            language_slug=canonical_language_slug,
+        ),
+        context_back_href=url_for("public.research_home", ui_lang=ui_lang),
+        items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
+    )
+    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+
+
+@blueprint.get("/<ui_lang>/research/<language_slug>/speakers/<person_id>")
+def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
+    ui_lang = _require_ui_lang(ui_lang)
+    canonical_language_slug = get_canonical_language_slug(language_slug)
+    if canonical_language_slug is None:
+        abort(404)
+
+    language = get_language(canonical_language_slug)
+    page = build_speaker_profile_page(ui_lang, canonical_language_slug, person_id)
+    if page is None or language is None:
+        abort(404)
+
+    language_label = get_language_label(language, ui_lang)
+    panel = _panel_config(
+        section_key="research",
+        section_label=get_section_label("research", ui_lang),
+        active_slug="speakers",
+        language_label=language_label,
+        context_mode="language",
+        context_title=language_label,
+        context_root_href=url_for(
+            "public.research_language_root",
+            ui_lang=ui_lang,
+            language_slug=canonical_language_slug,
+        ),
+        context_back_href=url_for("public.research_home", ui_lang=ui_lang),
+        items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
+    )
+    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+
+
+@blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>")
+def research_player_stub(ui_lang: str, language_slug: str, session_id: str, task: str):
+    ui_lang = _require_ui_lang(ui_lang)
+    canonical_language_slug = get_canonical_language_slug(language_slug)
+    if canonical_language_slug is None:
+        abort(404)
+
+    language = get_language(canonical_language_slug)
+    source = request.args.get("source")
+    page = build_player_stub_page(ui_lang, canonical_language_slug, session_id, task, source)
+    if page is None or language is None:
+        abort(404)
+
+    language_label = get_language_label(language, ui_lang)
+    active_slug = "recordings" if source == "recordings" else "speakers" if source in {"speakers", "profile"} else ""
+    panel = _panel_config(
+        section_key="research",
+        section_label=get_section_label("research", ui_lang),
+        active_slug=active_slug,
         language_label=language_label,
         context_mode="language",
         context_title=language_label,

@@ -550,20 +550,20 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                 {
                     "heading": "Isolierte Aussprache (Wortliste)",
                     "paragraphs": [
-                        "Die Wortliste dokumentiert segmentale und prosodische Zielstellen in isolierter Produktion.",
+                        "Die Wortliste dokumentiert segmentale und prosodische Zielstellen in klar isolierter Produktion.",
                         "Die technische Aufgabenlogik ist bereits auf den stabilen Task-Key isolated_speech vorbereitet.",
                     ],
                 },
                 {
                     "heading": "Zusammenhängende Aussprache (Text/Sätze)",
                     "paragraphs": [
-                        "Dieser Teil erfasst Aussprache im Kontext zusammenhängender Sprache und bereitet den Task-Key connected_speech vor.",
+                        "Dieser Teil erfasst Aussprache in gelesenen oder eng geführten Satz- und Textpassagen und bereitet den Task-Key connected_speech vor.",
                     ],
                 },
                 {
-                    "heading": "Interview (kurze Reflexion)",
+                    "heading": "Interview zur Aussprache",
                     "paragraphs": [
-                        "Kurze metasprachliche Reflexionen werden als eigener Task-Typ interview geführt.",
+                        "Halbgeleitete Gesprächspassagen mit spontaner Aussprache werden als eigener Task-Typ interview geführt.",
                     ],
                 },
                 {
@@ -615,19 +615,19 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                 {
                     "heading": "Isolierte Aussprache (Wortliste)",
                     "paragraphs": [
-                        "Einzelwörter für segmentale und prosodische Analyse, technisch unter isolated_speech vorbereitet.",
+                        "Einzelwörter und kurze isolierte Einheiten für segmentale und prosodische Vergleiche, technisch unter isolated_speech vorbereitet.",
                     ],
                 },
                 {
                     "heading": "Zusammenhängende Aussprache (Text/Sätze)",
                     "paragraphs": [
-                        "Zusammenhängende Sprache mit dem technischen Task-Key connected_speech.",
+                        "Zusammenhängende Aussprache in gelesenen oder eng geführten Satz- und Textpassagen mit dem technischen Task-Key connected_speech.",
                     ],
                 },
                 {
-                    "heading": "Interview (kurze Reflexion)",
+                    "heading": "Interview zur Aussprache",
                     "paragraphs": [
-                        "Kurze reflexive Aussagen mit dem Task-Key interview.",
+                        "Halbgeleitete Gesprächssituationen mit spontaner Aussprache unter dem Task-Key interview.",
                     ],
                 },
             ],

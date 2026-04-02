@@ -19,6 +19,7 @@ Before changing architecture, routing, data paths, governance files, or repo str
 - `data/` is protected research data, `public/` is explicitly released media, `secure/` is never for webapp access.
 - Technical keys, slugs, route segments, data fields, and controlled vocabularies are English only.
 - UI chrome is currently German and must stay separable from technical keys.
+- User-visible German UI text must use real umlauts and `ß`. Avoid `ae`, `oe`, `ue`, and `ss` in visible German labels, buttons, filter text, sample text, and documentation examples unless the text is technical-only.
 - Do not reintroduce old German technical slugs, old public routes, or legacy runtime paths.
 - Use `AUTH_DATABASE_URL`, `PROMAT_RUNTIME_ROOT`, and `PROMAT_PUBLIC_ROOT` as canonical runtime variables.
 - Do not mix raw data, derived data, and public assets.

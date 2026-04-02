@@ -5,6 +5,7 @@
 - `app/` is the only application source root.
 - `data/`, `public/`, and `secure/` are runtime boundaries and stay outside the versioned app core.
 - `AUTH_DATABASE_URL`, `PROMAT_RUNTIME_ROOT`, and `PROMAT_PUBLIC_ROOT` are the canonical runtime variables.
+- User-visible German UI text must use real umlauts and `ß`. Do not normalize visible German strings to `ae`, `oe`, `ue`, or `ss` unless the string is technical-only and never shown to users.
 - `raw/` is only for untouched original WAV masters; `source/` is for processed working WAVs; `derived/` is for webapp-facing derivatives.
 - Alignment JSON for a whole recording belongs under `alignment/{task}.json`. `items/{task}/` is reserved for split MP3s only.
 - Internal split filenames must use stable `item_id`s. Longer filenames with `session_id` plus labels are for later download/UI logic, not canonical session storage.

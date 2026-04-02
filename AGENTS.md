@@ -34,6 +34,7 @@ Historische Run-Logs unter `docs/start/` und `docs/agent-runs/` erklären Entsch
 - Öffentliches Routing folgt dem Schema `/{ui_lang}/{section}/{corpus_language}/{page}`.
 - Technische Slugs, Keys, Datenfelder und Controlled Vocabularies sind immer Englisch.
 - Sichtbare UI-Labels bleiben aktuell Deutsch, müssen aber lokalisierbar bleiben.
+- In sichtbaren deutschen UI-Texten sind echte Umlaute und `ß` zu verwenden. Ersetzungen wie `ae`, `oe`, `ue` oder `ss` sind nur in technischen, nicht user-visible Kontexten zulässig.
 - Alte deutsche technische Slugs und Altpfade dürfen nicht wieder eingeführt werden.
 - UI-Sprache und technische Routing-Sprache dürfen nicht vermischt werden.
 

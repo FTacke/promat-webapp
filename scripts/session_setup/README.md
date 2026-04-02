@@ -7,3 +7,5 @@ Hilfen zur Anlage neuer Sessions, Ordner und Metadatenvorlagen.
 - Fuer diese Seed-Daten liegen aktuell keine echten unbearbeiteten `raw`-Masterdateien vor.
 - Spaetere Alignment-JSONs gehoeren unter `alignment/{task}.json`; `items/{task}/` bleibt fuer Split-MP3s reserviert.
 - `dev_spanish_example_sessions.json` ist das deterministische Seed-Manifest fuer Person-, Session- und Quelldatei-Mapping.
+- Lernenden-Seeds schreiben `current_region`, `childhood_region` und `stays_in_target_country`.
+- Native-Speaker-Seeds schreiben `standard_variety`, `origin_country` und `origin_region` statt lernendentypischer Regionalfelder.

@@ -14,6 +14,7 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 - Öffentliche Routen bleiben ui-lang-präfixiert und technisch englisch.
 - Technische Section-, Language- und Page-Slugs bleiben englisch.
 - Sichtbare Labels, Breadcrumbs und Navigationseinträge dürfen deutsch sein, müssen aber von technischen Keys getrennt bleiben.
+- In sichtbaren deutschen UI-Texten innerhalb von Templates, Seitentiteln, Buttons, Filtern, Sample-Beispielen und Leerzuständen sind echte Umlaute und `ß` zu verwenden. ASCII-Umschriften wie `ae`, `oe`, `ue` oder `ss` sind dort unzulässig.
 - Alte deutsche Routen oder Alias-Slugs werden nicht wieder eingeführt.
 
 ## Datenzugriff und Runtime-Grenzen
@@ -33,6 +34,7 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 
 - `templates/base.html` bleibt die gemeinsame Shell.
 - UI-Labels und Textstruktur dürfen angepasst werden, aber nicht über technische Slugs oder Dateipfade gesteuert werden.
+- Badge-, Chip- und Task-Benennungen sollen aus bestehenden UI-Mustern konsolidiert werden, statt parallele Varianten einzuführen.
 - Keine verdeckte Vermischung von Forschungszugang, öffentlichem Materialraum und Sample-Logik in denselben Komponenten.
 
 ## Refactor-Regeln

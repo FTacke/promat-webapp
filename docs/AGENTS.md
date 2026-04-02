@@ -18,6 +18,7 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten unter `docs/`.
 - Run-Logs beschreiben Änderungen, ersetzen aber keine aktive Referenzdokumentation.
 - Wenn ein Dokument veraltet ist, aktualisiere oder markiere es als historisch statt eine konkurrierende Kopie anzulegen.
 - Doku muss repo-spezifisch, knapp und operational bleiben.
+- Wenn Doku sichtbare deutsche UI-Texte oder UI-Beispiele dokumentiert, sind echte Umlaute und `ß` zu verwenden; ASCII-Umschriften gelten dort nicht als akzeptabler UI-Stand.
 
 ## Run-Dokumentation
 

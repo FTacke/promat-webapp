@@ -1,0 +1,299 @@
+{
+  "workbook_scopes": [
+    {
+      "worksheet": "sessions",
+      "row_grain": "one row per session_id",
+      "fields": [
+        {
+          "xlsx_column": "person_id",
+          "scope": "person",
+          "metadata_key": "person_id",
+          "future_db_column": "person_id",
+          "type": "string",
+          "nullable": false,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "session_id",
+          "scope": "session",
+          "metadata_key": "session_id",
+          "future_db_column": "session_id",
+          "type": "string",
+          "nullable": false,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "target_language",
+          "scope": "session",
+          "metadata_key": "target_language",
+          "future_db_column": "target_language",
+          "type": "string",
+          "nullable": false,
+          "allowed_values": ["es", "fr", "en", "de"],
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "speaker_type",
+          "scope": "session",
+          "metadata_key": "speaker_type",
+          "future_db_column": "speaker_type",
+          "type": "string",
+          "nullable": false,
+          "allowed_values": ["learner", "native_speaker", "heritage_speaker"],
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "l1",
+          "scope": "person",
+          "metadata_key": "l1",
+          "future_db_column": "l1",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "mother_l1",
+          "scope": "person",
+          "metadata_key": "mother_l1",
+          "future_db_column": "mother_l1",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "father_l1",
+          "scope": "person",
+          "metadata_key": "father_l1",
+          "future_db_column": "father_l1",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "additional_languages",
+          "scope": "person",
+          "metadata_key": "additional_languages",
+          "future_db_column": "additional_languages",
+          "type": "json-array-string",
+          "nullable": true,
+          "serialization": "json_array_string",
+          "example": "[\"English\", \"French\"]",
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "gender",
+          "scope": "person",
+          "metadata_key": "gender",
+          "future_db_column": "gender",
+          "type": "string",
+          "nullable": true,
+          "allowed_values": ["female", "male", "diverse", "unknown"],
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "birth_year",
+          "scope": "person",
+          "metadata_key": "birth_year",
+          "future_db_column": "birth_year",
+          "type": "integer",
+          "nullable": true,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "current_region",
+          "scope": "person",
+          "metadata_key": "current_region",
+          "future_db_column": "current_region",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "childhood_region",
+          "scope": "person",
+          "metadata_key": "childhood_region",
+          "future_db_column": "childhood_region",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "origin_country",
+          "scope": "person",
+          "metadata_key": "origin_country",
+          "future_db_column": "origin_country",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["native_speaker"]
+        },
+        {
+          "xlsx_column": "origin_region",
+          "scope": "person",
+          "metadata_key": "origin_region",
+          "future_db_column": "origin_region",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["native_speaker"]
+        },
+        {
+          "xlsx_column": "level_code",
+          "scope": "session",
+          "metadata_key": "level_code",
+          "future_db_column": "level_code",
+          "type": "string",
+          "nullable": true,
+          "allowed_values": ["A1", "A2", "B1", "B2", "C1", "C2"],
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "level_self",
+          "scope": "session",
+          "metadata_key": "level_self",
+          "future_db_column": "level_self",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "standard_variety",
+          "scope": "session",
+          "metadata_key": "standard_variety",
+          "future_db_column": "standard_variety",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["native_speaker"]
+        },
+        {
+          "xlsx_column": "recording_year",
+          "scope": "session",
+          "metadata_key": "recording_year",
+          "future_db_column": "recording_year",
+          "type": "integer",
+          "nullable": false,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "recording_date",
+          "scope": "session",
+          "metadata_key": "recording_date",
+          "future_db_column": "recording_date",
+          "type": "date",
+          "nullable": true,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "context",
+          "scope": "session",
+          "metadata_key": "context",
+          "future_db_column": "context",
+          "type": "string",
+          "nullable": true,
+          "allowed_values": ["baseline", "follow_up"],
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "recorded_by",
+          "scope": "session",
+          "metadata_key": "recorded_by",
+          "future_db_column": "recorded_by",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        },
+        {
+          "xlsx_column": "stays_in_target_country",
+          "scope": "session",
+          "metadata_key": "stays_in_target_country",
+          "future_db_column": "stays_in_target_country",
+          "type": "boolean",
+          "nullable": true,
+          "allowed_values": [true, false, null],
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "notes",
+          "scope": "session",
+          "metadata_key": "notes",
+          "future_db_column": "notes",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner", "native_speaker", "heritage_speaker"]
+        }
+      ]
+    },
+    {
+      "worksheet": "exposure_entries",
+      "row_grain": "zero to many rows per learner session_id",
+      "fields": [
+        {
+          "xlsx_column": "session_id",
+          "scope": "exposure",
+          "metadata_key": "session_id",
+          "future_db_column": "session_id",
+          "type": "string",
+          "nullable": false,
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "entry_index",
+          "scope": "exposure",
+          "metadata_key": "entry_index",
+          "future_db_column": "entry_index",
+          "type": "integer",
+          "nullable": false,
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "country",
+          "scope": "exposure",
+          "metadata_key": "country",
+          "future_db_column": "country",
+          "type": "string",
+          "nullable": false,
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "duration_months",
+          "scope": "exposure",
+          "metadata_key": "duration_months",
+          "future_db_column": "duration_months",
+          "type": "integer",
+          "nullable": true,
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "type",
+          "scope": "exposure",
+          "metadata_key": "type",
+          "future_db_column": "type",
+          "type": "string",
+          "nullable": true,
+          "allowed_values": ["erasmus", "study", "work", "travel"],
+          "applies_to": ["learner"]
+        },
+        {
+          "xlsx_column": "exposure_notes",
+          "scope": "exposure",
+          "metadata_key": "exposure_notes",
+          "future_db_column": "exposure_notes",
+          "type": "string",
+          "nullable": true,
+          "applies_to": ["learner"]
+        }
+      ]
+    }
+  ],
+  "serialization_rules": {
+    "additional_languages": {
+      "worksheet": "sessions",
+      "type": "json_array_string",
+      "target_metadata_key": "additional_languages",
+      "example": "[\"English\", \"French\"]"
+    },
+    "exposure_entries": {
+      "worksheet": "exposure_entries",
+      "row_group_key": "session_id",
+      "target_metadata_key": "exposure_entries"
+    }
+  }
+}

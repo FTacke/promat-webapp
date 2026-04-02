@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% from 'partials/_research_filters.html' import render_filter_form %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--workbench pm-content pm-content--workbench pm-research-page" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  <section class="pm-feature-band pm-research-task-band" aria-label="{{ 'Aufgabentypen' if ui_lang == 'de' else 'Task types' }}">
+    <div class="pm-task-panel-grid">
+      {% for panel in promat_page.task_panels %}
+      <a class="pm-task-panel{{ ' is-current' if panel.current else '' }}" href="{{ panel.href }}"{% if panel.current %} aria-current="page"{% endif %}>
+        <span class="pm-task-panel__label">{{ panel.label }}</span>
+        <span class="pm-task-panel__description">{{ panel.description }}</span>
+        <span class="pm-task-panel__count">{{ panel.count }} {{ panel.count_label }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="pm-feature-band pm-research-mobile-filters">
+    {{ render_filter_form(promat_page.filter_form, true) }}
+  </div>
+
+  <div class="pm-feature-band pm-research-desktop-filters">
+    {{ render_filter_form(promat_page.filter_form, false) }}
+  </div>
+
+  <section class="pm-feature-band pm-research-results-stack" aria-label="{{ 'Ergebnisse' if ui_lang == 'de' else 'Results' }}">
+    <div class="pm-research-status-stack">
+      {% if promat_page.active_filters %}
+      <div class="pm-research-chip-row" aria-label="{{ 'Aktive Filter' if ui_lang == 'de' else 'Active filters' }}">
+        {% for chip in promat_page.active_filters %}
+        <a class="pm-filter-chip" href="{{ chip.href }}">{{ chip.label }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="pm-research-status">
+        <p class="pm-research-status__summary">{{ promat_page.status.result_count }} {{ promat_page.status.result_label }} · {{ promat_page.status.active_filter_count }} {{ promat_page.status.filter_label }}</p>
+      </div>
+    </div>
+
+    {% if promat_page.results %}
+    <div class="pm-research-table-wrap pm-container">
+      <table class="pm-research-table">
+        <thead>
+          <tr>
+            <th scope="col">Session</th>
+            <th scope="col">{{ 'Sprechergruppe' if ui_lang == 'de' else 'Speaker type' }}</th>
+            <th scope="col">Level</th>
+            <th scope="col">L1</th>
+            <th scope="col">{{ 'Geschlecht' if ui_lang == 'de' else 'Gender' }}</th>
+            <th scope="col">{{ promat_page.columns.stay }}</th>
+            <th scope="col" class="pm-research-table__action-col">{{ 'Aktion' if ui_lang == 'de' else 'Action' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in promat_page.results %}
+          <tr>
+            <td data-label="Session">
+              <div class="pm-research-session-cell">
+                <span class="pm-research-session-cell__primary">{{ row.session_id }}</span>
+                <span class="pm-research-session-cell__secondary">{{ row.person_id }}</span>
+              </div>
+            </td>
+            <td data-label="{{ 'Sprechergruppe' if ui_lang == 'de' else 'Speaker type' }}">{{ row.speaker_type }}</td>
+            <td data-label="Level">{{ row.level }}</td>
+            <td data-label="L1">{{ row.l1 }}</td>
+            <td data-label="{{ 'Geschlecht' if ui_lang == 'de' else 'Gender' }}">{{ row.gender }}</td>
+            <td data-label="{{ promat_page.columns.stay }}">{{ row.target_country_stay }}</td>
+            <td class="pm-research-table__action" data-label="{{ 'Aktion' if ui_lang == 'de' else 'Action' }}"><a class="pm-research-inline-action" href="{{ row.player_href }}">{{ row.action_label }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="pm-research-empty pm-container pm-container--tinted">
+      <p class="pm-research-empty__text">{{ promat_page.empty_state.message }}</p>
+      <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.empty_state.reset_href }}">{{ promat_page.empty_state.reset_label }}</a>
+    </div>
+    {% endif %}
+  </section>
+</article>
+{% endblock %}

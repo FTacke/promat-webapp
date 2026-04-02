@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--workbench pm-content pm-content--workbench pm-research-page" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  <div class="pm-feature-band pm-profile-layout">
+    <section class="pm-profile-card pm-container pm-container--tinted">
+      <div class="pm-profile-hero">
+        <div class="pm-profile-hero__header">
+          <p class="pm-profile-hero__title">{{ promat_page.profile_header.person_id }}</p>
+          <p class="pm-profile-hero__session">{{ promat_page.profile_header.session_id }}</p>
+        </div>
+        <div class="pm-profile-badge-row">
+          {% for badge in promat_page.profile_header.badges if badge and badge != '-' %}
+          <span class="pm-profile-badge">{{ badge }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <section class="pm-profile-card__section pm-profile-metadata">
+        <h2 class="pm-profile-section__title">{{ promat_page.identity_section.title }}</h2>
+        <div class="pm-profile-metadata__grid">
+          {% for row in promat_page.identity_section.rows %}
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ row.label }}</p>
+            <p class="pm-profile-metadata__value">{{ row.value }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="pm-profile-card__section pm-profile-metadata">
+        <h2 class="pm-profile-section__title">{{ promat_page.biography_section.title }}</h2>
+        <div class="pm-profile-metadata__grid">
+          {% for row in promat_page.biography_section.rows %}
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ row.label }}</p>
+            {% if row.entries is defined and row.entries %}
+            <div class="pm-profile-metadata__rich">
+              <ul class="pm-profile-metadata__list">
+                {% for item in row.entries %}
+                <li class="pm-profile-metadata__list-item">
+                  <span class="pm-profile-metadata__value">{{ item.text }}</span>
+                  {% if item.note %}
+                  <span class="pm-profile-metadata__note">{{ item.note }}</span>
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% else %}
+            <p class="pm-profile-metadata__value">{{ row.value }}</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+      {% if promat_page.notes %}
+      <section class="pm-profile-card__section pm-profile-notes">
+        <h2 class="pm-profile-section__title">{{ 'Notiz' if ui_lang == 'de' else 'Note' }}</h2>
+        <p>{{ promat_page.notes }}</p>
+      </section>
+      {% endif %}
+
+      {% if promat_page.related_sessions %}
+      <section class="pm-profile-card__section pm-profile-related">
+        <h2 class="pm-profile-section__title">{{ 'Weitere Sessions' if ui_lang == 'de' else 'Additional sessions' }}</h2>
+        <ul class="pm-profile-related__list">
+          {% for session in promat_page.related_sessions %}
+          <li>{{ session.label }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+    </section>
+
+    <section class="pm-profile-actions pm-container">
+      <h2 class="pm-profile-section__title">{{ promat_page.recordings_label }}</h2>
+      <div class="pm-profile-task-list">
+        {% for task in promat_page.tasks %}
+        <a class="pm-profile-task-link" href="{{ task.href }}">
+          <span class="pm-profile-task-link__label">{{ task.label }}</span>
+          <span class="pm-profile-task-link__description">{{ task.description }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    <nav class="pm-profile-navigation pm-container" aria-label="{{ 'Navigation' if ui_lang == 'de' else 'Navigation' }}">
+      <a class="pm-research-inline-action" href="{{ promat_page.speakers_href }}">{{ 'Zurück zu Sprecher:innen' if ui_lang == 'de' else 'Back to speakers' }}</a>
+    </nav>
+  </div>
+</article>
+{% endblock %}

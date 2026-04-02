@@ -1,0 +1,41 @@
+{% macro render_filter_form(form_config, mobile=false) -%}
+  {% if mobile %}
+  <details class="pm-research-filters-accordion">
+    <summary class="pm-research-filters-accordion__summary">{{ form_config.summary }}</summary>
+    <div class="pm-research-filters-accordion__body">
+      {{ _render_filter_inner(form_config) }}
+    </div>
+  </details>
+  {% else %}
+  {{ _render_filter_inner(form_config) }}
+  {% endif %}
+{%- endmacro %}
+
+{% macro _render_filter_inner(form_config) -%}
+  <section class="pm-research-filters-panel pm-container pm-container--tinted" aria-label="{{ form_config.title }}">
+    <div class="pm-research-filters-panel__header">
+      <h2 class="pm-research-filters-panel__title">{{ form_config.title }}</h2>
+    </div>
+    <form class="pm-research-filter-form" method="get" action="{{ form_config.action }}">
+      {% for field in form_config.hidden_fields | default([]) %}
+      <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+      {% endfor %}
+      <div class="pm-research-filter-grid">
+        {% for field in form_config.fields %}
+        <label class="pm-research-filter-field">
+          <span class="pm-research-filter-field__label">{{ field.label }}</span>
+          <select class="pm-research-filter-field__input" name="{{ field.name }}">
+            {% for option in field.options %}
+            <option value="{{ option.value }}"{{ ' selected' if option.value == field.value else '' }}>{{ option.label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        {% endfor %}
+      </div>
+      <div class="pm-research-filter-actions">
+        <button type="submit" class="pm-research-button">{{ form_config.submit_label }}</button>
+        <a class="pm-research-button pm-research-button--subtle" href="{{ form_config.reset_href }}">{{ form_config.reset_label }}</a>
+      </div>
+    </form>
+  </section>
+{%- endmacro %}

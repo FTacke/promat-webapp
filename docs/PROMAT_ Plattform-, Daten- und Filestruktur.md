@@ -207,7 +207,7 @@ Inhalt:
 
 * isolierte Aussprache (Wortliste)
 * zusammenhängende Aussprache (Text/Sätze)
-* Interview (kurze Reflexion)
+* Interview zur Aussprache
 * Auswahlprinzipien und Itemstruktur
 * Bezug zu bestehender Forschung
 * sprachspezifische Entscheidungen des Teilprojekts
@@ -240,7 +240,7 @@ Aufbau:
 
   * isolierte Aussprache (Wortliste)
   * zusammenhängende Aussprache (Text/Sätze)
-  * Interview (kurze Reflexion)
+  * Interview zur Aussprache
 
 Diese führen jeweils zur Player-Seite.
 
@@ -278,9 +278,9 @@ Struktur:
 
 * Aussprache im Kontext zusammenhängender Sprache
 
-#### Interview (kurze Reflexion)
+#### Interview zur Aussprache
 
-* kurze metasprachliche Aussagen oder Reflexionen
+* halbgeleitete Gesprächssituation mit spontaner Aussprache
 
 Interaktion:
 
@@ -667,6 +667,7 @@ Optionale Felder:
 ```text
 recording_date
 context
+recorded_by
 ```
 
 `context` bleibt kontrolliert und knapp:
@@ -676,7 +677,11 @@ baseline
 follow_up
 ```
 
-Was zwischen den Aufnahmen passiert ist, wird nicht im Feld `context`, sondern an anderer Stelle dokumentiert, z. B. über Exposure-Daten und Notizen.
+Was zwischen den Aufnahmen passiert ist, wird nicht im Feld `context`, sondern an anderer Stelle dokumentiert, z. B. über Sprachaufenthalte, strukturierte `exposure_entries` und Notizen.
+
+Regel:
+
+* `context` bleibt ein technisches Ordnungsfeld und wird in Profilen nicht als Rohwert `baseline` oder `follow_up` sichtbar gezeigt
 
 ---
 
@@ -687,11 +692,40 @@ Was zwischen den Aufnahmen passiert ist, wird nicht im Feld `context`, sondern a
 ```text
 person_id
 l1
+mother_l1
+father_l1
+additional_languages
 gender
 birth_year
 current_region
 childhood_region
+origin_region
+origin_country
 ```
+
+Regel:
+
+* `current_region` und `childhood_region` sind die aktiven Regionalfelder fuer Lernendenprofile
+* `origin_region` und `origin_country` sind die aktiven Herkunftsfelder fuer Native-Speaker-Profile
+* `mother_l1` und `father_l1` dokumentieren die sprachbiographische Familienumgebung auf Personenebene
+* `additional_languages` speichert eine normalisierte Liste weiterer Sprachen der Person
+
+### ExposureEntry
+
+```text
+session_id
+country
+duration_months
+type
+exposure_notes
+```
+
+Regel:
+
+* `exposure_entries` werden in `metadata.json` als Liste von Objekten unter der Session gespeichert
+* im XLSX-Import werden `exposure_entries` als eigene tabellarische Ebene mit Bezug auf `session_id` geführt
+* `duration_months` ist ganzzahlig oder `null`
+* `type` bleibt technisch englisch, zum Beispiel `erasmus`, `study`, `work` oder `travel`
 
 ### Session
 
@@ -705,9 +739,18 @@ level_self
 recording_year
 recording_date
 context
+recorded_by
+stays_in_target_country
+exposure_entries
 standard_variety
 notes
 ```
+
+Regel:
+
+* `stays_in_target_country` ist das kanonische boolesche/nullable Summenfeld fuer relevante Aufenthalte im Zielland vor der Aufnahme
+* `exposure_entries` dokumentiert die detaillierte Struktur dieser Aufenthalte, wenn solche Informationen vorliegen
+* die Webapp und neue Importmappings verwenden dafuer nicht mehr den generischen Begriff `exposure` als alleiniges aktives Kernfeld
 
 ---
 
@@ -799,6 +842,17 @@ follow_up
 
 ---
 
+### `recorded_by`
+
+Freitextfeld fuer die dokumentierte Person oder Rollenbezeichnung, die eine Session aufgenommen bzw. explorativ verantwortet hat.
+
+Regel:
+
+* der technische Feldname bleibt `recorded_by`
+* die UI darf dafuer lokalisierte sichtbare Labels wie `Explorator:in` verwenden
+
+---
+
 ### `standard_variety`
 
 #### Spanish
@@ -845,37 +899,43 @@ Hinweis:
 
 ---
 
-## 18. Sprachbiographie und Exposure
+## 18. Sprachbiographie und Sprachaufenthalte
 
-### Strukturierte Felder
+### Aktiver Feldanker
 
 ```text
-country
-duration_months
-type
+stays_in_target_country
+exposure_entries
 ```
 
-### `type`
+Regel:
+
+* `stays_in_target_country` ist das aktive boolesche/nullable Kernfeld fuer die kompakte Ja/Nein/Unbekannt-Zusammenfassung forschungsrelevanter Aufenthalte im Zielland vor der Aufnahme
+* Werte sind `true`, `false` oder `null`
+* `exposure_entries` enthält bei Bedarf die detaillierte Aufschlüsselung nach `country`, `duration_months`, `type` und `exposure_notes`
+* die Webapp verwendet dafuer die UI-Labels `Sprachaufenthalte` bzw. `Stays in target-language country`
+* in Profilen werden vorhandene `exposure_entries` sichtbar priorisiert; `stays_in_target_country` bleibt die kompakte Fallback- und Filterinformation
+* der frühere generische Begriff `Exposure` ist für neue PROMAT-Workflows nicht mehr der bevorzugte aktive Fachbegriff
+
+### Kompatibilitaet fuer Bestandsdaten
+
+Historische Importquellen duerfen weiterhin generische Exposure-Felder enthalten, zum Beispiel:
 
 ```text
-study
-erasmus
-work
-travel
-family
-other
-```
-
-### Freitextfeld
-
-```text
+previous_exposure
+has_previous_exposure
+prior_exposure
+exposure
+exposures
+exposure_history
 exposure_notes
 ```
 
 Regel:
 
-* Exposure wird möglichst strukturiert erfasst
-* komplexe oder schwer kategorisierbare Fälle können zusätzlich in `exposure_notes` beschrieben werden
+* diese Felder gelten nur noch als Kompatibilitaets- oder Importquelle
+* neue Seeds, neue `metadata.json`-Dateien und neue Importmappings sollen `stays_in_target_country` und, wenn vorhanden, strukturierte `exposure_entries` schreiben
+* aus historischen generischen Exposure-Feldern werden beim Import sowohl die Ja/Nein-Zusammenfassung als auch optional detaillierte `exposure_entries` normalisiert
 
 ---
 
@@ -906,11 +966,11 @@ Bedeutung:
   * Englisch: connected speech (text/sentences)
 
 * `interview`
-  kurze Reflexion oder metasprachliches Interview
+  halbgeleitete Gesprächssituation mit spontaner Aussprache
   UI-Label:
 
-  * Deutsch: Interview (kurze Reflexion)
-  * Englisch: interview (short reflection)
+  * Deutsch: Interview zur Aussprache
+  * Englisch: interview
 
 ---
 

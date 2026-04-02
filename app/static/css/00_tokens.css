@@ -252,6 +252,27 @@
   --pm-layout-reading-width: 72ch;
   --pm-layout-feature-width: var(--promat-content-width);
   --pm-layout-section-gap: var(--pm-space-xl);
+  --pm-research-sidebar-width: 19rem;
+  --pm-research-grid-min: 16rem;
+  --pm-research-speaker-card-min: 16.5rem;
+  --pm-research-speaker-card-max: 18.75rem;
+  --pm-research-table-action-width: 10rem;
+  --pm-research-task-panel-min: 15rem;
+  --pm-filter-grid-min: 14rem;
+  --pm-chip-min-height: 1.9rem;
+  --pm-chip-padding-inline: 0.7rem;
+  --pm-chip-font-size: 0.82rem;
+  --pm-chip-gap: 0.45rem;
+  --pm-chip-zone-padding-block: 0.15rem 0.4rem;
+  --pm-badge-min-height: 2rem;
+  --pm-badge-padding-inline: 0.72rem;
+  --pm-badge-font-size: var(--pm-type-meta-size);
+  --pm-speaker-level-a1: color-mix(in srgb, var(--promat-wordmark-accent) 88%, var(--book-accent) 12%);
+  --pm-speaker-level-a2: color-mix(in srgb, var(--promat-wordmark-accent) 70%, var(--book-accent) 30%);
+  --pm-speaker-level-b1: color-mix(in srgb, var(--promat-wordmark-accent) 50%, var(--book-accent) 50%);
+  --pm-speaker-level-b2: color-mix(in srgb, var(--promat-wordmark-accent) 28%, var(--book-accent) 72%);
+  --pm-speaker-level-c1: color-mix(in srgb, var(--promat-wordmark-accent) 16%, var(--book-accent) 84%);
+  --pm-speaker-level-c2: color-mix(in srgb, var(--promat-wordmark-accent) 8%, var(--book-accent) 92%);
 
   --promat-shell-gap: var(--pm-space-xl);
   --promat-shell-inline-padding: var(--promat-content-offset);

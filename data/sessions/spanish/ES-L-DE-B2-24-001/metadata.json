@@ -3,12 +3,33 @@
   "session_id": "ES-L-DE-B2-24-001",
   "target_language": "es",
   "speaker_type": "learner",
+  "l1": "DE",
+  "mother_l1": "DE",
+  "father_l1": "PL",
+  "additional_languages": [
+    "English",
+    "French"
+  ],
+  "gender": "female",
+  "birth_year": 1998,
+  "current_region": "Berlin, Germany",
+  "childhood_region": "Saxony, Germany",
   "level_code": "B2",
   "level_self": "B2",
   "recording_year": 2024,
   "recording_date": null,
   "context": "baseline",
+  "recorded_by": "PROMAT Placeholder",
   "standard_variety": null,
+  "stays_in_target_country": true,
+  "exposure_entries": [
+    {
+      "country": "spain",
+      "duration_months": 6,
+      "type": "erasmus",
+      "exposure_notes": "Austauschsemester in Madrid."
+    }
+  ],
   "notes": "Repository placeholder only. No real research data. Source WAVs are processed working copies; raw masters are not included.",
   "tasks": [
     {
@@ -27,7 +48,7 @@
     },
     {
       "task_type": "interview",
-      "label": "Interview (kurze Reflexion)",
+      "label": "Interview zur Aussprache",
       "source_file": "source/interview.wav",
       "alignment_file": "alignment/interview.TextGrid",
       "derived_file": "derived/interview.mp3"

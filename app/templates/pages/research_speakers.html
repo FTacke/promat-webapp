@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% from 'partials/_research_filters.html' import render_filter_form %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--workbench pm-content pm-content--workbench pm-research-page" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  <section class="pm-feature-band pm-research-quick-filter-band" aria-label="{{ 'Schnellfilter' if ui_lang == 'de' else 'Quick filters' }}">
+    <nav class="pm-segmented-control" aria-label="{{ 'Speaker groups' if ui_lang == 'en' else 'Sprechergruppen' }}">
+      {% for option in promat_page.quick_filters %}
+      <a class="pm-segmented-control__option{{ ' is-current' if option.current else '' }}" href="{{ option.href }}"{% if option.current %} aria-current="page"{% endif %}>{{ option.label }}</a>
+      {% endfor %}
+    </nav>
+  </section>
+
+  <div class="pm-feature-band pm-research-mobile-filters">
+    {{ render_filter_form(promat_page.filter_form, true) }}
+  </div>
+
+  <div class="pm-feature-band pm-research-desktop-filters">
+    {{ render_filter_form(promat_page.filter_form, false) }}
+  </div>
+
+  <section class="pm-feature-band pm-research-results-stack" aria-label="{{ 'Sprecher:innen' if ui_lang == 'de' else 'Speakers' }}">
+    <div class="pm-research-status-stack">
+      {% if promat_page.active_filters %}
+      <div class="pm-research-chip-row" aria-label="{{ 'Aktive Filter' if ui_lang == 'de' else 'Active filters' }}">
+        {% for chip in promat_page.active_filters %}
+        <a class="pm-filter-chip" href="{{ chip.href }}">{{ chip.label }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="pm-research-status">
+        <p class="pm-research-status__summary">{{ promat_page.status.result_count }} {{ promat_page.status.result_label }} · {{ promat_page.status.active_filter_count }} {{ promat_page.status.filter_label }}</p>
+      </div>
+    </div>
+
+    {% if promat_page.cards %}
+    <div class="pm-speaker-grid">
+      {% for card in promat_page.cards %}
+      <article class="pm-card pm-card--interactive pm-speaker-card pm-speaker-card--{{ card.accent_modifier }}">
+        <a class="pm-speaker-card__body" href="{{ card.profile_href }}">
+          <div class="pm-speaker-card__header">
+            <p class="pm-speaker-card__eyebrow">{{ card.eyebrow }}</p>
+            <p class="pm-speaker-card__session">{{ card.session_id }}</p>
+            <p class="pm-speaker-card__person">{{ card.person_id }}</p>
+          </div>
+          <div class="pm-speaker-card__meta">
+            {% for row in card.meta_rows %}
+            <div>
+              <p class="pm-speaker-card__meta-label">{{ row.label }}</p>
+              <p class="pm-speaker-card__meta-value">{{ row.value }}</p>
+            </div>
+            {% endfor %}
+          </div>
+        </a>
+        <footer class="pm-speaker-card__footer">
+          <p class="pm-speaker-card__task-label">{{ card.recordings_label }}</p>
+          <div class="pm-speaker-card__tasks" aria-label="{{ card.recording_links_aria_label }}">
+            {% for task_link in card.task_links %}
+            <a class="pm-speaker-task-link" href="{{ task_link.href }}">{{ task_link.label }}</a>
+            {% endfor %}
+          </div>
+        </footer>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="pm-research-empty pm-container pm-container--tinted">
+      <p class="pm-research-empty__text">{{ promat_page.empty_state.message }}</p>
+      <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.empty_state.reset_href }}">{{ promat_page.empty_state.reset_label }}</a>
+    </div>
+    {% endif %}
+  </section>
+</article>
+{% endblock %}
