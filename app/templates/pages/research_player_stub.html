@@ -33,12 +33,12 @@
           <dd>{{ promat_page.session.speaker_type }}</dd>
         </div>
         <div>
-          <dt>Level</dt>
-          <dd>{{ promat_page.session.level }}</dd>
+          <dt>{{ promat_page.session.context_label }}</dt>
+          <dd>{{ promat_page.session.context_value }}</dd>
         </div>
         <div>
-          <dt>L1</dt>
-          <dd>{{ promat_page.session.l1 }}</dd>
+          <dt>{{ promat_page.session.detail_label }}</dt>
+          <dd>{{ promat_page.session.detail_value }}</dd>
         </div>
         <div>
           <dt>{{ 'Aufgabe' if ui_lang == 'de' else 'Task' }}</dt>

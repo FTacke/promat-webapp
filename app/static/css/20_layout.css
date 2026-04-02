@@ -273,6 +273,11 @@ body.app-shell.page-landing .md3-content-wrapper {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.pm-profile-session-list {
+  display: grid;
+  gap: var(--pm-space-sm);
+}
+
 .pm-sample-research-showcase {
   gap: var(--pm-space-lg);
 }

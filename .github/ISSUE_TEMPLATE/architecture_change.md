@@ -24,10 +24,12 @@ Welches Problem oder welche Drift soll verhindert werden?
 - Architektur
 - Dev/Prod-Parität
 - Routing, Datenpfade oder öffentliche/geschützte Trennung
+- Person-/Session-Modell, Research-Zugangslogik oder Native-Speaker-Sonderfall
 
 ## No-Go-Check
 
 - Führt der Vorschlag alte Slugs, alte Pfade oder neue Schattenstruktur ein?
+- Bricht der Vorschlag das kanonische ID-Modell `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` / `session_id = {person_id}-{YYYY}-S{NN}`?
 
 ## Offene Fragen
 

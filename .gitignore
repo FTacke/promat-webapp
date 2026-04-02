@@ -38,8 +38,8 @@ data/sessions/*
 !data/sessions/spanish/
 data/sessions/spanish/*
 !data/sessions/spanish/.gitkeep
-!data/sessions/spanish/ES-L-DE-B2-24-001/
-!data/sessions/spanish/ES-L-DE-B2-24-001/**
+!data/sessions/spanish/ES-L-0901-2024-S01/
+!data/sessions/spanish/ES-L-0901-2024-S01/**
 secure/*
 !secure/.gitkeep
 !secure/README.md

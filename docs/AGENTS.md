@@ -18,6 +18,9 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten unter `docs/`.
 - Run-Logs beschreiben Änderungen, ersetzen aber keine aktive Referenzdokumentation.
 - Wenn ein Dokument veraltet ist, aktualisiere oder markiere es als historisch statt eine konkurrierende Kopie anzulegen.
 - Doku muss repo-spezifisch, knapp und operational bleiben.
+- Aktive Doku darf für `person_id` und `session_id` nur die kanonischen Formate `{CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` und `{person_id}-{YYYY}-S{NN}` verwenden; Altbeispiele gehören nur in klar historische Dokumente.
+- Aktive Doku muss `speaker_type` auf `learner` und `native_speaker`, `target_language` auf `es`/`fr`/`en`/`de`, `standard_variety` auf lowercase snake_case und `unknown` auf Kleinbuchstaben festhalten; `ch_std`, `heritage_speaker` und `H` sind kein aktiver Soll-Stand.
+- Intake-Doku muss `Exposure` immer über `person_id` plus `session_ref` anbinden; `session_id` bleibt im Intake leer, und `Vocabularies` bleibt das breite Blatt ohne normalisierte Parallelalternative.
 - Wenn Doku sichtbare deutsche UI-Texte oder UI-Beispiele dokumentiert, sind echte Umlaute und `ß` zu verwenden; ASCII-Umschriften gelten dort nicht als akzeptabler UI-Stand.
 
 ## Run-Dokumentation

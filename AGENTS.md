@@ -34,17 +34,24 @@ Historische Run-Logs unter `docs/start/` und `docs/agent-runs/` erklären Entsch
 - Öffentliches Routing folgt dem Schema `/{ui_lang}/{section}/{corpus_language}/{page}`.
 - Technische Slugs, Keys, Datenfelder und Controlled Vocabularies sind immer Englisch.
 - Sichtbare UI-Labels bleiben aktuell Deutsch, müssen aber lokalisierbar bleiben.
+- `speakers` ist personbasiert; `recordings` bleibt session- und taskbasiert.
 - In sichtbaren deutschen UI-Texten sind echte Umlaute und `ß` zu verwenden. Ersetzungen wie `ae`, `oe`, `ue` oder `ss` sind nur in technischen, nicht user-visible Kontexten zulässig.
 - Alte deutsche technische Slugs und Altpfade dürfen nicht wieder eingeführt werden.
 - UI-Sprache und technische Routing-Sprache dürfen nicht vermischt werden.
 
 ## Daten- und Filesystem-Prinzipien
 
-- `person_id` identifiziert Personen stabil und sprachneutral.
+- `person_id` identifiziert Personen stabil innerhalb eines sprach- bzw. korpusgebundenen ID-Raums.
 - `session_id` identifiziert konkrete Aufnahmen.
+- Kanonische Formate sind `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` und `session_id = {person_id}-{YYYY}-S{NN}`.
+- Aktive `speaker_type`-Werte sind nur `learner` und `native_speaker`; die zugehörigen aktiven ID-Marker sind nur `L` und `N`.
+- `session_id` enthält genau `person_id`, vierstelliges Aufnahmejahr und zweistellige Session-Nummer; Level, L1 und Standardvarietät gehören in Metadaten, nicht in die ID.
 - Session-Daten liegen unter `data/sessions/{language}/{session_id}/`.
 - Die Session-Unterstruktur ist `raw/`, `source/`, `alignment/`, `derived/`, `items/` plus `metadata.json`.
-- Technische Task-Typen sind `isolated_speech`, `connected_speech`, `interview`.
+- Technische Task-Typen sind `wordlist`, `text`, `interview`.
+- Aktive technische Vokabular-Cases bleiben gemischt, aber eindeutig: `target_language` ist `es`/`fr`/`en`/`de`, `standard_variety` ist lowercase snake_case, `unknown` bleibt lowercase, `l1_code` bleibt uppercase.
+- Der aktive Intake-Vertrag bleibt: `Research_Session_Intake` beginnt mit `person_id`, `session_ref`, `session_id`; `session_id` bleibt leer; `Exposure` verknüpft über `person_id` plus `session_ref`; `Vocabularies` bleibt ein breites Blatt.
+- Native-Speaker-Vergleichsprofile sind ein Sonderfall: pro nativer `person_id` genau eine Session.
 - Sensible Informationen gehören weder in Dateinamen noch in Pfade, Slugs oder öffentliche Assets.
 
 ## Unantastbare Webapp-Grenzen
@@ -106,8 +113,8 @@ Historische Run-Logs unter `docs/start/` und `docs/agent-runs/` erklären Entsch
 ## Benennungen und technische Sprache
 
 - Ein technisches Konzept hat genau einen bevorzugten Namen.
-- Verbindliche technische Standards sind unter anderem `project`, `research`, `teaching`, `sample`, `person_id`, `session_id`, `isolated_speech`, `connected_speech`, `interview`, `raw`, `source`, `alignment`, `derived`, `items`.
-- Alte Ausdrücke wie `wordlist`, `text`, `reflexion` sind keine technischen Standards mehr.
+- Verbindliche technische Standards sind unter anderem `project`, `research`, `teaching`, `sample`, `person_id`, `session_id`, `wordlist`, `text`, `interview`, `raw`, `source`, `alignment`, `derived`, `items`.
+- Alte Ausdrücke wie `isolated_speech`, `connected_speech` und `reflexion` sind keine aktiven technischen Standards mehr.
 - UI-Labels dürfen deutsch sein; technische Keys dürfen es nicht.
 
 ## Minimales, sauberes Arbeiten

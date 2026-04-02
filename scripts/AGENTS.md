@@ -20,6 +20,10 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten unter `scripts/`.
 - Keine Script-Logik darf `secure/` an die Webapp oder an öffentliche Exporte durchreichen.
 - `raw`, `source`, `alignment`, `derived` und `items` bleiben getrennte Verarbeitungsstufen.
 - Skripte dürfen diese Stufen nicht begrifflich oder physisch vermischen.
+- Seed-, Import- und Setup-Skripte müssen die kanonische ID-Kopplung `session_id = {person_id}-{YYYY}-S{NN}` erhalten.
+- Für Intake- und Import-Skripte gilt verbindlich: `Research_Session_Intake` beginnt mit `person_id`, `session_ref`, `session_id`; `session_id` bleibt leer; `Exposure` verknüpft über `person_id` plus `session_ref`; `Vocabularies` bleibt ein breites Blatt.
+- Aktive Skript-Vokabulare bleiben dabei konsistent: `speaker_type` nur `learner`/`native_speaker`, `target_language` lowercase, `standard_variety` lowercase snake_case und `unknown` lowercase.
+- Native-Speaker-Vergleichsprofile dürfen durch Skripte nie mehrere Sessions unter derselben nativen `person_id` erzeugen.
 
 ## Root-Skript-Regeln
 

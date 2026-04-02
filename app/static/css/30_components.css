@@ -669,6 +669,71 @@ textarea:focus-visible {
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
 }
 
+.pm-profile-session {
+  --pm-profile-session-accent: var(--book-accent);
+  display: grid;
+  gap: var(--pm-space-sm);
+  border-top: 0.38rem solid var(--pm-profile-session-accent);
+}
+
+.pm-profile-session--a1 {
+  --pm-profile-session-accent: var(--pm-research-level-a1);
+}
+
+.pm-profile-session--a2 {
+  --pm-profile-session-accent: var(--pm-research-level-a2);
+}
+
+.pm-profile-session--b1 {
+  --pm-profile-session-accent: var(--pm-research-level-b1);
+}
+
+.pm-profile-session--b2 {
+  --pm-profile-session-accent: var(--pm-research-level-b2);
+}
+
+.pm-profile-session--c1 {
+  --pm-profile-session-accent: var(--pm-research-level-c1);
+}
+
+.pm-profile-session--c2 {
+  --pm-profile-session-accent: var(--pm-research-level-c2);
+}
+
+.pm-profile-session--native {
+  --pm-profile-session-accent: var(--book-accent);
+}
+
+.pm-profile-session.is-selected {
+  box-shadow: var(--pm-session-selected-shadow);
+}
+
+.pm-profile-session__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pm-space-xs);
+}
+
+.pm-profile-session__title {
+  margin: 0;
+  font-size: clamp(1.05rem, 1rem + 0.2vw, 1.18rem);
+}
+
+.pm-profile-session__selected {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--pm-session-selected-ring);
+  background: color-mix(in srgb, var(--pm-session-selected-ring) 22%, white 78%);
+  color: var(--pm-text-accent);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+}
+
 .pm-profile-task-link {
   align-items: flex-start;
   justify-content: flex-start;

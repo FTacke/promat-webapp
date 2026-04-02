@@ -47,6 +47,14 @@ Die primären öffentlichen Routen folgen jetzt dem ui-lang-prefixed Schema.
 
 Frühere deutsche Altpfade wie `/forschung/...`, `/unterricht/...`, `/projekt/...`, `/sample` und `/sprachen` sind aus dem öffentlichen Routing entfernt.
 
+## Research-Zugangsmodell
+
+- `speakers` ist der personbasierte Zugang: genau eine Profilseite pro `person_id`, alle Sessions dieser Person auf derselben Seite.
+- `recordings` bleibt session- und taskbasiert: jede Zeile referenziert eine konkrete `session_id` plus Task.
+- Kanonische IDs sind jetzt `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` und `session_id = {person_id}-{YYYY}-S{NN}`.
+- Beispiel-IDs: `ES-L-0001`, `ES-N-0001`, `ES-L-0001-2026-S01`, `ES-L-0001-2027-S02`.
+- Native-Speaker-Vergleichsprofile bleiben ein Sonderfall: pro nativer `person_id` genau eine Session, kein Interview.
+
 ## Runtime-Grenzen
 
 - `PROMAT_RUNTIME_ROOT` muss auf das Workspace-Root zeigen, das `data/`, `logs/`, `secure/` und `public/` enthält.

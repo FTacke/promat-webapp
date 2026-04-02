@@ -47,10 +47,11 @@
       <table class="pm-research-table">
         <thead>
           <tr>
+            <th scope="col">{{ promat_page.columns.person }}</th>
             <th scope="col">Session</th>
             <th scope="col">{{ 'Sprechergruppe' if ui_lang == 'de' else 'Speaker type' }}</th>
-            <th scope="col">Level</th>
-            <th scope="col">L1</th>
+            <th scope="col">{{ promat_page.columns.context }}</th>
+            <th scope="col">{{ promat_page.columns.detail }}</th>
             <th scope="col">{{ 'Geschlecht' if ui_lang == 'de' else 'Gender' }}</th>
             <th scope="col">{{ promat_page.columns.stay }}</th>
             <th scope="col" class="pm-research-table__action-col">{{ 'Aktion' if ui_lang == 'de' else 'Action' }}</th>
@@ -59,15 +60,16 @@
         <tbody>
           {% for row in promat_page.results %}
           <tr>
+            <td data-label="{{ promat_page.columns.person }}"><a class="pm-research-inline-action" href="{{ row.person_href }}">{{ row.person_id }}</a></td>
             <td data-label="Session">
               <div class="pm-research-session-cell">
                 <span class="pm-research-session-cell__primary">{{ row.session_id }}</span>
-                <span class="pm-research-session-cell__secondary">{{ row.person_id }}</span>
+                <span class="pm-research-session-cell__secondary">{{ row.session_secondary }}</span>
               </div>
             </td>
             <td data-label="{{ 'Sprechergruppe' if ui_lang == 'de' else 'Speaker type' }}">{{ row.speaker_type }}</td>
-            <td data-label="Level">{{ row.level }}</td>
-            <td data-label="L1">{{ row.l1 }}</td>
+            <td data-label="{{ promat_page.columns.context }}">{{ row.context_value }}</td>
+            <td data-label="{{ promat_page.columns.detail }}">{{ row.detail_value }}</td>
             <td data-label="{{ 'Geschlecht' if ui_lang == 'de' else 'Gender' }}">{{ row.gender }}</td>
             <td data-label="{{ promat_page.columns.stay }}">{{ row.target_country_stay }}</td>
             <td class="pm-research-table__action" data-label="{{ 'Aktion' if ui_lang == 'de' else 'Action' }}"><a class="pm-research-inline-action" href="{{ row.player_href }}">{{ row.action_label }}</a></td>

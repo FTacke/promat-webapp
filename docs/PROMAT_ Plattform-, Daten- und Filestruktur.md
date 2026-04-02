@@ -205,8 +205,8 @@ Zweck:
 
 Inhalt:
 
-* isolierte Aussprache (Wortliste)
-* zusammenhängende Aussprache (Text/Sätze)
+* Wortliste
+* Text
 * Interview zur Aussprache
 * Auswahlprinzipien und Itemstruktur
 * Bezug zu bestehender Forschung
@@ -238,8 +238,8 @@ Aufbau:
 
 * direkte Aktionen pro Person:
 
-  * isolierte Aussprache (Wortliste)
-  * zusammenhängende Aussprache (Text/Sätze)
+  * Wortliste
+  * Text
   * Interview zur Aussprache
 
 Diese führen jeweils zur Player-Seite.
@@ -269,12 +269,12 @@ Zweck:
 
 Struktur:
 
-#### isolierte Aussprache (Wortliste)
+#### Wortliste
 
 * einzelne Wörter
 * Fokus auf segmentale und prosodische Aspekte
 
-#### zusammenhängende Aussprache (Text/Sätze)
+#### Text
 
 * Aussprache im Kontext zusammenhängender Sprache
 
@@ -516,8 +516,16 @@ Eigenschaften:
 Format:
 
 ```text
-P-0001
-P-0002
+[CORPUS_CODE]-[SPEAKER_MARKER]-[NNNN]
+```
+
+Beispiele:
+
+```text
+ES-L-0001
+ES-N-0001
+EN-L-0001
+FR-N-0001
 ```
 
 Eigenschaften:
@@ -525,7 +533,7 @@ Eigenschaften:
 * eindeutig
 * anonym
 * stabil
-* sprachunabhängig
+* korpus- bzw. zielsprachgebunden
 * verknüpft mehrere Sessions derselben Person
 
 ---
@@ -534,116 +542,68 @@ Eigenschaften:
 
 Die `session_id` beschreibt eine konkrete Aufnahme.
 
-#### Lerner:innen
-
 Format:
 
 ```text
-[TARGET_LANGUAGE]-L-[L1]-[LEVEL]-[YEAR]-[NNN]
+{person_id}-{YYYY}-S{NN}
 ```
 
 Beispiele:
 
 ```text
-ES-L-DE-B2-24-001
-FR-L-DE-B1-24-007
-EN-L-DE-C1-25-003
-DE-L-AR-B2-25-002
-```
-
-#### Native Speaker
-
-Format:
-
-```text
-[TARGET_LANGUAGE]-N-[STANDARD_VARIETY]-[YEAR]-[NNN]
-```
-
-Beispiele:
-
-```text
-ES-N-ES_STD-24-001
-ES-N-MX_STD-24-002
-EN-N-GB_STD-24-001
-EN-N-US_STD-24-002
-FR-N-FR_STD-24-001
-DE-N-DE_STD-24-001
-```
-
-#### Heritage Speaker
-
-Format:
-
-```text
-[TARGET_LANGUAGE]-H-[L1]-[LEVEL]-[YEAR]-[NNN]
-```
-
-Beispiel:
-
-```text
-ES-H-DE-B2-25-001
+ES-L-0001-2026-S01
+ES-L-0001-2027-S02
+ES-N-0001-2026-S01
+FR-N-0004-2025-S03
 ```
 
 Hinweis:
 
-* `H` ist nur zu verwenden, wenn `heritage_speaker` als eigener Sprecherstatus geführt wird
-* wenn das nicht gewünscht ist, kann auch `speaker_type` ausschließlich als Metadatum geführt werden
+* `person_id` ist immer der erste Teil der `session_id`
+* `YYYY` ist vierstellig und muss mit `recording_year` übereinstimmen
+* `SNN` ist die zweistellige Session-Nummer innerhalb genau dieser Person
+* Level, L1 und Standardvarietät bleiben Metadaten und werden nicht in die `session_id` eingebaut
 
 ---
 
 ## 13. Bedeutung der Session-Segmente
 
 ```text
-TARGET_LANGUAGE
+CORPUS_CODE
 SPEAKER_MARKER
-L1 or STANDARD_VARIETY
-LEVEL
-YEAR
-NNN
+NNNN
+
+person_id
+YYYY
+SNN
 ```
 
 Bedeutung:
 
-* `TARGET_LANGUAGE`: ES / FR / EN / DE
-* `SPEAKER_MARKER`: L / N / H
-* `L1`: Erstsprache, z. B. DE, AR, FR
-* `STANDARD_VARIETY`: z. B. ES_STD, MX_STD, GB_STD, US_STD
-* `LEVEL`: A1–C2, immer ein einzelner Wert
-* `YEAR`: zweistellig, z. B. 24, 25
-* `NNN`: laufende Nummer innerhalb der Gruppe
+* `CORPUS_CODE`: ES / FR / EN / DE
+* `SPEAKER_MARKER`: L / N
+* `NNNN`: laufende Personnummer innerhalb von Korpuscode plus Sprecherstatus
+* `person_id`: vollständige Personen-ID
+* `YYYY`: vierstelliges Aufnahmejahr
+* `SNN`: laufende Session-Nummer derselben Person
+
+Regel:
+
+* aktive Speaker-Marker sind nur `L` für `learner` und `N` für `native_speaker`
+* `H` und `heritage_speaker` sind kein aktiver Projektstandard
 
 ---
 
 ## 14. Nummernvergabe
 
-Die laufende Nummer `NNN` wird gruppenbasiert vergeben.
-
-Schlüssel:
-
-```text
-(TARGET_LANGUAGE, SPEAKER_MARKER, PROFILE, YEAR)
-```
-
-Beispiel:
-
-```text
-(ES, L, DE-B2, 24)
-```
-
-Daraus ergeben sich dann z. B.:
-
-```text
-ES-L-DE-B2-24-001
-ES-L-DE-B2-24-002
-ES-L-DE-B2-24-003
-```
+Die Personnummer `NNNN` wird innerhalb von `(CORPUS_CODE, SPEAKER_MARKER)` vergeben. Die Session-Nummer `SNN` wird innerhalb genau einer `person_id` vergeben.
 
 Regeln:
 
-* keine globale Zählung
-* keine chronologische Bedeutung
-* unabhängig vom Aufnahmezeitpunkt
-* neue Sessions werden in ihrer jeweiligen Gruppe fortlaufend ergänzt
+* keine Ableitung der Personnummer aus Level, L1 oder Standardvarietät
+* keine Gruppierung der Session-Nummer nach Level oder Herkunft
+* Follow-up-Aufnahmen derselben Person erhöhen nur `SNN`
+* `recording_year` wird sowohl in `session_id` als auch in den Metadaten geführt und muss konsistent bleiben
 
 ---
 
@@ -654,10 +614,10 @@ Mehrere Aufnahmen derselben Person werden nicht über die `session_id`, sondern 
 Beispiel:
 
 ```text
-person_id = P-0012
+person_id = ES-L-0001
 
-ES-L-DE-B1-24-003   → erste Aufnahme
-ES-L-DE-C1-26-001   → zweite Aufnahme
+ES-L-0001-2026-S01   → erste Aufnahme
+ES-L-0001-2027-S02   → zweite Aufnahme
 ```
 
 Die zeitliche Einordnung erfolgt primär über das Jahr in der `session_id` und zusätzlich über Metadaten.
@@ -678,6 +638,14 @@ follow_up
 ```
 
 Was zwischen den Aufnahmen passiert ist, wird nicht im Feld `context`, sondern an anderer Stelle dokumentiert, z. B. über Sprachaufenthalte, strukturierte `exposure_entries` und Notizen.
+
+Für die Webapp bedeutet das verbindlich:
+
+* `speakers` aggregiert pro `person_id`
+* es gibt genau eine Profilseite pro Person
+* auf dieser Personenseite bleiben alle Sessions sichtbar
+* `recordings` bleibt session- und taskbasiert
+* Native-Speaker-Vergleichsprofile bleiben ein Sonderfall mit genau einer Session pro nativer `person_id`
 
 Regel:
 
@@ -709,11 +677,11 @@ Regel:
 * `origin_region` und `origin_country` sind die aktiven Herkunftsfelder fuer Native-Speaker-Profile
 * `mother_l1` und `father_l1` dokumentieren die sprachbiographische Familienumgebung auf Personenebene
 * `additional_languages` speichert eine normalisierte Liste weiterer Sprachen der Person
+* das allgemeine Modell kann diese sprachbiographischen Personenfelder technisch fuehren; in den aktiven Native-Speaker-Vergleichsprofilen und den aktuellen Dev-Native-Seeds bleiben `l1`, `mother_l1`, `father_l1` und `additional_languages` jedoch ungenutzt
 
 ### ExposureEntry
 
 ```text
-session_id
 country
 duration_months
 type
@@ -723,7 +691,7 @@ exposure_notes
 Regel:
 
 * `exposure_entries` werden in `metadata.json` als Liste von Objekten unter der Session gespeichert
-* im XLSX-Import werden `exposure_entries` als eigene tabellarische Ebene mit Bezug auf `session_id` geführt
+* im Intake-Workbook werden Zeilen des Blatts `Exposure` über `person_id` plus `session_ref` an `Research_Session_Intake` gebunden und danach als `exposure_entries` in die Session-Metadaten serialisiert
 * `duration_months` ist ganzzahlig oder `null`
 * `type` bleibt technisch englisch, zum Beispiel `erasmus`, `study`, `work` oder `travel`
 
@@ -750,7 +718,8 @@ Regel:
 
 * `stays_in_target_country` ist das kanonische boolesche/nullable Summenfeld fuer relevante Aufenthalte im Zielland vor der Aufnahme
 * `exposure_entries` dokumentiert die detaillierte Struktur dieser Aufenthalte, wenn solche Informationen vorliegen
-* die Webapp und neue Importmappings verwenden dafuer nicht mehr den generischen Begriff `exposure` als alleiniges aktives Kernfeld
+* die Runtime arbeitet dafuer mit `stays_in_target_country` und `exposure_entries`; im Intake bleibt das Blatt `Exposure` der kanonische tabellarische Erfassungsort
+* Native Speaker werden im aktiven Forschungs-UI primär über `standard_variety`, `origin_country` und `origin_region` als Vergleichsgrößen beschrieben, nicht über lernendenzentrierte Sprachbiographiefelder
 
 ---
 
@@ -772,8 +741,12 @@ unknown
 ```text
 learner
 native_speaker
-heritage_speaker
 ```
+
+Regel:
+
+* nur `learner` und `native_speaker` sind aktive Projektwerte
+* `heritage_speaker` ist kein aktiver Soll-Stand
 
 ---
 
@@ -785,6 +758,30 @@ fr
 en
 de
 ```
+
+Regel:
+
+* technische Zielsprachenwerte bleiben durchgehend lowercase
+* davon getrennt bleiben `person_id`-Segmente wie `ES` oder `FR` uppercase
+
+---
+
+### `l1_code`
+
+```text
+DE
+ES
+EN
+FR
+IT
+PT
+RU
+```
+
+Regel:
+
+* `l1`, `mother_l1` und `father_l1` greifen auf dieselbe uppercase-Liste wie `l1_code` zurück
+* `target_language` und `l1_code` bleiben bewusst unterschiedlich gecased
 
 ---
 
@@ -842,6 +839,21 @@ follow_up
 
 ---
 
+### `yes_no_unknown`
+
+```text
+yes
+no
+unknown
+```
+
+Regel:
+
+* `unknown` ist die kanonische aktive Kleinform
+* `UNKNOWN` ist kein aktiver Standardwert
+
+---
+
 ### `recorded_by`
 
 Freitextfeld fuer die dokumentierte Person oder Rollenbezeichnung, die eine Session aufgenommen bzw. explorativ verantwortet hat.
@@ -879,7 +891,7 @@ nz_std
 ```text
 fr_std
 ca_std
-ch_std
+fr_ch_std
 be_std
 ```
 
@@ -888,14 +900,45 @@ be_std
 ```text
 de_std
 at_std
-ch_std
+de_ch_std
 de_south_std
 ```
 
 Hinweis:
 
+* `standard_variety` bleibt immer lowercase snake_case
+* Schweizer Varietäten werden aktiv disambiguiert als `fr_ch_std` und `de_ch_std`
+* `ch_std` ist kein aktiver Standardwert
 * feinere Differenzierungen können über Metadaten ergänzt werden
 * Herkunftsregionen werden nicht in der `session_id` kodiert
+
+---
+
+### Intake-Workbook `Vocabularies`
+
+Im aktiven Intake bleibt `Vocabularies` ein breites Kontrollblatt mit genau diesen Spalten:
+
+```text
+gender
+speaker_type
+l1_code
+target_language
+level_code
+level_self
+standard_variety
+context
+exposure_type
+task_type
+recorded_by
+yes_no_unknown
+```
+
+Regel:
+
+* das breite Blatt ist der einzige aktive Soll-Stand fuer das Intake-Workbook
+* eine normalisierte Alternative wie `field_name`/`value`/`label`/`sort_order`/`notes` ist kein aktiver PROMAT-Standard
+* `task_type` führt nur `wordlist`, `text`, `interview`
+* `recorded_by` wird nur dann als kontrollierte Liste gefuehrt, wenn das Projekt dafuer tatsaechlich feste Werte pflegt
 
 ---
 
@@ -915,7 +958,7 @@ Regel:
 * `exposure_entries` enthält bei Bedarf die detaillierte Aufschlüsselung nach `country`, `duration_months`, `type` und `exposure_notes`
 * die Webapp verwendet dafuer die UI-Labels `Sprachaufenthalte` bzw. `Stays in target-language country`
 * in Profilen werden vorhandene `exposure_entries` sichtbar priorisiert; `stays_in_target_country` bleibt die kompakte Fallback- und Filterinformation
-* der frühere generische Begriff `Exposure` ist für neue PROMAT-Workflows nicht mehr der bevorzugte aktive Fachbegriff
+* im Intake-Workbook bleibt `Exposure` der aktive Blattname; ausserhalb dieses Workbook-Kontexts werden fuer Runtime und neue Metadaten die Felder `stays_in_target_country` und `exposure_entries` bevorzugt
 
 ### Kompatibilitaet fuer Bestandsdaten
 
@@ -934,7 +977,8 @@ exposure_notes
 Regel:
 
 * diese Felder gelten nur noch als Kompatibilitaets- oder Importquelle
-* neue Seeds, neue `metadata.json`-Dateien und neue Importmappings sollen `stays_in_target_country` und, wenn vorhanden, strukturierte `exposure_entries` schreiben
+* neue Seeds und neue `metadata.json`-Dateien sollen `stays_in_target_country` und, wenn vorhanden, strukturierte `exposure_entries` schreiben
+* neue Intake-Mappings verwenden dafuer das Blatt `Exposure` mit Bezug auf `person_id` plus `session_ref`
 * aus historischen generischen Exposure-Feldern werden beim Import sowohl die Ja/Nein-Zusammenfassung als auch optional detaillierte `exposure_entries` normalisiert
 
 ---
@@ -944,26 +988,26 @@ Regel:
 Die Aufgabentypen werden intern sprachübergreifend mit stabilen englischen Keys geführt.
 
 ```text
-isolated_speech
-connected_speech
+wordlist
+text
 interview
 ```
 
 Bedeutung:
 
-* `isolated_speech`
+* `wordlist`
   einzelne Wörter oder vergleichbare isolierte Einheiten
   UI-Label:
 
-  * Deutsch: isolierte Aussprache (Wortliste)
-  * Englisch: isolated speech (wordlist)
+  * Deutsch: Wortliste
+  * Englisch: wordlist
 
-* `connected_speech`
+* `text`
   Text, Satzliste oder andere Formen zusammenhängender Aussprache
   UI-Label:
 
-  * Deutsch: zusammenhängende Aussprache (Text/Sätze)
-  * Englisch: connected speech (text/sentences)
+  * Deutsch: Text
+  * Englisch: text
 
 * `interview`
   halbgeleitete Gesprächssituation mit spontaner Aussprache
@@ -1020,8 +1064,8 @@ Normativ:
 Beispiele:
 
 ```text
-/alignment/isolated_speech.TextGrid
-/alignment/isolated_speech.json
+/alignment/wordlist.TextGrid
+/alignment/wordlist.json
 ```
 
 Normativ:
@@ -1060,26 +1104,26 @@ Da der Ordner bereits die `session_id` trägt, sollen Dateinamen innerhalb des S
 Beispiele:
 
 ```text
-/source/isolated_speech.wav
-/source/connected_speech.wav
+/source/wordlist.wav
+/source/text.wav
 /source/interview.wav
 
-/alignment/isolated_speech.TextGrid
-/alignment/isolated_speech.json
-/alignment/connected_speech.TextGrid
+/alignment/wordlist.TextGrid
+/alignment/wordlist.json
+/alignment/text.TextGrid
 /alignment/interview.TextGrid
 
-/derived/isolated_speech.mp3
-/derived/connected_speech.mp3
+/derived/wordlist.mp3
+/derived/text.mp3
 /derived/interview.mp3
 ```
 
 Für Items:
 
 ```text
-/items/isolated_speech/es_wordlist_001.mp3
-/items/isolated_speech/es_wordlist_002.mp3
-/items/connected_speech/es_text_002.mp3
+/items/wordlist/es_wordlist_001.mp3
+/items/wordlist/es_wordlist_002.mp3
+/items/text/es_text_002.mp3
 ```
 
 Regeln:
@@ -1090,7 +1134,7 @@ Regeln:
 Hinweis für aktuelle Dev-Beispieldaten:
 
 * die vorhandenen spanischen Beispiel-WAVs sind de facto `source` und nicht `raw`
-* sie liegen deshalb fachlich korrekt unter `source/isolated_speech.wav`
+* sie liegen deshalb fachlich korrekt unter `source/wordlist.wav`
 * für diese Beispielsessions liegen aktuell keine echten `raw`-Dateien vor
 
 ---

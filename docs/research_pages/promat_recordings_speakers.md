@@ -13,10 +13,12 @@ Dieses Dokument beschreibt den aktuell gültigen Stand der PROMAT-Forschungsseit
 - Die Research-Webapp liest Sessions direkt aus `data/sessions/spanish/{session_id}/metadata.json`.
 - Es gibt aktuell keine separate Research-Metadatentabelle als zweite Laufzeitquelle.
 - Mehrere Sessions derselben Person werden über `person_id` zusammengeführt.
+- Kanonische IDs sind `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` und `session_id = {person_id}-{YYYY}-S{NN}`.
 
 ## Recordings
 
 - `recordings` ist der task-basierte Zugang.
+- Jede Zeile referenziert explizit Person, Session und Task.
 - Die sichtbaren kurzen Task-Namen sind `Wortliste`, `Text` und `Interview`.
 - Die längeren Beschreibungstexte sind fest eingefroren:
 
@@ -24,22 +26,27 @@ Dieses Dokument beschreibt den aktuell gültigen Stand der PROMAT-Forschungsseit
 | --- | --- |
 | Wortliste | Isolierte Aussprache über das Vorlesen einer Wortliste. |
 | Text | Zusammenhängende Aussprache über das Vorlesen eines Textes oder einer Satzliste. |
-| Interview | Reflexion über Aussprache im Interview. |
+| Interview | Halbgeleitete Gesprächssituation mit spontaner Aussprache. |
 
 - Die Ergebnissicht bleibt tabellarisch, kompakt, ruhig und sans-orientiert.
 - Die Aktionsspalte ist task-abhängig und benennt direkt die aktuell gewählte Aufzeichnung.
 - Verfügbarkeit wird aus den dokumentierten `tasks` der Session abgeleitet.
 - Native-Speaker-Sessions bieten keinen Interview-Zugang.
+- Profil-Links aus `recordings` fokussieren dieselbe Personenseite optional über `?session={session_id}`.
 
 ## Speakers und Profilseite
 
 - `speakers` ist der person-basierte Zugang.
-- Karten bleiben kompakt und führen entweder ins Profil oder direkt in verfügbare Aufzeichnungen.
+- Es gibt genau eine Karte pro `person_id`, auch wenn diese Person mehrere Sessions hat.
+- Filter treffen eine Person dann, wenn mindestens eine ihrer Sessions alle aktiven Filter erfüllt.
+- Karten bleiben kompakt und führen entweder ins Profil oder direkt in verfügbare Aufzeichnungen der ausgewählten bzw. gematchten Session.
 - Der Footer-Bereich der Karten heißt `Aufzeichnungen`.
 
 ### Profilsemantik
 
-- Die Session-Box heißt `Ausgewählte Session`.
+- Oben steht ein stabiler Personbereich; darunter folgen alle Sessions dieser Person als eigene Container.
+- Jede Session zeigt ihre eigenen Metadaten, Hinweise und direkt darunter ihre verfügbaren Aufzeichnungen.
+- Die ausgewählte Session heißt `Ausgewählte Session` und bleibt zusätzlich markiert, ohne andere Sessions auszublenden.
 - Das technische Feld `context` bleibt intern, wird aber nicht sichtbar als `baseline` oder `follow_up` ausgegeben.
 - `recorded_by` wird sichtbar als `Explorator:in` gezeigt.
 
@@ -64,15 +71,29 @@ Die Lernenden-Profile zeigen in `Sprachbiographie`:
 
 Native-Speaker-Profile zeigen:
 
+- `Person-ID`
+- `Ausgewählte Session`
+- `Sprechergruppe`
+- `Geschlecht`
+- `Geburtsjahr`
+- `Aufnahmedatum`
+- `Aufnahmejahr`
+- `Explorator:in`
+- `Herkunftsland`
+- `Herkunftsregion`
+- `Standardvarietät`
+
+Sie zeigen bewusst nicht:
+
 - `L1`
 - `L1 der Mutter`
 - `L1 des Vaters`
 - `Zusätzliche Sprachen`
-- `Geschlecht`
-- `Geburtsjahr`
-- `Herkunftsland`
-- `Herkunftsregion`
-- `Standardvarietät`
+- `Sprachaufenthalte`
+- `Level (Selbsteinschätzung)`
+
+Native Speaker dienen im aktiven UI als Vergleichsprofile für Zielsprachenaussprache und nicht als zweite sprachbiographische Untersuchungsgruppe neben den Lernenden.
+Für aktive Vergleichsprofile gilt zusätzlich: genau eine Session pro nativer `person_id`.
 
 ## Aktiver Metadatenvertrag
 
@@ -89,6 +110,8 @@ Native-Speaker-Profile zeigen:
 - `childhood_region`
 - `origin_country`
 - `origin_region`
+
+Das allgemeine Modell kann personbezogene sprachbiographische Felder tragen. In den aktiven Native-Speaker-Vergleichsprofilen und den aktuellen spanischen Dev-Native-Seeds bleiben `l1`, `mother_l1`, `father_l1` und `additional_languages` jedoch ungenutzt.
 
 ### Session-Ebene
 
@@ -116,7 +139,8 @@ Native-Speaker-Profile zeigen:
 ## Sample
 
 - `Sample` bleibt die Proof-Surface für sichtbare Forschungssemantik.
-- Änderungen an Task-Texten, Profilbezeichnungen, `Explorator:in` und `Sprachaufenthalte` müssen dort parallel aktualisiert werden.
+- Änderungen an Task-Texten, Profilbezeichnungen, `Explorator:in`, `Sprachaufenthalte` und der Person-/Session-Struktur müssen dort parallel aktualisiert werden.
+- Native-Speaker-Beispiele in `Sample` folgen derselben schlanken Vergleichslogik wie die aktiven Profile und zeigen keine lernendenzentrierte Sprachbiographie.
 
 ## Bewusst nicht umgesetzt
 
@@ -124,3 +148,4 @@ Native-Speaker-Profile zeigen:
 - kein Doppel-Player
 - keine Vergleichslogik
 - keine zweite Datenquelle neben den dateibasierten Session-Metadaten
+- keine echte XLSX-Importpipeline; die Mapping-Dateien definieren derzeit nur den Vertrag für eine spätere Implementierung mit realen Daten

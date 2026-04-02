@@ -12,7 +12,7 @@
       <div class="pm-profile-hero">
         <div class="pm-profile-hero__header">
           <p class="pm-profile-hero__title">{{ promat_page.profile_header.person_id }}</p>
-          <p class="pm-profile-hero__session">{{ promat_page.profile_header.session_id }}</p>
+          <p class="pm-profile-hero__session">{{ 'Ausgewählte Session' if ui_lang == 'de' else 'Selected session' }}: {{ promat_page.profile_header.selected_session_id }}</p>
         </div>
         <div class="pm-profile-badge-row">
           {% for badge in promat_page.profile_header.badges if badge and badge != '-' %}
@@ -22,9 +22,9 @@
       </div>
 
       <section class="pm-profile-card__section pm-profile-metadata">
-        <h2 class="pm-profile-section__title">{{ promat_page.identity_section.title }}</h2>
+        <h2 class="pm-profile-section__title">{{ promat_page.person_section.title }}</h2>
         <div class="pm-profile-metadata__grid">
-          {% for row in promat_page.identity_section.rows %}
+          {% for row in promat_page.person_section.rows %}
           <div class="pm-profile-metadata__row">
             <p class="pm-profile-metadata__label">{{ row.label }}</p>
             <p class="pm-profile-metadata__value">{{ row.value }}</p>
@@ -32,61 +32,63 @@
           {% endfor %}
         </div>
       </section>
-
-      <section class="pm-profile-card__section pm-profile-metadata">
-        <h2 class="pm-profile-section__title">{{ promat_page.biography_section.title }}</h2>
-        <div class="pm-profile-metadata__grid">
-          {% for row in promat_page.biography_section.rows %}
-          <div class="pm-profile-metadata__row">
-            <p class="pm-profile-metadata__label">{{ row.label }}</p>
-            {% if row.entries is defined and row.entries %}
-            <div class="pm-profile-metadata__rich">
-              <ul class="pm-profile-metadata__list">
-                {% for item in row.entries %}
-                <li class="pm-profile-metadata__list-item">
-                  <span class="pm-profile-metadata__value">{{ item.text }}</span>
-                  {% if item.note %}
-                  <span class="pm-profile-metadata__note">{{ item.note }}</span>
-                  {% endif %}
-                </li>
-                {% endfor %}
-              </ul>
-            </div>
-            {% else %}
-            <p class="pm-profile-metadata__value">{{ row.value }}</p>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </section>
-
-      {% if promat_page.notes %}
-      <section class="pm-profile-card__section pm-profile-notes">
-        <h2 class="pm-profile-section__title">{{ 'Notiz' if ui_lang == 'de' else 'Note' }}</h2>
-        <p>{{ promat_page.notes }}</p>
-      </section>
-      {% endif %}
-
-      {% if promat_page.related_sessions %}
-      <section class="pm-profile-card__section pm-profile-related">
-        <h2 class="pm-profile-section__title">{{ 'Weitere Sessions' if ui_lang == 'de' else 'Additional sessions' }}</h2>
-        <ul class="pm-profile-related__list">
-          {% for session in promat_page.related_sessions %}
-          <li>{{ session.label }}</li>
-          {% endfor %}
-        </ul>
-      </section>
-      {% endif %}
     </section>
 
-    <section class="pm-profile-actions pm-container">
-      <h2 class="pm-profile-section__title">{{ promat_page.recordings_label }}</h2>
-      <div class="pm-profile-task-list">
-        {% for task in promat_page.tasks %}
-        <a class="pm-profile-task-link" href="{{ task.href }}">
-          <span class="pm-profile-task-link__label">{{ task.label }}</span>
-          <span class="pm-profile-task-link__description">{{ task.description }}</span>
-        </a>
+    <section class="pm-profile-actions pm-profile-sessions">
+      <h2 class="pm-profile-section__title">{{ promat_page.sessions_section.title }}</h2>
+      <div class="pm-profile-session-list">
+        {% for session in promat_page.sessions_section.cards %}
+        <article class="pm-container pm-profile-session pm-profile-session--{{ session.accent_modifier }}{{ ' is-selected' if session.is_selected else '' }}">
+          <div class="pm-profile-session__header">
+            <h3 class="pm-profile-session__title">{{ session.session_id }}</h3>
+            {% if session.is_selected %}
+            <span class="pm-profile-session__selected">{{ session.selected_label }}</span>
+            {% endif %}
+          </div>
+
+          <div class="pm-profile-metadata__grid">
+            {% for row in session.rows %}
+            <div class="pm-profile-metadata__row">
+              <p class="pm-profile-metadata__label">{{ row.label }}</p>
+              {% if row.entries is defined and row.entries %}
+              <div class="pm-profile-metadata__rich">
+                <ul class="pm-profile-metadata__list">
+                  {% for item in row.entries %}
+                  <li class="pm-profile-metadata__list-item">
+                    <span class="pm-profile-metadata__value">{{ item.text }}</span>
+                    {% if item.note %}
+                    <span class="pm-profile-metadata__note">{{ item.note }}</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% else %}
+              <p class="pm-profile-metadata__value">{{ row.value }}</p>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+
+          {% if session.notes %}
+          <section class="pm-profile-card__section pm-profile-notes">
+            <h4 class="pm-profile-section__title">{{ 'Notiz' if ui_lang == 'de' else 'Note' }}</h4>
+            <p>{{ session.notes }}</p>
+          </section>
+          {% endif %}
+
+          <section class="pm-profile-card__section pm-profile-recordings">
+            <h4 class="pm-profile-section__title">{{ session.recordings_label }}</h4>
+            <div class="pm-profile-task-list">
+              {% for task in session.tasks %}
+              <a class="pm-profile-task-link" href="{{ task.href }}">
+                <span class="pm-profile-task-link__label">{{ task.label }}</span>
+                <span class="pm-profile-task-link__description">{{ task.description }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </section>
+        </article>
         {% endfor %}
       </div>
     </section>

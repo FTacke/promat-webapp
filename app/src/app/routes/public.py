@@ -520,7 +520,7 @@ def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
         abort(404)
 
     language = get_language(canonical_language_slug)
-    page = build_speaker_profile_page(ui_lang, canonical_language_slug, person_id)
+    page = build_speaker_profile_page(ui_lang, canonical_language_slug, person_id, request.args.get("session"))
     if page is None or language is None:
         abort(404)
 

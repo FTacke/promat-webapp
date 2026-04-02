@@ -21,14 +21,18 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 
 - Verwende `PROMAT_RUNTIME_ROOT` und `PROMAT_PUBLIC_ROOT` als einzige kanonische Runtime-Grenzen.
 - Leite Pfade über `src/app/runtime_paths.py` und `src/app/config/__init__.py` ab, nicht über freie Stringpfade.
+- `speakers` bleibt personbasiert; `recordings` bleibt session- und taskbasiert.
+- `person_id` und `session_id` folgen den kanonischen Formaten `{CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` und `{person_id}-{YYYY}-S{NN}`.
 - Kein View, Helper oder Script in `app/` greift direkt auf `secure/` zu.
 - Öffentliche Inhalte kommen nur aus `public/`, nicht direkt aus `data/`.
 
 ## Technische Begriffe
 
-- Verbindliche Task-Keys sind `isolated_speech`, `connected_speech`, `interview`.
+- Verbindliche Task-Keys sind `wordlist`, `text`, `interview`.
 - Verbindliche Datenbegriffe sind unter anderem `person_id`, `session_id`, `speaker_type`, `target_language`, `file_role`, `standard_variety`.
-- Alte Begriffe wie `wordlist`, `text` oder `reflexion` dürfen nicht als neue technische Standards eingebaut werden.
+- Aktive App-Werte bleiben konsistent: `speaker_type` nur `learner`/`native_speaker`, ID-Marker nur `L`/`N`, `target_language` lowercase und `standard_variety` lowercase snake_case mit `fr_ch_std` bzw. `de_ch_std` statt `ch_std`.
+- Native-Speaker-Vergleichsprofile behalten genau eine Session pro `person_id`; Multi-Session-Aggregation gilt nur für nicht-native Personenprofile.
+- Alte Begriffe wie `isolated_speech`, `connected_speech` oder `reflexion` dürfen nicht als neue technische Standards eingebaut werden.
 
 ## Template- und UI-Regeln
 

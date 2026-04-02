@@ -27,6 +27,7 @@ Kurze Beschreibung des Changes und des gelösten Problems.
 ## Governance-Check
 
 - [ ] keine deutschen technischen Slugs oder alten Legacy-Pfade eingeführt
+- [ ] `person_id`/`session_id` bleiben im kanonischen Format; keine Alt-IDs oder Session-IDs mit Level/L1/Varietät eingeführt
 - [ ] kein Webapp-Zugriff auf `secure/`
 - [ ] keine direkte öffentliche Auslieferung aus `data/`
 - [ ] keine stillen Umbenennungen ohne Doku

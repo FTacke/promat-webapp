@@ -548,16 +548,16 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
             "access": "public",
             "sections": [
                 {
-                    "heading": "Isolierte Aussprache (Wortliste)",
+                    "heading": "Wortliste",
                     "paragraphs": [
                         "Die Wortliste dokumentiert segmentale und prosodische Zielstellen in klar isolierter Produktion.",
-                        "Die technische Aufgabenlogik ist bereits auf den stabilen Task-Key isolated_speech vorbereitet.",
+                        "Die technische Aufgabenlogik ist bereits auf den stabilen Task-Key wordlist vorbereitet.",
                     ],
                 },
                 {
-                    "heading": "Zusammenhängende Aussprache (Text/Sätze)",
+                    "heading": "Text",
                     "paragraphs": [
-                        "Dieser Teil erfasst Aussprache in gelesenen oder eng geführten Satz- und Textpassagen und bereitet den Task-Key connected_speech vor.",
+                        "Dieser Teil erfasst Aussprache in gelesenen oder eng geführten Satz- und Textpassagen und bereitet den Task-Key text vor.",
                     ],
                 },
                 {
@@ -613,15 +613,15 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
             "access": "protected",
             "sections": [
                 {
-                    "heading": "Isolierte Aussprache (Wortliste)",
+                    "heading": "Wortliste",
                     "paragraphs": [
-                        "Einzelwörter und kurze isolierte Einheiten für segmentale und prosodische Vergleiche, technisch unter isolated_speech vorbereitet.",
+                        "Einzelwörter und kurze isolierte Einheiten für segmentale und prosodische Vergleiche, technisch unter wordlist vorbereitet.",
                     ],
                 },
                 {
-                    "heading": "Zusammenhängende Aussprache (Text/Sätze)",
+                    "heading": "Text",
                     "paragraphs": [
-                        "Zusammenhängende Aussprache in gelesenen oder eng geführten Satz- und Textpassagen mit dem technischen Task-Key connected_speech.",
+                        "Zusammenhängende Aussprache in gelesenen oder eng geführten Satz- und Textpassagen mit dem technischen Task-Key text.",
                     ],
                 },
                 {

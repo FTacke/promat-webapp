@@ -1,135 +1,128 @@
 # Session Metadata XLSX Mapping
 
-Dieses Dokument definiert den aktuellen kanonischen XLSX-Importvertrag für PROMAT-Session-Metadaten.
+Dieses Dokument definiert den aktiven XLSX-Importvertrag fuer das PROMAT-Intake-Workbook. Es folgt dem Endstand aus `docs/data-intake/README_promat_intake_template_revised.md` und fuehrt keine parallele zweite Mapping-Logik ein.
 
 ## Status
 
 - Die aktive Research-Webapp liest Sessions derzeit direkt aus `data/sessions/{language}/{session_id}/metadata.json`.
-- Es gibt aktuell noch keine verdrahtete Research-Metadatentabelle in PostgreSQL.
-- Der Importvertrag ist bereits in drei fachliche Ebenen gegliedert: Person, Session und `exposure_entries`.
+- Eine echte XLSX-Importpipeline ist weiterhin nicht verdrahtet; die Mapping-Dateien definieren nur den verbindlichen Vertrag fuer die spaetere Implementierung.
+- Das Intake-Workbook ist person-, session-intake- und exposurebezogen aufgebaut; `speaker_type` ist personbezogen, Exposure ist ueber `session_ref` an die Intake-Session gebunden.
 
 ## Workbook-Struktur
 
-- Worksheet `sessions`: genau eine Zeile pro `session_id`; enthält alle Person- und Session-Felder.
-- Worksheet `exposure_entries`: null bis viele Zeilen pro `session_id`; enthält detaillierte Sprachaufenthalte für Lernenden-Sessions.
+- `Secure_Person_Intake`: Klardaten, ausserhalb des Research-Runtimes.
+- `Research_Person`: genau eine Zeile pro `person_id`.
+- `Research_Session_Intake`: eine Zeile pro geplanter oder erfasster Session.
+- `Exposure`: null bis viele Zeilen pro Kombination aus `person_id` und `session_ref`.
+- `Vocabularies`: breites Kontrollblatt mit stabilen Werte-Spalten.
 
 ## Grundregeln
 
-- XLSX-Spalten verwenden dieselben englischen Snake-Case-Namen wie die kanonischen `metadata.json`-Keys.
-- Leere XLSX-Zellen werden als `null` behandelt.
-- `speaker_type`, `context`, `standard_variety` und `type` in `exposure_entries` verwenden kontrollierte technische Vokabulare.
-- `recorded_by` bleibt technisch englisch benannt, auch wenn die UI dafür lokalisierte Labels wie `Explorator:in` zeigt.
-- `context` bleibt technisch und wird in Profilen nicht als Rohwert `baseline` oder `follow_up` sichtbar wiedergegeben.
-- `additional_languages` wird im Worksheet `sessions` als JSON-Array-String serialisiert, zum Beispiel `["English", "French"]`.
-- Wenn für eine Session Zeilen in `exposure_entries` vorliegen, soll `stays_in_target_country` in `sessions` auf `TRUE` gesetzt werden.
+- XLSX-Spalten verwenden englische Snake-Case-Namen.
+- `person_id` folgt `{CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}`.
+- `session_ref` ist die lokale Session-Referenz im Intake, z. B. `S01`.
+- `session_id` bleibt im Intake leer und wird spaeter aus `person_id`, `recording_year` und `session_ref` abgeleitet.
+- `speaker_type` steht nur in `Research_Person`, nicht in `Research_Session_Intake`.
+- Exposure bleibt sessionbezogen und wird ueber `person_id` plus `session_ref` verknuepft.
+- Die kanonische Form fuer unbekannte, aber relevante Werte ist `unknown` in Kleinbuchstaben.
+- Fuer `speaker_type` werden aktuell nur die aktiv genutzten Werte gepflegt: `learner`, `native_speaker`.
+- `target_language` fuehrt nur die lowercase-Werte `es`, `fr`, `en`, `de`.
+- `standard_variety` fuehrt nur lowercase snake_case und disambiguiert Schweizer Varietaeten als `fr_ch_std` und `de_ch_std`.
+- `l1_code` bleibt uppercase und gilt gleichermassen fuer `l1`, `mother_l1` und `father_l1`.
+- Technische Task-Werte sind `wordlist`, `text`, `interview`; alte Parallelwerte wie `isolated_speech` oder `connected_speech` sind im Intake unzulaessig.
 
-## Person- und Session-Felder im Worksheet `sessions`
+## Worksheet `Research_Person`
 
-| XLSX column | Scope | metadata.json key | future DB column | Type | Nullable | Applies to | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| person_id | person | person_id | person_id | string | no | all | Stable person identifier, e.g. `P-0001` |
-| session_id | session | session_id | session_id | string | no | all | Stable session identifier, e.g. `ES-L-DE-A1-26-001` |
-| target_language | session | target_language | target_language | string | no | all | Controlled vocabulary: `es`, `fr`, `en`, `de` |
-| speaker_type | session | speaker_type | speaker_type | string | no | all | Controlled vocabulary: `learner`, `native_speaker`, `heritage_speaker` |
-| l1 | person | l1 | l1 | string | yes | all | Primary L1 label for the recorded person |
-| mother_l1 | person | mother_l1 | mother_l1 | string | yes | all | Person-level family-language field |
-| father_l1 | person | father_l1 | father_l1 | string | yes | all | Person-level family-language field |
-| additional_languages | person | additional_languages | additional_languages | json-array-string | yes | all | Serialized JSON array in a single cell |
-| gender | person | gender | gender | string | yes | all | Controlled vocabulary: `female`, `male`, `diverse`, `unknown` |
-| birth_year | person | birth_year | birth_year | integer | yes | all | Four-digit year |
-| current_region | person | current_region | current_region | string | yes | learner | Active learner-only regional field |
-| childhood_region | person | childhood_region | childhood_region | string | yes | learner | Active learner-only regional field |
-| origin_country | person | origin_country | origin_country | string | yes | native_speaker | Active native-only origin field |
-| origin_region | person | origin_region | origin_region | string | yes | native_speaker | Active native-only origin field |
-| level_code | session | level_code | level_code | string | yes | learner | Controlled vocabulary: `A1`, `A2`, `B1`, `B2`, `C1`, `C2` |
-| level_self | session | level_self | level_self | string | yes | learner | May contain ranges such as `A2-B1` |
-| standard_variety | session | standard_variety | standard_variety | string | yes | native_speaker | Controlled vocabulary depends on target language |
-| recording_year | session | recording_year | recording_year | integer | no | all | Year of recording |
-| recording_date | session | recording_date | recording_date | date | yes | all | ISO date, e.g. `2026-03-10` |
-| context | session | context | context | string | yes | all | Controlled vocabulary: `baseline`, `follow_up` |
-| recorded_by | session | recorded_by | recorded_by | string | yes | all | Person or documented role responsible for recording the session |
-| stays_in_target_country | session | stays_in_target_country | stays_in_target_country | boolean | yes | learner | Summary field for profile/filter logic |
-| notes | session | notes | notes | string | yes | all | Free text note |
+| XLSX column | Scope | future metadata key | Type | Nullable | Applies to | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| person_id | person | person_id | string | no | all | Stable person identifier |
+| speaker_type | person | speaker_type | string | no | all | Controlled vocabulary: `learner`, `native_speaker` |
+| l1 | person | l1 | string | yes | all | Uses the same value list as `l1_code` |
+| mother_l1 | person | mother_l1 | string | yes | all | Uses the same value list as `l1_code` |
+| father_l1 | person | father_l1 | string | yes | all | Uses the same value list as `l1_code` |
+| additional_languages | person | additional_languages | string | yes | all | Free collection field, e.g. `EN; FR` |
+| gender | person | gender | string | yes | all | Controlled vocabulary: `female`, `male`, `diverse`, `unknown` |
+| birth_year | person | birth_year | integer | yes | all | Four-digit year |
+| current_region | person | current_region | string | yes | learner | Learner-oriented regional field |
+| childhood_region | person | childhood_region | string | yes | learner | Learner-oriented regional field |
+| origin_country | person | origin_country | string | yes | native_speaker | Native comparison field |
+| origin_region | person | origin_region | string | yes | native_speaker | Native comparison field |
+| needs_review | person | needs_review | string | yes | all | Controlled vocabulary: `yes`, `no`, `unknown` |
+| person_notes | person | person_notes | string | yes | all | Optional intake note |
 
-## Detaillierte Sprachaufenthalte im Worksheet `exposure_entries`
+## Worksheet `Research_Session_Intake`
 
-| XLSX column | Scope | metadata.json key | future DB column | Type | Nullable | Applies to | Notes |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| session_id | exposure | session_id | session_id | string | no | learner | Foreign key to the `sessions` worksheet |
-| entry_index | exposure | entry_index | entry_index | integer | no | learner | Stable row order within one session |
-| country | exposure | country | country | string | no | learner | Technical country value; UI may localize separately |
-| duration_months | exposure | duration_months | duration_months | integer | yes | learner | Integer month count or `null` |
-| type | exposure | type | type | string | yes | learner | Controlled vocabulary such as `erasmus`, `study`, `work`, `travel` |
-| exposure_notes | exposure | exposure_notes | exposure_notes | string | yes | learner | Optional free-text note |
+| XLSX column | Scope | future metadata key | Type | Nullable | Applies to | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| person_id | session | person_id | string | no | all | Foreign key to `Research_Person` |
+| session_ref | session | session_ref | string | no | all | Local intake session ref such as `S01` |
+| session_id | session | session_id | string | yes | all | Must stay empty in intake |
+| target_language | session | target_language | string | no | all | Controlled vocabulary: `es`, `fr`, `en`, `de` |
+| standard_variety | session | standard_variety | string | yes | native_speaker | Lowercase snake_case, e.g. `es_std`, `mx_std`, `fr_ch_std`, `de_ch_std` |
+| level_self | session | level_self | string | yes | learner | Free or controlled self-assessment value |
+| level_code | session | level_code | string | yes | learner | Controlled vocabulary: `A1`, `A2`, `B1`, `B2`, `C1`, `C2` |
+| recording_year | session | recording_year | integer | no | all | Used later to derive `session_id` |
+| recording_date | session | recording_date | date | yes | all | ISO date |
+| recorded_by | session | recorded_by | string | yes | all | Technical field name stays English |
+| context | session | context | string | yes | all | Controlled vocabulary: `baseline`, `follow_up` |
+| needs_review | session | needs_review | string | yes | all | Controlled vocabulary: `yes`, `no`, `unknown` |
+| session_notes | session | session_notes | string | yes | all | Optional intake note |
 
-## Serialisierungsregeln für `metadata.json`
+## Worksheet `Exposure`
 
-- Das Worksheet `sessions` wird in die flachen Person- und Session-Felder von `metadata.json` geschrieben.
-- Die Zeilen des Worksheets `exposure_entries` werden nach `session_id` gruppiert und als Liste unter `metadata.json.exposure_entries` serialisiert.
-- `additional_languages` wird beim Import aus dem JSON-Array-String in eine JSON-Liste umgewandelt.
-- Wenn keine Zeilen für `exposure_entries` vorliegen, darf `metadata.json.exposure_entries` fehlen oder als leere Liste geschrieben werden.
+| XLSX column | Scope | future metadata key | Type | Nullable | Applies to | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+| person_id | exposure | person_id | string | no | learner | Must match `Research_Person.person_id` |
+| session_ref | exposure | session_ref | string | no | learner | Must match `Research_Session_Intake.session_ref` |
+| target_language | exposure | target_language | string | no | learner | Controlled vocabulary: `es`, `fr`, `en`, `de` |
+| country | exposure | country | string | yes | learner | `unknown` allowed if relevant but not known |
+| duration_months | exposure | duration_months | integer | yes | learner | Integer or empty |
+| exposure_type | exposure | type | string | yes | learner | Controlled vocabulary from `Vocabularies.exposure_type` |
+| exposure_notes | exposure | exposure_notes | string | yes | learner | Optional note |
+| needs_review | exposure | needs_review | string | yes | learner | Controlled vocabulary: `yes`, `no`, `unknown` |
 
-## Beispiel Lernenden-Session
+## Worksheet `Vocabularies`
 
-### Worksheet `sessions`
-
-```text
-person_id=P-0001
-session_id=ES-L-DE-A1-26-001
-target_language=es
-speaker_type=learner
-l1=DE
-mother_l1=DE
-father_l1=PL
-additional_languages=["English", "French"]
-gender=female
-birth_year=1998
-current_region=Berlin, Germany
-childhood_region=Saxony, Germany
-origin_country=
-origin_region=
-level_code=A1
-level_self=A1
-standard_variety=
-recording_year=2026
-recording_date=2026-03-10
-context=baseline
-recorded_by=Ana Romero
-stays_in_target_country=TRUE
-notes=Fully fictional local dev seed mapped from data/example_data/test_person_ (1).*
-```
-
-### Worksheet `exposure_entries`
+Breites Kontrollblatt mit genau diesen Spalten:
 
 ```text
-session_id=ES-L-DE-A1-26-001 | entry_index=1 | country=spain | duration_months=6 | type=erasmus | exposure_notes=Austauschsemester in Madrid.
-session_id=ES-L-DE-A1-26-001 | entry_index=2 | country=mexico | duration_months=2 | type=travel | exposure_notes=
+gender
+speaker_type
+l1_code
+target_language
+level_code
+level_self
+standard_variety
+context
+exposure_type
+task_type
+recorded_by
+yes_no_unknown
 ```
 
-## Beispiel Native-Speaker-Session
+Regeln:
 
-```text
-person_id=P-0002
-session_id=ES-N-ES_STD-26-001
-target_language=es
-speaker_type=native_speaker
-l1=ES
-mother_l1=ES
-father_l1=ES
-additional_languages=["English"]
-gender=male
-birth_year=1992
-current_region=
-childhood_region=
-origin_country=Spain
-origin_region=Castile and Leon
-level_code=
-level_self=
-standard_variety=es_std
-recording_year=2026
-recording_date=2026-03-10
-context=baseline
-recorded_by=Ana Romero
-stays_in_target_country=
-notes=Fully fictional local dev seed mapped from data/example_data/test_person_ (2).*
-```
+- `speaker_type` fuehrt aktuell nur `learner` und `native_speaker`.
+- `l1_code` bleibt uppercase, z. B. `DE`, `ES`, `EN`, `FR`, `IT`, `PT`, `RU`.
+- `target_language` fuehrt nur `es`, `fr`, `en`, `de`.
+- `standard_variety` fuehrt nur lowercase snake_case; `ch_std` ist kein aktiver Wert, stattdessen `fr_ch_std` bzw. `de_ch_std`.
+- `task_type` fuehrt `wordlist`, `text`, `interview`.
+- `yes_no_unknown` verwendet `yes`, `no`, `unknown`.
+- `Vocabularies` bleibt das breite Kontrollblatt; eine normalisierte Alternative wie `field_name`/`value`/`label`/`sort_order`/`notes` ist kein aktiver Soll-Stand.
+- `recorded_by` wird nur dann als kontrollierte Liste gefuehrt, wenn das Projekt wirklich mit festen Werten arbeitet.
+
+## Projektion in `metadata.json`
+
+- `Research_Person` liefert die personenbezogenen Felder fuer jede spaetere Session-Metadatei.
+- `Research_Session_Intake` liefert die sessionbezogenen Felder.
+- `Exposure` wird nach `person_id` plus `session_ref` gruppiert und als `exposure_entries` serialisiert.
+- Aus vorhandenen Exposure-Zeilen wird fuer Lernenden-Sessions zusaetzlich das Summenfeld `stays_in_target_country` abgeleitet.
+- `tasks` in `metadata.json` werden nicht direkt als eigenes Intake-Blatt erfasst; ihre erlaubten technischen Werte werden aber ueber `Vocabularies.task_type` verbindlich festgelegt.
+
+## Validierungsregeln
+
+- Jede `Exposure`-Zeile muss zu einer vorhandenen Kombination aus `person_id` und `session_ref` passen.
+- Native-Speaker-Vergleichsprofile sollen im Intake in der Regel genau eine Session mit `session_ref = S01` haben.
+- `standard_variety` bleibt bei Lernenden leer.
+- `level_self` und `level_code` bleiben bei Native Speakers leer.
+- Wenn ein Feld nicht relevant ist, bleibt es leer und wird nicht mit `unknown` befuellt.

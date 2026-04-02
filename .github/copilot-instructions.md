@@ -33,6 +33,12 @@ Before changing architecture, routing, data paths, governance files, or repo str
 - Before changing DB schemas, seed paths, import paths, or local Dev setup, first inspect the existing PostgreSQL structure, env/compose/docker wiring, migration files, and current Dev data expectations. Extend existing structures instead of creating side structures.
 - Do not create a second data store, DB file, seed path, or temporary migration detour if the existing architecture can be extended directly.
 - Dev test data may be fictional, but must still follow the canonical project model: stable `person_id` and `session_id` formats, prod-like seed/import direction, and the session filesystem under `data/sessions/{language}/{session_id}/`.
+- Canonical research IDs are `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` and `session_id = {person_id}-{YYYY}-S{NN}`. Do not reintroduce legacy session-derived person IDs or old session formats that encode level, L1, or variety directly into `session_id`.
+- Active speaker markers are only `L` and `N`, matching `learner` and `native_speaker`; do not reintroduce `H` or `heritage_speaker` as an active project standard.
+- Active technical research task keys are `wordlist`, `text`, and `interview`. Do not reintroduce `isolated_speech` or `connected_speech` outside clearly historical context.
+- Intake workbook end state is binding for import work: `speaker_type` belongs to `Research_Person`; `Research_Session_Intake` starts with `person_id`, `session_ref`, `session_id`; `session_id` stays empty in intake; `Exposure` links through `person_id` plus `session_ref`; `Vocabularies` stays a broad worksheet, not a normalized field-value sheet.
+- Active technical vocabulary casing is binding: `target_language` uses `es`/`fr`/`en`/`de`, `standard_variety` uses lowercase snake_case with `fr_ch_std` and `de_ch_std`, `unknown` stays lowercase, and `l1_code` stays uppercase.
+- `speakers` must stay person-based, `recordings` must stay session-/task-based, and native-speaker comparison profiles must map one `person_id` to exactly one session.
 - Future item splitting should follow `TextGrid -> alignment JSON -> item splits` and cut from `source/{task}.wav`.
 - Do not make silent architecture decisions; update governance and documentation in the same run.
 

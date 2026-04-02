@@ -45,8 +45,11 @@
         <a class="pm-speaker-card__body" href="{{ card.profile_href }}">
           <div class="pm-speaker-card__header">
             <p class="pm-speaker-card__eyebrow">{{ card.eyebrow }}</p>
-            <p class="pm-speaker-card__session">{{ card.session_id }}</p>
             <p class="pm-speaker-card__person">{{ card.person_id }}</p>
+            <p class="pm-speaker-card__session"><span class="pm-speaker-card__session-label">{{ card.selected_session_label }}:</span> {{ card.selected_session_id }}</p>
+            {% if card.match_note %}
+            <p class="pm-speaker-card__match">{{ card.match_note }}</p>
+            {% endif %}
           </div>
           <div class="pm-speaker-card__meta">
             {% for row in card.meta_rows %}
@@ -64,6 +67,7 @@
             <a class="pm-speaker-task-link" href="{{ task_link.href }}">{{ task_link.label }}</a>
             {% endfor %}
           </div>
+          <a class="pm-research-inline-action pm-speaker-card__profile-link" href="{{ card.profile_href }}">{{ card.profile_label }}</a>
         </footer>
       </article>
       {% endfor %}

@@ -267,12 +267,20 @@
   --pm-badge-min-height: 2rem;
   --pm-badge-padding-inline: 0.72rem;
   --pm-badge-font-size: var(--pm-type-meta-size);
-  --pm-speaker-level-a1: color-mix(in srgb, var(--promat-wordmark-accent) 88%, var(--book-accent) 12%);
-  --pm-speaker-level-a2: color-mix(in srgb, var(--promat-wordmark-accent) 70%, var(--book-accent) 30%);
-  --pm-speaker-level-b1: color-mix(in srgb, var(--promat-wordmark-accent) 50%, var(--book-accent) 50%);
-  --pm-speaker-level-b2: color-mix(in srgb, var(--promat-wordmark-accent) 28%, var(--book-accent) 72%);
-  --pm-speaker-level-c1: color-mix(in srgb, var(--promat-wordmark-accent) 16%, var(--book-accent) 84%);
-  --pm-speaker-level-c2: color-mix(in srgb, var(--promat-wordmark-accent) 8%, var(--book-accent) 92%);
+  --pm-research-level-a1: color-mix(in srgb, var(--promat-wordmark-accent) 88%, var(--book-accent) 12%);
+  --pm-research-level-a2: color-mix(in srgb, var(--promat-wordmark-accent) 70%, var(--book-accent) 30%);
+  --pm-research-level-b1: color-mix(in srgb, var(--promat-wordmark-accent) 50%, var(--book-accent) 50%);
+  --pm-research-level-b2: color-mix(in srgb, var(--promat-wordmark-accent) 28%, var(--book-accent) 72%);
+  --pm-research-level-c1: color-mix(in srgb, var(--promat-wordmark-accent) 16%, var(--book-accent) 84%);
+  --pm-research-level-c2: color-mix(in srgb, var(--promat-wordmark-accent) 8%, var(--book-accent) 92%);
+  --pm-speaker-level-a1: var(--pm-research-level-a1);
+  --pm-speaker-level-a2: var(--pm-research-level-a2);
+  --pm-speaker-level-b1: var(--pm-research-level-b1);
+  --pm-speaker-level-b2: var(--pm-research-level-b2);
+  --pm-speaker-level-c1: var(--pm-research-level-c1);
+  --pm-speaker-level-c2: var(--pm-research-level-c2);
+  --pm-session-selected-ring: color-mix(in srgb, var(--promat-wordmark-accent) 26%, white 74%);
+  --pm-session-selected-shadow: 0 0 0 2px var(--pm-session-selected-ring);
 
   --promat-shell-gap: var(--pm-space-xl);
   --promat-shell-inline-padding: var(--promat-content-offset);
