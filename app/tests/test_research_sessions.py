@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from flask import Flask
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -16,6 +17,8 @@ os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app.config.data_conventions import build_person_id, build_session_id, parse_person_id, parse_session_id
+from app.research_views import build_recordings_page, build_speaker_profile_page, build_speakers_page
+from app.routes.public import blueprint as public_blueprint
 from app.research_sessions import (
     load_language_sessions,
     load_person_records,
@@ -43,6 +46,14 @@ def runtime_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     _clear_research_caches()
 
 
+@pytest.fixture
+def url_app() -> Flask:
+    app = Flask(__name__)
+    app.config["SERVER_NAME"] = "promat.test"
+    app.register_blueprint(public_blueprint)
+    return app
+
+
 def _write_session(runtime_root: Path, language_slug: str, session_id: str, payload: dict[str, object]) -> None:
     session_dir = runtime_root / "data" / "sessions" / language_slug / session_id
     session_dir.mkdir(parents=True, exist_ok=True)
@@ -66,6 +77,8 @@ def _learner_payload(
     level_code: str,
     context: str,
     task_types: tuple[str, ...],
+    exposure_entries: list[dict[str, object]] | None = None,
+    stays_in_target_country: bool | None = True,
 ) -> dict[str, object]:
     return {
         "person_id": person_id,
@@ -86,8 +99,8 @@ def _learner_payload(
         "recording_date": recording_date,
         "context": context,
         "recorded_by": "Ana Romero",
-        "stays_in_target_country": True,
-        "exposure_entries": [],
+        "stays_in_target_country": stays_in_target_country,
+        "exposure_entries": exposure_entries or [],
         "notes": "test learner session",
         "tasks": [_task(task_type) for task_type in task_types],
     }
@@ -222,3 +235,209 @@ def test_native_person_with_multiple_sessions_raises(runtime_env: Path) -> None:
 
     with pytest.raises(ValueError, match="native_speaker person_id must map to exactly one session"):
         load_person_records("spanish")
+
+
+def test_speakers_cards_use_person_primary_and_no_match_note(runtime_env: Path, url_app: Flask) -> None:
+    baseline_session = "ES-L-0001-2026-S01"
+    follow_up_session = "ES-L-0001-2027-S02"
+
+    _write_session(
+        runtime_env,
+        "spanish",
+        baseline_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=baseline_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A1",
+            context="baseline",
+            task_types=("wordlist",),
+        ),
+    )
+    _write_session(
+        runtime_env,
+        "spanish",
+        follow_up_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=follow_up_session,
+            recording_year=2027,
+            recording_date="2027-03-12",
+            level_code="A2",
+            context="follow_up",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speakers_page("de", "spanish", {"level": "A1"})
+
+    assert len(page["cards"]) == 1
+    card = page["cards"][0]
+    assert card["person_id"] == "ES-L-0001"
+    assert card["selected_session_id"] == baseline_session
+    assert "match_note" not in card
+    assert [task["label"] for task in card["task_links"]] == ["Wortliste"]
+
+
+def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+            exposure_entries=[
+                {"country": "Spain", "duration_months": 6, "type": "erasmus", "exposure_notes": "Austauschsemester in Madrid."},
+                {"country": "Mexico", "duration_months": 2, "type": "travel", "exposure_notes": ""},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0001", session_id)
+
+    assert page is not None
+    assert page["title"] == "Profil"
+    assert page["content_header"]["title"] == "Profil"
+    assert page["content_header"]["breadcrumbs"][-1]["label"] == "Profil"
+    assert page["person_section"]["title"] == "Profildaten"
+    assert page["content_header"]["intro"] == "Profil mit Personendaten und allen zugehörigen Sessions und Aufzeichnungen."
+    assert page["profile_header"]["session_count_label"] == "Zugeordnete Sessions"
+    assert page["profile_header"]["session_count_value"] == 1
+
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
+    assert [entry["text"] for entry in exposure_row["entries"]] == [
+        "Spain · 6 Monate · Erasmus",
+        "Mexico · 2 Monate · Reise",
+    ]
+    assert [entry["note"] for entry in exposure_row["entries"]] == ["Austauschsemester in Madrid.", ""]
+    assert [task["key"] for task in page["sessions_section"]["cards"][0]["tasks"]] == ["wordlist", "text", "interview"]
+    assert all(not task["is_disabled"] for task in page["sessions_section"]["cards"][0]["tasks"])
+
+
+def test_profile_page_supports_single_exposure_entry_without_note(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0002-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0002",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text"),
+            exposure_entries=[
+                {"country": "Spain", "duration_months": 3, "type": "study", "exposure_notes": ""},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0002", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "Spain · 3 Monate · Studium", "note": ""}]
+
+
+def test_profile_page_preserves_long_exposure_note_for_wrapping(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0005-2026-S01"
+    long_note = "Längerer Freitext zur Reise, der bewusst mehrere Wortgruppen enthält und in schmaleren Layouts sauber umbrechen soll."
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0005",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B2",
+            context="baseline",
+            task_types=("wordlist", "text"),
+            exposure_entries=[
+                {"country": "Spain", "duration_months": 4, "type": "work", "exposure_notes": long_note},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0005", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "Spain · 4 Monate · Arbeit", "note": long_note}]
+
+
+def test_recordings_page_combines_session_and_person_in_leading_column(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    native_session = "ES-N-0001-2026-S01"
+
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
+
+    with url_app.test_request_context():
+        page = build_recordings_page("de", "spanish", {"task": "wordlist"})
+
+    assert page["columns"]["recording"] == "Aufzeichnung (Sprecher:in)"
+    assert page["columns"]["context"] == "Niveau"
+    assert page["columns"]["detail"] == "L1"
+    first_row = page["results"][0]
+    assert "session_secondary" not in first_row
+    assert first_row["person_href"].endswith(f"/de/research/spanish/speakers/{first_row['person_id']}?session={first_row['session_id']}")
+
+
+def test_profile_header_shows_session_count_and_native_interview_disabled(runtime_env: Path, url_app: Flask) -> None:
+    native_session = "ES-N-0001-2026-S01"
+    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-N-0001", native_session)
+
+    assert page is not None
+    assert page["profile_header"]["session_count_label"] == "Zugeordnete Sessions"
+    assert page["profile_header"]["session_count_value"] == 1
+    tasks = page["sessions_section"]["cards"][0]["tasks"]
+    assert [task["key"] for task in tasks] == ["wordlist", "text", "interview"]
+    assert [task["is_disabled"] for task in tasks] == [False, False, True]
+    assert tasks[-1]["state_label"] == "Nicht verfügbar"
+
+
+def test_recordings_page_keeps_disabled_interview_panel_and_blank_native_columns(runtime_env: Path, url_app: Flask) -> None:
+    native_session = "ES-N-0001-2026-S01"
+    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
+
+    with url_app.test_request_context():
+        page = build_recordings_page("de", "spanish", {"task": "wordlist", "speaker_type": "native_speaker"})
+
+    assert [panel["key"] for panel in page["task_panels"]] == ["wordlist", "text", "interview"]
+    assert [panel["is_disabled"] for panel in page["task_panels"]] == [False, False, True]
+    assert page["task_panels"][-1]["href"] is None
+    native_row = page["results"][0]
+    assert native_row["context_value"] == ""
+    assert native_row["detail_value"] == ""

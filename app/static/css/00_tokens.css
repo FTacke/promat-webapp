@@ -95,6 +95,10 @@
   --pm-space-lg: 32px;
   --pm-space-xl: 48px;
   --pm-space-xxl: 60px;
+  --pm-divider-space-before: var(--pm-space-sm);
+  --pm-divider-space-after: var(--pm-space-sm);
+  --pm-divider-block-gap: var(--pm-divider-space-after);
+  --pm-text-muted-strong: color-mix(in srgb, var(--book-muted) 28%, var(--pm-surface-paper) 72%);
 
   --pm-type-brand-family: var(--book-font-ui);
   --pm-type-brand-size: clamp(1.2rem, 1.08rem + 0.32vw, 1.42rem);

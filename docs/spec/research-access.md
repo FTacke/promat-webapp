@@ -46,8 +46,12 @@ This file is the binding source of truth for the active research-access model in
 
 - One card per `person_id`.
 - Cards show reduced person-facing metadata.
+- `person_id` is the dominant primary line on the card.
+- The selected session is shown as a secondary line under `person_id`.
 - The footer label is `Aufzeichnungen`.
-- Cards expose direct task links for the currently selected or matched session.
+- Cards expose compact direct task links for the currently selected or matched session.
+- The profile CTA remains visually secondary to the card identity and recording links.
+- The UI does not show a separate `Treffer über ...` match note on the card.
 
 ### Matching behavior
 
@@ -59,6 +63,8 @@ This file is the binding source of truth for the active research-access model in
 
 ### Shared profile semantics
 
+- The page is labeled `Profil` in the German UI and `Profile` in the English UI.
+- The profile header remains person-based and shows the number of associated sessions, not the currently selected session.
 - A stable person section appears first.
 - All sessions of that person appear below as separate session containers.
 - Each session container shows its own metadata and its own recording links.
@@ -84,6 +90,7 @@ Rules:
 
 - `Sprachaufenthalte` prioritizes structured `exposure_entries`.
 - If no detailed entries exist, `stays_in_target_country` remains the compact fallback.
+- Structured exposure entries are rendered as a simple vertical list with one primary summary line per stay and an optional secondary note line.
 
 ### Native-speaker profile semantics
 
@@ -140,6 +147,16 @@ Additional rule:
 
 - Task availability is derived from documented session tasks.
 - Native-speaker sessions do not offer `interview`.
+- Tasks that are unavailable in the current UI context may still remain visible as disabled, non-interactive panels or links.
+
+## Recordings Table Semantics
+
+- The leading recordings-table column is `Aufzeichnung (Sprecher:in)` in the German UI.
+- That leading column shows `session_id` as the primary line and linked `person_id` as the quieter secondary line.
+- The recordings table does not use a separate standalone `person_id` column.
+- The UI does not repeat the recording year as a second line below `session_id`.
+- The learner-facing metadata columns are labeled `Niveau` and `L1`.
+- Native-speaker rows leave `Niveau` and `L1` empty instead of reusing variety or origin values in those columns.
 
 ## Active UI-Metadata Contract
 

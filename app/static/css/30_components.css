@@ -337,6 +337,19 @@ textarea:focus-visible {
   color: var(--pm-text-accent);
 }
 
+.pm-task-panel.is-disabled,
+.pm-profile-task-link.is-disabled {
+  border-color: var(--pm-border-subtle);
+  background: var(--pm-surface-neutral);
+  color: var(--book-muted);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.pm-text-muted-strong {
+  color: var(--pm-text-muted-strong);
+}
+
 .pm-task-panel {
   align-items: flex-start;
   justify-content: flex-start;
@@ -364,6 +377,24 @@ textarea:focus-visible {
   font-size: var(--pm-type-meta-size);
   letter-spacing: var(--pm-type-meta-tracking);
   color: var(--pm-text-accent);
+}
+
+.pm-task-panel__state,
+.pm-profile-task-link__state {
+  margin-top: auto;
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  letter-spacing: var(--pm-type-meta-tracking);
+  color: var(--book-muted);
+}
+
+.pm-task-panel.is-disabled .pm-task-panel__label,
+.pm-task-panel.is-disabled .pm-task-panel__description,
+.pm-task-panel.is-disabled .pm-task-panel__state,
+.pm-profile-task-link.is-disabled .pm-profile-task-link__label,
+.pm-profile-task-link.is-disabled .pm-profile-task-link__description,
+.pm-profile-task-link.is-disabled .pm-profile-task-link__state {
+  color: var(--pm-text-muted-strong);
 }
 
 .pm-research-tab__label {
@@ -438,21 +469,23 @@ textarea:focus-visible {
 }
 
 .pm-speaker-task-link {
-  min-height: 0;
+  min-height: calc(var(--pm-space-sm) + 0.2rem);
   width: fit-content;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  color: var(--book-muted);
-  background: transparent;
-  font-size: 0.9rem;
-  gap: 0.28rem;
-  justify-content: flex-start;
+  padding: 0 calc(var(--pm-space-sm) * 0.42);
+  border: 1px solid var(--pm-border-subtle);
+  border-radius: 999px;
+  color: var(--book-fg);
+  background: var(--pm-surface-paper);
+  font-size: var(--pm-type-meta-size);
+  font-family: var(--book-font-ui);
+  letter-spacing: var(--pm-type-meta-tracking);
+  gap: 0.18rem;
+  justify-content: center;
 }
 
 .pm-speaker-task-link:hover {
-  color: var(--pm-text-accent);
-  background: transparent;
+  color: var(--book-fg);
+  background: var(--pm-surface-hover);
 }
 
 .pm-speaker-task-link::after {
@@ -472,6 +505,22 @@ textarea:focus-visible {
 
 .pm-research-inline-action {
   width: fit-content;
+}
+
+.pm-research-inline-action--compact {
+  min-height: 2rem;
+  padding: 0 0.72rem;
+  font-size: 0.74rem;
+  letter-spacing: var(--pm-type-meta-tracking);
+}
+
+.pm-research-inline-action--secondary {
+  color: var(--book-muted);
+  background: var(--pm-surface-neutral);
+}
+
+.pm-research-inline-action--secondary:hover {
+  color: var(--book-fg);
 }
 
 .pm-research-filters-accordion {
@@ -573,18 +622,25 @@ textarea:focus-visible {
 
 .pm-research-table {
   width: 100%;
+  min-width: 54rem;
   border-collapse: collapse;
   font-family: var(--book-font-ui);
   font-size: 0.88rem;
-  line-height: 1.25;
+  line-height: 1.35;
+  table-layout: fixed;
 }
 
 .pm-research-table th,
 .pm-research-table td {
-  padding: 0.62rem 0;
+  padding: 0.78rem 0.65rem 0.78rem 0;
   border-bottom: 1px solid var(--pm-border-subtle);
   text-align: left;
   vertical-align: top;
+}
+
+.pm-research-table th:last-child,
+.pm-research-table td:last-child {
+  padding-right: 0;
 }
 
 .pm-research-table th {
@@ -593,31 +649,101 @@ textarea:focus-visible {
   font-weight: 500;
   letter-spacing: 0.03em;
   color: var(--book-muted);
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .pm-research-table .pm-research-inline-action {
-  min-height: 1.95rem;
-  padding: 0 0.68rem;
-  font-size: 0.74rem;
+  min-height: 1.85rem;
+  padding: 0 0.58rem;
+  font-size: 0.72rem;
   letter-spacing: var(--pm-type-meta-tracking);
 }
 
-.pm-research-session-cell__primary {
-  font-size: 0.9rem;
+.pm-research-recording-cell {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
 }
 
-.pm-research-session-cell__secondary {
-  font-size: 0.7rem;
+.pm-research-recording-cell__session-id {
+  font-family: var(--book-font-ui);
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.pm-research-recording-cell__person-link {
+  color: var(--book-muted);
+  font-size: var(--pm-type-meta-size);
+  line-height: 1.4;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.pm-research-recording-cell__person-link:hover,
+.pm-research-recording-cell__person-link:focus-visible {
+  color: var(--pm-text-accent);
 }
 
 .pm-research-table__action-col,
 .pm-research-table__action {
   width: var(--pm-research-table-action-width);
+  text-align: right;
+}
+
+.pm-research-table__action .pm-research-inline-action {
+  margin-inline-start: auto;
+  white-space: nowrap;
+}
+
+.pm-research-table__col--recording,
+.pm-research-table__head--recording,
+.pm-research-table__cell--recording {
+  width: 25%;
+}
+
+.pm-research-table__col--speaker-type,
+.pm-research-table__head--speaker-type,
+.pm-research-table__cell--speaker-type {
+  width: 15%;
+}
+
+.pm-research-table__col--level,
+.pm-research-table__head--level,
+.pm-research-table__cell--level {
+  width: 10%;
+}
+
+.pm-research-table__col--l1,
+.pm-research-table__head--l1,
+.pm-research-table__cell--l1 {
+  width: 9%;
+}
+
+.pm-research-table__col--gender,
+.pm-research-table__head--gender,
+.pm-research-table__cell--gender {
+  width: 10%;
+}
+
+.pm-research-table__col--stay,
+.pm-research-table__head--stay,
+.pm-research-table__cell--stay {
+  width: 16%;
+}
+
+.pm-research-table__col--action,
+.pm-research-table__head--action,
+.pm-research-table__cell--action {
+  width: 11%;
 }
 
 .pm-profile-metadata__grid,
 .pm-player-stub-summary__grid {
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
 }
 
 .pm-speaker-card__meta-label,
@@ -642,6 +768,22 @@ textarea:focus-visible {
 
 .pm-profile-hero__session {
   margin: 0;
+  display: grid;
+  gap: 0.14rem;
+}
+
+.pm-profile-hero__session-label {
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: 0.72rem;
+  letter-spacing: var(--pm-type-meta-tracking);
+}
+
+.pm-profile-hero__session-value {
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  overflow-wrap: anywhere;
 }
 
 .pm-profile-badge {
@@ -651,8 +793,8 @@ textarea:focus-visible {
   padding: 0 var(--pm-badge-padding-inline);
   border-radius: 999px;
   border: 1px solid var(--pm-border-subtle);
-  background: color-mix(in srgb, var(--pm-surface-accent-soft) 62%, var(--pm-surface-paper) 38%);
-  color: var(--pm-text-accent);
+  background: color-mix(in srgb, var(--pm-surface-accent-soft) 26%, var(--pm-surface-paper) 74%);
+  color: var(--book-muted);
   font-family: var(--book-font-ui);
   font-size: var(--pm-badge-font-size);
   letter-spacing: var(--pm-type-meta-tracking);
@@ -719,6 +861,7 @@ textarea:focus-visible {
 .pm-profile-session__title {
   margin: 0;
   font-size: clamp(1.05rem, 1rem + 0.2vw, 1.18rem);
+  overflow-wrap: anywhere;
 }
 
 .pm-profile-session__selected {
@@ -746,6 +889,7 @@ textarea:focus-visible {
 .pm-profile-metadata__row {
   display: grid;
   gap: 0.3rem;
+  min-width: 0;
 }
 
 .pm-profile-metadata__rich {
@@ -755,19 +899,42 @@ textarea:focus-visible {
 
 .pm-profile-metadata__list {
   display: grid;
-  gap: 0.45rem;
-  padding-left: 1rem;
+  gap: 0.82rem;
+  padding: 0;
   margin: 0;
+  list-style: none;
 }
 
 .pm-profile-metadata__list-item {
   display: grid;
-  gap: 0.18rem;
+  gap: 0.12rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  align-content: start;
+}
+
+.pm-profile-metadata__entry-line {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .pm-profile-metadata__note {
+  margin: 0;
+  margin-left: 0.72rem;
   color: var(--book-muted);
-  font-size: var(--pm-type-meta-size);
+  font-size: 0.76rem;
+  line-height: 1.38;
+  max-width: 34ch;
+  overflow-wrap: anywhere;
+}
+
+.pm-profile-metadata__value {
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .pm-profile-card__section {
@@ -816,6 +983,10 @@ textarea:focus-visible {
 
   .pm-research-table td {
     padding: 0.4rem 0;
+  }
+
+  .pm-research-table {
+    min-width: 100%;
   }
 
   .pm-research-table td::before {

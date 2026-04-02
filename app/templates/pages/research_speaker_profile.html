@@ -12,7 +12,10 @@
       <div class="pm-profile-hero">
         <div class="pm-profile-hero__header">
           <p class="pm-profile-hero__title">{{ promat_page.profile_header.person_id }}</p>
-          <p class="pm-profile-hero__session">{{ 'Ausgewählte Session' if ui_lang == 'de' else 'Selected session' }}: {{ promat_page.profile_header.selected_session_id }}</p>
+          <p class="pm-profile-hero__session">
+            <span class="pm-profile-hero__session-label">{{ promat_page.profile_header.session_count_label }}</span>
+            <span class="pm-profile-hero__session-value">{{ promat_page.profile_header.session_count_value }}</span>
+          </p>
         </div>
         <div class="pm-profile-badge-row">
           {% for badge in promat_page.profile_header.badges if badge and badge != '-' %}
@@ -55,9 +58,9 @@
                 <ul class="pm-profile-metadata__list">
                   {% for item in row.entries %}
                   <li class="pm-profile-metadata__list-item">
-                    <span class="pm-profile-metadata__value">{{ item.text }}</span>
+                    <p class="pm-profile-metadata__entry-line">{{ item.text }}</p>
                     {% if item.note %}
-                    <span class="pm-profile-metadata__note">{{ item.note }}</span>
+                    <p class="pm-profile-metadata__note">{{ item.note }}</p>
                     {% endif %}
                   </li>
                   {% endfor %}
@@ -81,10 +84,18 @@
             <h4 class="pm-profile-section__title">{{ session.recordings_label }}</h4>
             <div class="pm-profile-task-list">
               {% for task in session.tasks %}
+              {% if task.href %}
               <a class="pm-profile-task-link" href="{{ task.href }}">
                 <span class="pm-profile-task-link__label">{{ task.label }}</span>
                 <span class="pm-profile-task-link__description">{{ task.description }}</span>
               </a>
+              {% else %}
+              <div class="pm-profile-task-link is-disabled" aria-disabled="true">
+                <span class="pm-profile-task-link__label pm-text-muted-strong">{{ task.label }}</span>
+                <span class="pm-profile-task-link__description pm-text-muted-strong">{{ task.description }}</span>
+                <span class="pm-profile-task-link__state pm-text-muted-strong">{{ task.state_label }}</span>
+              </div>
+              {% endif %}
               {% endfor %}
             </div>
           </section>

@@ -249,6 +249,10 @@ def _recording_links_aria_label(ui_lang: str) -> str:
     return "Direktlinks zu Aufzeichnungen" if ui_lang == "de" else "Direct links to recordings"
 
 
+def _unavailable_label(ui_lang: str) -> str:
+    return "Nicht verfügbar" if ui_lang == "de" else "Not available"
+
+
 def _url_with_query(endpoint: str, *, query: Mapping[str, str] | None = None, **values: Any) -> str:
     base_url = url_for(endpoint, **values)
     if not query:
@@ -307,6 +311,33 @@ def _recording_year_span(person: PersonRecord) -> str:
     return f"{person.recording_years[0]}–{person.recording_years[-1]}"
 
 
+def _session_count_label(ui_lang: str) -> str:
+    return "Zugeordnete Sessions" if ui_lang == "de" else "Associated sessions"
+
+
+def _build_task_item(session: SessionRecord, task_key: str, ui_lang: str, language_slug: str, source: str) -> dict[str, Any]:
+    task = get_research_task(task_key)
+    if task is None:
+        raise LookupError(f"Unsupported task: {task_key}")
+
+    is_available = session_has_task(session, task.key)
+    return {
+        "key": task.key,
+        "label": task.short_label(ui_lang),
+        "description": task.description(ui_lang),
+        "href": _url_with_query(
+            "public.research_player_stub",
+            ui_lang=ui_lang,
+            language_slug=language_slug,
+            session_id=session.session_id,
+            task=task.key,
+            query={"source": source},
+        ) if is_available else None,
+        "is_disabled": not is_available,
+        "state_label": _unavailable_label(ui_lang) if not is_available else None,
+    }
+
+
 def _level_summary_label(level_codes: tuple[str, ...], ui_lang: str) -> str:
     if ui_lang == "de":
         return "Niveau" if len(level_codes) == 1 else "Niveaus"
@@ -328,25 +359,6 @@ def _summarize_target_country_stays(person: PersonRecord, ui_lang: str) -> str:
     if values == {False}:
         return TARGET_COUNTRY_STAY_LABELS[False][ui_lang]
     return "Teilweise" if ui_lang == "de" else "Mixed"
-
-
-def _session_match_descriptor(session: SessionRecord, ui_lang: str) -> str:
-    if session.is_native:
-        return _format_standard_variety(session)
-    return _format_level(session, ui_lang)
-
-
-def _build_match_note(matching_sessions: tuple[SessionRecord, ...], ui_lang: str) -> str | None:
-    if not matching_sessions:
-        return None
-    if len(matching_sessions) == 1:
-        session = matching_sessions[0]
-        return (
-            f"Treffer über {session.recording_year_value} · {_session_match_descriptor(session, ui_lang)}"
-            if ui_lang == "de"
-            else f"Match via {session.recording_year_value} · {_session_match_descriptor(session, ui_lang)}"
-        )
-    return f"{len(matching_sessions)} passende Sessions" if ui_lang == "de" else f"{len(matching_sessions)} matching sessions"
 
 
 def _recordings_filter_form(ui_lang: str, language_slug: str, filters: Mapping[str, str], sessions: list[SessionRecord]) -> dict[str, Any]:
@@ -652,8 +664,6 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
     task_panels = []
     for task in iter_research_tasks():
         task_count = task_counts[task.key]
-        if task_count == 0:
-            continue
         task_query = dict(filters)
         task_query["task"] = task.key
         task_panels.append(
@@ -669,8 +679,10 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
                     language_slug=language_slug,
                     page_slug="recordings",
                     query=task_query,
-                ),
+                ) if task_count > 0 else None,
                 "current": task.key == active_task_key,
+                "is_disabled": task_count == 0,
+                "state_label": _unavailable_label(ui_lang) if task_count == 0 else None,
             }
         )
 
@@ -689,10 +701,9 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
                 query={"session": session.session_id},
             ),
             "session_id": session.session_id,
-            "session_secondary": _format_recording_year(session),
             "speaker_type": _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
-            "context_value": _format_standard_variety(session) if session.is_native else _format_level(session, ui_lang),
-            "detail_value": (session.origin_country or "-") if session.is_native else (session.l1 or "-"),
+            "context_value": "" if session.is_native else _format_level(session, ui_lang),
+            "detail_value": "" if session.is_native else (session.l1 or "-"),
             "gender": _label(GENDER_LABELS, session.gender or "unknown", ui_lang),
             "target_country_stay": "-" if session.is_native else _format_target_country_stay(session.stays_in_target_country, ui_lang),
             "action_label": active_task.short_label(ui_lang),
@@ -736,11 +747,13 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
         },
         "active_filters": active_filters,
         "columns": {
-            "person": "Person" if ui_lang == "de" else "Person",
-            "session": "Session",
-            "context": "Niveau / Varietät" if ui_lang == "de" else "Level / variety",
-            "detail": "L1 / Herkunft" if ui_lang == "de" else "L1 / origin",
+            "recording": "Aufzeichnung (Sprecher:in)" if ui_lang == "de" else "Recording (speaker)",
+            "speaker_type": "Sprechergruppe" if ui_lang == "de" else "Speaker type",
+            "context": "Niveau" if ui_lang == "de" else "Level",
+            "detail": "L1",
+            "gender": "Geschlecht" if ui_lang == "de" else "Gender",
             "stay": _target_country_stay_label(ui_lang),
+            "action": "Aktion" if ui_lang == "de" else "Action",
         },
         "results": results,
         "empty_state": {
@@ -900,7 +913,6 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                 "eyebrow": _label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang),
                 "selected_session_label": "Ausgewählte Session" if ui_lang == "de" else "Selected session",
                 "selected_session_id": selected_session.session_id,
-                "match_note": _build_match_note(matching_sessions, ui_lang) if active_filters else None,
                 "meta_rows": meta_rows,
                 "profile_href": _url_with_query(
                     "public.research_speaker_profile",
@@ -962,8 +974,6 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
 
 def _person_section_rows(person: PersonRecord, ui_lang: str) -> list[dict[str, str]]:
     rows = [
-        {"label": "Person-ID" if ui_lang == "de" else "Person ID", "value": person.person_id},
-        {"label": "Sprechergruppe" if ui_lang == "de" else "Speaker type", "value": _label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang)},
         {"label": "Geschlecht" if ui_lang == "de" else "Gender", "value": _label(GENDER_LABELS, person.gender or "unknown", ui_lang)},
         {"label": "Geburtsjahr" if ui_lang == "de" else "Birth year", "value": str(person.birth_year) if person.birth_year else "-"},
     ]
@@ -992,7 +1002,6 @@ def _person_section_rows(person: PersonRecord, ui_lang: str) -> list[dict[str, s
 
 def _session_card_rows(session: SessionRecord, ui_lang: str) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = [
-        {"label": "Session-ID" if ui_lang == "de" else "Session ID", "value": session.session_id},
         {"label": "Aufnahmedatum" if ui_lang == "de" else "Recording date", "value": _format_recording_date(session)},
         {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": _format_recording_year(session)},
         {"label": _recorded_by_label(ui_lang), "value": session.recorded_by or "-"},
@@ -1019,22 +1028,7 @@ def _session_cards(person: PersonRecord, selected_session: SessionRecord, ui_lan
                 "rows": _session_card_rows(session, ui_lang),
                 "notes": session.notes,
                 "recordings_label": _recordings_section_label(ui_lang),
-                "tasks": [
-                    {
-                        "label": task.short_label(ui_lang),
-                        "description": task.description(ui_lang),
-                        "href": _url_with_query(
-                            "public.research_player_stub",
-                            ui_lang=ui_lang,
-                            language_slug=language_slug,
-                            session_id=session.session_id,
-                            task=task.key,
-                            query={"source": "profile"},
-                        ),
-                    }
-                    for task in iter_research_tasks()
-                    if session_has_task(session, task.key)
-                ],
+                "tasks": [_build_task_item(session, task.key, ui_lang, language_slug, "profile") for task in iter_research_tasks()],
             }
         )
     return cards
@@ -1058,29 +1052,30 @@ def build_speaker_profile_page(
         intro = "Reduziertes Vergleichsprofil mit genau einer Session und den zugehörigen Aufzeichnungen." if ui_lang == "de" else "Reduced comparison profile with exactly one session and its recordings."
         header_badges = [_label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang), person.standard_variety.upper() if person.standard_variety else None]
     else:
-        intro = "Personenseite mit stabilen Persondaten sowie allen Sessions und den jeweils zugehörigen Aufzeichnungen." if ui_lang == "de" else "Person page with stable person data plus all sessions and their recordings."
+        intro = "Profil mit Personendaten und allen zugehörigen Sessions und Aufzeichnungen." if ui_lang == "de" else "Profile with person data and all associated sessions and recordings."
         header_badges = [_label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang), _recording_year_span(person)]
 
     return {
-        "title": "Person" if ui_lang == "de" else "Person",
+        "title": "Profil" if ui_lang == "de" else "Profile",
         "template": "pages/research_speaker_profile.html",
         "page_kind": "workbench",
         "access": "protected",
         "content_header": {
-            "breadcrumbs": _research_breadcrumbs(ui_lang, language_slug, "Person" if ui_lang == "de" else "Person"),
-            "title": "Person" if ui_lang == "de" else "Person",
+            "breadcrumbs": _research_breadcrumbs(ui_lang, language_slug, "Profil" if ui_lang == "de" else "Profile"),
+            "title": "Profil" if ui_lang == "de" else "Profile",
             "intro": intro,
             "title_id": "promat-page-title",
         },
         "profile_header": {
             "person_id": person.person_id,
             "speaker_type": _label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang),
-            "selected_session_id": selected_session.session_id,
+            "session_count_label": _session_count_label(ui_lang),
+            "session_count_value": person.session_count,
             "badges": [badge for badge in header_badges if badge and badge != "-"],
         },
-        "person_section": {"title": "Person", "rows": person_section_rows},
+        "person_section": {"title": "Profildaten" if ui_lang == "de" else "Profile data", "rows": person_section_rows},
         "sessions_section": {
-            "title": "Session und Aufzeichnungen" if person.is_native or person.session_count == 1 else "Sessions und Aufzeichnungen",
+            "title": "Session und Aufzeichnungen" if ui_lang == "de" and (person.is_native or person.session_count == 1) else "Sessions und Aufzeichnungen" if ui_lang == "de" else "Session and recordings" if person.is_native or person.session_count == 1 else "Sessions and recordings",
             "cards": session_cards,
         },
         "speakers_href": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),
@@ -1114,7 +1109,7 @@ def build_player_stub_page(ui_lang: str, language_slug: str, session_id: str, ta
         origin_label = "Zurück zu Aufzeichnungen" if ui_lang == "de" else "Back to recordings"
     elif source == "profile":
         origin_href = profile_href
-        origin_label = "Zurück zur Person" if ui_lang == "de" else "Back to person"
+        origin_label = "Zurück zum Profil" if ui_lang == "de" else "Back to profile"
 
     context_value = _format_standard_variety(session) if session.is_native else _format_level(session, ui_lang)
     detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
@@ -1131,7 +1126,7 @@ def build_player_stub_page(ui_lang: str, language_slug: str, session_id: str, ta
             "title_id": "promat-page-title",
         },
         "origin_link": {"label": origin_label, "href": origin_href},
-        "profile_link": {"label": "Zur Person" if ui_lang == "de" else "Open person", "href": profile_href},
+        "profile_link": {"label": "Zum Profil" if ui_lang == "de" else "Open profile", "href": profile_href},
         "speakers_href": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),
         "recordings_href": _url_with_query(
             "public.research_language_page",
