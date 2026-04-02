@@ -90,13 +90,14 @@ def _learner_payload(
     level_code: str,
     context: str,
     task_types: tuple[str, ...],
+    target_language: str = "es",
     exposure_entries: list[dict[str, object]] | None = None,
     stays_in_target_country: bool | None = True,
 ) -> dict[str, object]:
     return {
         "person_id": person_id,
         "session_id": session_id,
-        "target_language": "es",
+        "target_language": target_language,
         "speaker_type": "learner",
         "l1": "DE",
         "mother_l1": "DE",
@@ -455,6 +456,194 @@ def test_research_profile_renders_exposure_entries_with_grouped_markup(runtime_e
     assert 'pm-profile-metadata__entry-line pm-profile-metadata__entry-summary' in html
     assert 'pm-profile-metadata__note pm-profile-metadata__entry-note' in html
     assert 'Semester in Salamanca.' in html
+
+
+def test_research_overview_renders_shared_sidebar_header_and_single_header_nav(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/research")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count('class="promat-topbar__nav"') == 1
+    assert 'promat-topbar__row--secondary' not in html
+    assert 'class="app-shell app-shell--inner"' in html
+    assert 'data-page="research"' in html
+    assert 'data-context-mode="none"' in html
+    assert 'promat-panel__context' in html
+    assert 'promat-panel__section-header' in html
+    assert 'pm-icon-mask--section' in html
+    assert '>Forschung<' in html
+    assert 'Korpus wählen' in html
+
+
+def test_research_overview_renders_corpus_titles_and_data_driven_session_counts(runtime_env: Path, url_app: Flask) -> None:
+    spanish_person_id = build_person_id("es", "learner", 1)
+    spanish_session_one = build_session_id(spanish_person_id, 2026, 1)
+    spanish_session_two = build_session_id(spanish_person_id, 2027, 2)
+    english_person_id = build_person_id("en", "learner", 1)
+    english_session_one = build_session_id(english_person_id, 2026, 1)
+
+    _write_session(
+        runtime_env,
+        "spanish",
+        spanish_session_one,
+        _learner_payload(
+            person_id=spanish_person_id,
+            session_id=spanish_session_one,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text"),
+            target_language="es",
+        ),
+    )
+    _write_session(
+        runtime_env,
+        "spanish",
+        spanish_session_two,
+        _learner_payload(
+            person_id=spanish_person_id,
+            session_id=spanish_session_two,
+            recording_year=2027,
+            recording_date="2027-03-12",
+            level_code="B1",
+            context="follow_up",
+            task_types=("wordlist", "text", "interview"),
+            target_language="es",
+        ),
+    )
+    _write_session(
+        runtime_env,
+        "english",
+        english_session_one,
+        _learner_payload(
+            person_id=english_person_id,
+            session_id=english_session_one,
+            recording_year=2026,
+            recording_date="2026-04-05",
+            level_code="B2",
+            context="baseline",
+            task_types=("wordlist",),
+            target_language="en",
+        ),
+    )
+
+    client = url_app.test_client()
+    response = client.get("/de/research")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Spanisch-Korpus' in html
+    assert 'Französisch-Korpus' in html
+    assert 'Deutsch-Korpus' in html
+    assert 'Englisch-Korpus' in html
+    assert 'Kontrolliert angelegtes Korpus zur Lernendenaussprache mit Wortliste, Satzliste und Interview als vergleichbaren Erhebungsformaten.' in html
+    assert 'Aktuell 2 erfasste Learner-Sessions im Bestand.' in html
+    assert 'Aktuell 1 erfasste Learner-Session im Bestand.' in html
+    assert 'Aktuell keine erfassten Learner-Sessions im Bestand.' in html
+
+
+def test_project_page_uses_inner_shell_with_section_sidebar_header(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/project")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count('class="promat-topbar__nav"') == 1
+    assert 'promat-topbar__row--secondary' not in html
+    assert 'class="app-shell app-shell--inner"' in html
+    assert 'data-page="project"' in html
+    assert 'data-context-mode="section"' in html
+    assert 'promat-panel__inner--section' in html
+    assert 'promat-panel__section-header' in html
+    assert 'Projekt' in html
+
+
+def test_research_language_root_renders_shared_sidebar_header_and_language_context(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/research/spanish")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count('class="promat-topbar__nav"') == 1
+    assert 'promat-topbar__row--secondary' not in html
+    assert 'class="app-shell app-shell--inner"' in html
+    assert 'data-context-mode="language"' in html
+    assert 'promat-panel__context' in html
+    assert 'promat-panel__inner--language' in html
+    assert 'promat-panel__language-header' in html
+    assert 'promat-panel__section-header' in html
+    assert 'pm-icon-mask--section' in html
+    assert 'pm-icon-mask--back' in html
+    assert '>Forschung<' in html
+    assert 'href="/de/research"' in html
+    assert 'aria-label="Zur Korpusauswahl"' in html
+    assert 'Spanisch' in html
+    assert 'promat-panel__context-line--accent' not in html
+    assert 'pm-grid--selection' not in html
+    assert 'href="/de/research/spanish/design"' in html
+    assert 'href="/de/research/spanish/speakers"' in html
+    assert 'href="/de/research/spanish/recordings"' in html
+    assert 'Zugriffe' in html
+
+
+def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/teaching")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Sprache wählen' in html
+    assert 'Korpus wählen' not in html
+
+
+def test_teaching_language_root_uses_inner_shell_with_language_sidebar_context(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/teaching/spanish")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count('class="promat-topbar__nav"') == 1
+    assert 'promat-topbar__row--secondary' not in html
+    assert 'class="app-shell app-shell--inner"' in html
+    assert 'data-page="teaching"' in html
+    assert 'data-context-mode="language"' in html
+    assert 'promat-panel__context' in html
+    assert 'promat-panel__inner--language' in html
+    assert 'promat-panel__language-header' in html
+    assert 'promat-panel__section-header' in html
+    assert 'pm-icon-mask--section' in html
+    assert 'pm-icon-mask--back' in html
+    assert '>Unterricht<' in html
+    assert 'href="/de/teaching"' in html
+    assert 'aria-label="Zur Sprachwahl"' in html
+    assert 'promat-panel__context-line--accent' not in html
+    assert 'Spanisch' in html
+
+
+def test_sample_page_uses_shared_inner_shell_renderer(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count('class="promat-topbar__nav"') == 1
+    assert 'promat-topbar__row--secondary' not in html
+    assert 'class="app-shell app-shell--inner"' in html
+    assert 'data-page="sample"' in html
+    assert 'data-context-mode="none"' in html
+    assert 'promat-panel__context' in html
+    assert 'promat-panel__section-header' in html
+    assert 'pm-icon-mask--section' in html
+    assert '>Sample<' in html
+    assert 'pages/sample_page.html' not in html
 
 
 def test_recordings_page_combines_session_and_person_in_leading_column(runtime_env: Path, url_app: Flask) -> None:

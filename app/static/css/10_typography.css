@@ -193,19 +193,20 @@ textarea {
 
 .promat-panel__section-title {
   margin: 0;
-  font-size: 0.88rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--book-muted);
+  font-size: var(--pm-type-panel-section-size);
+  line-height: var(--pm-type-panel-section-line);
+  font-weight: var(--pm-type-panel-section-weight);
+  letter-spacing: var(--pm-type-panel-section-tracking);
+  color: var(--promat-wordmark-accent);
 }
 
 .promat-panel__language-title {
   margin: 0;
   font-family: var(--pm-type-nav-family);
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.18;
-  letter-spacing: 0;
+  font-size: var(--pm-type-panel-language-size);
+  font-weight: var(--pm-type-panel-language-weight);
+  line-height: var(--pm-type-panel-language-line);
+  letter-spacing: var(--pm-type-panel-language-tracking);
   color: var(--book-fg);
 }
 

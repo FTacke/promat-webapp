@@ -19,6 +19,7 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten unter `docs/`.
 ## Pflicht bei Änderungen
 
 - Bei fachlichen Änderungen zuerst prüfen, welche Datei unter `docs/spec/` angepasst werden muss.
+- Bei Änderungen an App-Shell, Navigationshierarchie oder Bereichsnavigation die aktive Regel unter `docs/spec/platform-data-files.md` aktualisieren statt Zwischenstände in Run-Logs als Soll-Zustand stehen zu lassen.
 - Für jeden substanziellen Run einen Eintrag unter `docs/agent-runs/` anlegen.
 - Bei dauerhaften Architekturentscheidungen zusätzlich ein ADR unter `docs/decisions/` anlegen oder aktualisieren.
 - Bei wiederholbaren Abläufen zusätzlich das passende Runbook unter `docs/runbooks/` aktualisieren.

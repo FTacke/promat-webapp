@@ -33,6 +33,7 @@ For active PROMAT rules, consult these files first:
 ## Change Discipline
 
 - If routing, data paths, IDs, vocabularies, research-access logic, or intake rules change, update the relevant file in `docs/spec/` in the same run.
+- If the shared app-shell or navigation hierarchy changes, update the active rule in `docs/spec/platform-data-files.md` in the same run.
 - If a durable architectural decision is accepted, add or update an ADR in `docs/decisions/`.
 - If a repeatable workflow changes, add or update the relevant runbook in `docs/runbooks/`.
 - Every substantive run adds one entry under `docs/agent-runs/`.

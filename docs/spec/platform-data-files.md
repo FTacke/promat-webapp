@@ -45,6 +45,15 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - UI language and technical routing language must not be mixed.
 - Old German technical slugs and old public routes must not be reintroduced.
 
+## Active App Shell
+
+- All public non-landing inner pages use the same shared app shell.
+- The landing page is the only public layout exception.
+- The shared inner shell keeps the global topbar as the stable upper level and the local page shell below it.
+- The local page shell uses a left sidebar for area navigation and a right main-content column.
+- The sidebar begins with a permanent area header: section icon, section title, and a subtle divider.
+- Language-context pages keep their language back-link and language title below that permanent area header, not instead of it.
+
 ## Runtime Boundaries
 
 - `AUTH_DATABASE_URL` is the canonical auth/core database variable.

@@ -32,6 +32,14 @@
         </a>
       </div>
 
+      <nav class="promat-topbar__nav" aria-label="Hauptbereiche">
+        {% for item in top_nav_items %}
+        <a href="{{ item.href }}"
+           class="promat-topbar__link {{ 'is-active' if page_name == item.key else '' }}"
+           aria-current="{{ 'page' if page_name == item.key else 'false' }}">{{ item.label }}</a>
+        {% endfor %}
+      </nav>
+
       <div class="promat-topbar__meta">
         <div class="promat-topbar__actions">
           <button id="themeToggle"
@@ -80,16 +88,6 @@
           {% endif %}
         </div>
       </div>
-    </div>
-
-    <div class="promat-topbar__row promat-topbar__row--secondary">
-      <nav class="promat-topbar__nav" aria-label="Hauptbereiche">
-        {% for item in top_nav_items %}
-        <a href="{{ item.href }}"
-           class="promat-topbar__link {{ 'is-active' if page_name == item.key else '' }}"
-           aria-current="{{ 'page' if page_name == item.key else 'false' }}">{{ item.label }}</a>
-        {% endfor %}
-      </nav>
     </div>
   </div>
 </div>

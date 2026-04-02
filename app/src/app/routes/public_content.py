@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..research_sessions import load_language_sessions
+
 
 DEFAULT_UI_LANGUAGE = "de"
 SUPPORTED_UI_LANGUAGES: tuple[str, ...] = ("de",)
@@ -16,7 +18,10 @@ TEXTS: dict[str, dict[str, str]] = {
         "section.teaching": "Unterricht",
         "section.sample": "Sample",
         "section.legal": "Rechtliches",
+        "nav.choose_corpus": "Korpus wählen",
         "nav.choose_language": "Sprache wählen",
+        "nav.back_to_corpus_selection": "Zur Korpusauswahl",
+        "nav.back_to_language_selection": "Zur Sprachwahl",
         "nav.more": "Mehr erfahren →",
         "nav.open_section": "Bereich öffnen",
         "nav.open_corpus": "Korpus öffnen →",
@@ -40,7 +45,10 @@ TEXTS: dict[str, dict[str, str]] = {
         "section.teaching": "Teaching",
         "section.sample": "Sample",
         "section.legal": "Legal",
+        "nav.choose_corpus": "Choose corpus",
         "nav.choose_language": "Choose language",
+        "nav.back_to_corpus_selection": "Back to corpus selection",
+        "nav.back_to_language_selection": "Back to language selection",
         "nav.more": "Learn more →",
         "nav.open_section": "Open area",
         "nav.open_corpus": "Open corpus →",
@@ -66,7 +74,7 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "spanish",
         "lang_code": "es",
         "labels": {"de": "Spanisch", "en": "Spanish"},
-        "corpus_lead": "Prof. Marín",
+        "corpus_lead": "Prof. Dr. Felix Tacke",
         "summary": {
             "de": "Referenzkorpus für plurizentrisches Spanisch zwischen methodischer Dokumentation, Vergleich und didaktischer Weitergabe.",
             "en": "Reference corpus for pluricentric Spanish across method documentation, comparison, and teaching transfer.",
@@ -84,7 +92,7 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "french",
         "lang_code": "fr",
         "labels": {"de": "Französisch", "en": "French"},
-        "corpus_lead": "Prof. Delorme",
+        "corpus_lead": "Prof. Dr. Janina Reinhardt",
         "summary": {
             "de": "Vorbereiteter Korpusbereich für Rhythmus, Vokalqualität und frankophone Variationslagen.",
             "en": "Prepared corpus area for rhythm, vowel quality, and francophone variation.",
@@ -102,7 +110,7 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "german",
         "lang_code": "de",
         "labels": {"de": "Deutsch", "en": "German"},
-        "corpus_lead": "Dr. Hamid",
+        "corpus_lead": "Prof. Dr. Kathrin Siebold",
         "summary": {
             "de": "Vorbereiteter Korpusbereich für deutsche Ausspracheprofile in Lern- und Vergleichskontexten.",
             "en": "Prepared corpus area for German pronunciation profiles in learning and comparison contexts.",
@@ -120,7 +128,7 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "english",
         "lang_code": "en",
         "labels": {"de": "Englisch", "en": "English"},
-        "corpus_lead": "Prof. Reeves",
+        "corpus_lead": "Prof. Dr. Rolf Kreyer",
         "summary": {
             "de": "Vorbereiteter Korpusbereich für Akzentprofil, Intonation und intelligibility-orientierte Vergleichsachsen.",
             "en": "Prepared corpus area for accent profile, intonation, and intelligibility-oriented comparison.",
@@ -243,6 +251,41 @@ def get_teaching_page_label(page_slug: str, ui_lang: str) -> str:
     return get_text(ui_lang, label_key)
 
 
+def _research_corpus_card_title(language: dict[str, Any], ui_lang: str) -> str:
+    label = get_language_label(language, ui_lang)
+    if ui_lang == "de":
+        return f"{label}-Korpus"
+    return f"{label} corpus"
+
+
+def _research_learner_session_count(language_slug: str) -> int:
+    return sum(1 for session in load_language_sessions(language_slug) if session.speaker_type == "learner")
+
+
+def _research_learner_session_count_copy(count: int, ui_lang: str) -> str:
+    if ui_lang == "de":
+        if count == 0:
+            return "Aktuell keine erfassten Learner-Sessions im Bestand."
+        if count == 1:
+            return "Aktuell 1 erfasste Learner-Session im Bestand."
+        return f"Aktuell {count} erfasste Learner-Sessions im Bestand."
+
+    if count == 0:
+        return "Currently no learner sessions are available."
+    if count == 1:
+        return "Currently 1 learner session is available."
+    return f"Currently {count} learner sessions are available."
+
+
+def _research_corpus_card_copy(language_slug: str, ui_lang: str) -> str:
+    base_copy = {
+        "de": "Kontrolliert angelegtes Korpus zur Lernendenaussprache mit Wortliste, Satzliste und Interview als vergleichbaren Erhebungsformaten.",
+        "en": "Structured learner-pronunciation corpus with wordlist, sentence-list, and interview tasks as comparable elicitation formats.",
+    }
+    count_copy = _research_learner_session_count_copy(_research_learner_session_count(language_slug), ui_lang)
+    return f"{base_copy.get(ui_lang, base_copy['de'])} {count_copy}"
+
+
 def _research_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, str]]:
     labels = {
         "design": "Methodische Anlage und Auswahlprinzipien des Korpus.",
@@ -319,10 +362,10 @@ def build_corpus_cards_research(ui_lang: str) -> list[dict[str, str]]:
     for language in LANGUAGES:
         cards.append(
             {
-                "title": get_language_label(language, ui_lang),
+                "title": _research_corpus_card_title(language, ui_lang),
                 "modifier": "pm-card--corpus-research",
                 "meta": f"Projekt-Leitung: {language['corpus_lead']}",
-                "text": _localized(language["summary"], ui_lang),
+                "text": _research_corpus_card_copy(language["slug"], ui_lang),
                 "action_label": get_text(ui_lang, "nav.open_corpus"),
                 "href_key": f"research:{language['slug']}",
             }
@@ -475,18 +518,41 @@ def build_research_language_root_page(ui_lang: str, language_slug: str) -> dict[
             "title": title,
             "eyebrow": get_section_label("research", ui_lang),
             "intro": (
-                "Das spanische Korpus dient als Referenzimplementierung für die neue PROMAT-Struktur mit "
-                "sprachneutralen Slugs, vorbereiteten Zugangsseiten und klar getrennter Datenarchitektur."
+                "Das spanische Korpus bündelt kontrolliert erhobene Lernendenaussprache und verweist knapp auf "
+                "methodische Analyse sowie die aktuellen Zugriffswege über Sprecher:innen und Aufnahmen."
             ),
             "page_kind": "reading",
             "access": "public",
-            "feature_cards": _research_feature_cards(language_slug, ui_lang),
+            "hero_links": [
+                {
+                    "label": "Design öffnen →",
+                    "href_key": f"research:{language_slug}:design",
+                    "variant": "subtle",
+                },
+                {
+                    "label": "Sprecher:innen öffnen →",
+                    "href_key": f"research:{language_slug}:speakers",
+                    "variant": "subtle",
+                },
+                {
+                    "label": "Aufnahmen öffnen →",
+                    "href_key": f"research:{language_slug}:recordings",
+                    "variant": "subtle",
+                },
+            ],
             "sections": [
                 {
-                    "heading": "Zugänge zum Korpus",
+                    "heading": "Analyse",
                     "paragraphs": [
-                        "Das Korpus ist über mehrere gleichwertige Zugänge erschlossen: über Personen, Aufgabentypen, itembasierten Vergleich und Phänomene.",
-                        "Die methodische Anlage bleibt öffentlich unter Design dokumentiert; datennahe Oberflächen sind strukturell vorbereitet, aber noch nicht final abgesichert.",
+                        "Die methodische Anlage ist unter Design dokumentiert: Wortliste, Satzliste und Interview bilden die kontrollierten Erhebungsformate des Korpus.",
+                        "Vergleich und Phänomene bleiben als analytische Ausbaupfade im Routenmodell vorbereitet; der aktuelle öffentliche Einstieg konzentriert sich bewusst auf die belastbaren Kernzugriffe.",
+                    ],
+                },
+                {
+                    "heading": "Zugriffe",
+                    "paragraphs": [
+                        "Sprecher:innen bündelt die Sessions personbasiert und führt von dort in Profile mit den zugehörigen Aufnahmen.",
+                        "Aufnahmen erschließt dieselben Bestände session- und taskbasiert über Wortliste, Text und Interview.",
                     ],
                 },
             ],
@@ -543,33 +609,67 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
         "design": {
             "title": "Design",
             "eyebrow": "Forschung · Spanisch",
-            "intro": "Dokumentation der sprachspezifischen Anlage des spanischen Korpus.",
+            "intro": "Das spanische Forschungsdesign verbindet kontrollierte Elizitation, Vergleichbarkeit und lernendengerechte Materialgestaltung für die Untersuchung von Lernendenaussprache.",
             "page_kind": "reading",
             "access": "public",
             "sections": [
                 {
+                    "heading": "Ausgangspunkt",
+                    "paragraphs": [
+                        "Die spanischen Aufgaben dieses Korpus wurden entwickelt, um ein Forschungsdesign für Lernendenaussprache bereitzustellen, das systematisch, vergleichbar und zugleich für Lernende gut bearbeitbar ist.",
+                        "Ausgangspunkt war die Beobachtung, dass bestehende Modelle zwar wichtige Vorarbeiten bieten, für die gezielte Untersuchung der spanischen Aussprache von Lernenden aber nur teilweise direkt übernommen werden können. Das betrifft vor allem Wortschatzschwierigkeit, inhaltliche Ablenkungen durch Lesetexte und die Frage, welche lautlichen Phänomene für Lernendenaussprache tatsächlich mehrfach und kontrolliert erhoben werden müssen. Leitend sind daher nicht Nativitätsnähe oder bloße Tradition, sondern Intelligibilität, kontrollierte Elizitation und eine für Lernende sinnvolle Materialgestaltung.",
+                    ],
+                },
+                {
+                    "heading": "Vorarbeiten und empirische Ausgangslage",
+                    "paragraphs": [
+                        "Ein wichtiger Zwischenschritt war das frühere Projekt MAR.ELE – Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg. In diesem kleineren Vorprojekt wurden 22 Aufnahmen mit Studierenden der Universität Marburg erstellt. MAR.ELE diente dazu, spanische Lernendenaussprache als Korpusmaterial zugänglich und empirisch auswertbar zu machen. In der praktischen Arbeit mit diesem Korpus wurden jedoch auch die Grenzen eines stark übernommenen Designs sichtbar. Gerade diese Erfahrungen waren entscheidend für die weitergehende Überarbeitung im vorliegenden Projekt.",
+                        "Für MAR.ELE wurde die Wortliste des Projekts I(F)EC vollständig übernommen, um die Anschlussfähigkeit an ein etabliertes korpusphonologisches Design des Spanischen zu sichern. Das war methodisch sinnvoll, zeigte in der Arbeit mit Lernenden aber auch deutliche Probleme: Einige Items erwiesen sich als unnötige lexikalische Stolperstellen, andere Phänomene, die für Lernendenaussprache besonders aufschlussreich sind, waren nicht optimal verteilt oder nicht stark genug vertreten. Die jetzige Konzeption reagiert daher nicht aus bloßer Präferenz auf frühere Modelle, sondern auf konkrete Erfahrungen aus ihrer Anwendung.",
+                    ],
+                },
+                {
+                    "heading": "Anschluss an bestehende Forschungsdesigns",
+                    "paragraphs": [
+                        "Bei der Erstellung der Materialien wurde zunächst geprüft, inwiefern und wie weit sich an Forschungsdesigns empirisch arbeitender Phonologieprojekte anknüpfen lässt. Besonders wichtig war hier I(F)EC, dessen Grundprotokoll eine Wortliste, einen Lesetext, einen Discourse-Completion-Task und ein Interview umfasst. Die I(F)EC-Wortliste ist bewusst breit angelegt und zielt auf eine umfassende Erfassung regionaler Variation, phonologischer Prozesse, Wortakzentuierung und orthographischer Einflüsse. Dieses Modell war für die Entwicklung der spanischen Materialien ein zentraler Referenzpunkt, wurde aber nicht unverändert übernommen.",
+                        "Die Orientierung an I(F)EC war damit wichtig, aber nicht bindend. Ziel war nicht, ein bestehendes Materialpaket zu reproduzieren, sondern ein Design zu entwickeln, das die Aussprache von Lernenden möglichst kontrolliert erhebt, ohne sie durch unnötig schwierigen Wortschatz oder unpassende Inhalte zusätzlich zu belasten. Daraus ergab sich die Grundentscheidung, bestehende Vorbilder nur dort zu übernehmen, wo sie für die vorliegende Fragestellung tatsächlich tragfähig sind.",
+                    ],
+                },
+                {
                     "heading": "Wortliste",
                     "paragraphs": [
-                        "Die Wortliste dokumentiert segmentale und prosodische Zielstellen in klar isolierter Produktion.",
-                        "Die technische Aufgabenlogik ist bereits auf den stabilen Task-Key wordlist vorbereitet.",
+                        "Die spanische Wortliste orientiert sich zunächst grob an I(F)EC, wurde dann aber konsequent auf ein lernendenorientiertes Forschungsdesign hin überarbeitet. Maßgeblich waren dabei mehrere Prinzipien: lexikalische Vertrautheit vor bloßer Tradition, mehrfache Belege pro relevantem Phänomen, keine sichtbare Gruppierung nach Phänomenbereichen im Hauptteil und ein eigener Schlussblock mit Minimal- oder Pseudominimalpaaren. Damit soll die Liste einerseits systematische Analyse ermöglichen, andererseits aber für Lernende lesbar und bearbeitbar bleiben.",
+                        "Die Überarbeitung reagiert auch auf ein praktisches Problem früherer Designs: Die direkte Übernahme bestehender Listen erhöht zwar oft die Vergleichbarkeit, kann aber für Lernende unnötige Stolperstellen erzeugen. Für das vorliegende Projekt wurde deshalb eine Liste zusammengestellt, die zentrale segmentale und prosodisch relevante Zielstellen mehrfach abbildet, ohne sich unnötig an lexikalisch randständige oder didaktisch wenig geeignete Items zu binden. Auf diese Weise soll nicht nur Variation dokumentiert, sondern Lernendenaussprache unter möglichst stabilen Bedingungen erhoben werden.",
                     ],
                 },
                 {
-                    "heading": "Text",
+                    "heading": "Vom Lesetext zur Satzliste",
                     "paragraphs": [
-                        "Dieser Teil erfasst Aussprache in gelesenen oder eng geführten Satz- und Textpassagen und bereitet den Task-Key text vor.",
+                        "Auch bei der zweiten kontrollierten Leseaufgabe wurde geprüft, welche bestehenden Lösungen übernehmbar sind. In anderen Projekten wurden dafür traditionelle Lesetexte verwendet, etwa der vielfach eingesetzte Text El viento del norte y el sol. Solche Texte sind forschungsgeschichtlich etabliert, für Lernende aber nur begrenzt geeignet: Ihr Inhalt ist oft künstlich oder ungewöhnlich, der Wortschatz nicht durchgehend einfach, und die lautlichen Zielstellen lassen sich nur begrenzt kontrollieren. Dadurch steigt die Gefahr, dass nicht die Aussprache selbst, sondern vor allem Verstehens- und Leseschwierigkeiten das Ergebnis beeinflussen.",
+                        "Bereits im Vorprojekt MAR.ELE wurde statt eines neutralen Standardtexts ein modifizierter und erweiterter Ausschnitt aus Der kleine Prinz verwendet. Dieser Text war seinerseits in bearbeiteter Form von Andrea Pešková übernommen worden, deren Forschung insbesondere im Bereich der Intonation des Spanischen wichtige Anknüpfungspunkte bietet. Gerade die Arbeit mit einem literarischen Text machte jedoch sichtbar, dass literarische Prägung, stilistische Dichte und eingeschränkte Kontrollierbarkeit der Lautkontexte für Lernende neue Probleme erzeugen. Das war ein wesentlicher Grund, im vorliegenden Projekt bewusst auf eine eigene Satzliste umzusteigen.",
+                        "Die Satzliste des vorliegenden Projekts ist daher kein Ersatztext im traditionellen Sinn, sondern ein kontrolliertes Elizitationsinstrument. Sie rekombiniert die Items der Wortliste in einfachen, gut lesbaren Sätzen, ohne neue aussprachebezogene Zielphänomene einzuführen. Ziel ist es, die in der Wortliste erhobenen Muster in Lautkontexten und unter satzprosodischen Bedingungen erneut zu prüfen. Die Satzliste ist damit funktional eng an die Wortliste gebunden, aber kognitiv deutlich kontrollierbarer als ein übernommener Fließtext.",
                     ],
                 },
                 {
-                    "heading": "Interview zur Aussprache",
+                    "heading": "Interview",
                     "paragraphs": [
-                        "Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.",
+                        "Das Interview ist schließlich eine projektweite Erweiterung des Designs. Es ergänzt die kontrollierten Leseaufgaben um eine reflexive Komponente: Lernende werden nicht nur aufgenommen, sondern auch zu ihrer eigenen Aussprache, zu wahrgenommenen Schwierigkeiten und zu auffälligen Phänomenen befragt, die im Verlauf der Erhebung beobachtet wurden. Damit fließt neben der Außenbeobachtung auch die Perspektive der Lernenden selbst in das Korpus ein. Für die Untersuchung von Lernendenaussprache ist das besonders wichtig, weil so nicht nur Realisierungen dokumentiert, sondern auch metasprachliche Einschätzungen und subjektive Problemwahrnehmungen sichtbar werden.",
                     ],
                 },
                 {
-                    "heading": "Auswahlprinzipien",
+                    "heading": "Zusammenfassung",
                     "paragraphs": [
-                        "Items, Sprecher:innenbezug und spätere Vergleichsachsen werden so dokumentiert, dass weitere Sprachkorpora dieselbe Struktur übernehmen können.",
+                        "Das spanische Design dieses Korpus ist das Ergebnis einer doppelten Bewegung: Es knüpft an bestehende korpusphonologische Modelle des Spanischen an, distanziert sich aber dort bewusst von ihnen, wo ihre direkte Übernahme für Lernende methodische Nachteile erzeugt. Die Erfahrungen aus MAR.ELE waren dafür ebenso wichtig wie die Auseinandersetzung mit I(F)EC, mit traditionellen Lesetexten und mit Arbeiten aus dem Bereich der Intonations- und Ausspracheforschung. Das Ergebnis ist ein Forschungsdesign, das Wortliste, Satzliste und Interview so miteinander verbindet, dass segmentale und prosodische Phänomene kontrolliert, vergleichbar und lernendengerecht erhoben werden können.",
+                    ],
+                },
+                {
+                    "heading": "Literatur",
+                    "bullets": [
+                        "I(F)EC: (Inter-)Fonología del Español Contemporáneo.",
+                        "MAR.ELE: Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg.",
+                        "Bárkányi, Zsuzsanna / Galindo Merino, M. Mar / Pérez-Bernabeu, Aarón (Hg.) (2024): La integración de la pronunciación en el aula de ELE / Integrating pronunciation in the Spanish language classroom. Amsterdam / Philadelphia: John Benjamins.",
+                        "Pešková, Andrea: Archivo de los acentos en el ELE. Online: https://andrea-peskova.com/archivo-de-los-acentos-l2/",
+                        "Pustka, Elissa / Gabriel, Christoph / Meisenburg, Trudel / Burkard, Monja / Dziallas, Kristina (2018): (Inter-)Fonología del Español Contemporáneo (I)FEC: Metodología de un programa de investigación para la fonología de corpus. Loquens 5(1), e046. DOI: https://doi.org/10.3989/loquens.2018.046",
+                        "Tacke, Felix (2023–2024): MAR.ELE – Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg. Marburg: Philipps-Universität Marburg. Online: https://marele.hispanistica.com",
                     ],
                 },
             ],

@@ -30,8 +30,8 @@ main.site-main,
 
 body.app-shell.page-landing .md3-content-wrapper {
   min-height: 100%;
-  width: min(100%, var(--promat-shell-max-width));
-  max-width: var(--promat-shell-max-width);
+  width: min(100%, var(--pm-layout-shell-max-width-current));
+  max-width: var(--pm-layout-shell-max-width-current);
   padding: clamp(4.5rem, 9vh, 7rem) var(--promat-shell-inline-padding) var(--pm-space-xxl);
 }
 
@@ -39,7 +39,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 .pm-content {
   display: grid;
   gap: var(--pm-layout-section-gap);
-  max-width: min(100%, var(--promat-content-width));
+  max-width: min(100%, var(--pm-layout-content-width-current));
   margin: 0 auto;
 }
 

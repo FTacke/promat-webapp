@@ -4,27 +4,21 @@
 {% set role_value = user_role.value if user_role else '' %}
 
 {% macro panel_content(panel) -%}
-  <div class="promat-panel__inner pm-panel__inner {{ 'promat-panel__inner--language' if panel['context_mode'] == 'language' else '' }}">
-    {% if panel['context_mode'] != 'none' %}
+  <div class="promat-panel__inner pm-panel__inner{{ ' promat-panel__inner--language' if panel['context_mode'] == 'language' else '' }}{{ ' promat-panel__inner--section' if panel['context_mode'] == 'section' else '' }}{{ ' promat-panel__inner--contextless' if panel['context_mode'] == 'none' else '' }}" data-section="{{ panel['section_key'] }}" data-context-mode="{{ panel['context_mode'] }}">
     <div class="promat-panel__context {{ 'promat-panel__context--language' if panel['context_mode'] == 'language' else '' }}" data-section="{{ panel['section_key'] }}">
-      {% if panel['context_mode'] == 'language' %}
-      <div class="promat-panel__language-header pm-panel__language-header">
-        <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="Zur Sprachwahl">
-          <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--back" aria-hidden="true"></span>
-          <p class="promat-panel__language-title">{{ panel['context_title'] }}</p>
-        </a>
-      </div>
-      {% else %}
       <div class="promat-panel__section-header pm-panel__section-header">
         <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--section" aria-hidden="true"></span>
         <p class="promat-panel__section-title">{{ panel['section_label'] }}</p>
       </div>
-      {% if panel['language_label'] %}
-      <p class="promat-panel__context-line promat-panel__context-line--accent">{{ panel['language_label'] }}</p>
-      {% endif %}
+      {% if panel['context_mode'] == 'language' %}
+      <div class="promat-panel__language-header pm-panel__language-header">
+        <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="{{ panel.get('context_back_label') or 'Zur Auswahl' }}">
+          <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--back" aria-hidden="true"></span>
+          <p class="promat-panel__language-title">{{ panel['context_title'] }}</p>
+        </a>
+      </div>
       {% endif %}
     </div>
-    {% endif %}
 
     <nav class="promat-panel__nav" aria-label="Bereichsnavigation">
       {% for item in panel['items'] %}

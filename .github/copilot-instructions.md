@@ -17,6 +17,7 @@ Before changing architecture, routing, data paths, governance files, or repo str
 
 - `docs/spec/` is the only active source of truth.
 - Update the relevant spec file before or together with any implementation change that affects active rules.
+- Treat shared app-shell and sidebar-navigation hierarchy as active platform rules; update `docs/spec/platform-data-files.md` when they change, and do not treat old run logs as the current UI contract.
 - ADRs explain why; runbooks explain how; run logs are never normative.
 - Do not create shadow docs, free-form note buckets, or new active rules in run logs.
 - `app/` is the only application source root.

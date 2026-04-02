@@ -14,6 +14,7 @@ This file is the binding source of truth for the active research-access model in
 
 ### Research landing and sections
 
+- The research section root is a corpus selection in the German UI (`Korpus wählen`), not a teaching-style language selection.
 - `design` documents corpus design.
 - `speakers` is the person-based access path.
 - `recordings` is the session- and task-based access path.

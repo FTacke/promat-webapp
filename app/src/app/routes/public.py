@@ -222,6 +222,7 @@ def _panel_config(
     context_title: str | None = None,
     context_root_href: str | None = None,
     context_back_href: str | None = None,
+    context_back_label: str | None = None,
     items: list[dict[str, str]],
 ) -> dict[str, Any]:
     return {
@@ -232,6 +233,7 @@ def _panel_config(
         "context_title": context_title or language_label or section_label,
         "context_root_href": context_root_href,
         "context_back_href": context_back_href,
+        "context_back_label": context_back_label,
         "active_slug": active_slug,
         "items": items,
     }
@@ -257,7 +259,7 @@ def _render_promat_page(
     template_name = page_context.get("template") or "pages/promat_page.html"
     render_top_app_bar = True
     render_navigation_drawer = True
-    shell_class = None
+    shell_class = "app-shell--inner"
     body_class = None
 
     if layout == "landing":
@@ -319,6 +321,7 @@ def sample_page(ui_lang: str):
     ui_lang = _require_ui_lang(ui_lang)
     page = {
         "title": "Sample",
+        "template": "pages/sample_page.html",
         "intro": (
             "Visueller Prüfstand für ruhige Corpus Cards, sachliche Info-Panels und das "
             "bestehende Admonition-System."
@@ -338,14 +341,7 @@ def sample_page(ui_lang: str):
         ],
     )
     page["content_header"] = _build_content_header(page, panel, "sample", ui_lang)
-    return render_template(
-        "pages/sample_page.html",
-        promat_page=page,
-        promat_panel=panel,
-        promat_top_nav_items=_top_nav(ui_lang),
-        page_name="sample",
-        ui_lang=ui_lang,
-    )
+    return _render_promat_page(page=page, panel=panel, page_name="sample", ui_lang=ui_lang)
 
 
 @blueprint.get("/login", endpoint="login")
@@ -427,10 +423,10 @@ def research_home(ui_lang: str):
         section_key="research",
         section_label=get_section_label("research", ui_lang),
         active_slug="language-selection",
-        context_mode="section",
+        context_mode="none",
         items=[
             {
-                "label": get_text(ui_lang, "nav.choose_language"),
+                "label": get_text(ui_lang, "nav.choose_corpus"),
                 "href": url_for("public.research_home", ui_lang=ui_lang),
                 "page_slug": "language-selection",
             }
@@ -470,6 +466,7 @@ def research_language_root(ui_lang: str, language_slug: str):
             language_slug=canonical_language_slug,
         ),
         context_back_href=url_for("public.research_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
@@ -507,6 +504,7 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
             language_slug=canonical_language_slug,
         ),
         context_back_href=url_for("public.research_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
@@ -538,6 +536,7 @@ def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
             language_slug=canonical_language_slug,
         ),
         context_back_href=url_for("public.research_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
@@ -571,6 +570,7 @@ def research_player_stub(ui_lang: str, language_slug: str, session_id: str, task
             language_slug=canonical_language_slug,
         ),
         context_back_href=url_for("public.research_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
@@ -626,6 +626,7 @@ def teaching_language_root(ui_lang: str, language_slug: str):
             language_slug=canonical_language_slug,
         ),
         context_back_href=url_for("public.teaching_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "nav.back_to_language_selection"),
         items=_panel_items_for_language("teaching", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=ui_lang)
@@ -658,6 +659,7 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
             language_slug=canonical_language_slug,
         ),
         context_back_href=url_for("public.teaching_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "nav.back_to_language_selection"),
         items=_panel_items_for_language("teaching", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=ui_lang)

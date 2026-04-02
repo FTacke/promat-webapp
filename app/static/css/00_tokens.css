@@ -117,6 +117,14 @@
   --pm-type-panel-line: 1.35;
   --pm-type-panel-tracking: 0;
   --pm-type-panel-weight: 500;
+  --pm-type-panel-section-size: 0.88rem;
+  --pm-type-panel-section-line: var(--pm-type-meta-line);
+  --pm-type-panel-section-tracking: 0.01em;
+  --pm-type-panel-section-weight: 600;
+  --pm-type-panel-language-size: 1.05rem;
+  --pm-type-panel-language-line: 1.18;
+  --pm-type-panel-language-tracking: 0;
+  --pm-type-panel-language-weight: 600;
 
   --pm-type-meta-family: var(--book-font-ui);
   --pm-type-meta-size: 0.82rem;
@@ -232,6 +240,12 @@
   --pm-reading-heading-gap-before-h3: var(--pm-space-text);
   --pm-reading-heading-gap-after-h3: var(--promat-space-2);
   --pm-reading-list-item-gap: var(--promat-space-2);
+  --pm-shell-block-start: var(--pm-space-xl);
+  --pm-shell-block-start-inner: var(--pm-space-xxl);
+  --pm-shell-block-start-research: var(--pm-shell-block-start-inner);
+  --pm-shell-block-start-current: var(--pm-shell-block-start);
+  --pm-shell-divider-width: 1px;
+  --pm-shell-divider-color: var(--pm-border-fine);
   --pm-shell-inline-hover-padding-y: 0.34rem;
   --pm-shell-inline-hover-padding-x: 0.5rem;
   --pm-shell-inline-hover-radius: var(--pm-nav-item-radius);
@@ -254,9 +268,20 @@
   --pm-icon-legal: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>');
 
   --pm-layout-reading-width: 72ch;
-  --pm-layout-feature-width: var(--promat-content-width);
+  --pm-layout-panel-width-current: var(--promat-panel-width);
+  --pm-layout-content-width-current: var(--promat-content-width);
+  --pm-layout-shell-gap-current: var(--promat-shell-gap);
+  --pm-layout-shell-max-width-current: calc(var(--pm-layout-panel-width-current) + var(--pm-layout-content-width-current) + var(--pm-layout-shell-gap-current) + (2 * var(--promat-shell-inline-padding)));
+  --pm-layout-feature-width: var(--pm-layout-content-width-current);
   --pm-layout-section-gap: var(--pm-space-xl);
-  --pm-research-sidebar-width: 19rem;
+  --pm-inner-shell-panel-width: 16rem;
+  --pm-inner-shell-content-width: 68rem;
+  --pm-inner-shell-gap: var(--pm-space-xxl);
+  --pm-inner-shell-max-width: calc(var(--pm-inner-shell-panel-width) + var(--pm-inner-shell-content-width) + var(--pm-inner-shell-gap) + (2 * var(--promat-shell-inline-padding)));
+  --pm-research-sidebar-width: var(--pm-inner-shell-panel-width);
+  --pm-research-content-width: var(--pm-inner-shell-content-width);
+  --pm-research-shell-gap: var(--pm-inner-shell-gap);
+  --pm-research-shell-max-width: var(--pm-inner-shell-max-width);
   --pm-research-grid-min: 16rem;
   --pm-research-speaker-card-min: 16.5rem;
   --pm-research-speaker-card-max: 18.75rem;
@@ -285,14 +310,24 @@
   --pm-speaker-level-c2: var(--pm-research-level-c2);
   --pm-session-selected-ring: color-mix(in srgb, var(--promat-wordmark-accent) 26%, white 74%);
   --pm-session-selected-shadow: 0 0 0 2px var(--pm-session-selected-ring);
+  --pm-inner-shell-sidebar-offset: var(--pm-space-lg);
+  --pm-inner-shell-divider-gap: var(--pm-space-lg);
+  --pm-research-sidebar-offset: var(--pm-inner-shell-sidebar-offset);
+  --pm-research-sidebar-divider-gap: var(--pm-inner-shell-divider-gap);
 
   --promat-shell-gap: var(--pm-space-xl);
   --promat-shell-inline-padding: var(--promat-content-offset);
   --promat-shell-axis-offset: var(--pm-space-xs);
-  --pm-topbar-row-gap: 0.32rem;
-  --pm-topbar-padding-top: 0.72rem;
-  --pm-topbar-padding-bottom: 0;
-  --pm-topbar-primary-min-height: 2.9rem;
+  --pm-topbar-row-gap: 0;
+  --pm-topbar-padding-top: var(--promat-space-3);
+  --pm-topbar-padding-bottom: var(--pm-space-sm);
+  --pm-topbar-primary-min-height: calc(2.3rem + var(--pm-space-xs));
+  --pm-topbar-column-gap: var(--pm-space-xl);
+  --pm-topbar-brand-gap: var(--pm-space-sm);
+  --pm-topbar-nav-gap: var(--pm-space-lg);
+  --pm-topbar-nav-zone-padding-inline: var(--pm-space-xl);
+  --pm-topbar-border-width: 1px;
+  --pm-topbar-border-color: var(--book-border);
   --pm-topbar-secondary-min-height: 1.85rem;
   --pm-topbar-link-offset-bottom: 0.18rem;
   --pm-topbar-active-line-thickness: 2px;
@@ -301,7 +336,7 @@
   --pm-footer-row-gap: var(--promat-space-2);
   --pm-footer-column-gap: var(--pm-space-container);
   --pm-footer-nav-gap: var(--promat-space-2);
-  --promat-topbar-height-desktop: 7.3rem;
+  --promat-topbar-height-desktop: calc(var(--pm-topbar-padding-top) + var(--pm-topbar-primary-min-height) + var(--pm-topbar-padding-bottom));
   --promat-topbar-height-mobile: 4.55rem;
   --promat-topbar-height: var(--promat-topbar-height-desktop);
   --promat-topbar-blur: 0.4rem;
