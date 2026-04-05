@@ -7,6 +7,7 @@ from typing import Any
 from flask import Blueprint, abort, jsonify, make_response, render_template, request, url_for
 from sqlalchemy import text
 
+from ..content_navigation import build_content_header as build_shared_content_header
 from ..research_views import (
     build_player_stub_page,
     build_recordings_page,
@@ -74,41 +75,20 @@ def _build_content_header(
     page_name: str,
     ui_lang: str,
 ) -> dict[str, Any]:
-    breadcrumbs: list[dict[str, Any]] = []
-    if page_name != "start":
-        section_href = _section_home_href(panel["section_key"], ui_lang)
-        if panel["context_mode"] == "language":
-            if page.get("is_language_root"):
-                breadcrumbs = [
-                    {"label": panel["section_label"], "href": section_href, "current": False},
-                    {"label": panel["context_title"], "href": None, "current": True},
-                ]
-            else:
-                breadcrumbs = [
-                    {"label": panel["section_label"], "href": section_href, "current": False},
-                    {
-                        "label": panel["context_title"],
-                        "href": panel.get("context_root_href"),
-                        "current": False,
-                    },
-                ]
-        elif panel["context_mode"] == "section":
-            breadcrumbs = [
-                {
-                    "label": panel["section_label"],
-                    "href": None if page.get("is_section_root") else section_href,
-                    "current": bool(page.get("is_section_root")),
-                }
-            ]
-        elif panel["section_key"] in {"sample", "legal"}:
-            breadcrumbs = [{"label": panel["section_label"], "href": None, "current": True}]
-
-    return {
-        "breadcrumbs": breadcrumbs,
-        "title": page["title"],
-        "intro": page.get("intro"),
-        "title_id": "promat-page-title",
-    }
+    return build_shared_content_header(
+        page_name=page_name,
+        title=page["title"],
+        intro=page.get("intro"),
+        section_label=panel["section_label"],
+        section_href=_section_home_href(panel["section_key"], ui_lang),
+        context_mode=panel["context_mode"],
+        context_title=panel.get("context_title"),
+        context_root_href=panel.get("context_root_href"),
+        is_section_root=bool(page.get("is_section_root")),
+        is_language_root=bool(page.get("is_language_root")),
+        ancestors=page.get("nav_ancestors", []),
+        current_label=page.get("nav_current_label"),
+    )
 
 
 def _resolve_href_key(href_key: str, ui_lang: str) -> str:
@@ -388,6 +368,7 @@ def sample_page(ui_lang: str):
             "Visueller Prüfstand für die aktuell produktiv genutzten Layout-Elemente. Sample folgt "
             "den realen Seiten und dient nicht als eigenständiges Vorbild."
         ),
+        "is_section_root": True,
         "sample_landing_cards": _linkify(landing_page.get("landing_cards", []), ui_lang),
         "sample_research_cards": _linkify(research_select_page.get("corpus_cards", []), ui_lang),
         "sample_teaching_cards": _linkify(teaching_select_page.get("corpus_cards", []), ui_lang),

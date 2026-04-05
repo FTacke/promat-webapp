@@ -119,6 +119,16 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-top: var(--pm-content-header-breadcrumb-title-gap);
 }
 
+@media (min-width: 980px) {
+  .pm-breadcrumb--mobile-only {
+    display: none;
+  }
+
+  .pm-breadcrumb--mobile-only + .pm-content-header__title {
+    margin-top: 0;
+  }
+}
+
 .pm-content-header__title + .pm-content-header__intro {
   margin-top: var(--pm-content-header-title-intro-gap);
 }

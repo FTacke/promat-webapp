@@ -475,6 +475,7 @@ def test_research_overview_renders_shared_sidebar_header_and_single_header_nav(u
     assert 'pm-icon-mask--section' in html
     assert '>Forschung<' in html
     assert 'Korpus wählen' in html
+    assert 'class="pm-breadcrumb' not in html
 
 
 def test_research_overview_renders_corpus_titles_and_data_driven_session_counts(runtime_env: Path, url_app: Flask) -> None:
@@ -560,6 +561,7 @@ def test_project_page_uses_inner_shell_with_section_sidebar_header(url_app: Flas
     assert 'promat-panel__inner--section' in html
     assert 'promat-panel__section-header' in html
     assert 'Projekt' in html
+    assert 'class="pm-breadcrumb' not in html
 
 
 def test_research_language_root_renders_shared_sidebar_header_and_language_context(url_app: Flask) -> None:
@@ -588,7 +590,13 @@ def test_research_language_root_renders_shared_sidebar_header_and_language_conte
     assert 'href="/de/research/spanish/design"' in html
     assert 'href="/de/research/spanish/speakers"' in html
     assert 'href="/de/research/spanish/recordings"' in html
-    assert 'Zugriffe' in html
+    assert 'Überblick' in html
+    assert 'class="pm-breadcrumb pm-breadcrumb--mobile-only"' in html
+    assert 'data-depth="2"' in html
+    assert 'aria-current="page">Spanisch</span>' in html
+    assert 'Vergleich öffnen →' in html
+    assert 'Phänomene öffnen →' in html
+    assert 'Sprecher:innen erschließt den Bestand personbezogen.' in html
 
 
 def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> None:
@@ -625,6 +633,9 @@ def test_teaching_language_root_uses_inner_shell_with_language_sidebar_context(u
     assert 'aria-label="Zur Sprachwahl"' in html
     assert 'promat-panel__context-line--accent' not in html
     assert 'Spanisch' in html
+    assert 'class="pm-breadcrumb pm-breadcrumb--mobile-only"' in html
+    assert 'data-depth="2"' in html
+    assert 'aria-current="page">Spanisch</span>' in html
 
 
 def test_sample_page_uses_shared_inner_shell_renderer(url_app: Flask) -> None:
@@ -644,6 +655,36 @@ def test_sample_page_uses_shared_inner_shell_renderer(url_app: Flask) -> None:
     assert 'pm-icon-mask--section' in html
     assert '>Sample<' in html
     assert 'pages/sample_page.html' not in html
+    assert 'class="pm-breadcrumb' not in html
+
+
+def test_project_detail_page_uses_mobile_only_breadcrumb_for_depth_two(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/project/research-design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'class="pm-breadcrumb pm-breadcrumb--mobile-only"' in html
+    assert 'data-depth="2"' in html
+    assert 'href="/de/project"' in html
+    assert 'aria-current="page">Forschungsdesign</span>' in html
+
+
+def test_research_detail_page_uses_full_breadcrumb_from_depth_three(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'class="pm-breadcrumb"' in html
+    assert 'pm-breadcrumb--mobile-only' not in html
+    assert 'data-depth="3"' in html
+    assert 'href="/de/research"' in html
+    assert 'href="/de/research/spanish"' in html
+    assert 'aria-current="page">Design</span>' in html
+    assert '>Zusammenfassung<' not in html
 
 
 def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -> None:
@@ -722,6 +763,13 @@ def test_profile_header_shows_session_count_and_native_interview_disabled(runtim
     assert [task["key"] for task in tasks] == ["wordlist", "text", "interview"]
     assert [task["is_disabled"] for task in tasks] == [False, False, True]
     assert tasks[-1]["state_label"] == "Nicht verfügbar"
+    assert page["content_header"]["breadcrumb_mode"] == "all"
+    assert [item["label"] for item in page["content_header"]["breadcrumbs"]] == [
+        "Forschung",
+        "Spanisch",
+        "Sprecher:innen",
+        "Profil",
+    ]
 
 
 def test_recordings_page_keeps_disabled_interview_panel_and_blank_native_columns(runtime_env: Path, url_app: Flask) -> None:

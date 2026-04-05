@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 
 from flask import url_for
 
+from .content_navigation import build_content_header
 from .research_sessions import (
     LEVEL_ORDER,
     PersonRecord,
@@ -272,17 +273,6 @@ def _language_context(ui_lang: str, language_slug: str) -> tuple[dict[str, Any],
         raise LookupError(f"Unsupported language slug: {language_slug}")
     language_label = get_language_label(language, ui_lang)
     return language, language_label
-
-
-def _research_breadcrumbs(ui_lang: str, language_slug: str, current_label: str | None = None) -> list[dict[str, Any]]:
-    _, language_label = _language_context(ui_lang, language_slug)
-    breadcrumbs = [
-        {"label": get_section_label("research", ui_lang), "href": url_for("public.research_home", ui_lang=ui_lang), "current": False},
-        {"label": language_label, "href": url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug), "current": current_label is None},
-    ]
-    if current_label:
-        breadcrumbs.append({"label": current_label, "href": None, "current": True})
-    return breadcrumbs
 
 
 def _filter_chip(label: str, endpoint: str, *, query: Mapping[str, str], drop_key: str, **values: Any) -> dict[str, str]:
@@ -726,12 +716,16 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
         "template": "pages/research_recordings.html",
         "page_kind": "workbench",
         "access": "protected",
-        "content_header": {
-            "breadcrumbs": _research_breadcrumbs(ui_lang, language_slug),
-            "title": get_research_page_label("recordings", ui_lang),
-            "intro": RESEARCH_PAGE_INTROS["recordings"][ui_lang],
-            "title_id": "promat-page-title",
-        },
+        "content_header": build_content_header(
+            page_name="research",
+            title=get_research_page_label("recordings", ui_lang),
+            intro=RESEARCH_PAGE_INTROS["recordings"][ui_lang],
+            section_label=get_section_label("research", ui_lang),
+            section_href=url_for("public.research_home", ui_lang=ui_lang),
+            context_mode="language",
+            context_title=_language_context(ui_lang, language_slug)[1],
+            context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
+        ),
         "task_panels": task_panels,
         "active_task": {
             "key": active_task.key,
@@ -950,12 +944,16 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
         "template": "pages/research_speakers.html",
         "page_kind": "workbench",
         "access": "protected",
-        "content_header": {
-            "breadcrumbs": _research_breadcrumbs(ui_lang, language_slug),
-            "title": get_research_page_label("speakers", ui_lang),
-            "intro": RESEARCH_PAGE_INTROS["speakers"][ui_lang],
-            "title_id": "promat-page-title",
-        },
+        "content_header": build_content_header(
+            page_name="research",
+            title=get_research_page_label("speakers", ui_lang),
+            intro=RESEARCH_PAGE_INTROS["speakers"][ui_lang],
+            section_label=get_section_label("research", ui_lang),
+            section_href=url_for("public.research_home", ui_lang=ui_lang),
+            context_mode="language",
+            context_title=_language_context(ui_lang, language_slug)[1],
+            context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
+        ),
         "quick_filters": quick_filters,
         "filter_form": _speakers_filter_form(ui_lang, language_slug, filters, persons),
         "status": {
@@ -1062,12 +1060,22 @@ def build_speaker_profile_page(
         "template": "pages/research_speaker_profile.html",
         "page_kind": "workbench",
         "access": "protected",
-        "content_header": {
-            "breadcrumbs": _research_breadcrumbs(ui_lang, language_slug, "Profil" if ui_lang == "de" else "Profile"),
-            "title": "Profil" if ui_lang == "de" else "Profile",
-            "intro": intro,
-            "title_id": "promat-page-title",
-        },
+        "content_header": build_content_header(
+            page_name="research",
+            title="Profil" if ui_lang == "de" else "Profile",
+            intro=intro,
+            section_label=get_section_label("research", ui_lang),
+            section_href=url_for("public.research_home", ui_lang=ui_lang),
+            context_mode="language",
+            context_title=_language_context(ui_lang, language_slug)[1],
+            context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
+            ancestors=[
+                {
+                    "label": get_research_page_label("speakers", ui_lang),
+                    "href": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),
+                }
+            ],
+        ),
         "profile_header": {
             "person_id": person.person_id,
             "speaker_type": _label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang),
@@ -1121,12 +1129,28 @@ def build_player_stub_page(ui_lang: str, language_slug: str, session_id: str, ta
         "template": "pages/research_player_stub.html",
         "page_kind": "workbench",
         "access": "protected",
-        "content_header": {
-            "breadcrumbs": _research_breadcrumbs(ui_lang, language_slug, task.long_label(ui_lang)),
-            "title": task.long_label(ui_lang),
-            "intro": "Die Player-Ansicht ist strukturell vorbereitet, wird in diesem Run aber bewusst noch nicht fachlich ausgebaut." if ui_lang == "de" else "The player view is structurally prepared but intentionally not implemented in this run.",
-            "title_id": "promat-page-title",
-        },
+        "content_header": build_content_header(
+            page_name="research",
+            title=task.long_label(ui_lang),
+            intro="Die Player-Ansicht ist strukturell vorbereitet, wird in diesem Run aber bewusst noch nicht fachlich ausgebaut." if ui_lang == "de" else "The player view is structurally prepared but intentionally not implemented in this run.",
+            section_label=get_section_label("research", ui_lang),
+            section_href=url_for("public.research_home", ui_lang=ui_lang),
+            context_mode="language",
+            context_title=_language_context(ui_lang, language_slug)[1],
+            context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
+            ancestors=[
+                {
+                    "label": get_research_page_label("recordings", ui_lang) if source == "recordings" else get_research_page_label("speakers", ui_lang),
+                    "href": _url_with_query(
+                        "public.research_language_page",
+                        ui_lang=ui_lang,
+                        language_slug=language_slug,
+                        page_slug="recordings" if source == "recordings" else "speakers",
+                        query={"task": task_key} if source == "recordings" else None,
+                    ),
+                }
+            ],
+        ),
         "origin_link": {"label": origin_label, "href": origin_href},
         "profile_link": {"label": "Zum Profil" if ui_lang == "de" else "Open profile", "href": profile_href},
         "speakers_href": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),

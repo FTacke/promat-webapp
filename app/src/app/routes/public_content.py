@@ -518,8 +518,9 @@ def build_research_language_root_page(ui_lang: str, language_slug: str) -> dict[
             "title": title,
             "eyebrow": get_section_label("research", ui_lang),
             "intro": (
-                "Das spanische Korpus bündelt kontrolliert erhobene Lernendenaussprache und verweist knapp auf "
-                "methodische Analyse sowie die aktuellen Zugriffswege über Sprecher:innen und Aufnahmen."
+                "Der spanische Forschungsbereich bündelt die methodische Dokumentation des Korpus und die "
+                "vorbereiteten Zugänge zu seinen Analyseoberflächen. Er ordnet personbezogene, sessionbezogene "
+                "und phänomenbezogene Perspektiven in einer gemeinsamen Struktur."
             ),
             "page_kind": "reading",
             "access": "public",
@@ -539,20 +540,52 @@ def build_research_language_root_page(ui_lang: str, language_slug: str) -> dict[
                     "href_key": f"research:{language_slug}:recordings",
                     "variant": "subtle",
                 },
+                {
+                    "label": "Vergleich öffnen →",
+                    "href_key": f"research:{language_slug}:comparison",
+                    "variant": "subtle",
+                },
+                {
+                    "label": "Phänomene öffnen →",
+                    "href_key": f"research:{language_slug}:phenomena",
+                    "variant": "subtle",
+                },
             ],
             "sections": [
                 {
-                    "heading": "Analyse",
+                    "heading": "Überblick",
                     "paragraphs": [
-                        "Die methodische Anlage ist unter Design dokumentiert: Wortliste, Satzliste und Interview bilden die kontrollierten Erhebungsformate des Korpus.",
-                        "Vergleich und Phänomene bleiben als analytische Ausbaupfade im Routenmodell vorbereitet; der aktuelle öffentliche Einstieg konzentriert sich bewusst auf die belastbaren Kernzugriffe.",
+                        "Die öffentlichen Seiten des spanischen Forschungsbereichs dokumentieren Aufbau, Zugriff und Auswertungsperspektiven des Korpus. Sie verbinden bereits verfügbare Arbeitsflächen mit konzeptionell vorbereiteten Modulen, die demselben Routen- und Navigationsschema folgen.",
                     ],
                 },
                 {
-                    "heading": "Zugriffe",
+                    "heading": "Design",
                     "paragraphs": [
-                        "Sprecher:innen bündelt die Sessions personbasiert und führt von dort in Profile mit den zugehörigen Aufnahmen.",
-                        "Aufnahmen erschließt dieselben Bestände session- und taskbasiert über Wortliste, Text und Interview.",
+                        "Design dokumentiert Erhebungslogik, Materialauswahl und die methodischen Entscheidungen, die dem spanischen Korpus zugrunde liegen.",
+                    ],
+                },
+                {
+                    "heading": "Sprecher:innen",
+                    "paragraphs": [
+                        "Sprecher:innen erschließt den Bestand personbezogen. Von dort führen Karten in Profile und zu den Aufnahmen der jeweils ausgewählten Session.",
+                    ],
+                },
+                {
+                    "heading": "Aufnahmen",
+                    "paragraphs": [
+                        "Aufnahmen ordnet denselben Bestand session- und taskbasiert. Die Oberfläche bündelt Wortliste, Text und Interview über gemeinsame Filter und Tabellenansichten.",
+                    ],
+                },
+                {
+                    "heading": "Vergleich",
+                    "paragraphs": [
+                        "Vergleich ist als Zugriff auf einzelne Items über mehrere Sprecher:innen hinweg vorgesehen. Die Seite dient dem systematischen Gegenüberstellen vergleichbarer Realisationen.",
+                    ],
+                },
+                {
+                    "heading": "Phänomene",
+                    "paragraphs": [
+                        "Phänomene ist als phänomenbezogener Zugang geplant. Die Seite soll Beobachtungen nach lautlichen oder prosodischen Kategorien bündeln, ohne die Person- und Sessionpfade zu ersetzen.",
                     ],
                 },
             ],
@@ -653,12 +686,6 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                     "heading": "Interview",
                     "paragraphs": [
                         "Das Interview ist schließlich eine projektweite Erweiterung des Designs. Es ergänzt die kontrollierten Leseaufgaben um eine reflexive Komponente: Lernende werden nicht nur aufgenommen, sondern auch zu ihrer eigenen Aussprache, zu wahrgenommenen Schwierigkeiten und zu auffälligen Phänomenen befragt, die im Verlauf der Erhebung beobachtet wurden. Damit fließt neben der Außenbeobachtung auch die Perspektive der Lernenden selbst in das Korpus ein. Für die Untersuchung von Lernendenaussprache ist das besonders wichtig, weil so nicht nur Realisierungen dokumentiert, sondern auch metasprachliche Einschätzungen und subjektive Problemwahrnehmungen sichtbar werden.",
-                    ],
-                },
-                {
-                    "heading": "Zusammenfassung",
-                    "paragraphs": [
-                        "Das spanische Design dieses Korpus ist das Ergebnis einer doppelten Bewegung: Es knüpft an bestehende korpusphonologische Modelle des Spanischen an, distanziert sich aber dort bewusst von ihnen, wo ihre direkte Übernahme für Lernende methodische Nachteile erzeugt. Die Erfahrungen aus MAR.ELE waren dafür ebenso wichtig wie die Auseinandersetzung mit I(F)EC, mit traditionellen Lesetexten und mit Arbeiten aus dem Bereich der Intonations- und Ausspracheforschung. Das Ergebnis ist ein Forschungsdesign, das Wortliste, Satzliste und Interview so miteinander verbindet, dass segmentale und prosodische Phänomene kontrolliert, vergleichbar und lernendengerecht erhoben werden können.",
                     ],
                 },
                 {

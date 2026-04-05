@@ -53,6 +53,10 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - The local page shell uses a left sidebar for area navigation and a right main-content column.
 - The sidebar begins with a permanent area header: section icon, section title, and a subtle divider.
 - Language-context pages keep their language back-link and language title below that permanent area header, not instead of it.
+- Breadcrumbs are rendered only when they add real orientation value, not as a pseudo-context line that merely repeats section or language.
+- Desktop shows breadcrumbs only from hierarchy depth 3 onward because the sidebar already carries orientation on flatter levels.
+- Mobile shows breadcrumbs from hierarchy depth 2 onward because the sidebar is reduced or absent there.
+- When a breadcrumb is shown, it always renders the full path including the current page as the final, non-clickable item.
 
 ## Sample Surface
 

@@ -1,6 +1,6 @@
 <header class="pm-content-header pm-reading" aria-labelledby="{{ content_header.title_id | default('promat-page-title') }}">
   {% if content_header.breadcrumbs %}
-  <nav class="pm-breadcrumb" aria-label="Pfad">
+  <nav class="pm-breadcrumb{{ ' pm-breadcrumb--mobile-only' if content_header.get('breadcrumb_mode') == 'mobile-only' else '' }}" aria-label="Pfad"{% if content_header.get('breadcrumb_depth') %} data-depth="{{ content_header.get('breadcrumb_depth') }}"{% endif %}>
     <ol class="pm-breadcrumb__list">
       {% for item in content_header.breadcrumbs %}
       <li class="pm-breadcrumb__item{{ ' is-current' if item.current else '' }}">
