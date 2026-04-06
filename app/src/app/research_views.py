@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import urlencode
 
@@ -318,7 +320,7 @@ def _build_task_item(session: SessionRecord, task_key: str, ui_lang: str, langua
         "label": task.short_label(ui_lang),
         "description": task.description(ui_lang),
         "href": _url_with_query(
-            "public.research_player_stub",
+            "public.research_player",
             ui_lang=ui_lang,
             language_slug=language_slug,
             session_id=session.session_id,
@@ -700,7 +702,7 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
             "target_country_stay": "-" if session.is_native else _format_target_country_stay(session.stays_in_target_country, ui_lang),
             "action_label": active_task.short_label(ui_lang),
             "player_href": _url_with_query(
-                "public.research_player_stub",
+                "public.research_player",
                 ui_lang=ui_lang,
                 language_slug=language_slug,
                 session_id=session.session_id,
@@ -924,7 +926,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                     {
                         "label": task.short_label(ui_lang),
                         "href": _url_with_query(
-                            "public.research_player_stub",
+                            "public.research_player",
                             ui_lang=ui_lang,
                             language_slug=language_slug,
                             session_id=selected_session.session_id,
@@ -1092,7 +1094,272 @@ def build_speaker_profile_page(
     }
 
 
-def build_player_stub_page(ui_lang: str, language_slug: str, session_id: str, task_key: str, source: str | None) -> dict[str, Any] | None:
+def _recording_date_label(ui_lang: str) -> str:
+    return "Aufnahmedatum" if ui_lang == "de" else "Recording date"
+
+
+def _task_label(ui_lang: str) -> str:
+    return "Aufgabe" if ui_lang == "de" else "Task"
+
+
+def _player_available_label(ui_lang: str) -> str:
+    return "Verfügbar" if ui_lang == "de" else "Available"
+
+
+def _player_current_label(ui_lang: str) -> str:
+    return "Aktive Aufgabe" if ui_lang == "de" else "Current task"
+
+
+def _player_not_ready_label(ui_lang: str) -> str:
+    return "Noch nicht im MVP" if ui_lang == "de" else "Not yet in MVP"
+
+
+def _player_artifacts_missing_label(ui_lang: str) -> str:
+    return "Keine verarbeitbaren Player-Artefakte" if ui_lang == "de" else "No playable artifacts"
+
+
+def _player_play_label(ui_lang: str) -> str:
+    return "Wiedergabe starten" if ui_lang == "de" else "Start playback"
+
+
+def _player_pause_label(ui_lang: str) -> str:
+    return "Pausieren" if ui_lang == "de" else "Pause"
+
+
+def _wordlist_items_label(ui_lang: str) -> str:
+    return "Wortliste" if ui_lang == "de" else "Wordlist"
+
+
+def _player_missing_message(task_key: str, ui_lang: str) -> str:
+    if task_key == "wordlist":
+        return (
+            "Für diese Session liegen noch keine verarbeitbaren Wortlisten-Artefakte vor. "
+            "Der Player bleibt deshalb in einem ehrlichen Fallback-Zustand."
+            if ui_lang == "de"
+            else "No playable wordlist artifacts are currently available for this session. The player therefore stays in an honest fallback state."
+        )
+    return (
+        "Für diese Aufgabe gibt es im aktuellen MVP noch keine produktive Player-Ansicht."
+        if ui_lang == "de"
+        else "This task does not have a production-ready player view in the current MVP yet."
+    )
+
+
+def _player_missing_hint(task_key: str, ui_lang: str) -> str | None:
+    if task_key == "wordlist":
+        return (
+            "Typische Ursachen sind fehlende Ableitungen oder Sessions, die für den aktuellen Wortlisten-Pfad nicht verarbeitbar sind."
+            if ui_lang == "de"
+            else "Typical reasons are missing derived artifacts or sessions that are not processable for the current wordlist path."
+        )
+    return (
+        "Der gemeinsame Player bleibt bestehen, aber `text` und `interview` sind in diesem Run bewusst noch nicht implementiert."
+        if ui_lang == "de"
+        else "The shared player base remains in place, but `text` and `interview` are intentionally not implemented in this run."
+    )
+
+
+def _format_player_clock(milliseconds: int) -> str:
+    total_seconds = max(0, milliseconds // 1000)
+    minutes, seconds = divmod(total_seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes}:{seconds:02d}"
+
+
+def _player_intro(ui_lang: str) -> str:
+    return (
+        "Audio-Workbench für eine dokumentierte Session und ihre verfügbaren Aufgabentypen."
+        if ui_lang == "de"
+        else "Audio workbench for one documented session and its available task types."
+    )
+
+
+def _session_root(session: SessionRecord) -> Path:
+    return session.metadata_path.parent
+
+
+def _resolve_session_relative_path(session_root: Path, relative_path: str | None) -> Path | None:
+    normalized = (relative_path or "").strip()
+    if not normalized:
+        return None
+
+    candidate = (session_root / normalized).resolve()
+    root = session_root.resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate
+
+
+def _load_alignment_payload(session: SessionRecord, task_key: str) -> dict[str, Any] | None:
+    session_root = _session_root(session)
+    alignment_path = _resolve_session_relative_path(session_root, f"alignment/{task_key}.json")
+    if alignment_path is None or not alignment_path.is_file():
+        return None
+
+    try:
+        payload = json.loads(alignment_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("session_id") != session.session_id or payload.get("person_id") != session.person_id or payload.get("task") != task_key:
+        return None
+    return payload
+
+
+def _coerce_milliseconds(value: Any) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return None
+
+
+def _load_wordlist_bundle(session: SessionRecord) -> dict[str, Any] | None:
+    payload = _load_alignment_payload(session, "wordlist")
+    if payload is None:
+        return None
+
+    session_root = _session_root(session)
+    audio = payload.get("audio")
+    if not isinstance(audio, dict):
+        return None
+
+    full_mp3 = audio.get("full_mp3")
+    if not isinstance(full_mp3, str):
+        return None
+
+    full_audio_path = _resolve_session_relative_path(session_root, full_mp3)
+    if full_audio_path is None or not full_audio_path.is_file():
+        return None
+
+    raw_items = payload.get("items")
+    if not isinstance(raw_items, list) or not raw_items:
+        return None
+
+    items: list[dict[str, Any]] = []
+    for raw_item in raw_items:
+        if not isinstance(raw_item, dict):
+            return None
+
+        item_id = raw_item.get("item_id")
+        item_number = raw_item.get("item_number")
+        text_value = raw_item.get("text")
+        start_ms = _coerce_milliseconds(raw_item.get("start_ms"))
+        end_ms = _coerce_milliseconds(raw_item.get("end_ms"))
+        if not isinstance(item_id, str) or not isinstance(item_number, str) or not isinstance(text_value, str):
+            return None
+        if start_ms is None or end_ms is None or end_ms < start_ms:
+            return None
+
+        split_mp3 = raw_item.get("split_mp3")
+        split_audio_path = _resolve_session_relative_path(session_root, split_mp3) if isinstance(split_mp3, str) else None
+        items.append(
+            {
+                "item_id": item_id,
+                "item_number": item_number,
+                "text": text_value,
+                "start_ms": start_ms,
+                "end_ms": end_ms,
+                "split_audio_path": split_audio_path if split_audio_path and split_audio_path.is_file() else None,
+            }
+        )
+
+    return {"full_audio_path": full_audio_path, "items": items}
+
+
+def _player_origin_context(
+    ui_lang: str,
+    language_slug: str,
+    session: SessionRecord,
+    task_key: str,
+    source: str | None,
+    profile_href: str,
+) -> tuple[dict[str, str], list[dict[str, str]]]:
+    speakers_href = url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers")
+    recordings_href = _url_with_query(
+        "public.research_language_page",
+        ui_lang=ui_lang,
+        language_slug=language_slug,
+        page_slug="recordings",
+        query={"task": task_key},
+    )
+    speakers_label = get_research_page_label("speakers", ui_lang)
+    recordings_label = get_research_page_label("recordings", ui_lang)
+    profile_label = "Profil" if ui_lang == "de" else "Profile"
+
+    if source == "recordings":
+        return (
+            {"label": "Zurück zu Aufzeichnungen" if ui_lang == "de" else "Back to recordings", "href": recordings_href},
+            [{"label": recordings_label, "href": recordings_href}],
+        )
+    if source == "profile":
+        return (
+            {"label": "Zurück zum Profil" if ui_lang == "de" else "Back to profile", "href": profile_href},
+            [
+                {"label": speakers_label, "href": speakers_href},
+                {"label": profile_label, "href": profile_href},
+            ],
+        )
+    return (
+        {"label": "Zurück zu Sprecher:innen" if ui_lang == "de" else "Back to speakers", "href": speakers_href},
+        [{"label": speakers_label, "href": speakers_href}],
+    )
+
+
+def _build_player_task_panels(
+    ui_lang: str,
+    language_slug: str,
+    session: SessionRecord,
+    requested_task_key: str,
+    source: str | None,
+    wordlist_ready: bool,
+) -> list[dict[str, Any]]:
+    panels: list[dict[str, Any]] = []
+    for task in iter_research_tasks():
+        is_available = session_has_task(session, task.key)
+        is_current = task.key == requested_task_key
+        href: str | None = None
+        state_label: str
+
+        if not is_available:
+            state_label = _unavailable_label(ui_lang)
+        elif task.key == "wordlist":
+            if wordlist_ready:
+                href = None if is_current else _url_with_query(
+                    "public.research_player",
+                    ui_lang=ui_lang,
+                    language_slug=language_slug,
+                    session_id=session.session_id,
+                    task=task.key,
+                    query={"source": source} if source else None,
+                )
+                state_label = _player_current_label(ui_lang) if is_current else _player_available_label(ui_lang)
+            else:
+                state_label = _player_artifacts_missing_label(ui_lang)
+        else:
+            state_label = _player_not_ready_label(ui_lang)
+
+        panels.append(
+            {
+                "key": task.key,
+                "label": task.short_label(ui_lang),
+                "description": task.description(ui_lang),
+                "href": href,
+                "current": is_current,
+                "is_disabled": href is None,
+                "state_label": state_label,
+            }
+        )
+    return panels
+
+
+def build_player_page(ui_lang: str, language_slug: str, session_id: str, task_key: str, source: str | None) -> dict[str, Any] | None:
     session = get_session(language_slug, session_id)
     task = get_research_task(task_key)
     if session is None or task is None or not session_has_task(session, task_key):
@@ -1106,52 +1373,105 @@ def build_player_stub_page(ui_lang: str, language_slug: str, session_id: str, ta
         query={"session": session.session_id},
     )
 
-    origin_href = url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers")
-    origin_label = "Zurück zu Sprecher:innen" if ui_lang == "de" else "Back to speakers"
-    if source == "recordings":
-        origin_href = _url_with_query(
-            "public.research_language_page",
-            ui_lang=ui_lang,
-            language_slug=language_slug,
-            page_slug="recordings",
-            query={"task": task_key},
-        )
-        origin_label = "Zurück zu Aufzeichnungen" if ui_lang == "de" else "Back to recordings"
-    elif source == "profile":
-        origin_href = profile_href
-        origin_label = "Zurück zum Profil" if ui_lang == "de" else "Back to profile"
+    origin_link, ancestors = _player_origin_context(ui_lang, language_slug, session, task_key, source, profile_href)
 
     context_value = _format_standard_variety(session) if session.is_native else _format_level(session, ui_lang)
     detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
+    wordlist_bundle = _load_wordlist_bundle(session) if session_has_task(session, "wordlist") else None
+    wordlist_ready = wordlist_bundle is not None
+    task_panels = _build_player_task_panels(ui_lang, language_slug, session, task_key, source, wordlist_ready)
+
+    player_view: dict[str, Any]
+    if task_key == "wordlist" and wordlist_bundle is not None:
+        player_items = [
+            {
+                "item_id": item["item_id"],
+                "item_number": item["item_number"],
+                "text": item["text"],
+                "start_label": _format_player_clock(item["start_ms"]),
+                "end_label": _format_player_clock(item["end_ms"]),
+                "download_href": url_for(
+                    "public.research_player_item_download",
+                    ui_lang=ui_lang,
+                    language_slug=language_slug,
+                    session_id=session.session_id,
+                    task=task_key,
+                    item_id=item["item_id"],
+                ) if item["split_audio_path"] else None,
+            }
+            for item in wordlist_bundle["items"]
+        ]
+        player_view = {
+            "mode": "wordlist",
+            "audio_href": url_for(
+                "public.research_player_audio",
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                session_id=session.session_id,
+                task=task_key,
+            ),
+            "controls_title": "Session-Audio" if ui_lang == "de" else "Session audio",
+            "controls_hint": (
+                "Klick auf einen Listeneintrag springt direkt an die dokumentierte Position in der Gesamtaufnahme."
+                if ui_lang == "de"
+                else "Clicking a list entry jumps directly to the documented position in the full recording."
+            ),
+            "items_title": _wordlist_items_label(ui_lang),
+            "items_count": len(player_items),
+            "download_label": "MP3 laden" if ui_lang == "de" else "Download MP3",
+            "toggle_play_label": _player_play_label(ui_lang),
+            "toggle_pause_label": _player_pause_label(ui_lang),
+            "client_state": {
+                "items": [
+                    {
+                        "itemId": item["item_id"],
+                        "startMs": item["start_ms"],
+                        "endMs": item["end_ms"],
+                    }
+                    for item in wordlist_bundle["items"]
+                ]
+            },
+            "items": player_items,
+        }
+    else:
+        fallback_href = None
+        if task_key != "wordlist" and wordlist_ready:
+            fallback_href = _url_with_query(
+                "public.research_player",
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                session_id=session.session_id,
+                task="wordlist",
+                query={"source": source} if source else None,
+            )
+        player_view = {
+            "mode": "unavailable",
+            "title": "Player-Status" if ui_lang == "de" else "Player status",
+            "message": _player_missing_message(task_key, ui_lang),
+            "hint": _player_missing_hint(task_key, ui_lang),
+            "fallback_link": {
+                "href": fallback_href,
+                "label": "Zur Wortliste wechseln" if ui_lang == "de" else "Open wordlist",
+            } if fallback_href else None,
+        }
 
     return {
         "title": task.long_label(ui_lang),
-        "template": "pages/research_player_stub.html",
+        "template": "pages/research_player.html",
         "page_kind": "workbench",
         "access": "protected",
         "content_header": build_content_header(
             page_name="research",
             title=task.long_label(ui_lang),
-            intro="Die Player-Ansicht ist strukturell vorbereitet, wird in diesem Run aber bewusst noch nicht fachlich ausgebaut." if ui_lang == "de" else "The player view is structurally prepared but intentionally not implemented in this run.",
+            intro=_player_intro(ui_lang),
             section_label=get_section_label("research", ui_lang),
             section_href=url_for("public.research_home", ui_lang=ui_lang),
             context_mode="language",
             context_title=_language_context(ui_lang, language_slug)[1],
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
-            ancestors=[
-                {
-                    "label": get_research_page_label("recordings", ui_lang) if source == "recordings" else get_research_page_label("speakers", ui_lang),
-                    "href": _url_with_query(
-                        "public.research_language_page",
-                        ui_lang=ui_lang,
-                        language_slug=language_slug,
-                        page_slug="recordings" if source == "recordings" else "speakers",
-                        query={"task": task_key} if source == "recordings" else None,
-                    ),
-                }
-            ],
+            ancestors=ancestors,
         ),
-        "origin_link": {"label": origin_label, "href": origin_href},
+        "origin_link": origin_link,
         "profile_link": {"label": "Zum Profil" if ui_lang == "de" else "Open profile", "href": profile_href},
         "speakers_href": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),
         "recordings_href": _url_with_query(
@@ -1161,15 +1481,60 @@ def build_player_stub_page(ui_lang: str, language_slug: str, session_id: str, ta
             page_slug="recordings",
             query={"task": task_key},
         ),
-        "session": {
+        "task_panels": task_panels,
+        "summary": {
             "session_id": session.session_id,
             "person_id": session.person_id,
+            "recording_date": _format_recording_date(session),
             "speaker_type": _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
             "context_label": "Varietät" if session.is_native and ui_lang == "de" else "Niveau" if ui_lang == "de" else "Variety" if session.is_native else "Level",
             "context_value": context_value,
             "detail_label": _origin_country_label(ui_lang) if session.is_native else "L1",
             "detail_value": detail_value,
-            "task": task.long_label(ui_lang),
-            "task_description": task.description(ui_lang),
+            "task_label": _task_label(ui_lang),
+            "task_value": task.long_label(ui_lang),
+            "recorded_by_label": _recorded_by_label(ui_lang),
+            "recorded_by_value": session.recorded_by or "-",
+            "recording_date_label": _recording_date_label(ui_lang),
+            "accent_modifier": _session_accent_modifier(session),
+            "selected_label": task.short_label(ui_lang),
+            "badges": [
+                _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
+                context_value if context_value != "-" else None,
+            ],
         },
+        "player": player_view,
     }
+
+
+def resolve_player_audio_artifact(language_slug: str, session_id: str, task_key: str) -> Path | None:
+    session = get_session(language_slug, session_id)
+    if session is None or task_key != "wordlist" or not session_has_task(session, task_key):
+        return None
+
+    bundle = _load_wordlist_bundle(session)
+    if bundle is None:
+        return None
+    return bundle["full_audio_path"]
+
+
+def resolve_player_item_download(language_slug: str, session_id: str, task_key: str, item_id: str) -> dict[str, Any] | None:
+    session = get_session(language_slug, session_id)
+    if session is None or task_key != "wordlist" or not session_has_task(session, task_key):
+        return None
+
+    bundle = _load_wordlist_bundle(session)
+    if bundle is None:
+        return None
+
+    for item in bundle["items"]:
+        if item["item_id"] != item_id or item["split_audio_path"] is None:
+            continue
+        return {
+            "path": item["split_audio_path"],
+            "person_id": session.person_id,
+            "task_key": task_key,
+            "item_id": item["item_id"],
+            "download_label": item["text"],
+        }
+    return None

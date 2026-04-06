@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--workbench pm-content pm-content--workbench pm-research-page" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  <section class="pm-feature-band pm-research-task-band" aria-label="{{ 'Aufgabentypen' if ui_lang == 'de' else 'Task types' }}">
+    <div class="pm-task-panel-grid">
+      {% for panel in promat_page.task_panels %}
+      {% if panel.href %}
+      <a class="pm-task-panel{{ ' is-current' if panel.current else '' }}" href="{{ panel.href }}"{% if panel.current %} aria-current="page"{% endif %}>
+        <span class="pm-task-panel__label">{{ panel.label }}</span>
+        <span class="pm-task-panel__description">{{ panel.description }}</span>
+        <span class="pm-task-panel__state">{{ panel.state_label }}</span>
+      </a>
+      {% else %}
+      <div class="pm-task-panel{{ ' is-current' if panel.current else '' }} is-disabled"{% if panel.current %} aria-current="page"{% endif %} aria-disabled="true">
+        <span class="pm-task-panel__label pm-text-muted-strong">{{ panel.label }}</span>
+        <span class="pm-task-panel__description pm-text-muted-strong">{{ panel.description }}</span>
+        <span class="pm-task-panel__state pm-text-muted-strong">{{ panel.state_label }}</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="pm-feature-band pm-player-layout">
+    <section class="pm-player-summary">
+      <article class="pm-container pm-profile-session pm-profile-session--{{ promat_page.summary.accent_modifier }} is-selected">
+        <div class="pm-profile-session__header">
+          <h2 class="pm-profile-session__title">{{ promat_page.summary.session_id }}</h2>
+          <span class="pm-profile-session__selected">{{ promat_page.summary.selected_label }}</span>
+        </div>
+
+        <div class="pm-profile-badge-row">
+          {% for badge in promat_page.summary.badges if badge %}
+          <span class="pm-profile-badge">{{ badge }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="pm-profile-metadata__grid">
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">Person-ID</p>
+            <p class="pm-profile-metadata__value">{{ promat_page.summary.person_id }}</p>
+          </div>
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ promat_page.summary.recording_date_label }}</p>
+            <p class="pm-profile-metadata__value">{{ promat_page.summary.recording_date }}</p>
+          </div>
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ 'Sprechergruppe' if ui_lang == 'de' else 'Speaker type' }}</p>
+            <p class="pm-profile-metadata__value">{{ promat_page.summary.speaker_type }}</p>
+          </div>
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ promat_page.summary.context_label }}</p>
+            <p class="pm-profile-metadata__value">{{ promat_page.summary.context_value }}</p>
+          </div>
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ promat_page.summary.detail_label }}</p>
+            <p class="pm-profile-metadata__value">{{ promat_page.summary.detail_value }}</p>
+          </div>
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ promat_page.summary.recorded_by_label }}</p>
+            <p class="pm-profile-metadata__value">{{ promat_page.summary.recorded_by_value }}</p>
+          </div>
+          <div class="pm-profile-metadata__row">
+            <p class="pm-profile-metadata__label">{{ promat_page.summary.task_label }}</p>
+            <p class="pm-profile-metadata__value">{{ promat_page.summary.task_value }}</p>
+          </div>
+        </div>
+
+        <div class="pm-player-summary__actions">
+          <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.origin_link.href }}">{{ promat_page.origin_link.label }}</a>
+          <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.profile_link.href }}">{{ promat_page.profile_link.label }}</a>
+        </div>
+      </article>
+    </section>
+
+    <section class="pm-player-runtime">
+      {% if promat_page.player.mode == 'wordlist' %}
+      <div class="pm-player-runtime__inner" data-player-root>
+        <section class="pm-container pm-container--tinted pm-player-panel pm-player-panel--controls">
+          <div class="pm-player-panel__header">
+            <div class="pm-player-panel__copy">
+              <h2 class="pm-player-panel__title">{{ promat_page.player.controls_title }}</h2>
+              <p class="pm-player-panel__hint">{{ promat_page.player.controls_hint }}</p>
+            </div>
+          </div>
+
+          <audio class="pm-player-audio" preload="metadata" src="{{ promat_page.player.audio_href }}" data-player-audio></audio>
+
+          <div class="pm-player-toolbar">
+            <button
+              type="button"
+              class="pm-research-button pm-player-toolbar__toggle"
+              data-player-toggle
+              data-play-label="{{ promat_page.player.toggle_play_label }}"
+              data-pause-label="{{ promat_page.player.toggle_pause_label }}"
+              aria-label="{{ promat_page.player.toggle_play_label }}"
+            >{{ promat_page.player.toggle_play_label }}</button>
+
+            <div class="pm-player-toolbar__timeline">
+              <p class="pm-player-toolbar__time">
+                <span data-player-current>0:00</span>
+                <span aria-hidden="true">/</span>
+                <span data-player-duration>0:00</span>
+              </p>
+              <input type="range" min="0" max="1000" step="1" value="0" class="pm-player-progress" data-player-progress disabled aria-label="{{ 'Wiedergabefortschritt' if ui_lang == 'de' else 'Playback progress' }}">
+            </div>
+          </div>
+        </section>
+
+        <section class="pm-container pm-player-panel pm-player-panel--wordlist">
+          <div class="pm-player-panel__header pm-player-panel__header--split">
+            <div class="pm-player-panel__copy">
+              <h2 class="pm-player-panel__title">{{ promat_page.player.items_title }}</h2>
+              <p class="pm-player-panel__hint">{{ promat_page.player['items_count'] }} {{ 'Einträge' if ui_lang == 'de' else 'items' }}</p>
+            </div>
+          </div>
+
+          <ol class="pm-player-wordlist" aria-label="{{ promat_page.player.items_title }}">
+            {% for item in promat_page.player['items'] %}
+            <li class="pm-player-wordlist__item" data-player-item data-item-id="{{ item.item_id }}" data-start-ms="{{ promat_page.player['client_state']['items'][loop.index0].startMs }}" data-end-ms="{{ promat_page.player['client_state']['items'][loop.index0].endMs }}">
+              <button type="button" class="pm-player-wordlist__button" data-player-seek>
+                <span class="pm-player-wordlist__number">{{ item.item_number }}</span>
+                <span class="pm-player-wordlist__text">{{ item.text }}</span>
+                <span class="pm-player-wordlist__meta">{{ item.start_label }}–{{ item.end_label }}</span>
+              </button>
+
+              <div class="pm-player-wordlist__actions">
+                {% if item.download_href %}
+                <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="{{ item.download_href }}">{{ promat_page.player.download_label }}</a>
+                {% endif %}
+              </div>
+            </li>
+            {% endfor %}
+          </ol>
+        </section>
+      </div>
+      {% else %}
+      <section class="pm-container pm-container--tinted pm-player-panel pm-player-panel--unavailable">
+        <div class="pm-player-panel__copy">
+          <h2 class="pm-player-panel__title">{{ promat_page.player.title }}</h2>
+          <p class="pm-player-panel__hint">{{ promat_page.player.message }}</p>
+          {% if promat_page.player.hint %}
+          <p class="pm-player-panel__hint pm-player-panel__hint--secondary">{{ promat_page.player.hint }}</p>
+          {% endif %}
+        </div>
+
+        <div class="pm-player-summary__actions">
+          {% if promat_page.player.fallback_link %}
+          <a class="pm-research-button" href="{{ promat_page.player.fallback_link.href }}">{{ promat_page.player.fallback_link.label }}</a>
+          {% endif %}
+          <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.origin_link.href }}">{{ promat_page.origin_link.label }}</a>
+        </div>
+      </section>
+      {% endif %}
+    </section>
+  </div>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if promat_page.player.mode == 'wordlist' %}
+<script id="pm-player-state" type="application/json">{{ promat_page.player.client_state | tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/research-player.js') }}"></script>
+{% endif %}
+{% endblock %}

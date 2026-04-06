@@ -4,15 +4,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Blueprint, abort, jsonify, make_response, render_template, request, url_for
+import re
+
+from flask import Blueprint, abort, jsonify, make_response, render_template, request, send_file, url_for
 from sqlalchemy import text
 
 from ..content_navigation import build_content_header as build_shared_content_header
 from ..research_views import (
-    build_player_stub_page,
+    build_player_page,
     build_recordings_page,
     build_speaker_profile_page,
     build_speakers_page,
+    resolve_player_audio_artifact,
+    resolve_player_item_download,
 )
 from .public_content import (
     DEFAULT_UI_LANGUAGE,
@@ -592,7 +596,7 @@ def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>")
-def research_player_stub(ui_lang: str, language_slug: str, session_id: str, task: str):
+def research_player(ui_lang: str, language_slug: str, session_id: str, task: str):
     ui_lang = _require_ui_lang(ui_lang)
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
@@ -600,7 +604,7 @@ def research_player_stub(ui_lang: str, language_slug: str, session_id: str, task
 
     language = get_language(canonical_language_slug)
     source = request.args.get("source")
-    page = build_player_stub_page(ui_lang, canonical_language_slug, session_id, task, source)
+    page = build_player_page(ui_lang, canonical_language_slug, session_id, task, source)
     if page is None or language is None:
         abort(404)
 
@@ -623,6 +627,52 @@ def research_player_stub(ui_lang: str, language_slug: str, session_id: str, task
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+
+
+def _player_download_filename(person_id: str, task_key: str, item_id: str, download_label: str) -> str:
+    readable_label = re.sub(r"[^\w\s-]", "", download_label.strip().lower(), flags=re.UNICODE)
+    readable_label = re.sub(r"[-\s]+", "-", readable_label, flags=re.UNICODE).strip("-_") or item_id
+    return f"{person_id}_{task_key}_{item_id}_{readable_label}.mp3"
+
+
+@blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>/audio.mp3")
+def research_player_audio(ui_lang: str, language_slug: str, session_id: str, task: str):
+    _require_ui_lang(ui_lang)
+    canonical_language_slug = get_canonical_language_slug(language_slug)
+    if canonical_language_slug is None:
+        abort(404)
+
+    artifact_path = resolve_player_audio_artifact(canonical_language_slug, session_id, task)
+    if artifact_path is None:
+        abort(404)
+
+    return send_file(artifact_path, mimetype="audio/mpeg", conditional=True, etag=False)
+
+
+@blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>/items/<item_id>.mp3")
+def research_player_item_download(ui_lang: str, language_slug: str, session_id: str, task: str, item_id: str):
+    _require_ui_lang(ui_lang)
+    canonical_language_slug = get_canonical_language_slug(language_slug)
+    if canonical_language_slug is None:
+        abort(404)
+
+    artifact = resolve_player_item_download(canonical_language_slug, session_id, task, item_id)
+    if artifact is None:
+        abort(404)
+
+    return send_file(
+        artifact["path"],
+        mimetype="audio/mpeg",
+        as_attachment=True,
+        download_name=_player_download_filename(
+            artifact["person_id"],
+            artifact["task_key"],
+            artifact["item_id"],
+            artifact["download_label"],
+        ),
+        conditional=True,
+        etag=False,
+    )
 
 
 @blueprint.get("/<ui_lang>/teaching")

@@ -42,6 +42,8 @@ This file is the binding source of truth for the target architecture of the rese
 - Optional query context may refine the player state, but it must not create separate route families or separate player implementations.
 - Invalid optional query context must degrade to the nearest valid base state instead of breaking the whole page.
 - Source context is navigational context only and must not alter the base architecture of the player.
+- Protected media delivery for the current player stays inside the same route family via `.../audio.mp3` for full-task playback and `.../items/{item_id}.mp3` for single-item download.
+- These delivery routes resolve protected session artifacts through application logic; they do not redefine internal storage paths and they do not publish the artifacts under `public/`.
 
 ## Player State Model
 
@@ -102,6 +104,7 @@ The player state must be able to represent at least these values:
 - The task switch retains the primary session, metadata card, and route family.
 - Preset or focus context should be retained across task switches where it remains valid.
 - Tasks that are not available for the current session may remain visible as disabled, non-interactive controls.
+- In the current MVP, `wordlist` is the only production-ready task mode; documented `text` and `interview` tasks stay visible in the same switch but render as honest unavailable states until their task renderers exist.
 
 ## Task Modes
 
@@ -169,12 +172,12 @@ The player state must be able to represent at least these values:
 - Corpus-specific task catalogs live under `data/config/research_player/{language}/task_catalogs/`.
 - If a task catalog exists for a task, that catalog is the canonical content source for the task inside the player architecture and downstream derivation pipelines.
 - A task catalog carries the canonical unit sequence, stable IDs, visible numbering, exact texts, and optional provenance references for the corpus-specific task content.
+- A task catalog may additionally carry corpus-specific `display_label` and top-level `groups` metadata when grouped task structure is part of the canonical content model.
 - Session-specific `alignment/{task}.json` files are derived from the task catalog plus session-specific alignment and audio data.
 - Production pipelines must not reconstruct canonical task texts from TextGrid labels, PDF extraction, or loose TXT sources when a canonical task catalog already exists.
 - TextGrid labels may be used only for validation, explicit warning, or controlled failure and must not silently override task-catalog content.
 - Task catalogs may later support raw material views on project or information pages without implying automatic public audio access or release.
-- The first concrete task catalog prepared for this architecture is `data/config/research_player/spanish/task_catalogs/wordlist.json`.
-- The same structure is reserved for future `text` catalogs such as `data/config/research_player/{language}/task_catalogs/text.json`.
+- The first concrete task catalogs prepared for this architecture are `data/config/research_player/spanish/task_catalogs/wordlist.json` and `data/config/research_player/spanish/task_catalogs/text.json`.
 
 ### `player_config.json`
 
@@ -220,6 +223,7 @@ Optional preset item fields may include:
 - Split MP3 artifacts live under `items/{task}/{item_id}.mp3`.
 - The player must remain usable with full MP3 plus alignment JSON even when split MP3 coverage is incomplete.
 - Single-item split-MP3 download is part of the target contract when the artifact exists.
+- The current web implementation delivers full-task playback through the protected route `.../audio.mp3` and split downloads through `.../items/{item_id}.mp3`, while keeping internal runtime paths private.
 
 ### Common top-level contract
 
@@ -300,6 +304,12 @@ The top level may additionally include:
 - Wordlist split MP3s use `250 ms` padding before and after the canonical item boundaries.
 - Split-export boundaries are clamped to the available audio duration.
 
+### Current MVP scope
+
+- The current productive web-player MVP uses the shared player surface for all tasks but only implements real playback, progress, timing sync, active-item highlighting, and split-download delivery for `wordlist`.
+- If a session documents `wordlist` but lacks processable player artifacts, the player route must stay reachable and render an explicit unavailable state instead of failing the whole page.
+- The current MVP keeps `text` and `interview` inside the shared task switch but does not fake playback or pseudo-renderers for them.
+
 ### `text` container contract
 
 - In `text`, the leading container level is `items`.
@@ -308,7 +318,7 @@ The top level may additionally include:
 	- `item_id`
 	- `item_number`
 	- `text`
-- Future corpus-specific `text` production uses `data/config/research_player/{language}/task_catalogs/text.json` as the canonical content catalog for text units, numbering, and exact texts.
+- Corpus-specific `text` production uses `data/config/research_player/{language}/task_catalogs/text.json` as the canonical content catalog for text units, numbering, and exact texts.
 - Future session-specific `alignment/text.json` files are derived from that text catalog plus session-specific alignment and audio data.
 - Text items may transport their own broader timing via `start_ms` and `end_ms`.
 - For running synchronization, `text` should use nested `tokens` where sufficiently good word-level alignment exists.
@@ -316,6 +326,29 @@ The top level may additionally include:
 	- `split_mp3`
 	- `tokens`
 	- `label`
+
+### Current `text` catalog rules
+
+- The current prepared corpus-specific `text` path is the canonical Spanish sentence list with exactly `50` visible items.
+- `data/config/research_player/spanish/task_catalogs/text.json` is the canonical content catalog for that sentence list.
+- The current Spanish `text` catalog may use the visible `display_label` `Satzliste` without changing the technical task key `text`.
+- The current Spanish sentence-list catalog contains top-level `groups` and `items`.
+- These `groups` are canonical content-grouping metadata and must not be modeled as interview-like `segments`.
+- The current Spanish sentence-list groups are `D`, `QY`, and `QW`.
+- Their neutral machine-readable `group_type` values are `declarative`, `yes_no_question`, and `wh_question`.
+- Visible German or English group labels are UI or configuration concerns and must not replace the machine-readable catalog structure as the only truth.
+- The intended PDF reference `docs/model_mds/02_Spanisch_Satzliste.pdf` is the order and block-structure reference for the catalog.
+- The user-provided canonical sentence-list text is the authoritative source for the exact `text` strings of the catalog.
+- When this catalog exists, production pipelines must not reconstruct canonical sentence texts from PDF extraction, Word extraction, TextGrid labels, or other loose helper sources.
+- No orthographic normalization, Unicode simplification, accent removal, automatic case conversion, punctuation rewriting, quote substitution, or silent whitespace rewriting is allowed.
+- For the current Spanish sentence list, visible `item_number` values remain `D1` through `D30`, `QY1` through `QY10`, and `QW1` through `QW10`.
+- For the current Spanish sentence list, stable technical `item_id` values are `d_01` through `d_30`, `qy_01` through `qy_10`, and `qw_01` through `qw_10`.
+- The current canonical `text` catalog intentionally contains only sentence-level items and group metadata.
+- Tokens are not part of this canonical sentence-list catalog.
+- Future session-specific `alignment/text.json` files may add nested `tokens` for finer-grained synchronization.
+- `wordlist_item_ref` remains the optional cross-task reference on token level, not on the canonical sentence-list catalog as a whole.
+- The primary future correspondence between sentence-list material and wordlist material lives on token-level alignment data, not in the top-level sentence-list catalog structure.
+- The same canonical sentence-list catalog may later support raw material views in the webapp without implying public audio release, automatic corpus release, or a second competing text source.
 
 ### `interview` container contract
 

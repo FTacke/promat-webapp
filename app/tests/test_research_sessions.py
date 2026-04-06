@@ -18,7 +18,7 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app.config.data_conventions import build_person_id, build_session_id, parse_person_id, parse_session_id
 from app import register_context_processors
-from app.research_views import build_recordings_page, build_speaker_profile_page, build_speakers_page
+from app.research_views import build_player_page, build_recordings_page, build_speaker_profile_page, build_speakers_page
 from app.routes.public import blueprint as public_blueprint
 from app.research_sessions import (
     load_language_sessions,
@@ -71,6 +71,46 @@ def _write_session(runtime_root: Path, language_slug: str, session_id: str, payl
     session_dir = runtime_root / "data" / "sessions" / language_slug / session_id
     session_dir.mkdir(parents=True, exist_ok=True)
     (session_dir / "metadata.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def _write_session_file(runtime_root: Path, language_slug: str, session_id: str, relative_path: str, content: bytes | str) -> None:
+    file_path = runtime_root / "data" / "sessions" / language_slug / session_id / relative_path
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    if isinstance(content, bytes):
+        file_path.write_bytes(content)
+        return
+    file_path.write_text(content, encoding="utf-8")
+
+
+def _write_wordlist_player_artifacts(runtime_root: Path, language_slug: str, session_id: str, person_id: str) -> None:
+    payload = {
+        "session_id": session_id,
+        "person_id": person_id,
+        "task": "wordlist",
+        "audio": {"full_mp3": "derived/wordlist.mp3"},
+        "items": [
+            {
+                "item_id": "wl_001",
+                "item_number": "1",
+                "text": "mesa",
+                "start_ms": 500,
+                "end_ms": 1200,
+                "split_mp3": "items/wordlist/wl_001.mp3",
+            },
+            {
+                "item_id": "wl_002",
+                "item_number": "2",
+                "text": "reloj",
+                "start_ms": 1500,
+                "end_ms": 2400,
+                "split_mp3": "items/wordlist/wl_002.mp3",
+            },
+        ],
+    }
+    _write_session_file(runtime_root, language_slug, session_id, "alignment/wordlist.json", json.dumps(payload, indent=2) + "\n")
+    _write_session_file(runtime_root, language_slug, session_id, "derived/wordlist.mp3", b"fake mp3")
+    _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_001.mp3", b"fake split 1")
+    _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_002.mp3", b"fake split 2")
 
 
 def _task(task_type: str) -> dict[str, str]:
@@ -785,3 +825,110 @@ def test_recordings_page_keeps_disabled_interview_panel_and_blank_native_columns
     native_row = page["results"][0]
     assert native_row["context_value"] == ""
     assert native_row["detail_value"] == ""
+
+
+def test_player_page_builds_real_wordlist_view_and_disables_unimplemented_tasks(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    with url_app.test_request_context():
+        page = build_player_page("de", "spanish", session_id, "wordlist", "recordings")
+
+    assert page is not None
+    assert page["template"] == "pages/research_player.html"
+    assert page["player"]["mode"] == "wordlist"
+    assert page["player"]["audio_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/audio.mp3")
+    assert page["player"]["items"][0]["download_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")
+    assert [panel["key"] for panel in page["task_panels"]] == ["wordlist", "text", "interview"]
+    assert page["task_panels"][0]["current"] is True
+    assert page["task_panels"][1]["href"] is None
+    assert page["task_panels"][1]["state_label"] == "Noch nicht im MVP"
+    assert page["origin_link"]["href"].endswith("/de/research/spanish/recordings?task=wordlist")
+
+
+def test_player_route_renders_wordlist_runtime_and_profile_back_link(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-N-0001-2026-S01"
+    _write_session(runtime_env, "spanish", session_id, _native_payload("ES-N-0001", session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-N-0001")
+
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{session_id}/wordlist?source=profile")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-player-root' in html
+    assert f'/de/research/spanish/player/{session_id}/wordlist/audio.mp3' in html
+    assert f'/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3' in html
+    assert 'Zurück zum Profil' in html
+    assert 'Noch nicht im MVP' in html
+
+
+def test_player_route_uses_unavailable_fallback_when_wordlist_artifacts_are_missing(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0002-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0002",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-11",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{session_id}/wordlist")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'keine verarbeitbaren wortlisten-artefakte'.lower() in html.lower()
+    assert 'data-player-root' not in html
+
+
+def test_player_item_download_route_uses_delivery_filename(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    client = url_app.test_client()
+    audio_response = client.get(f"/de/research/spanish/player/{session_id}/wordlist/audio.mp3")
+    item_response = client.get(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")
+
+    assert audio_response.status_code == 200
+    assert audio_response.mimetype == "audio/mpeg"
+    assert item_response.status_code == 200
+    assert item_response.mimetype == "audio/mpeg"
+    disposition = item_response.headers["Content-Disposition"]
+    assert "attachment;" in disposition
+    assert "ES-L-0001_wordlist_wl_001_mesa.mp3" in disposition

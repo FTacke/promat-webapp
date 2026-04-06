@@ -28,6 +28,13 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 /{ui_lang}/research/{corpus_language}/player/{session_id}/{task}
 ```
 
+### Research player delivery route schema
+
+```text
+/{ui_lang}/research/{corpus_language}/player/{session_id}/{task}/audio.mp3
+/{ui_lang}/research/{corpus_language}/player/{session_id}/{task}/items/{item_id}.mp3
+```
+
 ### Active technical route values
 
 - `ui_lang`: `de`, `en`
@@ -45,6 +52,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 ### Active research detail routes
 
 - `player`
+- `player`-scoped protected media delivery for current-session playback and single-item download
 
 ### Active teaching pages
 
@@ -57,6 +65,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - UI language and technical routing language must not be mixed.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
+- Player media delivery stays under the same `player` route family and resolves protected session artifacts through application logic, not through static publication of `data/`.
 - Old German technical slugs and old public routes must not be reintroduced.
 
 ## Active App Shell
@@ -98,6 +107,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 
 - Protected research data only.
 - Public assets are never served directly from `data/`.
+- Protected research-player playback and single-item download may resolve session artifacts from `data/` only through explicit application routes under the canonical player family; this does not make those artifacts part of `public/`.
 
 ### `data/config/`
 
@@ -105,8 +115,10 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - Research-player corpus configuration belongs under `data/config/research_player/{language}/`.
 - The canonical corpus-level research-player config files include `data/config/research_player/{language}/player_config.json`, `data/config/research_player/{language}/phenomena_presets.json`, and `data/config/research_player/{language}/task_catalogs/{task}.json`.
 - Corpus-specific task catalogs under `data/config/research_player/{language}/task_catalogs/` are the canonical content source for task structure, ordering, stable IDs, and exact texts.
+- Task catalogs may also carry corpus-specific grouped content structure such as top-level `groups` arrays for sentence-list blocks; these are catalog groupings, not session `segments`.
 - Session-specific player artifacts such as `alignment/{task}.json` are derived from these task catalogs plus session alignment and audio data; task catalogs are not session outputs.
 - Task catalogs may later support raw material views in the webapp, but this does not imply public release and does not bypass separate access or publication decisions.
+- For the current Spanish sentence-list path, `data/config/research_player/spanish/task_catalogs/text.json` is the canonical content catalog for grouped block structure, visible `item_number`, stable `item_id`, and exact sentence strings.
 
 ### `public/`
 
@@ -190,6 +202,8 @@ metadata.json
 - Reduced alignment JSON belongs under `alignment/{task}.json`, never under `items/`.
 - Player-facing full-task MP3 files use `derived/{task}.mp3`.
 - Player-facing split MP3 paths use `items/{task}/{item_id}.mp3`.
+- For the current Spanish sentence-list catalog, visible numbering remains `D1` through `D30`, `QY1` through `QY10`, and `QW1` through `QW10`, while stable technical IDs remain `d_01` through `d_30`, `qy_01` through `qy_10`, and `qw_01` through `qw_10`.
+- The current player delivery routes map full-task playback to `.../player/{session_id}/{task}/audio.mp3` and single-item download to `.../player/{session_id}/{task}/items/{item_id}.mp3` without exposing internal runtime paths.
 - For the current `wordlist` production path, web derivatives use MP3 in mono with `160 kbps` CBR for both `derived/wordlist.mp3` and `items/wordlist/{item_id}.mp3`.
 - Internal split filenames use stable `item_id`s.
 - Single-item download filenames are generated separately at delivery time and do not redefine internal storage paths.

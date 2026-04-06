@@ -239,6 +239,8 @@ body.app-shell.page-landing .md3-content-wrapper {
 .pm-research-task-band,
 .pm-research-quick-filter-band,
 .pm-research-results-stack,
+.pm-player-layout,
+.pm-player-runtime,
 .pm-player-stub-layout,
 .pm-profile-layout {
   display: grid;
@@ -253,6 +255,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-research-desktop-filters,
+.pm-player-summary,
 .pm-profile-hero,
 .pm-profile-card,
 .pm-profile-actions,
@@ -282,13 +285,27 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-profile-layout,
+.pm-player-layout,
 .pm-player-stub-layout {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.pm-player-runtime__inner {
+  display: grid;
+  gap: var(--pm-space-container);
 }
 
 .pm-profile-session-list {
   display: grid;
   gap: var(--pm-space-sm);
+}
+
+.pm-player-wordlist {
+  display: grid;
+  gap: var(--pm-space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .pm-sample-research-showcase {
@@ -301,6 +318,11 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 @media (min-width: 900px) {
+  .pm-player-layout {
+    grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+    align-items: start;
+  }
+
   .pm-sample-research-showcase__row:first-child .pm-speaker-grid {
     grid-template-columns: repeat(2, minmax(0, var(--pm-research-speaker-card-max)));
   }
