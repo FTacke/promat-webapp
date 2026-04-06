@@ -2,7 +2,18 @@
 
 ## Zweck
 
-Vorbereitung und Referenzablauf für den kommenden Implementierungs-Run, der die `wordlist`-Produktionsartefakte für den Research-Player erzeugt.
+Wiederholbarer Implementierungs- und Betriebsablauf für die Erzeugung der `wordlist`-Produktionsartefakte des Research-Players.
+
+## CLI-Einstieg
+
+- Einzelne Session validieren, ohne Schreibzugriff:
+	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --session-id ES-L-0001-2026-S01 --dry-run`
+- Einzelne Session produzieren:
+	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --session-id ES-L-0001-2026-S01`
+- Alle aktuell geeigneten spanischen Sessions produzieren:
+	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --all-suitable-sessions`
+- Optionale Label-Prüfung mit Warnungen:
+	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --all-suitable-sessions --validate-labels warn`
 
 ## Verbindliche Quellen
 
@@ -50,6 +61,7 @@ Vorbereitung und Referenzablauf für den kommenden Implementierungs-Run, der die
 - Wenn die Zahl der nicht-silence-Intervalle in `alignment/wordlist.TextGrid` nicht exakt `92` beträgt, schlägt der Produktions-Run fehl.
 - Wenn die Intervallreihenfolge nicht positionsgleich auf den kanonischen Task-Katalog gemappt werden kann, schlägt der Produktions-Run fehl.
 - Wenn für ein Intervall keine kanonische Katalogzuordnung hergestellt werden kann, schlägt der Produktions-Run fehl.
+- Wenn die kanonischen `wordlist`-Grenzen über die verfügbare Dauer von `source/wordlist.wav` hinausreichen, ist die Session für diesen Produktionspfad nicht verarbeitbar.
 - Wenn eine optionale Label-Validierung gegen TextGrid-Labels Abweichungen erkennt, darf der Run nur kontrolliert fehlschlagen oder explizit warnen; stillschweigende Textumschreibung ist unzulässig.
 
 ## Ablauf
@@ -62,19 +74,26 @@ Vorbereitung und Referenzablauf für den kommenden Implementierungs-Run, der die
 6. Die Intervallreihenfolge positionsgleich auf die `92` Katalog-Items mappen.
 7. Optional die TextGrid-Labels gegen die kanonischen `text`-Werte des Katalogs validieren.
 8. Die gelesenen Zeitwerte vor weiterer Ableitung auf vier Nachkommastellen runden.
-9. `derived/wordlist.mp3` aus `source/wordlist.wav` mit konstanter Bitrate und Lautheitsstandardisierung erzeugen.
-10. `items/wordlist/{item_id}.mp3` aus dem bereits standardisierten Full-MP3 erzeugen.
-11. Für jeden Split `250 ms` Vorlauf und `250 ms` Nachlauf anwenden.
-12. Die gepaddeten Split-Grenzen an die verfügbare Audiolänge klammern.
-13. `alignment/wordlist.json` aus dem kanonischen Task-Katalog plus den kanonischen Zeitgrenzen und den Split-Korrespondenzen erzeugen.
+9. Die gerundeten kanonischen Zeitgrenzen einmalig als ganzzahlige `start_ms`- und `end_ms`-Werte serialisieren.
+10. `derived/wordlist.mp3` aus `source/wordlist.wav` mit Lautheitsstandardisierung sowie MP3 in mono mit `160 kbps` CBR erzeugen.
+11. `items/wordlist/{item_id}.mp3` aus dem bereits standardisierten Full-MP3 mit denselben Web-Parametern erzeugen.
+12. Für jeden Split `250 ms` Vorlauf und `250 ms` Nachlauf anwenden.
+13. Die gepaddeten Split-Grenzen an die verfügbare Audiolänge klammern.
+14. `alignment/wordlist.json` aus dem kanonischen Task-Katalog plus den kanonischen Zeitgrenzen und den Split-Korrespondenzen erzeugen.
 
 ## Kanonische Grenzen vs. Exportgrenzen
 
 - Die Katalogdaten `item_id`, `item_number` und `text` bleiben von session-spezifischen Zeit- und Splitdaten getrennt.
-- `start_ms` und `end_ms` in `alignment/wordlist.json` sind die kanonischen Annotationsgrenzen.
+- `start_ms` und `end_ms` in `alignment/wordlist.json` sind die kanonischen Annotationsgrenzen und werden als ganzzahlige Millisekundenwerte gespeichert.
 - Die aus dem TextGrid gelesenen und auf vier Nachkommastellen gerundeten Werte sind die Grundlage dieser kanonischen JSON-Grenzen.
 - Die für Split-MP3s verwendeten gepaddeten Exportgrenzen sind davon getrennt.
 - Split-Padding verändert die kanonischen JSON-Grenzen nicht.
+
+## Audio-Parameter
+
+- Web-Derivate für den aktuellen `wordlist`-Pfad werden als MP3 in mono mit `160 kbps` CBR erzeugt.
+- Diese Parameter gelten einheitlich für `derived/wordlist.mp3` und `items/wordlist/{item_id}.mp3`.
+- `source/wordlist.wav` bleibt die maßgebliche Analyse- und Ableitungsgrundlage; MP3-Derivate sind Web-, Player-, Vergleichs- und Download-Artefakte.
 
 ## Interner Pfad vs. Download-Dateiname
 
@@ -98,4 +117,4 @@ Vorbereitung und Referenzablauf für den kommenden Implementierungs-Run, der die
 - `wordlist` bleibt item-zentriert; künstliche `tokens` mit identischen Werten werden nicht erzeugt, wenn das Item selbst bereits die timingtragende Einheit ist.
 - Der kanonische Task-Katalog kann später auch rohe Materialansichten in der Webapp tragen, ohne dadurch automatisch Audio oder geschützte Korpusdaten freizugeben.
 - Split-MP3s werden aus dem bereits lautheitsstandardisierten Full-MP3 erzeugt und nicht pro Item nochmals separat normalisiert.
-- Dieser Ablauf beschreibt den wiederholbaren Produktionsschritt, nicht dessen konkrete Implementierung im nächsten Run.
+- Die Implementierung verwendet `ffmpeg` und `ffprobe` für Erzeugung und Verifikation.

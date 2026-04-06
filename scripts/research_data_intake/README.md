@@ -27,3 +27,9 @@ Wenn für einen Task ein kanonischer Katalog unter `data/config/research_player/
 - `item_split/`: Ableitung von Split-MP3-Artefakten
 - `alignment_export/`: Export playerfähiger Alignment- oder JSON-Artefakte
 - `import/`: intake-nahe Importschritte und zugehörige Hilfsartefakte
+
+## Aktueller Einstiegspunkt
+
+- `scripts/research_data_intake/produce_wordlist_artifacts.py` implementiert die aktuelle reale `wordlist`-Produktionspipeline.
+- Das CLI unterstützt `--session-id`, `--all-suitable-sessions`, `--dry-run` und `--validate-labels {off,warn,fail}`.
+- Batch-Verarbeitung schreibt nur für Sessions mit nicht-leerem `source/wordlist.wav`, nicht-leerem `alignment/wordlist.TextGrid` und kanonischen Grenzen innerhalb der verfügbaren Audio-Dauer.

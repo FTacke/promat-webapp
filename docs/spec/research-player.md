@@ -289,9 +289,11 @@ The top level may additionally include:
 - The implementation run may validate TextGrid labels against the canonical task catalog, but any detected deviation must result in an explicit warning or a controlled failure and must not be auto-normalized.
 - Time values read from `alignment/wordlist.TextGrid` are rounded to four decimal places before further derivation into JSON time values or split-export boundaries.
 - These rounded values are the basis for both the canonical JSON time fields and the later split-export boundary calculation.
+- The current implementation serializes these canonical JSON time fields as integer milliseconds after rounding the TextGrid seconds to four decimal places and converting once into ms.
 - `start_ms` and `end_ms` in `alignment/wordlist.json` remain the canonical annotation boundaries.
 - Split-export padding does not modify these canonical boundaries.
-- Web derivatives for `wordlist` use constant bitrate.
+- If canonical `wordlist` boundaries exceed the available session audio duration, that session is not processable for the current production path and must fail or be skipped explicitly instead of producing truncated canonical JSON.
+- Web derivatives for `wordlist` use MP3 in mono with `160 kbps` CBR.
 - Loudness standardization is applied only to `derived/wordlist.mp3`.
 - Wordlist split MP3s are cut from the already standardized `derived/wordlist.mp3`.
 - Wordlist split MP3s are not normalized again per item after the standardized full MP3 has been produced.

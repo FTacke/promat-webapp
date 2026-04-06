@@ -179,9 +179,9 @@ metadata.json
 ### Semantics
 
 - `raw/` contains untouched original WAV masters only.
-- `source/` contains processed working WAVs.
+- `source/` contains processed working WAVs and remains the operative audio basis for analysis-aware derivation steps.
 - `alignment/` contains whole-session TextGrid files and reduced alignment JSON such as `alignment/wordlist.json`, derived from canonical task catalogs plus session-specific alignment and audio data.
-- `derived/` contains webapp-facing derivatives such as MP3.
+- `derived/` contains webapp-facing derivatives such as MP3 and does not replace the WAV-based analysis basis in `raw/` or `source/`.
 - `items/{task}/` contains split MP3 files only.
 
 ### File rules
@@ -190,6 +190,7 @@ metadata.json
 - Reduced alignment JSON belongs under `alignment/{task}.json`, never under `items/`.
 - Player-facing full-task MP3 files use `derived/{task}.mp3`.
 - Player-facing split MP3 paths use `items/{task}/{item_id}.mp3`.
+- For the current `wordlist` production path, web derivatives use MP3 in mono with `160 kbps` CBR for both `derived/wordlist.mp3` and `items/wordlist/{item_id}.mp3`.
 - Internal split filenames use stable `item_id`s.
 - Single-item download filenames are generated separately at delivery time and do not redefine internal storage paths.
 - The prepared delivery filename contract is `{person_id}_{task}_{item_id}_{download_label}.mp3`.
