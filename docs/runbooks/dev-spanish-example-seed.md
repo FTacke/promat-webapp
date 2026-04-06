@@ -15,13 +15,13 @@ Rebuild the canonical Spanish dev example sessions under `data/sessions/spanish/
 1. Optional dry run:
 
    ```powershell
-   c:/dev/promat/.venv/Scripts/python.exe scripts/session_setup/seed_dev_spanish_example_sessions.py --dry-run
+   c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/session_setup/seed_dev_spanish_example_sessions.py --dry-run
    ```
 
 2. Rebuild the tracked dev sessions:
 
    ```powershell
-   c:/dev/promat/.venv/Scripts/python.exe scripts/session_setup/seed_dev_spanish_example_sessions.py
+   c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/session_setup/seed_dev_spanish_example_sessions.py
    ```
 
 3. If runtime-facing research logic changed, run the focused tests:
@@ -40,4 +40,4 @@ Rebuild the canonical Spanish dev example sessions under `data/sessions/spanish/
 ## Risiken und Rückbau
 
 - The script rewrites tracked dev example session content.
-- If the result is wrong, inspect the manifest in `scripts/session_setup/dev_spanish_example_sessions.json`, fix it, and rerun the seed.
+- If the result is wrong, inspect the manifest in `scripts/research_data_intake/session_setup/dev_spanish_example_sessions.json`, fix it, and rerun the seed.

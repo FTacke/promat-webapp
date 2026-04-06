@@ -11,6 +11,8 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - `public/` is the explicitly released public-media space.
 - `secure/` is the clear-text space and is never accessed by the webapp.
 - `scripts/` contains repeatable import, export, setup, and pipeline steps.
+- `scripts/research_data_intake/` is the canonical root for research-data intake and derivation pipelines.
+- General dev and maintenance scripts remain at the top level under `scripts/` and do not move into `scripts/research_data_intake/` unless they become part of the research-data intake pipeline.
 
 ## Routing
 
@@ -18,6 +20,12 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 
 ```text
 /{ui_lang}/{section}/{corpus_language}/{page}
+```
+
+### Research detail route schema
+
+```text
+/{ui_lang}/research/{corpus_language}/player/{session_id}/{task}
 ```
 
 ### Active technical route values
@@ -34,6 +42,10 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - `comparison`
 - `phenomena`
 
+### Active research detail routes
+
+- `player`
+
 ### Active teaching pages
 
 - `phenomena`
@@ -43,6 +55,8 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 
 - Technical slugs and route segments stay English.
 - UI language and technical routing language must not be mixed.
+- `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
+- The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
 - Old German technical slugs and old public routes must not be reintroduced.
 
 ## Active App Shell
@@ -84,6 +98,15 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 
 - Protected research data only.
 - Public assets are never served directly from `data/`.
+
+### `data/config/`
+
+- Runtime configuration files belong under `data/config/`.
+- Research-player corpus configuration belongs under `data/config/research_player/{language}/`.
+- The canonical corpus-level research-player config files include `data/config/research_player/{language}/player_config.json`, `data/config/research_player/{language}/phenomena_presets.json`, and `data/config/research_player/{language}/task_catalogs/{task}.json`.
+- Corpus-specific task catalogs under `data/config/research_player/{language}/task_catalogs/` are the canonical content source for task structure, ordering, stable IDs, and exact texts.
+- Session-specific player artifacts such as `alignment/{task}.json` are derived from these task catalogs plus session alignment and audio data; task catalogs are not session outputs.
+- Task catalogs may later support raw material views in the webapp, but this does not imply public release and does not bypass separate access or publication decisions.
 
 ### `public/`
 
@@ -157,7 +180,7 @@ metadata.json
 
 - `raw/` contains untouched original WAV masters only.
 - `source/` contains processed working WAVs.
-- `alignment/` contains whole-session TextGrid files and reduced alignment JSON such as `alignment/wordlist.json`.
+- `alignment/` contains whole-session TextGrid files and reduced alignment JSON such as `alignment/wordlist.json`, derived from canonical task catalogs plus session-specific alignment and audio data.
 - `derived/` contains webapp-facing derivatives such as MP3.
 - `items/{task}/` contains split MP3 files only.
 
@@ -165,7 +188,12 @@ metadata.json
 
 - Canonical task filenames use `wordlist`, `text`, `interview`.
 - Reduced alignment JSON belongs under `alignment/{task}.json`, never under `items/`.
+- Player-facing full-task MP3 files use `derived/{task}.mp3`.
+- Player-facing split MP3 paths use `items/{task}/{item_id}.mp3`.
 - Internal split filenames use stable `item_id`s.
+- Single-item download filenames are generated separately at delivery time and do not redefine internal storage paths.
+- The prepared delivery filename contract is `{person_id}_{task}_{item_id}_{download_label}.mp3`.
+- `download_label` is a readable delivery-only text component derived from the canonical text or label of the exported unit.
 - Longer filenames with `session_id` and labels are for later download logic, not canonical storage.
 - Current Spanish dev example WAVs are processed `source` audio, not `raw` masters.
 

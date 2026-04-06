@@ -19,6 +19,13 @@ This file is the binding source of truth for the active research-access model in
 - `speakers` is the person-based access path.
 - `recordings` is the session- and task-based access path.
 - `comparison` and `phenomena` remain conceptually part of the research IA.
+- `player` is the shared research-detail workbench for concrete playback, preset, and comparison contexts.
+
+### Research detail workbench
+
+- `player` is not a second section root and not a sidebar page of its own.
+- `speakers`, `recordings`, and the person profile are direct player entry points in the current IA.
+- `comparison` and `phenomena` must later open the same player base with additional context, not separate player implementations.
 
 ## Binding Access Logic
 
@@ -40,6 +47,15 @@ This file is the binding source of truth for the active research-access model in
 - The person page may focus one selected session via query parameter.
 - Focusing a session must not hide the person's other sessions.
 - The selected session is highlighted as `Ausgewählte Session`.
+
+### `player`
+
+- `player` always has one primary `session_id` and one initial task key.
+- The canonical player route is `/{ui_lang}/research/{language}/player/{session_id}/{task}`.
+- Player entry may carry source context from `speakers`, `recordings`, `profile`, and later `comparison` or `phenomena`, but all of them resolve to the same route family.
+- The player keeps one shared session context while switching between all tasks that are documented as available for that session.
+- Tasks that are unavailable for the session may remain visible as disabled, non-interactive controls, consistent with the broader research UI.
+- Comparison is an optional extension of the same player and never a separate route family.
 
 ## Card Logic
 
@@ -132,11 +148,21 @@ Additional rule:
 - `text`
 - `interview`
 
+Rule:
+
+- These task keys are also the only legal task values in the canonical research-player route.
+
 ### Visible short labels
 
 - `Wortliste`
 - `Text`
 - `Interview`
+
+Rules:
+
+- These are the default visible German short labels of the research UI.
+- The technical task key remains `text` in all corpora even when a corpus-specific visible label such as `Satzliste` is configured for the player or other task-entry UI.
+- A corpus-specific visible label changes only display text and does not create a new task key or a second task family.
 
 ### Frozen task descriptions
 
@@ -149,6 +175,7 @@ Additional rule:
 - Task availability is derived from documented session tasks.
 - Native-speaker sessions do not offer `interview`.
 - Tasks that are unavailable in the current UI context may still remain visible as disabled, non-interactive panels or links.
+- The same availability semantics apply inside the unified player task switch.
 
 ## Recordings Table Semantics
 
@@ -203,5 +230,6 @@ Additional rule:
 
 - no real XLSX import pipeline in the web runtime
 - no second research data source
-- no double-player logic
+- no separate task-specific player families
+- no separate comparison player
 - no native-speaker interview path
