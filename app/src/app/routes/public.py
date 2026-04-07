@@ -292,13 +292,36 @@ def _sample_speaker_cards(ui_lang: str) -> list[dict[str, Any]]:
 
     return [
         {
-            "person_id": "ES-L-0001",
+            "person_id": "ES-L-0101",
             "eyebrow": learner_eyebrow,
             "selected_session_label": selected_session_label,
-            "selected_session_id": "ES-L-0001-2027-S02",
+            "selected_session_id": "ES-L-0101-2026-S01",
+            "meta_rows": [
+                {"label": "Sessions" if ui_lang == "de" else "Sessions", "value": "1"},
+                {"label": "Niveau" if ui_lang == "de" else "Level", "value": "A1"},
+                {"label": "L1", "value": "DE"},
+                {"label": "Sprachaufenthalte" if ui_lang == "de" else "Stays", "value": "Nein" if ui_lang == "de" else "No"},
+                {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": "2026"},
+            ],
+            "profile_href": "#sample-research-profile-title",
+            "profile_label": profile_label,
+            "recordings_label": recordings_label,
+            "recording_links_aria_label": recording_links_aria_label,
+            "task_links": [
+                {"label": "Wortliste" if ui_lang == "de" else "Wordlist", "href": "#sample-research-task-panels-title"},
+                {"label": "Text", "href": "#sample-research-task-panels-title"},
+                {"label": "Interview", "href": "#sample-research-task-panels-title"},
+            ],
+            "accent_modifier": "a1",
+        },
+        {
+            "person_id": "ES-L-0102",
+            "eyebrow": learner_eyebrow,
+            "selected_session_label": selected_session_label,
+            "selected_session_id": "ES-L-0102-2027-S02",
             "meta_rows": [
                 {"label": "Sessions" if ui_lang == "de" else "Sessions", "value": "2"},
-                {"label": "Niveaus" if ui_lang == "de" else "Levels", "value": "A1, A2"},
+                {"label": "Niveau" if ui_lang == "de" else "Level", "value": "A2"},
                 {"label": "L1", "value": "DE"},
                 {"label": "Sprachaufenthalte" if ui_lang == "de" else "Stays", "value": "Teilweise" if ui_lang == "de" else "Partial"},
                 {"label": "Aufnahmejahre" if ui_lang == "de" else "Recording years", "value": "2026–2027"},
@@ -312,7 +335,51 @@ def _sample_speaker_cards(ui_lang: str) -> list[dict[str, Any]]:
                 {"label": "Text", "href": "#sample-research-task-panels-title"},
                 {"label": "Interview", "href": "#sample-research-task-panels-title"},
             ],
+            "accent_modifier": "a2",
+        },
+        {
+            "person_id": "ES-L-0103",
+            "eyebrow": learner_eyebrow,
+            "selected_session_label": selected_session_label,
+            "selected_session_id": "ES-L-0103-2026-S01",
+            "meta_rows": [
+                {"label": "Sessions" if ui_lang == "de" else "Sessions", "value": "1"},
+                {"label": "Niveau" if ui_lang == "de" else "Level", "value": "B1"},
+                {"label": "L1", "value": "EN"},
+                {"label": "Sprachaufenthalte" if ui_lang == "de" else "Stays", "value": "Ja" if ui_lang == "de" else "Yes"},
+                {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": "2026"},
+            ],
+            "profile_href": "#sample-research-profile-title",
+            "profile_label": profile_label,
+            "recordings_label": recordings_label,
+            "recording_links_aria_label": recording_links_aria_label,
+            "task_links": [
+                {"label": "Wortliste" if ui_lang == "de" else "Wordlist", "href": "#sample-research-task-panels-title"},
+                {"label": "Text", "href": "#sample-research-task-panels-title"},
+            ],
             "accent_modifier": "b1",
+        },
+        {
+            "person_id": "ES-L-0104",
+            "eyebrow": learner_eyebrow,
+            "selected_session_label": selected_session_label,
+            "selected_session_id": "ES-L-0104-2026-S01",
+            "meta_rows": [
+                {"label": "Sessions" if ui_lang == "de" else "Sessions", "value": "1"},
+                {"label": "Niveau" if ui_lang == "de" else "Level", "value": "B2"},
+                {"label": "L1", "value": "FR"},
+                {"label": "Sprachaufenthalte" if ui_lang == "de" else "Stays", "value": "Ja" if ui_lang == "de" else "Yes"},
+                {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": "2026"},
+            ],
+            "profile_href": "#sample-research-profile-title",
+            "profile_label": profile_label,
+            "recordings_label": recordings_label,
+            "recording_links_aria_label": recording_links_aria_label,
+            "task_links": [
+                {"label": "Wortliste" if ui_lang == "de" else "Wordlist", "href": "#sample-research-task-panels-title"},
+                {"label": "Text", "href": "#sample-research-task-panels-title"},
+            ],
+            "accent_modifier": "b2",
         },
         {
             "person_id": "ES-N-0001",
@@ -604,7 +671,9 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
 
     language = get_language(canonical_language_slug)
     source = request.args.get("source")
-    page = build_player_page(ui_lang, canonical_language_slug, session_id, task, source)
+    compare_session = request.args.get("compare_session")
+    compare_mode = request.args.get("compare_mode")
+    page = build_player_page(ui_lang, canonical_language_slug, session_id, task, source, compare_session, compare_mode)
     if page is None or language is None:
         abort(404)
 

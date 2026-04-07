@@ -47,6 +47,8 @@ This file is the binding source of truth for the active research-access model in
 - The person page may focus one selected session via query parameter.
 - Focusing a session must not hide the person's other sessions.
 - The selected session is highlighted as `Ausgewählte Session`.
+- In profile session cards, the selected state reuses the concrete session accent for outline and selected badge instead of introducing a second detached selection color.
+- Profile-session color semantics stay session-bound, not person-bound, so different sessions of one person may carry different level accents.
 
 ### `player`
 
@@ -67,8 +69,11 @@ This file is the binding source of truth for the active research-access model in
 - The selected session is shown as a secondary line under `person_id`.
 - The footer label is `Aufzeichnungen`.
 - Cards expose compact direct task links for the currently selected or matched session.
+- Compact task-entry links in speaker cards and recordings rows reuse the shared compact inline-action family with an arrow affordance; they must read as actions and stay visually distinct from chips and badges.
 - The profile CTA remains visually secondary to the card identity and recording links.
 - The UI does not show a separate `Treffer über ...` match note on the card.
+- Learner-level accents stay on the shared learner scale, while native-speaker cards and session containers use the dedicated native accent `#18677A`.
+- Speaker cards and profile-session containers use a shared `0.5rem` top accent bar.
 
 ### Matching behavior
 
@@ -185,6 +190,7 @@ Rules:
 - The UI does not repeat the recording year as a second line below `session_id`.
 - The learner-facing metadata columns are labeled `Niveau` and `L1`.
 - Native-speaker rows leave `Niveau` and `L1` empty instead of reusing variety or origin values in those columns.
+- The recordings action column uses the same compact task-action button family as speaker-card recording links instead of a second badge-like control style.
 
 ## Active UI-Metadata Contract
 

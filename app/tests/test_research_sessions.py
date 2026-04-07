@@ -378,6 +378,52 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
     assert all(not task["is_disabled"] for task in page["sessions_section"]["cards"][0]["tasks"])
 
 
+def test_profile_page_keeps_selection_and_accent_bound_to_each_session(runtime_env: Path, url_app: Flask) -> None:
+    person_id = "ES-L-0010"
+    a1_session = "ES-L-0010-2026-S01"
+    b2_session = "ES-L-0010-2027-S02"
+
+    _write_session(
+        runtime_env,
+        "spanish",
+        a1_session,
+        _learner_payload(
+            person_id=person_id,
+            session_id=a1_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(
+        runtime_env,
+        "spanish",
+        b2_session,
+        _learner_payload(
+            person_id=person_id,
+            session_id=b2_session,
+            recording_year=2027,
+            recording_date="2027-03-12",
+            level_code="B2",
+            context="follow_up",
+            task_types=("wordlist", "text"),
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", person_id, b2_session)
+
+    assert page is not None
+    cards = {card["session_id"]: card for card in page["sessions_section"]["cards"]}
+    assert cards[a1_session]["accent_modifier"] == "a1"
+    assert cards[a1_session]["is_selected"] is False
+    assert cards[b2_session]["accent_modifier"] == "b2"
+    assert cards[b2_session]["is_selected"] is True
+    assert cards[b2_session]["selected_label"] == "Ausgewählt"
+
+
 def test_profile_page_supports_single_exposure_entry_without_note(runtime_env: Path, url_app: Flask) -> None:
     session_id = "ES-L-0002-2026-S01"
     _write_session(
@@ -752,8 +798,19 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     html = response.get_data(as_text=True)
     assert 'pm-speaker-card__footer-section--recordings' in html
     assert 'pm-speaker-card__footer-section--actions' in html
+    assert 'pm-research-inline-action--task' in html
+    assert 'pm-speaker-task-link' not in html
     assert 'pm-speaker-card__match' not in html
+    assert 'pm-speaker-card--a1' in html
+    assert 'pm-speaker-card--a2' in html
+    assert 'pm-speaker-card--b1' in html
+    assert 'pm-speaker-card--b2' in html
+    assert 'pm-speaker-card--native' in html
     assert 'Aufzeichnung (Sprecher:in)' in html
+    assert 'Chips, Badges und Action-Buttons' in html
+    assert 'Task-Aktionen' in html
+    assert 'pm-profile-session--a2 is-selected' in html
+    assert 'pm-profile-session--native is-selected' in html
     assert 'Zugeordnete Sessions' in html
     assert 'Niveau / Varietät' not in html
 
@@ -787,6 +844,35 @@ def test_recordings_page_combines_session_and_person_in_leading_column(runtime_e
     first_row = page["results"][0]
     assert "session_secondary" not in first_row
     assert first_row["person_href"].endswith(f"/de/research/spanish/speakers/{first_row['person_id']}?session={first_row['session_id']}")
+
+
+def test_recordings_route_uses_shared_task_action_buttons(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    native_session = "ES-N-0001-2026-S01"
+
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
+
+    client = url_app.test_client()
+    response = client.get("/de/research/spanish/recordings?task=wordlist")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'pm-research-inline-action--task' in html
+    assert 'pm-speaker-task-link' not in html
 
 
 def test_profile_header_shows_session_count_and_native_interview_disabled(runtime_env: Path, url_app: Flask) -> None:
@@ -858,6 +944,102 @@ def test_player_page_builds_real_wordlist_view_and_disables_unimplemented_tasks(
     assert page["task_panels"][1]["href"] is None
     assert page["task_panels"][1]["state_label"] == "Noch nicht im MVP"
     assert page["origin_link"]["href"].endswith("/de/research/spanish/recordings?task=wordlist")
+    assert page["summary_cards"][0]["session_id"] == session_id
+
+
+def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path, url_app: Flask) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    compare_session_id = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", compare_session_id, _native_payload("ES-N-0001", compare_session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
+
+    with url_app.test_request_context():
+        page = build_player_page(
+            "de",
+            "spanish",
+            primary_session_id,
+            "wordlist",
+            "recordings",
+            compare_session_id=compare_session_id,
+        )
+
+    assert page is not None
+    assert page["player"]["compare"]["is_ready"] is True
+    assert page["player"]["compare"]["mode"] == "sequence"
+    assert page["player"]["secondary"]["session_id"] == compare_session_id
+    assert page["player"]["compare"]["rows"][0]["secondary"]["item_id"] == "wl_001"
+    assert page["summary_cards"][1]["session_id"] == compare_session_id
+    assert page["summary_cards"][0]["profile_label"] == "Profil"
+    assert page["summary_cards"][0]["session_switch"]["current_label"] == primary_session_id
+    assert page["summary_cards"][1]["card_actions"][0]["label"] == "Vergleich entfernen"
+    assert page["summary_cards"][1]["card_actions"][0]["href"].endswith(
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"
+    )
+    assert any(row["label"] == "Niveau" for row in page["summary_cards"][0]["rows"])
+    assert all(row["label"] != "Explorator:in" for row in page["summary_cards"][0]["rows"])
+    assert page["player"]["compare"]["sequence_toggle"]["label"] == "Beide abspielen"
+    assert page["player"]["compare"]["sequence_toggle"]["enabled"] is True
+    assert any(option["current"] for option in page["player"]["compare"]["switchers"]["compare"]["options"])
+    assert page["player"]["client_state"]["compareOpen"] is True
+    assert page["player"]["client_state"]["modeHrefs"]["manual"].endswith(
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}&compare_mode=manual"
+    )
+    assert page["player"]["client_state"]["modeHrefs"]["sequence"].endswith(
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}"
+    )
+    assert page["player"]["client_state"]["rateOptions"] == [0.5, 0.75, 1.0, 1.25, 1.5]
+
+
+def test_player_page_supports_manual_compare_override(runtime_env: Path, url_app: Flask) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    compare_session_id = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", compare_session_id, _native_payload("ES-N-0001", compare_session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
+
+    with url_app.test_request_context():
+        page = build_player_page(
+            "de",
+            "spanish",
+            primary_session_id,
+            "wordlist",
+            "recordings",
+            compare_session_id=compare_session_id,
+            compare_mode="manual",
+        )
+
+    assert page is not None
+    assert page["player"]["compare"]["mode"] == "manual"
+    assert page["player"]["compare"]["sequence_toggle"]["enabled"] is False
 
 
 def test_player_route_renders_wordlist_runtime_and_profile_back_link(runtime_env: Path, url_app: Flask) -> None:
@@ -873,8 +1055,109 @@ def test_player_route_renders_wordlist_runtime_and_profile_back_link(runtime_env
     assert 'data-player-root' in html
     assert f'/de/research/spanish/player/{session_id}/wordlist/audio.mp3' in html
     assert f'/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3' in html
-    assert 'Zurück zum Profil' in html
-    assert 'Noch nicht im MVP' in html
+    assert '>Zurück<' in html
+    assert '>Profil<' in html
+    assert 'Zurück zum Profil' not in html
+    assert 'Explorator:in' not in html
+    assert 'pm-player-panel--control-bar' in html
+    assert 'pm-player-list pm-player-list--single' in html
+
+
+def test_player_route_keeps_compare_optional_until_explicit_activation(runtime_env: Path, url_app: Flask) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    compare_session_id = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", compare_session_id, _native_payload("ES-N-0001", compare_session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
+
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-player-compare-open="false"' in html
+    assert 'data-player-session-menu="primary"' in html
+    assert 'data-player-session-menu="secondary"' in html
+    assert 'Vergleich hinzufügen' in html
+    assert 'Vergleichssession wählen' in html
+    assert 'data-player-speaker-card="secondary" hidden' in html
+    assert 'data-player-nav-select' not in html
+    assert 'data-player-sequence-toggle' not in html
+    assert 'pm-player-panel--compare' not in html
+
+
+def test_player_route_renders_compare_controls_and_secondary_audio(runtime_env: Path, url_app: Flask) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    compare_session_id = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", compare_session_id, _native_payload("ES-N-0001", compare_session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
+
+    client = url_app.test_client()
+    response = client.get(
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}"
+    )
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-player-mode="sequence"' in html
+    assert 'data-player-compare-open="true"' in html
+    assert 'data-player-session-menu="primary"' in html
+    assert 'data-player-session-menu="secondary"' in html
+    assert 'data-player-volume' in html
+    assert 'data-player-rate-slider' in html
+    assert 'data-player-sequence-toggle' in html
+    assert 'data-player-sequence-toggle checked' in html
+    assert 'data-player-compare-panel' in html
+    assert html.index('data-player-compare-panel') < html.index('data-player-sequence-toggle')
+    assert f'/de/research/spanish/player/{compare_session_id}/wordlist/audio.mp3' in html
+    assert 'Beide abspielen' in html
+    assert html.count('Profil →') == 2
+    assert 'Vergleich entfernen' in html
+    assert f'href="/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"' in html
+    assert 'Vergleich erscheint nur auf Desktop-Breiten' not in html
+    assert 'data-player-activate-speaker' not in html
+    assert 'pm-player-panel--control-bar' in html
+    assert 'pm-player-summary-cards is-compare-ready' in html
+    assert 'pm-player-control-bar__block--transport' in html
+    assert 'pm-player-control-bar__block--settings' in html
+    assert 'pm-player-transport-main' in html
+    assert 'pm-player-list pm-player-list--compare' in html
+    assert 'pm-player-list__header' in html
+    assert 'pm-player-icon-button' in html
+    assert 'data-player-rate-value' in html
+    assert 'data-player-mode-hint' not in html
+    assert 'Zwei ausgerichtete Wortlisten mit gemeinsamer Nummerierung und getrennten Downloads.' not in html
+    assert '1.75×' not in html
+    assert '2.00×' not in html
 
 
 def test_player_route_uses_unavailable_fallback_when_wordlist_artifacts_are_missing(runtime_env: Path, url_app: Flask) -> None:

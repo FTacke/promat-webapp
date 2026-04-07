@@ -23,7 +23,7 @@
       <p class="pm-speaker-card__task-label">{{ card.recordings_label }}</p>
       <div class="pm-speaker-card__tasks" aria-label="{{ card.recording_links_aria_label }}">
         {% for task_link in card.task_links %}
-        <a class="pm-speaker-task-link" href="{{ task_link.href }}">{{ task_link.label }}</a>
+        <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="{{ task_link.href }}">{{ task_link.label }}</a>
         {% endfor %}
       </div>
     </div>

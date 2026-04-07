@@ -87,7 +87,7 @@
             <td class="pm-research-table__cell--l1" data-label="{{ promat_page.columns.detail }}">{{ row.detail_value }}</td>
             <td class="pm-research-table__cell--gender" data-label="{{ promat_page.columns.gender }}">{{ row.gender }}</td>
             <td class="pm-research-table__cell--stay" data-label="{{ promat_page.columns.stay }}">{{ row.target_country_stay }}</td>
-            <td class="pm-research-table__cell--action pm-research-table__action" data-label="{{ promat_page.columns.action }}"><a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="{{ row.player_href }}">{{ row.action_label }}</a></td>
+            <td class="pm-research-table__cell--action pm-research-table__action" data-label="{{ promat_page.columns.action }}"><a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="{{ row.player_href }}">{{ row.action_label }}</a></td>
           </tr>
           {% endfor %}
         </tbody>

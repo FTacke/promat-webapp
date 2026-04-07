@@ -1126,6 +1126,117 @@ def _player_pause_label(ui_lang: str) -> str:
     return "Pausieren" if ui_lang == "de" else "Pause"
 
 
+def _player_sequence_toggle_label(ui_lang: str) -> str:
+    return "Beide abspielen" if ui_lang == "de" else "Play both"
+
+
+def _player_session_switch_title(ui_lang: str) -> str:
+    return "Sessions und Vergleich" if ui_lang == "de" else "Sessions and comparison"
+
+
+def _player_session_switch_hint(ui_lang: str) -> str:
+    return (
+        "Primäre Session und optionale Vergleichssession bleiben im selben Player."
+        if ui_lang == "de"
+        else "Primary session and optional comparison session stay inside the same player."
+    )
+
+
+def _player_primary_session_label(ui_lang: str) -> str:
+    return "Primäre Session" if ui_lang == "de" else "Primary session"
+
+
+def _player_compare_session_label(ui_lang: str) -> str:
+    return "Vergleichssession" if ui_lang == "de" else "Comparison session"
+
+
+def _player_compare_disabled_option(ui_lang: str) -> str:
+    return "Kein Vergleich" if ui_lang == "de" else "No comparison"
+
+
+def _player_compare_add_label(ui_lang: str) -> str:
+    return "Vergleich hinzufügen" if ui_lang == "de" else "Add comparison"
+
+
+def _player_compare_remove_label(ui_lang: str) -> str:
+    return "Vergleich entfernen" if ui_lang == "de" else "Remove comparison"
+
+
+def _player_compare_close_label(ui_lang: str) -> str:
+    return "Vergleich schließen" if ui_lang == "de" else "Close comparison"
+
+
+def _player_compare_picker_title(ui_lang: str) -> str:
+    return "Vergleichssession wählen" if ui_lang == "de" else "Choose comparison session"
+
+
+def _player_session_switcher_label(ui_lang: str, role_key: str) -> str:
+    if role_key == "secondary":
+        return "Vergleichssession wechseln" if ui_lang == "de" else "Change comparison session"
+    return "Primäre Session wechseln" if ui_lang == "de" else "Change primary session"
+
+
+def _player_compare_placeholder_badge(ui_lang: str) -> str:
+    return "Noch offen" if ui_lang == "de" else "Pending"
+
+
+def _player_compare_placeholder_rows(ui_lang: str) -> list[dict[str, str]]:
+    return [
+        {
+            "label": "Status" if ui_lang == "de" else "Status",
+            "value": "Noch keine Vergleichssession gewählt" if ui_lang == "de" else "No comparison session selected yet",
+        },
+        {
+            "label": "Nächster Schritt" if ui_lang == "de" else "Next step",
+            "value": _player_compare_picker_title(ui_lang),
+        },
+    ]
+
+
+def _player_compare_invalid_notice(ui_lang: str) -> str:
+    return (
+        "Die angefragte Vergleichssession ist für die aktuelle Wortlistenansicht nicht verfügbar."
+        if ui_lang == "de"
+        else "The requested comparison session is not available for the current wordlist view."
+    )
+
+
+def _player_controls_status_label(ui_lang: str) -> str:
+    return "Aktiver Fokus" if ui_lang == "de" else "Active focus"
+
+
+def _player_volume_label(ui_lang: str) -> str:
+    return "Lautstärke" if ui_lang == "de" else "Volume"
+
+
+def _player_speed_label(ui_lang: str) -> str:
+    return "Geschwindigkeit" if ui_lang == "de" else "Speed"
+
+
+def _player_speaker_activate_label(ui_lang: str) -> str:
+    return "Aktivieren" if ui_lang == "de" else "Activate"
+
+
+def _player_mode_hint(ui_lang: str, mode_key: str) -> str:
+    if mode_key == "manual":
+        return (
+            "Ein Klick spielt nur die gewählte Seite des jeweiligen Items ab."
+            if ui_lang == "de"
+            else "Clicking plays only the chosen side of the respective item."
+        )
+    if mode_key == "sequence":
+        return (
+            "Ein Eintrag spielt zuerst A und direkt danach B desselben Items."
+            if ui_lang == "de"
+            else "An item plays A and directly afterwards B for the same item."
+        )
+    return (
+        "Ein Klick spielt nur die Primärsession an der dokumentierten Stelle ab."
+        if ui_lang == "de"
+        else "Clicking an item plays only the primary session at the documented position."
+    )
+
+
 def _wordlist_items_label(ui_lang: str) -> str:
     return "Wortliste" if ui_lang == "de" else "Wordlist"
 
@@ -1273,6 +1384,256 @@ def _load_wordlist_bundle(session: SessionRecord) -> dict[str, Any] | None:
     return {"full_audio_path": full_audio_path, "items": items}
 
 
+def _normalize_compare_mode(raw_value: str | None, *, compare_selected: bool) -> str:
+    normalized = (raw_value or "").strip().lower()
+    if not compare_selected:
+        return "single"
+    if normalized == "manual":
+        return "manual"
+    return "sequence"
+
+
+def _build_player_query(
+    source: str | None,
+    compare_session_id: str | None = None,
+    compare_mode: str | None = None,
+) -> dict[str, str] | None:
+    query: dict[str, str] = {}
+    if source:
+        query["source"] = source
+    if compare_session_id:
+        query["compare_session"] = compare_session_id
+    if compare_mode == "manual":
+        query["compare_mode"] = compare_mode
+    return query or None
+
+
+def _player_page_href(
+    ui_lang: str,
+    language_slug: str,
+    session_id: str,
+    task_key: str,
+    source: str | None,
+    *,
+    compare_session_id: str | None = None,
+    compare_mode: str | None = None,
+) -> str:
+    return _url_with_query(
+        "public.research_player",
+        ui_lang=ui_lang,
+        language_slug=language_slug,
+        session_id=session_id,
+        task=task_key,
+        query=_build_player_query(source, compare_session_id, compare_mode),
+    )
+
+
+def _load_wordlist_ready_sessions(language_slug: str) -> tuple[list[SessionRecord], dict[str, dict[str, Any]]]:
+    ready_sessions: list[SessionRecord] = []
+    bundles: dict[str, dict[str, Any]] = {}
+    for candidate in sort_sessions_by_recency(load_language_sessions(language_slug)):
+        if not session_has_task(candidate, "wordlist"):
+            continue
+        bundle = _load_wordlist_bundle(candidate)
+        if bundle is None:
+            continue
+        ready_sessions.append(candidate)
+        bundles[candidate.session_id] = bundle
+    return ready_sessions, bundles
+
+
+def _player_session_option_label(session: SessionRecord, ui_lang: str) -> str:
+    return session.session_id
+
+
+def _build_player_summary_card(
+    session: SessionRecord,
+    ui_lang: str,
+    language_slug: str,
+    role_key: str,
+    session_options: list[dict[str, Any]],
+) -> dict[str, Any]:
+    context_label = "Varietät" if session.is_native and ui_lang == "de" else "Niveau" if ui_lang == "de" else "Variety" if session.is_native else "Level"
+    context_value = _format_standard_variety(session) if session.is_native else _format_level(session, ui_lang)
+    detail_label = _origin_country_label(ui_lang) if session.is_native else "L1"
+    detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
+    return {
+        "speaker_key": role_key,
+        "session_id": session.session_id,
+        "accent_modifier": _session_accent_modifier(session),
+        "role_label": ("Primär" if ui_lang == "de" else "Primary") if role_key == "primary" else ("Vergleich" if ui_lang == "de" else "Compare"),
+        "profile_href": _url_with_query(
+            "public.research_speaker_profile",
+            ui_lang=ui_lang,
+            language_slug=language_slug,
+            person_id=session.person_id,
+            query={"session": session.session_id},
+        ),
+        "profile_label": "Profil" if ui_lang == "de" else "Profile",
+        "session_switch": {
+            "label": _player_session_switcher_label(ui_lang, role_key),
+            "current_label": session.session_id,
+            "options": session_options,
+        },
+        "badges": [
+            _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
+            context_value if context_value != "-" else None,
+        ],
+        "rows": [
+            {"label": "Person-ID", "value": session.person_id},
+            {"label": _recording_date_label(ui_lang), "value": _format_recording_date(session)},
+            {"label": context_label, "value": context_value},
+            {"label": detail_label, "value": detail_value},
+        ],
+        "is_placeholder": False,
+        "is_visible": True,
+        "card_actions": [],
+        "activate_label": _player_speaker_activate_label(ui_lang),
+    }
+
+
+def _build_player_compare_placeholder_card(ui_lang: str, session_options: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "speaker_key": "secondary",
+        "session_id": "",
+        "accent_modifier": "native",
+        "role_label": "Vergleich" if ui_lang == "de" else "Compare",
+        "profile_href": None,
+        "profile_label": "Profil" if ui_lang == "de" else "Profile",
+        "session_switch": {
+            "label": _player_session_switcher_label(ui_lang, "secondary"),
+            "current_label": _player_compare_picker_title(ui_lang),
+            "options": session_options,
+        },
+        "badges": [_player_compare_placeholder_badge(ui_lang)],
+        "rows": _player_compare_placeholder_rows(ui_lang),
+        "is_placeholder": True,
+        "is_visible": False,
+        "card_actions": [],
+    }
+
+
+def _build_wordlist_player_items(
+    ui_lang: str,
+    language_slug: str,
+    session: SessionRecord,
+    task_key: str,
+    bundle: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "item_id": item["item_id"],
+            "item_number": item["item_number"],
+            "text": item["text"],
+            "start_label": _format_player_clock(item["start_ms"]),
+            "end_label": _format_player_clock(item["end_ms"]),
+            "download_href": url_for(
+                "public.research_player_item_download",
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                session_id=session.session_id,
+                task=task_key,
+                item_id=item["item_id"],
+            ) if item["split_audio_path"] else None,
+            "start_ms": item["start_ms"],
+            "end_ms": item["end_ms"],
+            "is_available": True,
+        }
+        for item in bundle["items"]
+    ]
+
+
+def _build_player_compare_rows(
+    primary_items: list[dict[str, Any]],
+    secondary_items: list[dict[str, Any]],
+    ui_lang: str,
+) -> list[dict[str, Any]]:
+    secondary_by_item = {item["item_id"]: item for item in secondary_items}
+    rows: list[dict[str, Any]] = []
+    for primary in primary_items:
+        secondary = secondary_by_item.get(primary["item_id"])
+        rows.append(
+            {
+                "item_id": primary["item_id"],
+                "primary": primary,
+                "secondary": secondary or {
+                    "item_id": primary["item_id"],
+                    "item_number": primary["item_number"],
+                    "text": "Nicht verfügbar" if ui_lang == "de" else "Unavailable",
+                    "start_label": "",
+                    "end_label": "",
+                    "download_href": None,
+                    "start_ms": None,
+                    "end_ms": None,
+                    "is_available": False,
+                },
+            }
+        )
+    return rows
+
+
+def _build_player_switchers(
+    ui_lang: str,
+    language_slug: str,
+    primary_session: SessionRecord,
+    task_key: str,
+    source: str | None,
+    ready_sessions: list[SessionRecord],
+    compare_session: SessionRecord | None,
+    compare_mode: str,
+) -> dict[str, Any]:
+    compare_session_id = compare_session.session_id if compare_session else None
+    primary_options = [
+        {
+            "label": _player_session_option_label(candidate, ui_lang),
+            "href": _player_page_href(
+                ui_lang,
+                language_slug,
+                candidate.session_id,
+                task_key,
+                source,
+                compare_session_id=compare_session_id if compare_session_id != candidate.session_id else None,
+                compare_mode=compare_mode,
+            ),
+            "current": candidate.session_id == primary_session.session_id,
+        }
+        for candidate in ready_sessions
+    ]
+
+    compare_options = [
+        {
+            "label": _player_compare_disabled_option(ui_lang),
+            "href": _player_page_href(ui_lang, language_slug, primary_session.session_id, task_key, source),
+            "current": compare_session is None,
+        }
+    ]
+    for candidate in ready_sessions:
+        if candidate.session_id == primary_session.session_id:
+            continue
+        compare_options.append(
+            {
+                "label": _player_session_option_label(candidate, ui_lang),
+                "href": _player_page_href(
+                    ui_lang,
+                    language_slug,
+                    primary_session.session_id,
+                    task_key,
+                    source,
+                    compare_session_id=candidate.session_id,
+                    compare_mode=compare_mode,
+                ),
+                "current": compare_session is not None and candidate.session_id == compare_session.session_id,
+            }
+        )
+
+    return {
+        "title": _player_session_switch_title(ui_lang),
+        "hint": _player_session_switch_hint(ui_lang),
+        "primary": {"label": _player_primary_session_label(ui_lang), "options": primary_options},
+        "compare": {"label": _player_compare_session_label(ui_lang), "options": compare_options},
+    }
+
+
 def _player_origin_context(
     ui_lang: str,
     language_slug: str,
@@ -1319,6 +1680,8 @@ def _build_player_task_panels(
     requested_task_key: str,
     source: str | None,
     wordlist_ready: bool,
+    compare_session_id: str | None = None,
+    compare_mode: str | None = None,
 ) -> list[dict[str, Any]]:
     panels: list[dict[str, Any]] = []
     for task in iter_research_tasks():
@@ -1331,13 +1694,14 @@ def _build_player_task_panels(
             state_label = _unavailable_label(ui_lang)
         elif task.key == "wordlist":
             if wordlist_ready:
-                href = None if is_current else _url_with_query(
-                    "public.research_player",
-                    ui_lang=ui_lang,
-                    language_slug=language_slug,
-                    session_id=session.session_id,
-                    task=task.key,
-                    query={"source": source} if source else None,
+                href = None if is_current else _player_page_href(
+                    ui_lang,
+                    language_slug,
+                    session.session_id,
+                    task.key,
+                    source,
+                    compare_session_id=compare_session_id,
+                    compare_mode=compare_mode,
                 )
                 state_label = _player_current_label(ui_lang) if is_current else _player_available_label(ui_lang)
             else:
@@ -1359,7 +1723,15 @@ def _build_player_task_panels(
     return panels
 
 
-def build_player_page(ui_lang: str, language_slug: str, session_id: str, task_key: str, source: str | None) -> dict[str, Any] | None:
+def build_player_page(
+    ui_lang: str,
+    language_slug: str,
+    session_id: str,
+    task_key: str,
+    source: str | None,
+    compare_session_id: str | None = None,
+    compare_mode: str | None = None,
+) -> dict[str, Any] | None:
     session = get_session(language_slug, session_id)
     task = get_research_task(task_key)
     if session is None or task is None or not session_has_task(session, task_key):
@@ -1379,28 +1751,103 @@ def build_player_page(ui_lang: str, language_slug: str, session_id: str, task_ke
     detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
     wordlist_bundle = _load_wordlist_bundle(session) if session_has_task(session, "wordlist") else None
     wordlist_ready = wordlist_bundle is not None
-    task_panels = _build_player_task_panels(ui_lang, language_slug, session, task_key, source, wordlist_ready)
+    ready_sessions, ready_bundles = _load_wordlist_ready_sessions(language_slug) if task_key == "wordlist" else ([], {})
+    compare_session = None
+    compare_bundle = None
+    compare_notice = None
+    if task_key == "wordlist" and compare_session_id and compare_session_id != session.session_id:
+        compare_session = next((candidate for candidate in ready_sessions if candidate.session_id == compare_session_id), None)
+        compare_bundle = ready_bundles.get(compare_session_id)
+        if compare_session is None or compare_bundle is None:
+            compare_session = None
+            compare_bundle = None
+            compare_notice = _player_compare_invalid_notice(ui_lang)
+
+    effective_compare_mode = _normalize_compare_mode(compare_mode, compare_selected=compare_session is not None)
+    task_panels = _build_player_task_panels(
+        ui_lang,
+        language_slug,
+        session,
+        task_key,
+        source,
+        wordlist_ready,
+        compare_session.session_id if compare_session else None,
+        effective_compare_mode,
+    )
+    summary_cards: list[dict[str, Any]] = []
 
     player_view: dict[str, Any]
     if task_key == "wordlist" and wordlist_bundle is not None:
-        player_items = [
+        player_switchers = _build_player_switchers(
+            ui_lang,
+            language_slug,
+            session,
+            task_key,
+            source,
+            ready_sessions,
+            compare_session,
+            effective_compare_mode,
+        ) if ready_sessions else None
+        primary_session_options = player_switchers["primary"]["options"] if player_switchers else [
             {
-                "item_id": item["item_id"],
-                "item_number": item["item_number"],
-                "text": item["text"],
-                "start_label": _format_player_clock(item["start_ms"]),
-                "end_label": _format_player_clock(item["end_ms"]),
-                "download_href": url_for(
-                    "public.research_player_item_download",
-                    ui_lang=ui_lang,
-                    language_slug=language_slug,
-                    session_id=session.session_id,
-                    task=task_key,
-                    item_id=item["item_id"],
-                ) if item["split_audio_path"] else None,
+                "label": session.session_id,
+                "href": _player_page_href(ui_lang, language_slug, session.session_id, task_key, source),
+                "current": True,
             }
-            for item in wordlist_bundle["items"]
         ]
+        compare_session_options = player_switchers["compare"]["options"][1:] if player_switchers else []
+        compare_is_ready = compare_session is not None and compare_bundle is not None
+        can_compare = bool(compare_session_options)
+        primary_items = _build_wordlist_player_items(ui_lang, language_slug, session, task_key, wordlist_bundle)
+        secondary_items = _build_wordlist_player_items(ui_lang, language_slug, compare_session, task_key, compare_bundle) if compare_session and compare_bundle else []
+        manual_compare_href = _player_page_href(
+            ui_lang,
+            language_slug,
+            session.session_id,
+            task_key,
+            source,
+            compare_session_id=compare_session.session_id if compare_session else None,
+            compare_mode="manual",
+        ) if compare_session else None
+        sequence_compare_href = _player_page_href(
+            ui_lang,
+            language_slug,
+            session.session_id,
+            task_key,
+            source,
+            compare_session_id=compare_session.session_id if compare_session else None,
+        ) if compare_session else None
+        primary_summary = _build_player_summary_card(session, ui_lang, language_slug, "primary", primary_session_options)
+        if can_compare and not compare_is_ready:
+            primary_summary["card_actions"].append(
+                {"kind": "button", "action": "compare-add", "label": _player_compare_add_label(ui_lang)}
+            )
+        summary_cards.append(primary_summary)
+
+        if compare_is_ready:
+            secondary_summary = _build_player_summary_card(
+                compare_session,
+                ui_lang,
+                language_slug,
+                "secondary",
+                compare_session_options,
+            )
+            secondary_summary["card_actions"].append(
+                {
+                    "kind": "link",
+                    "action": "compare-remove",
+                    "label": _player_compare_remove_label(ui_lang),
+                    "href": _player_page_href(ui_lang, language_slug, session.session_id, task_key, source),
+                }
+            )
+            summary_cards.append(secondary_summary)
+        elif can_compare:
+            secondary_placeholder = _build_player_compare_placeholder_card(ui_lang, compare_session_options)
+            secondary_placeholder["card_actions"].append(
+                {"kind": "button", "action": "compare-remove", "label": _player_compare_close_label(ui_lang)}
+            )
+            summary_cards.append(secondary_placeholder)
+
         player_view = {
             "mode": "wordlist",
             "audio_href": url_for(
@@ -1410,18 +1857,105 @@ def build_player_page(ui_lang: str, language_slug: str, session_id: str, task_ke
                 session_id=session.session_id,
                 task=task_key,
             ),
-            "controls_title": "Session-Audio" if ui_lang == "de" else "Session audio",
-            "controls_hint": (
-                "Klick auf einen Listeneintrag springt direkt an die dokumentierte Position in der Gesamtaufnahme."
-                if ui_lang == "de"
-                else "Clicking a list entry jumps directly to the documented position in the full recording."
-            ),
+            "controls_title": "Wiedergabe" if ui_lang == "de" else "Playback",
+            "controls_status_label": _player_controls_status_label(ui_lang),
+            "controls_status_value": session.session_id,
+            "controls_hint": compare_notice,
             "items_title": _wordlist_items_label(ui_lang),
-            "items_count": len(player_items),
+            "items_count": len(primary_items),
             "download_label": "MP3 laden" if ui_lang == "de" else "Download MP3",
             "toggle_play_label": _player_play_label(ui_lang),
             "toggle_pause_label": _player_pause_label(ui_lang),
+            "volume_label": _player_volume_label(ui_lang),
+            "speed_label": _player_speed_label(ui_lang),
+            "primary": {
+                "speaker_key": "primary",
+                "session_id": session.session_id,
+                "label": session.session_id,
+                "role_label": "Primär" if ui_lang == "de" else "Primary",
+                "audio_href": url_for(
+                    "public.research_player_audio",
+                    ui_lang=ui_lang,
+                    language_slug=language_slug,
+                    session_id=session.session_id,
+                    task=task_key,
+                ),
+                "items": primary_items,
+            },
+            "secondary": {
+                "speaker_key": "secondary",
+                "session_id": compare_session.session_id,
+                "label": compare_session.session_id,
+                "role_label": "Vergleich" if ui_lang == "de" else "Compare",
+                "audio_href": url_for(
+                    "public.research_player_audio",
+                    ui_lang=ui_lang,
+                    language_slug=language_slug,
+                    session_id=compare_session.session_id,
+                    task=task_key,
+                ),
+                "items": secondary_items,
+            } if compare_session and compare_bundle else None,
+            "compare": {
+                "is_ready": compare_is_ready,
+                "mode": effective_compare_mode,
+                "has_candidates": can_compare,
+                "sequence_toggle": {
+                    "label": _player_sequence_toggle_label(ui_lang),
+                    "enabled": effective_compare_mode == "sequence",
+                    "off_href": manual_compare_href,
+                    "on_href": sequence_compare_href,
+                } if compare_is_ready else None,
+                "switchers": player_switchers,
+                "rows": _build_player_compare_rows(primary_items, secondary_items, ui_lang) if compare_is_ready else [],
+            },
             "client_state": {
+                "requestedMode": effective_compare_mode,
+                "compareOpen": compare_is_ready,
+                "canCompare": can_compare,
+                "mobileMinWidth": 900,
+                "rateOptions": [0.5, 0.75, 1.0, 1.25, 1.5],
+                "defaultRate": 1.0,
+                "defaultRateIndex": 2,
+                "defaultVolume": 1.0,
+                "singleViewHref": _player_page_href(ui_lang, language_slug, session.session_id, task_key, source),
+                "modeHrefs": {
+                    "manual": manual_compare_href,
+                    "sequence": sequence_compare_href,
+                },
+                "speakers": [
+                    {
+                        "key": "primary",
+                        "sessionId": session.session_id,
+                        "label": session.session_id,
+                        "items": [
+                            {
+                                "itemId": item["item_id"],
+                                "startMs": item["start_ms"],
+                                "endMs": item["end_ms"],
+                            }
+                            for item in wordlist_bundle["items"]
+                        ],
+                    }
+                ] + ([
+                    {
+                        "key": "secondary",
+                        "sessionId": compare_session.session_id,
+                        "label": compare_session.session_id,
+                        "items": [
+                            {
+                                "itemId": item["item_id"],
+                                "startMs": item["start_ms"],
+                                "endMs": item["end_ms"],
+                            }
+                            for item in compare_bundle["items"]
+                        ],
+                    }
+                ] if compare_session and compare_bundle else []),
+                "compareReady": compare_is_ready,
+                "statusLabel": _player_controls_status_label(ui_lang),
+                "togglePlay": _player_play_label(ui_lang),
+                "togglePause": _player_pause_label(ui_lang),
                 "items": [
                     {
                         "itemId": item["item_id"],
@@ -1429,21 +1963,14 @@ def build_player_page(ui_lang: str, language_slug: str, session_id: str, task_ke
                         "endMs": item["end_ms"],
                     }
                     for item in wordlist_bundle["items"]
-                ]
+                ],
             },
-            "items": player_items,
+            "items": primary_items,
         }
     else:
         fallback_href = None
         if task_key != "wordlist" and wordlist_ready:
-            fallback_href = _url_with_query(
-                "public.research_player",
-                ui_lang=ui_lang,
-                language_slug=language_slug,
-                session_id=session.session_id,
-                task="wordlist",
-                query={"source": source} if source else None,
-            )
+            fallback_href = _player_page_href(ui_lang, language_slug, session.session_id, "wordlist", source)
         player_view = {
             "mode": "unavailable",
             "title": "Player-Status" if ui_lang == "de" else "Player status",
@@ -1472,7 +1999,6 @@ def build_player_page(ui_lang: str, language_slug: str, session_id: str, task_ke
             ancestors=ancestors,
         ),
         "origin_link": origin_link,
-        "profile_link": {"label": "Zum Profil" if ui_lang == "de" else "Open profile", "href": profile_href},
         "speakers_href": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),
         "recordings_href": _url_with_query(
             "public.research_language_page",
@@ -1482,6 +2008,7 @@ def build_player_page(ui_lang: str, language_slug: str, session_id: str, task_ke
             query={"task": task_key},
         ),
         "task_panels": task_panels,
+        "summary_cards": summary_cards,
         "summary": {
             "session_id": session.session_id,
             "person_id": session.person_id,

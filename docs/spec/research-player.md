@@ -33,6 +33,7 @@ This file is the binding source of truth for the target architecture of the rese
 - `source`: identifies the entry source and may use `speakers`, `recordings`, `profile`, `comparison`, or `phenomena`.
 - `preset_id`: identifies an optional phenomena preset context.
 - `compare_session`: identifies an optional secondary comparison session.
+- `compare_mode`: identifies an optional compare-item override and currently uses `manual`; omitted compare mode keeps the default compare item-check behavior `Beide abspielen`.
 - `focus_item`: identifies an optional focused item.
 - `focus_segment`: identifies an optional focused segment.
 - `render_mode`: may override the corpus default render mode for the technical task `text`.
@@ -66,6 +67,7 @@ The player state must be able to represent at least these values:
 
 - One primary session is always required.
 - Speaker identity is derived from the primary session and is not a separate player root.
+- The current productive compare extension also needs one optional comparison-playback value for the primary plus optional secondary state; omitted value keeps `Beide abspielen` as the default item-check behavior and `manual` switches item clicks back to per-side playback.
 - A focused item or segment may narrow the visible context, but it does not replace the primary session or task state.
 - Comparison context is optional and only valid for compatible tasks.
 - Preset context is optional and may coexist with manual item additions inside the same player state.
@@ -94,7 +96,10 @@ The player state must be able to represent at least these values:
 
 - The metadata card reuses the existing visual semantics of speaker cards where appropriate, especially for speaker type and level or variety cues.
 - The player must not introduce a second competing color or badge taxonomy.
-- Back-navigation context is carried by the existing content-header and breadcrumb logic, not by a second custom player header system.
+- Productive player metadata cards keep the shared research accent system: learner levels stay on the learner scale, native sessions use the dedicated accent `#18677A`, and the family uses the shared `0.5rem` top accent bar.
+- In the productive `wordlist` player, session selection belongs to the metadata-card identity layer, not to the playback toolbar: the visible `session_id` acts as the session switcher in the card header.
+- The player may expose one compact page-level back action outside the playback control bar, but it must remain one route-context action and not expand into a second competing player header system.
+- Each visible metadata card exposes its own profile action so that primary and comparison sessions can both open their corresponding speaker profile directly from the player surface.
 
 ## Task Switching
 
@@ -111,11 +116,30 @@ The player state must be able to represent at least these values:
 ### `wordlist`
 
 - The full player does not show phonetic transcription in the wordlist mode.
+- The productive `wordlist` surface is ordered as metadata cards first, playback or compare controls second, and the wordlist or comparison list third.
+- In single-session `wordlist` view, the primary metadata card uses the full available width.
+- Compare is a conscious optional state in `wordlist`: the single-session view shows no permanently open comparison selector in the playback zone.
+- In the productive `wordlist` player, the primary card exposes a secondary action `Vergleich hinzufügen`; activating that state reveals the secondary comparison card instead of introducing a permanently visible compare form in the toolbar.
+- Once compare is active and a valid `compare_session` exists, the productive `wordlist` surface shows two equal-width metadata cards directly above the two aligned comparison columns.
+- The productive playback zone for `wordlist` is a calm two-row transport area: row one contains play or pause, time, and seek; row two contains only global volume and speed controls.
+- Clicking a `wordlist` item is always an item-level check and never means continuing the whole recording from that point onward.
+- In single-session `wordlist` view, clicking an item plays only that specific primary clip.
+- In productive compare-ready `wordlist`, `Beide abspielen` is enabled by default and item clicks play the primary item first and the matching comparison item second for exactly that chosen item.
+- If the compare item toggle is disabled, left-item clicks play only the primary side and right-item clicks play only the comparison side for the chosen item.
+- Global play remains separate from item checking: it resumes the current global audio context at its current position and does not reuse the item-click semantics.
+- Productive `wordlist` compare does not expose a separate compare-mode block anymore; the only compare-item override is a single toggle labeled `Beide abspielen`.
+- The compare item toggle belongs to the comparison-list header, not to the global playback controls, because it changes comparison-item click behavior rather than global transport.
+- In single-session wordlist view, compare-only controls and the secondary comparison card collapse away so that the primary session remains the only visible speaker context.
 - Wordlist is rendered as a calm list with stable numbering on the left and the item label or text on the right.
 - Numbering is fachlich fixed and must come from production data, not from UI-generated ordinals.
 - Clicking a wordlist item may directly trigger playback; a separate play button per item is optional and not required.
 - The target contract includes downloading single split MP3 files from the full player when those artifacts exist.
 - Full-task playback remains based on the full MP3 and does not require split MP3 playback as the primary logic.
+- Shared transport actions such as play or download use icon-only controls with accessible labels rather than verbose button text.
+- Shared playback speed is currently limited to `0.5`, `0.75`, `1.0`, `1.25`, and `1.5`.
+- The productive speed control uses a compact direct slider with the fixed steps `0.5`, `0.75`, `1.0`, `1.25`, and `1.5`, not a large dropdown or a wide chip row.
+- Player-header metadata for the productive wordlist surface stays compact and listening-relevant; fields such as `recorded_by` do not belong to the player card surface.
+- Productive player metadata cards are a player-specific derivation of the speaker-card family: they reuse the same accent or top-border logic, chip language, and facts-grid principle, while adapting width and internal geometry to the player workbench.
 - If one wordlist item corresponds to exactly one timing-bearing unit, the data contract does not require duplicating identical text or timing values on a second token layer.
 - In that case the player may derive the timing-bearing render unit internally from the item itself.
 
@@ -154,6 +178,7 @@ The player state must be able to represent at least these values:
 - Missing secondary items must not break the whole comparison view.
 - The primary side remains usable even when the secondary side has gaps.
 - Missing comparison items are shown as unavailable or empty-state elements instead of causing route or rendering failure.
+- On smaller viewports, compare-specific selectors, compare cards, and the aligned dual-column list collapse back to the primary single-session view instead of keeping a cramped compare layout.
 
 ## Phenomena Presets
 
@@ -306,9 +331,18 @@ The top level may additionally include:
 
 ### Current MVP scope
 
-- The current productive web-player MVP uses the shared player surface for all tasks but only implements real playback, progress, timing sync, active-item highlighting, and split-download delivery for `wordlist`.
+- The current productive web-player MVP uses the shared player surface for all tasks but only implements real playback, progress, timing sync, active-item highlighting, split-download delivery, in-player session switching, and comparison for `wordlist`.
 - If a session documents `wordlist` but lacks processable player artifacts, the player route must stay reachable and render an explicit unavailable state instead of failing the whole page.
 - The current MVP keeps `text` and `interview` inside the shared task switch but does not fake playback or pseudo-renderers for them.
+- The current productive comparison path is `wordlist` only; `text` remains future-capable in the architecture but not yet implemented productively.
+- The current productive `wordlist` compare flow uses one active transport focus at a time and must not default to simultaneous dual-audio playback; the productive surface no longer needs a dedicated primary-versus-compare focus switch or a second transport toolbar.
+- The current productive `wordlist` compare flow keeps item checking and global transport separate: item clicks run bounded clip checks, while global play resumes the current full-audio context.
+- The current productive `wordlist` compare flow enables `Beide abspielen` by default when a valid comparison session is loaded; `compare_mode=manual` remains the lightweight override for per-side item checks.
+- The current productive `wordlist` session switcher lives in the metadata cards, not in the playback controls; the visible `session_id` headers open the available session choices.
+- The current productive `wordlist` compare flow is explicitly activated from the primary card and does not leave an always-open empty comparison selector in the playback zone.
+- The productive compare item toggle is handled as a lightweight client-side state change on the already loaded compare surface and must not require a full player rebuild just to switch between `Beide abspielen` and manual per-side playback.
+- The current productive compare UI is desktop-only, while smaller viewports degrade to the primary single-session view without breaking the route.
+- The current productive shared controls expose fixed playback-rate steps `0.5`, `0.75`, `1.0`, `1.25`, and `1.5` via a compact slider plus shared volume control for active playback.
 
 ### `text` container contract
 

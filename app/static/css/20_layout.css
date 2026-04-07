@@ -295,14 +295,27 @@ body.app-shell.page-landing .md3-content-wrapper {
   gap: var(--pm-space-container);
 }
 
+.pm-player-control-bar,
+.pm-player-control-bar__row,
+.pm-player-control-bar__block,
+.pm-player-summary-cards,
+.pm-player-list,
+.pm-player-list__row,
+.pm-player-list__header,
+.pm-player-timeline-row,
+.pm-player-transport-cluster,
+.pm-player-transport-main,
+.pm-player-speaker-tabs {
+  display: grid;
+  gap: var(--pm-space-sm);
+}
+
 .pm-profile-session-list {
   display: grid;
   gap: var(--pm-space-sm);
 }
 
-.pm-player-wordlist {
-  display: grid;
-  gap: var(--pm-space-sm);
+.pm-player-list {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -318,17 +331,49 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 @media (min-width: 900px) {
-  .pm-player-layout {
-    grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  .pm-player-control-bar {
+    grid-template-columns: minmax(0, 1.45fr) auto;
+    align-items: stretch;
+    column-gap: var(--pm-space-lg);
+  }
+
+  .pm-player-control-bar__row--transport {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .pm-player-control-bar__row--settings {
+    grid-template-columns: repeat(2, minmax(0, 13.5rem));
     align-items: start;
+    justify-content: start;
+  }
+
+  .pm-player-list__row--single {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .pm-player-runtime__inner[data-player-compare-open="false"] .pm-player-summary-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pm-player-runtime__inner[data-player-compare-open="true"] .pm-player-summary-cards.is-compare-ready,
+  .pm-player-list__header--compare,
+  .pm-player-list__row--compare {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--pm-space-sm);
+  }
+
+  .pm-player-runtime__inner[data-player-compare-open="true"] .pm-player-summary-cards.is-compare-ready > [data-player-speaker-card] {
+    grid-column: auto;
   }
 
   .pm-sample-research-showcase__row:first-child .pm-speaker-grid {
-    grid-template-columns: repeat(2, minmax(0, var(--pm-research-speaker-card-max)));
+    grid-template-columns: repeat(3, minmax(0, var(--pm-research-speaker-card-max)));
   }
 
   .pm-sample-research-chip-badge-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -339,6 +384,19 @@ body.app-shell.page-landing .md3-content-wrapper {
 
   .pm-research-mobile-filters {
     display: block;
+  }
+
+  .pm-player-compare-desktop,
+  .pm-player-panel--compare {
+    display: none;
+  }
+
+  .pm-player-control-bar__row--transport,
+  .pm-player-control-bar__row--settings,
+  .pm-player-list__row--single,
+  .pm-player-list__header,
+  .pm-player-list__row--compare {
+    grid-template-columns: 1fr;
   }
 }
 

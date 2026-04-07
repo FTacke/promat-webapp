@@ -65,6 +65,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - UI language and technical routing language must not be mixed.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
+- The current productive `player` query context may add `compare_session` plus optional `compare_mode=manual` for the bounded `wordlist` comparison extension without creating a second route family; omitted `compare_mode` keeps the default compare item-check behavior `Beide abspielen`.
 - Player media delivery stays under the same `player` route family and resolves protected session artifacts through application logic, not through static publication of `data/`.
 - Old German technical slugs and old public routes must not be reintroduced.
 
