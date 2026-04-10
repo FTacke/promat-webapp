@@ -158,6 +158,15 @@ def register_maintenance_commands(app: Flask) -> None:
         count = services.anonymize_soft_deleted_users_older_than(days)
         app.logger.info(f"Anonymized {count} users soft-deleted older than {days} days")
 
+    @app.cli.command("research-sets-cleanup")
+    @with_appcontext
+    def research_sets_cleanup_command():
+        """Delete expired draft research sets."""
+        from .research_sets import delete_expired_drafts
+
+        count = delete_expired_drafts()
+        app.logger.info("Deleted %s expired draft research sets", count)
+
 
 def register_context_processors(app: Flask) -> None:
     """Expose helpers to the template engine."""
@@ -199,6 +208,7 @@ def register_auth_context(app: Flask) -> None:
 
         if any(path.startswith(p) for p in PUBLIC_PREFIXES):
             g.user = None
+            g.user_id = None
             g.role = None
             g.must_reset_password = False
             return
@@ -207,6 +217,7 @@ def register_auth_context(app: Flask) -> None:
             verify_jwt_in_request(optional=True, locations=["cookies"])
             identity = get_jwt_identity()
             token = get_jwt() or {}
+            g.user_id = identity if isinstance(identity, str) and identity.strip() else None
             g.user = token.get("username") or identity
             role_value = token.get("role")
             try:
@@ -216,6 +227,7 @@ def register_auth_context(app: Flask) -> None:
             g.must_reset_password = bool(token.get("must_reset_password", False))
         except Exception:  # noqa: BLE001
             g.user = None
+            g.user_id = None
             g.role = None
             g.must_reset_password = False
 

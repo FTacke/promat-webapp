@@ -82,6 +82,10 @@ def _write_session_file(runtime_root: Path, language_slug: str, session_id: str,
     file_path.write_text(content, encoding="utf-8")
 
 
+def _minimal_mp3_bytes() -> bytes:
+    return b"ID3\x04\x00\x00\x00\x00\x00\x00\xff\xfb\x90\x64" + (b"\x00" * 256)
+
+
 def _write_wordlist_player_artifacts(runtime_root: Path, language_slug: str, session_id: str, person_id: str) -> None:
     payload = {
         "session_id": session_id,
@@ -108,9 +112,9 @@ def _write_wordlist_player_artifacts(runtime_root: Path, language_slug: str, ses
         ],
     }
     _write_session_file(runtime_root, language_slug, session_id, "alignment/wordlist.json", json.dumps(payload, indent=2) + "\n")
-    _write_session_file(runtime_root, language_slug, session_id, "derived/wordlist.mp3", b"fake mp3")
-    _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_001.mp3", b"fake split 1")
-    _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_002.mp3", b"fake split 2")
+    _write_session_file(runtime_root, language_slug, session_id, "derived/wordlist.mp3", _minimal_mp3_bytes())
+    _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_001.mp3", _minimal_mp3_bytes())
+    _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_002.mp3", _minimal_mp3_bytes())
 
 
 def _task(task_type: str) -> dict[str, str]:
@@ -1207,11 +1211,24 @@ def test_player_item_download_route_uses_delivery_filename(runtime_env: Path, ur
     client = url_app.test_client()
     audio_response = client.get(f"/de/research/spanish/player/{session_id}/wordlist/audio.mp3")
     item_response = client.get(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")
+    item_download_response = client.get(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3?download=1")
+    item_range_response = client.get(
+        f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3",
+        headers={"Range": "bytes=0-15"},
+    )
 
     assert audio_response.status_code == 200
     assert audio_response.mimetype == "audio/mpeg"
     assert item_response.status_code == 200
     assert item_response.mimetype == "audio/mpeg"
     disposition = item_response.headers["Content-Disposition"]
-    assert "attachment;" in disposition
-    assert "ES-L-0001_wordlist_wl_001_mesa.mp3" in disposition
+    assert "attachment;" not in disposition
+    assert item_download_response.status_code == 200
+    assert item_download_response.mimetype == "audio/mpeg"
+    download_disposition = item_download_response.headers["Content-Disposition"]
+    assert "attachment;" in download_disposition
+    assert "ES-L-0001_wordlist_wl_001_mesa.mp3" in download_disposition
+    assert item_range_response.status_code == 206
+    assert item_range_response.mimetype == "audio/mpeg"
+    assert "attachment;" not in (item_range_response.headers.get("Content-Disposition") or "")
+    assert item_range_response.headers["Content-Range"].startswith("bytes 0-15/")

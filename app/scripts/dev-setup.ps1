@@ -11,6 +11,23 @@ $appRoot = Split-Path -Parent $PSScriptRoot
 $workspaceRoot = Split-Path -Parent $appRoot
 $composeFile = Join-Path $workspaceRoot 'docker-compose.dev-postgres.yml'
 
+function Wait-ForLocalDevPostgres {
+	param(
+		[string]$ComposeFilePath,
+		[string]$DockerExecutable
+	)
+
+	for ($attempt = 1; $attempt -le 30; $attempt++) {
+		& $DockerExecutable compose -f $ComposeFilePath exec -T promat_auth_db pg_isready -U promat_auth -d promat_auth *> $null
+		if ($LASTEXITCODE -eq 0) {
+			return
+		}
+		Start-Sleep -Seconds 1
+	}
+
+	throw 'Lokale PostgreSQL-Dev-Datenbank wurde nicht rechtzeitig bereit. Bitte Docker-Status prüfen.'
+}
+
 if (-not $env:PROMAT_RUNTIME_ROOT) {
 	$env:PROMAT_RUNTIME_ROOT = $workspaceRoot
 }
@@ -45,10 +62,12 @@ foreach ($dir in $dirs) {
 }
 
 if (Get-Command docker -ErrorAction SilentlyContinue) {
-	docker compose -f $composeFile up -d promat_auth_db
+	$docker = (Get-Command docker -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+	& $docker compose -f $composeFile up -d promat_auth_db
 	if ($LASTEXITCODE -ne 0) {
 		throw 'Failed to start promat_auth_db via docker compose.'
 	}
+	Wait-ForLocalDevPostgres -ComposeFilePath $composeFile -DockerExecutable $docker
 }
 
 if (-not $SkipInstall) {
@@ -80,5 +99,5 @@ if ($StartAdminPassword) {
 }
 
 if (-not $SkipDevServer) {
-	& $PSScriptRoot\dev-start.ps1
+	& $PSScriptRoot\dev-start.ps1 -SkipBootstrap
 }

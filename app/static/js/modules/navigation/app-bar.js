@@ -9,66 +9,99 @@
  * Uses delegated event listeners to work on every page load.
  * Binds on DOMContentLoaded to ensure DOM is ready.
  */
-function initUserMenu() {
-  // Guard: only initialize once to avoid duplicated listeners when module is loaded twice
-  if (window.__initTopAppUserMenu) return;
-  window.__initTopAppUserMenu = true;
-  // Delegate: Find elements whenever they exist (after any page reload)
-  // Accept either the new account trigger or the legacy user-menu toggle
-  const btn = document.querySelector("[data-account-menu-trigger], [data-user-menu-toggle]");
-  const menu = document.querySelector("[data-user-menu]");
+function syncUserMenuState(toggle, dropdown, open) {
+  if (!toggle || !dropdown) {
+    return;
+  }
+  toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  dropdown.hidden = !open;
+  if (open) {
+    dropdown.setAttribute("data-open", "");
+  } else {
+    dropdown.removeAttribute("data-open");
+  }
+}
 
-  if (!btn || !menu) {
+function focusFirstUserMenuItem(dropdown) {
+  const firstItem = dropdown.querySelector('[role="menuitem"]');
+  if (firstItem) {
+    window.setTimeout(() => firstItem.focus(), 50);
+  }
+}
+
+function bindUserMenu(userMenuRoot) {
+  if (!userMenuRoot) {
+    return null;
+  }
+
+  const toggle = userMenuRoot.querySelector("[data-account-menu-trigger], [data-user-menu-toggle]");
+  const dropdown = userMenuRoot.querySelector("[data-user-menu]");
+
+  if (!toggle || !dropdown) {
+    return null;
+  }
+
+  const closeMenu = () => {
+    syncUserMenuState(toggle, dropdown, false);
+  };
+  const openMenu = () => {
+    syncUserMenuState(toggle, dropdown, true);
+    focusFirstUserMenuItem(dropdown);
+  };
+
+  closeMenu();
+
+  if (userMenuRoot.dataset.userMenuBound === "true") {
+    return { toggle, dropdown, closeMenu, openMenu };
+  }
+
+  userMenuRoot.dataset.userMenuBound = "true";
+
+  toggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const isExpanded = toggle.getAttribute("aria-expanded") === "true";
+    if (isExpanded) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!userMenuRoot.contains(event.target)) {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+      closeMenu();
+      toggle.focus();
+    }
+  });
+
+  document.addEventListener("turbo:before-visit", closeMenu);
+  document.addEventListener("turbo:load", closeMenu);
+  window.addEventListener("pageshow", closeMenu);
+  window.addEventListener("pagehide", closeMenu);
+  window.addEventListener("popstate", closeMenu);
+
+  dropdown.querySelectorAll('[role="menuitem"]').forEach((item) => {
+    item.addEventListener("click", closeMenu);
+  });
+
+  return { toggle, dropdown, closeMenu, openMenu };
+}
+
+function initUserMenu() {
+  const userMenuRoot = document.querySelector("[data-user-menu-root]");
+  if (!bindUserMenu(userMenuRoot)) {
     console.log("[TopAppBar] User menu not found on this page");
     return;
   }
 
-  // Open/Close on button click
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const isOpen = btn.getAttribute("aria-expanded") === "true";
-
-    if (isOpen) {
-      closeUserMenu(btn, menu);
-    } else {
-      openUserMenu(btn, menu);
-    }
-  });
-
-  // Close on outside click
-  document.addEventListener("click", (e) => {
-    if (!btn.contains(e.target) && !menu.contains(e.target)) {
-      closeUserMenu(btn, menu);
-    }
-  });
-
-  // Close on Escape
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && menu.hasAttribute("data-open")) {
-      closeUserMenu(btn, menu);
-      btn.focus();
-    }
-  });
-
   console.log("[TopAppBar] User menu initialized");
-}
-
-function openUserMenu(btn, menu) {
-  menu.hidden = false;
-  menu.setAttribute("data-open", "");
-  btn.setAttribute("aria-expanded", "true");
-
-  // Focus first menu item
-  const firstItem = menu.querySelector('[role="menuitem"]');
-  if (firstItem) {
-    setTimeout(() => firstItem.focus(), 50);
-  }
-}
-
-function closeUserMenu(btn, menu) {
-  menu.hidden = true;
-  menu.removeAttribute("data-open");
-  btn.setAttribute("aria-expanded", "false");
 }
 
 /**
@@ -96,73 +129,13 @@ export class TopAppBar {
 
   init() {
     // User menu functionality
-    this.initUserMenu();
+    initUserMenu();
 
     // Login handler (MD3 Goldstandard: full-page login)
     this.initLoginHandler();
 
     // Optional: Check for ?showlogin=1 query parameter
     this.checkAutoOpenLogin();
-  }
-
-  /**
-   * User Menu (Avatar mit Logout-Menü)
-   */
-  initUserMenu() {
-    const userMenuRoot = document.querySelector("[data-user-menu-root]");
-    if (!userMenuRoot) return;
-
-    const toggle = userMenuRoot.querySelector("[data-account-menu-trigger], [data-user-menu-toggle]");
-    const dropdown = userMenuRoot.querySelector("[data-user-menu]");
-
-    if (!toggle || !dropdown) return;
-
-    toggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isExpanded = toggle.getAttribute("aria-expanded") === "true";
-
-      if (isExpanded) {
-        this.closeUserMenu(toggle, dropdown);
-      } else {
-        this.openUserMenu(toggle, dropdown);
-      }
-    });
-
-    // Close on outside click
-    document.addEventListener("click", (e) => {
-      if (!userMenuRoot.contains(e.target)) {
-        this.closeUserMenu(toggle, dropdown);
-      }
-    });
-
-    // Close on ESC
-    document.addEventListener("keydown", (e) => {
-      if (
-        e.key === "Escape" &&
-        toggle.getAttribute("aria-expanded") === "true"
-      ) {
-        this.closeUserMenu(toggle, dropdown);
-        toggle.focus();
-      }
-    });
-  }
-
-  openUserMenu(toggle, dropdown) {
-    toggle.setAttribute("aria-expanded", "true");
-    dropdown.hidden = false;
-    dropdown.setAttribute("data-open", "");
-
-    // Focus first item (Logout button)
-    const firstItem = dropdown.querySelector('[role="menuitem"]');
-    if (firstItem) {
-      setTimeout(() => firstItem.focus(), 50);
-    }
-  }
-
-  closeUserMenu(toggle, dropdown) {
-    toggle.setAttribute("aria-expanded", "false");
-    dropdown.hidden = true;
-    dropdown.removeAttribute("data-open");
   }
 
   /**

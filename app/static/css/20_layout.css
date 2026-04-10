@@ -239,6 +239,37 @@ body.app-shell.page-landing .md3-content-wrapper {
 .pm-research-task-band,
 .pm-research-quick-filter-band,
 .pm-research-results-stack,
+.pm-comparison-flow,
+.pm-comparison-material-card,
+.pm-comparison-material-bar,
+.pm-comparison-material-context,
+.pm-comparison-material-context-actions,
+.pm-comparison-material-panel,
+.pm-comparison-material-controls,
+.pm-comparison-session-panel,
+.pm-comparison-session-tools,
+.pm-comparison-session-groups,
+.pm-comparison-session-group,
+.pm-comparison-filter-summary,
+.pm-comparison-filter-zone,
+.pm-comparison-step-header,
+.pm-comparison-set-summary,
+.pm-comparison-matrix-panel,
+.pm-comparison-matrix__item-header,
+.pm-phenomena-layout,
+.pm-phenomena-column,
+.pm-phenomena-preset-grid,
+.pm-phenomena-status-card,
+.pm-phenomena-launcher,
+.pm-phenomena-launcher__controls,
+.pm-phenomena-launcher__actions,
+.pm-phenomena-items-panel,
+.pm-phenomena-browser-panel,
+.pm-phenomena-browser-controls,
+.pm-phenomena-item-list,
+.pm-phenomena-browser-results,
+.pm-phenomena-panel-header,
+.pm-phenomena-section-intro,
 .pm-player-layout,
 .pm-player-runtime,
 .pm-player-stub-layout,
@@ -249,7 +280,13 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .pm-research-status-stack,
 .pm-sample-research-showcase,
-.pm-sample-research-showcase__row {
+.pm-sample-research-showcase__row,
+.pm-comparison-item,
+.pm-comparison-session-card,
+.pm-comparison-speaker-row__body,
+.pm-phenomena-item,
+.pm-phenomena-browser-result,
+.pm-phenomena-preview-list {
   display: grid;
   gap: var(--pm-space-sm);
 }
@@ -282,6 +319,61 @@ body.app-shell.page-landing .md3-content-wrapper {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--pm-research-speaker-card-min)), var(--pm-research-speaker-card-max)));
   gap: var(--pm-space-grid);
   justify-content: start;
+}
+
+.pm-phenomena-preset-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+}
+
+.pm-comparison-session-list,
+.pm-comparison-item-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-comparison-level-filters,
+.pm-comparison-active-filters {
+  min-width: 0;
+}
+
+.pm-comparison-matrix-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+  position: relative;
+}
+
+.pm-comparison-matrix-wrap::after {
+  content: "";
+  position: sticky;
+  right: 0;
+  display: block;
+  width: 2.4rem;
+  margin-left: auto;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--pm-surface-paper) 0%, transparent) 0%,
+    color-mix(in srgb, var(--pm-surface-paper) 78%, transparent) 100%
+  );
+}
+
+.pm-comparison-matrix {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.pm-phenomena-item-list,
+.pm-phenomena-browser-results,
+.pm-phenomena-preview-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .pm-profile-layout,
@@ -331,6 +423,26 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 @media (min-width: 900px) {
+  .pm-comparison-session-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .pm-comparison-material-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .pm-comparison-filter-summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .pm-phenomena-layout {
+    grid-template-columns: minmax(18rem, 0.95fr) minmax(0, 1.25fr);
+    align-items: start;
+  }
+
   .pm-player-control-bar {
     grid-template-columns: minmax(0, 1.45fr) auto;
     align-items: stretch;

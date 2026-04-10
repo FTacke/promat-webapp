@@ -371,6 +371,28 @@ function init() {
     }
   }
 
+  function revealFocusedItem() {
+    const focusedItemId = state.focusedItemId;
+    if (!focusedItemId) {
+      return;
+    }
+    const focusRows = Array.from(root.querySelectorAll('[data-player-focus-item]'));
+    const focusRow = focusRows.find((element) => element.dataset.playerFocusItem === focusedItemId) || null;
+    const primaryItems = itemMap.get('primary');
+    const focusedElements = primaryItems?.get(focusedItemId);
+    const element = Array.isArray(focusedElements) ? focusedElements[0] : null;
+    if (!focusRow && !element) {
+      return;
+    }
+    if (focusRow) {
+      focusRow.classList.add('is-focused');
+      focusRow.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+    if (element) {
+      element.classList.add('is-active');
+    }
+  }
+
   function playClip(speakerKey, itemId) {
     const speaker = speakerState.get(speakerKey);
     const item = speaker?.itemsById?.get(itemId);
@@ -574,6 +596,7 @@ function init() {
   syncToggleLabel();
   syncProgress();
   syncActiveItems();
+  revealFocusedItem();
 }
 
 document.addEventListener('DOMContentLoaded', init);

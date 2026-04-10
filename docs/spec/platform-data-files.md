@@ -35,6 +35,16 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 /{ui_lang}/research/{corpus_language}/player/{session_id}/{task}/items/{item_id}.mp3
 ```
 
+### Research set API route schema
+
+```text
+/api/research/sets
+/api/research/sets/{set_id}
+/api/research/sets/{set_id}/items
+/api/research/sets/{set_id}/sessions
+/api/research/sets/{set_id}/save-as
+```
+
 ### Active technical route values
 
 - `ui_lang`: `de`, `en`
@@ -65,8 +75,11 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - UI language and technical routing language must not be mixed.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
+- `comparison` and `phenomena` remain first-class research page routes and must not be collapsed into alternate `player` path shapes.
+- Mixed research selections stay in query context or server-side set state and must not introduce a `mixed` player task value.
 - The current productive `player` query context may add `compare_session` plus optional `compare_mode=manual` for the bounded `wordlist` comparison extension without creating a second route family; omitted `compare_mode` keeps the default compare item-check behavior `Beide abspielen`.
 - Player media delivery stays under the same `player` route family and resolves protected session artifacts through application logic, not through static publication of `data/`.
+- Owner-bound research set writes and reads use the `/api/research/sets` route family under JWT protection and must not trust client-supplied ownership fields.
 - Old German technical slugs and old public routes must not be reintroduced.
 
 ## Active App Shell
@@ -74,6 +87,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - All public non-landing inner pages use the same shared app shell.
 - The landing page is the only public layout exception.
 - The shared inner shell keeps the global topbar as the stable upper level and the local page shell below it.
+- If the authenticated account menu exists in the global topbar, it stays closed by default, opens only on explicit trigger activation, closes again on outside click, `Escape`, trigger re-click, and navigation, and must not persist a sticky-open state across reloads or page transitions.
 - The local page shell uses a left sidebar for area navigation and a right main-content column.
 - The sidebar begins with a permanent area header: section icon, section title, and a subtle divider.
 - Language-context pages keep their language back-link and language title below that permanent area header, not instead of it.
@@ -94,6 +108,8 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - `PROMAT_RUNTIME_ROOT` is the canonical runtime root.
 - `PROMAT_PUBLIC_ROOT` is the canonical public root.
 - Paths are derived through runtime/config wiring, not freehand string paths.
+- For the default local development PostgreSQL URL `postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth`, `scripts/dev-start.ps1` is the canonical app entrypoint and must ensure the local `promat_auth_db` service plus the idempotent auth/core and research-set migrations are applied before the Flask app starts.
+- `app/scripts/dev-setup.ps1` remains the canonical initial bootstrap path for the same local PostgreSQL setup; it provisions the local database, applies the same migration chain, and then may hand off to `dev-start` without re-running bootstrap work.
 
 ## Dev/Prod Parity
 
@@ -101,6 +117,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - Allowed differences are infrastructure-level only.
 - Research-data architecture must not diverge into Dev-only fallback stores or shadow structures.
 - PostgreSQL is the binding database strategy for research-data work.
+- The owner-bound research set model persists in PostgreSQL and does not get a second browser-only or file-backed storage path.
 
 ## Data Spaces
 
@@ -204,7 +221,8 @@ metadata.json
 - Player-facing full-task MP3 files use `derived/{task}.mp3`.
 - Player-facing split MP3 paths use `items/{task}/{item_id}.mp3`.
 - For the current Spanish sentence-list catalog, visible numbering remains `D1` through `D30`, `QY1` through `QY10`, and `QW1` through `QW10`, while stable technical IDs remain `d_01` through `d_30`, `qy_01` through `qy_10`, and `qw_01` through `qw_10`.
-- The current player delivery routes map full-task playback to `.../player/{session_id}/{task}/audio.mp3` and single-item download to `.../player/{session_id}/{task}/items/{item_id}.mp3` without exposing internal runtime paths.
+- The current player delivery routes map full-task playback to `.../player/{session_id}/{task}/audio.mp3` and single-item item-media delivery to `.../player/{session_id}/{task}/items/{item_id}.mp3` without exposing internal runtime paths.
+- The canonical single-item player route serves a playback-safe inline `audio/mpeg` response by default; explicit download semantics stay on the same route family through explicit download intent rather than through a separate media path.
 - For the current `wordlist` production path, web derivatives use MP3 in mono with `160 kbps` CBR for both `derived/wordlist.mp3` and `items/wordlist/{item_id}.mp3`.
 - Internal split filenames use stable `item_id`s.
 - Single-item download filenames are generated separately at delivery time and do not redefine internal storage paths.

@@ -11,6 +11,8 @@ from sqlalchemy import text
 
 from ..content_navigation import build_content_header as build_shared_content_header
 from ..research_views import (
+    build_comparison_page,
+    build_phenomena_page,
     build_player_page,
     build_recordings_page,
     build_speaker_profile_page,
@@ -605,6 +607,10 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
         page = build_recordings_page(ui_lang, canonical_language_slug, request.args)
     elif canonical_language_slug == "spanish" and canonical_page_slug == "speakers":
         page = build_speakers_page(ui_lang, canonical_language_slug, request.args)
+    elif canonical_language_slug == "spanish" and canonical_page_slug == "comparison":
+        page = build_comparison_page(ui_lang, canonical_language_slug, request.args)
+    elif canonical_language_slug == "spanish" and canonical_page_slug == "phenomena":
+        page = build_phenomena_page(ui_lang, canonical_language_slug, request.args)
     else:
         page = build_research_page(ui_lang, canonical_language_slug, canonical_page_slug)
     if page is None or language is None:
@@ -673,12 +679,36 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
     source = request.args.get("source")
     compare_session = request.args.get("compare_session")
     compare_mode = request.args.get("compare_mode")
-    page = build_player_page(ui_lang, canonical_language_slug, session_id, task, source, compare_session, compare_mode)
+    set_id = request.args.get("set_id")
+    preset_id = request.args.get("preset_id")
+    focus_item = request.args.get("focus_item")
+    page = build_player_page(
+        ui_lang,
+        canonical_language_slug,
+        session_id,
+        task,
+        source,
+        compare_session,
+        compare_mode,
+        set_id,
+        preset_id,
+        focus_item,
+    )
     if page is None or language is None:
         abort(404)
 
     language_label = get_language_label(language, ui_lang)
-    active_slug = "recordings" if source == "recordings" else "speakers" if source in {"speakers", "profile"} else ""
+    active_slug = (
+        "recordings"
+        if source == "recordings"
+        else "speakers"
+        if source in {"speakers", "profile"}
+        else "comparison"
+        if source == "comparison"
+        else "phenomena"
+        if source == "phenomena"
+        else ""
+    )
     panel = _panel_config(
         section_key="research",
         section_label=get_section_label("research", ui_lang),
@@ -702,6 +732,11 @@ def _player_download_filename(person_id: str, task_key: str, item_id: str, downl
     readable_label = re.sub(r"[^\w\s-]", "", download_label.strip().lower(), flags=re.UNICODE)
     readable_label = re.sub(r"[-\s]+", "-", readable_label, flags=re.UNICODE).strip("-_") or item_id
     return f"{person_id}_{task_key}_{item_id}_{readable_label}.mp3"
+
+
+def _request_wants_download() -> bool:
+    value = (request.args.get("download") or "").strip().lower()
+    return value not in {"", "0", "false", "no"}
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>/audio.mp3")
@@ -729,16 +764,18 @@ def research_player_item_download(ui_lang: str, language_slug: str, session_id: 
     if artifact is None:
         abort(404)
 
+    download_name = _player_download_filename(
+        artifact["person_id"],
+        artifact["task_key"],
+        artifact["item_id"],
+        artifact["download_label"],
+    )
+
     return send_file(
         artifact["path"],
         mimetype="audio/mpeg",
-        as_attachment=True,
-        download_name=_player_download_filename(
-            artifact["person_id"],
-            artifact["task_key"],
-            artifact["item_id"],
-            artifact["download_label"],
-        ),
+        as_attachment=_request_wants_download(),
+        download_name=download_name,
         conditional=True,
         etag=False,
     )

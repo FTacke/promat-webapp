@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--workbench pm-content pm-content--workbench pm-research-page" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  {% if promat_page.page_notice %}
+  <div class="pm-feature-band">
+    <div class="pm-container pm-container--tinted pm-phenomena-inline-note">
+      <p class="pm-phenomena-inline-note__text">{{ promat_page.page_notice }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="pm-feature-band pm-comparison-flow" data-comparison-root>
+    <section class="pm-container pm-comparison-session-panel" aria-labelledby="pm-comparison-session-title">
+      <div class="pm-comparison-step-header">
+        <h2 id="pm-comparison-session-title" class="pm-comparison-stage-title">
+          <span class="pm-comparison-stage-title__step">1</span>
+          <span>{{ 'Sprecher:innen auswählen' if ui_lang == 'de' else 'Select speakers' }}</span>
+        </h2>
+      </div>
+
+      <div class="pm-comparison-session-tools" aria-label="{{ 'Sprecher:innen filtern' if ui_lang == 'de' else 'Filter speakers' }}">
+        <div class="pm-comparison-filter-bar">
+          <div class="pm-comparison-filter-zone pm-comparison-filter-zone--search">
+            <label class="pm-comparison-filter-field pm-comparison-filter-field--search">
+              <span class="sr-only">{{ promat_page.client_state.labels.searchPlaceholder }}</span>
+              <input class="pm-phenomena-field__input pm-comparison-filter-input" type="search" placeholder="{{ promat_page.client_state.labels.searchPlaceholder }}" data-comparison-filter-search>
+            </label>
+          </div>
+
+          <div class="pm-comparison-filter-zone pm-comparison-filter-zone--levels">
+            <div class="pm-comparison-level-filters" role="group" aria-label="{{ promat_page.client_state.labels.levelLabel }}" data-comparison-level-filters></div>
+          </div>
+
+          <div class="pm-comparison-filter-zone pm-comparison-filter-zone--secondary">
+            <label class="pm-comparison-filter-field pm-comparison-filter-field--select">
+              <span class="sr-only">{{ promat_page.client_state.labels.l1FilterLabel }}</span>
+              <select class="pm-phenomena-field__input pm-comparison-filter-select" data-comparison-filter-l1></select>
+            </label>
+
+            <details class="pm-comparison-more-filters" data-comparison-more-filters>
+              <summary class="pm-comparison-more-filters__summary">{{ promat_page.client_state.labels.moreFiltersLabel }}</summary>
+              <div class="pm-comparison-more-filters__body">
+                <label class="pm-phenomena-field pm-comparison-filter-field">
+                  <span class="pm-phenomena-field__label">{{ promat_page.client_state.labels.genderFilterLabel }}</span>
+                  <select class="pm-phenomena-field__input pm-comparison-filter-select" data-comparison-filter-gender></select>
+                </label>
+
+                <label class="pm-phenomena-field pm-comparison-filter-field">
+                  <span class="pm-phenomena-field__label">{{ promat_page.client_state.labels.exposureFilterLabel }}</span>
+                  <select class="pm-phenomena-field__input pm-comparison-filter-select" data-comparison-filter-exposure></select>
+                </label>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="pm-comparison-filter-summary">
+          <p class="pm-comparison-filter-count" data-comparison-filter-count></p>
+          <div class="pm-comparison-active-filters" data-comparison-active-filters></div>
+          <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-comparison-clear-filters hidden>{{ promat_page.client_state.labels.clearFiltersLabel }}</button>
+        </div>
+      </div>
+
+      <div class="pm-comparison-session-groups">
+        <section class="pm-comparison-session-group pm-comparison-session-group--source" aria-labelledby="pm-comparison-learners-title">
+          <div class="pm-comparison-session-group__header">
+            <h4 id="pm-comparison-learners-title" class="pm-comparison-session-group__title">{{ 'Lernende' if ui_lang == 'de' else 'Learners' }}</h4>
+          </div>
+
+          <ul class="pm-comparison-session-list" data-comparison-learner-sessions></ul>
+        </section>
+
+        <section class="pm-comparison-session-group pm-comparison-session-group--source" aria-labelledby="pm-comparison-native-title">
+          <div class="pm-comparison-session-group__header">
+            <h4 id="pm-comparison-native-title" class="pm-comparison-session-group__title">{{ 'Native Speaker' if ui_lang == 'de' else 'Native speakers' }}</h4>
+          </div>
+
+          <ul class="pm-comparison-session-list" data-comparison-native-sessions></ul>
+        </section>
+
+        <section class="pm-comparison-session-group pm-comparison-session-group--selected" aria-labelledby="pm-comparison-selected-title">
+          <div class="pm-comparison-session-group__header">
+            <h4 id="pm-comparison-selected-title" class="pm-comparison-session-group__title">{{ 'Ausgewählt' if ui_lang == 'de' else 'Selected' }}</h4>
+          </div>
+
+          <ul class="pm-comparison-session-list" data-comparison-selected-sessions></ul>
+        </section>
+      </div>
+    </section>
+
+    <section class="pm-container pm-container--tinted pm-comparison-material-card" data-comparison-status aria-labelledby="pm-comparison-material-title">
+      <div class="pm-comparison-step-header pm-comparison-step-header--section">
+        <h3 id="pm-comparison-material-title" class="pm-comparison-stage-title pm-comparison-stage-title--section">
+          <span class="pm-comparison-stage-title__step">2</span>
+          <span>{{ promat_page.client_state.labels.materialPrompt }}</span>
+        </h3>
+      </div>
+
+      <div class="pm-comparison-material-bar" aria-labelledby="pm-comparison-filter-title">
+        <div class="pm-comparison-material-chooser pm-comparison-material-chooser--stacked">
+          <div class="pm-comparison-material-controls" data-comparison-material-controls>
+            <span id="pm-comparison-filter-title" class="sr-only">{{ promat_page.client_state.labels.materialTitle }}</span>
+          </div>
+        </div>
+
+        <div class="pm-comparison-set-select-block">
+          <div class="pm-comparison-set-select-block__label-row">
+            <label for="pm-comparison-set-select" class="pm-phenomena-field__label">{{ promat_page.client_state.labels.setSelectLabel }}</label>
+
+            <details class="pm-comparison-inline-help">
+              <summary class="pm-comparison-inline-help__summary" aria-label="{{ promat_page.client_state.labels.setSelectInfoLabel }}">
+                <span aria-hidden="true">i</span>
+              </summary>
+              <div class="pm-comparison-inline-help__body" role="note">
+                {{ promat_page.client_state.labels.setSelectInfoText }}
+              </div>
+            </details>
+          </div>
+
+          <select id="pm-comparison-set-select" class="pm-phenomena-field__input pm-comparison-filter-select" data-comparison-material-preset-select></select>
+        </div>
+      </div>
+
+      <p class="pm-comparison-status-card__text pm-comparison-status-card__text--subtle" data-comparison-status-text hidden>{{ promat_page.workspace.text }}</p>
+      <p class="pm-workspace-feedback" data-comparison-feedback hidden></p>
+    </section>
+
+    <section class="pm-container pm-comparison-matrix-panel" data-comparison-matrix-panel>
+      <div class="pm-comparison-step-header pm-comparison-step-header--section pm-phenomena-panel-header--split pm-comparison-step-header--matrix">
+        <div>
+          <h3 class="pm-comparison-stage-title pm-comparison-stage-title--section">
+            <span class="pm-comparison-stage-title__step">3</span>
+            <span>{{ 'Matrix' if ui_lang == 'de' else 'Matrix' }}</span>
+          </h3>
+          <p class="pm-phenomena-panel-header__text" data-comparison-matrix-summary></p>
+        </div>
+
+        <div class="pm-comparison-toolbar pm-player-control-bar" aria-label="{{ promat_page.client_state.labels.controlsTitle }}">
+          <div class="pm-player-control-bar__row pm-player-control-bar__row--settings pm-player-control-bar__block pm-player-control-bar__block--settings">
+            <label class="pm-player-range-field pm-player-range-field--volume pm-comparison-toolbar__field">
+              <span class="pm-player-field-label">
+                <span class="pm-icon-mask pm-icon-mask--volume" aria-hidden="true"></span>
+                <span>{{ promat_page.client_state.labels.volumeLabel }}</span>
+              </span>
+              <div class="pm-player-range-field__control">
+                <input class="pm-player-progress pm-player-progress--volume" type="range" min="0" max="100" step="1" value="100" data-comparison-volume aria-label="{{ promat_page.client_state.labels.volumeLabel }}">
+                <span class="pm-player-range-field__value" data-comparison-volume-value>100%</span>
+              </div>
+            </label>
+
+            <div class="pm-player-rate-field pm-comparison-toolbar__field" aria-label="{{ promat_page.client_state.labels.speedLabel }}">
+              <span class="pm-player-field-label">
+                <span class="pm-icon-mask pm-icon-mask--speed" aria-hidden="true"></span>
+                <span>{{ promat_page.client_state.labels.speedLabel }}</span>
+              </span>
+              <div class="pm-player-rate-slider">
+                <input class="pm-player-progress pm-player-progress--rate" type="range" min="0" max="4" step="1" value="2" data-comparison-rate aria-label="{{ promat_page.client_state.labels.speedLabel }}">
+                <span class="pm-player-rate-slider__value" data-comparison-rate-value>1.00×</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pm-comparison-matrix-empty pm-text-muted-strong" data-comparison-matrix-empty></div>
+
+      <div class="pm-comparison-matrix-wrap" data-comparison-matrix-wrap hidden>
+        <table class="pm-comparison-matrix" data-comparison-matrix>
+          <thead data-comparison-matrix-head></thead>
+          <tbody data-comparison-matrix-body></tbody>
+        </table>
+      </div>
+    </section>
+
+    <noscript>
+      <div class="pm-container pm-container--tinted pm-phenomena-inline-note">
+        <p class="pm-phenomena-inline-note__text">{{ 'Die Vergleichsfläche benötigt JavaScript für owner-gebundene Set-Aufrufe und Clip-Wiedergabe.' if ui_lang == 'de' else 'The comparison workbench requires JavaScript for owner-bound set calls and clip playback.' }}</p>
+      </div>
+    </noscript>
+  </div>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script id="pm-comparison-state" type="application/json">{{ promat_page.client_state | tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/research-comparison.js') }}"></script>
+{% endblock %}

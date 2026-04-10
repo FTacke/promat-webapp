@@ -23,6 +23,7 @@ Before changing architecture, routing, data paths, governance files, or repo str
 - Do not create shadow docs, free-form note buckets, or new active rules in run logs.
 - `app/` is the only application source root.
 - Keep `data/`, `public/`, and `secure/` strictly separated.
+- Visible German UI text and maintained German prose headings/labels must use real umlauts and `ß`; keep technical identifiers, filenames, routes, URLs, keys, and machine values ASCII/English unless an active spec explicitly requires otherwise.
 
 ## Documentation Rule
 

@@ -17,6 +17,7 @@ import argparse
 ROOT = Path(__file__).resolve().parents[1]
 POSTGRES_SQL_FILE = ROOT / "migrations" / "0001_create_auth_schema_postgres.sql"
 ANALYTICS_SQL_FILE = ROOT / "migrations" / "0002_create_analytics_tables.sql"
+RESEARCH_SETS_SQL_FILE = ROOT / "migrations" / "0003_create_research_sets.sql"
 
 
 def apply_postgres_migration(reset: bool = False) -> None:
@@ -81,6 +82,9 @@ def apply_postgres_migration(reset: bool = False) -> None:
             if reset:
                 # Drop existing tables (in reverse order of dependencies)
                 print("Dropping existing auth tables...")
+                cur.execute("DROP TABLE IF EXISTS research_set_sessions CASCADE")
+                cur.execute("DROP TABLE IF EXISTS research_set_items CASCADE")
+                cur.execute("DROP TABLE IF EXISTS research_sets CASCADE")
                 cur.execute("DROP TABLE IF EXISTS analytics_daily CASCADE")
                 cur.execute("DROP TABLE IF EXISTS reset_tokens CASCADE")
                 cur.execute("DROP TABLE IF EXISTS refresh_tokens CASCADE")
@@ -108,6 +112,19 @@ def apply_postgres_migration(reset: bool = False) -> None:
                 print("PostgreSQL analytics migration applied successfully.")
             else:
                 print(f"Warning: Analytics migration not found: {ANALYTICS_SQL_FILE}")
+
+            if RESEARCH_SETS_SQL_FILE.exists():
+                print("Executing research sets migration SQL...")
+                with open(RESEARCH_SETS_SQL_FILE, "r", encoding="utf-8") as f:
+                    research_sets_sql = f.read()
+                research_sets_sql = research_sets_sql.replace("BEGIN;", "").replace(
+                    "COMMIT;", ""
+                )
+                cur.execute(research_sets_sql)
+                conn.commit()
+                print("PostgreSQL research sets migration applied successfully.")
+            else:
+                print(f"Warning: Research sets migration not found: {RESEARCH_SETS_SQL_FILE}")
 
     except OperationalError as e:
         print(f"ERROR: Database connection failed: {e}", file=sys.stderr)

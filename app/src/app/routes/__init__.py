@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from flask import Flask
 
-from . import admin, auth, public
+from . import admin, auth, public, research_api
 
-BLUEPRINTS = [public.blueprint, auth.blueprint, admin.blueprint]
+BLUEPRINTS = [public.blueprint, auth.blueprint, research_api.blueprint, admin.blueprint]
 
 
 def register_blueprints(app: Flask) -> None:

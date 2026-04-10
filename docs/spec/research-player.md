@@ -16,8 +16,9 @@ This file is the binding source of truth for the target architecture of the rese
 - PROMAT has exactly one modular research player for the whole webapp.
 - There are no separate player implementations for `wordlist`, `text`, and `interview`.
 - Task differences are implemented through task modes, render modes, and optional context extensions, not through separate player products.
-- Comparison is a bounded extension of the same player base.
-- Phenomena presets are a bounded extension of the same player base.
+- The player includes a bounded direct-compare extension with at most one optional secondary session.
+- The standalone `comparison` page is separate from the player surface but reuses shared loader, item, and media logic where practical.
+- `phenomena` is a separate curated launcher and selection page; when it opens the player, it does so through the same player route family with additional preset or set context.
 - Shared player logic must be changeable once in the base architecture and must not require parallel task-specific rewrites.
 
 ## Route and Entry Contract
@@ -32,6 +33,7 @@ This file is the binding source of truth for the target architecture of the rese
 
 - `source`: identifies the entry source and may use `speakers`, `recordings`, `profile`, `comparison`, or `phenomena`.
 - `preset_id`: identifies an optional phenomena preset context.
+- `set_id`: identifies an optional user-owned draft or saved set context.
 - `compare_session`: identifies an optional secondary comparison session.
 - `compare_mode`: identifies an optional compare-item override and currently uses `manual`; omitted compare mode keeps the default compare item-check behavior `Beide abspielen`.
 - `focus_item`: identifies an optional focused item.
@@ -43,6 +45,9 @@ This file is the binding source of truth for the target architecture of the rese
 - Optional query context may refine the player state, but it must not create separate route families or separate player implementations.
 - Invalid optional query context must degrade to the nearest valid base state instead of breaking the whole page.
 - Source context is navigational context only and must not alter the base architecture of the player.
+- If `set_id` and `preset_id` are both present, `set_id` wins for the active working selection and `preset_id` remains provenance or bootstrap context only.
+- The player route stays task-specific even when the referenced set contains mixed `wordlist` and `text` items; no `mixed` task value is allowed.
+- When the HTML player route is rendered without owner-bound access to the requested `set_id`, the page degrades to the nearest session-and-task base state and may show only a generic set-context notice; it must not leak owner-bound set contents, labels, or existence details.
 - Protected media delivery for the current player stays inside the same route family via `.../audio.mp3` for full-task playback and `.../items/{item_id}.mp3` for single-item download.
 - These delivery routes resolve protected session artifacts through application logic; they do not redefine internal storage paths and they do not publish the artifacts under `public/`.
 
@@ -59,6 +64,7 @@ The player state must be able to represent at least these values:
 - `available_tasks`
 - `render_mode`
 - `preset_id` as optional preset context
+- `set_id` as optional user-owned working-set context
 - `compare_session_id` as optional comparison context
 - `focused_item_id` as optional item focus
 - `focused_segment_id` as optional segment focus
@@ -70,7 +76,11 @@ The player state must be able to represent at least these values:
 - The current productive compare extension also needs one optional comparison-playback value for the primary plus optional secondary state; omitted value keeps `Beide abspielen` as the default item-check behavior and `manual` switches item clicks back to per-side playback.
 - A focused item or segment may narrow the visible context, but it does not replace the primary session or task state.
 - Comparison context is optional and only valid for compatible tasks.
-- Preset context is optional and may coexist with manual item additions inside the same player state.
+- Set context is optional and carries the active user-owned selection when the player is opened from `phenomena` or `comparison`.
+- Preset context is optional curated provenance or bootstrap context.
+- Manual additions or removals belong to the active set state and never mutate the preset configuration files.
+- In the productive player, a valid `set_id` filters the visible item list and any bounded direct-compare rows to the current task-specific excerpt of that set.
+- If the current task has no items in the active set excerpt, the player renders an explicit empty or unavailable state for that task and must not silently fall back to the full session list.
 
 ## Shared Player Surface
 
@@ -107,7 +117,8 @@ The player state must be able to represent at least these values:
 - The player exposes all documented session-available tasks as one shared task switch.
 - Switching tasks stays inside the same player architecture and does not jump into separate task-specific player implementations.
 - The task switch retains the primary session, metadata card, and route family.
-- Preset or focus context should be retained across task switches where it remains valid.
+- Set context, preset provenance, or focus context should be retained across task switches where they remain valid.
+- Task switching with an active `set_id` retains the same owner-bound set reference and recalculates the task-specific excerpt for the new task instead of dropping back to full-session content.
 - Tasks that are not available for the current session may remain visible as disabled, non-interactive controls.
 - In the current MVP, `wordlist` is the only production-ready task mode; documented `text` and `interview` tasks stay visible in the same switch but render as honest unavailable states until their task renderers exist.
 
@@ -133,6 +144,7 @@ The player state must be able to represent at least these values:
 - Wordlist is rendered as a calm list with stable numbering on the left and the item label or text on the right.
 - Numbering is fachlich fixed and must come from production data, not from UI-generated ordinals.
 - Clicking a wordlist item may directly trigger playback; a separate play button per item is optional and not required.
+- A valid `focus_item` may highlight and reveal the initial visible wordlist entry, but it must not autoplay and it must degrade cleanly when the focused item is outside the current task-specific excerpt.
 - The target contract includes downloading single split MP3 files from the full player when those artifacts exist.
 - Full-task playback remains based on the full MP3 and does not require split MP3 playback as the primary logic.
 - Shared transport actions such as play or download use icon-only controls with accessible labels rather than verbose button text.
@@ -154,6 +166,11 @@ The player state must be able to represent at least these values:
 - Numbering comes from source data and must not be synthesized in the web UI.
 - In both `sentence_list` and `running_text`, visible sentence or segment numbering must remain quiet and secondary.
 - Both render modes stay within the same task key and the same shared audio and sync architecture.
+- The first productive `text` renderer in the current MVP is `sentence_list` only.
+- The productive `text` sentence-list renderer uses the canonical task catalog plus session-specific `alignment/text.json` artifacts for stable numbering, texts, item IDs, and clip boundaries.
+- A valid `set_id` filters the visible sentence-list rows task-specifically, and an empty `text` excerpt renders an explicit empty state instead of falling back to the full session list.
+- A valid `focus_item` may highlight and reveal the initial visible `text` row, but it must not autoplay and it must degrade cleanly when the focused item is outside the current `text` excerpt.
+- The current productive `text` surface may use item-level clip actions where session artifacts provide reliable split clips, but it must not pretend to have finer token-sync precision than the available sentence-level data.
 
 ### `interview`
 
@@ -163,14 +180,16 @@ The player state must be able to represent at least these values:
 - Interview must not be forced into the interaction model of isolated wordlist items or quiet sentence-list rows.
 - Focus handling for interview may use segment identifiers where item identifiers are not the primary structure.
 
-## Comparison Mode
+## Direct Comparison in Player
 
-- Comparison is an extension of the same player base and not a second player product.
-- Comparison is desktop-only.
-- Only `wordlist` and `text` support comparison.
-- `interview` never supports comparison.
-- Comparison adds one optional secondary session to the primary player state.
+- Direct comparison inside the player is a bounded extension of the same player base and not a second player product.
+- The standalone `comparison` research page remains separate from this bounded player mode.
+- Direct comparison in the player is desktop-only.
+- Only `wordlist` and `text` support direct comparison in the player.
+- `interview` never supports direct comparison in the player.
+- Direct comparison adds one optional secondary session to the primary player state.
 - Primary item matching uses stable `item_id` values.
+- The current MVP keeps productive direct comparison enabled for both `wordlist` and `text`, while `text` remains limited to the stable `sentence_list` renderer and honest sentence-level matching.
 
 ### Graceful degradation
 
@@ -178,12 +197,15 @@ The player state must be able to represent at least these values:
 - Missing secondary items must not break the whole comparison view.
 - The primary side remains usable even when the secondary side has gaps.
 - Missing comparison items are shown as unavailable or empty-state elements instead of causing route or rendering failure.
+- In productive `text` compare, matching stays on stable `item_id` values from the canonical sentence-list task catalog and never falls back to loose text matching.
+- In productive `text` compare, a valid `set_id` filters both sides to the same task-specific sentence-list excerpt; the player must not silently widen back to the full session when that excerpt is empty or partial.
+- In productive `text` compare, sentence-level item playback may still use full-audio timing boundaries when those are available, but missing split downloads stay visibly absent and do not become a second promised artifact contract.
 - On smaller viewports, compare-specific selectors, compare cards, and the aligned dual-column list collapse back to the primary single-session view instead of keeping a cramped compare layout.
 
-## Phenomena Presets
+## Phenomena Presets and Set Context
 
-- Phenomena does not get a separate special-purpose player.
-- Phenomena launches the same player route with optional preset context.
+- `phenomena` is a separate research page and not a special-purpose player surface.
+- `phenomena` may launch either the canonical player route or the standalone `comparison` workbench.
 - Presets are configuration, not part of the audio files or the alignment JSON.
 - Corpus-specific player configuration lives under `data/config/research_player/{language}/`.
 
@@ -237,9 +259,21 @@ Optional preset item fields may include:
 
 - A preset may contain mixed task selections, for example `wordlist` and `text` items in one curated set.
 - Preset data is maintained separately from session audio and alignment artifacts so that corpora can extend or revise presets without regenerating the source alignment data.
-- In preset context, the player filters the active view to the curated items of the current task.
-- In preset context, the player must allow users to add further explicit items to the active curated selection.
-- Manual additions extend only the active player state and never mutate the preset configuration files.
+- Opening a preset for active user work must resolve into one server-side set context instead of a browser-only working state.
+- In player context, the player filters the referenced set to the curated or edited items of the current task.
+- Manual additions or removals mutate the active set state and never mutate the preset configuration files.
+
+### Set-context rules
+
+- Active user work across `phenomena`, `comparison`, and `player` uses one server-side set model in PostgreSQL.
+- The canonical working reference for user-owned selection state is `set_id`.
+- Draft and saved sets are lifecycle states of the same technical model rather than separate storage mechanisms.
+- `phenomena` and `comparison` each expose exactly one visible owner-side persistence action `Als neues Set speichern`; it reuses the canonical set `save-as` flow, creates a new saved copy, and switches the active workbench context to that new `set_id`.
+- `phenomena` may expose presets and launcher structure before login, but draft materialization, owner-bound `set_id` loading, and set mutation always go through authenticated set API access.
+- The first productive set model stores explicit item references as `task + item_id` plus optional `segment_id` and is limited to the curated tasks `wordlist` and `text`.
+- Set-bound session selections and the persisted `comparison_view_task` filter are part of the same owner-bound set aggregate rather than a second comparison-only state store.
+- Drafts refresh `last_accessed_at` and `expires_at` server-side, while saved sets keep `expires_at = null`.
+- Server-side set reads and writes are owner-scoped through the authenticated user and never trust client-supplied ownership fields.
 
 ## Data and Artifact Contract
 
@@ -331,10 +365,16 @@ The top level may additionally include:
 
 ### Current MVP scope
 
-- The current productive web-player MVP uses the shared player surface for all tasks but only implements real playback, progress, timing sync, active-item highlighting, split-download delivery, in-player session switching, and comparison for `wordlist`.
+- The current productive web-player MVP uses the shared player surface for all tasks but currently implements real playback, progress, timing sync, active-item highlighting, split-download delivery, and in-player session switching productively for `wordlist` and `text`, with bounded direct compare on both tasks.
+- The current productive player now evaluates `set_id` server-side for owner-bound access and applies task-specific filtering of the visible wordlist excerpt and any bounded direct-compare rows.
+- The current productive player now evaluates `focus_item` for visible `wordlist` entries as an initial reveal and highlight only, without autoplay.
+- The current productive player now also renders `text` in one real sentence-list mode when `alignment/text.json` plus playable task audio are available.
 - If a session documents `wordlist` but lacks processable player artifacts, the player route must stay reachable and render an explicit unavailable state instead of failing the whole page.
-- The current MVP keeps `text` and `interview` inside the shared task switch but does not fake playback or pseudo-renderers for them.
-- The current productive comparison path is `wordlist` only; `text` remains future-capable in the architecture but not yet implemented productively.
+- The current MVP keeps `interview` inside the shared task switch as an honest unavailable state.
+- The current productive direct-compare path inside the player now covers `wordlist` and bounded `text` sentence-list comparisons through the same player base.
+- The current productive `text` renderer stays deliberately conservative: it supports task-level audio, sentence-level item playback, bounded direct compare, set-aware filtering, and focus reveal, but it does not claim token-level sync or a productive `running_text` compare renderer.
+- The standalone `comparison` page now productively uses mixed `wordlist` and `text` set contents, owner-bound session selections, persisted `all | wordlist | text` filtering, and reduced split-clip listening when matching artifacts exist.
+- This standalone `comparison` workbench does not redefine the player architecture: it launches the canonical player route with optional `set_id` and `focus_item` context instead of becoming a second player implementation.
 - The current productive `wordlist` compare flow uses one active transport focus at a time and must not default to simultaneous dual-audio playback; the productive surface no longer needs a dedicated primary-versus-compare focus switch or a second transport toolbar.
 - The current productive `wordlist` compare flow keeps item checking and global transport separate: item clicks run bounded clip checks, while global play resumes the current full-audio context.
 - The current productive `wordlist` compare flow enables `Beide abspielen` by default when a valid comparison session is loaded; `compare_mode=manual` remains the lightweight override for per-side item checks.

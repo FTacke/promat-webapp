@@ -8,4 +8,5 @@
 - ADRs document why a durable choice was made; runbooks document repeatable procedures; run logs are never normative.
 - `app/` is the only application source root.
 - Keep `data/`, `public/`, and `secure/` strictly separated.
+- Visible German UI text and maintained German prose headings/labels must use real umlauts and `ß`; keep technical identifiers, filenames, routes, URLs, keys, and machine values ASCII/English unless an active spec explicitly requires otherwise.
 - Do not create shadow documentation buckets, parallel import contracts, or ad hoc source-of-truth notes.
