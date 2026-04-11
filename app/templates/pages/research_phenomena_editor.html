@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--workbench pm-content pm-content--workbench pm-research-page" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  <section class="pm-feature-band pm-phenomena-editor" data-phenomena-editor-root>
+    <div class="pm-container pm-container--tinted pm-phenomena-editor__workspace-head">
+      <div class="pm-phenomena-editor__header">
+        <div class="pm-phenomena-editor__header-main">
+          <label class="pm-phenomena-editor__title-field">
+            <span class="sr-only">{{ 'Titel' if ui_lang == 'de' else 'Title' }}</span>
+            <span class="pm-phenomena-editor__title-row">
+              <input class="pm-phenomena-editor__title-input" type="text" data-phenomena-title-input>
+              <span class="pm-phenomena-editor__title-affordance" aria-hidden="true" title="{{ 'Setname bearbeiten' if ui_lang == 'de' else 'Edit set name' }}">
+                <span class="pm-icon-mask pm-icon-mask--edit"></span>
+              </span>
+            </span>
+          </label>
+          <div class="pm-phenomena-editor__status-row">
+            <span class="pm-comparison-speaker-badge pm-phenomena-badge" data-phenomena-type-badge></span>
+            <span class="pm-comparison-speaker-badge pm-phenomena-badge" data-phenomena-state-badge hidden></span>
+            <span class="pm-phenomena-editor__status-text" data-phenomena-status-text></span>
+          </div>
+          <p class="pm-phenomena-editor__hint" data-phenomena-curated-hint hidden>{{ 'Änderungen an diesem kuratierten Set werden als neues eigenes Set gespeichert.' if ui_lang == 'de' else 'Changes to this curated set are saved as a new custom set.' }}</p>
+        </div>
+
+        <div class="pm-phenomena-editor__header-actions">
+          <button type="button" class="pm-research-inline-action pm-research-inline-action--secondary" data-phenomena-discard-action>{{ 'Entwurf verwerfen' if ui_lang == 'de' else 'Discard draft' }}</button>
+          <button type="button" class="pm-research-button" data-phenomena-save-action>{{ 'Speichern' if ui_lang == 'de' else 'Save' }}</button>
+        </div>
+      </div>
+
+      <div class="pm-phenomena-editor__note-card">
+        <label class="pm-phenomena-editor__note-field">
+          <span class="pm-phenomena-field__label">{{ 'Notiz' if ui_lang == 'de' else 'Note' }}</span>
+          <textarea class="pm-phenomena-editor__note-input" rows="3" placeholder="{{ 'Kurze Notiz zum Set' if ui_lang == 'de' else 'Short note for this set' }}" data-phenomena-note-input></textarea>
+        </label>
+      </div>
+    </div>
+
+    <div class="pm-phenomena-editor__sources">
+      <section class="pm-container pm-phenomena-source-column" data-phenomena-source-column="wordlist">
+        <div class="pm-phenomena-source-column__header">
+          <div>
+            <h2 class="pm-player-panel__title pm-phenomena-source-column__title">{{ promat_page.client_state.labels.wordlist }}</h2>
+          </div>
+          <div class="pm-phenomena-source-column__actions">
+            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-select-all="wordlist">{{ 'Alle auswählen' if ui_lang == 'de' else 'Select all' }}</button>
+            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-clear-all="wordlist">{{ 'Alle abwählen' if ui_lang == 'de' else 'Clear all' }}</button>
+          </div>
+        </div>
+        <label class="pm-phenomena-field pm-phenomena-field--search pm-phenomena-source-column__search">
+          <span class="sr-only">{{ 'Wortliste durchsuchen' if ui_lang == 'de' else 'Search word list' }}</span>
+          <input class="pm-phenomena-field__input pm-comparison-filter-input" type="search" data-phenomena-source-search="wordlist" placeholder="{{ 'Wortliste durchsuchen' if ui_lang == 'de' else 'Search word list' }}">
+        </label>
+        <ul class="pm-player-list pm-phenomena-source-list" data-phenomena-source-list="wordlist"></ul>
+      </section>
+
+      <section class="pm-container pm-phenomena-source-column" data-phenomena-source-column="text">
+        <div class="pm-phenomena-source-column__header">
+          <div>
+            <h2 class="pm-player-panel__title pm-phenomena-source-column__title">{{ promat_page.client_state.labels.text }}</h2>
+          </div>
+          <div class="pm-phenomena-source-column__actions">
+            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-select-all="text">{{ 'Alle auswählen' if ui_lang == 'de' else 'Select all' }}</button>
+            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-clear-all="text">{{ 'Alle abwählen' if ui_lang == 'de' else 'Clear all' }}</button>
+          </div>
+        </div>
+        <label class="pm-phenomena-field pm-phenomena-field--search pm-phenomena-source-column__search">
+          <span class="sr-only">{{ 'Satzliste durchsuchen' if ui_lang == 'de' else 'Search sentence list' }}</span>
+          <input class="pm-phenomena-field__input pm-comparison-filter-input" type="search" data-phenomena-source-search="text" placeholder="{{ 'Satzliste durchsuchen' if ui_lang == 'de' else 'Search sentence list' }}">
+        </label>
+        <ul class="pm-player-list pm-phenomena-source-list" data-phenomena-source-list="text"></ul>
+      </section>
+    </div>
+
+    <section class="pm-container pm-phenomena-selected" aria-labelledby="pm-phenomena-selected-title">
+      <div class="pm-phenomena-selected__header">
+        <h2 id="pm-phenomena-selected-title" class="pm-player-panel__title pm-phenomena-selected__title">{{ 'Ausgewählte Items' if ui_lang == 'de' else 'Selected items' }}</h2>
+      </div>
+      <p class="pm-phenomena-selected__empty" data-phenomena-selected-empty hidden>{{ 'Noch keine Items ausgewählt.' if ui_lang == 'de' else 'No items selected yet.' }}</p>
+      <ol class="pm-player-list pm-phenomena-selected__list" data-phenomena-selected-list></ol>
+    </section>
+  </section>
+
+  <dialog class="md3-dialog" data-phenomena-editor-confirm role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-editor-confirm-title">
+    <div class="md3-dialog__container">
+      <div class="md3-dialog__surface">
+        <header class="md3-dialog__header">
+          <h2 id="pm-phenomena-editor-confirm-title" class="md3-title-large md3-dialog__title" data-phenomena-editor-confirm-title></h2>
+        </header>
+        <div class="md3-dialog__content md3-stack--dialog">
+          <p class="md3-body-medium" data-phenomena-editor-confirm-message></p>
+        </div>
+        <div class="md3-dialog__actions">
+          <button type="button" class="md3-button md3-button--text" data-phenomena-editor-confirm-cancel>{{ 'Abbrechen' if ui_lang == 'de' else 'Cancel' }}</button>
+          <button type="button" class="md3-button md3-button--filled" data-phenomena-editor-confirm-submit></button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script id="pm-phenomena-editor-state" type="application/json">{{ promat_page.client_state | tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/research-phenomena-editor.js') }}"></script>
+{% endblock %}

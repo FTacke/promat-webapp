@@ -26,6 +26,8 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 
 ```text
 /{ui_lang}/research/{corpus_language}/player/{session_id}/{task}
+/{ui_lang}/research/{corpus_language}/phenomena/presets/{preset_id}
+/{ui_lang}/research/{corpus_language}/phenomena/sets/{set_id}
 ```
 
 ### Research player delivery route schema
@@ -62,6 +64,8 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 ### Active research detail routes
 
 - `player`
+- `phenomena` preset editor
+- `phenomena` owner-set editor
 - `player`-scoped protected media delivery for current-session playback and single-item download
 
 ### Active teaching pages
@@ -75,7 +79,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - UI language and technical routing language must not be mixed.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
-- `comparison` and `phenomena` remain first-class research page routes and must not be collapsed into alternate `player` path shapes.
+- `comparison` and `phenomena` remain first-class research page routes; `phenomena` may additionally own dedicated editor subroutes, but neither page may collapse into alternate `player` path shapes.
 - Mixed research selections stay in query context or server-side set state and must not introduce a `mixed` player task value.
 - The current productive `player` query context may add `compare_session` plus optional `compare_mode=manual` for the bounded `wordlist` comparison extension without creating a second route family; omitted `compare_mode` keeps the default compare item-check behavior `Beide abspielen`.
 - Player media delivery stays under the same `player` route family and resolves protected session artifacts through application logic, not through static publication of `data/`.
@@ -101,6 +105,16 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - `sample` is a showcase for current, already accepted layout elements of the webapp.
 - `sample` never defines the target UI for product pages; it mirrors the current implementation on real pages.
 - If an active layout element is changed on a real page and `sample` contains that element, `sample` must be updated in the same run.
+
+## Active UI System
+
+- Productive pages, shared partials, and established CSS families are the visual source for recurring UI work; `sample` mirrors them but does not replace them as the design reference.
+- When a recurring UI family already exists, it must be extended or reused before a page-local variant is introduced.
+- Repeated UI families that must be treated systemically include action hierarchy (`buttons`, inline actions, overflow actions), form controls (`inputs`, `selects`, `textareas`), badges and chips, cards and list rows, step containers and work blocks, dialogs and confirm flows, empty states, sticky headers or anchors, and muted, active, or selected states.
+- Research workbench UI uses current productive pages as reference surfaces: `comparison` for step containers, selection blocks, badge or meta rhythm, and clear vertical work sequences; `player` for dense material rows, compact work heads, sticky anchors, and muted versus active row states; `speakers`, `recordings`, and the person profile for speaker cards, compact task actions, and row or table action layout.
+- Overview surfaces stay overview surfaces, and editor or detail surfaces stay editor or detail surfaces; active split flows must not be collapsed back into mixed one-page workbenches without an explicit spec change.
+- If shared layout files, shared component CSS, or reused partials change, the affected repeated UI families must be regression-checked on at least one other active page that uses them.
+- Visually substantial UI changes require browser validation and screenshot comparison against the affected productive reference surfaces before the run is considered complete.
 
 ## Runtime Boundaries
 

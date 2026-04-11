@@ -20,11 +20,17 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 from app import register_context_processors
 from app.auth.models import Base, User
 from app.extensions import register_extensions
-from app.extensions.sqlalchemy_ext import get_engine, init_engine, get_session
+from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
+from app.research_phenomena_views import (
+    build_phenomena_overview_page,
+    build_phenomena_preset_editor_page,
+    build_phenomena_set_editor_page,
+)
 from app.research_presets import clear_research_preset_caches
 from app.research_sessions import load_language_sessions, load_person_records
-from app.research_sets import create_draft_set
-from app.research_views import build_phenomena_page
+from app.research_sets import create_draft_set, update_set_metadata
+from app.routes.auth import blueprint as auth_blueprint
+from app.routes.research_api import blueprint as research_api_blueprint
 from app.routes.public import blueprint as public_blueprint
 
 
@@ -187,66 +193,149 @@ def phenomena_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
     @app.before_request
     def _set_test_auth_context() -> None:
         g.user = app.config.get("TEST_AUTH_USER")
+        g.user_id = app.config.get("TEST_AUTH_USER_ID")
         g.role = None
 
+    app.register_blueprint(auth_blueprint)
+    app.register_blueprint(research_api_blueprint)
     app.register_blueprint(public_blueprint)
     _clear_runtime_caches()
     yield app
     _clear_runtime_caches()
 
 
-def test_build_phenomena_page_exposes_file_backed_presets_and_catalogs(phenomena_app: Flask) -> None:
+def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenomena_app: Flask) -> None:
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Fokusset", state="saved")
+
     with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
-        g.user = None
-        g.role = None
-        page = build_phenomena_page("de", "spanish", {})
-
-    assert page is not None
-    assert page["template"] == "pages/research_phenomena.html"
-    assert page["preset_cards"][0]["preset_id"] == "starter_preset"
-    assert page["client_state"]["taskLabels"]["text"] == "Satzliste"
-    assert page["client_state"]["catalogsByTask"]["wordlist"][0]["item_id"] == "wl_001"
-    assert page["client_state"]["sessionsByTask"]["text"][0]["session_id"] == "ES-L-0001-2026-S01"
-
-
-def test_build_phenomena_page_marks_requested_preset_for_authenticated_flow(phenomena_app: Flask) -> None:
-    with phenomena_app.test_request_context("/de/research/spanish/phenomena?preset_id=starter_preset"):
         g.user = "alice"
+        g.user_id = "user-1"
         g.role = None
-        page = build_phenomena_page("de", "spanish", {"preset_id": "starter_preset"})
+        page = build_phenomena_overview_page("de", "spanish")
 
     assert page is not None
-    assert page["is_authenticated"] is True
-    assert page["workspace"]["mode"] == "open-preset"
-    assert page["workspace"]["save_label"] == "Als neues Set speichern"
-    assert page["client_state"]["requestedPresetId"] == "starter_preset"
-    assert page["client_state"]["labels"]["saveAsLabel"] == "Als neues Set speichern"
-    assert page["client_state"]["labels"]["stateDraft"] == "Draft"
-    assert page["client_state"]["labels"]["stateSaved"] == "Gespeichert"
+    assert page["template"] == "pages/research_phenomena_overview.html"
+    assert page["heading"] == "1 Set wählen"
+    assert page["content_header"]["intro"] == "Kuratierte Sets öffnen, bearbeiten oder ein neues Set mit ausgewählten Items aus Wortliste und Text anlegen."
+    assert [entry["kind"] for entry in page["entries"]] == ["curated", "custom"]
+    assert page["entries"][1]["title"] == "Mein Fokusset"
+    assert page["client_state"]["labels"]["view"] == "Ansehen"
+    assert page["client_state"]["labels"]["edit"] == "Bearbeiten"
+    assert page["client_state"]["labels"]["modify"] == "Modifizieren"
+    assert page["search_placeholder"] == "Set suchen"
+    assert page["entries"][0]["preview"]
 
 
-def test_build_phenomena_page_exposes_requested_set_id_for_client_loading(phenomena_app: Flask) -> None:
+def test_build_phenomena_preset_editor_page_exposes_curated_initial_record(phenomena_app: Flask) -> None:
+    with phenomena_app.test_request_context("/de/research/spanish/phenomena/presets/starter_preset"):
+        g.user = None
+        g.user_id = None
+        g.role = None
+        page = build_phenomena_preset_editor_page("de", "spanish", "starter_preset")
+
+    assert page is not None
+    assert page["template"] == "pages/research_phenomena_editor.html"
+    assert page["title"] == "Starter"
+    assert page["content_header"]["title"] == "Starter"
+    assert page["content_header"]["intro"] == "Set bearbeiten"
+    assert [item["label"] for item in page["content_header"]["breadcrumbs"]][-2:] == ["Phänomene", "Starter"]
+    assert page["client_state"]["editorMode"] == "preset"
+    assert page["client_state"]["initialRecord"]["state"] == "curated"
+    assert page["client_state"]["initialRecord"]["label"] == "Starter"
+    assert page["client_state"]["labels"]["selectedItems"] == "Ausgewählte Items"
+    assert page["client_state"]["labels"]["curatedHint"] == "Änderungen an diesem kuratierten Set werden als neues eigenes Set gespeichert."
+    assert page["client_state"]["labels"]["typeWordlist"] == "Wortliste"
+    assert page["client_state"]["labels"]["unsavedStateText"] == "Änderungen noch nicht gespeichert."
+
+
+def test_build_phenomena_set_editor_page_loads_owned_set(phenomena_app: Flask) -> None:
     with phenomena_app.app_context():
         draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Set", note="Merken", state="saved")
 
-    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena?set_id={draft.set_id}"):
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/sets/{draft.set_id}"):
         g.user = "alice"
+        g.user_id = "user-1"
         g.role = None
-        page = build_phenomena_page("de", "spanish", {"set_id": draft.set_id})
+        page = build_phenomena_set_editor_page("de", "spanish", draft.set_id)
 
     assert page is not None
-    assert page["workspace"]["mode"] == "load-set"
-    assert page["client_state"]["requestedSetId"] == draft.set_id
+    assert page["title"] == "Mein Set"
+    assert page["content_header"]["title"] == "Mein Set"
+    assert page["client_state"]["editorMode"] == "set"
+    assert page["client_state"]["initialRecord"]["set_id"] == draft.set_id
+    assert page["client_state"]["initialRecord"]["note"] == "Merken"
 
 
-def test_public_phenomena_route_renders_dedicated_workspace(phenomena_app: Flask) -> None:
+def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: Flask) -> None:
     client = phenomena_app.test_client()
-    response = client.get("/de/research/spanish/phenomena?preset_id=starter_preset")
+    response = client.get("/de/research/spanish/phenomena")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "Material-Presets" in html
-    assert "pm-phenomena-state" in html
-    assert "data-phenomena-save-dialog" in html
-    assert "data-phenomena-status-meta" in html
-    assert "heuristisch" not in html
+    assert "Set wählen" in html
+    assert "Set suchen" in html
+    assert "Neues Set" in html
+    assert "Ansehen" in html
+    assert "Öffnen" not in html
+    assert "pm-phenomena-overview-card__preview" not in html
+    assert "research-phenomena-overview.js" in html
+    assert "Material-Presets" not in html
+
+
+def test_public_phenomena_overview_route_renders_edit_action_for_owned_custom_sets(phenomena_app: Flask) -> None:
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Set", state="saved")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    client = phenomena_app.test_client()
+    response = client.get("/de/research/spanish/phenomena")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Bearbeiten" in html
+    assert "Modifizieren" in html
+    assert "Öffnen" not in html
+
+
+def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) -> None:
+    client = phenomena_app.test_client()
+    response = client.get("/de/research/spanish/phenomena/presets/starter_preset")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "research-phenomena-editor.js" in html
+    assert "Ausgewählte Items" in html
+    assert "Zum Speichern bitte anmelden" not in html
+    assert "data-phenomena-state-badge" in html
+    assert "data-phenomena-editor-root" in html
+
+
+def test_public_set_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 302
+    assert "/login" in response.headers["Location"]
+
+
+def test_public_set_editor_route_renders_for_authenticated_owner(phenomena_app: Flask) -> None:
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "data-phenomena-editor-root" in html
+    assert "pm-phenomena-editor-state" in html

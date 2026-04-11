@@ -152,12 +152,13 @@ function init() {
   });
 
   const sessionLookup = new Map((state.sessionCatalog || []).map((session) => [session.sessionId, session]));
-  const materialPresetLookup = new Map((state.materialPresets || []).map((preset) => [preset.presetId, preset]));
+  const materialPresetLookup = new Map();
   const rateOptions = [0.5, 0.75, 1.0, 1.25, 1.5];
   const audio = new Audio();
   const clipCache = new Map();
   const DEFAULT_MATERIAL_OPTION = "__default__";
   const CURRENT_MATERIAL_OPTION = "__current__";
+  let materialPresets = Array.isArray(state.materialPresets) ? state.materialPresets.slice() : [];
 
   let activeSet = null;
   let visibleViewTask = state.defaultViewTask || "wordlist";
@@ -175,6 +176,17 @@ function init() {
     gender: "",
     exposure: "",
   };
+
+  function setMaterialPresets(nextPresets) {
+    materialPresets = Array.isArray(nextPresets) ? nextPresets.slice() : [];
+    state.materialPresets = materialPresets;
+    materialPresetLookup.clear();
+    materialPresets.forEach((preset) => {
+      materialPresetLookup.set(preset.presetId, preset);
+    });
+  }
+
+  setMaterialPresets(materialPresets);
 
   function defaultSetItems() {
     return ["wordlist", "text"].flatMap((taskKey) =>
@@ -211,6 +223,10 @@ function init() {
     if (!record) {
       return null;
     }
+    const matchingSavedSet = (state.materialPresets || []).find((preset) => preset.setId && preset.setId === record.set_id);
+    if (matchingSavedSet) {
+      return matchingSavedSet.presetId;
+    }
     const explicitPresetId = record.source_preset_id;
     if (explicitPresetId && materialPresetLookup.has(explicitPresetId)) {
       return explicitPresetId;
@@ -221,6 +237,14 @@ function init() {
       }
     }
     return null;
+  }
+
+  function requestedPresetId() {
+    if (!state.requestedSetId) {
+      return null;
+    }
+    const matched = (state.materialPresets || []).find((preset) => preset.setId && preset.setId === state.requestedSetId);
+    return matched ? matched.presetId : null;
   }
 
   function resolveViewTaskForItems(items, preferredTask) {
@@ -238,6 +262,49 @@ function init() {
       return "text";
     }
     return "all";
+  }
+
+  function normalizeSavedSetPreset(storedSet) {
+    const fallbackLabel = state.uiLang === "de" ? "Ohne Titel" : "Untitled";
+    const label = (storedSet && storedSet.label) || fallbackLabel;
+    const items = Array.isArray(storedSet && storedSet.items)
+      ? storedSet.items.map((item) => ({
+        task: item.task,
+        item_id: item.item_id,
+      }))
+      : [];
+    return {
+      presetId: `saved:${storedSet.set_id}`,
+      kind: "custom",
+      setId: storedSet.set_id,
+      optionLabel: `${label} · ${labels.stateCustom || "custom"}`,
+      label,
+      preferredTask: storedSet.comparison_view_task || storedSet.preferred_task || resolveViewTaskForItems(items, null),
+      taskSummary: "",
+      items,
+    };
+  }
+
+  async function loadOwnedSetPresets() {
+    if (!state.isAuthenticated) {
+      return;
+    }
+
+    try {
+      const query = new URLSearchParams({ corpus_language: state.languageSlug });
+      const payload = await requestJson(`${state.setApiBaseHref}?${query.toString()}`);
+      if (!payload || !Array.isArray(payload.sets)) {
+        return;
+      }
+      const curatedPresets = materialPresets.filter((preset) => preset.kind !== "custom");
+      const savedPresets = payload.sets.map(normalizeSavedSetPreset);
+      setMaterialPresets([...curatedPresets, ...savedPresets]);
+      render();
+    } catch (error) {
+      if (error.status !== 401 && error.status !== 404) {
+        console.warn("Could not load saved set presets.", error);
+      }
+    }
   }
 
   function applyPlaybackSettings() {
@@ -457,14 +524,24 @@ function init() {
 
   function currentSetDisplayName() {
     if (!activeSet || isImplicitDraft || isDefaultCompleteSet()) {
+      const requestedId = requestedPresetId();
+      if (requestedId) {
+        return materialPresetLookup.get(requestedId)?.optionLabel || defaultMaterialScopeLabel();
+      }
       return defaultMaterialScopeLabel();
+    }
+    const matchedId = matchedPresetId();
+    if (matchedId) {
+      const matchedPreset = materialPresetLookup.get(matchedId);
+      if (matchedPreset && matchedPreset.optionLabel) {
+        return matchedPreset.optionLabel;
+      }
     }
     if (activeSet.label) {
       return activeSet.label;
     }
-    const presetId = matchedPresetId();
-    if (presetId) {
-      return labels.curatedMaterialLabel || materialPresetLookup.get(presetId)?.label || presetId;
+    if (matchedId) {
+      return labels.curatedMaterialLabel || materialPresetLookup.get(matchedId)?.label || matchedId;
     }
     return labels.customSetLabel || "Custom selection";
   }
@@ -484,6 +561,10 @@ function init() {
 
   function currentMaterialOptionValue() {
     if (!activeSet || isImplicitDraft || isDefaultCompleteSet()) {
+      const requestedId = requestedPresetId();
+      if (requestedId) {
+        return requestedId;
+      }
       return DEFAULT_MATERIAL_OPTION;
     }
     const presetId = matchedPresetId();
@@ -1036,8 +1117,8 @@ function init() {
       options.push(`<option value="${CURRENT_MATERIAL_OPTION}">${escapeHtml(currentSetDisplayName())}</option>`);
     }
 
-    for (const preset of state.materialPresets || []) {
-      options.push(`<option value="${escapeHtml(preset.presetId)}">${escapeHtml(preset.label)}</option>`);
+    for (const preset of materialPresets) {
+      options.push(`<option value="${escapeHtml(preset.presetId)}">${escapeHtml(preset.optionLabel || preset.label)}</option>`);
     }
 
     materialPresetSelect.innerHTML = options.join("");
@@ -1477,6 +1558,7 @@ function init() {
   }
   applyPlaybackSettings();
   render();
+  void loadOwnedSetPresets();
   if (state.requestedSetId) {
     loadRequestedSet();
   } else {

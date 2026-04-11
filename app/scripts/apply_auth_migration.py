@@ -15,9 +15,24 @@ from pathlib import Path
 import argparse
 
 ROOT = Path(__file__).resolve().parents[1]
-POSTGRES_SQL_FILE = ROOT / "migrations" / "0001_create_auth_schema_postgres.sql"
-ANALYTICS_SQL_FILE = ROOT / "migrations" / "0002_create_analytics_tables.sql"
-RESEARCH_SETS_SQL_FILE = ROOT / "migrations" / "0003_create_research_sets.sql"
+MIGRATIONS_DIR = ROOT / "migrations"
+
+
+def _postgres_migration_files() -> tuple[Path, ...]:
+    migrations: list[Path] = []
+    for path in sorted(MIGRATIONS_DIR.glob("*.sql")):
+        if not path.name[:4].isdigit():
+            continue
+        if path.name.endswith("_sqlite.sql"):
+            continue
+        migrations.append(path)
+    return tuple(migrations)
+
+
+def _read_sql(path: Path) -> str:
+    with open(path, "r", encoding="utf-8") as f:
+        sql = f.read()
+    return sql.replace("BEGIN;", "").replace("COMMIT;", "")
 
 
 def apply_postgres_migration(reset: bool = False) -> None:
@@ -34,8 +49,15 @@ def apply_postgres_migration(reset: bool = False) -> None:
         )
         sys.exit(1)
 
-    if not POSTGRES_SQL_FILE.exists():
-        print(f"ERROR: Migration SQL not found: {POSTGRES_SQL_FILE}", file=sys.stderr)
+    migration_files = _postgres_migration_files()
+    if not migration_files:
+        print(f"ERROR: No PostgreSQL migration SQL files found in: {MIGRATIONS_DIR}", file=sys.stderr)
+        sys.exit(1)
+    if migration_files[0].name != "0001_create_auth_schema_postgres.sql":
+        print(
+            "ERROR: PostgreSQL migration chain must start with 0001_create_auth_schema_postgres.sql.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     db_url = os.getenv("AUTH_DATABASE_URL", "")
@@ -65,13 +87,6 @@ def apply_postgres_migration(reset: bool = False) -> None:
         separator = "&" if "?" in db_url else "?"
         db_url = f"{db_url}{separator}connect_timeout=10"
 
-    with open(POSTGRES_SQL_FILE, "r", encoding="utf-8") as f:
-        sql = f.read()
-
-    # Remove explicit BEGIN/COMMIT from SQL as psycopg handles transactions
-    # This prevents nested transaction issues
-    sql = sql.replace("BEGIN;", "").replace("COMMIT;", "")
-
     conn = None
     try:
         print("Connecting to PostgreSQL...")
@@ -93,38 +108,11 @@ def apply_postgres_migration(reset: bool = False) -> None:
                 conn.commit()
                 print("Existing tables dropped.")
 
-            # Apply migration
-            print("Executing auth migration SQL...")
-            cur.execute(sql)
-            conn.commit()
-            print("PostgreSQL auth migration applied successfully.")
-
-            # Apply analytics migration (0002)
-            if ANALYTICS_SQL_FILE.exists():
-                print("Executing analytics migration SQL...")
-                with open(ANALYTICS_SQL_FILE, "r", encoding="utf-8") as f:
-                    analytics_sql = f.read()
-                analytics_sql = analytics_sql.replace("BEGIN;", "").replace(
-                    "COMMIT;", ""
-                )
-                cur.execute(analytics_sql)
+            for migration_path in migration_files:
+                print(f"Executing migration SQL: {migration_path.name}...")
+                cur.execute(_read_sql(migration_path))
                 conn.commit()
-                print("PostgreSQL analytics migration applied successfully.")
-            else:
-                print(f"Warning: Analytics migration not found: {ANALYTICS_SQL_FILE}")
-
-            if RESEARCH_SETS_SQL_FILE.exists():
-                print("Executing research sets migration SQL...")
-                with open(RESEARCH_SETS_SQL_FILE, "r", encoding="utf-8") as f:
-                    research_sets_sql = f.read()
-                research_sets_sql = research_sets_sql.replace("BEGIN;", "").replace(
-                    "COMMIT;", ""
-                )
-                cur.execute(research_sets_sql)
-                conn.commit()
-                print("PostgreSQL research sets migration applied successfully.")
-            else:
-                print(f"Warning: Research sets migration not found: {RESEARCH_SETS_SQL_FILE}")
+                print(f"PostgreSQL migration applied successfully: {migration_path.name}")
 
     except OperationalError as e:
         print(f"ERROR: Database connection failed: {e}", file=sys.stderr)

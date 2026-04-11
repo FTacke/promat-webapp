@@ -512,6 +512,125 @@ body.app-shell.page-landing .md3-content-wrapper {
   }
 }
 
+.pm-phenomena-overview,
+.pm-phenomena-editor,
+.pm-phenomena-editor__workspace-head,
+.pm-phenomena-overview__toolbar,
+.pm-phenomena-overview__toolbar-inner,
+.pm-phenomena-overview__controls,
+.pm-phenomena-overview__list-shell,
+.pm-phenomena-overview__list,
+.pm-phenomena-overview-card,
+.pm-phenomena-overview-card__body,
+.pm-phenomena-overview-card__meta,
+.pm-phenomena-overview-card__actions,
+.pm-phenomena-editor__workspace-head,
+.pm-phenomena-editor__header,
+.pm-phenomena-editor__header-main,
+.pm-phenomena-editor__title-row,
+.pm-phenomena-editor__header-actions,
+.pm-phenomena-editor__note-card,
+.pm-phenomena-editor__status-row,
+.pm-phenomena-editor__sources,
+.pm-phenomena-source-column,
+.pm-phenomena-source-column__header,
+.pm-phenomena-source-column__search,
+.pm-phenomena-source-column__actions,
+.pm-phenomena-source-list,
+.pm-phenomena-selected,
+.pm-phenomena-selected__header,
+.pm-phenomena-selected__list,
+.pm-phenomena-selected-item,
+.pm-phenomena-selected-item__body,
+.pm-phenomena-source-item__body {
+  display: grid;
+  gap: var(--pm-space-md);
+}
+
+.pm-phenomena-overview,
+.pm-phenomena-editor {
+  gap: var(--pm-space-lg);
+}
+
+.pm-phenomena-overview__controls {
+  grid-template-columns: minmax(16rem, 22rem) auto;
+  align-items: end;
+  justify-content: end;
+}
+
+.pm-phenomena-overview__list,
+.pm-phenomena-source-list,
+.pm-phenomena-selected__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pm-phenomena-overview-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.pm-phenomena-overview-card__meta,
+.pm-phenomena-editor__status-row,
+.pm-phenomena-source-column__actions,
+.pm-phenomena-editor__header-actions,
+.pm-phenomena-overview-card__actions {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  justify-content: start;
+  align-items: center;
+}
+
+.pm-phenomena-editor__header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.pm-phenomena-editor__title-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.pm-phenomena-editor__sources {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.pm-phenomena-source-column__header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.pm-phenomena-selected-item {
+  grid-template-columns: 2.45rem minmax(0, 1fr) auto;
+  column-gap: 0.82rem;
+  align-items: center;
+}
+
+@media (max-width: 899px) {
+  .pm-phenomena-overview__toolbar,
+  .pm-phenomena-overview__toolbar-inner,
+  .pm-phenomena-overview__controls,
+  .pm-phenomena-overview-card,
+  .pm-phenomena-editor__header,
+  .pm-phenomena-editor__sources,
+  .pm-phenomena-source-column__header,
+  .pm-phenomena-selected-item {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-phenomena-source-column__actions,
+  .pm-phenomena-editor__header-actions,
+  .pm-phenomena-selected-item__actions,
+  .pm-phenomena-overview-card__actions,
+  .pm-phenomena-overview-card__meta,
+  .pm-phenomena-editor__status-row {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+  }
+}
+
 .pm-sample {
   gap: var(--pm-space-xxl);
 }

@@ -6,13 +6,17 @@ from typing import Any
 
 import re
 
-from flask import Blueprint, abort, jsonify, make_response, render_template, request, send_file, url_for
+from flask import Blueprint, abort, g, jsonify, make_response, render_template, request, send_file, url_for
 from sqlalchemy import text
 
 from ..content_navigation import build_content_header as build_shared_content_header
+from ..research_phenomena_views import (
+    build_phenomena_overview_page,
+    build_phenomena_preset_editor_page,
+    build_phenomena_set_editor_page,
+)
 from ..research_views import (
     build_comparison_page,
-    build_phenomena_page,
     build_player_page,
     build_recordings_page,
     build_speaker_profile_page,
@@ -610,7 +614,7 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
     elif canonical_language_slug == "spanish" and canonical_page_slug == "comparison":
         page = build_comparison_page(ui_lang, canonical_language_slug, request.args)
     elif canonical_language_slug == "spanish" and canonical_page_slug == "phenomena":
-        page = build_phenomena_page(ui_lang, canonical_language_slug, request.args)
+        page = build_phenomena_overview_page(ui_lang, canonical_language_slug)
     else:
         page = build_research_page(ui_lang, canonical_language_slug, canonical_page_slug)
     if page is None or language is None:
@@ -631,6 +635,83 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
         ),
         context_back_href=url_for("public.research_home", ui_lang=ui_lang),
         context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
+        items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
+    )
+    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+
+
+@blueprint.get("/<ui_lang>/research/<language_slug>/phenomena/presets/<preset_id>")
+def research_phenomena_preset_editor(ui_lang: str, language_slug: str, preset_id: str):
+    ui_lang = _require_ui_lang(ui_lang)
+    canonical_language_slug = get_canonical_language_slug(language_slug)
+    if canonical_language_slug is None:
+        abort(404)
+
+    language = get_language(canonical_language_slug)
+    page = build_phenomena_preset_editor_page(ui_lang, canonical_language_slug, preset_id)
+    if page is None or language is None:
+        abort(404)
+
+    language_label = get_language_label(language, ui_lang)
+    panel = _panel_config(
+        section_key="research",
+        section_label=get_section_label("research", ui_lang),
+        active_slug="phenomena",
+        language_label=language_label,
+        context_mode="language",
+        context_title=language_label,
+        context_root_href=url_for(
+            "public.research_language_root",
+            ui_lang=ui_lang,
+            language_slug=canonical_language_slug,
+        ),
+        context_back_href=url_for(
+            "public.research_language_page",
+            ui_lang=ui_lang,
+            language_slug=canonical_language_slug,
+            page_slug="phenomena",
+        ),
+        context_back_label=get_research_page_label("phenomena", ui_lang),
+        items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
+    )
+    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+
+
+@blueprint.get("/<ui_lang>/research/<language_slug>/phenomena/sets/<set_id>")
+def research_phenomena_set_editor(ui_lang: str, language_slug: str, set_id: str):
+    ui_lang = _require_ui_lang(ui_lang)
+    canonical_language_slug = get_canonical_language_slug(language_slug)
+    if canonical_language_slug is None:
+        abort(404)
+
+    if not getattr(g, "user_id", None):
+        return _redirect(url_for("public.login", next=request.full_path or request.path))
+
+    language = get_language(canonical_language_slug)
+    page = build_phenomena_set_editor_page(ui_lang, canonical_language_slug, set_id)
+    if page is None or language is None:
+        abort(404)
+
+    language_label = get_language_label(language, ui_lang)
+    panel = _panel_config(
+        section_key="research",
+        section_label=get_section_label("research", ui_lang),
+        active_slug="phenomena",
+        language_label=language_label,
+        context_mode="language",
+        context_title=language_label,
+        context_root_href=url_for(
+            "public.research_language_root",
+            ui_lang=ui_lang,
+            language_slug=canonical_language_slug,
+        ),
+        context_back_href=url_for(
+            "public.research_language_page",
+            ui_lang=ui_lang,
+            language_slug=canonical_language_slug,
+            page_slug="phenomena",
+        ),
+        context_back_label=get_research_page_label("phenomena", ui_lang),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
     return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)

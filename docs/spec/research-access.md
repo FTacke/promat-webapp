@@ -26,8 +26,8 @@ This file is the binding source of truth for the active research-access model in
 - `player` is not a second section root and not a sidebar page of its own.
 - `speakers`, `recordings`, and the person profile are direct player entry points in the current IA.
 - `comparison` is a first-class item-centered research workbench page and not just a player mode.
-- `phenomena` is a curated preset and selection page and not the primary listening surface.
-- Both pages may launch the same player route with additional context, but they do not collapse into separate player implementations or new player route families.
+- `phenomena` is a split list-curation surface with one calm overview page plus dedicated editor detail routes, and it is not the primary listening surface.
+- `comparison` may still launch the canonical player route with additional context, but neither `comparison` nor `phenomena` collapse into separate player implementations or new player route families.
 
 ## Binding Access Logic
 
@@ -56,7 +56,7 @@ This file is the binding source of truth for the active research-access model in
 
 - `player` always has one primary `session_id` and one initial task key.
 - The canonical player route is `/{ui_lang}/research/{language}/player/{session_id}/{task}`.
-- Player entry may carry source context from `speakers`, `recordings`, `profile`, and later `comparison` or `phenomena`, but all of them resolve to the same route family.
+- Player entry may carry source context from `speakers`, `recordings`, `profile`, and `comparison`; all of them resolve to the same route family.
 - The player keeps one shared session context while switching between all tasks that are documented as available for that session.
 - Tasks that are unavailable for the session may remain visible as disabled, non-interactive controls, consistent with the broader research UI.
 - The player may add one optional secondary `compare_session` for bounded direct compare without creating a second player route family.
@@ -66,7 +66,7 @@ This file is the binding source of truth for the active research-access model in
 - `comparison` uses the existing research page route `/{ui_lang}/research/{language}/comparison`.
 - `comparison` is item-centered, not session-first.
 - `comparison` may launch the canonical player route for one concrete session and task, but it is not constrained to one primary session.
-- `comparison` may work from owner-bound sets derived in `phenomena`, but it does not expose visible preset or set-configuration controls inside the workbench.
+- `comparison` may work from owner-bound sets derived in `phenomena`, but it does not expose a first-class set-management workflow inside the workbench.
 - The `comparison` HTML page remains renderable without login so the workbench surface stays visible in the public research IA.
 - Loading an existing `set_id`, creating the internal default draft, changing the active session selection, and persisting the comparison view filter require authenticated owner context through the canonical `/api/research/sets` route family.
 - The canonical `/api/research/sets/{set_id}/save-as` flow remains part of the owner-bound set model, but `comparison` does not expose it as a visible primary workbench action.
@@ -77,8 +77,8 @@ This file is the binding source of truth for the active research-access model in
 - The visible speaker selector in `comparison` is speaker-first, row-dense, and structurally split into three simultaneous areas: `Lernende`, `Native Speaker`, and the active `Ausgewählt` composition; `person_id` is the primary line, while speaker group, level, and `L1` remain secondary metadata, and internal `session_id` stays functional without becoming the visible headline pattern.
 - In that visible three-column comparison selector, learners and native speakers are separate source lists, while `Ausgewählt` reads as the active assembly area rather than as a third source catalog; the selected list keeps learners above native speakers and exposes a direct remove action instead of a pure status indicator.
 - The standard visible speaker filters in `comparison` are `Suche`, direct level chips `A1`, `A2`, `B1`, `B2`, and `L1 wählen`, with secondary controls such as `Geschlecht` and `Sprachaufenthalt` grouped under `Weitere Filter`; native-speaker access is handled primarily through the dedicated native source column rather than through a visible `Native` filter chip.
-- The visible material control in `comparison` stays compact and honest: `Wortliste` is the standard, `Satzliste` is the secondary alternative, and the same first block may expose one adjacent secondary `Set wählen` select with a quiet info hint that sets are created and adjusted in `phenomena`; `comparison` does not expose a separate handoff button or a second right-side material island.
-- Choosing one of those visible comparison example sets reuses the current owner-bound comparison draft and replaces its item scope in place; the dropdown does not spin up a second visible draft workflow for every selection.
+- The visible material control in `comparison` stays compact and honest: `Wortliste` is the standard, `Satzliste` is the secondary alternative, and the same first block may expose one adjacent secondary `Set wählen` select with a quiet info hint that sets are created and adjusted in `phenomena`; that select may list curated example sets plus saved owner-bound custom sets from `phenomena`, but `comparison` does not expose a separate handoff button or a second right-side material island.
+- Choosing one of those visible curated or custom comparison sets reuses the current owner-bound comparison draft and replaces its item scope in place; the dropdown does not spin up a second visible draft workflow for every selection.
 - The visible `comparison` surface does not repeat login or sign-in hints inside the workbench body; access clarification belongs before the page, not as a CTA inside the first comparison step.
 - The comparison matrix keeps `Item` as the left stub header, uses speaker badges in column headers for learner/native semantics, and exposes clip playback plus direct item download as the visible row actions.
 - Comparison matrix playback and direct item download both stay on the canonical player item delivery family, but playback must use a browser-safe inline audio response while explicit download intent keeps the delivery filename contract without forcing attachment semantics onto matrix playback.
@@ -93,11 +93,17 @@ This file is the binding source of truth for the active research-access model in
 ### `phenomena`
 
 - `phenomena` uses the existing research page route `/{ui_lang}/research/{language}/phenomena`.
-- `phenomena` is the curated material-configuration page for presets and owner-bound set selection.
-- The `phenomena` HTML page remains renderable without login so curated presets and corpus-level launcher structure stay visible in the public research IA.
-- Opening a preset into active work, loading an existing `set_id`, and mutating a set from `phenomena` require authenticated owner context through the canonical `/api/research/sets` route family.
-- The productive `phenomena` workbench exposes one visible owner-side persistence action `Als neues Set speichern`; it reuses the canonical `/api/research/sets/{set_id}/save-as` flow and switches the active workbench context to the returned saved copy.
-- `phenomena` may branch into either `comparison` or the canonical player route after deriving or loading a user-owned set, but session comparison itself belongs to `comparison`.
+- `phenomena` is split into one public overview route plus dedicated detail routes for curated presets and owner-bound custom sets.
+- The productive overview route stays publicly renderable and linear: page header, one `1 Set wählen` block with `Set suchen` plus `Neues Set`, one unified list of curated and custom entries, and only functional list-end empty states.
+- The overview does not expose an active workspace, task/material configuration, save controls, player/comparison handoff, or other parallel work areas.
+- Curated entries are distinguished only by badge/status, expose `Ansehen` and `Modifizieren`, and are never deletable from the overview.
+- Custom entries are distinguished only by badge/status, expose `Bearbeiten` as the primary action, and keep `Umbenennen` plus `Löschen` in a secondary overflow action family.
+- The curated preset editor route remains publicly renderable for inspection and local editing, but saving owner-bound work still requires authenticated owner context through the canonical `/api/research/sets` route family.
+- The owner-bound custom-set editor route requires authenticated owner context; loading or mutating one concrete stored set without owner context is not part of the public `phenomena` surface.
+- The productive editor surface exposes one readable title field, one persisted `Notiz` field, a visible type/save-state status line, two stable source columns for the full `Wortliste` and `Satzliste`, and one lower `Ausgewählte Items` area with one explicit shared saved order across both task types.
+- The productive editor exposes one visible save action, not a visible `Speichern als`; owner-bound save semantics now use the canonical `/api/research/sets` create, patch, delete, and item-replacement flows.
+- If unsaved changes exist in the productive `phenomena` editor, normal in-app navigation uses the same app-level confirm dialog as discard flows; browser-native unload prompts remain only as fallback for reload, close, or comparable browser-level exits.
+- In the current productive `phenomena` phase, player and comparison handoff are intentionally absent from both overview and editor so the page stays a focused list-curation surface.
 
 ## Card Logic
 

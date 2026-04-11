@@ -32,6 +32,14 @@ Kurze Beschreibung des Changes und des gelösten Problems.
 - [ ] keine direkte öffentliche Auslieferung aus `data/`
 - [ ] keine stillen Umbenennungen ohne Doku
 
+## UI- und Konsistenzcheck
+
+- [ ] produktive Referenzseiten geprüft, falls UI betroffen ist
+- [ ] bestehende UI-Familien wiederverwendet oder erweitert statt neu erfunden
+- [ ] `sample` aktualisiert, falls ein repräsentiertes aktives UI-Element geändert wurde
+- [ ] Browser-Durchlauf und Screenshots ergänzt, falls die Änderung visuell substanziell ist
+- [ ] bei Änderungen an globalem oder shared CSS die betroffenen Familien auf mindestens einer weiteren Seite gegengeprüft
+
 ## Verifikation
 
 - Tests, Checks oder manuelle Validierung

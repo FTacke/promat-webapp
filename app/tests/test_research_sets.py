@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import sys
@@ -28,8 +29,11 @@ from app.research_sets import (  # noqa: E402
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
     create_draft_set,
+    delete_owned_set,
     delete_expired_drafts,
+    list_owned_sets,
     load_owned_set,
+    update_set_metadata,
 )
 from app.routes.research_api import blueprint as research_api_blueprint  # noqa: E402
 
@@ -209,6 +213,26 @@ def test_research_set_migration_declares_expected_tables() -> None:
     assert "REFERENCES users(user_id) ON DELETE CASCADE" in content
     assert "state IN ('draft', 'saved')" in content
 
+    extension_migration = (TEST_REPO_ROOT / "app" / "migrations" / "0004_extend_research_sets_for_phenomena_editor.sql").read_text(
+        encoding="utf-8"
+    )
+    assert "ADD COLUMN IF NOT EXISTS note TEXT NULL" in extension_migration
+
+
+def test_apply_auth_migration_discovers_full_postgres_chain() -> None:
+    script_path = TEST_REPO_ROOT / "app" / "scripts" / "apply_auth_migration.py"
+    spec = importlib.util.spec_from_file_location("apply_auth_migration", script_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    migration_names = [path.name for path in module._postgres_migration_files()]
+
+    assert migration_names == sorted(migration_names)
+    assert migration_names[0] == "0001_create_auth_schema_postgres.sql"
+    assert "0001_create_auth_schema_sqlite.sql" not in migration_names
+    assert "0004_extend_research_sets_for_phenomena_editor.sql" in migration_names
+
 
 def test_create_empty_draft_set_service(set_app: Flask) -> None:
     with set_app.app_context():
@@ -216,6 +240,7 @@ def test_create_empty_draft_set_service(set_app: Flask) -> None:
 
     assert record.state == "draft"
     assert record.corpus_language == "spanish"
+    assert record.label == "Neues Set 1"
     assert record.items == tuple()
     assert record.sessions == tuple()
     assert record.expires_at is not None
@@ -233,6 +258,7 @@ def test_create_draft_from_valid_preset_materializes_items(set_app: Flask) -> No
     payload = response.get_json()
     assert payload["set"]["source_preset_id"] == "starter_preset"
     assert payload["set"]["preferred_task"] == "text"
+    assert payload["set"]["label"] == "Starter (modifiziert)"
     assert [item["task"] for item in payload["set"]["items"]] == ["wordlist", "text"]
     assert payload["set"]["items"][1]["segment_id"] == "rise"
 
@@ -308,7 +334,7 @@ def test_save_as_new_set_creates_saved_copy(set_app: Flask) -> None:
     assert saved_payload["set_id"] != draft_id
     assert saved_payload["state"] == "saved"
     assert saved_payload["label"] == "Mein Set"
-    assert saved_payload["suggested_save_label"] == "Mein Set_copy"
+    assert saved_payload["suggested_save_label"] == "Mein Set"
     assert saved_payload["expires_at"] is None
     assert saved_payload["items"] == draft_payload["items"]
 
@@ -324,7 +350,69 @@ def test_preset_derived_draft_exposes_suggested_save_label(set_app: Flask) -> No
     assert create_response.status_code == 201
     payload = create_response.get_json()["set"]
     assert payload["state"] == "draft"
-    assert payload["suggested_save_label"] == "starter_preset_modified"
+    assert payload["suggested_save_label"] == "Starter (modifiziert)"
+
+
+def test_patch_set_can_store_note_and_promote_to_saved(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish", "note": "Arbeitsnotiz"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    set_id = create_response.get_json()["set"]["set_id"]
+
+    patch_response = client.patch(
+        f"/api/research/sets/{set_id}",
+        json={"label": "Mein Fokusset", "note": "Gespeichert", "state": "saved"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert patch_response.status_code == 200
+    payload = patch_response.get_json()["set"]
+    assert payload["state"] == "saved"
+    assert payload["label"] == "Mein Fokusset"
+    assert payload["note"] == "Gespeichert"
+    assert payload["expires_at"] is None
+
+
+def test_list_sets_endpoint_returns_only_saved_sets_by_default(set_app: Flask) -> None:
+    with set_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, state="saved", label="Freies Set")
+        create_draft_set(owner_user_id="user-1", corpus_language="spanish", label="Nur Draft")
+
+    client = set_app.test_client()
+    response = client.get(
+        "/api/research/sets?corpus_language=spanish",
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert [entry["label"] for entry in payload["sets"]] == ["Freies Set"]
+
+
+def test_delete_set_endpoint_removes_owned_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish", "label": "Löschbar"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    set_id = create_response.get_json()["set"]["set_id"]
+
+    delete_response = client.delete(
+        f"/api/research/sets/{set_id}",
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert delete_response.status_code == 200
+    follow_up = client.get(
+        f"/api/research/sets/{set_id}",
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    assert follow_up.status_code == 404
 
 
 def test_save_as_new_set_rejects_empty_label(set_app: Flask) -> None:
@@ -419,3 +507,18 @@ def test_cleanup_removes_expired_drafts(set_app: Flask) -> None:
         client = set_app.test_client()
         response = client.get(f"/api/research/sets/{record.set_id}", headers=_auth_header(set_app, "user-1", "alice"))
         assert response.status_code == 404
+
+
+def test_list_and_delete_helpers_work_for_owned_sets(set_app: Flask) -> None:
+    with set_app.app_context():
+        first = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        second = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        update_set_metadata(owner_user_id="user-1", set_id=first.set_id, state="saved", label="A")
+        update_set_metadata(owner_user_id="user-1", set_id=second.set_id, state="saved", label="B")
+
+        listed = list_owned_sets(owner_user_id="user-1", corpus_language="spanish")
+        assert {entry.label for entry in listed} == {"A", "B"}
+
+        delete_owned_set(owner_user_id="user-1", set_id=first.set_id)
+        listed_after_delete = list_owned_sets(owner_user_id="user-1", corpus_language="spanish")
+        assert [entry.label for entry in listed_after_delete] == ["B"]

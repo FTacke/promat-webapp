@@ -14,6 +14,8 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten unter `docs/`.
 - Neue aktive Regeln werden immer in eine bestehende oder neue passende Datei unter `docs/spec/` integriert.
 - ADRs, Runbooks und Run-Logs dürfen keine konkurrierende Soll-Spezifikation aufbauen.
 - Wenn eine ältere Doku-Datei nach `docs/spec/` überführt wurde, wird sie gelöscht oder vollständig entnormativisiert.
+- Wiederkehrende Implementierungs-, UI- oder Prüf-Erkenntnisse aus mehreren Runs müssen in `docs/spec/` oder `docs/runbooks/` verdichtet werden; sie dürfen nicht nur als implizites Wissen in `docs/agent-runs/` stehen bleiben.
+- `docs/plans/` bleiben Planungstexte; wenn ein Plan durch aktive Spec oder produktive Umsetzung überholt ist, erhält er einen klaren Statushinweis zurück auf `docs/spec/` oder wird entfernt.
 - Keine neuen freien Doku-Sammelbecken anlegen.
 
 ## Pflicht bei Änderungen

@@ -9,6 +9,8 @@ from flask import Blueprint, Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from ..research_sets import (
+    delete_owned_set,
+    list_owned_sets,
     ResearchSetNotFoundError,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
@@ -59,6 +61,7 @@ def create_set() -> tuple[Response, int]:
             source_preset_id=payload.get("preset_id"),
             preferred_task=payload.get("preferred_task"),
             label=payload.get("label"),
+            note=payload.get("note"),
             comparison_view_task=payload.get("comparison_view_task"),
         )
     except ResearchSetValidationError as exc:
@@ -66,6 +69,23 @@ def create_set() -> tuple[Response, int]:
     except ResearchSetStorageUnavailableError as exc:
         return _json_error(str(exc), HTTPStatus.SERVICE_UNAVAILABLE)
     return jsonify(_set_response_payload(record)), HTTPStatus.CREATED.value
+
+
+@blueprint.get("/sets")
+@jwt_required()
+def list_sets() -> tuple[Response, int]:
+    try:
+        include_drafts = request.args.get("include_drafts", "").strip().lower() in {"1", "true", "yes"}
+        records = list_owned_sets(
+            owner_user_id=_current_owner_user_id(),
+            corpus_language=request.args.get("corpus_language", ""),
+            include_drafts=include_drafts,
+        )
+    except ResearchSetValidationError as exc:
+        return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
+    except ResearchSetStorageUnavailableError as exc:
+        return _json_error(str(exc), HTTPStatus.SERVICE_UNAVAILABLE)
+    return jsonify({"sets": [record.to_dict() for record in records]}), HTTPStatus.OK.value
 
 
 @blueprint.get("/sets/<set_id>")
@@ -91,6 +111,8 @@ def patch_set(set_id: str) -> tuple[Response, int]:
             owner_user_id=_current_owner_user_id(),
             set_id=set_id,
             label=payload["label"] if "label" in payload else UNSET,
+            note=payload["note"] if "note" in payload else UNSET,
+            state=payload["state"] if "state" in payload else UNSET,
             preferred_task=payload["preferred_task"] if "preferred_task" in payload else UNSET,
             comparison_view_task=payload["comparison_view_task"] if "comparison_view_task" in payload else UNSET,
         )
@@ -101,6 +123,20 @@ def patch_set(set_id: str) -> tuple[Response, int]:
     except ResearchSetStorageUnavailableError as exc:
         return _json_error(str(exc), HTTPStatus.SERVICE_UNAVAILABLE)
     return jsonify(_set_response_payload(record)), HTTPStatus.OK.value
+
+
+@blueprint.delete("/sets/<set_id>")
+@jwt_required()
+def delete_set(set_id: str) -> tuple[Response, int]:
+    try:
+        delete_owned_set(owner_user_id=_current_owner_user_id(), set_id=set_id)
+    except ResearchSetValidationError as exc:
+        return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
+    except ResearchSetNotFoundError as exc:
+        return _json_error(str(exc), HTTPStatus.NOT_FOUND)
+    except ResearchSetStorageUnavailableError as exc:
+        return _json_error(str(exc), HTTPStatus.SERVICE_UNAVAILABLE)
+    return jsonify({"deleted": True, "set_id": set_id}), HTTPStatus.OK.value
 
 
 @blueprint.put("/sets/<set_id>/items")

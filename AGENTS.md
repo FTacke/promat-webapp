@@ -27,8 +27,18 @@ For active PROMAT rules, consult these files first:
 - Do not place active rules in run logs, ADRs, folder READMEs, or ad hoc notes.
 - ADRs in `docs/decisions/` explain why a decision was taken; they do not replace current specs.
 - Runbooks in `docs/runbooks/` document repeatable procedures only.
+- `docs/plans/` are planning inputs only; when a plan is superseded by active spec or implementation, add a clear status note or retire it instead of letting it compete with `docs/spec/`.
 - Run logs in `docs/agent-runs/` are non-normative work journals only.
 - Delete or merge obsolete documentation instead of preserving shadow copies.
+
+## UI Change Discipline
+
+- Before introducing new UI markup, CSS, or client-side interaction, inspect matching productive pages, shared partials, and shared CSS families in `app/templates/` and `app/static/css/`.
+- Reuse or extend existing UI families before creating feature-local variants for buttons, form controls, badges or chips, cards or list rows, dialogs, empty states, sticky anchors, or overflow actions.
+- Prefer calm, linear flows over parallel work islands; avoid mini-overlabels, duplicate status blocks, and mixed one-page workbenches unless the active spec explicitly requires them.
+- For research UI, use `comparison` as the default reference for step containers, selection blocks, badge or meta rhythm, and vertical work sequences; use `player` as the default reference for dense material rows, compact work heads, sticky anchors, and muted versus active states.
+- If shared CSS files or shared partials change, regression-check at least one unaffected page that uses the same component family.
+- Any substantial UI change requires a browser pass and screenshots before completion; if a mirrored element exists in `sample`, update it in the same run.
 
 ## Change Discipline
 

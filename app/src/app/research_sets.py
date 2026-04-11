@@ -71,6 +71,7 @@ class ResearchSet(Base):
     owner_user_id: Mapped[str] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     corpus_language: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     label: Mapped[str | None] = mapped_column(Text, nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
     state: Mapped[str] = mapped_column(String(16), nullable=False)
     source_preset_id: Mapped[str | None] = mapped_column(Text, nullable=True)
     preferred_task: Mapped[str | None] = mapped_column(String(16), nullable=True)
@@ -157,6 +158,7 @@ class StoredResearchSet:
     set_id: str
     corpus_language: str
     label: str | None
+    note: str | None
     state: str
     source_preset_id: str | None
     preferred_task: str | None
@@ -173,6 +175,7 @@ class StoredResearchSet:
             "set_id": self.set_id,
             "corpus_language": self.corpus_language,
             "label": self.label,
+            "note": self.note,
             "suggested_save_label": _suggest_saved_set_label(
                 label=self.label,
                 state=self.state,
@@ -201,12 +204,10 @@ def _serialize_datetime(value: datetime | None) -> str | None:
 
 
 def _suggest_saved_set_label(*, label: str | None, state: str, source_preset_id: str | None, created_at: datetime) -> str:
-    if state == "saved" and label:
-        return f"{label}_copy"
-    if source_preset_id:
-        return f"{source_preset_id}_modified"
     if label:
         return label
+    if source_preset_id:
+        return f"{source_preset_id}_modified"
     return f"set_{created_at.date().isoformat()}"
 
 
@@ -231,6 +232,24 @@ def _normalize_optional_label(label: Any) -> str | None:
         raise ResearchSetValidationError("label must be a string when provided")
     normalized = label.strip()
     return normalized or None
+
+
+def _normalize_optional_note(note: Any) -> str | None:
+    if note is None:
+        return None
+    if not isinstance(note, str):
+        raise ResearchSetValidationError("note must be a string when provided")
+    normalized = note.strip()
+    return normalized or None
+
+
+def _normalize_set_state(state: Any) -> str:
+    if not isinstance(state, str):
+        raise ResearchSetValidationError("state must be a string when provided")
+    normalized = state.strip().lower()
+    if normalized not in SET_STATES:
+        raise ResearchSetValidationError("state must be one of 'draft' or 'saved'")
+    return normalized
 
 
 def _normalize_preferred_task(task: Any) -> str | None:
@@ -299,6 +318,7 @@ def _serialize_set(record: ResearchSet) -> StoredResearchSet:
         set_id=record.set_id,
         corpus_language=record.corpus_language,
         label=record.label,
+        note=record.note,
         state=record.state,
         source_preset_id=record.source_preset_id,
         preferred_task=record.preferred_task,
@@ -334,6 +354,51 @@ def _get_owned_set_record(session, *, owner_user_id: str, set_id: str) -> Resear
     if record is None:
         raise ResearchSetNotFoundError(f"Research set '{set_id}' was not found")
     return record
+
+
+def _existing_owner_labels(session, *, owner_user_id: str, language_slug: str) -> set[str]:
+    stmt = select(ResearchSet.label).where(
+        ResearchSet.owner_user_id == owner_user_id,
+        ResearchSet.corpus_language == language_slug,
+        ResearchSet.label.is_not(None),
+    )
+    return {value.strip() for value in session.execute(stmt).scalars().all() if isinstance(value, str) and value.strip()}
+
+
+def _next_generated_label(existing_labels: set[str], *, base_label: str, suffix_template: str) -> str:
+    if base_label not in existing_labels:
+        return base_label
+
+    index = 2
+    while True:
+        candidate = suffix_template.format(index=index)
+        if candidate not in existing_labels:
+            return candidate
+        index += 1
+
+
+def _default_draft_label(
+    session,
+    *,
+    owner_user_id: str,
+    language_slug: str,
+    preset_label: str | None,
+) -> str:
+    existing_labels = _existing_owner_labels(session, owner_user_id=owner_user_id, language_slug=language_slug)
+    if preset_label:
+        base_label = f"{preset_label} (modifiziert)"
+        return _next_generated_label(
+            existing_labels,
+            base_label=base_label,
+            suffix_template=f"{preset_label} (modifiziert {{index}})",
+        )
+
+    index = 1
+    while True:
+        candidate = f"Neues Set {index}"
+        if candidate not in existing_labels:
+            return candidate
+        index += 1
 
 
 def _validated_item_references(raw_items: list[Any], *, language_slug: str, context: str) -> tuple[TaskItemReference, ...]:
@@ -416,17 +481,20 @@ def create_draft_set(
     source_preset_id: str | None = None,
     preferred_task: str | None = None,
     label: str | None = None,
+    note: str | None = None,
     comparison_view_task: str | None = None,
 ) -> StoredResearchSet:
     owner_id = _normalize_owner_user_id(owner_user_id)
     language_slug = _normalize_language_slug(corpus_language)
     normalized_label = _normalize_optional_label(label)
+    normalized_note = _normalize_optional_note(note)
     normalized_preferred_task = _normalize_preferred_task(preferred_task)
     normalized_view_task = _normalize_comparison_view_task(comparison_view_task)
     now = _utcnow()
 
     preset_items: tuple[TaskItemReference, ...] = tuple()
     normalized_source_preset_id = None
+    preset_label: str | None = None
     if source_preset_id is not None:
         if not isinstance(source_preset_id, str) or not source_preset_id.strip():
             raise ResearchSetValidationError("source_preset_id must be a non-empty string when provided")
@@ -440,14 +508,22 @@ def create_draft_set(
                 f"Unknown preset_id '{normalized_source_preset_id}' for corpus_language '{language_slug}'"
             ) from exc
         preset_items = preset.items
+        preset_label = preset.label
 
     def operation() -> StoredResearchSet:
         with get_session() as session:
+            effective_label = normalized_label or _default_draft_label(
+                session,
+                owner_user_id=owner_id,
+                language_slug=language_slug,
+                preset_label=preset_label,
+            )
             record = ResearchSet(
                 set_id=str(uuid.uuid4()),
                 owner_user_id=owner_id,
                 corpus_language=language_slug,
-                label=normalized_label,
+                label=effective_label,
+                note=normalized_note,
                 state="draft",
                 source_preset_id=normalized_source_preset_id,
                 preferred_task=normalized_preferred_task,
@@ -487,6 +563,8 @@ def update_set_metadata(
     owner_user_id: str,
     set_id: str,
     label: object = UNSET,
+    note: object = UNSET,
+    state: object = UNSET,
     preferred_task: object = UNSET,
     comparison_view_task: object = UNSET,
 ) -> StoredResearchSet:
@@ -502,6 +580,10 @@ def update_set_metadata(
 
             if label is not UNSET:
                 record.label = _normalize_optional_label(label)
+            if note is not UNSET:
+                record.note = _normalize_optional_note(note)
+            if state is not UNSET:
+                record.state = _normalize_set_state(state)
             if preferred_task is not UNSET:
                 record.preferred_task = _normalize_preferred_task(preferred_task)
             if comparison_view_task is not UNSET:
@@ -514,6 +596,34 @@ def update_set_metadata(
             _touch_access(record, now=now)
             session.flush()
             return _serialize_set(record)
+
+    return _run_storage_operation(operation)
+
+
+def list_owned_sets(
+    *,
+    owner_user_id: str,
+    corpus_language: str,
+    include_drafts: bool = False,
+) -> tuple[StoredResearchSet, ...]:
+    owner_id = _normalize_owner_user_id(owner_user_id)
+    language_slug = _normalize_language_slug(corpus_language)
+
+    def operation() -> tuple[StoredResearchSet, ...]:
+        with get_session() as session:
+            stmt = (
+                select(ResearchSet)
+                .options(selectinload(ResearchSet.items), selectinload(ResearchSet.sessions))
+                .where(
+                    ResearchSet.owner_user_id == owner_id,
+                    ResearchSet.corpus_language == language_slug,
+                )
+                .order_by(ResearchSet.updated_at.desc(), ResearchSet.created_at.desc())
+            )
+            if not include_drafts:
+                stmt = stmt.where(ResearchSet.state == "saved")
+            records = session.execute(stmt).scalars().all()
+            return tuple(_serialize_set(record) for record in records)
 
     return _run_storage_operation(operation)
 
@@ -576,6 +686,7 @@ def save_set_as_new(*, owner_user_id: str, source_set_id: str, label: str) -> St
                 owner_user_id=owner_id,
                 corpus_language=source_record.corpus_language,
                 label=normalized_label,
+                note=source_record.note,
                 state="saved",
                 source_preset_id=source_record.source_preset_id,
                 preferred_task=source_record.preferred_task,
@@ -606,6 +717,20 @@ def save_set_as_new(*, owner_user_id: str, source_set_id: str, label: str) -> St
             return _serialize_set(saved_record)
 
     return _run_storage_operation(operation)
+
+
+def delete_owned_set(*, owner_user_id: str, set_id: str) -> None:
+    owner_id = _normalize_owner_user_id(owner_user_id)
+    normalized_set_id = (set_id or "").strip()
+    if not normalized_set_id:
+        raise ResearchSetValidationError("set_id is required")
+
+    def operation() -> None:
+        with get_session() as session:
+            record = _get_owned_set_record(session, owner_user_id=owner_id, set_id=normalized_set_id)
+            session.delete(record)
+
+    _run_storage_operation(operation)
 
 
 def delete_expired_drafts(*, now: datetime | None = None) -> int:

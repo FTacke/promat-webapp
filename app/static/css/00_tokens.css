@@ -99,6 +99,26 @@
   --pm-divider-space-after: var(--pm-space-sm);
   --pm-divider-block-gap: var(--pm-divider-space-after);
   --pm-text-muted-strong: color-mix(in srgb, var(--book-muted) 28%, var(--pm-surface-paper) 72%);
+  --pm-state-muted-surface: color-mix(in srgb, var(--pm-surface-neutral) 88%, var(--pm-surface-paper) 12%);
+  --pm-state-muted-surface-hover: color-mix(in srgb, var(--pm-surface-neutral) 76%, var(--pm-surface-paper) 24%);
+  --pm-state-muted-border: var(--pm-border-subtle);
+  --pm-state-muted-text: var(--book-muted);
+  --pm-state-muted-text-strong: var(--pm-text-muted-strong);
+  --pm-state-selected-surface: color-mix(in srgb, var(--pm-surface-accent-soft) 28%, var(--pm-surface-paper) 72%);
+  --pm-state-selected-surface-strong: color-mix(in srgb, var(--pm-surface-accent-soft) 78%, var(--pm-surface-paper) 22%);
+  --pm-state-selected-border: color-mix(in srgb, var(--book-accent) 14%, transparent);
+  --pm-state-selected-text: var(--book-fg);
+  --pm-state-selected-accent: var(--book-accent);
+  --pm-status-neutral-surface: color-mix(in srgb, var(--pm-surface-neutral) 74%, var(--pm-surface-paper) 26%);
+  --pm-status-neutral-text: var(--book-muted);
+  --pm-status-curated-surface: color-mix(in srgb, var(--book-accent) 14%, var(--pm-surface-paper) 86%);
+  --pm-status-curated-text: var(--book-accent);
+  --pm-status-custom-surface: color-mix(in srgb, var(--pm-surface-accent-soft) 34%, var(--pm-surface-paper) 66%);
+  --pm-status-custom-text: var(--pm-text-accent);
+  --pm-status-saved-surface: color-mix(in srgb, var(--pm-research-native-accent) 17%, var(--pm-surface-paper) 83%);
+  --pm-status-saved-text: var(--pm-research-native-accent);
+  --pm-status-unsaved-surface: color-mix(in srgb, var(--book-adm-danger) 16%, var(--pm-surface-paper) 84%);
+  --pm-status-unsaved-text: var(--book-adm-danger);
 
   --pm-type-brand-family: var(--book-font-ui);
   --pm-type-brand-size: clamp(1.2rem, 1.08rem + 0.32vw, 1.42rem);
@@ -275,6 +295,7 @@
   --pm-icon-volume: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>');
   --pm-icon-speed: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M12 7h.01"/></svg>');
   --pm-icon-switch: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M7 7h11"/><path d="m14 4 4 3-4 3"/><path d="M17 17H6"/><path d="m10 14-4 3 4 3"/></svg>');
+  --pm-icon-edit: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>');
 
   --pm-layout-reading-width: 72ch;
   --pm-layout-panel-width-current: var(--promat-panel-width);

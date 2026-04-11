@@ -23,7 +23,7 @@ from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, init_engine, get_session
 from app.research_presets import clear_research_preset_caches
 from app.research_sessions import load_language_sessions, load_person_records
-from app.research_sets import create_draft_set, replace_set_sessions
+from app.research_sets import create_draft_set, replace_set_sessions, update_set_metadata
 from app.research_views import build_comparison_page, _is_playable_audio_artifact
 from app.routes.public import blueprint as public_blueprint
 
@@ -304,6 +304,7 @@ def comparison_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
     @app.before_request
     def _set_test_auth_context() -> None:
         g.user = app.config.get("TEST_AUTH_USER")
+        g.user_id = app.config.get("TEST_AUTH_USER_ID")
         g.role = None
 
     app.register_blueprint(public_blueprint)
@@ -358,6 +359,7 @@ def test_build_comparison_page_marks_requested_set_for_client_loading(comparison
 
     with comparison_app.test_request_context(f"/de/research/spanish/comparison?set_id={draft.set_id}"):
         g.user = "alice"
+        g.user_id = "user-1"
         g.role = None
         page = build_comparison_page("de", "spanish", {"set_id": draft.set_id})
 
@@ -366,6 +368,23 @@ def test_build_comparison_page_marks_requested_set_for_client_loading(comparison
     assert page["client_state"]["requestedSetId"] == draft.set_id
     assert page["client_state"]["labels"]["stateDraft"] == "Draft"
     assert page["client_state"]["labels"]["stateSaved"] == "Gespeichert"
+
+
+def test_build_comparison_page_includes_saved_custom_sets_in_material_options(comparison_app: Flask) -> None:
+    with comparison_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Fokusset", state="saved")
+
+    with comparison_app.test_request_context("/de/research/spanish/comparison"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_comparison_page("de", "spanish", {})
+
+    assert page is not None
+    option_labels = [entry["optionLabel"] for entry in page["client_state"]["materialPresets"]]
+    assert "Starter · curated" in option_labels
+    assert "Mein Fokusset · custom" in option_labels
 
 
 def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Flask) -> None:

@@ -16,6 +16,7 @@ from .research_sets import (
     ResearchSetNotFoundError,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
+    list_owned_sets,
     load_owned_set,
 )
 from .research_sessions import (
@@ -1320,6 +1321,8 @@ def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[
         presets.append(
             {
                 "presetId": preset.preset_id,
+                "kind": "curated",
+                "optionLabel": f"{preset.label} · curated",
                 "label": preset.label,
                 "preferredTask": _phenomena_preferred_task(task_counts),
                 "taskSummary": _phenomena_task_summary(task_counts, task_labels),
@@ -1329,6 +1332,39 @@ def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[
                         "item_id": reference.item_id,
                     }
                     for reference in preset.items
+                ],
+            }
+        )
+
+    owner_user_id = _current_owner_user_id()
+    if owner_user_id is None:
+        return presets
+
+    try:
+        saved_sets = list_owned_sets(owner_user_id=owner_user_id, corpus_language=language_slug)
+    except (ResearchSetStorageUnavailableError, ResearchSetValidationError):
+        return presets
+
+    for stored_set in saved_sets:
+        task_counts = {task_key: 0 for task_key in PHENOMENA_ITEM_TASKS}
+        for reference in stored_set.items:
+            if reference.task in task_counts:
+                task_counts[reference.task] += 1
+        presets.append(
+            {
+                "presetId": f"saved:{stored_set.set_id}",
+                "kind": "custom",
+                "setId": stored_set.set_id,
+                "optionLabel": f"{stored_set.label or ('Ohne Titel' if ui_lang == 'de' else 'Untitled')} · custom",
+                "label": stored_set.label or ("Ohne Titel" if ui_lang == "de" else "Untitled"),
+                "preferredTask": stored_set.comparison_view_task or _phenomena_preferred_task(task_counts),
+                "taskSummary": _phenomena_task_summary(task_counts, task_labels),
+                "items": [
+                    {
+                        "task": reference.task,
+                        "item_id": reference.item_id,
+                    }
+                    for reference in stored_set.items
                 ],
             }
         )
@@ -1348,156 +1384,6 @@ def _phenomena_session_options(language_slug: str) -> dict[str, list[dict[str, s
                 }
             )
     return sessions_by_task
-
-
-def build_phenomena_page(ui_lang: str, language_slug: str, query_args: Mapping[str, str]) -> dict[str, Any] | None:
-    language = get_language(language_slug)
-    if language is None:
-        return None
-
-    is_authenticated = bool(getattr(g, "user", None))
-    task_labels = _phenomena_task_labels(language_slug, ui_lang)
-    preset_cards = _phenomena_preset_cards(language_slug, ui_lang)
-    preset_ids = {card["preset_id"] for card in preset_cards}
-    raw_preset_id = _normalize_text(query_args.get("preset_id"))
-    requested_preset_id = raw_preset_id if raw_preset_id in preset_ids else None
-    requested_set_id = _normalize_text(query_args.get("set_id"))
-    requested_task = _normalize_text(query_args.get("task")) or ""
-    if requested_task not in PHENOMENA_ITEM_TASKS:
-        requested_task = ""
-
-    page_notice = None
-    if raw_preset_id and requested_preset_id is None:
-        page_notice = "Unbekanntes preset_id in der URL." if ui_lang == "de" else "Unknown preset_id in the URL."
-
-    sessions_by_task = _phenomena_session_options(language_slug)
-    default_task = requested_task or "wordlist"
-    if not sessions_by_task.get(default_task):
-        default_task = "text" if sessions_by_task.get("text") else default_task
-
-    base_comparison_href = url_for(
-        "public.research_language_page",
-        ui_lang=ui_lang,
-        language_slug=language_slug,
-        page_slug="comparison",
-    )
-    player_href_template = url_for(
-        "public.research_player",
-        ui_lang=ui_lang,
-        language_slug=language_slug,
-        session_id="__SESSION__",
-        task="__TASK__",
-    )
-
-    workspace_mode = "empty"
-    workspace_text = _phenomena_empty_text(ui_lang)
-    if requested_set_id:
-        workspace_mode = "load-set"
-        workspace_text = _phenomena_pending_set_text(ui_lang) if is_authenticated else _phenomena_login_text(ui_lang)
-    elif requested_preset_id:
-        workspace_mode = "open-preset"
-        workspace_text = _phenomena_pending_preset_text(ui_lang) if is_authenticated else _phenomena_login_text(ui_lang)
-
-    return {
-        "title": get_research_page_label("phenomena", ui_lang),
-        "template": "pages/research_phenomena.html",
-        "page_kind": "workbench",
-        "access": "public",
-        "content_header": build_content_header(
-            page_name="research",
-            title=get_research_page_label("phenomena", ui_lang),
-            intro=_phenomena_intro(ui_lang),
-            section_label=get_section_label("research", ui_lang),
-            section_href=url_for("public.research_home", ui_lang=ui_lang),
-            context_mode="language",
-            context_title=_language_context(ui_lang, language_slug)[1],
-            context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
-        ),
-        "page_notice": page_notice,
-        "is_authenticated": is_authenticated,
-        "preset_heading": "Material-Presets" if ui_lang == "de" else "Material presets",
-        "preset_intro": "Hier konfigurieren Sie Material. Verglichen wird anschließend in Comparison." if ui_lang == "de" else "Configure material here, then compare sessions in comparison.",
-        "preset_cards": preset_cards,
-        "workspace": {
-            "title": _phenomena_status_title(ui_lang),
-            "mode": workspace_mode,
-            "empty_title": _phenomena_empty_title(ui_lang),
-            "text": workspace_text,
-            "login_href": _phenomena_login_href(ui_lang, language_slug, preset_id=requested_preset_id, set_id=requested_set_id, task=default_task),
-            "login_label": _phenomena_login_label(ui_lang),
-            "save_label": "Als neues Set speichern" if ui_lang == "de" else "Save as new set",
-            "comparison_label": _phenomena_open_comparison_label(ui_lang),
-            "player_label": _phenomena_open_player_label(ui_lang),
-            "catalog_heading": _phenomena_catalog_heading(ui_lang),
-            "task_options": [
-                {"task": task_key, "label": task_labels[task_key]}
-                for task_key in PHENOMENA_ITEM_TASKS
-                if task_key in task_labels
-            ],
-        },
-        "client_state": {
-            "uiLang": ui_lang,
-            "languageSlug": language_slug,
-            "isAuthenticated": is_authenticated,
-            "requestedPresetId": requested_preset_id,
-            "requestedSetId": requested_set_id,
-            "requestedTask": default_task,
-            "phenomenaPageHref": _phenomena_page_href(ui_lang, language_slug),
-            "loginHref": _phenomena_login_href(ui_lang, language_slug),
-            "comparisonBaseHref": base_comparison_href,
-            "playerHrefTemplate": player_href_template,
-            "createSetHref": "/api/research/sets",
-            "setApiBaseHref": "/api/research/sets",
-            "taskLabels": task_labels,
-            "catalogsByTask": _phenomena_catalog_payload(language_slug, ui_lang),
-            "presets": [
-                {
-                    "presetId": card["preset_id"],
-                    "label": card["label"],
-                    "preferredTask": card["preferred_task"],
-                }
-                for card in preset_cards
-            ],
-            "sessionsByTask": sessions_by_task,
-            "labels": {
-                "statusTitle": _phenomena_status_title(ui_lang),
-                "emptyTitle": _phenomena_empty_title(ui_lang),
-                "emptyText": _phenomena_empty_text(ui_lang),
-                "loginText": _phenomena_login_text(ui_lang),
-                "loginLabel": _phenomena_login_label(ui_lang),
-                "openingPreset": _phenomena_pending_preset_text(ui_lang),
-                "loadingSet": _phenomena_pending_set_text(ui_lang),
-                "openComparison": _phenomena_open_comparison_label(ui_lang),
-                "openPlayer": _phenomena_open_player_label(ui_lang),
-                "addLabel": _phenomena_add_label(ui_lang),
-                "removeLabel": _phenomena_remove_label(ui_lang),
-                "catalogHeading": _phenomena_catalog_heading(ui_lang),
-                "searchPlaceholder": "Nach Nummer oder Text suchen" if ui_lang == "de" else "Search by number or text",
-                "browserEmpty": "Keine passenden Katalogeinträge." if ui_lang == "de" else "No matching catalog entries.",
-                "workspaceReady": "Draft geladen" if ui_lang == "de" else "Draft loaded",
-                "workspaceItems": "Einträge" if ui_lang == "de" else "items",
-                "workspaceSource": "Preset" if ui_lang == "de" else "Preset",
-                "workspaceSetId": "Set-ID" if ui_lang == "de" else "Set ID",
-                "stateDraft": "Draft" if ui_lang == "de" else "Draft",
-                "stateSaved": "Gespeichert" if ui_lang == "de" else "Saved",
-                "saveAsLabel": "Als neues Set speichern" if ui_lang == "de" else "Save as new set",
-                "saveDialogTitle": "Als neues Set speichern" if ui_lang == "de" else "Save as new set",
-                "saveNameLabel": "Set-Name" if ui_lang == "de" else "Set name",
-                "saveHint": "Der aktuelle Arbeitsstand wird als owner-gebundenes neues Set unter diesem Namen gespeichert." if ui_lang == "de" else "The current workspace is saved as a new owner-bound set under this name.",
-                "saveCancel": "Abbrechen" if ui_lang == "de" else "Cancel",
-                "saveSuccessPrefix": "Gespeichert als" if ui_lang == "de" else "Saved as",
-                "saveValidationError": "Bitte geben Sie einen gültigen Set-Namen ein." if ui_lang == "de" else "Please enter a valid set name.",
-                "saveUnavailable": "Dieses Set kann im aktuellen Kontext nicht gespeichert werden." if ui_lang == "de" else "This set cannot be saved in the current context.",
-                "saveAuthError": "Zum Speichern dieses Sets ist eine Anmeldung im owner-gebundenen Kontext erforderlich." if ui_lang == "de" else "Saving this set requires signed-in owner context.",
-                "saveBackendError": "Das Set konnte nicht gespeichert werden." if ui_lang == "de" else "The set could not be saved.",
-                "taskLabel": _task_label(ui_lang),
-                "sessionLabel": "Session" if ui_lang == "de" else "Session",
-                "playerUnavailable": "Keine passende Session für dieses Material verfügbar." if ui_lang == "de" else "No session available for this task.",
-                "saveErrorFallback": "Aktion konnte nicht abgeschlossen werden." if ui_lang == "de" else "Action could not be completed.",
-                "catalogCountLabel": "verfügbare Katalogeinträge" if ui_lang == "de" else "available catalog entries",
-            },
-        },
-    }
 
 
 def _comparison_intro(ui_lang: str) -> str:
@@ -1687,7 +1573,8 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
     if language is None:
         return None
 
-    is_authenticated = bool(getattr(g, "user", None))
+    owner_user_id = _current_owner_user_id()
+    is_authenticated = owner_user_id is not None
     task_labels = _phenomena_task_labels(language_slug, ui_lang)
     requested_set_id = _normalize_text(query_args.get("set_id"))
     raw_view_task = _normalize_text(query_args.get("task")) or ""
@@ -1829,6 +1716,8 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
                 "selectedEmpty": "Noch keine Sprecher:innen ausgewählt." if ui_lang == "de" else "No speakers selected yet.",
                 "stateDraft": "Draft" if ui_lang == "de" else "Draft",
                 "stateSaved": "Gespeichert" if ui_lang == "de" else "Saved",
+                "stateCurated": "curated" if ui_lang == "de" else "curated",
+                "stateCustom": "custom" if ui_lang == "de" else "custom",
                 "downloadClip": _comparison_download_clip_label(ui_lang),
                 "workspaceEmptyItems": "Noch kein Material ausgewählt." if ui_lang == "de" else "No material selected yet.",
                 "workspaceEmptySessions": "Noch keine Sprecher:innen ausgewählt." if ui_lang == "de" else "No speakers selected yet.",

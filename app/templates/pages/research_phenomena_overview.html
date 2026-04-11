@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--workbench pm-content pm-content--workbench pm-research-page" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  <section class="pm-feature-band pm-phenomena-overview" data-phenomena-overview-root>
+    <div class="pm-container pm-container--tinted pm-phenomena-overview__toolbar">
+      <div class="pm-comparison-step-header pm-phenomena-overview__toolbar-inner">
+        <h2 class="pm-comparison-stage-title pm-phenomena-overview__heading">
+          <span class="pm-comparison-stage-title__step">1</span>
+          <span>{{ promat_page.heading|replace('1 ', '', 1) }}</span>
+        </h2>
+
+        <div class="pm-phenomena-overview__controls">
+          <label class="pm-phenomena-field pm-phenomena-field--search pm-phenomena-overview__search-field">
+            <span class="sr-only">{{ promat_page.search_placeholder }}</span>
+            <input class="pm-phenomena-field__input pm-comparison-filter-input" type="search" placeholder="{{ promat_page.search_placeholder }}" data-phenomena-search>
+          </label>
+
+          <button type="button" class="pm-research-button" data-phenomena-new-set>{{ promat_page.new_set_label }}</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pm-container pm-container--tinted pm-phenomena-overview__list-shell" data-phenomena-list-shell>
+      <div class="pm-phenomena-overview__list" data-phenomena-entry-list>
+        {% for entry in promat_page.entries %}
+        <article class="pm-phenomena-overview-card" data-phenomena-entry data-entry-id="{{ entry.entry_id }}" data-kind="{{ entry.kind }}" data-title="{{ entry.title|lower }}">
+          <div class="pm-phenomena-overview-card__body">
+            <h3 class="pm-phenomena-overview-card__title" data-phenomena-entry-title>{{ entry.title }}</h3>
+            <div class="pm-phenomena-overview-card__meta">
+              <span class="pm-comparison-speaker-badge pm-phenomena-badge pm-phenomena-badge--{{ entry.kind }}">{{ entry.status_label }}</span>
+              <span class="pm-phenomena-overview-card__count">{{ entry.item_count }} {{ 'Items' if ui_lang == 'de' else 'items' }}</span>
+            </div>
+          </div>
+
+          <div class="pm-phenomena-overview-card__actions">
+            {% if entry.kind == 'curated' %}
+            <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="{{ entry.open_href }}">{{ 'Ansehen' if ui_lang == 'de' else 'View' }}</a>
+            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-modify-preset="{{ entry.preset_id }}">{{ 'Modifizieren' if ui_lang == 'de' else 'Modify' }}</button>
+            {% else %}
+            <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="{{ entry.open_href }}">{{ 'Bearbeiten' if ui_lang == 'de' else 'Edit' }}</a>
+            <details class="pm-comparison-more-filters pm-phenomena-overflow" data-phenomena-overflow>
+              <summary class="pm-comparison-more-filters__summary pm-phenomena-overflow__toggle" aria-label="{{ 'Weitere Aktionen' if ui_lang == 'de' else 'More actions' }}">⋯</summary>
+              <div class="pm-comparison-more-filters__body pm-phenomena-overflow__menu">
+                <button type="button" class="pm-phenomena-overflow__action" data-phenomena-rename-set="{{ entry.set_id }}">{{ 'Umbenennen' if ui_lang == 'de' else 'Rename' }}</button>
+                <button type="button" class="pm-phenomena-overflow__action pm-phenomena-overflow__action--danger" data-phenomena-delete-set="{{ entry.set_id }}">{{ 'Löschen' if ui_lang == 'de' else 'Delete' }}</button>
+              </div>
+            </details>
+            {% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="pm-container pm-container--tinted pm-phenomena-empty-state" data-phenomena-empty-state hidden>
+      <h3 class="pm-phenomena-empty-state__title">{{ promat_page.empty_title }}</h3>
+      <p class="pm-phenomena-empty-state__text">{{ promat_page.empty_text }}</p>
+    </div>
+  </section>
+
+  <dialog class="md3-dialog" data-phenomena-rename-dialog role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-rename-title">
+    <div class="md3-dialog__container">
+      <div class="md3-dialog__surface">
+        <header class="md3-dialog__header">
+          <h2 id="pm-phenomena-rename-title" class="md3-title-large md3-dialog__title">{{ 'Set umbenennen' if ui_lang == 'de' else 'Rename set' }}</h2>
+        </header>
+        <div class="md3-dialog__content md3-stack--dialog">
+          <form id="pm-phenomena-rename-form" class="md3-form" data-phenomena-rename-form>
+            <div class="md3-outlined-textfield md3-outlined-textfield--block">
+              <input type="text" id="pm-phenomena-rename-input" class="md3-outlined-textfield__input" data-phenomena-rename-input required>
+              <label class="md3-outlined-textfield__label" for="pm-phenomena-rename-input">{{ 'Titel' if ui_lang == 'de' else 'Title' }}</label>
+              <div class="md3-outlined-textfield__outline">
+                <div class="md3-outlined-textfield__outline-start"></div>
+                <div class="md3-outlined-textfield__outline-notch"></div>
+                <div class="md3-outlined-textfield__outline-end"></div>
+              </div>
+            </div>
+          </form>
+          <p class="pm-workspace-dialog-message" data-phenomena-rename-error hidden></p>
+        </div>
+        <div class="md3-dialog__actions">
+          <button type="button" class="md3-button md3-button--text" data-phenomena-rename-cancel>{{ 'Abbrechen' if ui_lang == 'de' else 'Cancel' }}</button>
+          <button type="submit" class="md3-button md3-button--filled" form="pm-phenomena-rename-form">{{ 'Speichern' if ui_lang == 'de' else 'Save' }}</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="md3-dialog" data-phenomena-delete-dialog role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-delete-title">
+    <div class="md3-dialog__container">
+      <div class="md3-dialog__surface">
+        <header class="md3-dialog__header">
+          <h2 id="pm-phenomena-delete-title" class="md3-title-large md3-dialog__title">{{ 'Eigenes Set löschen?' if ui_lang == 'de' else 'Delete custom set?' }}</h2>
+        </header>
+        <div class="md3-dialog__content md3-stack--dialog">
+          <p class="md3-body-medium" data-phenomena-delete-message></p>
+        </div>
+        <div class="md3-dialog__actions">
+          <button type="button" class="md3-button md3-button--text" data-phenomena-delete-cancel>{{ 'Abbrechen' if ui_lang == 'de' else 'Cancel' }}</button>
+          <button type="button" class="md3-button md3-button--filled" data-phenomena-delete-confirm>{{ 'Löschen' if ui_lang == 'de' else 'Delete' }}</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script id="pm-phenomena-overview-state" type="application/json">{{ promat_page.client_state | tojson }}</script>
+<script type="module" src="{{ url_for('static', filename='js/pages/research-phenomena-overview.js') }}"></script>
+{% endblock %}
