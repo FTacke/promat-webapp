@@ -44,4 +44,7 @@ BRANDING: dict[str, str] = {
 
 def format_page_title(page_label: str | None = None) -> str:
     """Return a consistently formatted document title."""
-    return BRANDING["app_display_name"]
+    normalized_label = (page_label or "").strip()
+    if not normalized_label:
+        return BRANDING["app_display_name"]
+    return f"{normalized_label} {BRANDING['page_title_separator']} {BRANDING['app_display_name']}"

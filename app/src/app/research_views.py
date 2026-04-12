@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import urlencode
@@ -11,12 +12,13 @@ from urllib.parse import urlencode
 from flask import g, url_for
 
 from .content_navigation import build_content_header
-from .research_presets import load_phenomena_presets, load_player_config, load_task_catalogs
+from .i18n import translate, translate_many
+from .research_presets import TEXT_RENDER_MODES, load_phenomena_presets, load_task_catalogs
 from .research_sets import (
     ResearchSetNotFoundError,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
-    list_owned_sets,
+    list_selectable_owned_sets,
     load_owned_set,
 )
 from .research_sessions import (
@@ -88,8 +90,27 @@ PHENOMENA_ITEM_TASKS: tuple[str, ...] = ("wordlist", "text")
 COMPARISON_VIEW_TASKS: tuple[str, ...] = ("all", "wordlist", "text")
 
 
+@dataclass(frozen=True)
+class NormalizedPlayerSource:
+    task_key: str
+    source_kind: str
+    items_title: str
+    default_render_mode: str | None
+    render_mode: str | None
+    allowed_render_modes: tuple[str, ...]
+    primary_audio_mode: str
+    supports_item_audio: bool
+    supports_full_audio: bool
+    supports_text_view: bool
+    is_set_excerpt: bool
+
+
 def _label(mapping: dict[str, dict[str, str]], key: str, ui_lang: str) -> str:
     return mapping.get(key, mapping.get("unknown", {"de": key, "en": key})).get(ui_lang, key)
+
+
+def _t(ui_lang: str, key: str, **kwargs: object) -> str:
+    return translate(ui_lang, key, **kwargs)
 
 
 def _format_level(session: SessionRecord, ui_lang: str) -> str:
@@ -129,35 +150,35 @@ def _format_target_country_stay(stays_in_target_country: bool | None, ui_lang: s
 
 
 def _target_country_stay_label(ui_lang: str) -> str:
-    return "Sprachaufenthalte" if ui_lang == "de" else "Stays in target-language country"
+    return _t(ui_lang, "common.labels.target_country_stays")
 
 
 def _standard_variety_label(ui_lang: str) -> str:
-    return "Standardvarietät" if ui_lang == "de" else "Standard variety"
+    return _t(ui_lang, "common.labels.standard_variety")
 
 
 def _origin_country_label(ui_lang: str) -> str:
-    return "Herkunftsland" if ui_lang == "de" else "Origin country"
+    return _t(ui_lang, "common.labels.origin_country")
 
 
 def _origin_region_label(ui_lang: str) -> str:
-    return "Herkunftsregion" if ui_lang == "de" else "Origin region"
+    return _t(ui_lang, "common.labels.origin_region")
 
 
 def _recorded_by_label(ui_lang: str) -> str:
-    return "Explorator:in" if ui_lang == "de" else "Recorded by"
+    return _t(ui_lang, "common.labels.recorded_by")
 
 
 def _mother_l1_label(ui_lang: str) -> str:
-    return "L1 der Mutter" if ui_lang == "de" else "Mother L1"
+    return _t(ui_lang, "common.labels.mother_l1")
 
 
 def _father_l1_label(ui_lang: str) -> str:
-    return "L1 des Vaters" if ui_lang == "de" else "Father L1"
+    return _t(ui_lang, "common.labels.father_l1")
 
 
 def _additional_languages_label(ui_lang: str) -> str:
-    return "Zusätzliche Sprachen" if ui_lang == "de" else "Additional languages"
+    return _t(ui_lang, "common.labels.additional_languages")
 
 
 def _humanize_value(value: str | None) -> str:
@@ -205,7 +226,7 @@ def _build_exposure_row(session: SessionRecord, ui_lang: str) -> dict[str, Any]:
                 parts.append(exposure_type)
             entries.append(
                 {
-                    "text": " · ".join(parts) if parts else ("Sprachaufenthalt" if ui_lang == "de" else "Language stay"),
+                    "text": " · ".join(parts) if parts else _t(ui_lang, "research.exposure.language_stay"),
                     "note": entry.exposure_notes or "",
                 }
             )
@@ -215,17 +236,17 @@ def _build_exposure_row(session: SessionRecord, ui_lang: str) -> dict[str, Any]:
         return {
             "label": label,
             "kind": "exposure",
-            "value": "Keine erfassten Sprachaufenthalte" if ui_lang == "de" else "No recorded stays in the target-language country",
+            "value": _t(ui_lang, "research.exposure.none"),
         }
 
     if session.stays_in_target_country is True:
         return {
             "label": label,
             "kind": "exposure",
-            "value": "Erfasst, ohne Detailangaben" if ui_lang == "de" else "Recorded without detailed stay information",
+            "value": _t(ui_lang, "research.exposure.recorded_without_details"),
         }
 
-    return {"label": label, "kind": "exposure", "value": "Nicht erfasst" if ui_lang == "de" else "Not recorded"}
+    return {"label": label, "kind": "exposure", "value": _t(ui_lang, "research.exposure.not_recorded")}
 
 
 def _uses_native_filters(selected_group: str) -> bool:
@@ -1128,65 +1149,59 @@ def build_speaker_profile_page(
 
 
 def _phenomena_intro(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Materialseite für kuratierte Presets und owner-gebundene Auswahl. Sessions verglichen werden anschließend in Comparison."
-    return "Curated preset catalog with draft-backed work state for mixed wordlist and sentence-list selections."
+    return _t(ui_lang, "research.phenomena.intro")
 
 
 def _phenomena_status_title(ui_lang: str) -> str:
-    return "Materialkonfiguration" if ui_lang == "de" else "Material configuration"
+    return _t(ui_lang, "research.comparison.material_title")
 
 
 def _phenomena_empty_title(ui_lang: str) -> str:
-    return "Noch kein Material aktiv" if ui_lang == "de" else "No material active yet"
+    return _t(ui_lang, "research.comparison.empty_title")
 
 
 def _phenomena_empty_text(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Öffnen Sie ein Preset, um Material als owner-gebundenen Arbeitsstand zu konfigurieren."
-    return "Open a preset to create an owner-bound draft and continue editing the selection."
+    return _t(ui_lang, "research.phenomena.empty_text")
 
 
 def _phenomena_login_text(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Material-Presets bleiben sichtbar, aber Set-Laden und Bearbeitung bleiben an den angemeldeten Owner gebunden."
-    return "The preset catalog and corpus overview are visible, but draft creation, set loading, and editing remain bound to the signed-in owner."
+    return _t(ui_lang, "research.phenomena.login_text")
 
 
 def _phenomena_pending_preset_text(ui_lang: str) -> str:
-    return "Preset wird geöffnet ..." if ui_lang == "de" else "Opening preset ..."
+    return _t(ui_lang, "research.phenomena.pending_preset_text")
 
 
 def _phenomena_pending_set_text(ui_lang: str) -> str:
-    return "Set wird geladen ..." if ui_lang == "de" else "Loading set ..."
+    return _t(ui_lang, "research.comparison.pending_set_text")
 
 
 def _phenomena_open_label(ui_lang: str) -> str:
-    return "Preset öffnen" if ui_lang == "de" else "Open preset"
+    return _t(ui_lang, "research.comparison.edit_items_label")
 
 
 def _phenomena_login_label(ui_lang: str) -> str:
-    return "Anmelden und öffnen" if ui_lang == "de" else "Sign in and open"
+    return _t(ui_lang, "research.comparison.login_label")
 
 
 def _phenomena_add_label(ui_lang: str) -> str:
-    return "Hinzufügen" if ui_lang == "de" else "Add"
+    return _t(ui_lang, "common.actions.add")
 
 
 def _phenomena_remove_label(ui_lang: str) -> str:
-    return "Entfernen" if ui_lang == "de" else "Remove"
+    return _t(ui_lang, "common.actions.remove")
 
 
 def _phenomena_open_player_label(ui_lang: str) -> str:
-    return "Im Player öffnen" if ui_lang == "de" else "Open in player"
+    return _t(ui_lang, "research.comparison.open_player")
 
 
 def _phenomena_open_comparison_label(ui_lang: str) -> str:
-    return "Sessions vergleichen" if ui_lang == "de" else "Compare sessions"
+    return get_research_page_label("comparison", ui_lang)
 
 
 def _phenomena_catalog_heading(ui_lang: str) -> str:
-    return "Task-Kataloge" if ui_lang == "de" else "Task catalogs"
+    return _t(ui_lang, "research.comparison.material_title")
 
 
 def _phenomena_page_href(
@@ -1221,16 +1236,10 @@ def _phenomena_login_href(
 
 
 def _phenomena_task_labels(language_slug: str, ui_lang: str) -> dict[str, str]:
-    player_config = load_player_config(language_slug)
+    del language_slug
     labels: dict[str, str] = {}
     for task_key in PHENOMENA_ITEM_TASKS:
-        task = get_research_task(task_key)
-        if task is None:
-            continue
-        if task_key == "text":
-            labels[task_key] = player_config.text.display_label
-            continue
-        labels[task_key] = task.short_label(ui_lang)
+        labels[task_key] = _t(ui_lang, f"common.task.{task_key}")
     return labels
 
 
@@ -1341,7 +1350,7 @@ def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[
         return presets
 
     try:
-        saved_sets = list_owned_sets(owner_user_id=owner_user_id, corpus_language=language_slug)
+        saved_sets = list_selectable_owned_sets(owner_user_id=owner_user_id, corpus_language=language_slug)
     except (ResearchSetStorageUnavailableError, ResearchSetValidationError):
         return presets
 
@@ -1355,8 +1364,8 @@ def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[
                 "presetId": f"saved:{stored_set.set_id}",
                 "kind": "custom",
                 "setId": stored_set.set_id,
-                "optionLabel": f"{stored_set.label or ('Ohne Titel' if ui_lang == 'de' else 'Untitled')} · custom",
-                "label": stored_set.label or ("Ohne Titel" if ui_lang == "de" else "Untitled"),
+                "optionLabel": f"{stored_set.label or _t(ui_lang, 'common.untitled')} · {_t(ui_lang, 'common.status.custom')}",
+                "label": stored_set.label or _t(ui_lang, "common.untitled"),
                 "preferredTask": stored_set.comparison_view_task or _phenomena_preferred_task(task_counts),
                 "taskSummary": _phenomena_task_summary(task_counts, task_labels),
                 "items": [
@@ -1387,76 +1396,72 @@ def _phenomena_session_options(language_slug: str) -> dict[str, list[dict[str, s
 
 
 def _comparison_intro(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Items auswählen, Sprecher:innen auswählen, in der Matrix hören und laden. Sets entstehen unter Phänomene."
-    return "Select items, choose speakers, and work in one comparison matrix. Sets are created under phenomena."
+    return _t(ui_lang, "research.comparison.intro")
 
 
 def _comparison_status_title(ui_lang: str) -> str:
-    return "Material" if ui_lang == "de" else "Material"
+    return _t(ui_lang, "research.comparison.status_title")
 
 
 def _comparison_empty_title(ui_lang: str) -> str:
-    return "Items auswählen" if ui_lang == "de" else "Select items"
+    return _t(ui_lang, "research.comparison.empty_title")
 
 
 def _comparison_empty_text(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Wortliste und Satzliste stehen hier zum Vergleichen bereit. Eigene Ausschnitte passen Sie in Phänomene an."
-    return "Wordlist and sentence-list material are available here for comparison. Adjust curated item selections in phenomena."
+    return _t(ui_lang, "research.comparison.empty_text")
 
 
 def _comparison_login_text(ui_lang: str) -> str:
-    return ""
+    return _t(ui_lang, "research.comparison.login_text")
 
 
 def _comparison_pending_set_text(ui_lang: str) -> str:
-    return "Set wird geladen ..." if ui_lang == "de" else "Loading set ..."
+    return _t(ui_lang, "research.comparison.pending_set_text")
 
 
 def _comparison_create_label(ui_lang: str) -> str:
-    return "Vergleich starten" if ui_lang == "de" else "Start comparison"
+    return _t(ui_lang, "research.comparison.create_label")
 
 
 def _comparison_login_label(ui_lang: str) -> str:
-    return "Anmelden" if ui_lang == "de" else "Sign in"
+    return _t(ui_lang, "research.comparison.login_label")
 
 
 def _comparison_edit_items_label(ui_lang: str) -> str:
-    return "In Phänomene anpassen" if ui_lang == "de" else "Adjust in phenomena"
+    return _t(ui_lang, "research.comparison.phenomena_choose_label")
 
 
 def _comparison_open_player_label(ui_lang: str) -> str:
-    return "Im Player öffnen" if ui_lang == "de" else "Open in player"
+    return _t(ui_lang, "research.comparison.open_player")
 
 
 def _comparison_download_clip_label(ui_lang: str) -> str:
-    return "MP3 laden" if ui_lang == "de" else "Download MP3"
+    return _t(ui_lang, "research.comparison.download_clip")
 
 
 def _comparison_add_session_label(ui_lang: str) -> str:
-    return "Hinzufügen" if ui_lang == "de" else "Add"
+    return _t(ui_lang, "research.comparison.add_session")
 
 
 def _comparison_remove_session_label(ui_lang: str) -> str:
-    return "Entfernen" if ui_lang == "de" else "Remove"
+    return _t(ui_lang, "research.comparison.remove_session")
 
 
 def _comparison_play_row_label(ui_lang: str) -> str:
-    return "Zeile hören" if ui_lang == "de" else "Play row"
+    return _t(ui_lang, "research.comparison.play_row")
 
 
 def _comparison_play_clip_label(ui_lang: str) -> str:
-    return "Clip hören" if ui_lang == "de" else "Play clip"
+    return _t(ui_lang, "research.comparison.play_clip")
 
 
 def _comparison_stop_label(ui_lang: str) -> str:
-    return "Stoppen" if ui_lang == "de" else "Stop"
+    return _t(ui_lang, "research.comparison.stop")
 
 
 def _comparison_view_task_label(view_task: str, task_labels: Mapping[str, str], ui_lang: str) -> str:
     if view_task == "all":
-        return "Alle Materialien" if ui_lang == "de" else "All materials"
+        return _t(ui_lang, "research.comparison.default_set_label")
     return task_labels.get(view_task, view_task)
 
 
@@ -1521,9 +1526,9 @@ def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[s
                 }
             )
 
-        context_label = "Varietät" if session.is_native and ui_lang == "de" else "Niveau" if ui_lang == "de" else "Variety" if session.is_native else "Level"
+        context_label = _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "research.comparison.level_label")
         context_value = _format_standard_variety_value(session.standard_variety, ui_lang) if session.is_native else _format_level(session, ui_lang)
-        detail_label = _origin_country_label(ui_lang) if session.is_native else "L1"
+        detail_label = _origin_country_label(ui_lang) if session.is_native else _t(ui_lang, "common.labels.l1_short")
         detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
         level_value = "-" if session.is_native else (_format_level(session, ui_lang) or "-")
         l1_value = "-" if session.is_native else (session.l1 or "-")
@@ -1542,7 +1547,7 @@ def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[s
                 "label": session.person_id,
                 "personId": session.person_id,
                 "speakerTypeKey": session.speaker_type,
-                "speakerTypeLabel": ("Native" if ui_lang == "de" else "Native") if session.is_native else _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
+                "speakerTypeLabel": _t(ui_lang, "research.comparison.native_short") if session.is_native else _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
                 "accentModifier": _session_accent_modifier(session),
                 "isNative": session.is_native,
                 "contextLabel": context_label,
@@ -1580,7 +1585,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
     raw_view_task = _normalize_text(query_args.get("task")) or ""
     requested_view_task = raw_view_task if raw_view_task in COMPARISON_VIEW_TASKS else ""
     if raw_view_task and not requested_view_task:
-        page_notice = "Unbekannter task-Filter in der URL." if ui_lang == "de" else "Unknown task filter in the URL."
+        page_notice = _t(ui_lang, "research.comparison.unknown_task_filter")
     else:
         page_notice = None
 
@@ -1653,184 +1658,196 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
             "catalogsByTask": _phenomena_catalog_payload(language_slug, ui_lang),
             "sessionCatalog": _comparison_session_catalog(language_slug, ui_lang),
             "labels": {
-                "statusTitle": _comparison_status_title(ui_lang),
-                "emptyTitle": _comparison_empty_title(ui_lang),
-                "emptyText": _comparison_empty_text(ui_lang),
-                "loginText": _comparison_login_text(ui_lang),
-                "loginLabel": _comparison_login_label(ui_lang),
-                "loadingSet": _comparison_pending_set_text(ui_lang),
-                "createLabel": _comparison_create_label(ui_lang),
-                "editItemsLabel": _comparison_edit_items_label(ui_lang),
-                "openPlayer": _comparison_open_player_label(ui_lang),
-                "addSessionLabel": "Sprecher:in auswählen" if ui_lang == "de" else "Select speaker",
-                "removeSessionLabel": "Sprecher:in abwählen" if ui_lang == "de" else "Deselect speaker",
-                "playRowLabel": _comparison_play_row_label(ui_lang),
-                "playClipLabel": _comparison_play_clip_label(ui_lang),
-                "stopLabel": _comparison_stop_label(ui_lang),
-                "materialTitle": "Material" if ui_lang == "de" else "Material",
-                "materialText": "Wortliste und Satzliste stehen hier zum Vergleichen bereit." if ui_lang == "de" else "Wordlist and sentence-list material are ready here for comparison.",
-                "materialPrompt": "Items auswählen" if ui_lang == "de" else "Select items",
-                "materialLoadingTitle": "Wortliste wird vorbereitet" if ui_lang == "de" else "Preparing wordlist",
-                "materialLoadingText": "Die Wortliste wird vorbereitet." if ui_lang == "de" else "Preparing the default wordlist.",
-                "setSelectLabel": "Set wählen" if ui_lang == "de" else "Choose set",
-                "setSelectInfoLabel": "Info zu Sets" if ui_lang == "de" else "Set info",
-                "setSelectInfoText": "Sets lassen sich unter „Phänomene“ individuell erstellen und anpassen." if ui_lang == "de" else "Sets can be created and adjusted individually under “Phenomena”.",
-                "sessionPanelTitle": "Sprecher:innen auswählen" if ui_lang == "de" else "Select speakers",
-                "sessionPanelText": "" if ui_lang == "de" else "",
-                "allSessionsTitle": "Verfügbar" if ui_lang == "de" else "Available",
-                "allSessionsText": "" if ui_lang == "de" else "",
-                "selectedSessionsTitle": "Ausgewählt" if ui_lang == "de" else "Selected",
-                "selectedSessionsText": "" if ui_lang == "de" else "",
-                "itemsTitle": "Item" if ui_lang == "de" else "Item",
-                "matrixTitle": "Matrix" if ui_lang == "de" else "Matrix",
-                "controlsTitle": "Clip-Wiedergabe" if ui_lang == "de" else "Clip playback",
-                "volumeLabel": _player_volume_label(ui_lang),
-                "speedLabel": _player_speed_label(ui_lang),
-                "workspaceReady": "Draft geladen" if ui_lang == "de" else "Draft loaded",
-                "workspaceItems": "Einträge" if ui_lang == "de" else "items",
-                "workspaceSpeakers": "Sprecher:innen" if ui_lang == "de" else "speakers",
-                "workspaceSetId": "Set-ID" if ui_lang == "de" else "Set ID",
-                "workspacePreset": "Preset" if ui_lang == "de" else "Preset",
-                "defaultSetLabel": "Alle Items" if ui_lang == "de" else "All items",
-                "fullListLabel": "Alle Items" if ui_lang == "de" else "All items",
-                "fullTextLabel": "Ganzer Text" if ui_lang == "de" else "Full text",
-                "customSetLabel": "Eigene Auswahl" if ui_lang == "de" else "Custom selection",
-                "curatedMaterialLabel": "Auswahl aus Phänomene" if ui_lang == "de" else "Selection from phenomena",
-                "phenomenaChooseLabel": "In Phänomene anpassen" if ui_lang == "de" else "Adjust in phenomena",
-                "speakerGroupLabel": "Sprechergruppe" if ui_lang == "de" else "Speaker group",
-                "levelLabel": "Niveau" if ui_lang == "de" else "Level",
-                "l1ShortLabel": "L1" if ui_lang == "de" else "L1",
-                "speakerIdLabel": "Sprecher-ID" if ui_lang == "de" else "Speaker ID",
-                "searchPlaceholder": "Sprecher-ID suchen" if ui_lang == "de" else "Search speaker ID",
-                "moreFiltersLabel": "Weitere Filter" if ui_lang == "de" else "More filters",
-                "l1FilterLabel": "L1 wählen" if ui_lang == "de" else "Choose L1",
-                "genderFilterLabel": "Geschlecht" if ui_lang == "de" else "Gender",
-                "exposureFilterLabel": "Sprachaufenthalt" if ui_lang == "de" else "Language stay",
-                "filterAllLabel": "Alle" if ui_lang == "de" else "All",
-                "exposureYesLabel": "Mit Sprachaufenthalt" if ui_lang == "de" else "With language stay",
-                "exposureNoLabel": "Ohne Sprachaufenthalt" if ui_lang == "de" else "Without language stay",
-                "clearFiltersLabel": "Zurücksetzen" if ui_lang == "de" else "Reset",
-                "speakerSingularLabel": "Sprecher:in" if ui_lang == "de" else "speaker",
-                "speakerPluralLabel": "Sprecher:innen" if ui_lang == "de" else "speakers",
-                "availableEmptyFiltered": "Keine passenden Sprecher:innen." if ui_lang == "de" else "No matching speakers.",
-                "selectedEmpty": "Noch keine Sprecher:innen ausgewählt." if ui_lang == "de" else "No speakers selected yet.",
-                "stateDraft": "Draft" if ui_lang == "de" else "Draft",
-                "stateSaved": "Gespeichert" if ui_lang == "de" else "Saved",
-                "stateCurated": "curated" if ui_lang == "de" else "curated",
-                "stateCustom": "custom" if ui_lang == "de" else "custom",
-                "downloadClip": _comparison_download_clip_label(ui_lang),
-                "workspaceEmptyItems": "Noch kein Material ausgewählt." if ui_lang == "de" else "No material selected yet.",
-                "workspaceEmptySessions": "Noch keine Sprecher:innen ausgewählt." if ui_lang == "de" else "No speakers selected yet.",
-                "workspaceNoRows": "Für den aktuellen Filter sind keine Items sichtbar." if ui_lang == "de" else "No items are visible for the current filter.",
-                "workspaceNoMatches": "Für diese Item-Session-Kombination liegt noch kein Split-Clip vor." if ui_lang == "de" else "No split clip is currently available for this item-session combination.",
-                "clipUnavailable": "Dieser Clip ist aktuell nicht abspielbar." if ui_lang == "de" else "This clip is currently not playable.",
-                "taskLabel": _task_label(ui_lang),
-                "sessionLabel": "Session" if ui_lang == "de" else "Session",
-                "saveErrorFallback": "Aktion konnte nicht abgeschlossen werden." if ui_lang == "de" else "Action could not be completed.",
-                "playbackIdle": "Kein Clip aktiv." if ui_lang == "de" else "No clip playing.",
-                "playbackLoading": "Clip wird geladen ..." if ui_lang == "de" else "Loading clip ...",
-                "playbackRowPrefix": "Zeile" if ui_lang == "de" else "Row",
-                "playbackSpeakerPrefix": "Sprecher:in" if ui_lang == "de" else "Speaker",
-                "clipMissing": "Kein Clip" if ui_lang == "de" else "No clip",
+                **translate_many(
+                    ui_lang,
+                    {
+                        "statusTitle": "research.comparison.status_title",
+                        "emptyTitle": "research.comparison.empty_title",
+                        "emptyText": "research.comparison.empty_text",
+                        "loginText": "research.comparison.login_text",
+                        "loginLabel": "research.comparison.login_label",
+                        "loadingSet": "research.comparison.pending_set_text",
+                        "createLabel": "research.comparison.create_label",
+                        "editItemsLabel": "research.comparison.edit_items_label",
+                        "openPlayer": "research.comparison.open_player",
+                        "addSessionLabel": "research.comparison.add_session",
+                        "removeSessionLabel": "research.comparison.remove_session",
+                        "playRowLabel": "research.comparison.play_row",
+                        "playClipLabel": "research.comparison.play_clip",
+                        "stopLabel": "research.comparison.stop",
+                        "materialTitle": "research.comparison.material_title",
+                        "materialText": "research.comparison.material_text",
+                        "materialPrompt": "research.comparison.material_prompt",
+                        "materialLoadingTitle": "research.comparison.material_loading_title",
+                        "materialLoadingText": "research.comparison.material_loading_text",
+                        "setSelectLabel": "research.comparison.set_select_label",
+                        "setSelectInfoLabel": "research.comparison.set_select_info_label",
+                        "setSelectInfoText": "research.comparison.set_select_info_text",
+                        "sessionPanelTitle": "research.comparison.session_panel_title",
+                        "allSessionsTitle": "research.comparison.all_sessions_title",
+                        "selectedSessionsTitle": "research.comparison.selected_sessions_title",
+                        "itemsTitle": "research.comparison.items_title",
+                        "matrixTitle": "research.comparison.matrix_title",
+                        "controlsTitle": "research.comparison.controls_title",
+                        "volumeLabel": "research.player.volume",
+                        "speedLabel": "research.player.speed",
+                        "workspaceReady": "research.comparison.workspace_ready",
+                        "workspaceItems": "research.comparison.workspace_items",
+                        "workspaceSpeakers": "research.comparison.workspace_speakers",
+                        "workspaceSetId": "research.comparison.workspace_set_id",
+                        "workspacePreset": "research.comparison.workspace_preset",
+                        "defaultSetLabel": "research.comparison.default_set_label",
+                        "fullListLabel": "research.comparison.full_list_label",
+                        "fullTextLabel": "research.comparison.full_text_label",
+                        "customSetLabel": "research.comparison.custom_set_label",
+                        "curatedMaterialLabel": "research.comparison.curated_material_label",
+                        "phenomenaChooseLabel": "research.comparison.phenomena_choose_label",
+                        "speakerGroupLabel": "research.comparison.speaker_group_label",
+                        "levelLabel": "research.comparison.level_label",
+                        "l1ShortLabel": "research.comparison.l1_short_label",
+                        "speakerIdLabel": "research.comparison.speaker_id_label",
+                        "searchPlaceholder": "research.comparison.search_placeholder",
+                        "moreFiltersLabel": "research.comparison.more_filters_label",
+                        "l1FilterLabel": "research.comparison.l1_filter_label",
+                        "genderFilterLabel": "research.comparison.gender_filter_label",
+                        "exposureFilterLabel": "research.comparison.exposure_filter_label",
+                        "filterAllLabel": "research.comparison.filter_all_label",
+                        "exposureYesLabel": "research.comparison.exposure_yes_label",
+                        "exposureNoLabel": "research.comparison.exposure_no_label",
+                        "clearFiltersLabel": "research.comparison.clear_filters_label",
+                        "speakerSingularLabel": "research.comparison.speaker_singular",
+                        "speakerPluralLabel": "research.comparison.speaker_plural",
+                        "availableEmptyFiltered": "research.comparison.available_empty_filtered",
+                        "selectedEmpty": "research.comparison.selected_empty",
+                        "stateDraft": "research.comparison.state_draft",
+                        "stateSaved": "research.comparison.state_saved",
+                        "stateCurated": "research.comparison.state_curated",
+                        "stateCustom": "research.comparison.state_custom",
+                        "downloadClip": "research.comparison.download_clip",
+                        "workspaceEmptyItems": "research.comparison.workspace_empty_items",
+                        "workspaceEmptySessions": "research.comparison.workspace_empty_sessions",
+                        "workspaceNoRows": "research.comparison.workspace_no_rows",
+                        "workspaceNoMatches": "research.comparison.workspace_no_matches",
+                        "clipUnavailable": "research.comparison.clip_unavailable",
+                        "taskLabel": "research.comparison.task_label",
+                        "sessionLabel": "research.comparison.session_label",
+                        "requestFailed": "common.errors.request_failed",
+                        "saveHint": "research.comparison.save_hint",
+                        "saveValidationError": "research.comparison.save_validation_error",
+                        "saveSuccessPrefix": "research.comparison.save_success_prefix",
+                        "saveBackendError": "research.comparison.save_backend_error",
+                        "saveErrorFallback": "research.comparison.save_error_fallback",
+                        "playbackIdle": "research.comparison.playback_idle",
+                        "playbackLoading": "research.comparison.playback_loading",
+                        "playbackRowPrefix": "research.comparison.playback_row_prefix",
+                        "playbackSpeakerPrefix": "research.comparison.playback_speaker_prefix",
+                        "clipMissing": "research.comparison.clip_missing",
+                    },
+                ),
+                "sessionPanelText": "",
+                "allSessionsText": "",
+                "selectedSessionsText": "",
+                "learnersTitle": _t(ui_lang, "research.comparison.learners_title"),
+                "nativeTitle": _t(ui_lang, "research.comparison.native_title"),
+                "nativeShort": _t(ui_lang, "research.comparison.native_short"),
+                "selectedTitle": _t(ui_lang, "research.comparison.selected_title"),
+                "noscript": _t(ui_lang, "research.comparison.noscript"),
+                "untitled": _t(ui_lang, "common.untitled"),
             },
         },
     }
 
 
 def _recording_date_label(ui_lang: str) -> str:
-    return "Aufnahmedatum" if ui_lang == "de" else "Recording date"
+    return _t(ui_lang, "research.player.recording_date")
 
 
 def _task_label(ui_lang: str) -> str:
-    return "Aufgabe" if ui_lang == "de" else "Task"
+    return _t(ui_lang, "research.player.task_switch")
 
 
 def _player_available_label(ui_lang: str) -> str:
-    return "Verfügbar" if ui_lang == "de" else "Available"
+    return _t(ui_lang, "research.player.available")
 
 
 def _player_current_label(ui_lang: str) -> str:
-    return "Aktive Aufgabe" if ui_lang == "de" else "Current task"
+    return _t(ui_lang, "research.player.current_task")
 
 
 def _player_not_ready_label(ui_lang: str) -> str:
-    return "Noch nicht im MVP" if ui_lang == "de" else "Not yet in MVP"
+    return _t(ui_lang, "research.player.not_ready")
 
 
 def _player_artifacts_missing_label(ui_lang: str) -> str:
-    return "Keine verarbeitbaren Player-Artefakte" if ui_lang == "de" else "No playable artifacts"
+    return _t(ui_lang, "research.player.artifacts_missing")
 
 
 def _player_play_label(ui_lang: str) -> str:
-    return "Wiedergabe starten" if ui_lang == "de" else "Start playback"
+    return _t(ui_lang, "research.player.play")
 
 
 def _player_pause_label(ui_lang: str) -> str:
-    return "Pausieren" if ui_lang == "de" else "Pause"
+    return _t(ui_lang, "research.player.pause")
 
 
 def _player_sequence_toggle_label(ui_lang: str) -> str:
-    return "Beide abspielen" if ui_lang == "de" else "Play both"
+    return _t(ui_lang, "research.player.play_both")
 
 
 def _player_session_switch_title(ui_lang: str) -> str:
-    return "Sessions und Vergleich" if ui_lang == "de" else "Sessions and comparison"
+    return _t(ui_lang, "research.player.sessions_and_comparison")
 
 
 def _player_session_switch_hint(ui_lang: str) -> str:
-    return (
-        "Primäre Session und optionale Vergleichssession bleiben im selben Player."
-        if ui_lang == "de"
-        else "Primary session and optional comparison session stay inside the same player."
-    )
+    return _t(ui_lang, "research.player.sessions_and_comparison_hint")
 
 
 def _player_primary_session_label(ui_lang: str) -> str:
-    return "Primäre Session" if ui_lang == "de" else "Primary session"
+    return _t(ui_lang, "research.player.primary_session")
 
 
 def _player_compare_session_label(ui_lang: str) -> str:
-    return "Vergleichssession" if ui_lang == "de" else "Comparison session"
+    return _t(ui_lang, "research.player.compare_session")
 
 
 def _player_compare_disabled_option(ui_lang: str) -> str:
-    return "Kein Vergleich" if ui_lang == "de" else "No comparison"
+    return _t(ui_lang, "research.player.no_comparison")
 
 
 def _player_compare_add_label(ui_lang: str) -> str:
-    return "Vergleich hinzufügen" if ui_lang == "de" else "Add comparison"
+    return _t(ui_lang, "research.player.add_comparison")
 
 
 def _player_compare_remove_label(ui_lang: str) -> str:
-    return "Vergleich entfernen" if ui_lang == "de" else "Remove comparison"
+    return _t(ui_lang, "research.player.remove_comparison")
 
 
 def _player_compare_close_label(ui_lang: str) -> str:
-    return "Vergleich schließen" if ui_lang == "de" else "Close comparison"
+    return _t(ui_lang, "research.player.close_comparison")
 
 
 def _player_compare_picker_title(ui_lang: str) -> str:
-    return "Vergleichssession wählen" if ui_lang == "de" else "Choose comparison session"
+    return _t(ui_lang, "research.player.choose_comparison_session")
 
 
 def _player_session_switcher_label(ui_lang: str, role_key: str) -> str:
     if role_key == "secondary":
-        return "Vergleichssession wechseln" if ui_lang == "de" else "Change comparison session"
-    return "Primäre Session wechseln" if ui_lang == "de" else "Change primary session"
+        return _t(ui_lang, "research.player.change_compare_session")
+    return _t(ui_lang, "research.player.change_primary_session")
 
 
 def _player_compare_placeholder_badge(ui_lang: str) -> str:
-    return "Noch offen" if ui_lang == "de" else "Pending"
+    return _t(ui_lang, "research.player.pending")
 
 
 def _player_compare_placeholder_rows(ui_lang: str) -> list[dict[str, str]]:
     return [
         {
-            "label": "Status" if ui_lang == "de" else "Status",
-            "value": "Noch keine Vergleichssession gewählt" if ui_lang == "de" else "No comparison session selected yet",
+            "label": _t(ui_lang, "research.player.placeholder_status"),
+            "value": _t(ui_lang, "research.player.no_comparison_selected"),
         },
         {
-            "label": "Nächster Schritt" if ui_lang == "de" else "Next step",
+            "label": _t(ui_lang, "research.player.next_step"),
             "value": _player_compare_picker_title(ui_lang),
         },
     ]
@@ -1838,159 +1855,106 @@ def _player_compare_placeholder_rows(ui_lang: str) -> list[dict[str, str]]:
 
 def _player_compare_invalid_notice(language_slug: str, task_key: str, ui_lang: str) -> str:
     task_label = _player_task_display_label(language_slug, task_key, ui_lang)
-    if ui_lang == "de":
-        return f"Die angefragte Vergleichssession ist für die aktuelle {task_label}-Ansicht nicht verfügbar."
-    return f"The requested comparison session is not available for the current {task_label} view."
+    return _t(ui_lang, "research.player.compare_invalid_notice", task_label=task_label)
 
 
 def _player_compare_partial_notice(ui_lang: str) -> str:
-    return (
-        "Einzelne Vergleichszeilen sind auf der Sekundärseite nicht verfügbar. Die Primärseite bleibt vollständig nutzbar."
-        if ui_lang == "de"
-        else "Some comparison rows are not available on the secondary side. The primary side remains fully usable."
-    )
+    return _t(ui_lang, "research.player.compare_partial_notice")
 
 
 def _player_controls_status_label(ui_lang: str) -> str:
-    return "Aktiver Fokus" if ui_lang == "de" else "Active focus"
+    return _t(ui_lang, "research.player.controls_status")
 
 
 def _player_volume_label(ui_lang: str) -> str:
-    return "Lautstärke" if ui_lang == "de" else "Volume"
+    return _t(ui_lang, "research.player.volume")
 
 
 def _player_speed_label(ui_lang: str) -> str:
-    return "Geschwindigkeit" if ui_lang == "de" else "Speed"
+    return _t(ui_lang, "research.player.speed")
 
 
 def _player_speaker_activate_label(ui_lang: str) -> str:
-    return "Aktivieren" if ui_lang == "de" else "Activate"
+    return _t(ui_lang, "research.player.activate")
 
 
 def _player_mode_hint(ui_lang: str, mode_key: str) -> str:
     if mode_key == "manual":
-        return (
-            "Ein Klick spielt nur die gewählte Seite des jeweiligen Items ab."
-            if ui_lang == "de"
-            else "Clicking plays only the chosen side of the respective item."
-        )
+        return _t(ui_lang, "research.player.mode_hint.manual")
     if mode_key == "sequence":
-        return (
-            "Ein Eintrag spielt zuerst A und direkt danach B desselben Items."
-            if ui_lang == "de"
-            else "An item plays A and directly afterwards B for the same item."
-        )
-    return (
-        "Ein Klick spielt nur die Primärsession an der dokumentierten Stelle ab."
-        if ui_lang == "de"
-        else "Clicking an item plays only the primary session at the documented position."
-    )
+        return _t(ui_lang, "research.player.mode_hint.sequence")
+    return _t(ui_lang, "research.player.mode_hint.single")
 
 
 def _wordlist_items_label(ui_lang: str) -> str:
-    return "Wortliste" if ui_lang == "de" else "Wordlist"
+    return _t(ui_lang, "research.player.wordlist")
 
 
 def _player_missing_message(task_key: str, ui_lang: str) -> str:
     if task_key == "wordlist":
-        return (
-            "Für diese Session liegen noch keine verarbeitbaren Wortlisten-Artefakte vor. "
-            "Der Player bleibt deshalb in einem ehrlichen Fallback-Zustand."
-            if ui_lang == "de"
-            else "No playable wordlist artifacts are currently available for this session. The player therefore stays in an honest fallback state."
-        )
-    return (
-        "Für diese Aufgabe gibt es im aktuellen MVP noch keine produktive Player-Ansicht."
-        if ui_lang == "de"
-        else "This task does not have a production-ready player view in the current MVP yet."
-    )
+        return _t(ui_lang, "research.player.missing_message.wordlist")
+    return _t(ui_lang, "research.player.missing_message.generic")
 
 
 def _player_missing_hint(task_key: str, ui_lang: str) -> str | None:
     if task_key == "wordlist":
-        return (
-            "Typische Ursachen sind fehlende Ableitungen oder Sessions, die für den aktuellen Wortlisten-Pfad nicht verarbeitbar sind."
-            if ui_lang == "de"
-            else "Typical reasons are missing derived artifacts or sessions that are not processable for the current wordlist path."
-        )
-    return (
-        "Der gemeinsame Player bleibt bestehen, aber `text` und `interview` sind in diesem Run bewusst noch nicht implementiert."
-        if ui_lang == "de"
-        else "The shared player base remains in place, but `text` and `interview` are intentionally not implemented in this run."
-    )
+        return _t(ui_lang, "research.player.missing_hint.wordlist")
+    return _t(ui_lang, "research.player.missing_hint.generic")
 
 
 def _player_set_banner_title(ui_lang: str) -> str:
-    return "Aktiver Set-Ausschnitt" if ui_lang == "de" else "Active set excerpt"
+    return _t(ui_lang, "research.player.set_banner.active_title")
 
 
 def _player_set_requires_auth_title(ui_lang: str) -> str:
-    return "Set-Kontext nicht geladen" if ui_lang == "de" else "Set context not loaded"
+    return _t(ui_lang, "research.player.set_banner.requires_auth_title")
 
 
 def _player_set_unavailable_title(ui_lang: str) -> str:
-    return "Set-Kontext nicht verfügbar" if ui_lang == "de" else "Set context unavailable"
+    return _t(ui_lang, "research.player.set_banner.unavailable_title")
 
 
 def _player_set_requires_auth_text(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Die HTML-Seite bleibt sichtbar, aber der angefragte Set-Ausschnitt kann nur im owner-gebundenen Kontext geladen werden. Der Player zeigt deshalb die reguläre Session-Ansicht ohne Set-Daten."
-    return "The HTML page remains visible, but the requested set excerpt can only be loaded in owner-bound context. The player therefore falls back to the regular session view without set data."
+    return _t(ui_lang, "research.player.set_banner.requires_auth_text")
 
 
 def _player_set_unavailable_text(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Der angefragte Set-Ausschnitt konnte in diesem Kontext nicht geladen werden. Der Player bleibt bei der regulären Session-Ansicht, ohne owner-gebundene Set-Daten zu leaken."
-    return "The requested set excerpt could not be loaded in this context. The player stays on the regular session view without leaking owner-bound set data."
+    return _t(ui_lang, "research.player.set_banner.unavailable_text")
 
 
 def _player_set_storage_unavailable_text(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Der Set-Speicher ist lokal noch nicht vollständig initialisiert. Der Player bleibt bei der regulären Session-Ansicht; führen Sie scripts/dev-start.ps1 oder app/scripts/dev-setup.ps1 aus, um die Migrationen nachzuziehen."
-    return "The set storage is not fully initialized yet. The player stays on the regular session view; run scripts/dev-start.ps1 or app/scripts/dev-setup.ps1 to apply the missing migrations."
+    return _t(ui_lang, "research.player.set_banner.storage_unavailable_text")
 
 
 def _player_set_empty_message(task_label: str, ui_lang: str) -> str:
-    if ui_lang == "de":
-        return f"Das aktive Set enthält für {task_label} keine sichtbaren Einträge. Dieser Task rendert deshalb bewusst keinen Voll-Session-Fallback."
-    return f"The active set does not contain any visible {task_label} entries. This task therefore intentionally avoids falling back to the full session view."
+    return _t(ui_lang, "research.player.set_banner.empty_message", task_label=task_label)
 
 
 def _player_set_empty_hint(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Wechseln Sie explizit auf einen anderen Task desselben Sets oder bearbeiten Sie die Auswahl über Phänomene bzw. Vergleich."
-    return "Explicitly switch to another task from the same set or edit the selection through phenomena or comparison."
+    return _t(ui_lang, "research.player.set_banner.empty_hint")
 
 
 def _player_set_interview_hint(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Das aktuelle Set-Modell filtert nur Wortliste und Text. Für Interview gibt es in diesem Run bewusst keinen setgebundenen Renderer."
-    return "The current set model filters only wordlist and text. This run intentionally does not add a set-bound renderer for interview."
+    return _t(ui_lang, "research.player.set_banner.interview_hint")
 
 
 def _player_set_focus_missed_text(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Das angefragte Fokus-Item liegt nicht im aktuell sichtbaren Task-Ausschnitt."
-    return "The requested focus item is not part of the currently visible task excerpt."
+    return _t(ui_lang, "research.player.set_banner.focus_missed")
 
 
 def _player_text_compare_unavailable_notice(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Direktvergleich ist für Satzliste in diesem Run noch nicht produktiv freigeschaltet. Der Player bleibt bewusst im Einzel-Session-Modus."
-    return "Direct comparison is not productively enabled for sentence-list mode in this run. The player intentionally stays in single-session mode."
+    return _t(ui_lang, "research.player.text_compare_unavailable")
 
 
 def _player_text_running_mode_notice(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Der produktive Text-Renderer nutzt in diesem Run nur den belastbaren Satzlisten-Modus. Andere Render-Modi bleiben bewusst deaktiviert."
-    return "The productive text renderer in this run only supports the reliable sentence-list mode. Other render modes intentionally stay disabled."
+    return _t(ui_lang, "research.player.text_running_mode_notice")
 
 
 def _player_source_handoff_note(source: str | None, ui_lang: str) -> str | None:
     if source == "comparison":
-        return "Handoff aus Vergleich" if ui_lang == "de" else "Handoff from comparison"
+        return _t(ui_lang, "research.player.source_handoff.comparison")
     if source == "phenomena":
-        return "Handoff aus Phänomene" if ui_lang == "de" else "Handoff from phenomena"
+        return _t(ui_lang, "research.player.source_handoff.phenomena")
     return None
 
 
@@ -2090,6 +2054,10 @@ def _load_player_set_context(
                     "item_number": catalog_item.item_number,
                     "text": catalog_item.text,
                     "group_id": catalog_item.group_id,
+                    "text_container_id": catalog_item.text_container_id,
+                    "text_order_index": catalog_item.text_order_index,
+                    "paragraph_break_before": catalog_item.paragraph_break_before,
+                    "paragraph_id": catalog_item.paragraph_id,
                     "segment_id": stored_item.segment_id,
                     "note": stored_item.note,
                 }
@@ -2112,81 +2080,40 @@ def _load_player_set_context(
     }
 
 
-def _build_player_set_banner(
+def _build_player_set_notice(
     ui_lang: str,
     language_slug: str,
     task_key: str,
-    source: str | None,
     set_context: dict[str, Any] | None,
-    visible_item_count: int,
     resolved_focus_item_id: str | None,
 ) -> dict[str, Any] | None:
     if set_context is None:
         return None
 
-    handoff_note = _player_source_handoff_note(source, ui_lang)
-    meta: list[str] = []
-    requested_set_id = set_context.get("requested_set_id")
-    if requested_set_id:
-        meta.append(f"Set-ID {requested_set_id}")
-    if handoff_note:
-        meta.append(handoff_note)
-
     status = set_context["status"]
     if status == "requires-auth":
         return {
             "status": status,
-            "title": _player_set_requires_auth_title(ui_lang),
             "text": _player_set_requires_auth_text(ui_lang),
-            "meta": meta,
-            "focus_note": None,
         }
     if status == "storage-unavailable":
         return {
             "status": status,
-            "title": _player_set_unavailable_title(ui_lang),
             "text": _player_set_storage_unavailable_text(ui_lang),
-            "meta": meta,
-            "focus_note": None,
         }
     if status != "loaded":
         return {
             "status": status,
-            "title": _player_set_unavailable_title(ui_lang),
             "text": _player_set_unavailable_text(ui_lang),
-            "meta": meta,
-            "focus_note": None,
         }
 
-    task_label = _player_task_display_label(language_slug, task_key, ui_lang)
-    if task_key in PHENOMENA_ITEM_TASKS:
-        item_label = "Einträge" if ui_lang == "de" else "items"
-        meta.append(f"{visible_item_count} {task_label}-{item_label}" if ui_lang == "de" else f"{visible_item_count} {task_label} items")
-    source_preset_id = set_context["stored_set"].source_preset_id
-    if source_preset_id:
-        meta.append(f"Preset {source_preset_id}")
-
-    if task_key not in PHENOMENA_ITEM_TASKS:
-        text = _player_set_interview_hint(ui_lang)
-    elif visible_item_count == 0:
-        text = _player_set_empty_message(task_label, ui_lang)
-    else:
-        if ui_lang == "de":
-            text = "Diese Ansicht ist taskgebunden auf den aktiven Set-Ausschnitt gefiltert und zeigt keinen impliziten Voll-Session-Modus."
-        else:
-            text = "This view is filtered to the active set excerpt for the current task and does not silently fall back to full-session content."
-
-    focus_note = None
     if task_key in PHENOMENA_ITEM_TASKS and set_context.get("requested_focus_item") and not resolved_focus_item_id:
-        focus_note = _player_set_focus_missed_text(ui_lang)
+        return {
+            "status": "focus-missed",
+            "text": _player_set_focus_missed_text(ui_lang),
+        }
 
-    return {
-        "status": status,
-        "title": _player_set_banner_title(ui_lang),
-        "text": text,
-        "meta": meta,
-        "focus_note": focus_note,
-    }
+    return None
 
 
 def _format_player_clock(milliseconds: int) -> str:
@@ -2199,11 +2126,7 @@ def _format_player_clock(milliseconds: int) -> str:
 
 
 def _player_intro(ui_lang: str) -> str:
-    return (
-        "Audio-Workbench für eine dokumentierte Session und ihre verfügbaren Aufgabentypen."
-        if ui_lang == "de"
-        else "Audio workbench for one documented session and its available task types."
-    )
+    return _t(ui_lang, "research.player.intro")
 
 
 def _session_root(session: SessionRecord) -> Path:
@@ -2359,6 +2282,213 @@ def _normalize_compare_mode(raw_value: str | None, *, compare_selected: bool) ->
     return "sequence"
 
 
+def _normalize_render_mode(raw_value: str | None) -> str | None:
+    normalized = (raw_value or "").strip().lower()
+    if normalized in TEXT_RENDER_MODES:
+        return normalized
+    return None
+
+
+def _render_mode_from_view(view_key: str) -> str:
+    if view_key == "text":
+        return "running_text"
+    return "sentence_list"
+
+
+def _render_mode_to_view(render_mode: str) -> str:
+    if render_mode == "running_text":
+        return "text"
+    return "list"
+
+
+def _normalized_render_mode_query(player_source: NormalizedPlayerSource) -> str | None:
+    if player_source.task_key != "text":
+        return None
+    if player_source.render_mode and player_source.render_mode != player_source.default_render_mode:
+        return player_source.render_mode
+    return None
+
+
+def _build_normalized_player_source(
+    ui_lang: str,
+    language_slug: str,
+    task_key: str,
+    *,
+    bundle: Mapping[str, Any] | None,
+    compare_selected: bool,
+    requested_render_mode: str | None,
+    set_context: dict[str, Any] | None,
+) -> NormalizedPlayerSource:
+    task_label = _player_task_display_label(language_slug, task_key, ui_lang)
+    if task_key == "wordlist":
+        return NormalizedPlayerSource(
+            task_key=task_key,
+            source_kind="set" if set_context is not None and set_context.get("status") == "loaded" else "wordlist",
+            items_title=task_label,
+            default_render_mode=None,
+            render_mode=None,
+            allowed_render_modes=(),
+            primary_audio_mode="item",
+            supports_item_audio=True,
+            supports_full_audio=bundle is not None and bundle.get("full_audio_path") is not None,
+            supports_text_view=False,
+            is_set_excerpt=set_context is not None and set_context.get("status") == "loaded",
+        )
+
+    catalog = load_task_catalogs(language_slug)[task_key]
+    catalog_source = catalog.player_source
+    is_set_excerpt = set_context is not None and set_context.get("status") == "loaded"
+    source_kind = "set" if is_set_excerpt else catalog_source.source_kind
+    supports_text_view = (
+        not is_set_excerpt
+        and catalog_source.source_kind == "text"
+        and catalog_source.content_mode == "connected_text"
+        and catalog_source.supports_text_view
+    )
+    if supports_text_view and compare_selected:
+        allowed_render_modes = ("sentence_list",)
+        default_render_mode = "sentence_list"
+    else:
+        allowed_render_modes = tuple(
+            mode for mode in TEXT_RENDER_MODES if _render_mode_to_view(mode) in catalog_source.allowed_views
+        ) if supports_text_view else ("sentence_list",)
+        default_render_mode = (
+            _render_mode_from_view(catalog_source.default_view)
+            if supports_text_view
+            else "sentence_list"
+        )
+    render_mode = _normalize_render_mode(requested_render_mode)
+    if render_mode not in allowed_render_modes:
+        render_mode = default_render_mode
+
+    return NormalizedPlayerSource(
+        task_key=task_key,
+        source_kind=source_kind,
+        items_title=catalog.display_label or task_label,
+        default_render_mode=default_render_mode,
+        render_mode=render_mode,
+        allowed_render_modes=allowed_render_modes,
+        primary_audio_mode="item" if is_set_excerpt else catalog_source.primary_audio_mode,
+        supports_item_audio=catalog_source.supports_item_audio,
+        supports_full_audio=(
+            False
+            if is_set_excerpt
+            else catalog_source.supports_full_audio and bundle is not None and bundle.get("full_audio_path") is not None
+        ),
+        supports_text_view=supports_text_view,
+        is_set_excerpt=is_set_excerpt,
+    )
+
+
+def _build_player_items(
+    ui_lang: str,
+    language_slug: str,
+    session: SessionRecord,
+    task_key: str,
+    bundle: Mapping[str, Any],
+    *,
+    item_filter: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    catalog = load_task_catalogs(language_slug)[task_key]
+    bundle_items = {item["item_id"]: item for item in bundle["items"]}
+    if item_filter is not None:
+        visible_items = item_filter
+    else:
+        visible_items = []
+        for bundle_item in bundle["items"]:
+            catalog_item = catalog.items_by_id.get(bundle_item["item_id"])
+            visible_items.append(
+                {
+                    "item_id": bundle_item["item_id"],
+                    "item_number": catalog_item.item_number if catalog_item is not None else bundle_item["item_number"],
+                    "text": catalog_item.text if catalog_item is not None else bundle_item["text"],
+                    "group_id": catalog_item.group_id if catalog_item is not None else None,
+                    "text_container_id": catalog_item.text_container_id if catalog_item is not None else None,
+                    "text_order_index": catalog_item.text_order_index if catalog_item is not None else None,
+                    "paragraph_break_before": catalog_item.paragraph_break_before if catalog_item is not None else False,
+                    "paragraph_id": catalog_item.paragraph_id if catalog_item is not None else None,
+                    "segment_id": None,
+                    "note": None,
+                }
+            )
+
+    rows: list[dict[str, Any]] = []
+    for visible_item in visible_items:
+        bundle_item = bundle_items.get(visible_item["item_id"])
+        if bundle_item is None:
+            rows.append(
+                {
+                    "item_id": visible_item["item_id"],
+                    "item_number": visible_item["item_number"],
+                    "text": visible_item["text"],
+                    "group_id": visible_item.get("group_id"),
+                    "text_container_id": visible_item.get("text_container_id"),
+                    "text_order_index": visible_item.get("text_order_index"),
+                    "paragraph_break_before": bool(visible_item.get("paragraph_break_before")),
+                    "paragraph_id": visible_item.get("paragraph_id"),
+                    "segment_id": visible_item.get("segment_id"),
+                    "note": visible_item.get("note"),
+                    "start_label": "",
+                    "end_label": "",
+                    "download_href": None,
+                    "start_ms": None,
+                    "end_ms": None,
+                    "is_available": False,
+                    "missing_label": _t(ui_lang, "research.player.no_clip_in_session"),
+                }
+            )
+            continue
+
+        rows.append(
+            {
+                "item_id": bundle_item["item_id"],
+                "item_number": visible_item.get("item_number") or bundle_item["item_number"],
+                "text": visible_item.get("text") or bundle_item["text"],
+                "group_id": visible_item.get("group_id"),
+                "text_container_id": visible_item.get("text_container_id"),
+                "text_order_index": visible_item.get("text_order_index"),
+                "paragraph_break_before": bool(visible_item.get("paragraph_break_before")),
+                "paragraph_id": visible_item.get("paragraph_id"),
+                "segment_id": visible_item.get("segment_id"),
+                "note": visible_item.get("note"),
+                "start_label": _format_player_clock(bundle_item["start_ms"]),
+                "end_label": _format_player_clock(bundle_item["end_ms"]),
+                "download_href": url_for(
+                    "public.research_player_item_download",
+                    ui_lang=ui_lang,
+                    language_slug=language_slug,
+                    session_id=session.session_id,
+                    task=task_key,
+                    item_id=bundle_item["item_id"],
+                ) if bundle_item["split_audio_path"] else None,
+                "start_ms": bundle_item["start_ms"],
+                "end_ms": bundle_item["end_ms"],
+                "is_available": True,
+                "missing_label": None,
+            }
+        )
+    return rows
+
+
+def _build_running_text_blocks(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not items:
+        return []
+
+    blocks: list[dict[str, Any]] = []
+    current_items: list[dict[str, Any]] = []
+    block_index = 1
+    for item in items:
+        if current_items and item.get("paragraph_break_before"):
+            blocks.append({"block_id": f"paragraph-{block_index}", "items": current_items})
+            block_index += 1
+            current_items = []
+        current_items.append(item)
+
+    if current_items:
+        blocks.append({"block_id": f"paragraph-{block_index}", "items": current_items})
+    return blocks
+
+
 def _build_player_query(
     source: str | None,
     compare_session_id: str | None = None,
@@ -2366,6 +2496,7 @@ def _build_player_query(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    render_mode: str | None = None,
 ) -> dict[str, str] | None:
     query: dict[str, str] = {}
     if source:
@@ -2380,6 +2511,8 @@ def _build_player_query(
         query["preset_id"] = preset_id
     if focus_item:
         query["focus_item"] = focus_item
+    if render_mode in TEXT_RENDER_MODES:
+        query["render_mode"] = render_mode
     return query or None
 
 
@@ -2395,6 +2528,7 @@ def _player_page_href(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    render_mode: str | None = None,
 ) -> str:
     return _url_with_query(
         "public.research_player",
@@ -2402,7 +2536,7 @@ def _player_page_href(
         language_slug=language_slug,
         session_id=session_id,
         task=task_key,
-        query=_build_player_query(source, compare_session_id, compare_mode, set_id, preset_id, focus_item),
+        query=_build_player_query(source, compare_session_id, compare_mode, set_id, preset_id, focus_item, render_mode),
     )
 
 
@@ -2445,15 +2579,15 @@ def _build_player_summary_card(
     role_key: str,
     session_options: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    context_label = "Varietät" if session.is_native and ui_lang == "de" else "Niveau" if ui_lang == "de" else "Variety" if session.is_native else "Level"
+    context_label = _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "research.comparison.level_label")
     context_value = _format_standard_variety(session, ui_lang) if session.is_native else _format_level(session, ui_lang)
-    detail_label = _origin_country_label(ui_lang) if session.is_native else "L1"
+    detail_label = _origin_country_label(ui_lang) if session.is_native else _t(ui_lang, "common.labels.l1_short")
     detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
     return {
         "speaker_key": role_key,
         "session_id": session.session_id,
         "accent_modifier": _session_accent_modifier(session),
-        "role_label": ("Primär" if ui_lang == "de" else "Primary") if role_key == "primary" else ("Vergleich" if ui_lang == "de" else "Compare"),
+        "role_label": _t(ui_lang, "research.player.role.primary") if role_key == "primary" else _t(ui_lang, "research.player.role.compare"),
         "profile_href": _url_with_query(
             "public.research_speaker_profile",
             ui_lang=ui_lang,
@@ -2461,7 +2595,7 @@ def _build_player_summary_card(
             person_id=session.person_id,
             query={"session": session.session_id},
         ),
-        "profile_label": "Profil" if ui_lang == "de" else "Profile",
+        "profile_label": _t(ui_lang, "research.player.profile"),
         "session_switch": {
             "label": _player_session_switcher_label(ui_lang, role_key),
             "current_label": session.session_id,
@@ -2523,7 +2657,7 @@ def _build_text_player_items(
                     "start_ms": None,
                     "end_ms": None,
                     "is_available": False,
-                    "missing_label": "Kein Clip in dieser Session" if ui_lang == "de" else "No clip in this session",
+                    "missing_label": _t(ui_lang, "research.player.no_clip_in_session"),
                 }
             )
             continue
@@ -2560,9 +2694,9 @@ def _build_player_compare_placeholder_card(ui_lang: str, session_options: list[d
         "speaker_key": "secondary",
         "session_id": "",
         "accent_modifier": "native",
-        "role_label": "Vergleich" if ui_lang == "de" else "Compare",
+        "role_label": _t(ui_lang, "research.player.role.compare"),
         "profile_href": None,
-        "profile_label": "Profil" if ui_lang == "de" else "Profile",
+        "profile_label": _t(ui_lang, "research.player.profile"),
         "session_switch": {
             "label": _player_session_switcher_label(ui_lang, "secondary"),
             "current_label": _player_compare_picker_title(ui_lang),
@@ -2609,7 +2743,7 @@ def _build_wordlist_player_items(
                     "start_ms": None,
                     "end_ms": None,
                     "is_available": False,
-                    "missing_label": "Kein Clip in dieser Session" if ui_lang == "de" else "No clip in this session",
+                    "missing_label": _t(ui_lang, "research.player.no_clip_in_session"),
                 }
             )
             continue
@@ -2654,8 +2788,12 @@ def _build_player_compare_rows(
                 "secondary": secondary or {
                     "item_id": primary["item_id"],
                     "item_number": primary["item_number"],
-                    "text": "Nicht verfügbar" if ui_lang == "de" else "Unavailable",
+                    "text": _t(ui_lang, "research.player.unavailable"),
                     "group_id": primary.get("group_id"),
+                    "text_container_id": primary.get("text_container_id"),
+                    "text_order_index": primary.get("text_order_index"),
+                    "paragraph_break_before": primary.get("paragraph_break_before"),
+                    "paragraph_id": primary.get("paragraph_id"),
                     "segment_id": primary.get("segment_id"),
                     "note": None,
                     "start_label": "",
@@ -2664,7 +2802,7 @@ def _build_player_compare_rows(
                     "start_ms": None,
                     "end_ms": None,
                     "is_available": False,
-                    "missing_label": "Kein passender Clip" if ui_lang == "de" else "No matching clip",
+                    "missing_label": _t(ui_lang, "research.player.no_clip_in_session"),
                 },
             }
         )
@@ -2683,6 +2821,7 @@ def _build_player_switchers(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    render_mode: str | None = None,
 ) -> dict[str, Any]:
     compare_session_id = compare_session.session_id if compare_session else None
     primary_options = [
@@ -2699,6 +2838,7 @@ def _build_player_switchers(
                 set_id=set_id,
                 preset_id=preset_id,
                 focus_item=focus_item,
+                render_mode=render_mode if task_key == "text" else None,
             ),
             "current": candidate.session_id == primary_session.session_id,
         }
@@ -2717,6 +2857,7 @@ def _build_player_switchers(
                 set_id=set_id,
                 preset_id=preset_id,
                 focus_item=focus_item,
+                render_mode=render_mode if task_key == "text" else None,
             ),
             "current": compare_session is None,
         }
@@ -2738,6 +2879,7 @@ def _build_player_switchers(
                     set_id=set_id,
                     preset_id=preset_id,
                     focus_item=focus_item,
+                    render_mode=render_mode if task_key == "text" else None,
                 ),
                 "current": compare_session is not None and candidate.session_id == compare_session.session_id,
             }
@@ -2773,16 +2915,16 @@ def _player_origin_context(
     recordings_label = get_research_page_label("recordings", ui_lang)
     comparison_label = get_research_page_label("comparison", ui_lang)
     phenomena_label = get_research_page_label("phenomena", ui_lang)
-    profile_label = "Profil" if ui_lang == "de" else "Profile"
+    profile_label = _t(ui_lang, "research.player.profile")
 
     if source == "recordings":
         return (
-            {"label": "Zurück zu Aufzeichnungen" if ui_lang == "de" else "Back to recordings", "href": recordings_href},
+            {"label": _t(ui_lang, "research.player.back_recordings"), "href": recordings_href},
             [{"label": recordings_label, "href": recordings_href}],
         )
     if source == "profile":
         return (
-            {"label": "Zurück zum Profil" if ui_lang == "de" else "Back to profile", "href": profile_href},
+            {"label": _t(ui_lang, "research.player.back_profile"), "href": profile_href},
             [
                 {"label": speakers_label, "href": speakers_href},
                 {"label": profile_label, "href": profile_href},
@@ -2796,7 +2938,7 @@ def _player_origin_context(
             task=task_key if task_key in PHENOMENA_ITEM_TASKS else None,
         )
         return (
-            {"label": "Zurück zum Vergleich" if ui_lang == "de" else "Back to comparison", "href": comparison_href},
+            {"label": _t(ui_lang, "research.player.back_comparison"), "href": comparison_href},
             [{"label": comparison_label, "href": comparison_href}],
         )
     if source == "phenomena":
@@ -2808,11 +2950,11 @@ def _player_origin_context(
             task=task_key if task_key in PHENOMENA_ITEM_TASKS else None,
         )
         return (
-            {"label": "Zurück zu Phänomene" if ui_lang == "de" else "Back to phenomena", "href": phenomena_href},
+            {"label": _t(ui_lang, "research.player.back_phenomena"), "href": phenomena_href},
             [{"label": phenomena_label, "href": phenomena_href}],
         )
     return (
-        {"label": "Zurück zu Sprecher:innen" if ui_lang == "de" else "Back to speakers", "href": speakers_href},
+        {"label": _t(ui_lang, "research.player.back_speakers"), "href": speakers_href},
         [{"label": speakers_label, "href": speakers_href}],
     )
 
@@ -2830,6 +2972,7 @@ def _build_player_task_panels(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    render_mode: str | None = None,
 ) -> list[dict[str, Any]]:
     panels: list[dict[str, Any]] = []
     for task in iter_research_tasks():
@@ -2854,6 +2997,7 @@ def _build_player_task_panels(
                     set_id=set_id,
                     preset_id=preset_id,
                     focus_item=focus_item,
+                    render_mode=render_mode if task.key == "text" else None,
                 )
                 state_label = _player_current_label(ui_lang) if is_current else _player_available_label(ui_lang)
             else:
@@ -2875,6 +3019,133 @@ def _build_player_task_panels(
     return panels
 
 
+def _player_render_mode_label(ui_lang: str, render_mode: str) -> str:
+    if render_mode == "running_text":
+        return _t(ui_lang, "research.player.view_text")
+    return _t(ui_lang, "research.player.view_list")
+
+
+def _build_player_render_mode_switch(
+    ui_lang: str,
+    language_slug: str,
+    session_id: str,
+    task_key: str,
+    source: str | None,
+    *,
+    compare_session_id: str | None,
+    compare_mode: str | None,
+    set_id: str | None,
+    preset_id: str | None,
+    focus_item: str | None,
+    player_source: NormalizedPlayerSource,
+) -> dict[str, Any] | None:
+    if player_source.task_key != "text" or len(player_source.allowed_render_modes) <= 1:
+        return None
+
+    options = []
+    for render_mode in player_source.allowed_render_modes:
+        options.append(
+            {
+                "key": render_mode,
+                "label": _player_render_mode_label(ui_lang, render_mode),
+                "current": render_mode == player_source.render_mode,
+                "href": _player_page_href(
+                    ui_lang,
+                    language_slug,
+                    session_id,
+                    task_key,
+                    source,
+                    compare_session_id=compare_session_id,
+                    compare_mode=compare_mode,
+                    set_id=set_id,
+                    preset_id=preset_id,
+                    focus_item=focus_item,
+                    render_mode=render_mode if render_mode != player_source.default_render_mode else None,
+                ),
+            }
+        )
+
+    return {
+        "label": _t(ui_lang, "research.player.view_mode"),
+        "current": player_source.render_mode,
+        "options": options,
+    }
+
+
+def _build_player_set_select(
+    ui_lang: str,
+    language_slug: str,
+    session_id: str,
+    task_key: str,
+    source: str | None,
+    *,
+    compare_session_id: str | None,
+    compare_mode: str | None,
+    active_set_id: str | None,
+    preset_id: str | None,
+    render_mode: str | None,
+) -> dict[str, Any] | None:
+    if task_key not in PHENOMENA_ITEM_TASKS:
+        return None
+
+    options = [
+        {
+            "label": _t(ui_lang, "research.player.all_items"),
+            "href": _player_page_href(
+                ui_lang,
+                language_slug,
+                session_id,
+                task_key,
+                source,
+                compare_session_id=compare_session_id,
+                compare_mode=compare_mode,
+                preset_id=preset_id,
+                render_mode=render_mode if task_key == "text" else None,
+            ),
+            "current": active_set_id is None,
+        }
+    ]
+
+    owner_user_id = _current_owner_user_id()
+    if owner_user_id is not None:
+        try:
+            stored_sets = list_selectable_owned_sets(
+                owner_user_id=owner_user_id,
+                corpus_language=language_slug,
+                current_set_id=active_set_id,
+            )
+        except (ResearchSetStorageUnavailableError, ResearchSetValidationError):
+            stored_sets = []
+
+        for stored_set in stored_sets:
+            options.append(
+                {
+                    "label": stored_set.label or _t(ui_lang, "common.untitled"),
+                    "href": _player_page_href(
+                        ui_lang,
+                        language_slug,
+                        session_id,
+                        task_key,
+                        source,
+                        compare_session_id=compare_session_id,
+                        compare_mode=compare_mode,
+                        set_id=stored_set.set_id,
+                        preset_id=preset_id,
+                        render_mode=render_mode if task_key == "text" else None,
+                    ),
+                    "current": stored_set.set_id == active_set_id,
+                }
+            )
+
+    return {
+        "label": _t(ui_lang, "research.player.set_select_label"),
+        "info_label": _t(ui_lang, "research.player.set_select_info_label"),
+        "info_text": _t(ui_lang, "research.player.set_select_info_text"),
+        "disabled": len(options) <= 1,
+        "options": options,
+    }
+
+
 def build_player_page(
     ui_lang: str,
     language_slug: str,
@@ -2886,6 +3157,7 @@ def build_player_page(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    render_mode: str | None = None,
 ) -> dict[str, Any] | None:
     session = get_session(language_slug, session_id)
     task = get_research_task(task_key)
@@ -2917,13 +3189,11 @@ def build_player_page(
 
     context_value = _format_standard_variety(session, ui_lang) if session.is_native else _format_level(session, ui_lang)
     detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
-    player_config = load_player_config(language_slug)
     text_bundle = _load_task_bundle(session, "text") if session_has_task(session, "text") else None
     text_ready = text_bundle is not None
-    text_render_mode = player_config.text.default_render_mode
-    text_display_label = player_config.text.display_label
     wordlist_bundle = _load_wordlist_bundle(session) if session_has_task(session, "wordlist") else None
     wordlist_ready = wordlist_bundle is not None
+    task_bundle = _load_task_bundle(session, task_key) if task_key in PHENOMENA_ITEM_TASKS else None
     ready_sessions, ready_bundles = _load_task_ready_sessions(language_slug, task_key) if task_key in PHENOMENA_ITEM_TASKS else ([], {})
     compare_session = None
     compare_bundle = None
@@ -2937,6 +3207,16 @@ def build_player_page(
             compare_notice = _player_compare_invalid_notice(language_slug, task_key, ui_lang)
 
     effective_compare_mode = _normalize_compare_mode(compare_mode, compare_selected=compare_session is not None)
+    player_source = _build_normalized_player_source(
+        ui_lang,
+        language_slug,
+        task_key,
+        bundle=task_bundle,
+        compare_selected=compare_session is not None,
+        requested_render_mode=render_mode,
+        set_context=set_context if task_key in PHENOMENA_ITEM_TASKS else None,
+    ) if task_key in PHENOMENA_ITEM_TASKS else None
+    active_render_mode_query = _normalized_render_mode_query(player_source) if player_source is not None else None
     task_panels = _build_player_task_panels(
         ui_lang,
         language_slug,
@@ -2950,6 +3230,7 @@ def build_player_page(
         set_id,
         preset_id,
         focus_item,
+        active_render_mode_query,
     )
     summary_cards: list[dict[str, Any]] = []
 
@@ -2962,7 +3243,7 @@ def build_player_page(
         and not set_context["task_items"]
     )
 
-    if task_key == "wordlist" and wordlist_bundle is not None and not filtered_task_empty:
+    if task_key in PHENOMENA_ITEM_TASKS and task_bundle is not None and player_source is not None:
         player_switchers = _build_player_switchers(
             ui_lang,
             language_slug,
@@ -2975,6 +3256,7 @@ def build_player_page(
             effective_set_id,
             effective_preset_id,
             focus_item,
+            active_render_mode_query,
         ) if ready_sessions else None
         primary_session_options = player_switchers["primary"]["options"] if player_switchers else [
             {
@@ -2988,6 +3270,7 @@ def build_player_page(
                     set_id=effective_set_id,
                     preset_id=effective_preset_id,
                     focus_item=focus_item,
+                    render_mode=active_render_mode_query if task_key == "text" else None,
                 ),
                 "current": True,
             }
@@ -2995,277 +3278,24 @@ def build_player_page(
         compare_session_options = player_switchers["compare"]["options"][1:] if player_switchers else []
         compare_is_ready = compare_session is not None and compare_bundle is not None
         can_compare = bool(compare_session_options)
-        primary_items = _build_wordlist_player_items(
+        primary_items = _build_player_items(
             ui_lang,
             language_slug,
             session,
             task_key,
-            wordlist_bundle,
-            filtered_task_items,
+            task_bundle,
+            item_filter=filtered_task_items,
         )
-        secondary_items = _build_wordlist_player_items(
+        secondary_items = _build_player_items(
             ui_lang,
             language_slug,
             compare_session,
             task_key,
             compare_bundle,
-            filtered_task_items,
-        ) if compare_session and compare_bundle else []
-        visible_focus_item = None
-        if isinstance(focus_item, str) and focus_item and any(item["item_id"] == focus_item for item in primary_items):
-            visible_focus_item = focus_item
-        manual_compare_href = _player_page_href(
-            ui_lang,
-            language_slug,
-            session.session_id,
-            task_key,
-            source,
-            compare_session_id=compare_session.session_id if compare_session else None,
-            compare_mode="manual",
-            set_id=effective_set_id,
-            preset_id=effective_preset_id,
-            focus_item=visible_focus_item or focus_item,
-        ) if compare_session else None
-        sequence_compare_href = _player_page_href(
-            ui_lang,
-            language_slug,
-            session.session_id,
-            task_key,
-            source,
-            compare_session_id=compare_session.session_id if compare_session else None,
-            set_id=effective_set_id,
-            preset_id=effective_preset_id,
-            focus_item=visible_focus_item or focus_item,
-        ) if compare_session else None
-        primary_summary = _build_player_summary_card(session, ui_lang, language_slug, "primary", primary_session_options)
-        if can_compare and not compare_is_ready:
-            primary_summary["card_actions"].append(
-                {"kind": "button", "action": "compare-add", "label": _player_compare_add_label(ui_lang)}
-            )
-        summary_cards.append(primary_summary)
-
-        if compare_is_ready:
-            secondary_summary = _build_player_summary_card(
-                compare_session,
-                ui_lang,
-                language_slug,
-                "secondary",
-                compare_session_options,
-            )
-            secondary_summary["card_actions"].append(
-                {
-                    "kind": "link",
-                    "action": "compare-remove",
-                    "label": _player_compare_remove_label(ui_lang),
-                    "href": _player_page_href(
-                        ui_lang,
-                        language_slug,
-                        session.session_id,
-                        task_key,
-                        source,
-                        set_id=effective_set_id,
-                        preset_id=effective_preset_id,
-                        focus_item=visible_focus_item or focus_item,
-                    ),
-                }
-            )
-            summary_cards.append(secondary_summary)
-        elif can_compare:
-            secondary_placeholder = _build_player_compare_placeholder_card(ui_lang, compare_session_options)
-            secondary_placeholder["card_actions"].append(
-                {"kind": "button", "action": "compare-remove", "label": _player_compare_close_label(ui_lang)}
-            )
-            summary_cards.append(secondary_placeholder)
-
-        player_view = {
-            "mode": "wordlist",
-            "audio_href": url_for(
-                "public.research_player_audio",
-                ui_lang=ui_lang,
-                language_slug=language_slug,
-                session_id=session.session_id,
-                task=task_key,
-            ),
-            "controls_title": "Wiedergabe" if ui_lang == "de" else "Playback",
-            "controls_status_label": _player_controls_status_label(ui_lang),
-            "controls_status_value": session.session_id,
-            "controls_hint": compare_notice,
-            "items_title": _wordlist_items_label(ui_lang),
-            "items_count": len(primary_items),
-            "set_context": _build_player_set_banner(
-                ui_lang,
-                language_slug,
-                task_key,
-                source,
-                set_context,
-                len(primary_items),
-                visible_focus_item,
-            ),
-            "download_label": "MP3 laden" if ui_lang == "de" else "Download MP3",
-            "toggle_play_label": _player_play_label(ui_lang),
-            "toggle_pause_label": _player_pause_label(ui_lang),
-            "volume_label": _player_volume_label(ui_lang),
-            "speed_label": _player_speed_label(ui_lang),
-            "primary": {
-                "speaker_key": "primary",
-                "session_id": session.session_id,
-                "label": session.session_id,
-                "role_label": "Primär" if ui_lang == "de" else "Primary",
-                "audio_href": url_for(
-                    "public.research_player_audio",
-                    ui_lang=ui_lang,
-                    language_slug=language_slug,
-                    session_id=session.session_id,
-                    task=task_key,
-                ),
-                "items": primary_items,
-            },
-            "secondary": {
-                "speaker_key": "secondary",
-                "session_id": compare_session.session_id,
-                "label": compare_session.session_id,
-                "role_label": "Vergleich" if ui_lang == "de" else "Compare",
-                "audio_href": url_for(
-                    "public.research_player_audio",
-                    ui_lang=ui_lang,
-                    language_slug=language_slug,
-                    session_id=compare_session.session_id,
-                    task=task_key,
-                ),
-                "items": secondary_items,
-            } if compare_session and compare_bundle else None,
-            "compare": {
-                "is_ready": compare_is_ready,
-                "mode": effective_compare_mode,
-                "has_candidates": can_compare,
-                "sequence_toggle": {
-                    "label": _player_sequence_toggle_label(ui_lang),
-                    "enabled": effective_compare_mode == "sequence",
-                    "off_href": manual_compare_href,
-                    "on_href": sequence_compare_href,
-                } if compare_is_ready else None,
-                "switchers": player_switchers,
-                "rows": _build_player_compare_rows(primary_items, secondary_items, ui_lang) if compare_is_ready else [],
-            },
-            "client_state": {
-                "requestedMode": effective_compare_mode,
-                "compareOpen": compare_is_ready,
-                "canCompare": can_compare,
-                "mobileMinWidth": 900,
-                "rateOptions": [0.5, 0.75, 1.0, 1.25, 1.5],
-                "defaultRate": 1.0,
-                "defaultRateIndex": 2,
-                "defaultVolume": 1.0,
-                "singleViewHref": _player_page_href(
-                    ui_lang,
-                    language_slug,
-                    session.session_id,
-                    task_key,
-                    source,
-                    set_id=effective_set_id,
-                    preset_id=effective_preset_id,
-                    focus_item=visible_focus_item or focus_item,
-                ),
-                "modeHrefs": {
-                    "manual": manual_compare_href,
-                    "sequence": sequence_compare_href,
-                },
-                "speakers": [
-                    {
-                        "key": "primary",
-                        "sessionId": session.session_id,
-                        "label": session.session_id,
-                        "items": [
-                            {
-                                "itemId": item["item_id"],
-                                "startMs": item["start_ms"],
-                                "endMs": item["end_ms"],
-                            }
-                            for item in wordlist_bundle["items"]
-                        ],
-                    }
-                ] + ([
-                    {
-                        "key": "secondary",
-                        "sessionId": compare_session.session_id,
-                        "label": compare_session.session_id,
-                        "items": [
-                            {
-                                "itemId": item["item_id"],
-                                "startMs": item["start_ms"],
-                                "endMs": item["end_ms"],
-                            }
-                            for item in compare_bundle["items"]
-                        ],
-                    }
-                ] if compare_session and compare_bundle else []),
-                "compareReady": compare_is_ready,
-                "focusedItemId": visible_focus_item,
-                "statusLabel": _player_controls_status_label(ui_lang),
-                "togglePlay": _player_play_label(ui_lang),
-                "togglePause": _player_pause_label(ui_lang),
-                "items": [
-                    {
-                        "itemId": item["item_id"],
-                        "startMs": item["start_ms"],
-                        "endMs": item["end_ms"],
-                    }
-                    for item in wordlist_bundle["items"]
-                ],
-            },
-            "items": primary_items,
-        }
-    elif task_key == "text" and text_bundle is not None and not filtered_task_empty and text_render_mode == "sentence_list":
-        player_switchers = _build_player_switchers(
-            ui_lang,
-            language_slug,
-            session,
-            task_key,
-            source,
-            ready_sessions,
-            compare_session,
-            effective_compare_mode,
-            effective_set_id,
-            effective_preset_id,
-            focus_item,
-        ) if ready_sessions else None
-        primary_session_options = player_switchers["primary"]["options"] if player_switchers else [
-            {
-                "label": session.session_id,
-                "href": _player_page_href(
-                    ui_lang,
-                    language_slug,
-                    session.session_id,
-                    task_key,
-                    source,
-                    set_id=effective_set_id,
-                    preset_id=effective_preset_id,
-                    focus_item=focus_item,
-                ),
-                "current": True,
-            }
-        ]
-        compare_session_options = player_switchers["compare"]["options"][1:] if player_switchers else []
-        compare_is_ready = compare_session is not None and compare_bundle is not None
-        can_compare = bool(compare_session_options)
-        visible_focus_item = None
-        primary_items = _build_text_player_items(
-            ui_lang,
-            language_slug,
-            session,
-            task_key,
-            text_bundle,
-            filtered_task_items,
-        )
-        secondary_items = _build_text_player_items(
-            ui_lang,
-            language_slug,
-            compare_session,
-            task_key,
-            compare_bundle,
-            filtered_task_items,
+            item_filter=filtered_task_items,
         ) if compare_session and compare_bundle else []
         compare_rows = _build_player_compare_rows(primary_items, secondary_items, ui_lang) if compare_is_ready else []
+        visible_focus_item = None
         if isinstance(focus_item, str) and focus_item and any(item["item_id"] == focus_item for item in primary_items):
             visible_focus_item = focus_item
         manual_compare_href = _player_page_href(
@@ -3279,6 +3309,7 @@ def build_player_page(
             set_id=effective_set_id,
             preset_id=effective_preset_id,
             focus_item=visible_focus_item or focus_item,
+            render_mode=active_render_mode_query if task_key == "text" else None,
         ) if compare_session else None
         sequence_compare_href = _player_page_href(
             ui_lang,
@@ -3290,8 +3321,17 @@ def build_player_page(
             set_id=effective_set_id,
             preset_id=effective_preset_id,
             focus_item=visible_focus_item or focus_item,
+            render_mode=active_render_mode_query if task_key == "text" else None,
         ) if compare_session else None
         primary_summary = _build_player_summary_card(session, ui_lang, language_slug, "primary", primary_session_options)
+        primary_summary["card_actions"].append(
+            {
+                "kind": "link",
+                "action": "profile",
+                "label": primary_summary["profile_label"],
+                "href": primary_summary["profile_href"],
+            }
+        )
         if can_compare and not compare_is_ready:
             primary_summary["card_actions"].append(
                 {"kind": "button", "action": "compare-add", "label": _player_compare_add_label(ui_lang)}
@@ -3309,6 +3349,14 @@ def build_player_page(
             secondary_summary["card_actions"].append(
                 {
                     "kind": "link",
+                    "action": "profile",
+                    "label": secondary_summary["profile_label"],
+                    "href": secondary_summary["profile_href"],
+                }
+            )
+            secondary_summary["card_actions"].append(
+                {
+                    "kind": "link",
                     "action": "compare-remove",
                     "label": _player_compare_remove_label(ui_lang),
                     "href": _player_page_href(
@@ -3320,6 +3368,7 @@ def build_player_page(
                         set_id=effective_set_id,
                         preset_id=effective_preset_id,
                         focus_item=visible_focus_item or focus_item,
+                        render_mode=active_render_mode_query if task_key == "text" else None,
                     ),
                 }
             )
@@ -3327,16 +3376,46 @@ def build_player_page(
         elif can_compare:
             secondary_placeholder = _build_player_compare_placeholder_card(ui_lang, compare_session_options)
             secondary_placeholder["card_actions"].append(
-                {"kind": "button", "action": "compare-remove", "label": _player_compare_close_label(ui_lang)}
+                {"kind": "button", "action": "compare-remove", "label": _player_compare_remove_label(ui_lang)}
             )
             summary_cards.append(secondary_placeholder)
 
-        text_controls_hint = compare_notice
-        if text_controls_hint is None and compare_is_ready and any(not row["secondary"]["is_available"] for row in compare_rows):
-            text_controls_hint = _player_compare_partial_notice(ui_lang)
+        controls_hint = compare_notice
+        if controls_hint is None and compare_is_ready and any(not row["secondary"]["is_available"] for row in compare_rows):
+            controls_hint = _player_compare_partial_notice(ui_lang)
+        render_mode_switch = _build_player_render_mode_switch(
+            ui_lang,
+            language_slug,
+            session.session_id,
+            task_key,
+            source,
+            compare_session_id=compare_session.session_id if compare_session else None,
+            compare_mode=effective_compare_mode if compare_session else None,
+            set_id=effective_set_id,
+            preset_id=effective_preset_id,
+            focus_item=visible_focus_item or focus_item,
+            player_source=player_source,
+        )
+        set_select = _build_player_set_select(
+            ui_lang,
+            language_slug,
+            session.session_id,
+            task_key,
+            source,
+            compare_session_id=compare_session.session_id if compare_session else None,
+            compare_mode=effective_compare_mode if compare_session else None,
+            active_set_id=effective_set_id,
+            preset_id=effective_preset_id,
+            render_mode=active_render_mode_query,
+        )
         player_view = {
-            "mode": "text",
-            "render_mode": text_render_mode,
+            "mode": task_key,
+            "source_kind": player_source.source_kind,
+            "render_mode": player_source.render_mode,
+            "render_modes": render_mode_switch,
+            "set_select": set_select,
+            "primary_audio_mode": player_source.primary_audio_mode,
+            "supports_full_audio": player_source.supports_full_audio,
             "audio_href": url_for(
                 "public.research_player_audio",
                 ui_lang=ui_lang,
@@ -3344,31 +3423,29 @@ def build_player_page(
                 session_id=session.session_id,
                 task=task_key,
             ),
-            "controls_title": text_display_label,
+            "controls_title": _t(ui_lang, "research.player.controls_title") if task_key == "wordlist" else player_source.items_title,
             "controls_status_label": _player_controls_status_label(ui_lang),
             "controls_status_value": session.session_id,
-            "controls_hint": text_controls_hint,
-            "items_title": text_display_label,
+            "controls_hint": controls_hint,
+            "items_title": player_source.items_title,
             "items_count": len(primary_items),
-            "download_label": "MP3 laden" if ui_lang == "de" else "Download MP3",
+            "set_notice": _build_player_set_notice(
+                ui_lang,
+                language_slug,
+                task_key,
+                set_context,
+                visible_focus_item,
+            ),
+            "download_label": _t(ui_lang, "research.player.download_mp3"),
             "toggle_play_label": _player_play_label(ui_lang),
             "toggle_pause_label": _player_pause_label(ui_lang),
             "volume_label": _player_volume_label(ui_lang),
             "speed_label": _player_speed_label(ui_lang),
-            "set_context": _build_player_set_banner(
-                ui_lang,
-                language_slug,
-                task_key,
-                source,
-                set_context,
-                len(primary_items),
-                visible_focus_item,
-            ),
             "primary": {
                 "speaker_key": "primary",
                 "session_id": session.session_id,
                 "label": session.session_id,
-                "role_label": "Primär" if ui_lang == "de" else "Primary",
+                "role_label": _t(ui_lang, "research.player.role.primary"),
                 "audio_href": url_for(
                     "public.research_player_audio",
                     ui_lang=ui_lang,
@@ -3382,7 +3459,7 @@ def build_player_page(
                 "speaker_key": "secondary",
                 "session_id": compare_session.session_id,
                 "label": compare_session.session_id,
-                "role_label": "Vergleich" if ui_lang == "de" else "Compare",
+                "role_label": _t(ui_lang, "research.player.role.compare"),
                 "audio_href": url_for(
                     "public.research_player_audio",
                     ui_lang=ui_lang,
@@ -3405,6 +3482,7 @@ def build_player_page(
                 "switchers": player_switchers,
                 "rows": compare_rows,
             },
+            "text_blocks": _build_running_text_blocks(primary_items) if task_key == "text" and player_source.render_mode == "running_text" and not compare_is_ready else [],
             "client_state": {
                 "requestedMode": effective_compare_mode,
                 "compareOpen": compare_is_ready,
@@ -3423,6 +3501,7 @@ def build_player_page(
                     set_id=effective_set_id,
                     preset_id=effective_preset_id,
                     focus_item=visible_focus_item or focus_item,
+                    render_mode=active_render_mode_query if task_key == "text" else None,
                 ),
                 "modeHrefs": {
                     "manual": manual_compare_href,
@@ -3476,6 +3555,12 @@ def build_player_page(
             },
             "items": primary_items,
         }
+        if filtered_task_empty:
+            player_view["empty_state"] = {
+                "title": player_source.items_title,
+                "message": _player_set_empty_message(_player_task_display_label(language_slug, task_key, ui_lang), ui_lang),
+                "hint": _player_set_empty_hint(ui_lang),
+            }
     else:
         fallback_href = None
         fallback_wordlist_available = wordlist_ready and (
@@ -3499,39 +3584,48 @@ def build_player_page(
         if filtered_task_empty:
             player_message = _player_set_empty_message(_player_task_display_label(language_slug, task_key, ui_lang), ui_lang)
             player_hint = _player_set_empty_hint(ui_lang)
-        elif task_key == "text" and text_bundle is not None and text_render_mode != "sentence_list":
-            player_message = _player_missing_message(task_key, ui_lang)
-            player_hint = _player_text_running_mode_notice(ui_lang)
         elif set_context is not None and set_context["status"] == "loaded" and task_key == "interview":
             player_hint = _player_set_interview_hint(ui_lang)
         player_view = {
             "mode": "unavailable",
-            "title": "Player-Status" if ui_lang == "de" else "Player status",
+            "title": _t(ui_lang, "research.player.status_title"),
             "message": player_message,
             "hint": player_hint,
-            "set_context": _build_player_set_banner(
+            "set_select": _build_player_set_select(
+                ui_lang,
+                language_slug,
+                session.session_id,
+                task_key,
+                source,
+                compare_session_id=compare_session.session_id if compare_session else None,
+                compare_mode=effective_compare_mode if compare_session else None,
+                active_set_id=effective_set_id,
+                preset_id=effective_preset_id,
+                render_mode=active_render_mode_query,
+            ) if task_key in PHENOMENA_ITEM_TASKS else None,
+            "set_notice": _build_player_set_notice(
                 ui_lang,
                 language_slug,
                 task_key,
-                source,
                 set_context,
-                len(set_context["task_items"]) if set_context is not None and set_context["status"] == "loaded" else 0,
                 None,
             ),
             "fallback_link": {
                 "href": fallback_href,
-                "label": "Zur Wortliste wechseln" if ui_lang == "de" else "Open wordlist",
+                "label": _t(ui_lang, "research.player.open_wordlist"),
             } if fallback_href else None,
         }
 
+    page_title = _t(ui_lang, "research.player.page_title")
+
     return {
-        "title": task.long_label(ui_lang),
+        "title": page_title,
         "template": "pages/research_player.html",
         "page_kind": "workbench",
         "access": "protected",
         "content_header": build_content_header(
             page_name="research",
-            title=task.long_label(ui_lang),
+            title=page_title,
             intro=_player_intro(ui_lang),
             section_label=get_section_label("research", ui_lang),
             section_href=url_for("public.research_home", ui_lang=ui_lang),
@@ -3556,17 +3650,17 @@ def build_player_page(
             "person_id": session.person_id,
             "recording_date": _format_recording_date(session),
             "speaker_type": _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
-            "context_label": "Varietät" if session.is_native and ui_lang == "de" else "Niveau" if ui_lang == "de" else "Variety" if session.is_native else "Level",
+            "context_label": _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "research.comparison.level_label"),
             "context_value": context_value,
-            "detail_label": _origin_country_label(ui_lang) if session.is_native else "L1",
+            "detail_label": _origin_country_label(ui_lang) if session.is_native else _t(ui_lang, "common.labels.l1_short"),
             "detail_value": detail_value,
             "task_label": _task_label(ui_lang),
-            "task_value": text_display_label if task_key == "text" else task.long_label(ui_lang),
+            "task_value": player_source.items_title if task_key == "text" and player_source is not None else task.long_label(ui_lang),
             "recorded_by_label": _recorded_by_label(ui_lang),
             "recorded_by_value": session.recorded_by or "-",
             "recording_date_label": _recording_date_label(ui_lang),
             "accent_modifier": _session_accent_modifier(session),
-            "selected_label": text_display_label if task_key == "text" else task.short_label(ui_lang),
+            "selected_label": player_source.items_title if task_key == "text" and player_source is not None else task.short_label(ui_lang),
             "badges": [
                 _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
                 context_value if context_value != "-" else None,

@@ -24,7 +24,7 @@ from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
 from app.research_presets import clear_research_preset_caches
 from app.research_sessions import load_language_sessions, load_person_records
-from app.research_sets import ResearchSetStorageUnavailableError, create_draft_set, replace_set_items
+from app.research_sets import ResearchSetStorageUnavailableError, create_draft_set, replace_set_items, update_set_metadata
 from app.research_views import build_player_page, _is_playable_audio_artifact
 from app.routes.public import blueprint as public_blueprint
 
@@ -165,6 +165,17 @@ def _write_minimal_runtime(runtime_root: Path) -> None:
         {
             "task": "wordlist",
             "language": "spanish",
+            "player_source": {
+                "source_kind": "wordlist",
+                "content_mode": "wordlist",
+                "default_view": "list",
+                "allowed_views": ["list"],
+                "primary_audio_mode": "item",
+                "supports_item_audio": True,
+                "supports_full_audio": True,
+                "supports_text_view": False,
+                "paragraph_model": "none",
+            },
             "items": [
                 {"item_id": "wl_001", "item_number": "1", "text": "mesa"},
                 {"item_id": "wl_002", "item_number": "2", "text": "reloj"},
@@ -177,6 +188,17 @@ def _write_minimal_runtime(runtime_root: Path) -> None:
             "task": "text",
             "language": "spanish",
             "display_label": "Satzliste",
+            "player_source": {
+                "source_kind": "sentence_list",
+                "content_mode": "sentence_list",
+                "default_view": "list",
+                "allowed_views": ["list"],
+                "primary_audio_mode": "item",
+                "supports_item_audio": True,
+                "supports_full_audio": True,
+                "supports_text_view": False,
+                "paragraph_model": "none",
+            },
             "items": [
                 {"item_id": "d_01", "item_number": "D1", "text": "Hoy miro el reloj con calma antes de salir."},
                 {"item_id": "d_02", "item_number": "D2", "text": "Mañana vuelvo a casa después del trabajo."},
@@ -225,6 +247,49 @@ def _write_minimal_runtime(runtime_root: Path) -> None:
     _write_wordlist_artifacts(runtime_root, "spanish", compare_session, "ES-N-0001", wordlist_items)
     _write_text_artifacts(runtime_root, "spanish", primary_session, "ES-L-0001", text_items)
     _write_text_artifacts(runtime_root, "spanish", compare_session, "ES-N-0001", text_items)
+
+
+def _write_connected_text_catalog(runtime_root: Path) -> None:
+    config_dir = runtime_root / "data" / "config" / "research_player" / "spanish"
+    _write_json(
+        config_dir / "task_catalogs" / "text.json",
+        {
+            "task": "text",
+            "language": "spanish",
+            "display_label": "Text",
+            "player_source": {
+                "source_kind": "text",
+                "content_mode": "connected_text",
+                "default_view": "text",
+                "allowed_views": ["text", "list"],
+                "primary_audio_mode": "full",
+                "supports_item_audio": True,
+                "supports_full_audio": True,
+                "supports_text_view": True,
+                "paragraph_model": "explicit",
+            },
+            "items": [
+                {
+                    "item_id": "d_01",
+                    "item_number": "D1",
+                    "text": "Hoy miro el reloj con calma antes de salir.",
+                    "text_container_id": "story_01",
+                    "text_order_index": 1,
+                    "paragraph_break_before": True,
+                    "paragraph_id": "p1",
+                },
+                {
+                    "item_id": "d_02",
+                    "item_number": "D2",
+                    "text": "Mañana vuelvo a casa después del trabajo.",
+                    "text_container_id": "story_01",
+                    "text_order_index": 2,
+                    "paragraph_break_before": True,
+                    "paragraph_id": "p2",
+                },
+            ],
+        },
+    )
 
 
 def _insert_user(user_id: str, username: str) -> None:
@@ -315,8 +380,7 @@ def test_player_filters_wordlist_to_active_set_excerpt(player_set_app: Flask) ->
     assert page is not None
     assert page["player"]["mode"] == "wordlist"
     assert [item["item_id"] for item in page["player"]["items"]] == ["wl_002"]
-    assert page["player"]["set_context"]["status"] == "loaded"
-    assert "Set-ID" in " ".join(page["player"]["set_context"]["meta"])
+    assert page["player"]["set_notice"] is None
 
 
 def test_player_renders_explicit_empty_state_when_task_excerpt_is_empty(player_set_app: Flask) -> None:
@@ -330,9 +394,12 @@ def test_player_renders_explicit_empty_state_when_task_excerpt_is_empty(player_s
         page = build_player_page("de", "spanish", "ES-L-0001-2026-S01", "wordlist", "comparison", set_id=set_id)
 
     assert page is not None
-    assert page["player"]["mode"] == "unavailable"
-    assert "keine sichtbaren Einträge" in page["player"]["message"]
-    assert page["player"]["set_context"]["status"] == "loaded"
+    assert page["player"]["mode"] == "wordlist"
+    assert "keine sichtbaren Einträge" in page["player"]["empty_state"]["message"]
+    assert page["player"]["set_notice"] is None
+    assert [action["action"] for action in page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
+    assert page["player"]["set_select"]["options"][0]["label"] == "Alle Items"
+    assert any(option["current"] for option in page["player"]["set_select"]["options"][1:])
 
 
 def test_player_focus_item_marks_visible_set_excerpt(player_set_app: Flask) -> None:
@@ -361,7 +428,42 @@ def test_player_focus_item_marks_visible_set_excerpt(player_set_app: Flask) -> N
 
     assert page is not None
     assert page["player"]["client_state"]["focusedItemId"] == "wl_002"
-    assert page["player"]["set_context"]["focus_note"] is None
+    assert page["player"]["set_notice"] is None
+
+
+def test_player_set_select_uses_saved_workbench_list_and_only_keeps_current_draft(player_set_app: Flask) -> None:
+    with player_set_app.app_context():
+        saved_set_id = _create_set(owner_user_id="user-1", items=[{"task": "wordlist", "item_id": "wl_001"}])
+        update_set_metadata(owner_user_id="user-1", set_id=saved_set_id, label="Gespeichertes Set", state="saved")
+        current_draft_id = _create_set(owner_user_id="user-1", items=[{"task": "wordlist", "item_id": "wl_002"}])
+        update_set_metadata(owner_user_id="user-1", set_id=current_draft_id, label="Aktiver Draft")
+        hidden_draft_id = _create_set(owner_user_id="user-1", items=[{"task": "text", "item_id": "d_01"}])
+        update_set_metadata(owner_user_id="user-1", set_id=hidden_draft_id, label="Versteckter Draft")
+
+    with player_set_app.test_request_context():
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        base_page = build_player_page("de", "spanish", "ES-L-0001-2026-S01", "wordlist", "comparison")
+        current_draft_page = build_player_page(
+            "de",
+            "spanish",
+            "ES-L-0001-2026-S01",
+            "wordlist",
+            "comparison",
+            set_id=current_draft_id,
+        )
+
+    assert base_page is not None
+    assert [option["label"] for option in base_page["player"]["set_select"]["options"]] == ["Alle Items", "Gespeichertes Set"]
+
+    assert current_draft_page is not None
+    assert [option["label"] for option in current_draft_page["player"]["set_select"]["options"]] == [
+        "Alle Items",
+        "Aktiver Draft",
+        "Gespeichertes Set",
+    ]
+    assert current_draft_page["player"]["set_select"]["options"][1]["current"] is True
 
 
 def test_player_task_switches_keep_set_and_focus_context(player_set_app: Flask) -> None:
@@ -432,7 +534,7 @@ def test_player_degrades_without_leaking_set_data_when_owner_context_is_missing(
 
     assert page is not None
     assert [item["item_id"] for item in page["player"]["items"]] == ["wl_001", "wl_002"]
-    assert page["player"]["set_context"]["status"] == "requires-auth"
+    assert page["player"]["set_notice"]["status"] == "requires-auth"
 
 
 def test_player_degrades_cleanly_when_set_storage_is_unavailable(
@@ -453,7 +555,7 @@ def test_player_degrades_cleanly_when_set_storage_is_unavailable(
 
     assert page is not None
     assert [item["item_id"] for item in page["player"]["items"]] == ["wl_001", "wl_002"]
-    assert page["player"]["set_context"]["status"] == "storage-unavailable"
+    assert page["player"]["set_notice"]["status"] == "storage-unavailable"
 
 
 def test_player_route_renders_filtered_handoff_from_comparison(player_set_app: Flask) -> None:
@@ -469,7 +571,8 @@ def test_player_route_renders_filtered_handoff_from_comparison(player_set_app: F
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'pm-player-set-context' in html
+    assert 'pm-player-set-context' not in html
+    assert 'data-player-set-notice' not in html
     assert 'data-player-focus-item="wl_002"' in html
     assert 'data-player-focus-item="wl_001"' not in html
 
@@ -493,10 +596,72 @@ def test_text_player_builds_productive_sentence_list_with_set_context(player_set
     assert page is not None
     assert page["player"]["mode"] == "text"
     assert page["player"]["render_mode"] == "sentence_list"
-    assert page["player"]["set_context"]["status"] == "loaded"
-    assert any("Satzliste" in item for item in page["player"]["set_context"]["meta"])
+    assert page["player"]["source_kind"] == "set"
+    assert page["player"]["set_notice"] is None
     assert [item["item_id"] for item in page["player"]["items"]] == ["d_01", "d_02"]
     assert page["player"]["client_state"]["focusedItemId"] == "d_01"
+
+
+def test_connected_text_source_falls_back_to_list_view_inside_set_excerpt(player_set_app: Flask) -> None:
+    runtime_root = Path(os.environ["PROMAT_RUNTIME_ROOT"])
+    _write_connected_text_catalog(runtime_root)
+
+    with player_set_app.app_context():
+        set_id = _create_set(owner_user_id="user-1", items=[{"task": "text", "item_id": "d_01"}])
+
+    with player_set_app.test_request_context():
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_player_page(
+            "de",
+            "spanish",
+            "ES-L-0001-2026-S01",
+            "text",
+            "phenomena",
+            set_id=set_id,
+            focus_item="d_01",
+            render_mode="running_text",
+        )
+
+    assert page is not None
+    assert page["player"]["mode"] == "text"
+    assert page["player"]["source_kind"] == "set"
+    assert page["player"]["render_mode"] == "sentence_list"
+    assert page["player"]["render_modes"] is None
+    assert page["player"]["text_blocks"] == []
+    assert [item["item_id"] for item in page["player"]["items"]] == ["d_01"]
+
+
+def test_text_set_select_preserves_render_mode_query_for_saved_sets(player_set_app: Flask) -> None:
+    runtime_root = Path(os.environ["PROMAT_RUNTIME_ROOT"])
+    _write_connected_text_catalog(runtime_root)
+
+    with player_set_app.app_context():
+        saved_set_id = _create_set(owner_user_id="user-1", items=[{"task": "text", "item_id": "d_01"}])
+        update_set_metadata(owner_user_id="user-1", set_id=saved_set_id, label="Gespeichertes Set", state="saved")
+
+    with player_set_app.test_request_context():
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_player_page(
+            "de",
+            "spanish",
+            "ES-L-0001-2026-S01",
+            "text",
+            "recordings",
+            render_mode="sentence_list",
+        )
+
+    assert page is not None
+    assert page["player"]["render_mode"] == "sentence_list"
+    saved_option = next(
+        option for option in page["player"]["set_select"]["options"] if option["label"] == "Gespeichertes Set"
+    )
+    assert saved_option["href"].endswith(
+        f"/de/research/spanish/player/ES-L-0001-2026-S01/text?source=recordings&set_id={saved_set_id}&render_mode=sentence_list"
+    )
 
 
 def test_text_player_filters_to_set_excerpt(player_set_app: Flask) -> None:
@@ -526,8 +691,9 @@ def test_text_player_renders_explicit_empty_state_when_text_excerpt_is_empty(pla
         page = build_player_page("de", "spanish", "ES-L-0001-2026-S01", "text", "comparison", set_id=set_id)
 
     assert page is not None
-    assert page["player"]["mode"] == "unavailable"
-    assert "keine sichtbaren Einträge" in page["player"]["message"]
+    assert page["player"]["mode"] == "text"
+    assert "keine sichtbaren Einträge" in page["player"]["empty_state"]["message"]
+    assert page["player"]["set_select"]["options"][0]["label"] == "Alle Items"
 
 
 def test_text_task_switch_keeps_set_context_and_becomes_available(player_set_app: Flask) -> None:
@@ -567,7 +733,7 @@ def test_text_focus_item_degrades_cleanly_when_not_in_excerpt(player_set_app: Fl
     assert page is not None
     assert page["player"]["mode"] == "text"
     assert page["player"]["client_state"]["focusedItemId"] is None
-    assert page["player"]["set_context"]["focus_note"] is not None
+    assert page["player"]["set_notice"]["status"] == "focus-missed"
 
 
 def test_text_player_route_renders_productive_runtime(player_set_app: Flask) -> None:

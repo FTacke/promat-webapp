@@ -1,6 +1,8 @@
 import { getCsrfToken } from "../api.js";
 import { fetchWithAuth } from "../modules/auth/refresh.js";
 
+let requestFailedLabel = "";
+
 function parseState() {
   const element = document.getElementById("pm-comparison-state");
   if (!element) {
@@ -92,7 +94,7 @@ async function requestJson(url, options = {}) {
   const payload = contentType.includes("application/json") ? await response.json().catch(() => null) : null;
 
   if (!response.ok) {
-    const error = new Error((payload && payload.error) || response.statusText || "Request failed");
+    const error = new Error((payload && payload.error) || response.statusText || requestFailedLabel);
     error.status = response.status;
     error.payload = payload;
     throw error;
@@ -109,6 +111,9 @@ function init() {
   }
 
   const labels = state.labels || {};
+  requestFailedLabel = labels.requestFailed || requestFailedLabel;
+  const saveErrorFallbackLabel = labels.saveErrorFallback || requestFailedLabel;
+  const untitledLabel = labels.untitled || "";
   const statusText = root.querySelector("[data-comparison-status-text]");
   const statusActions = root.querySelector("[data-comparison-status-actions]");
   const feedback = root.querySelector("[data-comparison-feedback]");
@@ -265,8 +270,7 @@ function init() {
   }
 
   function normalizeSavedSetPreset(storedSet) {
-    const fallbackLabel = state.uiLang === "de" ? "Ohne Titel" : "Untitled";
-    const label = (storedSet && storedSet.label) || fallbackLabel;
+    const label = (storedSet && storedSet.label) || untitledLabel;
     const items = Array.isArray(storedSet && storedSet.items)
       ? storedSet.items.map((item) => ({
         task: item.task,
@@ -277,7 +281,7 @@ function init() {
       presetId: `saved:${storedSet.set_id}`,
       kind: "custom",
       setId: storedSet.set_id,
-      optionLabel: `${label} · ${labels.stateCustom || "custom"}`,
+      optionLabel: `${label} · ${labels.stateCustom || ""}`,
       label,
       preferredTask: storedSet.comparison_view_task || storedSet.preferred_task || resolveViewTaskForItems(items, null),
       taskSummary: "",
@@ -342,16 +346,16 @@ function init() {
     const contentDisposition = (response.headers.get("content-disposition") || "").toLowerCase();
     const contentLength = Number(response.headers.get("content-length") || "0");
     if (!response.ok) {
-      throw new Error(response.statusText || "Audio request failed");
+      throw new Error(response.statusText || requestFailedLabel);
     }
     if (contentDisposition.startsWith("attachment;")) {
-      throw new Error(labels.clipUnavailable || "This clip is currently not playable.");
+      throw new Error(labels.clipUnavailable || requestFailedLabel);
     }
     if (!contentType.startsWith("audio/")) {
-      throw new Error(labels.clipUnavailable || "This clip is currently not playable.");
+      throw new Error(labels.clipUnavailable || requestFailedLabel);
     }
     if (contentLength === 0) {
-      throw new Error(labels.clipUnavailable || "This clip is currently not playable.");
+      throw new Error(labels.clipUnavailable || requestFailedLabel);
     }
     clipCache.set(href, href);
     return href;
@@ -359,7 +363,7 @@ function init() {
 
   async function playEntrySequence(entries) {
     if (!entries.length) {
-      setFeedback(labels.workspaceNoMatches || "No split clip available.", "error");
+      setFeedback(labels.workspaceNoMatches || requestFailedLabel, "error");
       return;
     }
 
@@ -391,7 +395,7 @@ function init() {
           cleanup();
           clipCache.delete(entry.href);
           clearActiveMatrixCell();
-          reject(new Error("Audio playback failed"));
+          reject(new Error(labels.clipUnavailable || requestFailedLabel));
         };
         audio.onpause = () => {
           if (token !== playbackToken || audio.currentTime === 0) {
@@ -496,13 +500,13 @@ function init() {
   }
 
   function defaultComparisonSetLabel() {
-    return labels.defaultSetLabel || "Complete";
+    return labels.defaultSetLabel || "";
   }
 
   function defaultMaterialScopeLabel() {
     return visibleViewTask === "text"
-      ? (labels.fullTextLabel || "Complete text")
-      : (labels.fullListLabel || labels.defaultSetLabel || "Complete list");
+      ? (labels.fullTextLabel || "")
+      : (labels.fullListLabel || labels.defaultSetLabel || "");
   }
 
   function isDefaultCompleteSet() {
@@ -543,7 +547,7 @@ function init() {
     if (matchedId) {
       return labels.curatedMaterialLabel || materialPresetLookup.get(matchedId)?.label || matchedId;
     }
-    return labels.customSetLabel || "Custom selection";
+    return labels.customSetLabel || "";
   }
 
   function renderSetSummary() {
@@ -554,8 +558,8 @@ function init() {
   }
 
   function speakerCountLabel(count) {
-    const singular = labels.speakerSingularLabel || "speaker";
-    const plural = labels.speakerPluralLabel || "speakers";
+    const singular = labels.speakerSingularLabel || "";
+    const plural = labels.speakerPluralLabel || "";
     return `${count} ${count === 1 ? singular : plural}`;
   }
 
@@ -584,7 +588,7 @@ function init() {
     }
     if (!state.isAuthenticated) {
       redirectToLogin();
-      throw new Error("Authentication required");
+      throw new Error(labels.loginText || requestFailedLabel);
     }
 
     const payload = await requestJson(state.createSetHref, {
@@ -607,7 +611,7 @@ function init() {
       applySet(payload.set, { implicit: false });
     } catch (error) {
       isBootstrappingWorkspace = false;
-      transientMessage = error.message || labels.saveErrorFallback || "Action could not be completed.";
+      transientMessage = error.message || saveErrorFallbackLabel;
       render();
     }
   }
@@ -638,7 +642,7 @@ function init() {
       applySet(payload.set, { implicit: true });
     } catch (error) {
       isBootstrappingWorkspace = false;
-      transientMessage = error.message || labels.saveErrorFallback || "Action could not be completed.";
+      transientMessage = error.message || saveErrorFallbackLabel;
       render();
     }
   }
@@ -818,7 +822,7 @@ function init() {
   function speakerMetaMarkup(session) {
     if (session.isNative) {
       return [
-        `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--native">${escapeHtml(session.speakerTypeLabel || "Native")}</span>`,
+        `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--native">${escapeHtml(session.speakerTypeLabel || labels.nativeShort || "")}</span>`,
         session.standardVarietyValue
           ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--native-detail">${escapeHtml(session.standardVarietyValue)}</span>`
           : "",
@@ -936,7 +940,7 @@ function init() {
     setDialogError("");
     setSavePending(false);
     if (saveHint) {
-      saveHint.textContent = labels.saveHint || "Save the current draft as a new set.";
+      saveHint.textContent = labels.saveHint || "";
     }
     saveInput.value = activeSet.suggested_save_label || activeSet.label || "";
     if (typeof saveDialog.showModal === "function") {
@@ -957,7 +961,7 @@ function init() {
 
     const label = (saveInput.value || "").trim();
     if (!label) {
-      setDialogError(labels.saveValidationError || "Please enter a name.");
+      setDialogError(labels.saveValidationError || requestFailedLabel);
       return;
     }
 
@@ -969,7 +973,7 @@ function init() {
       });
       applySet(payload.set);
       closeSaveDialog();
-      setFeedback(`${labels.saveSuccessPrefix || "Saved as"} ${label}`, "success");
+      setFeedback(`${labels.saveSuccessPrefix || ""} ${label}`, "success");
       render();
     } catch (error) {
       setSavePending(false);
@@ -979,24 +983,24 @@ function init() {
         return;
       }
       if (error.status === 400) {
-        setDialogError((error.payload && error.payload.error) || labels.saveValidationError || "Please enter a name.");
+        setDialogError((error.payload && error.payload.error) || labels.saveValidationError || requestFailedLabel);
         return;
       }
-      setDialogError((error.payload && error.payload.error) || labels.saveBackendError || labels.saveErrorFallback || "Action could not be completed.");
+      setDialogError((error.payload && error.payload.error) || labels.saveBackendError || saveErrorFallbackLabel);
     }
   }
 
   function renderStatus() {
     if (transientMessage) {
-      setStatus(labels.statusTitle || "Comparison workspace", transientMessage, []);
+      setStatus(labels.statusTitle || "", transientMessage, []);
       return;
     }
     if (isBootstrappingWorkspace) {
-      setStatus(labels.materialLoadingTitle || labels.emptyTitle || "Preparing comparison", labels.materialLoadingText || labels.emptyText || "Preparing comparison.", []);
+      setStatus(labels.materialLoadingTitle || labels.emptyTitle || "", labels.materialLoadingText || labels.emptyText || "", []);
       return;
     }
     if (!activeSet && state.requestedSetId && state.isAuthenticated) {
-      setStatus(labels.statusTitle || "Comparison workspace", labels.loadingSet || "Loading set ...", []);
+      setStatus(labels.statusTitle || "", labels.loadingSet || "", []);
       return;
     }
     setStatus("", "", []);
@@ -1008,15 +1012,19 @@ function init() {
     }
     const availableTasks = ["wordlist", "text"];
     materialControls.innerHTML = availableTasks
-      .map((entry) => `
+      .map((entry) => {
+        const isCurrent = entry === visibleViewTask;
+        const isDisabled = Boolean(activeSet && !(activeSet.taskCounts[entry] > 0) && !isCurrent);
+        return `
         <button
           type="button"
-          class="pm-comparison-material-option${entry === visibleViewTask ? " is-active" : ""}"
+          class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice${isCurrent ? " is-current" : ""}${isDisabled ? " is-disabled" : ""}"
           data-comparison-view-filter="${escapeHtml(entry)}"
-          ${(activeSet && !(activeSet.taskCounts[entry] > 0) && entry !== visibleViewTask) ? "disabled" : ""}
-          aria-pressed="${entry === visibleViewTask ? "true" : "false"}"
+          ${isCurrent || isDisabled ? "disabled" : ""}
+          aria-pressed="${isCurrent ? "true" : "false"}"
         >${escapeHtml(state.taskLabels[entry] || entry)}</button>
-      `)
+      `;
+      })
       .join("");
   }
 
@@ -1038,7 +1046,7 @@ function init() {
 
     if (l1FilterSelect) {
       l1FilterSelect.innerHTML = [
-        `<option value="">${escapeHtml(labels.l1FilterLabel || "Choose L1")}</option>`,
+        `<option value="">${escapeHtml(labels.l1FilterLabel || "")}</option>`,
         ...availableL1Values().map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`),
       ].join("");
       l1FilterSelect.value = filterState.l1;
@@ -1049,7 +1057,7 @@ function init() {
         .filter((session) => session.genderKey && session.genderKey !== "unknown")
         .map((session) => [session.genderKey, session.genderLabel]))).sort((left, right) => String(left[1]).localeCompare(String(right[1])));
       genderFilterSelect.innerHTML = [
-        `<option value="">${escapeHtml(labels.filterAllLabel || "All")}</option>`,
+        `<option value="">${escapeHtml(labels.filterAllLabel || "")}</option>`,
         ...genderOptions.map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`),
       ].join("");
       genderFilterSelect.value = filterState.gender;
@@ -1057,9 +1065,9 @@ function init() {
 
     if (exposureFilterSelect) {
       exposureFilterSelect.innerHTML = [
-        `<option value="">${escapeHtml(labels.filterAllLabel || "All")}</option>`,
-        `<option value="yes">${escapeHtml(labels.exposureYesLabel || "With language stay")}</option>`,
-        `<option value="no">${escapeHtml(labels.exposureNoLabel || "Without language stay")}</option>`,
+        `<option value="">${escapeHtml(labels.filterAllLabel || "")}</option>`,
+        `<option value="yes">${escapeHtml(labels.exposureYesLabel || "")}</option>`,
+        `<option value="no">${escapeHtml(labels.exposureNoLabel || "")}</option>`,
       ].join("");
       exposureFilterSelect.value = filterState.exposure;
     }
@@ -1074,7 +1082,7 @@ function init() {
         chips.push({ key: `level:${level}`, label: level });
       }
       if (filterState.l1) {
-        chips.push({ key: "l1", label: `${labels.l1ShortLabel || "L1"}: ${filterState.l1}` });
+        chips.push({ key: "l1", label: `${labels.l1ShortLabel || ""}: ${filterState.l1}` });
       }
       if (filterState.gender && genderFilterSelect) {
         const selected = genderFilterSelect.selectedOptions[0];
@@ -1084,8 +1092,8 @@ function init() {
         chips.push({
           key: "exposure",
           label: filterState.exposure === "yes"
-            ? (labels.exposureYesLabel || "With language stay")
-            : (labels.exposureNoLabel || "Without language stay"),
+            ? (labels.exposureYesLabel || "")
+            : (labels.exposureNoLabel || ""),
         });
       }
       if (filterState.search.trim()) {
@@ -1129,7 +1137,7 @@ function init() {
   async function updateMaterialSelection({ presetId = null } = {}) {
     if (!state.isAuthenticated) {
       redirectToLogin({ setId: activeSet && activeSet.set_id, task: visibleViewTask !== "all" ? visibleViewTask : null });
-      throw new Error(labels.loginText || "Please sign in.");
+      throw new Error(labels.loginText || requestFailedLabel);
     }
 
     const ensuredSet = await ensureDraft();
@@ -1183,8 +1191,8 @@ function init() {
       availableLearnerSessions(),
       {
         isSelectedList: false,
-        actionLabel: labels.addSessionLabel || "Add session",
-        emptyText: labels.availableEmptyFiltered || "No matching speakers.",
+        actionLabel: labels.addSessionLabel || "",
+        emptyText: labels.availableEmptyFiltered || "",
       },
     );
     renderSessionList(
@@ -1192,8 +1200,8 @@ function init() {
       availableNativeSessions(),
       {
         isSelectedList: false,
-        actionLabel: labels.addSessionLabel || "Add session",
-        emptyText: labels.availableEmptyFiltered || "No matching speakers.",
+        actionLabel: labels.addSessionLabel || "",
+        emptyText: labels.availableEmptyFiltered || "",
       },
     );
     renderSessionList(
@@ -1201,8 +1209,8 @@ function init() {
       orderedSelectedSessions(),
       {
         isSelectedList: true,
-        actionLabel: labels.removeSessionLabel || "Remove session",
-        emptyText: labels.selectedEmpty || labels.workspaceEmptySessions || "No speakers selected yet.",
+        actionLabel: labels.removeSessionLabel || "",
+        emptyText: labels.selectedEmpty || labels.workspaceEmptySessions || "",
       },
     );
   }
@@ -1220,19 +1228,19 @@ function init() {
     const sessions = selectedSessions();
     if (!activeSet) {
       matrixSummary.textContent = labels.materialText || "";
-      matrixEmpty.textContent = labels.workspaceEmptyItems || "This set does not contain any items yet.";
+      matrixEmpty.textContent = labels.workspaceEmptyItems || "";
       matrixWrap.hidden = true;
       return;
     }
 
-    matrixSummary.textContent = `${state.taskLabels[visibleViewTask] || labels.itemsTitle || "Material"} · ${items.length} ${labels.workspaceItems || "items"} · ${speakerCountLabel(sessions.length)}`;
+    matrixSummary.textContent = `${state.taskLabels[visibleViewTask] || labels.itemsTitle || ""} · ${items.length} ${labels.workspaceItems || ""} · ${speakerCountLabel(sessions.length)}`;
     if (!items.length) {
-      matrixEmpty.textContent = labels.workspaceNoRows || "No items are visible for the current filter.";
+      matrixEmpty.textContent = labels.workspaceNoRows || "";
       matrixWrap.hidden = true;
       return;
     }
     if (!sessions.length) {
-      matrixEmpty.textContent = labels.selectedEmpty || labels.workspaceEmptySessions || "No speakers selected yet.";
+      matrixEmpty.textContent = labels.selectedEmpty || labels.workspaceEmptySessions || "";
       matrixWrap.hidden = true;
       return;
     }
@@ -1241,7 +1249,7 @@ function init() {
     matrixWrap.hidden = false;
     matrixHead.innerHTML = `
       <tr>
-        <th class="pm-comparison-matrix__stub" scope="col">${escapeHtml(labels.itemsTitle || "Set contents")}</th>
+        <th class="pm-comparison-matrix__stub" scope="col">${escapeHtml(labels.itemsTitle || "")}</th>
         ${sessions.map((session) => `
           <th class="pm-comparison-matrix__session" scope="col" title="${escapeHtml(session.sessionId)}">
             ${speakerCardMarkup(session, { matrix: true })}
@@ -1255,7 +1263,7 @@ function init() {
           .filter((session) => sessionSupportsItem(session, item))
           .map((session) => ({
             href: buildItemClipHref(session.sessionId, item.task, item.item_id),
-            label: `${labels.playbackSpeakerPrefix || "Speaker"} ${session.personId} · ${item.itemNumber}`,
+            label: `${labels.playbackSpeakerPrefix || ""} ${session.personId} · ${item.itemNumber}`,
             sessionId: session.sessionId,
             taskKey: item.task,
             itemId: item.item_id,
@@ -1271,21 +1279,21 @@ function init() {
                   </div>
                   <p class="pm-comparison-item__text">${escapeHtml(item.text)}</p>
                 </div>
-                  ${rowEntries.length ? `<button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary pm-comparison-matrix__row-play" data-comparison-play-row="${escapeHtml(item.task)}:${escapeHtml(item.item_id)}" aria-label="${escapeHtml(labels.playRowLabel || "Play row")}" title="${escapeHtml(labels.playRowLabel || "Play row")}">${iconSvg("play")}</button>` : ""}
+                  ${rowEntries.length ? `<button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary pm-comparison-matrix__row-play" data-comparison-play-row="${escapeHtml(item.task)}:${escapeHtml(item.item_id)}" aria-label="${escapeHtml(labels.playRowLabel || "")}" title="${escapeHtml(labels.playRowLabel || "")}">${iconSvg("play")}</button>` : ""}
                 </div>
               </div>
             </th>
             ${sessions.map((session) => {
               if (!sessionSupportsItem(session, item)) {
-                return `<td class="pm-comparison-matrix__cell pm-comparison-matrix__cell--missing"><span class="pm-comparison-matrix__missing" aria-label="${escapeHtml(labels.clipMissing || "No clip")}" title="${escapeHtml(labels.clipMissing || "No clip")}">-</span></td>`;
+                return `<td class="pm-comparison-matrix__cell pm-comparison-matrix__cell--missing"><span class="pm-comparison-matrix__missing" aria-label="${escapeHtml(labels.clipMissing || "")}" title="${escapeHtml(labels.clipMissing || "")}">-</span></td>`;
               }
               const clipHref = buildItemClipHref(session.sessionId, item.task, item.item_id);
               const downloadHref = buildItemDownloadHref(session.sessionId, item.task, item.item_id);
               return `
                 <td class="pm-comparison-matrix__cell" data-comparison-matrix-cell="${escapeHtml(session.sessionId)}|${escapeHtml(item.task)}|${escapeHtml(item.item_id)}">
                   <div class="pm-comparison-matrix__cell-actions">
-                    <button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary" data-comparison-play-cell="${escapeHtml(session.sessionId)}|${escapeHtml(item.task)}|${escapeHtml(item.item_id)}|${escapeHtml(item.itemNumber)}" aria-label="${escapeHtml(labels.playClipLabel || "Play clip")}" title="${escapeHtml(labels.playClipLabel || "Play clip")}">${iconSvg("play")}</button>
-                    <a class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--secondary" href="${escapeHtml(downloadHref)}" download aria-label="${escapeHtml(labels.downloadClip || "Download MP3")}" title="${escapeHtml(labels.downloadClip || "Download MP3")}">${iconSvg("download")}</a>
+                    <button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary" data-comparison-play-cell="${escapeHtml(session.sessionId)}|${escapeHtml(item.task)}|${escapeHtml(item.item_id)}|${escapeHtml(item.itemNumber)}" aria-label="${escapeHtml(labels.playClipLabel || "")}" title="${escapeHtml(labels.playClipLabel || "")}">${iconSvg("play")}</button>
+                    <a class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--secondary" href="${escapeHtml(downloadHref)}" download aria-label="${escapeHtml(labels.downloadClip || "")}" title="${escapeHtml(labels.downloadClip || "")}">${iconSvg("download")}</a>
                   </div>
                 </td>
               `;
@@ -1346,7 +1354,7 @@ function init() {
       try {
         await ensureDraft();
       } catch (error) {
-        transientMessage = error.message || labels.saveErrorFallback || "Action could not be completed.";
+        transientMessage = error.message || saveErrorFallbackLabel;
         render();
       }
       return;
@@ -1359,7 +1367,7 @@ function init() {
       try {
         await updateViewTask(nextViewTask);
       } catch (error) {
-        transientMessage = error.message || labels.saveErrorFallback || "Action could not be completed.";
+        transientMessage = error.message || saveErrorFallbackLabel;
         render();
       }
       return;
@@ -1380,7 +1388,7 @@ function init() {
           await updateSessions([...currentIds, sessionId]);
         }
       } catch (error) {
-        transientMessage = error.message || labels.saveErrorFallback || "Action could not be completed.";
+        transientMessage = error.message || saveErrorFallbackLabel;
         render();
       }
       return;
@@ -1439,7 +1447,7 @@ function init() {
         await playEntrySequence([
           {
             href: buildItemClipHref(sessionId, taskKey, itemId),
-            label: `${labels.playbackSpeakerPrefix || "Speaker"} ${(session && session.personId) || sessionId} · ${itemNumber || itemId}`,
+            label: `${labels.playbackSpeakerPrefix || ""} ${(session && session.personId) || sessionId} · ${itemNumber || itemId}`,
             sessionId,
             taskKey,
             itemId,
@@ -1447,7 +1455,7 @@ function init() {
         ]);
       } catch (error) {
         stopPlayback();
-        setFeedback(error.message || labels.saveErrorFallback || "Action could not be completed.", "error");
+        setFeedback(error.message || saveErrorFallbackLabel, "error");
       }
       return;
     }
@@ -1465,7 +1473,7 @@ function init() {
         .filter((session) => sessionSupportsItem(session, item))
         .map((session) => ({
           href: buildItemClipHref(session.sessionId, taskKey, itemId),
-          label: `${labels.playbackRowPrefix || "Row"} ${item.itemNumber} · ${session.personId}`,
+          label: `${labels.playbackRowPrefix || ""} ${item.itemNumber} · ${session.personId}`,
           sessionId: session.sessionId,
           taskKey,
           itemId,
@@ -1474,7 +1482,7 @@ function init() {
         await playEntrySequence(entries);
       } catch (error) {
         stopPlayback();
-        setFeedback(error.message || labels.saveErrorFallback || "Action could not be completed.", "error");
+        setFeedback(error.message || saveErrorFallbackLabel, "error");
       }
     }
   });
@@ -1504,7 +1512,7 @@ function init() {
       try {
         await updateMaterialSelection({ presetId: nextValue === DEFAULT_MATERIAL_OPTION ? null : nextValue });
       } catch (error) {
-        transientMessage = error.message || labels.saveErrorFallback || "Action could not be completed.";
+        transientMessage = error.message || saveErrorFallbackLabel;
         render();
       }
     });

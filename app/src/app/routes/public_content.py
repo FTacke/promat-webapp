@@ -4,69 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
 from ..research_sessions import load_language_sessions
-
-
-DEFAULT_UI_LANGUAGE = "de"
-SUPPORTED_UI_LANGUAGES: tuple[str, ...] = ("de",)
-
-
-TEXTS: dict[str, dict[str, str]] = {
-    "de": {
-        "section.project": "Projekt",
-        "section.research": "Forschung",
-        "section.teaching": "Unterricht",
-        "section.sample": "Sample",
-        "section.legal": "Rechtliches",
-        "nav.choose_corpus": "Korpus wählen",
-        "nav.choose_language": "Sprache wählen",
-        "nav.back_to_corpus_selection": "Zur Korpusauswahl",
-        "nav.back_to_language_selection": "Zur Sprachwahl",
-        "nav.more": "Mehr erfahren →",
-        "nav.open_section": "Bereich öffnen",
-        "nav.open_corpus": "Korpus öffnen →",
-        "nav.open_materials": "Materialien öffnen →",
-        "nav.open_page": "Seite öffnen →",
-        "project.about": "Worum es geht",
-        "project.research-design": "Forschungsdesign",
-        "project.data-methods": "Daten & Methodik",
-        "project.team": "Team",
-        "research.design": "Design",
-        "research.speakers": "Sprecher:innen",
-        "research.recordings": "Aufnahmen",
-        "research.comparison": "Vergleich",
-        "research.phenomena": "Phänomene",
-        "teaching.phenomena": "Phänomene",
-        "teaching.materials": "Materialien",
-    },
-    "en": {
-        "section.project": "Project",
-        "section.research": "Research",
-        "section.teaching": "Teaching",
-        "section.sample": "Sample",
-        "section.legal": "Legal",
-        "nav.choose_corpus": "Choose corpus",
-        "nav.choose_language": "Choose language",
-        "nav.back_to_corpus_selection": "Back to corpus selection",
-        "nav.back_to_language_selection": "Back to language selection",
-        "nav.more": "Learn more →",
-        "nav.open_section": "Open area",
-        "nav.open_corpus": "Open corpus →",
-        "nav.open_materials": "Open materials →",
-        "nav.open_page": "Open page →",
-        "project.about": "About",
-        "project.research-design": "Research Design",
-        "project.data-methods": "Data & Methods",
-        "project.team": "Team",
-        "research.design": "Design",
-        "research.speakers": "Speakers",
-        "research.recordings": "Recordings",
-        "research.comparison": "Comparison",
-        "research.phenomena": "Phenomena",
-        "teaching.phenomena": "Phenomena",
-        "teaching.materials": "Materials",
-    },
-}
 
 
 LANGUAGES: tuple[dict[str, Any], ...] = (
@@ -179,10 +118,7 @@ def get_supported_ui_language(ui_lang: str) -> str | None:
 
 
 def get_text(ui_lang: str, key: str) -> str:
-    language_texts = TEXTS.get(ui_lang) or TEXTS[DEFAULT_UI_LANGUAGE]
-    if key in language_texts:
-        return language_texts[key]
-    return TEXTS[DEFAULT_UI_LANGUAGE][key]
+    return translate(ui_lang, key)
 
 
 def get_section_label(section_key: str, ui_lang: str) -> str:
@@ -364,7 +300,11 @@ def build_corpus_cards_research(ui_lang: str) -> list[dict[str, str]]:
             {
                 "title": _research_corpus_card_title(language, ui_lang),
                 "modifier": "pm-card--corpus-research",
-                "meta": f"Projekt-Leitung: {language['corpus_lead']}",
+                "meta": (
+                    f"Projekt-Leitung: {language['corpus_lead']}"
+                    if ui_lang == "de"
+                    else f"Project lead: {language['corpus_lead']}"
+                ),
                 "text": _research_corpus_card_copy(language["slug"], ui_lang),
                 "action_label": get_text(ui_lang, "nav.open_corpus"),
                 "href_key": f"research:{language['slug']}",
@@ -395,7 +335,9 @@ def build_research_select_page(ui_lang: str) -> dict[str, Any]:
         "eyebrow": get_section_label("research", ui_lang),
         "intro": (
             "Vier Sprachkorpora zur Lernendenaussprache mit einheitlicher Route-Struktur, "
-            "vorbereiteter Zugriffslogik und deutschsprachiger UI."
+            "vorbereiteter Zugriffslogik und zweisprachiger UI."
+            if ui_lang == "de"
+            else "Four learner-pronunciation corpora with a shared route structure, prepared access logic, and a bilingual UI."
         ),
         "page_kind": "workbench",
         "corpus_cards": build_corpus_cards_research(ui_lang),
@@ -514,81 +456,114 @@ def build_research_language_root_page(ui_lang: str, language_slug: str) -> dict[
 
     title = get_language_label(language, ui_lang)
     if language_slug == "spanish":
+        intro = (
+            "Der spanische Forschungsbereich bündelt die methodische Dokumentation des Korpus und die vorbereiteten Zugänge zu seinen Analyseoberflächen. Er ordnet personbezogene, sessionbezogene und phänomenbezogene Perspektiven in einer gemeinsamen Struktur."
+            if ui_lang == "de"
+            else "The Spanish research area brings together the corpus methodology and the prepared access paths to its analysis surfaces. It aligns person-based, session-based, and phenomenon-based perspectives within one shared structure."
+        )
+        hero_labels = {
+            "design": "Design öffnen →" if ui_lang == "de" else "Open design →",
+            "speakers": "Sprecher:innen öffnen →" if ui_lang == "de" else "Open speakers →",
+            "recordings": "Aufnahmen öffnen →" if ui_lang == "de" else "Open recordings →",
+            "comparison": "Vergleich öffnen →" if ui_lang == "de" else "Open comparison →",
+            "phenomena": "Phänomene öffnen →" if ui_lang == "de" else "Open phenomena →",
+        }
+        sections = [
+            {
+                "heading": "Überblick" if ui_lang == "de" else "Overview",
+                "paragraphs": [
+                    (
+                        "Die öffentlichen Seiten des spanischen Forschungsbereichs dokumentieren Aufbau, Zugriff und Auswertungsperspektiven des Korpus. Sie verbinden bereits verfügbare Arbeitsflächen mit konzeptionell vorbereiteten Modulen, die demselben Routen- und Navigationsschema folgen."
+                        if ui_lang == "de"
+                        else "The public pages in the Spanish research area document the corpus structure, access paths, and evaluation perspectives. They connect already available work surfaces with conceptually prepared modules that follow the same routing and navigation pattern."
+                    ),
+                ],
+            },
+            {
+                "heading": "Design",
+                "paragraphs": [
+                    (
+                        "Design dokumentiert Erhebungslogik, Materialauswahl und die methodischen Entscheidungen, die dem spanischen Korpus zugrunde liegen."
+                        if ui_lang == "de"
+                        else "Design documents the elicitation logic, material selection, and the methodological decisions behind the Spanish corpus."
+                    ),
+                ],
+            },
+            {
+                "heading": "Sprecher:innen" if ui_lang == "de" else "Speakers",
+                "paragraphs": [
+                    (
+                        "Sprecher:innen erschließt den Bestand personbezogen. Von dort führen Karten in Profile und zu den Aufnahmen der jeweils ausgewählten Session."
+                        if ui_lang == "de"
+                        else "Speakers opens the corpus from a person-based perspective. From there, cards lead into profiles and to the recordings for the selected session."
+                    ),
+                ],
+            },
+            {
+                "heading": "Aufnahmen" if ui_lang == "de" else "Recordings",
+                "paragraphs": [
+                    (
+                        "Aufnahmen ordnet denselben Bestand session- und taskbasiert. Die Oberfläche bündelt Wortliste, Text und Interview über gemeinsame Filter und Tabellenansichten."
+                        if ui_lang == "de"
+                        else "Recordings arranges the same corpus by session and task. The surface brings together wordlist, text, and interview views through shared filters and table-based access."
+                    ),
+                ],
+            },
+            {
+                "heading": "Vergleich" if ui_lang == "de" else "Comparison",
+                "paragraphs": [
+                    (
+                        "Vergleich ist als Zugriff auf einzelne Items über mehrere Sprecher:innen hinweg vorgesehen. Die Seite dient dem systematischen Gegenüberstellen vergleichbarer Realisationen."
+                        if ui_lang == "de"
+                        else "Comparison is designed as an item-based access path across multiple speakers. The page supports the systematic juxtaposition of comparable realizations."
+                    ),
+                ],
+            },
+            {
+                "heading": "Phänomene" if ui_lang == "de" else "Phenomena",
+                "paragraphs": [
+                    (
+                        "Phänomene ist als phänomenbezogener Zugang geplant. Die Seite soll Beobachtungen nach lautlichen oder prosodischen Kategorien bündeln, ohne die Person- und Sessionpfade zu ersetzen."
+                        if ui_lang == "de"
+                        else "Phenomena is planned as a phenomenon-based access path. The page groups observations by phonetic or prosodic categories without replacing the person and session paths."
+                    ),
+                ],
+            },
+        ]
         return {
             "title": title,
             "eyebrow": get_section_label("research", ui_lang),
-            "intro": (
-                "Der spanische Forschungsbereich bündelt die methodische Dokumentation des Korpus und die "
-                "vorbereiteten Zugänge zu seinen Analyseoberflächen. Er ordnet personbezogene, sessionbezogene "
-                "und phänomenbezogene Perspektiven in einer gemeinsamen Struktur."
-            ),
+            "intro": intro,
             "page_kind": "reading",
             "access": "public",
             "hero_links": [
                 {
-                    "label": "Design öffnen →",
+                    "label": hero_labels["design"],
                     "href_key": f"research:{language_slug}:design",
                     "variant": "subtle",
                 },
                 {
-                    "label": "Sprecher:innen öffnen →",
+                    "label": hero_labels["speakers"],
                     "href_key": f"research:{language_slug}:speakers",
                     "variant": "subtle",
                 },
                 {
-                    "label": "Aufnahmen öffnen →",
+                    "label": hero_labels["recordings"],
                     "href_key": f"research:{language_slug}:recordings",
                     "variant": "subtle",
                 },
                 {
-                    "label": "Vergleich öffnen →",
+                    "label": hero_labels["comparison"],
                     "href_key": f"research:{language_slug}:comparison",
                     "variant": "subtle",
                 },
                 {
-                    "label": "Phänomene öffnen →",
+                    "label": hero_labels["phenomena"],
                     "href_key": f"research:{language_slug}:phenomena",
                     "variant": "subtle",
                 },
             ],
-            "sections": [
-                {
-                    "heading": "Überblick",
-                    "paragraphs": [
-                        "Die öffentlichen Seiten des spanischen Forschungsbereichs dokumentieren Aufbau, Zugriff und Auswertungsperspektiven des Korpus. Sie verbinden bereits verfügbare Arbeitsflächen mit konzeptionell vorbereiteten Modulen, die demselben Routen- und Navigationsschema folgen.",
-                    ],
-                },
-                {
-                    "heading": "Design",
-                    "paragraphs": [
-                        "Design dokumentiert Erhebungslogik, Materialauswahl und die methodischen Entscheidungen, die dem spanischen Korpus zugrunde liegen.",
-                    ],
-                },
-                {
-                    "heading": "Sprecher:innen",
-                    "paragraphs": [
-                        "Sprecher:innen erschließt den Bestand personbezogen. Von dort führen Karten in Profile und zu den Aufnahmen der jeweils ausgewählten Session.",
-                    ],
-                },
-                {
-                    "heading": "Aufnahmen",
-                    "paragraphs": [
-                        "Aufnahmen ordnet denselben Bestand session- und taskbasiert. Die Oberfläche bündelt Wortliste, Text und Interview über gemeinsame Filter und Tabellenansichten.",
-                    ],
-                },
-                {
-                    "heading": "Vergleich",
-                    "paragraphs": [
-                        "Vergleich ist als Zugriff auf einzelne Items über mehrere Sprecher:innen hinweg vorgesehen. Die Seite dient dem systematischen Gegenüberstellen vergleichbarer Realisationen.",
-                    ],
-                },
-                {
-                    "heading": "Phänomene",
-                    "paragraphs": [
-                        "Phänomene ist als phänomenbezogener Zugang geplant. Die Seite soll Beobachtungen nach lautlichen oder prosodischen Kategorien bündeln, ohne die Person- und Sessionpfade zu ersetzen.",
-                    ],
-                },
-            ],
+            "sections": sections,
             "is_language_root": True,
         }
 

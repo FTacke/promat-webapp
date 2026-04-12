@@ -2,11 +2,11 @@
 
 ## Status
 
-This file is the binding source of truth for the target architecture of the research player in the PROMAT webapp.
+This file is the binding source of truth for the active architecture of the research player in the PROMAT webapp.
 
 ## Scope and Relation
 
-- This spec defines the unified research-player architecture for future implementation runs.
+- This spec defines the active unified research-player architecture.
 - `docs/spec/platform-data-files.md` remains binding for routing, runtime boundaries, and filesystem semantics.
 - `docs/spec/research-access.md` remains binding for research IA and access logic around speakers, recordings, profiles, comparison, and phenomena.
 - `docs/model_mds/speech_text_sync.md` is a technical reference only and is not normative for PROMAT.
@@ -14,12 +14,23 @@ This file is the binding source of truth for the target architecture of the rese
 ## Core Architecture
 
 - PROMAT has exactly one modular research player for the whole webapp.
-- There are no separate player implementations for `wordlist`, `text`, and `interview`.
-- Task differences are implemented through task modes, render modes, and optional context extensions, not through separate player products.
+- There are no separate player products for `wordlist`, sentence-list `text`, connected-text `text`, and set excerpts.
+- Task differences are implemented through normalized source metadata, render modes, and optional context extensions, not through parallel player implementations.
 - The player includes a bounded direct-compare extension with at most one optional secondary session.
 - The standalone `comparison` page is separate from the player surface but reuses shared loader, item, and media logic where practical.
 - `phenomena` is a separate curated launcher and selection page; when it opens the player, it does so through the same player route family with additional preset or set context.
 - Shared player logic must be changeable once in the base architecture and must not require parallel task-specific rewrites.
+
+## Source and Item Normalization
+
+- Each productive player surface resolves the current request into one normalized player source plus one ordered item sequence before template rendering begins.
+- The normalized source is explicit and data-driven. It must not be guessed from visible text length, item count, or loose ordering heuristics.
+- For catalog-backed task sources, the canonical source metadata lives in `task_catalogs/{task}.json` under `player_source`.
+- `player_source` must define at least `source_kind`, `content_mode`, `default_view`, `allowed_views`, `primary_audio_mode`, `supports_item_audio`, `supports_full_audio`, `supports_text_view`, and `paragraph_model`.
+- The active source kinds are `wordlist`, `sentence_list`, `text`, and `set`.
+- `set` is a runtime source kind produced by owner-bound set context. It is not a separate route task key.
+- Every rendered item is normalized to one shared item structure carrying stable `item_id`, source-backed numbering, visible text, and optional text metadata such as `text_container_id`, `text_order_index`, `paragraph_break_before`, or `paragraph_id`.
+- Sets filter the visible sequence but do not redefine item IDs or rebuild a second item system.
 
 ## Route and Entry Contract
 
@@ -81,6 +92,7 @@ The player state must be able to represent at least these values:
 - Manual additions or removals belong to the active set state and never mutate the preset configuration files.
 - In the productive player, a valid `set_id` filters the visible item list and any bounded direct-compare rows to the current task-specific excerpt of that set.
 - If the current task has no items in the active set excerpt, the player renders an explicit empty or unavailable state for that task and must not silently fall back to the full session list.
+- When a valid `set_id` is active for technical task `text`, the normalized source kind becomes `set`, the allowed view collapses to list-only `sentence_list`, and the player must not reconstruct a running-text surface from the excerpt.
 
 ## Shared Player Surface
 
@@ -109,7 +121,10 @@ The player state must be able to represent at least these values:
 - Productive player metadata cards keep the shared research accent system: learner levels stay on the learner scale, native sessions use the dedicated accent `#18677A`, and the family uses the shared `0.5rem` top accent bar.
 - In the productive `wordlist` player, session selection belongs to the metadata-card identity layer, not to the playback toolbar: the visible `session_id` acts as the session switcher in the card header.
 - The player may expose one compact page-level back action outside the playback control bar, but it must remain one route-context action and not expand into a second competing player header system.
-- Each visible metadata card exposes its own profile action so that primary and comparison sessions can both open their corresponding speaker profile directly from the player surface.
+- The top-right metadata-card action zone keeps only the compact role badge such as `Primär` or `Vergleich`; profile access belongs to the card footer and not to a second header action row.
+- Each visible metadata card exposes its own profile action in the footer so that primary and comparison sessions can both open their corresponding speaker profile directly from the player surface.
+- In single-session mode, the primary footer may expose one compact compare-entry action plus the profile action; once compare is active, the primary footer keeps only the profile action and the comparison footer owns the `Vergleich entfernen` action.
+- The productive player does not expose a separate `Vergleich ändern` button; changing the comparison session happens through the comparison card's session switcher.
 
 ## Task Switching
 
@@ -117,10 +132,15 @@ The player state must be able to represent at least these values:
 - The player exposes all documented session-available tasks as one shared task switch.
 - Switching tasks stays inside the same player architecture and does not jump into separate task-specific player implementations.
 - The task switch retains the primary session, metadata card, and route family.
+- On productive item tasks, the task switch sits in one compact material bar directly below the metadata cards.
 - Set context, preset provenance, or focus context should be retained across task switches where they remain valid.
 - Task switching with an active `set_id` retains the same owner-bound set reference and recalculates the task-specific excerpt for the new task instead of dropping back to full-session content.
+- The same material bar places the `Set wählen` control on the right; its default visible value is `Alle Items`, and a selected set filters the visible task-specific sequence without redefining the task switch itself.
+- The visible owner-bound entries in that player set select follow the same saved custom-set subset as `comparison` and productive `phenomena`; unrelated drafts stay hidden, while the currently active draft may remain visible as a contextual option when the player was already opened with that exact `set_id`.
+- Source-driven view switching remains separate from task and set controls. If a source supports both list and connected-text rendering, the view switch appears as its own compact control block below the material bar and above playback.
 - Tasks that are not available for the current session may remain visible as disabled, non-interactive controls.
-- In the current MVP, `wordlist` is the only production-ready task mode; documented `text` and `interview` tasks stay visible in the same switch but render as honest unavailable states until their task renderers exist.
+- `wordlist` and `text` are productive task modes when the session has valid alignment and audio artifacts.
+- `interview` stays visible in the shared switch but continues to render as an honest unavailable state until its dedicated interview renderer exists.
 
 ## Task Modes
 
@@ -159,15 +179,18 @@ The player state must be able to represent at least these values:
 
 - The technical task key remains `text` in all corpora.
 - `text` may render either as `sentence_list` or as `running_text`.
-- Each corpus defines one default render mode for `text` through player configuration.
-- Each corpus defines the visible task label for `text` through player configuration.
+- The active render behavior for `text` is driven by the task catalog `player_source`, not by UI heuristics.
+- Sentence-list sources keep `allowed_views = ['list']` and therefore render only as `sentence_list`.
+- Connected-text sources use `source_kind = 'text'`, `content_mode = 'connected_text'`, and `supports_text_view = true`; they may expose both `running_text` and `sentence_list` on the same item basis.
+- Visible task labeling for `text` still comes from the canonical task catalog and stays independent from the technical task key.
 - Even in `running_text`, a small visible sentence or segment numbering remains present.
 - In `sentence_list`, each row uses a stable left-side number or ID and the sentence text on the right.
 - Numbering comes from source data and must not be synthesized in the web UI.
 - In both `sentence_list` and `running_text`, visible sentence or segment numbering must remain quiet and secondary.
 - Both render modes stay within the same task key and the same shared audio and sync architecture.
-- The first productive `text` renderer in the current MVP is `sentence_list` only.
 - The productive `text` sentence-list renderer uses the canonical task catalog plus session-specific `alignment/text.json` artifacts for stable numbering, texts, item IDs, and clip boundaries.
+- For connected-text sources, `running_text` is the default only when the source metadata explicitly permits it; otherwise the player must degrade to `sentence_list`.
+- Running-text sources currently fall back to `sentence_list` while direct comparison is active, so sentence matching and compare rows stay on the stable item list contract.
 - A valid `set_id` filters the visible sentence-list rows task-specifically, and an empty `text` excerpt renders an explicit empty state instead of falling back to the full session list.
 - A valid `focus_item` may highlight and reveal the initial visible `text` row, but it must not autoplay and it must degrade cleanly when the focused item is outside the current `text` excerpt.
 - The current productive `text` surface may use item-level clip actions where session artifacts provide reliable split clips, but it must not pretend to have finer token-sync precision than the available sentence-level data.
@@ -189,7 +212,7 @@ The player state must be able to represent at least these values:
 - `interview` never supports direct comparison in the player.
 - Direct comparison adds one optional secondary session to the primary player state.
 - Primary item matching uses stable `item_id` values.
-- The current MVP keeps productive direct comparison enabled for both `wordlist` and `text`, while `text` remains limited to the stable `sentence_list` renderer and honest sentence-level matching.
+- The active player keeps productive direct comparison enabled for both `wordlist` and `text`, while compare rendering stays on the stable sentence-list or item-list contract even when the underlying `text` source also supports `running_text`.
 
 ### Graceful degradation
 
@@ -219,7 +242,9 @@ The player state must be able to represent at least these values:
 - Corpus-specific task catalogs live under `data/config/research_player/{language}/task_catalogs/`.
 - If a task catalog exists for a task, that catalog is the canonical content source for the task inside the player architecture and downstream derivation pipelines.
 - A task catalog carries the canonical unit sequence, stable IDs, visible numbering, exact texts, and optional provenance references for the corpus-specific task content.
+- A task catalog also carries the active player-source contract under `player_source`.
 - A task catalog may additionally carry corpus-specific `display_label` and top-level `groups` metadata when grouped task structure is part of the canonical content model.
+- Connected-text catalogs may additionally carry item-level `text_container_id`, `text_order_index`, `paragraph_break_before`, and `paragraph_id` fields for running-text rendering.
 - Session-specific `alignment/{task}.json` files are derived from the task catalog plus session-specific alignment and audio data.
 - Production pipelines must not reconstruct canonical task texts from TextGrid labels, PDF extraction, or loose TXT sources when a canonical task catalog already exists.
 - TextGrid labels may be used only for validation, explicit warning, or controlled failure and must not silently override task-catalog content.
@@ -228,11 +253,9 @@ The player state must be able to represent at least these values:
 
 ### `player_config.json`
 
-- `player_config.json` must at least define the corpus default for the technical task `text`.
-- The minimum required field is `text.default_render_mode` with the allowed values `sentence_list` and `running_text`.
-- `player_config.json` must also define the visible label for the technical task `text` via `text.display_label`.
-- `text.display_label` may be values such as `Text` or `Satzliste`, depending on corpus conventions.
-- Changing `text.display_label` changes only visible naming and never the technical task key.
+- `player_config.json` remains a compatibility file for corpus-wide player defaults and legacy tooling.
+- The active player no longer infers real text capability from `player_config.json`; true text behavior comes from the explicit `player_source` metadata in the task catalog.
+- `text.display_label` and `text.default_render_mode` may remain present for compatibility, but they must not override a task catalog that explicitly declares sentence-list or connected-text behavior.
 
 ### `phenomena_presets.json`
 
@@ -274,6 +297,7 @@ Optional preset item fields may include:
 - Set-bound session selections and the persisted `comparison_view_task` filter are part of the same owner-bound set aggregate rather than a second comparison-only state store.
 - Drafts refresh `last_accessed_at` and `expires_at` server-side, while saved sets keep `expires_at = null`.
 - Server-side set reads and writes are owner-scoped through the authenticated user and never trust client-supplied ownership fields.
+- In the normal loaded player success state, the surface does not keep a permanent generic set-context container; only targeted exceptional notices such as inaccessible set degradation, storage unavailability, or focus-missed degradation may remain visible.
 
 ## Data and Artifact Contract
 

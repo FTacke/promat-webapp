@@ -32,6 +32,7 @@ from app.research_sets import (  # noqa: E402
     delete_owned_set,
     delete_expired_drafts,
     list_owned_sets,
+    list_selectable_owned_sets,
     load_owned_set,
     update_set_metadata,
 )
@@ -42,6 +43,24 @@ def _clear_runtime_caches() -> None:
     clear_research_preset_caches()
     load_language_sessions.cache_clear()
     load_person_records.cache_clear()
+
+
+def test_list_selectable_owned_sets_returns_saved_sets_and_optional_current_draft(set_app: Flask) -> None:
+    with set_app.app_context():
+        saved = create_draft_set(owner_user_id="user-1", corpus_language="spanish", label="Gespeichertes Set")
+        update_set_metadata(owner_user_id="user-1", set_id=saved.set_id, label="Gespeichertes Set", state="saved")
+        current_draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", label="Aktiver Draft")
+        create_draft_set(owner_user_id="user-1", corpus_language="spanish", label="Versteckter Draft")
+
+        visible_without_current = list_selectable_owned_sets(owner_user_id="user-1", corpus_language="spanish")
+        visible_with_current = list_selectable_owned_sets(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            current_set_id=current_draft.set_id,
+        )
+
+    assert [record.label for record in visible_without_current] == ["Gespeichertes Set"]
+    assert [record.label for record in visible_with_current] == ["Aktiver Draft", "Gespeichertes Set"]
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:

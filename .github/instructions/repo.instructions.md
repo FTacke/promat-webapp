@@ -9,8 +9,15 @@
 - Before building new UI markup, CSS, or client interaction, inspect the relevant productive pages, shared partials, and existing CSS families.
 - Reuse or extend existing UI families before creating page-local variants for buttons, inputs, selects, textareas, badges, chips, cards, list rows, dialogs, empty states, sticky anchors, or overflow actions.
 - For research workbench UI, use `comparison` as the reference for step containers, selection blocks, badge or meta rhythm, and clear vertical flows; use `player` as the reference for dense list rows, compact work heads, sticky anchors, and muted versus active row states.
+- Finished visible UI surfaces must ship in `de` and `en` together; do not leave English as a later copy-only follow-up for already-completed pages.
+- Visible UI text on finished surfaces must come from the shared translation layer or server-injected localized payloads; do not leave hardcoded user-facing strings or local `de`/`en` branches in builders, templates, or page JS.
 - Prefer calm, linear flows over parallel work islands; avoid extra mini-headings or a second competing surface when the same job is already solved on an existing page.
 - Shared CSS changes are high-risk and require regression checks on unaffected pages that use the same family; visually substantial UI changes also require browser validation and screenshots.
+- For finished bilingual surfaces, browser validation must cover the real routes in both `de` and `en`, including dialogs, placeholders, empty states, overflow actions, and longer English labels when they stress layout.
+- Do not treat green tests as sufficient sign-off for substantial UI work; iterate until the screenshot pass is clean for the in-scope surfaces.
+- If the user specifies an exact visual arrangement, control order, label text, or provides current-browser screenshots, treat that request plus the live screenshot state as the acceptance contract for the run; do not infer completion from an earlier interpretation.
+- For requested UI reorderings or relabelings, add or update focused regressions that assert the exact order and visible labels, not just element presence or rough structure.
+- Before declaring a UI fix complete, re-check the live screenshot or browser artifact against the exact requested arrangement and explicitly verify that stale runtime HTML is not masking the new code.
 - ADRs document why a durable choice was made; runbooks document repeatable procedures; run logs are never normative.
 - `app/` is the only application source root.
 - Keep `data/`, `public/`, and `secure/` strictly separated.

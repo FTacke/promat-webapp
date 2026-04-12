@@ -11,6 +11,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from ..research_sets import (
     delete_owned_set,
     list_owned_sets,
+    list_selectable_owned_sets,
     ResearchSetNotFoundError,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
@@ -76,11 +77,17 @@ def create_set() -> tuple[Response, int]:
 def list_sets() -> tuple[Response, int]:
     try:
         include_drafts = request.args.get("include_drafts", "").strip().lower() in {"1", "true", "yes"}
-        records = list_owned_sets(
-            owner_user_id=_current_owner_user_id(),
-            corpus_language=request.args.get("corpus_language", ""),
-            include_drafts=include_drafts,
-        )
+        if include_drafts:
+            records = list_owned_sets(
+                owner_user_id=_current_owner_user_id(),
+                corpus_language=request.args.get("corpus_language", ""),
+                include_drafts=True,
+            )
+        else:
+            records = list_selectable_owned_sets(
+                owner_user_id=_current_owner_user_id(),
+                corpus_language=request.args.get("corpus_language", ""),
+            )
     except ResearchSetValidationError as exc:
         return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
     except ResearchSetStorageUnavailableError as exc:

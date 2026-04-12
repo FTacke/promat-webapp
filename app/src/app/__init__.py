@@ -12,6 +12,7 @@ from flask import Flask, jsonify, redirect, render_template, request, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .branding import BRANDING, format_page_title
+from .i18n import resolve_ui_language, translate
 from .extensions import register_extensions
 from .routes import register_blueprints
 from .runtime_paths import get_logs_dir
@@ -176,12 +177,15 @@ def register_context_processors(app: Flask) -> None:
 
     @app.context_processor
     def inject_utilities():  # pragma: no cover - thin wrapper
+        current_ui_lang = resolve_ui_language((request.view_args or {}).get("ui_lang"))
         return {
             "now": lambda: datetime.now(timezone.utc),
             "app_version": app.config.get("APP_VERSION", ""),
             "app_release_tag": app.config.get("APP_RELEASE_TAG", ""),
             "app_release_url": app.config.get("APP_RELEASE_URL", ""),
             "format_page_title": format_page_title,
+            "current_ui_lang": current_ui_lang,
+            "t": lambda key, **kwargs: translate(current_ui_lang, key, **kwargs),
             **BRANDING,
         }
 

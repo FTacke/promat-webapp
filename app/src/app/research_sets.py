@@ -628,6 +628,33 @@ def list_owned_sets(
     return _run_storage_operation(operation)
 
 
+def list_selectable_owned_sets(
+    *,
+    owner_user_id: str,
+    corpus_language: str,
+    current_set_id: str | None = None,
+) -> tuple[StoredResearchSet, ...]:
+    owner_id = _normalize_owner_user_id(owner_user_id)
+    language_slug = _normalize_language_slug(corpus_language)
+    visible_sets = list(list_owned_sets(owner_user_id=owner_id, corpus_language=language_slug, include_drafts=False))
+    normalized_current_set_id = (current_set_id or "").strip()
+    if not normalized_current_set_id:
+        return tuple(visible_sets)
+
+    if any(record.set_id == normalized_current_set_id for record in visible_sets):
+        return tuple(visible_sets)
+
+    try:
+        current_record = load_owned_set(owner_user_id=owner_id, set_id=normalized_current_set_id, touch_access=False)
+    except (ResearchSetNotFoundError, ResearchSetStorageUnavailableError, ResearchSetValidationError):
+        return tuple(visible_sets)
+
+    if current_record.corpus_language != language_slug:
+        return tuple(visible_sets)
+
+    return (current_record, *visible_sets)
+
+
 def replace_set_items(*, owner_user_id: str, set_id: str, items: list[Any]) -> StoredResearchSet:
     owner_id = _normalize_owner_user_id(owner_user_id)
     normalized_set_id = (set_id or "").strip()

@@ -109,12 +109,19 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 ## Active UI System
 
 - Productive pages, shared partials, and established CSS families are the visual source for recurring UI work; `sample` mirrors them but does not replace them as the design reference.
+- `de` and `en` are the active public UI languages for finished surfaces under the canonical `ui_lang` route context.
+- Finished or newly completed UI surfaces must ship with both `de` and `en` display strings in the same run; do not treat English as a later copy-only follow-up for already-finished visible UI.
+- Visible UI strings for finished surfaces must resolve through the shared translation layer and server-provided localized payloads; do not hardcode visible `de`/`en` branches or fallback copy in Python builders, Jinja templates, or page JavaScript.
+- Technical keys, route values, IDs, and client-state field names remain stable English machine values and must stay separate from translated display labels.
+- Visible UI must not expose raw technical values such as UUID-like set identifiers, internal translation keys, or internal handoff/debug vocabulary when a user-facing label or omission is the truthful product behavior.
 - When a recurring UI family already exists, it must be extended or reused before a page-local variant is introduced.
 - Repeated UI families that must be treated systemically include action hierarchy (`buttons`, inline actions, overflow actions), form controls (`inputs`, `selects`, `textareas`), badges and chips, cards and list rows, step containers and work blocks, dialogs and confirm flows, empty states, sticky headers or anchors, and muted, active, or selected states.
 - Research workbench UI uses current productive pages as reference surfaces: `comparison` for step containers, selection blocks, badge or meta rhythm, and clear vertical work sequences; `player` for dense material rows, compact work heads, sticky anchors, and muted versus active row states; `speakers`, `recordings`, and the person profile for speaker cards, compact task actions, and row or table action layout.
 - Overview surfaces stay overview surfaces, and editor or detail surfaces stay editor or detail surfaces; active split flows must not be collapsed back into mixed one-page workbenches without an explicit spec change.
 - If shared layout files, shared component CSS, or reused partials change, the affected repeated UI families must be regression-checked on at least one other active page that uses them.
 - Visually substantial UI changes require browser validation and screenshot comparison against the affected productive reference surfaces before the run is considered complete.
+- For finished bilingual surfaces, browser validation must cover the same real routes in `de` and `en` and explicitly include dialogs, placeholders, empty states, snackbars, overflow actions, and longer English labels where they affect layout or density.
+- A substantial UI run is not accepted on green tests alone; visible defects found in the browser pass must be fixed and the screenshots regenerated until the in-scope surfaces are linguistically and visually clean.
 
 ## Runtime Boundaries
 

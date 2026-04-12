@@ -8,13 +8,13 @@
   {% include 'partials/_content_header.html' %}
 
   <div class="pm-reading pm-player-page-actions">
-    <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.origin_link.href }}">{{ 'Zurück' if ui_lang == 'de' else 'Back' }}</a>
+    <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.origin_link.href }}">{{ t('common.actions.back') }}</a>
   </div>
 
   <div class="pm-feature-band pm-player-layout">
     <section class="pm-player-runtime">
       {% if promat_page.player.mode in ['wordlist', 'text'] %}
-      <div class="pm-player-runtime__inner{{ ' is-compare-ready' if promat_page.player.compare.is_ready else '' }}" data-player-root data-player-mode="{{ promat_page.player.compare.mode }}" data-player-compare-open="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}" data-player-compare-ready="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}">
+      <div class="pm-player-runtime__inner{{ ' is-compare-ready' if promat_page.player.compare.is_ready else '' }}" data-player-compare-open="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}" data-player-compare-ready="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}">
         <section class="pm-player-summary-band">
           <div class="pm-player-summary-cards{{ ' is-compare-ready' if promat_page.summary_cards|length > 1 else '' }}">
             {% for summary in promat_page.summary_cards %}
@@ -49,9 +49,6 @@
 
                   <div class="pm-player-meta-card__actions">
                     <span class="pm-player-meta-card__role">{{ summary.role_label }}</span>
-                    {% if summary.profile_href %}
-                    <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-meta-card__profile-link" href="{{ summary.profile_href }}">{{ summary.profile_label }} →</a>
-                    {% endif %}
                   </div>
                 </div>
 
@@ -68,7 +65,7 @@
                 <div class="pm-player-meta-card__footer">
                   {% for action in summary.card_actions %}
                   {% if action.href %}
-                  <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-meta-card__action pm-player-meta-card__action--{{ action.action }}" href="{{ action.href }}" data-player-{{ action.action }}>{{ action.label }}</a>
+                  <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-meta-card__action pm-player-meta-card__action--{{ action.action }}" href="{{ action.href }}" data-player-{{ action.action }}>{{ action.label }}{% if action.action == 'profile' %} →{% endif %}</a>
                   {% else %}
                   <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-meta-card__action pm-player-meta-card__action--{{ action.action }}" data-player-{{ action.action }}>{{ action.label }}</button>
                   {% endif %}
@@ -81,25 +78,73 @@
           </div>
         </section>
 
-        {% if promat_page.player.set_context %}
-        <section class="pm-container pm-container--tinted pm-player-set-context pm-player-set-context--{{ promat_page.player.set_context.status }}" aria-labelledby="pm-player-set-context-title">
-          <div class="pm-player-set-context__body">
-            <p class="pm-player-set-context__eyebrow">{{ 'Set-Kontext' if ui_lang == 'de' else 'Set context' }}</p>
-            <h2 id="pm-player-set-context-title" class="pm-player-set-context__title">{{ promat_page.player.set_context.title }}</h2>
-            <p class="pm-player-set-context__text">{{ promat_page.player.set_context.text }}</p>
-            {% if promat_page.player.set_context.meta %}
-            <ul class="pm-player-set-context__meta" aria-label="{{ 'Set-Metadaten' if ui_lang == 'de' else 'Set metadata' }}">
-              {% for item in promat_page.player.set_context.meta %}
-              <li class="pm-player-set-context__meta-item">{{ item }}</li>
+        <section class="pm-container pm-container--tinted pm-player-material-strip">
+          <div class="pm-comparison-material-bar pm-player-material-strip__bar">
+            <div class="pm-comparison-material-controls pm-player-material-strip__tasks" aria-label="{{ t('research.player.task_switch') }}">
+              {% for panel in promat_page.task_panels %}
+              {% if panel.current %}
+              <span class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice is-current" aria-current="page">{{ panel.label }}</span>
+              {% elif panel.href %}
+              <a class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice" href="{{ panel.href }}">{{ panel.label }}</a>
+              {% else %}
+              <span class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice is-disabled" aria-disabled="true">{{ panel.label }}</span>
+              {% endif %}
               {% endfor %}
-            </ul>
-            {% endif %}
-            {% if promat_page.player.set_context.focus_note %}
-            <p class="pm-player-set-context__focus-note">{{ promat_page.player.set_context.focus_note }}</p>
+            </div>
+
+            {% if promat_page.player.set_select %}
+            <div class="pm-player-material-strip__set-inline">
+              <label for="pm-player-set-select" class="pm-player-material-strip__set-inline-label">{{ promat_page.player.set_select.label }}</label>
+              <details class="pm-comparison-inline-help pm-player-material-strip__set-help">
+                <summary class="pm-comparison-inline-help__summary" aria-label="{{ promat_page.player.set_select.info_label }}">
+                  <span aria-hidden="true">i</span>
+                </summary>
+                <div class="pm-comparison-inline-help__body" role="note">{{ promat_page.player.set_select.info_text }}</div>
+              </details>
+
+              <select id="pm-player-set-select" class="pm-phenomena-field__input pm-comparison-filter-select pm-player-material-strip__select" data-player-set-select{% if promat_page.player.set_select.disabled %} disabled{% endif %}>
+                {% for option in promat_page.player.set_select.options %}
+                <option value="{{ option.href }}"{% if option.current %} selected{% endif %}>{{ option.label }}</option>
+                {% endfor %}
+              </select>
+            </div>
             {% endif %}
           </div>
         </section>
+
+        {% if promat_page.player.set_notice %}
+        <section class="pm-container pm-container--tinted pm-phenomena-inline-note pm-phenomena-inline-note--player-set" data-player-set-notice="{{ promat_page.player.set_notice.status }}">
+          <p class="pm-phenomena-inline-note__text">{{ promat_page.player.set_notice.text }}</p>
+        </section>
         {% endif %}
+
+        {% if promat_page.player.render_modes %}
+        <section class="pm-container pm-container--tinted pm-player-view-bar" aria-label="{{ promat_page.player.render_modes.label }}">
+          <p class="pm-player-field-label pm-player-view-bar__label">{{ promat_page.player.render_modes.label }}</p>
+          <div class="pm-player-view-switch">
+            {% for option in promat_page.player.render_modes.options %}
+            {% if option.current %}
+            <span class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice is-current" aria-current="page">{{ option.label }}</span>
+            {% else %}
+            <a class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice" href="{{ option.href }}">{{ option.label }}</a>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+
+        {% if promat_page.player.empty_state %}
+        <section class="pm-container pm-container--tinted pm-player-panel pm-player-panel--unavailable">
+          <div class="pm-player-panel__copy">
+            <h2 class="pm-player-panel__title">{{ promat_page.player.empty_state.title }}</h2>
+            <p class="pm-player-panel__hint">{{ promat_page.player.empty_state.message }}</p>
+            {% if promat_page.player.empty_state.hint %}
+            <p class="pm-player-panel__hint pm-player-panel__hint--secondary">{{ promat_page.player.empty_state.hint }}</p>
+            {% endif %}
+          </div>
+        </section>
+        {% else %}
+        <div class="pm-player-runtime__interactive" data-player-root data-player-mode="{{ promat_page.player.compare.mode }}" data-player-compare-open="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}" data-player-compare-ready="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}">
 
         <section class="pm-container pm-container--tinted pm-player-panel pm-player-panel--control-bar">
           <div class="pm-player-panel__copy">
@@ -137,7 +182,7 @@
                   </p>
 
                   <div class="pm-player-toolbar__timeline">
-                    <input type="range" min="0" max="1000" step="1" value="0" class="pm-player-progress pm-player-progress--seek" data-player-progress disabled aria-label="{{ 'Wiedergabefortschritt' if ui_lang == 'de' else 'Playback progress' }}">
+                    <input type="range" min="0" max="1000" step="1" value="0" class="pm-player-progress pm-player-progress--seek" data-player-progress disabled aria-label="{{ t('research.player.playback_progress') }}">
                   </div>
                 </div>
               </div>
@@ -173,7 +218,7 @@
         <section class="pm-container pm-player-panel pm-player-panel--compare pm-player-compare-desktop" data-player-compare-panel>
           <div class="pm-player-panel__header pm-player-panel__header--split pm-player-panel__header--compare-tools">
             <div class="pm-player-panel__copy">
-              <h2 class="pm-player-panel__title">{{ 'Vergleich' if ui_lang == 'de' else 'Comparison' }}</h2>
+              <h2 class="pm-player-panel__title">{{ t('research.player.comparison_title') }}</h2>
             </div>
 
             {% if promat_page.player.compare.sequence_toggle %}
@@ -194,7 +239,7 @@
             <div class="pm-player-list__heading">{{ promat_page.player.secondary.label }}</div>
           </div>
 
-          <ol class="pm-player-list pm-player-list--compare{{ ' pm-player-list--text' if promat_page.player.mode == 'text' else '' }}" aria-label="{{ 'Verglichene Satzliste' if ui_lang == 'de' and promat_page.player.mode == 'text' else 'Compared sentence list' if promat_page.player.mode == 'text' else 'Vergleichte Wortliste' if ui_lang == 'de' else 'Compared wordlist' }}">
+          <ol class="pm-player-list pm-player-list--compare{{ ' pm-player-list--text' if promat_page.player.mode == 'text' else '' }}" aria-label="{{ t('research.player.compared_sentence_list') if promat_page.player.mode == 'text' else t('research.player.compared_wordlist') }}">
             {% for row in promat_page.player.compare.rows %}
             <li class="pm-player-list__row pm-player-list__row--compare{{ ' pm-player-list__row--text' if promat_page.player.mode == 'text' else '' }}" data-player-focus-item="{{ row.item_id }}">
               {% if row.primary.is_available %}
@@ -279,10 +324,40 @@
           <div class="pm-player-panel__header pm-player-panel__header--split">
             <div class="pm-player-panel__copy">
               <h2 class="pm-player-panel__title">{{ promat_page.player.items_title }}</h2>
-              <p class="pm-player-panel__hint">{{ promat_page.player['items_count'] }} {{ 'Einträge' if ui_lang == 'de' else 'items' }}</p>
+              <p class="pm-player-panel__hint">{{ t('research.player.items_count', count=promat_page.player['items_count']) }}</p>
             </div>
           </div>
 
+          {% if promat_page.player.render_mode == 'running_text' %}
+          <div class="pm-player-text-flow" aria-label="{{ promat_page.player.items_title }}">
+            {% for block in promat_page.player.text_blocks %}
+            <p class="pm-player-text-flow__paragraph" data-player-text-block="{{ block.block_id }}">
+              {% for item in block.items %}
+              <span class="pm-player-text-flow__sentence" data-player-focus-item="{{ item.item_id }}">
+                <span class="pm-player-text-flow__number">{{ item.item_number }}</span>
+                {% if item.is_available %}
+                <span class="pm-player-text-flow__body pm-player-list__cell" data-player-item data-speaker-key="primary" data-item-id="{{ item.item_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
+                  <button type="button" class="pm-player-text-flow__trigger" data-player-seek aria-label="{{ item.text }}">
+                    <span class="pm-player-text-flow__text">{{ item.text }}</span>
+                  </button>
+                  {% if item.download_href %}
+                  <a class="pm-player-icon-button" href="{{ item.download_href }}" aria-label="{{ promat_page.player.download_label }}: {{ item.text }}" title="{{ promat_page.player.download_label }}: {{ item.text }}">
+                    <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
+                  </a>
+                  {% endif %}
+                </span>
+                {% else %}
+                <span class="pm-player-text-flow__body pm-player-text-flow__body--missing">
+                  <span class="pm-player-text-flow__text">{{ item.text }}</span>
+                  <span class="pm-player-text-flow__meta">{{ item.missing_label }}</span>
+                </span>
+                {% endif %}
+              </span>
+              {% endfor %}
+            </p>
+            {% endfor %}
+          </div>
+          {% else %}
           <ol class="pm-player-list pm-player-list--single{{ ' pm-player-list--text' if promat_page.player.mode == 'text' else '' }}" aria-label="{{ promat_page.player.items_title }}">
             {% for item in promat_page.player.primary['items'] %}
             <li class="pm-player-list__row pm-player-list__row--single{{ ' pm-player-list__row--text' if promat_page.player.mode == 'text' else '' }}" data-player-focus-item="{{ item.item_id }}">
@@ -325,28 +400,17 @@
             </li>
             {% endfor %}
           </ol>
+          {% endif %}
         </section>
+        {% endif %}
+        </div>
         {% endif %}
       </div>
       {% else %}
       <section class="pm-container pm-container--tinted pm-player-panel pm-player-panel--unavailable">
-        {% if promat_page.player.set_context %}
-        <div class="pm-player-set-context pm-player-set-context--{{ promat_page.player.set_context.status }}">
-          <div class="pm-player-set-context__body">
-            <p class="pm-player-set-context__eyebrow">{{ 'Set-Kontext' if ui_lang == 'de' else 'Set context' }}</p>
-            <h2 class="pm-player-set-context__title">{{ promat_page.player.set_context.title }}</h2>
-            <p class="pm-player-set-context__text">{{ promat_page.player.set_context.text }}</p>
-            {% if promat_page.player.set_context.meta %}
-            <ul class="pm-player-set-context__meta" aria-label="{{ 'Set-Metadaten' if ui_lang == 'de' else 'Set metadata' }}">
-              {% for item in promat_page.player.set_context.meta %}
-              <li class="pm-player-set-context__meta-item">{{ item }}</li>
-              {% endfor %}
-            </ul>
-            {% endif %}
-            {% if promat_page.player.set_context.focus_note %}
-            <p class="pm-player-set-context__focus-note">{{ promat_page.player.set_context.focus_note }}</p>
-            {% endif %}
-          </div>
+        {% if promat_page.player.set_notice %}
+        <div class="pm-phenomena-inline-note pm-phenomena-inline-note--player-set" data-player-set-notice="{{ promat_page.player.set_notice.status }}">
+          <p class="pm-phenomena-inline-note__text">{{ promat_page.player.set_notice.text }}</p>
         </div>
         {% endif %}
         <div class="pm-player-panel__copy">
@@ -370,8 +434,10 @@
 {% endblock %}
 
 {% block extra_scripts %}
-{% if promat_page.player.mode in ['wordlist', 'text'] %}
+{% if promat_page.player.client_state is defined %}
 <script id="pm-player-state" type="application/json">{{ promat_page.player.client_state | tojson }}</script>
+{% endif %}
+{% if promat_page.player.mode in ['wordlist', 'text'] or promat_page.player.set_select %}
 <script type="module" src="{{ url_for('static', filename='js/pages/research-player.js') }}"></script>
 {% endif %}
 {% endblock %}

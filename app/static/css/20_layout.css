@@ -387,6 +387,11 @@ body.app-shell.page-landing .md3-content-wrapper {
   gap: var(--pm-space-container);
 }
 
+.pm-player-runtime__interactive {
+  display: grid;
+  gap: var(--pm-space-container);
+}
+
 .pm-player-control-bar,
 .pm-player-control-bar__row,
 .pm-player-control-bar__block,

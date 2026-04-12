@@ -29,6 +29,153 @@ function parseState() {
   }
 }
 
+let playerNavigationController = null;
+
+function currentPlayerPage() {
+  return document.querySelector('article.pm-research-page');
+}
+
+function setPlayerNavigationPending(isPending) {
+  document.documentElement.classList.toggle('pm-player-nav-pending', isPending);
+  const page = currentPlayerPage();
+  if (!page) {
+    return;
+  }
+  page.classList.toggle('is-player-nav-pending', isPending);
+  if (isPending) {
+    page.setAttribute('aria-busy', 'true');
+    return;
+  }
+  page.removeAttribute('aria-busy');
+}
+
+async function navigatePlayerInPlace(href) {
+  if (!href) {
+    return false;
+  }
+
+  const nextUrl = new URL(href, window.location.href);
+  const currentUrl = new URL(window.location.href);
+  if (`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}` === `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`) {
+    return true;
+  }
+
+  if (playerNavigationController) {
+    playerNavigationController.abort();
+  }
+
+  document.querySelectorAll('[data-player-audio]').forEach((element) => {
+    if (typeof element.pause === 'function') {
+      element.pause();
+    }
+  });
+
+  const controller = new AbortController();
+  playerNavigationController = controller;
+  setPlayerNavigationPending(true);
+
+  try {
+    const response = await fetch(nextUrl.toString(), {
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'promat-player-nav' },
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`Navigation failed with status ${response.status}`);
+    }
+
+    const html = await response.text();
+    if (controller.signal.aborted) {
+      return false;
+    }
+
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+    const nextPage = parsed.querySelector('article.pm-research-page');
+    const currentPage = currentPlayerPage();
+    if (!nextPage || !currentPage) {
+      throw new Error('Player page markup is missing.');
+    }
+
+    currentPage.replaceWith(document.importNode(nextPage, true));
+
+    const currentState = document.getElementById('pm-player-state');
+    if (currentState) {
+      currentState.remove();
+    }
+    const nextState = parsed.getElementById('pm-player-state');
+    if (nextState) {
+      document.body.appendChild(document.importNode(nextState, true));
+    }
+
+    if (parsed.title) {
+      document.title = parsed.title;
+    }
+    window.history.replaceState({ playerNavigation: true }, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+
+    initSetSelect();
+    init();
+    return true;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return false;
+    }
+    window.location.assign(nextUrl.toString());
+    return false;
+  } finally {
+    if (playerNavigationController === controller) {
+      playerNavigationController = null;
+    }
+    setPlayerNavigationPending(false);
+  }
+}
+
+function initSetSelect() {
+  const select = document.querySelector('[data-player-set-select]');
+  if (!select) {
+    return;
+  }
+
+  if (select.dataset.playerSetSelectBound === 'true') {
+    return;
+  }
+  select.dataset.playerSetSelectBound = 'true';
+
+  select.addEventListener('change', () => {
+    const nextHref = select.value;
+    if (!nextHref || nextHref === window.location.href) {
+      return;
+    }
+    void navigatePlayerInPlace(nextHref);
+  });
+}
+
+function bindInPlacePlayerNavigation(scope) {
+  const links = Array.from(scope.querySelectorAll(
+    '.pm-player-session-picker__option[href], .pm-player-material-strip a[href], .pm-player-view-switch a[href]'
+  ));
+
+  for (const link of links) {
+    if (link.dataset.playerNavBound === 'true') {
+      continue;
+    }
+    link.dataset.playerNavBound = 'true';
+    link.addEventListener('click', (event) => {
+      if (
+        event.defaultPrevented
+        || event.button !== 0
+        || event.metaKey
+        || event.ctrlKey
+        || event.shiftKey
+        || event.altKey
+      ) {
+        return;
+      }
+      event.preventDefault();
+      void navigatePlayerInPlace(link.href);
+    });
+  }
+}
+
 function findActiveItem(items, currentMs) {
   for (const item of items) {
     if (currentMs >= item.startMs && currentMs <= item.endMs) {
@@ -46,9 +193,13 @@ function findActiveItem(items, currentMs) {
 function init() {
   const root = document.querySelector('[data-player-root]');
   const state = parseState();
+  const runtimeInner = root?.closest('.pm-player-runtime__inner') || null;
+  const runtimeScope = runtimeInner || root;
   if (!root || !state) {
     return;
   }
+
+  bindInPlacePlayerNavigation(document);
 
   const audioElements = Array.from(root.querySelectorAll('[data-player-audio][data-speaker-key]'));
   const toggle = root.querySelector('[data-player-toggle]');
@@ -61,21 +212,21 @@ function init() {
   const currentLabel = root.querySelector('[data-player-current]');
   const durationLabel = root.querySelector('[data-player-duration]');
   const comparePanel = root.querySelector('[data-player-compare-panel]');
-  const compareAddButtons = Array.from(root.querySelectorAll('[data-player-compare-add]'));
-  const compareRemoveButtons = Array.from(root.querySelectorAll('[data-player-compare-remove]'));
+  const compareAddButtons = Array.from(runtimeScope.querySelectorAll('[data-player-compare-add]'));
+  const compareRemoveButtons = Array.from(runtimeScope.querySelectorAll('[data-player-compare-remove]'));
   const sequenceToggle = root.querySelector('[data-player-sequence-toggle]');
   const sequenceWrap = root.querySelector('[data-player-sequence-wrap]');
-  const sessionMenus = Array.from(root.querySelectorAll('[data-player-session-menu]'));
-  const speakerCards = Array.from(root.querySelectorAll('[data-player-speaker-card]'));
-  const secondaryCard = root.querySelector('[data-player-speaker-card="secondary"]');
+  const sessionMenus = Array.from(runtimeScope.querySelectorAll('[data-player-session-menu]'));
+  const speakerCards = Array.from(runtimeScope.querySelectorAll('[data-player-speaker-card]'));
+  const secondaryCard = runtimeScope.querySelector('[data-player-speaker-card="secondary"]');
   const itemElements = Array.from(root.querySelectorAll('[data-player-item][data-speaker-key][data-item-id]'));
 
   if (!toggle || !progress || !currentLabel || !durationLabel || !volume || !volumeLabel || !rateSlider) {
     return;
   }
 
-  const playLabel = toggle.dataset.playLabel || 'Play';
-  const pauseLabel = toggle.dataset.pauseLabel || 'Pause';
+  const playLabel = toggle.dataset.playLabel || '';
+  const pauseLabel = toggle.dataset.pauseLabel || '';
   const desktopMedia = window.matchMedia(`(min-width: ${Number(state.mobileMinWidth || 900)}px)`);
   const audioMap = new Map(audioElements.map((element) => [element.dataset.speakerKey, element]));
   const speakerState = new Map(
@@ -214,6 +365,10 @@ function init() {
     root.dataset.playerCompareOpen = compareOpen ? 'true' : 'false';
     root.dataset.playerCompareReady = compareIsReady() ? 'true' : 'false';
     root.dataset.playerCompareActive = compareActive ? 'true' : 'false';
+    if (runtimeInner) {
+      runtimeInner.dataset.playerCompareOpen = root.dataset.playerCompareOpen;
+      runtimeInner.dataset.playerCompareReady = root.dataset.playerCompareReady;
+    }
 
     if (secondaryCard) {
       secondaryCard.hidden = !compareOpen;
@@ -318,11 +473,6 @@ function init() {
   }
 
   function closeCompare() {
-    if (compareIsReady() && state.singleViewHref) {
-      window.location.assign(state.singleViewHref);
-      return;
-    }
-
     state.lastCompareMode = effectiveMode() === 'manual' ? 'manual' : 'sequence';
 
     cancelSequence();
@@ -515,7 +665,8 @@ function init() {
   }
 
   for (const button of compareRemoveButtons) {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
       closeCompare();
     });
   }
@@ -599,4 +750,7 @@ function init() {
   revealFocusedItem();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  initSetSelect();
+  init();
+});

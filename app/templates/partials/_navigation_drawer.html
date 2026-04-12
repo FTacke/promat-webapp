@@ -12,7 +12,7 @@
       </div>
       {% if panel['context_mode'] == 'language' %}
       <div class="promat-panel__language-header pm-panel__language-header">
-        <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="{{ panel.get('context_back_label') or 'Zur Auswahl' }}">
+        <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="{{ panel.get('context_back_label') or t('shell.panel.back_to_selection') }}">
           <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--back" aria-hidden="true"></span>
           <p class="promat-panel__language-title">{{ panel['context_title'] }}</p>
         </a>
@@ -20,7 +20,7 @@
       {% endif %}
     </div>
 
-    <nav class="promat-panel__nav" aria-label="Bereichsnavigation">
+    <nav class="promat-panel__nav" aria-label="{{ t('shell.panel.navigation') }}">
       {% for item in panel['items'] %}
       <a href="{{ item.href }}"
          class="promat-panel__link pm-nav__item {{ 'is-active pm-nav__item--active' if panel['active_slug'] == item.page_slug else '' }}"
@@ -30,21 +30,21 @@
 
     {% if is_authenticated %}
     <div class="promat-panel__footer">
-      <a href="{{ url_for('auth.account_page') }}" class="promat-panel__footer-link">Interner Bereich</a>
+      <a href="{{ url_for('auth.account_page') }}" class="promat-panel__footer-link">{{ t('shell.panel.account_area') }}</a>
       {% if role_value == 'admin' %}
-      <a href="{{ url_for('admin.dashboard') }}" class="promat-panel__footer-link">Dashboard</a>
+      <a href="{{ url_for('admin.dashboard') }}" class="promat-panel__footer-link">{{ t('shell.panel.dashboard') }}</a>
       {% endif %}
       <a href="{{ url_for('auth.logout_any') }}"
          data-logout="fetch"
          data-logout-url="{{ url_for('auth.logout_any') }}"
          data-logout-method="POST"
-         class="promat-panel__footer-link">Logout</a>
+         class="promat-panel__footer-link">{{ t('shell.panel.logout') }}</a>
     </div>
     {% endif %}
   </div>
 {%- endmacro %}
 
-<dialog id="navigation-drawer-modal" class="promat-panel-dialog" aria-label="Seitenpanel">
+<dialog id="navigation-drawer-modal" class="promat-panel-dialog" aria-label="{{ t('shell.panel.drawer') }}">
   <div class="promat-panel promat-panel--modal">
     {% if promat_panel is defined %}
       {{ panel_content(promat_panel) }}
@@ -52,7 +52,7 @@
   </div>
 </dialog>
 
-<aside id="navigation-drawer-standard" class="promat-panel promat-panel--standard" role="navigation" aria-label="Seitenpanel" data-element="nav-drawer-standard">
+<aside id="navigation-drawer-standard" class="promat-panel promat-panel--standard" role="navigation" aria-label="{{ t('shell.panel.drawer') }}" data-element="nav-drawer-standard">
   {% if promat_panel is defined %}
     {{ panel_content(promat_panel) }}
   {% endif %}

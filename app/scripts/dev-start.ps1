@@ -1,5 +1,7 @@
 param(
-	[switch]$SkipBootstrap
+	[switch]$SkipBootstrap,
+	[string]$StartAdminUsername = 'admin_dev',
+	[string]$StartAdminPassword = 'Admin0000!'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,6 +83,7 @@ function Wait-ForLocalDevPostgres {
 }
 
 $shouldBootstrapLocalPostgres = (-not $SkipBootstrap) -and ($env:FLASK_ENV -eq 'development') -and (Test-LocalDevPostgresUrl -DatabaseUrl $env:AUTH_DATABASE_URL -DefaultDatabaseUrl $defaultAuthDatabaseUrl)
+$shouldSeedDefaultAdmin = ($env:FLASK_ENV -eq 'development') -and (Test-LocalDevPostgresUrl -DatabaseUrl $env:AUTH_DATABASE_URL -DefaultDatabaseUrl $defaultAuthDatabaseUrl)
 
 if ($shouldBootstrapLocalPostgres) {
 	$docker = Get-Command docker -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -95,6 +98,13 @@ if ($shouldBootstrapLocalPostgres) {
 	& $pythonSource (Join-Path $appRoot 'scripts\apply_auth_migration.py') --engine postgres
 	if ($LASTEXITCODE -ne 0) {
 		throw 'Auth-/Research-Set-Migration fehlgeschlagen.'
+	}
+}
+
+if ($shouldSeedDefaultAdmin -and $StartAdminPassword) {
+	& $pythonSource (Join-Path $appRoot 'scripts\create_initial_admin.py') --username $StartAdminUsername --password $StartAdminPassword
+	if ($LASTEXITCODE -ne 0) {
+		throw 'Standard-Dev-Admin konnte nicht angelegt oder aktualisiert werden.'
 	}
 }
 

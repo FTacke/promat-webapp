@@ -20,11 +20,11 @@
       <div class="pm-comparison-step-header">
         <h2 id="pm-comparison-session-title" class="pm-comparison-stage-title">
           <span class="pm-comparison-stage-title__step">1</span>
-          <span>{{ 'Sprecher:innen auswählen' if ui_lang == 'de' else 'Select speakers' }}</span>
+          <span>{{ promat_page.client_state.labels.sessionPanelTitle }}</span>
         </h2>
       </div>
 
-      <div class="pm-comparison-session-tools" aria-label="{{ 'Sprecher:innen filtern' if ui_lang == 'de' else 'Filter speakers' }}">
+      <div class="pm-comparison-session-tools" aria-label="{{ t('research.comparison.filter_speakers') }}">
         <div class="pm-comparison-filter-bar">
           <div class="pm-comparison-filter-zone pm-comparison-filter-zone--search">
             <label class="pm-comparison-filter-field pm-comparison-filter-field--search">
@@ -70,7 +70,7 @@
       <div class="pm-comparison-session-groups">
         <section class="pm-comparison-session-group pm-comparison-session-group--source" aria-labelledby="pm-comparison-learners-title">
           <div class="pm-comparison-session-group__header">
-            <h4 id="pm-comparison-learners-title" class="pm-comparison-session-group__title">{{ 'Lernende' if ui_lang == 'de' else 'Learners' }}</h4>
+            <h4 id="pm-comparison-learners-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.learnersTitle }}</h4>
           </div>
 
           <ul class="pm-comparison-session-list" data-comparison-learner-sessions></ul>
@@ -78,7 +78,7 @@
 
         <section class="pm-comparison-session-group pm-comparison-session-group--source" aria-labelledby="pm-comparison-native-title">
           <div class="pm-comparison-session-group__header">
-            <h4 id="pm-comparison-native-title" class="pm-comparison-session-group__title">{{ 'Native Speaker' if ui_lang == 'de' else 'Native speakers' }}</h4>
+            <h4 id="pm-comparison-native-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.nativeTitle }}</h4>
           </div>
 
           <ul class="pm-comparison-session-list" data-comparison-native-sessions></ul>
@@ -86,7 +86,7 @@
 
         <section class="pm-comparison-session-group pm-comparison-session-group--selected" aria-labelledby="pm-comparison-selected-title">
           <div class="pm-comparison-session-group__header">
-            <h4 id="pm-comparison-selected-title" class="pm-comparison-session-group__title">{{ 'Ausgewählt' if ui_lang == 'de' else 'Selected' }}</h4>
+            <h4 id="pm-comparison-selected-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.selectedTitle }}</h4>
           </div>
 
           <ul class="pm-comparison-session-list" data-comparison-selected-sessions></ul>
@@ -136,7 +136,7 @@
         <div>
           <h3 class="pm-comparison-stage-title pm-comparison-stage-title--section">
             <span class="pm-comparison-stage-title__step">3</span>
-            <span>{{ 'Matrix' if ui_lang == 'de' else 'Matrix' }}</span>
+            <span>{{ promat_page.client_state.labels.matrixTitle }}</span>
           </h3>
           <p class="pm-phenomena-panel-header__text" data-comparison-matrix-summary></p>
         </div>
@@ -180,7 +180,7 @@
 
     <noscript>
       <div class="pm-container pm-container--tinted pm-phenomena-inline-note">
-        <p class="pm-phenomena-inline-note__text">{{ 'Die Vergleichsfläche benötigt JavaScript für owner-gebundene Set-Aufrufe und Clip-Wiedergabe.' if ui_lang == 'de' else 'The comparison workbench requires JavaScript for owner-bound set calls and clip playback.' }}</p>
+        <p class="pm-phenomena-inline-note__text">{{ promat_page.client_state.labels.noscript }}</p>
       </div>
     </noscript>
   </div>

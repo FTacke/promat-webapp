@@ -18,6 +18,7 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app.config.data_conventions import build_person_id, build_session_id, parse_person_id, parse_session_id
 from app import register_context_processors
+from app.research_presets import clear_research_preset_caches
 from app.research_views import build_player_page, build_recordings_page, build_speaker_profile_page, build_speakers_page
 from app.routes.public import blueprint as public_blueprint
 from app.research_sessions import (
@@ -29,14 +30,87 @@ from app.research_sessions import (
 
 
 def _clear_research_caches() -> None:
+    clear_research_preset_caches()
     load_language_sessions.cache_clear()
     load_person_records.cache_clear()
+
+
+def _write_minimal_research_player_config(runtime_root: Path) -> None:
+    base_dir = runtime_root / "data" / "config" / "research_player" / "spanish"
+    task_catalog_dir = base_dir / "task_catalogs"
+    task_catalog_dir.mkdir(parents=True, exist_ok=True)
+
+    (task_catalog_dir / "wordlist.json").write_text(
+        json.dumps(
+            {
+                "task": "wordlist",
+                "language": "spanish",
+                "player_source": {
+                    "source_kind": "wordlist",
+                    "content_mode": "wordlist",
+                    "default_view": "list",
+                    "allowed_views": ["list"],
+                    "primary_audio_mode": "item",
+                    "supports_item_audio": True,
+                    "supports_full_audio": True,
+                    "supports_text_view": False,
+                    "paragraph_model": "none",
+                },
+                "items": [
+                    {"item_id": "wl_001", "item_number": "1", "text": "mesa"},
+                    {"item_id": "wl_002", "item_number": "2", "text": "reloj"},
+                ],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (task_catalog_dir / "text.json").write_text(
+        json.dumps(
+            {
+                "task": "text",
+                "language": "spanish",
+                "display_label": "Satzliste",
+                "player_source": {
+                    "source_kind": "sentence_list",
+                    "content_mode": "sentence_list",
+                    "default_view": "list",
+                    "allowed_views": ["list"],
+                    "primary_audio_mode": "item",
+                    "supports_item_audio": True,
+                    "supports_full_audio": True,
+                    "supports_text_view": False,
+                    "paragraph_model": "none",
+                },
+                "items": [
+                    {"item_id": "d_01", "item_number": "D1", "group_id": "D", "text": "Hoy miro el reloj con calma antes de salir."},
+                    {"item_id": "qy_01", "item_number": "QY1", "group_id": "QY", "text": "El vaso esta lleno de vino ahora."},
+                ],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (base_dir / "player_config.json").write_text(
+        json.dumps(
+            {
+                "language": "spanish",
+                "text": {"default_render_mode": "sentence_list", "display_label": "Satzliste"},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 @pytest.fixture
 def runtime_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (tmp_path / "data" / "sessions" / "spanish").mkdir(parents=True, exist_ok=True)
     (tmp_path / "public").mkdir(parents=True, exist_ok=True)
+    _write_minimal_research_player_config(tmp_path)
 
     monkeypatch.setenv("FLASK_ENV", "development")
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(tmp_path))
@@ -115,6 +189,86 @@ def _write_wordlist_player_artifacts(runtime_root: Path, language_slug: str, ses
     _write_session_file(runtime_root, language_slug, session_id, "derived/wordlist.mp3", _minimal_mp3_bytes())
     _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_001.mp3", _minimal_mp3_bytes())
     _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_002.mp3", _minimal_mp3_bytes())
+
+
+def _write_text_player_artifacts(runtime_root: Path, language_slug: str, session_id: str, person_id: str) -> None:
+    payload = {
+        "session_id": session_id,
+        "person_id": person_id,
+        "task": "text",
+        "audio": {"full_mp3": "derived/text.mp3"},
+        "items": [
+            {
+                "item_id": "d_01",
+                "item_number": "D1",
+                "text": "Hoy miro el reloj con calma antes de salir.",
+                "start_ms": 1200,
+                "end_ms": 2600,
+                "split_mp3": "items/text/d_01.mp3",
+            },
+            {
+                "item_id": "qy_01",
+                "item_number": "QY1",
+                "text": "El vaso esta lleno de vino ahora.",
+                "start_ms": 2900,
+                "end_ms": 4500,
+                "split_mp3": "items/text/qy_01.mp3",
+            },
+        ],
+    }
+    _write_session_file(runtime_root, language_slug, session_id, "alignment/text.json", json.dumps(payload, indent=2) + "\n")
+    _write_session_file(runtime_root, language_slug, session_id, "derived/text.mp3", _minimal_mp3_bytes())
+    _write_session_file(runtime_root, language_slug, session_id, "items/text/d_01.mp3", _minimal_mp3_bytes())
+    _write_session_file(runtime_root, language_slug, session_id, "items/text/qy_01.mp3", _minimal_mp3_bytes())
+
+
+def _write_connected_text_catalog(runtime_root: Path) -> None:
+    base_dir = runtime_root / "data" / "config" / "research_player" / "spanish"
+    (base_dir / "task_catalogs" / "text.json").write_text(
+        json.dumps(
+            {
+                "task": "text",
+                "language": "spanish",
+                "display_label": "Text",
+                "player_source": {
+                    "source_kind": "text",
+                    "content_mode": "connected_text",
+                    "default_view": "text",
+                    "allowed_views": ["text", "list"],
+                    "primary_audio_mode": "full",
+                    "supports_item_audio": True,
+                    "supports_full_audio": True,
+                    "supports_text_view": True,
+                    "paragraph_model": "explicit",
+                },
+                "items": [
+                    {
+                        "item_id": "d_01",
+                        "item_number": "D1",
+                        "group_id": "D",
+                        "text": "Hoy miro el reloj con calma antes de salir.",
+                        "text_container_id": "story_01",
+                        "text_order_index": 1,
+                        "paragraph_break_before": True,
+                        "paragraph_id": "p1",
+                    },
+                    {
+                        "item_id": "qy_01",
+                        "item_number": "QY1",
+                        "group_id": "QY",
+                        "text": "El vaso esta lleno de vino ahora.",
+                        "text_container_id": "story_01",
+                        "text_order_index": 2,
+                        "paragraph_break_before": True,
+                        "paragraph_id": "p2",
+                    },
+                ],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def _task(task_type: str) -> dict[str, str]:
@@ -946,9 +1100,176 @@ def test_player_page_builds_real_wordlist_view_and_disables_unimplemented_tasks(
     assert [panel["key"] for panel in page["task_panels"]] == ["wordlist", "text", "interview"]
     assert page["task_panels"][0]["current"] is True
     assert page["task_panels"][1]["href"] is None
-    assert page["task_panels"][1]["state_label"] == "Noch nicht im MVP"
+    assert page["task_panels"][1]["state_label"] == "Keine verarbeitbaren Player-Artefakte"
     assert page["origin_link"]["href"].endswith("/de/research/spanish/recordings?task=wordlist")
     assert page["summary_cards"][0]["session_id"] == session_id
+
+
+def test_player_page_exposes_english_labels_for_migrated_wordlist_surface(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    with url_app.test_request_context():
+        page = build_player_page("en", "spanish", session_id, "wordlist", "recordings")
+
+    assert page is not None
+    assert page["title"] == "Player"
+    assert page["content_header"]["title"] == "Player"
+    assert page["content_header"]["intro"] == "Audio workbench for one documented session and its available task types."
+    assert page["player"]["audio_href"].endswith(f"/en/research/spanish/player/{session_id}/wordlist/audio.mp3")
+    assert page["task_panels"][1]["state_label"] == "No playable artifacts"
+    assert page["origin_link"]["href"].endswith("/en/research/spanish/recordings?task=wordlist")
+    assert page["summary_cards"][0]["profile_label"] == "Profile"
+
+
+def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, url_app: Flask) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    compare_session_id = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", compare_session_id, _native_payload("ES-N-0001", compare_session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
+
+    with url_app.test_request_context():
+        single_page = build_player_page("de", "spanish", primary_session_id, "wordlist", "recordings")
+        compare_page = build_player_page(
+            "de",
+            "spanish",
+            primary_session_id,
+            "wordlist",
+            "recordings",
+            compare_session_id=compare_session_id,
+        )
+
+    assert single_page is not None
+    assert single_page["title"] == "Player"
+    assert single_page["content_header"]["title"] == "Player"
+    assert [action["action"] for action in single_page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
+    assert single_page["summary_cards"][0]["card_actions"][1]["label"] == "Vergleich"
+    assert single_page["player"]["set_select"]["options"][0]["label"] == "Alle Items"
+
+    assert compare_page is not None
+    assert [action["action"] for action in compare_page["summary_cards"][0]["card_actions"]] == ["profile"]
+    assert [action["action"] for action in compare_page["summary_cards"][1]["card_actions"]] == ["profile", "compare-remove"]
+
+
+def test_player_route_uses_shared_material_choice_family(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{session_id}/wordlist?source=recordings")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "pm-material-choice" in html
+    assert "data-player-set-select" in html
+
+
+def test_player_page_uses_running_text_for_explicit_connected_text_sources(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    with url_app.test_request_context():
+        page = build_player_page("de", "spanish", session_id, "text", "recordings")
+
+    assert page is not None
+    assert page["player"]["mode"] == "text"
+    assert page["player"]["source_kind"] == "text"
+    assert page["player"]["render_mode"] == "running_text"
+    assert page["player"]["primary_audio_mode"] == "full"
+    assert page["player"]["render_modes"] is not None
+    assert [option["key"] for option in page["player"]["render_modes"]["options"]] == ["sentence_list", "running_text"]
+    assert len(page["player"]["text_blocks"]) == 2
+    assert page["player"]["render_modes"]["options"][0]["href"].endswith(
+        f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
+    )
+
+
+def test_player_page_accepts_explicit_sentence_list_override_for_connected_text_sources(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    with url_app.test_request_context():
+        page = build_player_page("de", "spanish", session_id, "text", "recordings", render_mode="sentence_list")
+
+    assert page is not None
+    assert page["player"]["render_mode"] == "sentence_list"
+    assert page["player"]["text_blocks"] == []
+    assert page["player"]["client_state"]["singleViewHref"].endswith(
+        f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
+    )
 
 
 def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path, url_app: Flask) -> None:
@@ -990,8 +1311,9 @@ def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path,
     assert page["summary_cards"][1]["session_id"] == compare_session_id
     assert page["summary_cards"][0]["profile_label"] == "Profil"
     assert page["summary_cards"][0]["session_switch"]["current_label"] == primary_session_id
-    assert page["summary_cards"][1]["card_actions"][0]["label"] == "Vergleich entfernen"
-    assert page["summary_cards"][1]["card_actions"][0]["href"].endswith(
+    assert [action["action"] for action in page["summary_cards"][1]["card_actions"]] == ["profile", "compare-remove"]
+    assert page["summary_cards"][1]["card_actions"][1]["label"] == "Vergleich entfernen"
+    assert page["summary_cards"][1]["card_actions"][1]["href"].endswith(
         f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"
     )
     assert any(row["label"] == "Niveau" for row in page["summary_cards"][0]["rows"])
@@ -1096,12 +1418,15 @@ def test_player_route_keeps_compare_optional_until_explicit_activation(runtime_e
     assert 'data-player-compare-open="false"' in html
     assert 'data-player-session-menu="primary"' in html
     assert 'data-player-session-menu="secondary"' in html
-    assert 'Vergleich hinzufügen' in html
+    assert '>Vergleich<' in html
     assert 'Vergleichssession wählen' in html
     assert 'data-player-speaker-card="secondary" hidden' in html
     assert 'data-player-nav-select' not in html
     assert 'data-player-sequence-toggle' not in html
     assert 'pm-player-panel--compare' not in html
+    assert 'pm-player-material-strip__set-inline-label' in html
+    assert 'pm-player-task-switch-title' not in html
+    assert 'pm-comparison-set-select-block__label-row' not in html
 
 
 def test_player_route_renders_compare_controls_and_secondary_audio(runtime_env: Path, url_app: Flask) -> None:

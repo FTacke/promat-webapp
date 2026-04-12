@@ -208,6 +208,8 @@ def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenome
     with phenomena_app.app_context():
         draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
         update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Fokusset", state="saved")
+        hidden_draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=hidden_draft.set_id, label="Nur Draft")
 
     with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
         g.user = "alice"
@@ -226,6 +228,7 @@ def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenome
     assert page["client_state"]["labels"]["modify"] == "Modifizieren"
     assert page["search_placeholder"] == "Set suchen"
     assert page["entries"][0]["preview"]
+    assert all(entry["title"] != "Nur Draft" for entry in page["entries"])
 
 
 def test_build_phenomena_preset_editor_page_exposes_curated_initial_record(phenomena_app: Flask) -> None:
@@ -267,6 +270,33 @@ def test_build_phenomena_set_editor_page_loads_owned_set(phenomena_app: Flask) -
     assert page["client_state"]["editorMode"] == "set"
     assert page["client_state"]["initialRecord"]["set_id"] == draft.set_id
     assert page["client_state"]["initialRecord"]["note"] == "Merken"
+
+
+def test_phenomena_pages_expose_english_labels_for_migrated_surfaces(phenomena_app: Flask) -> None:
+    with phenomena_app.test_request_context("/en/research/spanish/phenomena"):
+        g.user = None
+        g.user_id = None
+        g.role = None
+        overview_page = build_phenomena_overview_page("en", "spanish")
+
+    with phenomena_app.test_request_context("/en/research/spanish/phenomena/presets/starter_preset"):
+        g.user = None
+        g.user_id = None
+        g.role = None
+        editor_page = build_phenomena_preset_editor_page("en", "spanish", "starter_preset")
+
+    assert overview_page is not None
+    assert overview_page["heading"] == "1 Choose a set"
+    assert overview_page["content_header"]["intro"] == "Open curated sets, edit them, or create a new set from selected word-list and sentence-list items."
+    assert overview_page["search_placeholder"] == "Search sets"
+    assert overview_page["client_state"]["labels"]["requestFailed"] == "Request failed."
+    assert overview_page["client_state"]["labels"]["view"] == "View"
+
+    assert editor_page is not None
+    assert editor_page["content_header"]["intro"] == "Edit set"
+    assert editor_page["client_state"]["labels"]["selectedItems"] == "Selected items"
+    assert editor_page["client_state"]["labels"]["curatedHint"] == "Changes to this curated set are saved as a new custom set."
+    assert editor_page["client_state"]["labels"]["untitled"] == "Untitled"
 
 
 def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: Flask) -> None:

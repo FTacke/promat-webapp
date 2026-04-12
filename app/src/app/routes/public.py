@@ -763,6 +763,7 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
     set_id = request.args.get("set_id")
     preset_id = request.args.get("preset_id")
     focus_item = request.args.get("focus_item")
+    render_mode = request.args.get("render_mode")
     page = build_player_page(
         ui_lang,
         canonical_language_slug,
@@ -774,6 +775,7 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
         set_id,
         preset_id,
         focus_item,
+        render_mode,
     )
     if page is None or language is None:
         abort(404)

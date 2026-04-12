@@ -35,10 +35,17 @@ For active PROMAT rules, consult these files first:
 
 - Before introducing new UI markup, CSS, or client-side interaction, inspect matching productive pages, shared partials, and shared CSS families in `app/templates/` and `app/static/css/`.
 - Reuse or extend existing UI families before creating feature-local variants for buttons, form controls, badges or chips, cards or list rows, dialogs, empty states, sticky anchors, or overflow actions.
+- Finished visible surfaces under the active public language set must be completed in `de` and `en` together; do not treat English as a later copy pass for already-finished UI.
+- Visible UI copy for finished surfaces must resolve through the shared translation layer or server-injected localized payloads; do not leave hardcoded visible strings or local `de`/`en` branches in Python builders, templates, or page JS.
 - Prefer calm, linear flows over parallel work islands; avoid mini-overlabels, duplicate status blocks, and mixed one-page workbenches unless the active spec explicitly requires them.
 - For research UI, use `comparison` as the default reference for step containers, selection blocks, badge or meta rhythm, and vertical work sequences; use `player` as the default reference for dense material rows, compact work heads, sticky anchors, and muted versus active states.
 - If shared CSS files or shared partials change, regression-check at least one unaffected page that uses the same component family.
 - Any substantial UI change requires a browser pass and screenshots before completion; if a mirrored element exists in `sample`, update it in the same run.
+- Browser acceptance for finished bilingual surfaces must cover the real app routes in both `de` and `en`, including dialogs, placeholders, empty states, overflow actions, and longer English labels where they affect layout.
+- Do not close substantial UI runs on green tests alone; fix and re-check until the browser screenshots are linguistically and visually clean for the in-scope surfaces.
+- If the user asks for an exact visual order, placement, or wording, that exact arrangement is the acceptance target for the run. A similar layout is not sufficient.
+- When fixing UI ordering or labeling, add or update focused regressions so they assert the precise visible order and labels of the affected controls, not only their presence.
+- If the live browser still shows the old arrangement after code and tests changed, treat stale runtime as the default suspect and verify the actual listener plus current HTML before concluding the implementation is correct.
 
 ## Change Discipline
 

@@ -370,10 +370,27 @@ def test_build_comparison_page_marks_requested_set_for_client_loading(comparison
     assert page["client_state"]["labels"]["stateSaved"] == "Gespeichert"
 
 
+def test_build_comparison_page_exposes_english_labels_for_migrated_workspace(comparison_app: Flask) -> None:
+    with comparison_app.test_request_context("/en/research/spanish/comparison?task=text"):
+        g.user = None
+        g.role = None
+        page = build_comparison_page("en", "spanish", {"task": "text"})
+
+    assert page is not None
+    assert page["content_header"]["intro"] == "Item-centered comparison workbench for speakers, sets, and directly usable split clips."
+    assert page["client_state"]["labels"]["materialPrompt"] == "Select items"
+    assert page["client_state"]["labels"]["setSelectLabel"] == "Choose set"
+    assert page["client_state"]["labels"]["fullTextLabel"] == "Full text"
+    assert page["client_state"]["labels"]["requestFailed"] == "Request failed."
+    assert page["client_state"]["labels"]["nativeShort"] == "Native"
+
+
 def test_build_comparison_page_includes_saved_custom_sets_in_material_options(comparison_app: Flask) -> None:
     with comparison_app.app_context():
         draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
         update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Fokusset", state="saved")
+        hidden_draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=hidden_draft.set_id, label="Nur Draft")
 
     with comparison_app.test_request_context("/de/research/spanish/comparison"):
         g.user = "alice"
@@ -385,6 +402,7 @@ def test_build_comparison_page_includes_saved_custom_sets_in_material_options(co
     option_labels = [entry["optionLabel"] for entry in page["client_state"]["materialPresets"]]
     assert "Starter · curated" in option_labels
     assert "Mein Fokusset · custom" in option_labels
+    assert "Nur Draft · custom" not in option_labels
 
 
 def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Flask) -> None:
@@ -402,6 +420,7 @@ def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Fla
     assert "Set wählen" in html
     assert "Sets lassen sich unter „Phänomene“ individuell erstellen und anpassen." in html
     assert "Phänomene wählen" not in html
+    assert "data-comparison-material-controls" in html
     assert "data-comparison-material-preset-select" in html
     assert "data-comparison-filter-search" in html
     assert "data-comparison-level-filters" in html

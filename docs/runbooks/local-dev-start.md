@@ -14,13 +14,22 @@ Wiederholbarer Start- und Reparaturablauf fuer die lokale PROMAT-Entwicklungsumg
 
 1. Im Workspace-Root `./scripts/dev-start.ps1` ausfuehren.
 2. Das Script startet bei der kanonischen lokalen `AUTH_DATABASE_URL` automatisch `promat_auth_db`, wartet auf Readiness und fuehrt die idempotente Auth-/Research-Set-Migrationskette aus.
-3. Danach startet die Flask-App ueber `python -m src.app.main`.
+3. Im selben lokalen Dev-Fall setzt das Script den Standard-Admin `admin_dev` idempotent zurueck und setzt dessen Passwort auf `Admin0000!`.
+4. Danach startet die Flask-App ueber `python -m src.app.main`.
 
 ## Erstinitialisierung oder Admin-Reset
 
 1. Im Workspace-Root `./app/scripts/dev-setup.ps1` ausfuehren.
 2. Optional `-ResetAuth` verwenden, wenn die lokale Dev-Datenbank bewusst neu aufgebaut werden soll.
 3. Das Script startet die lokale PostgreSQL-Instanz, wartet auf Readiness, fuehrt dieselbe Migrationskette aus und legt anschliessend den initialen Admin an.
+4. Fuer den Standardstart und fuer wiederholte lokale Resets ist `admin_dev / Admin0000!` damit der kanonische Dev-Login.
+
+## Standard-Dev-Admin
+
+1. Benutzername: `admin_dev`
+2. Passwort: `Admin0000!`
+3. `./scripts/dev-start.ps1` stellt diesen Account auf der kanonischen lokalen Dev-DB bei jedem Start idempotent wieder her.
+4. Der Rueckfall gilt nur fuer lokale Development-Starts gegen die kanonische Dev-PostgreSQL-URL auf `127.0.0.1:54321`.
 
 ## Wenn `research_sets` lokal fehlt
 

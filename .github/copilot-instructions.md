@@ -24,6 +24,9 @@ Before changing architecture, routing, data paths, governance files, or repo str
 - For research UI, treat `comparison` as the primary reference for step containers, selection blocks, badge or meta rhythm, and linear vertical work sequences; treat `player` as the reference for dense material rows, compact work heads, sticky anchors, and muted versus active row states.
 - Prefer calm, linear flows over parallel work islands; avoid mini-overlabels, duplicate status blocks, or a second competing surface when the same job is already solved on an existing page.
 - Substantial UI changes require browser validation plus screenshots, and shared or global CSS changes require regression checks on unaffected pages that use the same component family.
+- If the user gives an exact UI arrangement, label wording, or screenshot-backed correction, treat that as a hard acceptance target. Do not close the run on a nearby approximation.
+- For UI fixes about order, placement, or wording, update focused tests and browser-QA assertions to check the exact requested order and visible labels, not only that the controls still exist.
+- If tests and the live browser disagree, assume stale runtime or stale QA assumptions until proven otherwise; verify the active listener and current live HTML before claiming the fix is done.
 - ADRs explain why; runbooks explain how; run logs are never normative.
 - Do not create shadow docs, free-form note buckets, or new active rules in run logs.
 - `app/` is the only application source root.

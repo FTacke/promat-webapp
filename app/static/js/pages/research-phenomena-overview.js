@@ -2,6 +2,8 @@ import { getCsrfToken } from "../api.js";
 import { fetchWithAuth } from "../modules/auth/refresh.js";
 import { showSnackbar } from "../modules/core/snackbar.js";
 
+let requestFailedLabel = "";
+
 function parseState() {
   const element = document.getElementById("pm-phenomena-overview-state");
   if (!element) {
@@ -49,7 +51,7 @@ async function requestJson(url, options = {}) {
   const contentType = response.headers.get("content-type") || "";
   const payload = contentType.includes("application/json") ? await response.json().catch(() => null) : null;
   if (!response.ok) {
-    const error = new Error((payload && payload.error) || response.statusText || "Request failed");
+    const error = new Error((payload && payload.error) || response.statusText || requestFailedLabel);
     error.status = response.status;
     throw error;
   }
@@ -62,6 +64,7 @@ function init() {
   if (!state || !root) {
     return;
   }
+  requestFailedLabel = state.labels?.requestFailed || requestFailedLabel;
 
   const searchInput = root.querySelector("[data-phenomena-search]");
   const listShell = root.querySelector("[data-phenomena-list-shell]");

@@ -28,11 +28,15 @@
 
     const isDark = effective === "dark";
 
-    const fullLabel = isDark ? "Dunkelmodus" : "Hellmodus";
+    const lightLabel = btn.dataset.themeLightLabel || "Light mode";
+    const darkLabel = btn.dataset.themeDarkLabel || "Dark mode";
+    const toggleTemplate = btn.dataset.themeToggleTemplate || "Toggle appearance, currently {mode}";
+    const titleTemplate = btn.dataset.themeTitleTemplate || "Appearance: {mode}";
+    const fullLabel = isDark ? darkLabel : lightLabel;
 
     btn.setAttribute("aria-pressed", String(isDark));
-    btn.setAttribute("aria-label", `Darstellung umschalten, aktuell ${fullLabel}`);
-    btn.title = `Darstellung: ${fullLabel}`;
+    btn.setAttribute("aria-label", toggleTemplate.replace("{mode}", fullLabel));
+    btn.title = titleTemplate.replace("{mode}", fullLabel);
     icon.setAttribute("data-mode", isDark ? "dark" : "light");
   }
 

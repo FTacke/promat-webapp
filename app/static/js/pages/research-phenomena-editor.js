@@ -2,6 +2,8 @@ import { getCsrfToken } from "../api.js";
 import { fetchWithAuth } from "../modules/auth/refresh.js";
 import { showSnackbar } from "../modules/core/snackbar.js";
 
+let requestFailedLabel = "";
+
 function parseState() {
   const element = document.getElementById("pm-phenomena-editor-state");
   if (!element) {
@@ -49,7 +51,7 @@ async function requestJson(url, options = {}) {
   const payload = contentType.includes("application/json") ? await response.json().catch(() => null) : null;
 
   if (!response.ok) {
-    const error = new Error((payload && payload.error) || response.statusText || "Request failed");
+    const error = new Error((payload && payload.error) || response.statusText || requestFailedLabel);
     error.status = response.status;
     throw error;
   }
@@ -70,6 +72,7 @@ function init() {
   if (!state || !root) {
     return;
   }
+  requestFailedLabel = state.labels?.requestFailed || requestFailedLabel;
 
   const titleInput = root.querySelector("[data-phenomena-title-input]");
   const noteInput = root.querySelector("[data-phenomena-note-input]");
@@ -157,7 +160,7 @@ function init() {
   }
 
   function visibleTitle() {
-    const fallback = state.uiLang === "de" ? "Ohne Titel" : "Untitled";
+    const fallback = state.labels.untitled || "";
     return (titleInput?.value || "").trim() || record.label || fallback;
   }
 

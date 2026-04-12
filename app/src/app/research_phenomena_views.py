@@ -7,6 +7,7 @@ from typing import Any
 from flask import g, request, url_for
 
 from .content_navigation import build_content_header
+from .i18n import translate, translate_many
 from .research_presets import ResearchConfigError, load_phenomena_preset_map, load_phenomena_presets, load_task_catalogs
 from .research_sets import (
     ResearchSetNotFoundError,
@@ -14,13 +15,17 @@ from .research_sets import (
     ResearchSetValidationError,
     StoredResearchSet,
     StoredResearchSetItem,
-    list_owned_sets,
+    list_selectable_owned_sets,
     load_owned_set,
 )
 from .routes.public_content import get_language, get_language_label, get_research_page_label, get_section_label
 
 
 PHENOMENA_TASKS: tuple[str, ...] = ("wordlist", "text")
+
+
+def _t(ui_lang: str, key: str, **kwargs: object) -> str:
+    return translate(ui_lang, key, **kwargs)
 
 
 def _current_owner_user_id() -> str | None:
@@ -35,28 +40,23 @@ def _is_authenticated() -> bool:
 
 
 def _editor_status_labels(ui_lang: str) -> dict[str, str]:
-    if ui_lang == "de":
-        return {
-            "curated": "curated",
-            "custom": "custom",
-            "saved": "gespeichert",
-            "unsaved": "ungespeichert",
-            "new": "neu",
-        }
-    return {
-        "curated": "curated",
-        "custom": "custom",
-        "saved": "saved",
-        "unsaved": "unsaved",
-        "new": "new",
-    }
+    return translate_many(
+        ui_lang,
+        {
+            "curated": "common.status.curated",
+            "custom": "common.status.custom",
+            "saved": "common.status.saved",
+            "unsaved": "common.status.unsaved",
+            "new": "common.status.new",
+        },
+    )
 
 
 def _catalog_payload(language_slug: str, ui_lang: str) -> tuple[dict[str, list[dict[str, str | None]]], dict[str, str]]:
     catalogs = load_task_catalogs(language_slug)
     task_labels = {
-        "wordlist": "Wortliste" if ui_lang == "de" else "Word list",
-        "text": catalogs["text"].display_label or ("Satzliste" if ui_lang == "de" else "Sentence list"),
+        "wordlist": _t(ui_lang, "common.task.wordlist"),
+        "text": _t(ui_lang, "common.task.text"),
     }
     payload: dict[str, list[dict[str, str | None]]] = {}
     for task_key in PHENOMENA_TASKS:
@@ -110,20 +110,18 @@ def _preview_text(
 
 
 def _phenomena_intro(ui_lang: str) -> str:
-    if ui_lang == "de":
-        return "Kuratierte Sets öffnen, bearbeiten oder ein neues Set mit ausgewählten Items aus Wortliste und Text anlegen."
-    return "Open curated sets, edit them, or create a new set from selected word-list and sentence-list items."
+    return _t(ui_lang, "research.phenomena.intro")
 
 
 def _display_set_label(label: str | None, ui_lang: str) -> str:
     normalized = (label or "").strip()
     if normalized:
         return normalized
-    return "Ohne Titel" if ui_lang == "de" else "Untitled"
+    return _t(ui_lang, "common.untitled")
 
 
 def _editor_intro(ui_lang: str) -> str:
-    return "Set bearbeiten" if ui_lang == "de" else "Edit set"
+    return _t(ui_lang, "research.phenomena.editor_intro")
 
 
 def _base_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any]:
@@ -186,7 +184,7 @@ def _overview_card_from_preset(
         "title": preset.label,
         "item_count": len(preset.items),
         "preview": _preview_text(preset.items, catalogs_by_task=catalogs_by_task),
-        "status_label": "curated",
+        "status_label": _t(ui_lang, "common.status.curated"),
         "open_href": url_for(
             "public.research_phenomena_preset_editor",
             ui_lang=ui_lang,
@@ -207,10 +205,10 @@ def _overview_card_from_set(
     return {
         "entry_id": f"set:{stored_set.set_id}",
         "kind": "custom",
-        "title": stored_set.label or ("Ohne Titel" if ui_lang == "de" else "Untitled"),
+        "title": _display_set_label(stored_set.label, ui_lang),
         "item_count": len(stored_set.items),
         "preview": _preview_text(stored_set.items, catalogs_by_task=catalogs_by_task),
-        "status_label": "custom",
+        "status_label": _t(ui_lang, "common.status.custom"),
         "open_href": url_for(
             "public.research_phenomena_set_editor",
             ui_lang=ui_lang,
@@ -248,7 +246,7 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
                     language_slug=language_slug,
                     catalogs_by_task=catalogs_by_task,
                 )
-                for stored_set in list_owned_sets(
+                for stored_set in list_selectable_owned_sets(
                     owner_user_id=_current_owner_user_id() or "",
                     corpus_language=language_slug,
                 )
@@ -260,12 +258,12 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
     page.update(
         {
             "template": "pages/research_phenomena_overview.html",
-            "heading": "1 Set wählen" if ui_lang == "de" else "1 Choose a set",
-            "search_placeholder": "Set suchen" if ui_lang == "de" else "Search sets",
-            "new_set_label": "Neues Set" if ui_lang == "de" else "New set",
+            "heading": _t(ui_lang, "research.phenomena.overview.heading"),
+            "search_placeholder": _t(ui_lang, "research.phenomena.overview.search_placeholder"),
+            "new_set_label": _t(ui_lang, "research.phenomena.overview.new_set"),
             "entries": curated_entries + custom_entries,
-            "empty_title": "Keine Sets gefunden." if ui_lang == "de" else "No sets found.",
-            "empty_text": "Passen Sie die Suche an oder legen Sie ein neues Set an." if ui_lang == "de" else "Adjust the search or create a new set.",
+            "empty_title": _t(ui_lang, "research.phenomena.overview.empty_title"),
+            "empty_text": _t(ui_lang, "research.phenomena.overview.empty_text"),
             "is_authenticated": _is_authenticated(),
             "client_state": {
                 "uiLang": ui_lang,
@@ -283,25 +281,33 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
                 ),
                 "loginHref": url_for("public.login", next=request.full_path or request.path),
                 "labels": {
-                    "newSet": "Neues Set" if ui_lang == "de" else "New set",
-                    "renameTitle": "Set umbenennen" if ui_lang == "de" else "Rename set",
-                    "renameConfirm": "Speichern" if ui_lang == "de" else "Save",
-                    "renameCancel": "Abbrechen" if ui_lang == "de" else "Cancel",
-                    "deleteTitle": "Eigenes Set löschen?" if ui_lang == "de" else "Delete custom set?",
-                    "deleteConfirm": "Löschen" if ui_lang == "de" else "Delete",
-                    "deleteCancel": "Abbrechen" if ui_lang == "de" else "Cancel",
-                    "deleteMessage": "„{label}“ wird dauerhaft entfernt." if ui_lang == "de" else '"{label}" will be permanently removed.',
-                    "view": "Ansehen" if ui_lang == "de" else "View",
-                    "edit": "Bearbeiten" if ui_lang == "de" else "Edit",
-                    "modify": "Modifizieren" if ui_lang == "de" else "Modify",
-                    "rename": "Umbenennen" if ui_lang == "de" else "Rename",
-                    "delete": "Löschen" if ui_lang == "de" else "Delete",
-                    "createError": "Set konnte nicht erstellt werden." if ui_lang == "de" else "Could not create set.",
-                    "renameSuccess": "Set wurde umbenannt." if ui_lang == "de" else "Set renamed.",
-                    "deleteSuccess": "Set wurde gelöscht." if ui_lang == "de" else "Set deleted.",
-                    "itemsLabel": "Items" if ui_lang == "de" else "Items",
-                    "emptyTitle": "Keine Sets gefunden." if ui_lang == "de" else "No sets found.",
-                    "emptyText": "Passen Sie die Suche an oder legen Sie ein neues Set an." if ui_lang == "de" else "Adjust the search or create a new set.",
+                    **translate_many(
+                        ui_lang,
+                        {
+                            "newSet": "research.phenomena.overview.new_set",
+                            "renameTitle": "research.phenomena.overview.rename_title",
+                            "renameConfirm": "common.actions.save",
+                            "renameCancel": "common.actions.cancel",
+                            "deleteTitle": "research.phenomena.overview.delete_title",
+                            "deleteConfirm": "common.actions.delete",
+                            "deleteCancel": "common.actions.cancel",
+                            "view": "common.actions.view",
+                            "edit": "common.actions.edit",
+                            "modify": "common.actions.modify",
+                            "rename": "common.actions.rename",
+                            "delete": "common.actions.delete",
+                            "createError": "research.phenomena.overview.create_error",
+                            "renameSuccess": "research.phenomena.overview.rename_success",
+                            "deleteSuccess": "research.phenomena.overview.delete_success",
+                            "itemsLabel": "common.labels.items_count",
+                            "emptyTitle": "research.phenomena.overview.empty_title",
+                            "emptyText": "research.phenomena.overview.empty_text",
+                            "requestFailed": "common.errors.request_failed",
+                            "moreActions": "common.actions.more",
+                        },
+                    ),
+                    "deleteMessage": _t(ui_lang, "research.phenomena.overview.delete_message", label="{label}"),
+                    "untitled": _t(ui_lang, "common.untitled"),
                 },
                 "taskLabels": task_labels,
             },
@@ -378,35 +384,45 @@ def _editor_state(
         ),
         "loginHref": url_for("public.login", next=request.full_path or request.path),
         "labels": {
-            "save": "Speichern" if ui_lang == "de" else "Save",
-            "discard": "Entwurf verwerfen" if ui_lang == "de" else "Discard draft",
-            "delete": "Set löschen" if ui_lang == "de" else "Delete set",
-            "note": "Notiz" if ui_lang == "de" else "Note",
+            **translate_many(
+                ui_lang,
+                {
+                    "save": "common.actions.save",
+                    "discard": "research.phenomena.editor.discard",
+                    "delete": "research.phenomena.editor.delete",
+                    "note": "common.note",
+                    "searchWordlist": "research.phenomena.editor.search_wordlist",
+                    "searchText": "research.phenomena.editor.search_text",
+                    "selectAll": "common.actions.select_all",
+                    "clearAll": "common.actions.clear_all",
+                    "selectedItems": "research.phenomena.editor.selected_items",
+                    "selectedEmpty": "research.phenomena.editor.selected_empty",
+                    "remove": "common.actions.remove",
+                    "dragHandle": "research.phenomena.editor.drag_handle",
+                    "curatedHint": "research.phenomena.editor.curated_hint",
+                    "saveSuccess": "research.phenomena.editor.save_success",
+                    "saveError": "research.phenomena.editor.save_error",
+                    "requestFailed": "common.errors.request_failed",
+                    "deleteTitle": "research.phenomena.editor.delete_title",
+                    "discardTitle": "research.phenomena.editor.discard_title",
+                    "discardMessage": "research.phenomena.editor.discard_message",
+                    "confirmDelete": "common.actions.delete",
+                    "confirmDiscard": "common.actions.discard",
+                    "cancel": "common.actions.cancel",
+                    "savedStateText": "research.phenomena.editor.saved_state_text",
+                    "unsavedStateText": "research.phenomena.editor.unsaved_state_text",
+                    "unsavedLeave": "research.phenomena.editor.unsaved_leave",
+                    "title": "common.title",
+                    "editName": "research.phenomena.editor.edit_name",
+                    "notePlaceholder": "research.phenomena.editor.note_placeholder",
+                    "untitled": "common.untitled",
+                },
+            ),
             "wordlist": task_labels["wordlist"],
             "text": task_labels["text"],
-            "searchWordlist": "Wortliste durchsuchen" if ui_lang == "de" else "Search word list",
-            "searchText": "Satzliste durchsuchen" if ui_lang == "de" else "Search sentence list",
-            "selectAll": "Alle auswählen" if ui_lang == "de" else "Select all",
-            "clearAll": "Alle abwählen" if ui_lang == "de" else "Clear all",
-            "selectedItems": "Ausgewählte Items" if ui_lang == "de" else "Selected items",
-            "selectedEmpty": "Noch keine Items ausgewählt." if ui_lang == "de" else "No items selected yet.",
-            "remove": "Entfernen" if ui_lang == "de" else "Remove",
-            "dragHandle": "Reihenfolge ändern" if ui_lang == "de" else "Change order",
-            "curatedHint": "Änderungen an diesem kuratierten Set werden als neues eigenes Set gespeichert." if ui_lang == "de" else "Changes to this curated set are saved as a new custom set.",
-            "saveSuccess": "Set wurde gespeichert." if ui_lang == "de" else "Set saved.",
-            "saveError": "Set konnte nicht gespeichert werden." if ui_lang == "de" else "Could not save set.",
-            "deleteTitle": "Eigenes Set löschen?" if ui_lang == "de" else "Delete custom set?",
-            "deleteMessage": "„{label}“ wird dauerhaft entfernt." if ui_lang == "de" else '"{label}" will be permanently removed.',
-            "discardTitle": "Ungespeicherte Änderungen verwerfen?" if ui_lang == "de" else "Discard unsaved changes?",
-            "discardMessage": "Änderungen gehen verloren." if ui_lang == "de" else "Changes will be lost.",
-            "confirmDelete": "Löschen" if ui_lang == "de" else "Delete",
-            "confirmDiscard": "Verwerfen" if ui_lang == "de" else "Discard",
-            "cancel": "Abbrechen" if ui_lang == "de" else "Cancel",
-            "typeWordlist": "Wortliste" if ui_lang == "de" else "Word list",
+            "deleteMessage": _t(ui_lang, "research.phenomena.editor.delete_message", label="{label}"),
+            "typeWordlist": task_labels["wordlist"],
             "typeText": task_labels["text"],
-            "savedStateText": "Stand gespeichert." if ui_lang == "de" else "Set saved.",
-            "unsavedStateText": "Änderungen noch nicht gespeichert." if ui_lang == "de" else "Changes not saved yet.",
-            "unsavedLeave": "Ungespeicherte Änderungen verwerfen?" if ui_lang == "de" else "Discard unsaved changes?",
         },
     }
 
@@ -423,7 +439,7 @@ def build_phenomena_preset_editor_page(ui_lang: str, language_slug: str, preset_
     page.update(
         {
             "template": "pages/research_phenomena_editor.html",
-            "editor_hint": "Kuratiertes Set" if ui_lang == "de" else "Curated set",
+            "editor_hint": _t(ui_lang, "research.phenomena.editor.hint_curated"),
             "client_state": _editor_state(ui_lang=ui_lang, language_slug=language_slug, record=record, editor_mode="preset"),
         }
     )
@@ -448,7 +464,7 @@ def build_phenomena_set_editor_page(ui_lang: str, language_slug: str, set_id: st
     page.update(
         {
             "template": "pages/research_phenomena_editor.html",
-            "editor_hint": "Eigenes Set" if ui_lang == "de" else "Custom set",
+            "editor_hint": _t(ui_lang, "research.phenomena.editor.hint_custom"),
             "client_state": _editor_state(ui_lang=ui_lang, language_slug=language_slug, record=record, editor_mode="set"),
         }
     )

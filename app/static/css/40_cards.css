@@ -444,6 +444,7 @@
 .pm-player-meta-card__footer {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.55rem;
   margin-top: auto;
   padding-top: var(--pm-divider-space-after);
@@ -452,6 +453,11 @@
 
 .pm-player-meta-card__action {
   justify-self: start;
+}
+
+.pm-player-meta-card__action--compare-add,
+.pm-player-meta-card__action--compare-remove {
+  margin-left: auto;
 }
 
 .pm-player-meta-card.is-placeholder .pm-player-session-picker__title {

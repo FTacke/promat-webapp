@@ -50,6 +50,17 @@ def _minimal_catalog(task: str, language: str = "spanish") -> dict[str, object]:
         return {
             "task": "wordlist",
             "language": language,
+            "player_source": {
+                "source_kind": "wordlist",
+                "content_mode": "wordlist",
+                "default_view": "list",
+                "allowed_views": ["list"],
+                "primary_audio_mode": "item",
+                "supports_item_audio": True,
+                "supports_full_audio": True,
+                "supports_text_view": False,
+                "paragraph_model": "none",
+            },
             "items": [
                 {"item_id": "wl_001", "item_number": "1", "text": "mesa"},
                 {"item_id": "wl_002", "item_number": "2", "text": "reloj"},
@@ -60,6 +71,17 @@ def _minimal_catalog(task: str, language: str = "spanish") -> dict[str, object]:
             "task": "text",
             "language": language,
             "display_label": "Satzliste",
+            "player_source": {
+                "source_kind": "sentence_list",
+                "content_mode": "sentence_list",
+                "default_view": "list",
+                "allowed_views": ["list"],
+                "primary_audio_mode": "item",
+                "supports_item_audio": True,
+                "supports_full_audio": True,
+                "supports_text_view": False,
+                "paragraph_model": "none",
+            },
             "items": [
                 {"item_id": "d_01", "item_number": "D1", "text": "Hoy miro el reloj con calma antes de salir."},
                 {"item_id": "qy_01", "item_number": "QY1", "text": "¿El vaso está lleno de vino ahora?"},
@@ -119,8 +141,53 @@ def test_load_task_catalog_reads_existing_text_display_label_from_repo(monkeypat
     catalog = load_task_catalog("spanish", "text")
 
     assert catalog.display_label == "Satzliste"
+    assert catalog.player_source.source_kind == "sentence_list"
+    assert catalog.player_source.allowed_views == ("list",)
     assert "d_01" in catalog.items_by_id
     assert "qw_10" in catalog.items_by_id
+
+
+def test_load_task_catalog_accepts_explicit_connected_text_metadata(runtime_env: Path) -> None:
+    _write_minimal_language_config(runtime_env, presets=[])
+    _write_json(
+        runtime_env / "data" / "config" / "research_player" / "spanish" / "task_catalogs" / "text.json",
+        {
+            "task": "text",
+            "language": "spanish",
+            "display_label": "Text",
+            "player_source": {
+                "source_kind": "text",
+                "content_mode": "connected_text",
+                "default_view": "text",
+                "allowed_views": ["text", "list"],
+                "primary_audio_mode": "full",
+                "supports_item_audio": True,
+                "supports_full_audio": True,
+                "supports_text_view": True,
+                "paragraph_model": "explicit",
+            },
+            "items": [
+                {
+                    "item_id": "d_01",
+                    "item_number": "D1",
+                    "text": "Hoy miro el reloj con calma antes de salir.",
+                    "text_container_id": "story_01",
+                    "text_order_index": 1,
+                    "paragraph_break_before": True,
+                    "paragraph_id": "p1",
+                }
+            ],
+        },
+    )
+
+    catalog = load_task_catalog("spanish", "text")
+
+    assert catalog.player_source.source_kind == "text"
+    assert catalog.player_source.content_mode == "connected_text"
+    assert catalog.player_source.default_view == "text"
+    assert catalog.items_by_id["d_01"].text_container_id == "story_01"
+    assert catalog.items_by_id["d_01"].text_order_index == 1
+    assert catalog.items_by_id["d_01"].paragraph_break_before is True
 
 
 def test_normalize_task_item_reference_keeps_optional_fields() -> None:
