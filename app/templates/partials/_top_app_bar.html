@@ -42,9 +42,23 @@
 
       <div class="promat-topbar__meta">
         <div class="promat-topbar__actions">
+          <div class="promat-topbar__language-switch" role="group" aria-label="{{ t('shell.topbar.language_switch') }}">
+            <a href="{{ ui_lang_switch_urls.de }}"
+               class="promat-topbar__language-link {{ 'is-active' if current_ui_lang == 'de' else '' }}"
+               {% if current_ui_lang == 'de' %}aria-current="page"{% endif %}
+               title="{{ t('shell.topbar.language_current', language=t('shell.topbar.language_de')) if current_ui_lang == 'de' else t('shell.topbar.language_switch_to', language=t('shell.topbar.language_de')) }}"
+               lang="de">DE</a>
+            <span class="promat-topbar__language-separator" aria-hidden="true">|</span>
+            <a href="{{ ui_lang_switch_urls.en }}"
+               class="promat-topbar__language-link {{ 'is-active' if current_ui_lang == 'en' else '' }}"
+               {% if current_ui_lang == 'en' %}aria-current="page"{% endif %}
+               title="{{ t('shell.topbar.language_current', language=t('shell.topbar.language_en')) if current_ui_lang == 'en' else t('shell.topbar.language_switch_to', language=t('shell.topbar.language_en')) }}"
+               lang="en">EN</a>
+          </div>
+
           <button id="themeToggle"
                   type="button"
-                  class="promat-topbar__action promat-topbar__action--theme"
+                  class="promat-topbar__action promat-topbar__action--utility promat-topbar__action--theme"
               aria-label="{{ t('shell.theme.toggle_current', mode=t('shell.theme.mode_light')) }}"
                   aria-pressed="false"
               title="{{ t('shell.theme.title_current', mode=t('shell.theme.mode_light')) }}"
@@ -57,7 +71,7 @@
 
           {% if is_authenticated %}
           <div class="promat-user-menu" data-user-menu-root>
-            <button class="promat-topbar__action promat-topbar__action--theme"
+            <button class="promat-topbar__action promat-topbar__action--utility promat-topbar__action--account"
                     type="button"
                     aria-label="{{ t('shell.topbar.account_menu_open') }}"
                     aria-haspopup="menu"
@@ -69,21 +83,21 @@
               <span class="sr-only">{{ t('shell.topbar.account') }}</span>
             </button>
             <div class="promat-user-menu__dropdown" id="user-menu-dropdown" role="menu" aria-label="{{ t('shell.topbar.account_menu') }}" data-user-menu hidden>
-              <a href="{{ url_for('auth.account_page') }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.account_area') }}</a>
+              <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.account_area') }}</a>
               {% if role_value == 'admin' %}
-              <a href="{{ url_for('admin.dashboard') }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.dashboard') }}</a>
+              <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.admin') }}</a>
               {% endif %}
-              <a href="{{ url_for('auth.logout_any') }}"
+              <a href="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
                  data-logout="fetch"
                  data-logout-method="POST"
-                 data-logout-url="{{ url_for('auth.logout_any') }}"
+                 data-logout-url="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
                  class="promat-user-menu__item promat-user-menu__item--logout"
                  role="menuitem">{{ t('shell.panel.logout') }}</a>
             </div>
           </div>
           {% else %}
-          <a href="{{ url_for('public.login', next=request.full_path|default(request.path)) }}"
-             class="promat-topbar__action promat-topbar__action--theme"
+           <a href="{{ url_for('public.login', next=request.full_path|default(request.path), ui_lang=current_ui_lang) }}"
+             class="promat-topbar__action promat-topbar__action--utility"
              aria-label="{{ t('shell.topbar.login') }}"
              title="{{ t('shell.topbar.login') }}">
             <span class="pm-icon-mask pm-icon-mask--login promat-topbar__action-icon" aria-hidden="true"></span>

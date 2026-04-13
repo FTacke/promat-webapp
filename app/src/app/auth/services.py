@@ -27,6 +27,7 @@ from werkzeug.security import (
 from ..branding import BRANDING
 from ..i18n import translate
 from ..extensions.sqlalchemy_ext import get_session
+from . import Role, normalize_role_value
 from .models import User, RefreshToken, ResetToken
 
 # NOTE: Old counter metrics removed - analytics now handled by /api/analytics/event
@@ -151,7 +152,7 @@ def create_access_token_for_user(user: User) -> str:
     claims = {
         "sub": str(user.id),
         "username": user.username,
-        "role": user.role,
+        "role": normalize_role_value(user.role),
         "is_active": bool(user.is_active),
         "must_reset_password": bool(user.must_reset_password),
     }
@@ -388,6 +389,28 @@ def normalize_email(email: str) -> str:
     return (email or "").strip().lower()
 
 
+def normalize_role(role: str | Role | None) -> str:
+    try:
+        return normalize_role_value(role)
+    except ValueError as exc:  # pragma: no cover - thin guard
+        raise ValueError("role_invalid") from exc
+
+
+def build_display_name(
+    *,
+    first_name: str | None = None,
+    last_name: str | None = None,
+    display_name: str | None = None,
+    email: str | None = None,
+    username: str | None = None,
+) -> str | None:
+    parts = [part.strip() for part in (first_name, last_name) if part and part.strip()]
+    if parts:
+        return " ".join(parts)
+    fallback = (display_name or "").strip() or (email or "").strip() or (username or "").strip()
+    return fallback or None
+
+
 def access_request_contact_email() -> str:
     return current_app.config.get("AUTH_ACCESS_REQUEST_EMAIL") or BRANDING["contact_email"]
 
@@ -431,10 +454,54 @@ def get_user_by_id(user_id: str) -> Optional[User]:
         return session.execute(stmt).scalars().first()
 
 
-def list_users(*, include_inactive: bool = False, search_query: str | None = None) -> list[User]:
+def _creator_name_lookup(users: list[User]) -> dict[str, str]:
+    creator_ids = {
+        str(user.created_by_user_id)
+        for user in users
+        if user.created_by_user_id
+    }
+    if not creator_ids:
+        return {}
+    with get_session() as session:
+        creators = session.execute(select(User).where(User.id.in_(creator_ids))).scalars().all()
+    return {
+        str(creator.id): build_display_name(
+            first_name=creator.first_name,
+            last_name=creator.last_name,
+            display_name=creator.display_name,
+            email=creator.email,
+            username=creator.username,
+        )
+        or str(creator.email or creator.username or creator.id)
+        for creator in creators
+    }
+
+
+def _status_sort_order(user: User) -> int:
+    return {
+        "active": 0,
+        "invited": 1,
+        "expired": 2,
+        "deactivated": 3,
+    }.get(admin_status_code(user), 99)
+
+
+def _role_sort_order(user: User) -> int:
+    return {
+        Role.ADMIN.value: 0,
+        Role.USER.value: 1,
+    }.get(normalize_role_value(user.role), 99)
+
+
+def list_users(
+    *,
+    include_inactive: bool = False,
+    search_query: str | None = None,
+    sort_by: str = "created_desc",
+) -> list[User]:
     normalized_query = (search_query or "").strip().lower()
     with get_session() as session:
-        stmt = select(User).order_by(User.created_at.desc(), User.email.asc(), User.username.asc())
+        stmt = select(User)
         items = list(session.execute(stmt).scalars().all())
         if not include_inactive:
             items = [item for item in items if item.deleted_at is None]
@@ -443,23 +510,133 @@ def list_users(*, include_inactive: bool = False, search_query: str | None = Non
                 item
                 for item in items
                 if normalized_query in (item.email or "").lower()
-                or normalized_query in (item.username or "").lower()
+                or normalized_query in (item.first_name or "").lower()
+                or normalized_query in (item.last_name or "").lower()
                 or normalized_query in (item.display_name or "").lower()
             ]
+        creator_lookup = _creator_name_lookup(items)
+        if sort_by == "name":
+            items.sort(
+                key=lambda item: (
+                    (item.last_name or "").lower(),
+                    (item.first_name or "").lower(),
+                    (item.email or "").lower(),
+                )
+            )
+        elif sort_by == "role":
+            items.sort(
+                key=lambda item: (
+                    _role_sort_order(item),
+                    (item.last_name or "").lower(),
+                    (item.first_name or "").lower(),
+                )
+            )
+        elif sort_by == "status":
+            items.sort(
+                key=lambda item: (
+                    _status_sort_order(item),
+                    (item.last_name or "").lower(),
+                    (item.first_name or "").lower(),
+                )
+            )
+        elif sort_by == "expires":
+            items.sort(
+                key=lambda item: (
+                    item.access_expires_at is None,
+                    _ensure_utc(item.access_expires_at) or datetime.max.replace(tzinfo=timezone.utc),
+                    (item.last_name or "").lower(),
+                )
+            )
+        elif sort_by == "created_by":
+            items.sort(
+                key=lambda item: (
+                    (creator_lookup.get(str(item.created_by_user_id), "") or "").lower(),
+                    (item.last_name or "").lower(),
+                    (item.first_name or "").lower(),
+                )
+            )
+        else:
+            items.sort(
+                key=lambda item: (
+                    _ensure_utc(item.created_at) or datetime.min.replace(tzinfo=timezone.utc),
+                    (item.email or "").lower(),
+                    (item.username or "").lower(),
+                ),
+                reverse=True,
+            )
         return items
+
+
+def count_active_admins() -> int:
+    with get_session() as session:
+        users = session.execute(select(User)).scalars().all()
+    return sum(
+        1
+        for user in users
+        if normalize_role_value(user.role) == Role.ADMIN.value
+        and user.deleted_at is None
+        and bool(user.is_active)
+        and not (user.access_expires_at and _ensure_utc(user.access_expires_at) < datetime.now(timezone.utc))
+    )
+
+
+def _protect_last_admin(
+    *,
+    user: User,
+    requested_role: str | None = None,
+    requested_is_active: bool | None = None,
+    requested_access_expires_at: Any = _UNSET,
+) -> None:
+    current_role = normalize_role_value(user.role)
+    next_role = current_role if requested_role is None else normalize_role(requested_role)
+    next_is_active = bool(user.is_active) if requested_is_active is None else bool(requested_is_active)
+    next_access_expires_at = (
+        user.access_expires_at
+        if requested_access_expires_at is _UNSET
+        else requested_access_expires_at
+    )
+
+    removes_admin_access = (
+        current_role == Role.ADMIN.value
+        and (
+            next_role != Role.ADMIN.value
+            or not next_is_active
+            or (
+                next_access_expires_at is not None
+                and _ensure_utc(next_access_expires_at) < datetime.now(timezone.utc)
+            )
+        )
+    )
+
+    if removes_admin_access and count_active_admins() <= 1:
+        raise ValueError("last_admin_required")
 
 
 def create_user(
     *,
     email: str,
+    first_name: str,
+    last_name: str,
     role: str = "user",
     display_name: str | None = None,
     is_active: bool = True,
     access_expires_at: datetime | None = None,
+    created_by_user_id: str | None = None,
 ) -> User:
     normalized_email = normalize_email(email)
     if not normalized_email:
         raise ValueError("email_required")
+
+    normalized_first_name = (first_name or "").strip()
+    normalized_last_name = (last_name or "").strip()
+    if not normalized_first_name:
+        raise ValueError("first_name_required")
+    if not normalized_last_name:
+        raise ValueError("last_name_required")
+
+    normalized_role = normalize_role(role)
+    if normalized_role == Role.ADMIN.value:
+        access_expires_at = None
 
     now = datetime.now(timezone.utc)
     with get_session() as session:
@@ -472,13 +649,21 @@ def create_user(
             username=_build_internal_username(normalized_email, session),
             email=normalized_email,
             password_hash=hash_password(secrets.token_urlsafe(32)),
-            role=role,
+            role=normalized_role,
             is_active=bool(is_active),
             must_reset_password=True,
             created_at=now,
             updated_at=now,
             access_expires_at=access_expires_at,
-            display_name=(display_name or "").strip() or None,
+            first_name=normalized_first_name,
+            last_name=normalized_last_name,
+            display_name=build_display_name(
+                first_name=normalized_first_name,
+                last_name=normalized_last_name,
+                display_name=display_name,
+                email=normalized_email,
+            ),
+            created_by_user_id=created_by_user_id,
         )
         session.add(user)
         session.flush()
@@ -488,6 +673,8 @@ def create_user(
 def update_user_admin(
     user_id: str,
     *,
+    first_name: str | None = None,
+    last_name: str | None = None,
     email: str | None = None,
     role: str | None = None,
     is_active: bool | None = None,
@@ -499,6 +686,25 @@ def update_user_admin(
         if not user:
             raise KeyError("user_not_found")
 
+        _protect_last_admin(
+            user=user,
+            requested_role=role,
+            requested_is_active=is_active,
+            requested_access_expires_at=access_expires_at,
+        )
+
+        if first_name is not None:
+            normalized_first_name = first_name.strip()
+            if not normalized_first_name:
+                raise ValueError("first_name_required")
+            user.first_name = normalized_first_name
+
+        if last_name is not None:
+            normalized_last_name = last_name.strip()
+            if not normalized_last_name:
+                raise ValueError("last_name_required")
+            user.last_name = normalized_last_name
+
         if email is not None:
             normalized_email = normalize_email(email)
             if not normalized_email:
@@ -509,13 +715,24 @@ def update_user_admin(
             user.email = normalized_email
 
         if role is not None:
-            user.role = role
+            user.role = normalize_role(role)
 
         if is_active is not None:
             user.is_active = bool(is_active)
 
         if access_expires_at is not _UNSET:
             user.access_expires_at = access_expires_at
+
+        if normalize_role_value(user.role) == Role.ADMIN.value:
+            user.access_expires_at = None
+
+        user.display_name = build_display_name(
+            first_name=user.first_name,
+            last_name=user.last_name,
+            display_name=user.display_name,
+            email=user.email,
+            username=user.username,
+        )
 
         user.updated_at = datetime.now(timezone.utc)
         session.flush()
@@ -536,29 +753,52 @@ def mark_user_for_password_reset(user_id: str) -> User:
 
 def admin_status_code(user: User) -> str:
     if user.deleted_at is not None:
-        return "inactive"
+        return "deactivated"
     if not user.is_active:
-        return "inactive"
+        return "deactivated"
     if user.access_expires_at and _ensure_utc(user.access_expires_at) < datetime.now(timezone.utc):
         return "expired"
+    if user.must_reset_password:
+        return "invited"
     return "active"
 
 
-def serialize_user_for_admin(user: User) -> dict[str, Any]:
+def serialize_user_for_admin(
+    user: User,
+    *,
+    creator_lookup: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    creator_id = str(user.created_by_user_id) if user.created_by_user_id else ""
     return {
         "id": str(user.id),
         "username": user.username,
         "email": user.email,
-        "display_name": user.display_name,
-        "role": user.role,
+        "display_name": build_display_name(
+            first_name=user.first_name,
+            last_name=user.last_name,
+            display_name=user.display_name,
+            email=user.email,
+            username=user.username,
+        ),
+        "first_name": user.first_name or "",
+        "last_name": user.last_name or "",
+        "role": normalize_role_value(user.role),
         "is_active": bool(user.is_active),
         "must_reset_password": bool(user.must_reset_password),
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "updated_at": user.updated_at.isoformat() if user.updated_at else None,
         "access_expires_at": user.access_expires_at.isoformat() if user.access_expires_at else None,
         "access_expires_on": _ensure_utc(user.access_expires_at).date().isoformat() if user.access_expires_at else "",
+        "created_by_user_id": creator_id,
+        "created_by_name": (creator_lookup or {}).get(creator_id, ""),
+        "created_by_is_system": not bool(creator_id),
         "status_code": admin_status_code(user),
     }
+
+
+def serialize_users_for_admin(users: list[User]) -> list[dict[str, Any]]:
+    creator_lookup = _creator_name_lookup(users)
+    return [serialize_user_for_admin(user, creator_lookup=creator_lookup) for user in users]
 
 
 def update_user_password(user_id: str, new_hashed: str) -> None:
@@ -574,8 +814,8 @@ def update_user_password(user_id: str, new_hashed: str) -> None:
 
 def update_user_profile(
     user_id: str,
-    username: Optional[str] = None,
-    display_name: Optional[str] = None,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
     email: Optional[str] = None,
 ) -> None:
     with get_session() as session:
@@ -583,24 +823,31 @@ def update_user_profile(
         user = session.execute(stmt).scalars().first()
         if not user:
             raise KeyError("user_not_found")
-        # username update (if provided) — ensure uniqueness
-        if username is not None:
-            new_u = username.strip().lower()
-            if new_u and new_u != user.username:
-                # check whether another user already uses this username
-                stmt2 = select(User).where(User.username == new_u)
-                existing = session.execute(stmt2).scalars().first()
-                if existing:
-                    raise ValueError("username_exists")
-                user.username = new_u
-        if display_name is not None:
-            setattr(user, "display_name", display_name)
+        if first_name is not None:
+            normalized_first_name = first_name.strip()
+            if not normalized_first_name:
+                raise ValueError("first_name_required")
+            user.first_name = normalized_first_name
+        if last_name is not None:
+            normalized_last_name = last_name.strip()
+            if not normalized_last_name:
+                raise ValueError("last_name_required")
+            user.last_name = normalized_last_name
         if email is not None:
             normalized_email = normalize_email(email)
+            if not normalized_email:
+                raise ValueError("email_required")
             existing = session.execute(select(User).where(User.email == normalized_email, User.id != user_id)).scalars().first()
             if existing:
                 raise ValueError("email_exists")
             user.email = normalized_email
+        user.display_name = build_display_name(
+            first_name=user.first_name,
+            last_name=user.last_name,
+            display_name=user.display_name,
+            email=user.email,
+            username=user.username,
+        )
         user.updated_at = datetime.now(timezone.utc)
 
 
@@ -610,6 +857,7 @@ def mark_user_deleted(user_id: str) -> None:
         user = session.execute(stmt).scalars().first()
         if not user:
             raise KeyError("user_not_found")
+        _protect_last_admin(user=user, requested_is_active=False)
         user.deletion_requested_at = datetime.now(timezone.utc)
         user.deleted_at = datetime.now(timezone.utc)
         user.is_active = False

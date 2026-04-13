@@ -158,7 +158,46 @@ textarea:focus-visible {
 .promat-topbar__actions {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
   gap: var(--pm-space-xs);
+}
+
+.promat-topbar__language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.12rem;
+  min-height: 2.3rem;
+  padding: 0 0.28rem;
+  border: 1px solid var(--book-border);
+  border-radius: 999px;
+}
+
+.promat-topbar__language-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.7rem;
+  padding: 0 0.46rem;
+  border-radius: 999px;
+  color: var(--book-muted);
+  text-decoration: none;
+}
+
+.promat-topbar__language-link:hover,
+.promat-topbar__language-link:focus-visible {
+  background: var(--nav-hover-bg);
+  color: var(--book-fg);
+  text-decoration: none;
+}
+
+.promat-topbar__language-link.is-active {
+  color: var(--book-fg);
+  font-weight: 600;
+}
+
+.promat-topbar__language-separator {
+  color: var(--book-border-strong);
 }
 
 .promat-topbar__menu,
@@ -176,6 +215,10 @@ textarea:focus-visible {
   border-radius: 999px;
   padding: 0 0.7rem;
   transition: background var(--promat-transition-fast), border-color var(--promat-transition-fast), color var(--promat-transition-fast);
+}
+
+.promat-topbar__action--utility {
+  border-color: var(--book-border);
 }
 
 .promat-topbar__menu {
@@ -264,13 +307,19 @@ textarea:focus-visible {
   --pm-icon-mask-source: var(--pm-icon-edit);
 }
 
-.promat-topbar__action--theme {
-  border-color: var(--book-border);
+.promat-topbar__action--theme,
+.promat-topbar__action--account[aria-expanded="true"] {
+  border-color: var(--book-border-strong);
 }
 
 .promat-topbar__action--theme[aria-pressed="true"] {
   background: var(--nav-hover-bg);
   border-color: var(--book-border-strong);
+  color: var(--book-fg);
+}
+
+.promat-topbar__action--account[aria-expanded="true"] {
+  background: var(--nav-hover-bg);
   color: var(--book-fg);
 }
 
@@ -307,7 +356,7 @@ textarea:focus-visible {
   top: calc(100% + var(--pm-space-xs));
   right: 0;
   display: grid;
-  min-width: 12rem;
+  min-width: 12.8rem;
   padding: var(--pm-space-xs);
   background: var(--book-bg);
   border: 1px solid var(--book-border);
@@ -4348,6 +4397,7 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
 .pm-admin-toolbar,
 .pm-admin-toolbar__row,
 .pm-admin-toolbar__search,
+.pm-admin-toolbar__sort,
 .pm-admin-toolbar__actions,
 .pm-admin-table-panel,
 .pm-admin-table-panel__header,
@@ -4365,7 +4415,20 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
 .pm-admin-copy-block__content,
 .pm-admin-code-block,
 .pm-admin-alert,
-.pm-admin-toast {
+.pm-admin-toast,
+.pm-account-grid,
+.pm-account-card,
+.pm-account-card__header,
+.pm-account-form,
+.pm-account-form__grid,
+.pm-account-actions,
+.pm-account-meta,
+.pm-account-flash-stack,
+.pm-account-security-action,
+.pm-admin-analytics,
+.pm-admin-analytics__metrics,
+.pm-admin-analytics__cell,
+.pm-admin-analytics__periods {
   display: grid;
 }
 
@@ -4374,6 +4437,10 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
 }
 
 .pm-admin-users__stack {
+  gap: clamp(1.1rem, 2vw, 1.45rem);
+}
+
+.pm-admin-analytics {
   gap: clamp(1.1rem, 2vw, 1.45rem);
 }
 
@@ -4404,6 +4471,10 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   min-width: 0;
 }
 
+.pm-admin-toolbar__sort {
+  gap: 0.38rem;
+}
+
 .pm-admin-toolbar__search-label,
 .pm-admin-dialog__section-eyebrow,
 .pm-admin-field__label,
@@ -4429,7 +4500,29 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
 .pm-admin-toolbar__filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: end;
   gap: var(--pm-chip-gap);
+}
+
+.pm-admin-toolbar__filters > * {
+  align-self: end;
+}
+
+.pm-admin-toolbar__filters .pm-filter-chip,
+.pm-admin-toolbar__actions .pm-research-inline-action,
+.pm-admin-toolbar__actions .pm-research-button {
+  min-height: 2.75rem;
+}
+
+.pm-admin-toolbar__filters .pm-filter-chip {
+  gap: 0.42rem;
+  padding-inline: 0.98rem;
+}
+
+.pm-admin-toolbar__filters .pm-filter-chip .material-symbols-rounded,
+.pm-admin-toolbar__actions .material-symbols-rounded {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .pm-admin-table-panel {
@@ -4467,7 +4560,7 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
 }
 
 .pm-admin-table {
-  min-width: 46rem;
+  min-width: 72rem;
 }
 
 .pm-admin-table tbody tr:hover {
@@ -4540,18 +4633,118 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   background: color-mix(in srgb, var(--pm-surface-accent-soft) 88%, var(--pm-surface-paper) 12%);
 }
 
-.pm-admin-badge--role-editor {
-  background: color-mix(in srgb, var(--book-link) 12%, var(--pm-surface-paper) 88%);
-}
-
 .pm-admin-badge--status-active {
   background: color-mix(in srgb, var(--book-link) 14%, var(--pm-surface-paper) 86%);
 }
 
-.pm-admin-badge--status-inactive,
+.pm-admin-badge--status-invited {
+  color: var(--pm-text-accent);
+  background: color-mix(in srgb, var(--pm-surface-accent-soft) 88%, var(--pm-surface-paper) 12%);
+}
+
+.pm-admin-badge--status-deactivated,
 .pm-admin-badge--status-expired {
   color: var(--pm-state-muted-text-strong);
   background: color-mix(in srgb, var(--pm-surface-neutral) 82%, var(--pm-surface-paper) 18%);
+}
+
+.pm-account-grid {
+  grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.85fr);
+  gap: clamp(1rem, 2vw, 1.45rem);
+}
+
+.pm-account-card {
+  gap: 1rem;
+  padding: clamp(1rem, 0.9rem + 0.34vw, 1.22rem);
+  border: 1px solid var(--pm-border-default);
+  border-radius: var(--pm-radius-container);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pm-surface-paper) 97%, var(--pm-surface-neutral) 3%), color-mix(in srgb, var(--pm-surface-paper) 92%, var(--pm-surface-neutral) 8%));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--pm-surface-paper) 64%, transparent 36%);
+}
+
+.pm-account-card__header {
+  gap: 0.28rem;
+}
+
+.pm-account-card__title,
+.pm-admin-analytics__metric-value {
+  margin: 0;
+  color: var(--book-fg);
+  font-family: var(--book-font-display);
+}
+
+.pm-account-card__title {
+  font-size: clamp(1.06rem, 0.98rem + 0.26vw, 1.26rem);
+  line-height: 1.16;
+}
+
+.pm-account-card__intro {
+  margin: 0;
+  color: var(--book-muted);
+}
+
+.pm-account-form,
+.pm-account-form__grid,
+.pm-account-flash-stack,
+.pm-account-security-action {
+  gap: 0.95rem;
+}
+
+.pm-account-actions {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 0.75rem;
+  justify-content: start;
+  align-items: center;
+}
+
+.pm-account-meta {
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.pm-account-meta__row {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.pm-account-meta__term,
+.pm-account-meta__value {
+  margin: 0;
+}
+
+.pm-account-meta__term {
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: 0.79rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pm-account-meta__value {
+  color: var(--book-fg);
+  font-family: var(--book-font-ui);
+  font-weight: 600;
+}
+
+.pm-admin-analytics__metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.9rem, 1.6vw, 1.1rem);
+}
+
+.pm-admin-analytics__metric-value {
+  font-size: clamp(1.8rem, 1.35rem + 1vw, 2.45rem);
+  line-height: 1;
+}
+
+.pm-admin-analytics__cell {
+  gap: 0.14rem;
+}
+
+.pm-admin-analytics__periods {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 0.65rem;
 }
 
 .pm-admin-empty {
@@ -4768,13 +4961,17 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   }
 
   .pm-admin-toolbar__row--primary,
+  .pm-account-grid,
+  .pm-admin-analytics__metrics,
   .pm-admin-dialog__grid,
   .pm-admin-copy-block__head {
     grid-template-columns: 1fr;
   }
 
   .pm-admin-toolbar__actions,
-  .pm-admin-dialog__actions {
+  .pm-admin-dialog__actions,
+  .pm-account-actions,
+  .pm-admin-analytics__periods {
     grid-auto-flow: row;
     grid-auto-columns: 1fr;
     justify-content: stretch;
@@ -4958,6 +5155,18 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   .promat-topbar__brand {
     gap: var(--pm-space-xs);
     padding-inline-start: 0;
+  }
+
+  .promat-topbar__actions {
+    gap: 0.38rem;
+  }
+
+  .promat-topbar__language-switch {
+    padding-inline: 0.22rem;
+  }
+
+  .promat-topbar__language-link {
+    padding-inline: 0.34rem;
   }
 
   .promat-topbar__nav,

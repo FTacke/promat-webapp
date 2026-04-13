@@ -43,6 +43,11 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin: 0 auto;
 }
 
+.pm-admin-page--wide {
+  width: 100%;
+  max-width: none;
+}
+
 .landing-page {
   display: grid;
   gap: clamp(3.5rem, 6vw, 5.5rem);

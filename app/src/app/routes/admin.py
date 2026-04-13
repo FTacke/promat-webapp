@@ -5,14 +5,17 @@ from __future__ import annotations
 from datetime import date, datetime, time, timezone
 from urllib.parse import parse_qs, unquote, urlparse
 
-from flask import Blueprint, current_app, jsonify, render_template, request, url_for
-from flask_jwt_extended import jwt_required
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, url_for
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from ..analytics import summarize_analytics
 from ..auth import Role
 from ..auth import services as auth_services
 from ..auth.decorators import require_role
 from ..branding import BRANDING
 from ..i18n import resolve_ui_language, translate
+from ..protected_navigation import build_admin_panel, build_protected_content_header
+from .public_content import get_language, get_language_label
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -79,16 +82,31 @@ def _build_mail_preview(
     normalized_note = (admin_note or "").strip()
     if normalized_note:
         lines.extend(["", _t(ui_lang, "auth.mail.invite.note_label"), normalized_note])
-    lines.extend(["", _t(ui_lang, f"{key_prefix}.outro", contact_email=auth_services.access_request_contact_email())])
+    lines.extend(
+        [
+            "",
+            _t(
+                ui_lang,
+                f"{key_prefix}.outro",
+                contact_email=auth_services.access_request_contact_email(),
+            ),
+        ]
+    )
     return {
         "recipient": user_email,
-        "subject": _t(ui_lang, f"{key_prefix}.subject", app_name=BRANDING["app_display_name"]),
+        "subject": _t(
+            ui_lang,
+            f"{key_prefix}.subject",
+            app_name=BRANDING["app_display_name"],
+        ),
         "body": "\n".join(lines),
         "reset_link": reset_link,
     }
 
 
-def _mail_preview_payload(*, user, ui_lang: str, purpose: str, admin_note: str | None = None) -> dict[str, str]:
+def _mail_preview_payload(
+    *, user, ui_lang: str, purpose: str, admin_note: str | None = None
+) -> dict[str, str]:
     raw_token, reset_token = auth_services.create_reset_token_for_user(user)
     preview = _build_mail_preview(
         user_email=user.email or "",
@@ -113,37 +131,80 @@ def _mail_preview_payload(*, user, ui_lang: str, purpose: str, admin_note: str |
     }
 
 
+def _build_admin_page_context(
+    ui_lang: str,
+    *,
+    active_slug: str,
+    title_key: str,
+    intro_key: str,
+) -> dict[str, object]:
+    panel = build_admin_panel(ui_lang, active_slug=active_slug, translate=translate)
+    content_header = build_protected_content_header(
+        page_name=active_slug,
+        title=_t(ui_lang, title_key),
+        intro=_t(ui_lang, intro_key),
+        ui_lang=ui_lang,
+        translate=translate,
+        section_label=panel["section_label"],
+        current_href=request.path,
+    )
+    return {
+        "auth_ui_lang": ui_lang,
+        "ui_lang": ui_lang,
+        "promat_panel": panel,
+        "render_navigation_drawer": True,
+        "shell_class": "app-shell--inner",
+        "content_header": content_header,
+        "body_class": "page-admin",
+        "page_name": None,
+    }
+
+
 @blueprint.get("")
 @blueprint.get("/dashboard")
 @jwt_required()
 @require_role(Role.ADMIN)
 def dashboard():
-    return render_template("pages/admin_dashboard.html"), 200
+    return redirect(url_for("admin.users_page", ui_lang=_resolve_admin_ui_lang()), 303)
 
 
 @blueprint.get("/users/page")
 @jwt_required()
 @require_role(Role.ADMIN)
 def users_page():
-    return render_template(
-        "auth/admin_users.html",
-        auth_ui_lang=_resolve_admin_ui_lang(),
-    ), 200
+    ui_lang = _resolve_admin_ui_lang()
+    return (
+        render_template(
+            "auth/admin_users.html",
+            **_build_admin_page_context(
+                ui_lang,
+                active_slug="users",
+                title_key="auth.admin_users.heading",
+                intro_key="auth.admin_users.intro",
+            ),
+        ),
+        200,
+    )
 
 
 @blueprint.get("/users")
 @jwt_required()
 @require_role(Role.ADMIN)
 def users_list():
-    include_inactive = (request.args.get("include_inactive") or "").strip().lower() in {"1", "true", "yes"}
+    include_inactive = (request.args.get("include_inactive") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     search_query = request.args.get("q") or ""
-    items = [
-        auth_services.serialize_user_for_admin(user)
-        for user in auth_services.list_users(
+    sort_by = (request.args.get("sort") or "created_desc").strip().lower()
+    items = auth_services.serialize_users_for_admin(
+        auth_services.list_users(
             include_inactive=include_inactive,
             search_query=search_query,
+            sort_by=sort_by,
         )
-    ]
+    )
     return jsonify({"items": items}), 200
 
 
@@ -153,6 +214,8 @@ def users_list():
 def users_create():
     ui_lang = _resolve_admin_ui_lang()
     payload = request.get_json(silent=True) or {}
+    first_name = str(payload.get("first_name") or "")
+    last_name = str(payload.get("last_name") or "")
     email = auth_services.normalize_email(str(payload.get("email") or ""))
     role = str(payload.get("role") or Role.USER.value)
     access_expires_on = str(payload.get("access_expires_on") or "")
@@ -163,10 +226,13 @@ def users_create():
 
     try:
         user = auth_services.create_user(
+            first_name=first_name,
+            last_name=last_name,
             email=email,
             role=role,
             is_active=True,
             access_expires_at=_parse_access_expires_on(access_expires_on),
+            created_by_user_id=get_jwt_identity(),
         )
     except ValueError as exc:
         code = str(exc)
@@ -178,7 +244,7 @@ def users_create():
         purpose="invite",
         admin_note=invite_note,
     )
-    return jsonify({"ok": True, **preview_payload, "user": auth_services.serialize_user_for_admin(user)}), 201
+    return jsonify({"ok": True, **preview_payload, "user": auth_services.serialize_users_for_admin([user])[0]}), 201
 
 
 @blueprint.get("/users/<user_id>")
@@ -188,7 +254,7 @@ def users_detail(user_id: str):
     user = auth_services.get_user_by_id(user_id)
     if not user:
         return jsonify({"error": "user_not_found"}), 404
-    return jsonify(auth_services.serialize_user_for_admin(user)), 200
+    return jsonify(auth_services.serialize_users_for_admin([user])[0]), 200
 
 
 @blueprint.patch("/users/<user_id>")
@@ -204,7 +270,9 @@ def users_update(user_id: str):
     try:
         user = auth_services.update_user_admin(
             user_id,
-            email=auth_services.normalize_email(str(payload.get("email") or "")),
+            first_name=(str(payload.get("first_name") or "") if "first_name" in payload else None),
+            last_name=(str(payload.get("last_name") or "") if "last_name" in payload else None),
+            email=(auth_services.normalize_email(str(payload.get("email") or "")) if "email" in payload else None),
             role=role or None,
             is_active=payload.get("is_active") if "is_active" in payload else None,
             access_expires_at=(
@@ -219,7 +287,7 @@ def users_update(user_id: str):
         code = str(exc)
         return jsonify({"ok": False, "error": _t(ui_lang, f"auth.admin_users.error.{code}")}), 400
 
-    return jsonify({"ok": True, "user": auth_services.serialize_user_for_admin(user)}), 200
+    return jsonify({"ok": True, "user": auth_services.serialize_users_for_admin([user])[0]}), 200
 
 
 @blueprint.post("/users/<user_id>/reset-password")
@@ -239,4 +307,50 @@ def users_reset_password(user_id: str):
         ui_lang=ui_lang,
         purpose="reset",
     )
-    return jsonify({"ok": True, **preview_payload, "user": auth_services.serialize_user_for_admin(user)}), 200
+    return jsonify({"ok": True, **preview_payload, "user": auth_services.serialize_users_for_admin([user])[0]}), 200
+
+
+@blueprint.get("/analytics/page")
+@jwt_required()
+@require_role(Role.ADMIN)
+def analytics_page():
+    ui_lang = _resolve_admin_ui_lang()
+    period = (request.args.get("period") or "30d").strip().lower()
+    if period not in {"7d", "30d", "all"}:
+        period = "30d"
+
+    analytics = summarize_analytics(period)
+    matrix = analytics["matrix"]
+    languages = []
+    for slug in ("spanish", "french", "german", "english"):
+        language = get_language(slug)
+        label = get_language_label(language, ui_lang) if language else slug
+        languages.append(
+            {
+                "slug": slug,
+                "label": label,
+                "research": matrix.get((slug, "research"), {"page_views": 0, "unique_visitors": 0}),
+                "teaching": matrix.get((slug, "teaching"), {"page_views": 0, "unique_visitors": 0}),
+            }
+        )
+
+    return (
+        render_template(
+            "pages/admin_analytics.html",
+            analytics=analytics,
+            analytics_languages=languages,
+            analytics_period=period,
+            analytics_periods=[
+                {"value": "7d", "label": _t(ui_lang, "auth.admin_analytics.period_7d")},
+                {"value": "30d", "label": _t(ui_lang, "auth.admin_analytics.period_30d")},
+                {"value": "all", "label": _t(ui_lang, "auth.admin_analytics.period_all")},
+            ],
+            **_build_admin_page_context(
+                ui_lang,
+                active_slug="analytics",
+                title_key="auth.admin_analytics.heading",
+                intro_key="auth.admin_analytics.intro",
+            ),
+        ),
+        200,
+    )

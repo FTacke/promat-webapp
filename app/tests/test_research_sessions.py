@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from urllib.parse import quote
@@ -175,6 +176,16 @@ def _set_test_auth(app: Flask, *, username: str = "alice", user_id: str = "user-
 def _clear_test_auth(app: Flask) -> None:
     app.config["TEST_AUTH_USER"] = None
     app.config["TEST_AUTH_USER_ID"] = None
+
+
+def _extract_element_by_id(html: str, tag: str, element_id: str) -> str:
+    match = re.search(
+        rf'<{tag}[^>]*id="{re.escape(element_id)}".*?</{tag}>',
+        html,
+        re.DOTALL,
+    )
+    assert match is not None
+    return match.group(0)
 
 
 def _write_session(runtime_root: Path, language_slug: str, session_id: str, payload: dict[str, object]) -> None:
@@ -757,6 +768,35 @@ def test_research_overview_renders_shared_sidebar_header_and_single_header_nav(u
     assert '>Forschung<' in html
     assert 'Korpus wählen' in html
     assert 'class="pm-breadcrumb' not in html
+
+
+def test_research_overview_topbar_exposes_route_preserving_language_switch(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/research")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "promat-topbar__language-switch" in html
+    assert 'href="/de/research"' in html
+    assert 'href="/en/research"' in html
+    assert "pm-icon-mask--language" not in html
+    assert html.index("promat-topbar__language-switch") < html.index('id="themeToggle"') < html.index("pm-icon-mask--login")
+
+
+def test_research_sidebar_stays_area_only_when_authenticated(url_app: Flask) -> None:
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    response = client.get("/de/research")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    drawer_html = _extract_element_by_id(html, "aside", "navigation-drawer-standard")
+
+    assert "Mein Konto" not in drawer_html
+    assert "Admin-Bereich" not in drawer_html
+    assert "Logout" not in drawer_html
 
 
 def test_research_overview_renders_corpus_titles_and_data_driven_session_counts(runtime_env: Path, url_app: Flask) -> None:

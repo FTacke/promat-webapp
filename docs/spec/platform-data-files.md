@@ -65,9 +65,12 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 ```text
 /login
 /auth/login
+/auth/account
+/auth/account/password
 /auth/password/forgot
 /auth/password/reset
 /admin/users/page
+/admin/analytics/page
 /admin/users
 ```
 
@@ -100,8 +103,10 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Access requests are handled through one configurable `mailto` target instead of a public registration form.
 - The configurable access-request `mailto` keeps the exact subject `Zugangsanfrage "Pronunciation Matters"` and prefills at least last name plus first name, institution, role or function, institutional email address, purpose of use, the notice that this email becomes the later login identifier, and the confirmation to respect data-protection requirements plus the confidentiality of pseudonymized research data.
 - Accounts are created administratively and use one password-setup/reset token flow that is valid for 14 days unless an active environment setting shortens or extends it.
+- The productive protected-area role model contains only `user` and `admin`; `editor` is not part of the active PROMAT product contract.
 - Account access must be blocked before session issuance when the account is inactive, not yet valid, expired, deleted, or temporarily locked.
 - Admin user management uses the canonical `/admin/users` route family for account creation, status updates, optional expiry dates, and invitation/reset preparation.
+- The canonical protected default targets after login are: safe requested target first, otherwise `/auth/account` for `user` and `/admin/users/page` for `admin`.
 - Research page order, page access metadata, task subsets, compare capability, set-filter capability, render-mode vocabulary, and corpus-specific workbench readiness are defined centrally through the active research capability contract.
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus_language}/design` is the only public corpus-scoped research page.
 - The corpus root `/{ui_lang}/research/{corpus_language}` is a public corpus landing page that orients users to `design`, `speakers`, `recordings`, `comparison`, and `phenomena` through their canonical routes.
@@ -123,9 +128,14 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The landing page is the only public layout exception.
 - The shared inner shell keeps the global topbar as the stable upper level and the local page shell below it.
 - If the authenticated account menu exists in the global topbar, it stays closed by default, opens only on explicit trigger activation, closes again on outside click, `Escape`, trigger re-click, and navigation, and must not persist a sticky-open state across reloads or page transitions.
+- In the authenticated topbar user menu, `Mein Konto`/`My account` is always present, `Admin-Bereich`/`Admin area` appears only for admins and leads directly to `/admin/users/page`, and `Logout` stays the final item.
+- The global topbar utility order is language switch, theme switch, then account or login control.
+- The language switch is a compact text-based `DE | EN` control in the topbar utility zone, not a flag or primary globe-icon control, and it must keep users on the current route while switching `ui_lang`.
 - The local page shell uses a left sidebar for area navigation and a right main-content column.
 - The sidebar begins with a permanent area header: section icon, section title, and a subtle divider.
 - Language-context pages keep their language back-link and language title below that permanent area header, not instead of it.
+- Sidebars are area navigation only and must not repeat account actions such as `Mein Konto`, `Admin-Bereich`, or `Logout`.
+- Protected admin pages reuse the shared inner shell with one non-clickable `Admin-Bereich` sidebar header and the fixed linear navigation `Benutzer`, `Analytics`.
 - On public research pages for unauthenticated users, protected research targets stay visible in the sidebar but use muted locked navigation states rather than per-item login notices.
 - In those muted locked research sidebar states, the lock icon renders before the page label and no additional visible `login required` helper line is repeated inside the navigation list.
 - Breadcrumbs are rendered only when they add real orientation value, not as a pseudo-context line that merely repeats section or language.

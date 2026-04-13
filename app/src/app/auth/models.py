@@ -8,11 +8,12 @@ SQLAlchemy into the app.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy import (
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -54,6 +55,8 @@ class User(Base):
     access_expires_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     valid_from: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -61,6 +64,9 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
     display_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_by_user_id: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("users.user_id"), nullable=True
+    )
 
     login_failed_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     locked_until: Mapped[Optional[datetime]] = mapped_column(
@@ -80,6 +86,11 @@ class User(Base):
     )
     reset_tokens: Mapped[list["ResetToken"]] = relationship(
         "ResetToken", back_populates="user", cascade="all, delete-orphan"
+    )
+    created_by_user: Mapped[Optional["User"]] = relationship(
+        "User",
+        remote_side="User.id",
+        foreign_keys=[created_by_user_id],
     )
 
 
@@ -131,3 +142,25 @@ class ResetToken(Base):
     )
 
     user: Mapped[User] = relationship("User", back_populates="reset_tokens")
+
+
+class AnalyticsDaily(Base):
+    __tablename__ = "analytics_daily"
+
+    activity_date: Mapped[date] = mapped_column("date", Date, primary_key=True)
+    unique_visitors: Mapped[int] = mapped_column("visitors", Integer, nullable=False, default=0)
+    page_views: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class AnalyticsLanguageAreaDaily(Base):
+    __tablename__ = "analytics_language_area_daily"
+
+    activity_date: Mapped[date] = mapped_column("date", Date, primary_key=True)
+    section: Mapped[str] = mapped_column(String(32), primary_key=True)
+    corpus_language: Mapped[str] = mapped_column(String(32), primary_key=True)
+    unique_visitors: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    page_views: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{ format_page_title(t('auth.admin_analytics.page_title')) }}{% endblock %}
+
+{% block content %}
+<article class="pm-content pm-admin-page pm-admin-page--wide" aria-labelledby="promat-page-title">
+  {% include 'partials/_content_header.html' %}
+
+  <div class="pm-admin-analytics">
+    <section class="pm-admin-toolbar" aria-label="{{ t('auth.admin_analytics.period_label') }}">
+      <div class="pm-admin-toolbar__row pm-admin-toolbar__row--primary">
+        <div class="pm-admin-analytics__periods" role="group" aria-label="{{ t('auth.admin_analytics.period_label') }}">
+          {% for item in analytics_periods %}
+          <a href="{{ url_for('admin.analytics_page', ui_lang=auth_ui_lang, period=item.value) }}" class="pm-filter-chip{% if analytics_period == item.value %} is-active{% endif %}"{% if analytics_period == item.value %} aria-current="page"{% endif %}>{{ item.label }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <section class="pm-admin-analytics__metrics" aria-label="{{ t('auth.admin_analytics.metrics_label') }}">
+      <article class="pm-account-card">
+        <p class="pm-admin-field__label">{{ t('auth.admin_analytics.unique_visitors') }}</p>
+        <p class="pm-admin-analytics__metric-value">{{ analytics.totals.unique_visitors }}</p>
+      </article>
+      <article class="pm-account-card">
+        <p class="pm-admin-field__label">{{ t('auth.admin_analytics.page_views') }}</p>
+        <p class="pm-admin-analytics__metric-value">{{ analytics.totals.page_views }}</p>
+      </article>
+      <article class="pm-account-card">
+        <p class="pm-admin-field__label">{{ t('auth.admin_analytics.active_days') }}</p>
+        <p class="pm-admin-analytics__metric-value">{{ analytics.totals.days_with_activity }}</p>
+      </article>
+    </section>
+
+    <section class="pm-admin-table-panel" aria-labelledby="admin-analytics-matrix-title">
+      <div class="pm-admin-table-panel__header">
+        <h2 id="admin-analytics-matrix-title" class="pm-admin-table-panel__title">{{ t('auth.admin_analytics.matrix_title') }}</h2>
+        <p class="pm-admin-table-panel__intro">{{ t('auth.admin_analytics.matrix_intro') }}</p>
+      </div>
+      <div class="pm-research-table-wrap">
+        <table class="pm-research-table pm-admin-table pm-admin-table--analytics">
+          <thead>
+            <tr>
+              <th>{{ t('auth.admin_analytics.language') }}</th>
+              <th>{{ t('section.research') }}</th>
+              <th>{{ t('section.teaching') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in analytics_languages %}
+            <tr>
+              <td><span class="pm-admin-table__primary">{{ row.label }}</span></td>
+              <td>
+                <div class="pm-admin-analytics__cell">
+                  <span class="pm-admin-table__primary">{{ row.research.page_views }}</span>
+                  <span class="pm-admin-table__meta">{{ t('auth.admin_analytics.unique_visitors_inline', count=row.research.unique_visitors) }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="pm-admin-analytics__cell">
+                  <span class="pm-admin-table__primary">{{ row.teaching.page_views }}</span>
+                  <span class="pm-admin-table__meta">{{ t('auth.admin_analytics.unique_visitors_inline', count=row.teaching.unique_visitors) }}</span>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="pm-admin-table-panel" aria-labelledby="admin-analytics-trend-title">
+      <div class="pm-admin-table-panel__header">
+        <h2 id="admin-analytics-trend-title" class="pm-admin-table-panel__title">{{ t('auth.admin_analytics.trend_title') }}</h2>
+      </div>
+      <div class="pm-research-table-wrap">
+        <table class="pm-research-table pm-admin-table pm-admin-table--analytics">
+          <thead>
+            <tr>
+              <th>{{ t('auth.admin_analytics.day') }}</th>
+              <th>{{ t('auth.admin_analytics.unique_visitors') }}</th>
+              <th>{{ t('auth.admin_analytics.page_views') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if analytics.trend_rows %}
+              {% for row in analytics.trend_rows %}
+              <tr>
+                <td><span class="pm-admin-table__primary">{{ row.date }}</span></td>
+                <td><span class="pm-admin-table__primary">{{ row.unique_visitors }}</span></td>
+                <td><span class="pm-admin-table__primary">{{ row.page_views }}</span></td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="3" class="pm-admin-table__empty">{{ t('auth.admin_analytics.empty') }}</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</article>
+{% endblock %}

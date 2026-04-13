@@ -102,6 +102,7 @@ def apply_postgres_migration(reset: bool = False) -> None:
                 cur.execute("DROP TABLE IF EXISTS research_set_sessions CASCADE")
                 cur.execute("DROP TABLE IF EXISTS research_set_items CASCADE")
                 cur.execute("DROP TABLE IF EXISTS research_sets CASCADE")
+                cur.execute("DROP TABLE IF EXISTS analytics_language_area_daily CASCADE")
                 cur.execute("DROP TABLE IF EXISTS analytics_daily CASCADE")
                 cur.execute("DROP TABLE IF EXISTS reset_tokens CASCADE")
                 cur.execute("DROP TABLE IF EXISTS refresh_tokens CASCADE")

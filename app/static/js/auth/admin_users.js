@@ -39,22 +39,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const locale = uiLang === 'en' ? 'en-GB' : 'de-DE';
   const roleLabels = {
     user: text.roleUser || 'User',
-    editor: text.roleEditor || 'Editor',
     admin: text.roleAdmin || 'Admin',
   };
   const roleIcons = {
     user: 'person',
-    editor: 'edit_note',
     admin: 'verified_user',
   };
   const statusLabels = {
     active: text.statusActive || 'Active',
-    inactive: text.statusInactive || 'Inactive',
+    invited: text.statusInvited || 'Invited',
+    deactivated: text.statusDeactivated || 'Deactivated',
     expired: text.statusExpired || 'Expired',
   };
   const statusIcons = {
     active: 'check_circle',
-    inactive: 'cancel',
+    invited: 'mail',
+    deactivated: 'block',
     expired: 'schedule',
   };
 
@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const refreshBtn = document.getElementById('refresh');
   const searchInput = document.getElementById('admin-search');
   const filterInactiveBtn = document.getElementById('filter-inactive');
+  const sortSelect = document.getElementById('admin-sort');
 
   const createBtn = document.getElementById('create');
   const createDialog = document.getElementById('create-user-dialog');
@@ -82,6 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveEditBtn = document.getElementById('save-edit');
   const cancelEditBtn = document.getElementById('cancel-edit');
   const editUserId = document.getElementById('edit-user-id');
+  const editFirstName = document.getElementById('edit-first-name');
+  const editLastName = document.getElementById('edit-last-name');
   const editEmail = document.getElementById('edit-email');
   const editEmailError = document.getElementById('edit-email-error');
   const editAccessExpiresOn = document.getElementById('edit-access-expires-on');
@@ -113,6 +116,17 @@ document.addEventListener('DOMContentLoaded', () => {
       return value;
     }
     return date.toLocaleString(locale);
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return '–';
+    }
+    const date = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleDateString(locale);
   }
 
   function setDialogOpen(dialog, open) {
@@ -178,6 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '');
   }
 
+  function validateNames(firstName, lastName) {
+    return Boolean((firstName || '').trim() && (lastName || '').trim());
+  }
+
   function renderRoleBadge(role) {
     return `
       <span class="pm-admin-badge pm-admin-badge--role-${escapeHtml(role)}">
@@ -198,18 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderRow(user) {
     const row = document.createElement('tr');
+    const createdBy = user.created_by_name || (user.created_by_is_system ? t('createdBySystem', 'System') : '–');
     row.dataset.userId = user.id;
     row.innerHTML = `
-      <td>
-        <div class="pm-admin-table__email">
-          <span class="pm-admin-table__primary">${escapeHtml(user.email || '–')}</span>
-          <span class="pm-admin-table__meta">${escapeHtml(t('createdAtLabel', 'Created at'))}: ${escapeHtml(formatDateTime(user.created_at))}</span>
-        </div>
-      </td>
+      <td><span class="pm-admin-table__primary">${escapeHtml(user.last_name || '–')}</span></td>
+      <td><span class="pm-admin-table__primary">${escapeHtml(user.first_name || '–')}</span></td>
+      <td><div class="pm-admin-table__email"><span class="pm-admin-table__primary">${escapeHtml(user.email || '–')}</span></div></td>
       <td>${renderRoleBadge(user.role)}</td>
       <td>${renderStatusBadge(user.status_code)}</td>
-      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(user.access_expires_on || '–')}</span></td>
+      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(formatDate(user.access_expires_on))}</span></td>
       <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(formatDateTime(user.created_at))}</span></td>
+      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(createdBy)}</span></td>
       <td>
         <div class="pm-admin-table__actions">
           <button class="pm-research-inline-action pm-research-inline-action--secondary pm-research-inline-action--compact pm-admin-table__action edit-user-btn" type="button" data-id="${escapeHtml(user.id)}" title="${escapeHtml(t('editTitle', 'Edit user'))}" aria-label="${escapeHtml(t('editTitle', 'Edit user'))}">
@@ -226,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!listBody) {
       return;
     }
-    listBody.innerHTML = `<tr><td colspan="6" class="pm-admin-table__empty">${escapeHtml(t('loading', 'Loading...'))}</td></tr>`;
+    listBody.innerHTML = `<tr><td colspan="9" class="pm-admin-table__empty">${escapeHtml(t('loading', 'Loading...'))}</td></tr>`;
   }
 
   function showEditError(message) {
@@ -247,6 +264,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (editEmailError) {
       editEmailError.textContent = '';
+    }
+  }
+
+  function syncExpiryFieldForRole(roleField, expiryField) {
+    if (!roleField || !expiryField) {
+      return;
+    }
+    const isAdmin = roleField.value === 'admin';
+    expiryField.disabled = isAdmin;
+    if (isAdmin) {
+      expiryField.value = '';
     }
   }
 
@@ -307,6 +335,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editUserId) {
           editUserId.value = user.id;
         }
+        if (editFirstName) {
+          editFirstName.value = user.first_name || '';
+        }
+        if (editLastName) {
+          editLastName.value = user.last_name || '';
+        }
         if (editEmail) {
           editEmail.value = user.email || '';
         }
@@ -316,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editRole) {
           editRole.value = user.role;
         }
+        syncExpiryFieldForRole(editRole, editAccessExpiresOn);
         if (editIsActive) {
           editIsActive.checked = Boolean(user.is_active);
         }
@@ -346,6 +381,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (query) {
       params.set('q', query);
     }
+    if (sortSelect && sortSelect.value) {
+      params.set('sort', sortSelect.value);
+    }
 
     fetch(buildAdminUrl('/admin/users', Object.fromEntries(params.entries())), {
       headers: { Accept: 'application/json' },
@@ -360,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then((payload) => {
         listBody.innerHTML = '';
         if (!payload.items || payload.items.length === 0) {
-          listBody.innerHTML = `<tr><td colspan="6" class="pm-admin-table__empty">${escapeHtml(t('noUsers', 'No users found.'))}</td></tr>`;
+          listBody.innerHTML = `<tr><td colspan="9" class="pm-admin-table__empty">${escapeHtml(t('noUsers', 'No users found.'))}</td></tr>`;
           return;
         }
         payload.items.forEach((user) => listBody.appendChild(renderRow(user)));
@@ -377,7 +415,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     clearEditError();
+    const firstName = editFirstName ? editFirstName.value.trim() : '';
+    const lastName = editLastName ? editLastName.value.trim() : '';
     const email = editEmail ? editEmail.value.trim() : '';
+    if (!validateNames(firstName, lastName)) {
+      showEditError(t('requiredNames', 'First name and last name are required.'));
+      return;
+    }
     if (!validateEmail(email)) {
       if (editEmailError) {
         editEmailError.textContent = t('invalidEmail', 'Please enter a valid email address.');
@@ -401,6 +445,8 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       credentials: 'same-origin',
       body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
         email,
         role: editRole ? editRole.value : 'user',
         is_active: editIsActive ? editIsActive.checked : true,
@@ -489,11 +535,15 @@ document.addEventListener('DOMContentLoaded', () => {
       searchDebounce = window.setTimeout(reload, 250);
     });
   }
+  if (sortSelect) {
+    sortSelect.addEventListener('change', reload);
+  }
   if (createBtn) {
     createBtn.addEventListener('click', () => {
       if (createForm) {
         createForm.reset();
       }
+      syncExpiryFieldForRole(document.getElementById('new-role'), document.getElementById('new-access-expires-on'));
       setDialogOpen(createDialog, true);
     });
   }
@@ -505,6 +555,10 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault();
       const formData = new FormData(createForm);
       const payload = Object.fromEntries(formData.entries());
+      if (!validateNames(payload.first_name, payload.last_name)) {
+        showToast(t('requiredNames', 'First name and last name are required.'), 'error');
+        return;
+      }
       if (!validateEmail((payload.email || '').trim())) {
         showToast(t('invalidEmail', 'Please enter a valid email address.'), 'error');
         return;
@@ -553,6 +607,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (saveEditBtn) {
     saveEditBtn.addEventListener('click', saveEdit);
+  }
+  if (editRole) {
+    editRole.addEventListener('change', () => syncExpiryFieldForRole(editRole, editAccessExpiresOn));
+  }
+  const createRole = document.getElementById('new-role');
+  const createExpiry = document.getElementById('new-access-expires-on');
+  if (createRole) {
+    createRole.addEventListener('change', () => syncExpiryFieldForRole(createRole, createExpiry));
+    syncExpiryFieldForRole(createRole, createExpiry);
   }
   if (editResetPasswordBtn) {
     editResetPasswordBtn.addEventListener('click', prepareReset);

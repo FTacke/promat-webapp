@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from html import unescape
 import os
 from pathlib import Path
@@ -19,7 +19,7 @@ os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app import register_auth_context, register_context_processors
-from app.auth.models import Base, ResetToken, User
+from app.auth.models import AnalyticsDaily, AnalyticsLanguageAreaDaily, Base, ResetToken, User
 from app.auth import services as auth_services
 from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
@@ -33,9 +33,12 @@ def _insert_user(
     user_id: str,
     username: str,
     email: str,
+    first_name: str = "",
+    last_name: str = "",
     role: str = "user",
     is_active: bool = True,
     access_expires_at: datetime | None = None,
+    created_by_user_id: str | None = None,
 ) -> None:
     now = datetime.now(timezone.utc)
     with get_session() as session:
@@ -51,6 +54,10 @@ def _insert_user(
                 created_at=now,
                 updated_at=now,
                 access_expires_at=access_expires_at,
+                first_name=first_name,
+                last_name=last_name,
+                display_name=f"{first_name} {last_name}".strip() or None,
+                created_by_user_id=created_by_user_id,
             )
         )
 
@@ -91,12 +98,14 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
 
     with app.app_context():
         Base.metadata.create_all(bind=get_engine())
-        _insert_user(user_id="user-1", username="alice", email="alice@example.org")
-        _insert_user(user_id="admin-1", username="admin", email="admin@example.org", role="admin")
+        _insert_user(user_id="user-1", username="alice", email="alice@example.org", first_name="Alice", last_name="Example")
+        _insert_user(user_id="admin-1", username="admin", email="admin@example.org", first_name="Ada", last_name="Admin", role="admin")
         _insert_user(
             user_id="expired-1",
             username="expired",
             email="expired@example.org",
+            first_name="Erin",
+            last_name="Expired",
             access_expires_at=datetime.now(timezone.utc) - timedelta(days=1),
         )
 
@@ -118,6 +127,16 @@ def _extract_mailto(html: str) -> str:
     match = re.search(r'href="([^"]*mailto:[^"]+)"', html)
     assert match is not None
     return unquote(unescape(match.group(1)))
+
+
+def _extract_element_by_id(html: str, tag: str, element_id: str) -> str:
+    match = re.search(
+        rf'<{tag}[^>]*id="{re.escape(element_id)}".*?</{tag}>',
+        html,
+        re.DOTALL,
+    )
+    assert match is not None
+    return match.group(0)
 
 
 def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None:
@@ -310,8 +329,10 @@ def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask) ->
     response = client.post(
         "/admin/users",
         json={
+            "first_name": "Nora",
+            "last_name": "New",
             "email": "new.user@example.org",
-            "role": "editor",
+            "role": "user",
             "access_expires_on": "2030-01-31",
             "invite_note": "Please review the shared corpus guidelines before your first login.",
         },
@@ -328,7 +349,10 @@ def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask) ->
     with auth_app.app_context():
         user = auth_services.find_user_by_email("new.user@example.org")
         assert user is not None
-        assert user.role == "editor"
+        assert user.role == "user"
+        assert user.first_name == "Nora"
+        assert user.last_name == "New"
+        assert user.created_by_user_id == "admin-1"
         assert user.must_reset_password is True
         assert user.access_expires_at.date().isoformat() == "2030-01-31"
 
@@ -345,13 +369,17 @@ def test_admin_user_page_renders_in_english_after_admin_login(auth_app: Flask) -
     html = response.get_data(as_text=True)
     assert "User management" in html
     assert "Create user" in html
+    assert "Last name" in html
+    assert "First name" in html
     assert "Role" in html
     assert "Status" in html
+    assert "Created by" in html
     assert "Pronunciation Matters" in html
     assert "admin-users-config" in html
     assert "pm-admin-toolbar" in html
     assert "pm-admin-dialog" in html
     assert "pm-research-table pm-admin-table" in html
+    assert "Editor" not in html
     assert "window.PROMAT_ADMIN_USERS_I18N" not in html
     assert "js/auth/admin_users.js?v=" in html
     assert "md3-card" not in html
@@ -366,3 +394,154 @@ def test_dev_start_script_wires_expected_dev_admin_email() -> None:
     assert "StartAdminEmail" in script
     assert "felix.tacke@uni-marburg.de" in script
     assert "--email $StartAdminEmail" in script
+
+
+def test_login_without_next_redirects_to_role_default_targets(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    user_response = _login(client, email="alice@example.org")
+    assert user_response.status_code == 303
+    assert user_response.headers["Location"] == "/auth/account?ui_lang=de"
+
+    admin_client = auth_app.test_client()
+    admin_response = _login(admin_client, email="admin@example.org")
+    assert admin_response.status_code == 303
+    assert admin_response.headers["Location"] == "/admin/users/page?ui_lang=de"
+
+
+def test_account_page_renders_real_account_surface_for_user(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="alice@example.org")
+
+    assert login_response.status_code == 303
+    response = client.get("/auth/account?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "My account" in html
+    assert "Account details" in html
+    assert "Access and security" in html
+    assert "Save account details" in html
+    assert "Change password" in html
+    assert "app-shell--panel-hidden" in html
+    assert 'href="/auth/account?ui_lang=de"' in html
+    assert 'href="/auth/account?ui_lang=en"' in html
+    assert "Internal area" not in html
+
+
+def test_account_page_user_menu_stays_compact_for_regular_users(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    login_response = _login(client, email="alice@example.org")
+
+    assert login_response.status_code == 303
+    response = client.get("/auth/account?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    user_menu_html = _extract_element_by_id(html, "div", "user-menu-dropdown")
+
+    assert html.index("promat-topbar__language-switch") < html.index('id="themeToggle"') < html.index("data-user-menu-root")
+    assert "My account" in user_menu_html
+    assert "Logout" in user_menu_html
+    assert "Admin area" not in user_menu_html
+    assert user_menu_html.index("My account") < user_menu_html.index("Logout")
+
+
+def test_admin_users_page_uses_sidebar_only_for_admin_area_navigation(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+    response = client.get("/admin/users/page?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    drawer_html = _extract_element_by_id(html, "aside", "navigation-drawer-standard")
+    user_menu_html = _extract_element_by_id(html, "div", "user-menu-dropdown")
+
+    assert "Admin area" in drawer_html
+    assert "Users" in drawer_html
+    assert "Analytics" in drawer_html
+    assert "My account" not in drawer_html
+    assert "Logout" not in drawer_html
+    assert "pm-icon-mask--section" not in drawer_html
+    assert 'href="/admin/users/page?ui_lang=de"' in html
+    assert 'href="/admin/users/page?ui_lang=en"' in html
+    assert "My account" in user_menu_html
+    assert "Admin area" in user_menu_html
+    assert "Logout" in user_menu_html
+    assert user_menu_html.index("My account") < user_menu_html.index("Admin area") < user_menu_html.index("Logout")
+
+
+def test_last_admin_cannot_be_deactivated_or_demoted(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    deactivate_response = client.patch(
+        "/admin/users/admin-1?ui_lang=en",
+        json={"is_active": False},
+    )
+    assert deactivate_response.status_code == 400
+    assert "last active admin" in deactivate_response.get_json()["error"].lower()
+
+    role_response = client.patch(
+        "/admin/users/admin-1?ui_lang=en",
+        json={"role": "user"},
+    )
+    assert role_response.status_code == 400
+    assert "last active admin" in role_response.get_json()["error"].lower()
+
+
+def test_admin_analytics_page_renders_aggregated_usage(auth_app: Flask) -> None:
+    with auth_app.app_context():
+        now = datetime.now(timezone.utc)
+        with get_session() as session:
+            session.add(
+                AnalyticsDaily(
+                    activity_date=date(2026, 4, 13),
+                    unique_visitors=4,
+                    page_views=12,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+            session.add(
+                AnalyticsLanguageAreaDaily(
+                    activity_date=date(2026, 4, 13),
+                    section="research",
+                    corpus_language="spanish",
+                    unique_visitors=3,
+                    page_views=8,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+            session.add(
+                AnalyticsLanguageAreaDaily(
+                    activity_date=date(2026, 4, 13),
+                    section="teaching",
+                    corpus_language="spanish",
+                    unique_visitors=2,
+                    page_views=4,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+    response = client.get("/admin/analytics/page?ui_lang=en&period=30d")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Analytics" in html
+    assert "Usage by language and area" in html
+    assert "Unique visitors" in html
+    assert "Spanish" in html
+    assert "8" in html

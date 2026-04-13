@@ -1,70 +1,80 @@
-{% extends "_md3_skeletons/auth_login_skeleton.html" %}
+{% extends "base.html" %}
 
 {% block page_title %}{{ format_page_title(t('auth.admin_users.page_title')) }}{% endblock %}
 
-{% set auth_heading = t('auth.admin_users.heading') %}
-{% set auth_intro = t('auth.admin_users.intro') %}
-{% set auth_breadcrumbs = [
-  { 'label': BRANDING.app_display_name if BRANDING is defined else 'Pronunciation Matters', 'href': url_for('public.landing_page'), 'current': false },
-  { 'label': t('auth.admin_users.heading'), 'href': none, 'current': true },
-] %}
-{% set auth_section_classes = 'promat-auth-page__section--public pm-admin-users' %}
+{% block content %}
+<article class="pm-content pm-admin-page pm-admin-page--wide" aria-labelledby="promat-page-title">
+  {% include 'partials/_content_header.html' %}
 
-{% block auth_body %}
-<div class="pm-admin-users__stack">
-  <section class="pm-admin-toolbar" aria-label="{{ t('auth.admin_users.filter_group_label') }}">
-    <div class="pm-admin-toolbar__row pm-admin-toolbar__row--primary">
-      <label class="pm-admin-toolbar__search" for="admin-search">
-        <span class="pm-admin-toolbar__search-label">{{ t('auth.admin_users.search_label') }}</span>
-        <input id="admin-search" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.search_label') }}">
-      </label>
-      <div class="pm-admin-toolbar__actions">
-        <button id="refresh" type="button" class="pm-research-inline-action pm-research-inline-action--secondary">
-          <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
-          <span>{{ t('auth.admin_users.refresh') }}</span>
-        </button>
-        <button id="create" type="button" class="pm-research-button">
-          <span class="material-symbols-rounded" aria-hidden="true">add</span>
-          <span>{{ t('auth.admin_users.create_button') }}</span>
-        </button>
+  <div class="pm-admin-users__stack">
+    <section class="pm-admin-toolbar" aria-label="{{ t('auth.admin_users.filter_group_label') }}">
+      <div class="pm-admin-toolbar__row pm-admin-toolbar__row--primary">
+        <label class="pm-admin-toolbar__search" for="admin-search">
+          <span class="pm-admin-toolbar__search-label">{{ t('auth.admin_users.search_label') }}</span>
+          <input id="admin-search" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.search_label') }}" placeholder="{{ t('auth.admin_users.search_placeholder') }}">
+        </label>
+        <div class="pm-admin-toolbar__actions">
+          <button id="refresh" type="button" class="pm-research-inline-action pm-research-inline-action--secondary">
+            <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+            <span>{{ t('auth.admin_users.refresh') }}</span>
+          </button>
+          <button id="create" type="button" class="pm-research-button">
+            <span class="material-symbols-rounded" aria-hidden="true">add</span>
+            <span>{{ t('auth.admin_users.create_button') }}</span>
+          </button>
+        </div>
       </div>
-    </div>
 
-    <div class="pm-admin-toolbar__row">
-      <div class="pm-admin-toolbar__filters" role="group" aria-label="{{ t('auth.admin_users.filter_group_label') }}">
-        <button type="button" id="filter-inactive" class="pm-filter-chip" aria-pressed="false">
-          <span class="material-symbols-rounded" aria-hidden="true">visibility_off</span>
-          <span>{{ t('auth.admin_users.filter_inactive') }}</span>
-        </button>
+      <div class="pm-admin-toolbar__row">
+        <div class="pm-admin-toolbar__filters" role="group" aria-label="{{ t('auth.admin_users.filter_group_label') }}">
+          <button type="button" id="filter-inactive" class="pm-filter-chip" aria-pressed="false">
+            <span class="material-symbols-rounded" aria-hidden="true">visibility_off</span>
+            <span>{{ t('auth.admin_users.filter_inactive') }}</span>
+          </button>
+          <label class="pm-admin-toolbar__sort" for="admin-sort">
+            <span class="pm-admin-toolbar__search-label">{{ t('auth.admin_users.sort_label') }}</span>
+            <select id="admin-sort" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.sort_label') }}">
+              <option value="created_desc">{{ t('auth.admin_users.sort_created_desc') }}</option>
+              <option value="name">{{ t('auth.admin_users.sort_name') }}</option>
+              <option value="role">{{ t('auth.admin_users.sort_role') }}</option>
+              <option value="status">{{ t('auth.admin_users.sort_status') }}</option>
+              <option value="expires">{{ t('auth.admin_users.sort_expires') }}</option>
+              <option value="created_by">{{ t('auth.admin_users.sort_created_by') }}</option>
+            </select>
+          </label>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="pm-admin-table-panel" aria-label="{{ t('auth.admin_users.heading') }}">
-    <div class="pm-research-table-wrap">
-      <table class="pm-research-table pm-admin-table" id="users-table">
-        <thead>
-          <tr>
-            <th class="col-w-25">{{ t('auth.admin_users.table_email') }}</th>
-            <th class="col-w-10">{{ t('auth.admin_users.table_role') }}</th>
-            <th class="col-w-10">{{ t('auth.admin_users.table_status') }}</th>
-            <th class="col-w-15 pm-admin-table__desktop">{{ t('auth.admin_users.table_expires') }}</th>
-            <th class="col-w-20 pm-admin-table__desktop">{{ t('auth.admin_users.created_at') }}</th>
-            <th class="col-w-15">{{ t('auth.admin_users.table_actions') }}</th>
-          </tr>
-        </thead>
-        <tbody id="list-body">
-          <tr>
-            <td colspan="6" class="pm-admin-table__empty">{{ t('auth.admin_users.loading') }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-</div>
+    <section class="pm-admin-table-panel" aria-label="{{ t('auth.admin_users.heading') }}">
+      <div class="pm-research-table-wrap">
+        <table class="pm-research-table pm-admin-table" id="users-table">
+          <thead>
+            <tr>
+              <th>{{ t('auth.admin_users.table_last_name') }}</th>
+              <th>{{ t('auth.admin_users.table_first_name') }}</th>
+              <th>{{ t('auth.admin_users.table_email') }}</th>
+              <th>{{ t('auth.admin_users.table_role') }}</th>
+              <th>{{ t('auth.admin_users.table_status') }}</th>
+              <th class="pm-admin-table__desktop">{{ t('auth.admin_users.table_expires') }}</th>
+              <th class="pm-admin-table__desktop">{{ t('auth.admin_users.created_at') }}</th>
+              <th class="pm-admin-table__desktop">{{ t('auth.admin_users.created_by') }}</th>
+              <th>{{ t('auth.admin_users.table_actions') }}</th>
+            </tr>
+          </thead>
+          <tbody id="list-body">
+            <tr>
+              <td colspan="9" class="pm-admin-table__empty">{{ t('auth.admin_users.loading') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</article>
 {% endblock %}
 
-{% block auth_after %}
+{% block extra_scripts %}
 <dialog id="create-user-dialog" class="pm-admin-dialog" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
   <div class="pm-admin-dialog__surface">
     <div class="pm-admin-dialog__content">
@@ -76,16 +86,25 @@
 
       <form id="create-user-form" method="post" class="pm-admin-dialog__form">
         <div class="pm-admin-dialog__grid">
+          <label class="pm-admin-field" for="new-last-name">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.last_name_label') }}</span>
+            <input type="text" id="new-last-name" name="last_name" class="pm-phenomena-field__input" required autofocus aria-label="{{ t('auth.admin_users.last_name_label') }}">
+          </label>
+
+          <label class="pm-admin-field" for="new-first-name">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.first_name_label') }}</span>
+            <input type="text" id="new-first-name" name="first_name" class="pm-phenomena-field__input" required aria-label="{{ t('auth.admin_users.first_name_label') }}">
+          </label>
+
           <label class="pm-admin-field pm-admin-field--full" for="new-email">
             <span class="pm-admin-field__label">{{ t('auth.admin_users.email_label') }}</span>
-            <input type="email" id="new-email" name="email" class="pm-phenomena-field__input" required autofocus aria-label="{{ t('auth.admin_users.email_label') }}">
+            <input type="email" id="new-email" name="email" class="pm-phenomena-field__input" required aria-label="{{ t('auth.admin_users.email_label') }}">
           </label>
 
           <label class="pm-admin-field" for="new-role">
             <span class="pm-admin-field__label">{{ t('auth.admin_users.role_label') }}</span>
             <select id="new-role" name="role" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.role_label') }}">
               <option value="user" selected>{{ t('auth.admin_users.role_user') }}</option>
-              <option value="editor">{{ t('auth.admin_users.role_editor') }}</option>
               <option value="admin">{{ t('auth.admin_users.role_admin') }}</option>
             </select>
           </label>
@@ -176,6 +195,14 @@
             <h3 class="pm-admin-dialog__section-title">{{ t('auth.admin_users.account_section') }}</h3>
           </div>
           <div class="pm-admin-dialog__grid">
+            <label class="pm-admin-field" for="edit-last-name">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.last_name_label') }}</span>
+              <input type="text" id="edit-last-name" name="last_name" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.last_name_label') }}">
+            </label>
+            <label class="pm-admin-field" for="edit-first-name">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.first_name_label') }}</span>
+              <input type="text" id="edit-first-name" name="first_name" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.first_name_label') }}">
+            </label>
             <label class="pm-admin-field pm-admin-field--full" for="edit-email">
               <span class="pm-admin-field__label">{{ t('auth.admin_users.email_label') }}</span>
               <input type="email" id="edit-email" name="email" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.email_label') }}">
@@ -197,7 +224,6 @@
               <span class="pm-admin-field__label">{{ t('auth.admin_users.role_label') }}</span>
               <select id="edit-role" name="role" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.role_label') }}">
                 <option value="user">{{ t('auth.admin_users.role_user') }}</option>
-                <option value="editor">{{ t('auth.admin_users.role_editor') }}</option>
                 <option value="admin">{{ t('auth.admin_users.role_admin') }}</option>
               </select>
             </label>
@@ -250,11 +276,13 @@
     'loadError': t('auth.admin_users.load_error'),
     'editTitle': t('auth.admin_users.edit_action'),
     'statusActive': t('auth.admin_users.status_active'),
-    'statusInactive': t('auth.admin_users.status_inactive'),
+    'statusInvited': t('auth.admin_users.status_invited'),
+    'statusDeactivated': t('auth.admin_users.status_deactivated'),
     'statusExpired': t('auth.admin_users.status_expired'),
+    'createdBy': t('auth.admin_users.created_by'),
+    'createdBySystem': t('auth.admin_users.created_by_system'),
     'createdAtLabel': t('auth.admin_users.created_at'),
     'roleUser': t('auth.admin_users.role_user'),
-    'roleEditor': t('auth.admin_users.role_editor'),
     'roleAdmin': t('auth.admin_users.role_admin'),
     'save': t('common.actions.save'),
     'saving': t('auth.admin_users.saving'),
@@ -270,6 +298,7 @@
     'resetPrepared': t('auth.admin_users.reset_prepared'),
     'networkError': t('auth.admin_users.network_error'),
     'invalidEmail': t('auth.admin_users.invalid_email'),
+    'requiredNames': t('auth.admin_users.error.names_required'),
     'expiresPrefix': t('auth.admin_users.expires_prefix'),
     'notice': t('auth.common.notice'),
     'close': t('auth.admin_users.close_invite')

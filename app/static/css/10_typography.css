@@ -172,6 +172,16 @@ textarea {
   letter-spacing: var(--pm-type-meta-tracking);
 }
 
+.promat-topbar__language-link,
+.promat-topbar__language-separator {
+  font-family: var(--pm-type-meta-family);
+  font-size: var(--pm-type-meta-size);
+  line-height: 1;
+  font-weight: var(--pm-type-meta-weight);
+  letter-spacing: var(--pm-type-meta-tracking);
+  text-transform: uppercase;
+}
+
 .promat-topbar__action-label {
   line-height: 1;
 }

@@ -26,10 +26,15 @@ from flask_jwt_extended import (
     verify_jwt_in_request,
 )
 
+from ..auth import Role
 from ..auth import services as auth_services
+from ..branding import BRANDING
 from ..extensions import limiter
 from ..i18n import resolve_ui_language, translate
-from ..branding import BRANDING
+from ..protected_navigation import (
+    build_admin_panel,
+    build_protected_content_header,
+)
 
 blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 RETURN_URL_SESSION_KEY = "_return_url_after_login"
@@ -171,16 +176,31 @@ def _build_password_message(
     normalized_note = (admin_note or "").strip()
     if normalized_note:
         lines.extend(["", _t(ui_lang, "auth.mail.invite.note_label"), normalized_note])
-    lines.extend(["", _t(ui_lang, f"{key_prefix}.outro", contact_email=auth_services.access_request_contact_email())])
+    lines.extend(
+        [
+            "",
+            _t(
+                ui_lang,
+                f"{key_prefix}.outro",
+                contact_email=auth_services.access_request_contact_email(),
+            ),
+        ]
+    )
     return {
         "recipient": user_email,
-        "subject": _t(ui_lang, f"{key_prefix}.subject", app_name=BRANDING["app_display_name"]),
+        "subject": _t(
+            ui_lang,
+            f"{key_prefix}.subject",
+            app_name=BRANDING["app_display_name"],
+        ),
         "body": "\n".join(lines),
         "reset_link": reset_link,
     }
 
 
-def _log_prepared_auth_message(*, recipient: str, subject: str, body: str, purpose: str) -> None:
+def _log_prepared_auth_message(
+    *, recipient: str, subject: str, body: str, purpose: str
+) -> None:
     current_app.logger.info(
         "Prepared %s message for %s | subject=%s | body=%s",
         purpose,
@@ -231,6 +251,66 @@ def _json_ok(payload: dict[str, object] | None = None, *, status_code: int = 200
     return jsonify(response_payload), status_code
 
 
+def _build_account_context(ui_lang: str, *, user, page_key: str) -> dict[str, object]:
+    role_value = auth_services.normalize_role(user.role)
+    is_admin = role_value == Role.ADMIN.value
+    panel = build_admin_panel(ui_lang, active_slug="account", translate=translate) if is_admin else None
+    shell_class = "app-shell--inner" if panel else "app-shell--inner app-shell--panel-hidden"
+    section_label = panel["section_label"] if panel else None
+    content_header = build_protected_content_header(
+        page_name="account",
+        title=_t(ui_lang, f"auth.{page_key}.heading"),
+        intro=_t(ui_lang, f"auth.{page_key}.intro"),
+        ui_lang=ui_lang,
+        translate=translate,
+        section_label=section_label,
+        current_href=url_for("auth.account_page", ui_lang=ui_lang),
+    )
+    return {
+        "auth_ui_lang": ui_lang,
+        "ui_lang": ui_lang,
+        "shell_class": shell_class,
+        "render_navigation_drawer": bool(panel),
+        "promat_panel": panel,
+        "content_header": content_header,
+        "body_class": "page-protected-account",
+        "page_name": None,
+    }
+
+
+def _render_account_page(*, user, status_code: int = 200) -> Response:
+    ui_lang = _resolve_auth_ui_lang(request.referrer)
+    return (
+        render_template(
+            "pages/account.html",
+            account_user=user,
+            account_role=auth_services.normalize_role(user.role),
+            account_status=auth_services.admin_status_code(user),
+            **_build_account_context(ui_lang, user=user, page_key="account"),
+        ),
+        status_code,
+    )
+
+
+def _render_account_password_page(*, user, status_code: int = 200) -> Response:
+    ui_lang = _resolve_auth_ui_lang(request.referrer)
+    return (
+        render_template(
+            "auth/account_password.html",
+            account_user=user,
+            must_reset_mode=bool(user.must_reset_password or request.args.get("mustReset")),
+            **_build_account_context(ui_lang, user=user, page_key="account_password"),
+        ),
+        status_code,
+    )
+
+
+def _default_post_login_target(ui_lang: str, *, user) -> str:
+    if auth_services.normalize_role(user.role) == Role.ADMIN.value:
+        return url_for("admin.users_page", ui_lang=ui_lang)
+    return url_for("auth.account_page", ui_lang=ui_lang)
+
+
 @blueprint.get("/session")
 def check_session() -> Response:
     try:
@@ -251,18 +331,87 @@ def check_session() -> Response:
 
 @blueprint.get("/konto")
 @jwt_required()
+def account_page_legacy() -> Response:
+    return redirect(url_for("auth.account_page", ui_lang=_resolve_auth_ui_lang(request.referrer)), 303)
+
+
+@blueprint.get("/account", endpoint="account_page")
+@jwt_required()
 def account_page() -> Response:
-    user = None
     identity = get_jwt_identity()
-    if identity:
-        user = auth_services.get_user_by_id(identity)
-    return render_template("pages/account.html", user=user), 200
+    user = auth_services.get_user_by_id(identity) if identity else None
+    if not user:
+        flash(_t(_resolve_auth_ui_lang(request.referrer), "auth.flash.login_required"), "error")
+        return redirect(url_for("public.login", ui_lang=_resolve_auth_ui_lang(request.referrer)), 303)
+    return _render_account_page(user=user)
+
+
+@blueprint.post("/account", endpoint="account_update")
+@jwt_required()
+def account_update() -> Response:
+    identity = get_jwt_identity()
+    user = auth_services.get_user_by_id(identity) if identity else None
+    ui_lang = _resolve_auth_ui_lang(request.referrer)
+    if not user:
+        flash(_t(ui_lang, "auth.flash.login_required"), "error")
+        return redirect(url_for("public.login", ui_lang=ui_lang), 303)
+
+    try:
+        auth_services.update_user_profile(
+            str(user.id),
+            first_name=request.form.get("first_name", ""),
+            last_name=request.form.get("last_name", ""),
+            email=request.form.get("email", ""),
+        )
+    except ValueError as exc:
+        flash(_t(ui_lang, f"auth.account.error.{exc}"), "error")
+        refreshed_user = auth_services.get_user_by_id(str(user.id)) or user
+        return _render_account_page(user=refreshed_user, status_code=400)
+
+    flash(_t(ui_lang, "auth.account.success"), "success")
+    return redirect(url_for("auth.account_page", ui_lang=ui_lang), 303)
 
 
 @blueprint.get("/account/password", endpoint="account_password_page")
 @jwt_required()
 def account_password_page() -> Response:
-    return render_template("auth/account_password.html"), 200
+    identity = get_jwt_identity()
+    user = auth_services.get_user_by_id(identity) if identity else None
+    if not user:
+        flash(_t(_resolve_auth_ui_lang(request.referrer), "auth.flash.login_required"), "error")
+        return redirect(url_for("public.login", ui_lang=_resolve_auth_ui_lang(request.referrer)), 303)
+    return _render_account_password_page(user=user)
+
+
+@blueprint.post("/account/password", endpoint="account_password_submit")
+@jwt_required()
+def account_password_submit() -> Response:
+    ui_lang = _resolve_auth_ui_lang(request.referrer)
+    user = auth_services.get_user_by_id(get_jwt_identity())
+    if not user:
+        flash(_t(ui_lang, "auth.flash.login_required"), "error")
+        return redirect(url_for("public.login", ui_lang=ui_lang), 303)
+
+    old_password = request.form.get("old_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not user.must_reset_password and not auth_services.verify_password(old_password, user.password_hash):
+        flash(_t(ui_lang, "auth.account_password.error.current_password"), "error")
+        return _render_account_password_page(user=user, status_code=400)
+
+    error_message = _password_validation_error(
+        ui_lang,
+        new_password=new_password,
+        confirm_password=confirm_password,
+    )
+    if error_message:
+        flash(error_message, "error")
+        return _render_account_password_page(user=user, status_code=400)
+
+    auth_services.update_user_password(str(user.id), auth_services.hash_password(new_password))
+    flash(_t(ui_lang, "auth.account_password.success"), "success")
+    return redirect(url_for("auth.account_page", ui_lang=ui_lang), 303)
 
 
 @blueprint.post("/change-password")
@@ -272,7 +421,9 @@ def change_password() -> Response:
     payload = request.get_json(silent=True) or request.form
     old_password = (payload.get("oldPassword") or "") if payload else ""
     new_password = (payload.get("newPassword") or "") if payload else ""
-    confirm_password = (payload.get("confirmPassword") or new_password) if payload else new_password
+    confirm_password = (
+        (payload.get("confirmPassword") or new_password) if payload else new_password
+    )
 
     user = auth_services.get_user_by_id(get_jwt_identity())
     if not user:
@@ -434,7 +585,7 @@ def login_post() -> Response:
 
     auth_services.on_successful_login(user)
     access_token = auth_services.create_access_token_for_user(user)
-    target = next_url or url_for("auth.account_page")
+    target = next_url or _default_post_login_target(ui_lang, user=user)
     response = make_response(redirect(target, 303))
     set_access_cookies(response, access_token)
     response.headers["Cache-Control"] = "no-store, private"

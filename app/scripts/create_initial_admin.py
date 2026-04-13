@@ -157,6 +157,7 @@ def main():
                 existing.role = "admin"
                 existing.is_active = True
                 existing.must_reset_password = False
+                existing.access_expires_at = None
                 existing.login_failed_count = 0
                 existing.locked_until = None
                 existing.deleted_at = None
@@ -181,6 +182,7 @@ def main():
                     role="admin",
                     is_active=True,
                     must_reset_password=False,
+                    access_expires_at=None,
                     login_failed_count=0,
                     locked_until=None,
                     deleted_at=None,

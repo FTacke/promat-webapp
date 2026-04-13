@@ -1,13 +1,10 @@
-{% set user_name = g.user %}
-{% set user_role = g.role %}
-{% set is_authenticated = user_name is not none %}
-{% set role_value = user_role.value if user_role else '' %}
-
 {% macro panel_content(panel) -%}
   <div class="promat-panel__inner pm-panel__inner{{ ' promat-panel__inner--language' if panel['context_mode'] == 'language' else '' }}{{ ' promat-panel__inner--section' if panel['context_mode'] == 'section' else '' }}{{ ' promat-panel__inner--contextless' if panel['context_mode'] == 'none' else '' }}" data-section="{{ panel['section_key'] }}" data-context-mode="{{ panel['context_mode'] }}">
     <div class="promat-panel__context {{ 'promat-panel__context--language' if panel['context_mode'] == 'language' else '' }}" data-section="{{ panel['section_key'] }}">
       <div class="promat-panel__section-header pm-panel__section-header">
+        {% if panel.get('show_section_icon', True) %}
         <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--section" aria-hidden="true"></span>
+        {% endif %}
         <p class="promat-panel__section-title">{{ panel['section_label'] }}</p>
       </div>
       {% if panel['context_mode'] == 'language' %}
@@ -32,20 +29,6 @@
       </a>
       {% endfor %}
     </nav>
-
-    {% if is_authenticated %}
-    <div class="promat-panel__footer">
-      <a href="{{ url_for('auth.account_page') }}" class="promat-panel__footer-link">{{ t('shell.panel.account_area') }}</a>
-      {% if role_value == 'admin' %}
-      <a href="{{ url_for('admin.dashboard') }}" class="promat-panel__footer-link">{{ t('shell.panel.dashboard') }}</a>
-      {% endif %}
-      <a href="{{ url_for('auth.logout_any') }}"
-         data-logout="fetch"
-         data-logout-url="{{ url_for('auth.logout_any') }}"
-         data-logout-method="POST"
-         class="promat-panel__footer-link">{{ t('shell.panel.logout') }}</a>
-    </div>
-    {% endif %}
   </div>
 {%- endmacro %}
 

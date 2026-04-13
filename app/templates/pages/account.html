@@ -1,27 +1,107 @@
-{% extends '_md3_skeletons/page_text_skeleton.html' %}
+{% extends "base.html" %}
 
-{% block page_title %}{{ format_page_title('Interner Bereich') }}{% endblock %}
+{% block page_title %}{{ format_page_title(t('auth.account.page_title')) }}{% endblock %}
 
-{% set text_page_aria_label = 'Interner Bereich' %}
-{% set text_page_icon = 'lock' %}
-{% set text_page_eyebrow = 'Geschützt' %}
-{% set text_page_heading = 'Interner Bereich' %}
-{% set text_page_intro = 'Diese Seite prüft die Trennung zwischen öffentlichen und geschützten Bereichen.' %}
+{% block content %}
+<article class="pm-content pm-reading pm-account-page" aria-labelledby="promat-page-title">
+  {% include 'partials/_content_header.html' %}
 
-{% block text_page_body %}
-<section class="md3-text-section">
-  <p class="md3-body-large">
-    Sie sind angemeldet{% if user and user.username %} als <strong>{{ user.username }}</strong>{% endif %}.
-    Damit ist die geschützte Basis für spätere PROMAT-Funktionen aktiv.
-  </p>
-</section>
+  <div class="pm-account-grid">
+    <section class="pm-account-card" aria-labelledby="account-profile-title">
+      <div class="pm-account-card__header">
+        <h2 id="account-profile-title" class="pm-account-card__title">{{ t('auth.account.profile_title') }}</h2>
+        <p class="pm-account-card__intro">{{ t('auth.account.profile_intro') }}</p>
+      </div>
 
-<section class="md3-text-section">
-  <h2 class="md3-title-large md3-section-title md3-text-heading">Aktiver Bootstrap-Umfang</h2>
-  <ul class="md3-body-large md3-text-list">
-    <li>Login und Logout über JWT-Cookies</li>
-    <li>geschützte Route mit serverseitiger Absicherung</li>
-    <li>vorbereitete Admin-Erweiterung</li>
-  </ul>
-</section>
+      {% with messages = flash_messages if flash_messages is defined else [] %}
+        {% if messages %}
+          <div class="pm-account-flash-stack">
+            {% for category, message in messages %}
+              <div class="pm-auth-message{% if category == 'error' %} is-error{% elif category == 'success' %} is-success{% endif %}" role="alert">
+                <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">{% if category == 'success' %}check_circle{% else %}info{% endif %}</span>
+                <div class="pm-auth-message__body">
+                  <p class="pm-auth-message__eyebrow">{{ t('auth.common.notice') }}</p>
+                  <p class="pm-auth-message__text">{{ message }}</p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form class="pm-account-form" method="post" action="{{ url_for('auth.account_update', ui_lang=auth_ui_lang) }}">
+        <div class="pm-account-form__grid">
+          <label class="pm-admin-field" for="account-first-name">
+            <span class="pm-admin-field__label">{{ t('auth.account.first_name_label') }}</span>
+            <input id="account-first-name" name="first_name" type="text" class="pm-phenomena-field__input" value="{{ account_user.first_name or '' }}" required>
+          </label>
+
+          <label class="pm-admin-field" for="account-last-name">
+            <span class="pm-admin-field__label">{{ t('auth.account.last_name_label') }}</span>
+            <input id="account-last-name" name="last_name" type="text" class="pm-phenomena-field__input" value="{{ account_user.last_name or '' }}" required>
+          </label>
+
+          <label class="pm-admin-field pm-admin-field--full" for="account-email">
+            <span class="pm-admin-field__label">{{ t('auth.account.email_label') }}</span>
+            <input id="account-email" name="email" type="email" class="pm-phenomena-field__input" value="{{ account_user.email or '' }}" required>
+          </label>
+        </div>
+
+        <div class="pm-account-actions">
+          <button type="submit" class="pm-research-button">
+            <span class="material-symbols-rounded" aria-hidden="true">save</span>
+            <span>{{ t('auth.account.save') }}</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="pm-account-card pm-account-card--aside" aria-labelledby="account-security-title">
+      <div class="pm-account-card__header">
+        <h2 id="account-security-title" class="pm-account-card__title">{{ t('auth.account.security_title') }}</h2>
+      </div>
+
+      <div class="pm-account-meta">
+        <div class="pm-account-meta__row">
+          <p class="pm-account-meta__term">{{ t('auth.account.role_label') }}</p>
+          <p class="pm-account-meta__value">
+            {% if account_role == 'admin' %}
+              {{ t('auth.admin_users.role_admin') }}
+            {% else %}
+              {{ t('auth.admin_users.role_user') }}
+            {% endif %}
+          </p>
+        </div>
+        <div class="pm-account-meta__row">
+          <p class="pm-account-meta__term">{{ t('auth.account.status_label') }}</p>
+          <p class="pm-account-meta__value">
+            {% if account_status == 'active' %}
+              {{ t('auth.admin_users.status_active') }}
+            {% elif account_status == 'invited' %}
+              {{ t('auth.admin_users.status_invited') }}
+            {% elif account_status == 'expired' %}
+              {{ t('auth.admin_users.status_expired') }}
+            {% else %}
+              {{ t('auth.admin_users.status_deactivated') }}
+            {% endif %}
+          </p>
+        </div>
+        {% if account_role != 'admin' %}
+        <div class="pm-account-meta__row">
+          <p class="pm-account-meta__term">{{ t('auth.account.valid_until_label') }}</p>
+          <p class="pm-account-meta__value">{{ account_user.access_expires_at.date().isoformat() if account_user.access_expires_at else t('auth.account.valid_until_open') }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="pm-account-security-action">
+        <p class="pm-account-card__intro">{{ t('auth.account.password_intro') }}</p>
+        <a class="pm-research-inline-action pm-research-inline-action--secondary" href="{{ url_for('auth.account_password_page', ui_lang=auth_ui_lang) }}">
+          <span class="material-symbols-rounded" aria-hidden="true">password</span>
+          <span>{{ t('auth.account.password_action') }}</span>
+        </a>
+      </div>
+    </aside>
+  </div>
+</article>
 {% endblock %}

@@ -7,12 +7,13 @@ from datetime import datetime, timezone
 from importlib import metadata
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qsl, urlencode, unquote, urlparse, urlsplit, urlunsplit
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .branding import BRANDING, format_page_title
+from .analytics import register_analytics
 from .i18n import resolve_ui_language, translate
 from .extensions import register_extensions
 from .routes import register_blueprints
@@ -41,6 +42,65 @@ def _resolve_request_ui_language() -> str:
                 raw_value = first_segment
                 break
     return resolve_ui_language(raw_value)
+
+
+def _path_has_ui_lang_prefix(path: str) -> bool:
+    if not path.startswith("/"):
+        return False
+    first_segment = path.lstrip("/").split("/", 1)[0]
+    return first_segment in {"de", "en"}
+
+
+def _swap_ui_lang_prefix(path: str, target_ui_lang: str) -> str:
+    if not _path_has_ui_lang_prefix(path):
+        return path
+    stripped = path.lstrip("/")
+    parts = stripped.split("/", 1)
+    remainder = parts[1] if len(parts) > 1 else ""
+    return f"/{target_ui_lang}" + (f"/{remainder}" if remainder else "")
+
+
+def _rewrite_local_ui_lang_url(raw_url: str | None, target_ui_lang: str) -> str | None:
+    if not raw_url:
+        return raw_url
+
+    parsed = urlsplit(str(raw_url))
+    path = parsed.path or ""
+    if not path.startswith("/"):
+        return raw_url
+
+    query_items = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "ui_lang"]
+    rewritten_items: list[tuple[str, str]] = []
+    for key, value in query_items:
+        if key == "next":
+            rewritten_items.append((key, _rewrite_local_ui_lang_url(value, target_ui_lang) or value))
+        else:
+            rewritten_items.append((key, value))
+
+    rewritten_path = _swap_ui_lang_prefix(path, target_ui_lang) if _path_has_ui_lang_prefix(path) else path
+    if not _path_has_ui_lang_prefix(path):
+        rewritten_items.append(("ui_lang", target_ui_lang))
+
+    return urlunsplit(("", "", rewritten_path, urlencode(rewritten_items, doseq=True), parsed.fragment))
+
+
+def _build_ui_lang_switch_url(target_ui_lang: str) -> str:
+    target_ui_lang = resolve_ui_language(target_ui_lang)
+    path = request.path or "/"
+    query_items = [(key, value) for key, value in request.args.items(multi=True) if key != "ui_lang"]
+    rewritten_items: list[tuple[str, str]] = []
+    for key, value in query_items:
+        if key == "next":
+            rewritten_items.append((key, _rewrite_local_ui_lang_url(value, target_ui_lang) or value))
+        else:
+            rewritten_items.append((key, value))
+
+    localized_path = _swap_ui_lang_prefix(path, target_ui_lang) if _path_has_ui_lang_prefix(path) else path
+    if not _path_has_ui_lang_prefix(path):
+        rewritten_items.append(("ui_lang", target_ui_lang))
+
+    query = urlencode(rewritten_items, doseq=True)
+    return f"{localized_path}?{query}" if query else localized_path
 
 
 def _verify_critical_dependencies() -> list[str]:
@@ -158,6 +218,7 @@ def create_app(env_name: str | None = None) -> Flask:
     register_blueprints(app)
     register_context_processors(app)
     register_auth_context(app)
+    register_analytics(app)
     register_security_headers(app)
     register_maintenance_commands(app)
     register_error_handlers(app)
@@ -217,6 +278,10 @@ def register_context_processors(app: Flask) -> None:
             "format_page_title": format_page_title,
             "static_asset": static_asset,
             "current_ui_lang": current_ui_lang,
+            "ui_lang_switch_urls": {
+                "de": _build_ui_lang_switch_url("de"),
+                "en": _build_ui_lang_switch_url("en"),
+            },
             "t": lambda key, **kwargs: translate(current_ui_lang, key, **kwargs),
             **BRANDING,
         }
@@ -228,7 +293,7 @@ def register_auth_context(app: Flask) -> None:
     """Register request and template auth context."""
     from flask import g
     from flask_jwt_extended import get_jwt, get_jwt_identity, verify_jwt_in_request
-    from .auth import Role
+    from .auth import coerce_role
 
     @app.before_request
     def _set_auth_context():
@@ -257,7 +322,7 @@ def register_auth_context(app: Flask) -> None:
             g.user = token.get("username") or identity
             role_value = token.get("role")
             try:
-                g.role = Role(role_value) if role_value else None
+                g.role = coerce_role(role_value) if role_value else None
             except (ValueError, KeyError):
                 g.role = None
             g.must_reset_password = bool(token.get("must_reset_password", False))
