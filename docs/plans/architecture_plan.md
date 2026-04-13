@@ -10,6 +10,15 @@ architecture_plan.md
 
 Dieses Dokument ist ein Planungs- und Referenzdokument für die nächste Konsolidierungsphase der PROMAT-Webapp. Es bündelt die aus Audit, aktiver Spec und den letzten produktiven Runs abgeleiteten Architekturentscheidungen und legt eine verbindliche Umsetzungsreihenfolge für die nächsten größeren Eingriffe fest.
 
+Stand 2026-04-13:
+
+- Phase 1 der Access-Konsolidierung ist produktiv umgesetzt und normativ in `docs/spec/platform-data-files.md` und `docs/spec/research-access.md` verankert.
+- Phase 2 der zentralen Research-Capability-Schicht ist produktiv umgesetzt; die aktive Source of Truth liegt jetzt in `docs/spec/research-capabilities.md` und im kanonischen Implementierungsspiegel `app/src/app/research_capabilities.py`.
+- Phase 3 der Unified-Player-Entschlackung ist produktiv umgesetzt; die interne Runtime-Auflösung für Source, Set, Media, Items und bounded Compare lebt jetzt in `app/src/app/research_player_runtime.py`, während Route-Vertrag und produktive Nutzerlogik stabil bleiben.
+- Phase 4 der Set-Modell-Entschlackung ist produktiv umgesetzt; der kanonische Set-Kern und der owner-gebundene Workbench-State sind jetzt serverseitig getrennt, ohne die produktiven Flows in `phenomena`, `comparison` und `player` aufzubrechen.
+- Phase 5 der Schattenpfad-Bereinigung ist produktiv umgesetzt; verbliebene Top-Level-Kompatibilitätsprojektionen der Set-API wurden entfernt, sodass workbench-spezifischer Zustand im produktiven JSON-Vertrag nur noch unter `workbench_state` geführt wird.
+- Dieses Planungsdokument bleibt für die restliche Reihenfolge relevant, ist aber nicht selbst die aktive Spezifikation.
+
 Es beschreibt nicht nur den Zielzustand des Research-Players, sondern auch die nötige Vorarbeit in Access-Logik, Capability-Modell, Set-Semantik und Routing. Der Player darf nicht isoliert optimiert werden, weil seine aktuelle Komplexität direkt aus mehreren noch nicht sauber genug getrennten Systemschichten entsteht.
 
 ## Ausgangslage
@@ -28,8 +37,7 @@ Die zentralen strukturellen Probleme sind derzeit:
 1. Access-Regeln und öffentliche Research-Flächen sind noch nicht konsequent genug als geschützte App-Bereiche modelliert.
 2. Task-, View-, Set- und Workbench-Fähigkeiten sind nicht an einer einzigen kanonischen Stelle definiert.
 3. Der Player ist in seiner äußeren Form richtig, intern aber noch zu stark als Orchestrierungszentrum gebaut.
-4. Das Set-Modell trägt noch zu viele workbench-spezifische Semantiken in sich.
-5. Interview ist im gemeinsamen Task-Rahmen sichtbar, aber bewusst noch nicht als produktiver Player-Modus ausgebaut.
+4. Interview ist im gemeinsamen Task-Rahmen sichtbar, aber bewusst noch nicht als produktiver Player-Modus ausgebaut.
 
 ## Zielbild in einem Satz
 

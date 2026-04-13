@@ -18,6 +18,8 @@
 - If the user specifies an exact visual arrangement, control order, label text, or provides current-browser screenshots, treat that request plus the live screenshot state as the acceptance contract for the run; do not infer completion from an earlier interpretation.
 - For requested UI reorderings or relabelings, add or update focused regressions that assert the exact order and visible labels, not just element presence or rough structure.
 - Before declaring a UI fix complete, re-check the live screenshot or browser artifact against the exact requested arrangement and explicitly verify that stale runtime HTML is not masking the new code.
+- For research-access work, keep one corpus-generic rule: under `/{ui_lang}/research/{corpus}` only `design` may stay public, all other research pages and detail routes are authenticated app surfaces, and access clarification belongs before the workbench rather than as a CTA inside it.
+- For research capability work, keep one canonical capability contract in `docs/spec/research-capabilities.md` and its implementation mirror in `app/src/app/research_capabilities.py`; task subsets, compare rules, render modes, and corpus surface readiness must not drift into parallel literals elsewhere.
 - ADRs document why a durable choice was made; runbooks document repeatable procedures; run logs are never normative.
 - `app/` is the only application source root.
 - Keep `data/`, `public/`, and `secure/` strictly separated.

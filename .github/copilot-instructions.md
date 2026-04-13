@@ -8,10 +8,11 @@ Before changing architecture, routing, data paths, governance files, or repo str
 
 1. `docs/spec/platform-data-files.md`
 2. `docs/spec/research-access.md`
-3. `docs/spec/intake-workbook.md`
-4. root `AGENTS.md`
-5. the relevant scoped `AGENTS.md` in `app/`, `docs/`, or `scripts/`
-6. active runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `app/infra/docker-compose.prod.yml`
+3. `docs/spec/research-capabilities.md`
+4. `docs/spec/intake-workbook.md`
+5. root `AGENTS.md`
+6. the relevant scoped `AGENTS.md` in `app/`, `docs/`, or `scripts/`
+7. active runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `app/infra/docker-compose.prod.yml`
 
 ## Working Rules
 
@@ -27,6 +28,8 @@ Before changing architecture, routing, data paths, governance files, or repo str
 - If the user gives an exact UI arrangement, label wording, or screenshot-backed correction, treat that as a hard acceptance target. Do not close the run on a nearby approximation.
 - For UI fixes about order, placement, or wording, update focused tests and browser-QA assertions to check the exact requested order and visible labels, not only that the controls still exist.
 - If tests and the live browser disagree, assume stale runtime or stale QA assumptions until proven otherwise; verify the active listener and current live HTML before claiming the fix is done.
+- For research-access changes, treat `/{ui_lang}/research/{corpus}/design` as the only public corpus-scoped research page unless the active spec says otherwise; all other research pages, detail routes, and player-media routes must gate access before rendering, without corpus-specific exceptions or body-level login CTAs.
+- For research architecture changes, keep `app/src/app/research_capabilities.py` aligned with `docs/spec/research-capabilities.md` and remove duplicated capability literals instead of adding new parallel lookups.
 - ADRs explain why; runbooks explain how; run logs are never normative.
 - Do not create shadow docs, free-form note buckets, or new active rules in run logs.
 - `app/` is the only application source root.

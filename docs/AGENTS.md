@@ -16,12 +16,15 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten unter `docs/`.
 - Wenn eine ältere Doku-Datei nach `docs/spec/` überführt wurde, wird sie gelöscht oder vollständig entnormativisiert.
 - Wiederkehrende Implementierungs-, UI- oder Prüf-Erkenntnisse aus mehreren Runs müssen in `docs/spec/` oder `docs/runbooks/` verdichtet werden; sie dürfen nicht nur als implizites Wissen in `docs/agent-runs/` stehen bleiben.
 - Dauerhafte Regeln für bilinguale UI-Abnahme, Screenshot-Pflichten und das Verbot sichtbarer Hardcodings gehören in `docs/spec/` oder `docs/runbooks/`, nicht nur in einzelne Run-Logs.
+- Dauerhafte Regeln für Research-Capabilities, Task-Subsets, Render-Modi und corpus-spezifische Surface-Modes gehören in `docs/spec/research-capabilities.md`, nicht in verstreute Access-, Player- oder Run-Log-Listen.
 - `docs/plans/` bleiben Planungstexte; wenn ein Plan durch aktive Spec oder produktive Umsetzung überholt ist, erhält er einen klaren Statushinweis zurück auf `docs/spec/` oder wird entfernt.
 - Keine neuen freien Doku-Sammelbecken anlegen.
 
 ## Pflicht bei Änderungen
 
 - Bei fachlichen Änderungen zuerst prüfen, welche Datei unter `docs/spec/` angepasst werden muss.
+- Bei Änderungen an Research-Capabilities, Task-Semantik, Compare-/Set-Subsets oder Render-Modi müssen `docs/spec/research-capabilities.md` und die betroffenen Verweis-Specs auf demselben Stand bleiben.
+- Bei Änderungen an Research-Access oder Korpus-Routing müssen mindestens `docs/spec/research-access.md` und `docs/spec/platform-data-files.md` auf denselben Stand gebracht werden; öffentliche Workbench-Ausnahmen dürfen nicht in Scopes, Run-Logs oder Planungsdokumenten weiterleben.
 - Bei Änderungen an App-Shell, Navigationshierarchie oder Bereichsnavigation die aktive Regel unter `docs/spec/platform-data-files.md` aktualisieren statt Zwischenstände in Run-Logs als Soll-Zustand stehen zu lassen.
 - Für jeden substanziellen Run einen Eintrag unter `docs/agent-runs/` anlegen.
 - Bei dauerhaften Architekturentscheidungen zusätzlich ein ADR unter `docs/decisions/` anlegen oder aktualisieren.

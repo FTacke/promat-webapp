@@ -4,6 +4,8 @@
 
 This file is the binding source of truth for the active research-access model in the PROMAT webapp.
 
+Research page and task capability metadata are defined in `docs/spec/research-capabilities.md`.
+
 ## Runtime Source
 
 - The active research runtime reads sessions directly from `data/sessions/{language}/{session_id}/metadata.json`.
@@ -30,6 +32,22 @@ This file is the binding source of truth for the active research-access model in
 - `comparison` may still launch the canonical player route with additional context, but neither `comparison` nor `phenomena` collapse into separate player implementations or new player route families.
 
 ## Binding Access Logic
+
+- The access layer may wrap canonical capability helpers for compatibility, but it must not redefine page-publicness, protected detail routes, or corpus-specific research surface readiness in a second truth source.
+
+### Corpus-scoped public boundary
+
+- For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page.
+- The corpus root `/{ui_lang}/research/{corpus}` resolves to that same design entry and does not remain a second public research overview page.
+- All other research pages and detail routes under one concrete corpus path are authenticated research-app surfaces.
+- Access clarification belongs at the route boundary: unauthenticated requests are redirected to login with a safe return target, and the protected workbench or media response must not already render in the background.
+- There are no corpus-specific access exceptions such as public comparison or public phenomena variants outside `design`.
+
+### Protected research surfaces
+
+- Protected research page routes include `speakers`, `recordings`, `comparison`, and `phenomena`.
+- Protected research detail routes include the speaker profile, the canonical player route, the phenomena preset editor route, the phenomena owner-set editor route, and the protected player-media delivery routes.
+- The same protected boundary also applies to later research work surfaces added under the corpus path unless an active spec explicitly defines a public exception.
 
 ### `speakers`
 
@@ -67,7 +85,7 @@ This file is the binding source of truth for the active research-access model in
 - `comparison` is item-centered, not session-first.
 - `comparison` may launch the canonical player route for one concrete session and task, but it is not constrained to one primary session.
 - `comparison` may work from owner-bound sets derived in `phenomena`, but it does not expose a first-class set-management workflow inside the workbench.
-- The `comparison` HTML page remains renderable without login so the workbench surface stays visible in the public research IA.
+- The `comparison` HTML page is an authenticated workbench and is not publicly renderable outside the login boundary.
 - Loading an existing `set_id`, creating the internal default draft, changing the active session selection, and persisting the comparison view filter require authenticated owner context through the canonical `/api/research/sets` route family.
 - The canonical `/api/research/sets/{set_id}/save-as` flow remains part of the owner-bound set model, but `comparison` does not expose it as a visible primary workbench action.
 - The standard owner flow of `comparison` bootstraps an internal draft automatically, without making explicit set selection the visible first step.
@@ -93,13 +111,13 @@ This file is the binding source of truth for the active research-access model in
 ### `phenomena`
 
 - `phenomena` uses the existing research page route `/{ui_lang}/research/{language}/phenomena`.
-- `phenomena` is split into one public overview route plus dedicated detail routes for curated presets and owner-bound custom sets.
-- The productive overview route stays publicly renderable and linear: page header, one `1 Set wählen` block with `Set suchen` plus `Neues Set`, one unified list of curated and custom entries, and only functional list-end empty states.
+- `phenomena` is a protected list-curation workbench with one overview route plus dedicated detail routes for curated presets and owner-bound custom sets.
+- The productive overview route stays linear after login: page header, one `1 Set wählen` block with `Set suchen` plus `Neues Set`, one unified list of curated and custom entries, and only functional list-end empty states.
 - The overview does not expose an active workspace, task/material configuration, save controls, player/comparison handoff, or other parallel work areas.
 - Curated entries are distinguished only by badge/status, expose `Ansehen` and `Modifizieren`, and are never deletable from the overview.
 - Custom entries are distinguished only by badge/status, expose `Bearbeiten` as the primary action, and keep `Umbenennen` plus `Löschen` in a secondary overflow action family.
-- The curated preset editor route remains publicly renderable for inspection and local editing, but saving owner-bound work still requires authenticated owner context through the canonical `/api/research/sets` route family.
-- The owner-bound custom-set editor route requires authenticated owner context; loading or mutating one concrete stored set without owner context is not part of the public `phenomena` surface.
+- The curated preset editor route is an authenticated research-editor route; saving owner-bound work still requires authenticated owner context through the canonical `/api/research/sets` route family.
+- The owner-bound custom-set editor route requires authenticated owner context; loading or mutating one concrete stored set without owner context is not part of the public web surface.
 - The productive editor surface exposes one readable title field, one persisted `Notiz` field, a visible type/save-state status line, two stable source columns for the full `Wortliste` and `Satzliste`, and one lower `Ausgewählte Items` area with one explicit shared saved order across both task types.
 - The productive editor exposes one visible save action, not a visible `Speichern als`; owner-bound save semantics now use the canonical `/api/research/sets` create, patch, delete, and item-replacement flows.
 - If unsaved changes exist in the productive `phenomena` editor, normal in-app navigation uses the same app-level confirm dialog as discard flows; browser-native unload prompts remain only as fallback for reload, close, or comparable browser-level exits.
@@ -132,6 +150,7 @@ This file is the binding source of truth for the active research-access model in
 ### Shared profile semantics
 
 - The page is labeled `Profil` in the German UI and `Profile` in the English UI.
+- The profile route is an authenticated research-detail route and is not publicly renderable outside the login boundary.
 - The profile header remains person-based and shows the number of associated sessions, not the currently selected session.
 - A stable person section appears first.
 - All sessions of that person appear below as separate session containers.
@@ -192,6 +211,8 @@ Additional rule:
 - Each native-speaker comparison profile maps to exactly one session.
 
 ## Task Semantics in Research UI
+
+The canonical task and workbench capability contract lives in `docs/spec/research-capabilities.md`. The rules below describe the active visible semantics that remain relevant for research access and UI behavior.
 
 ### Active task keys
 

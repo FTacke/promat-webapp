@@ -10,6 +10,8 @@ from flask import Blueprint, abort, g, jsonify, make_response, render_template, 
 from sqlalchemy import text
 
 from ..content_navigation import build_content_header as build_shared_content_header
+from ..research_capabilities import get_research_page_surface_mode
+from ..research_access import requires_research_auth
 from ..research_phenomena_views import (
     build_phenomena_overview_page,
     build_phenomena_preset_editor_page,
@@ -58,6 +60,25 @@ blueprint = Blueprint("public", __name__)
 
 def _redirect(location: str):
     return make_response("", 302, {"Location": location})
+
+
+def _request_next_value() -> str:
+    next_value = request.full_path or request.path
+    if next_value.endswith("?"):
+        return next_value[:-1]
+    return next_value
+
+
+def _research_login_redirect():
+    return _redirect(url_for("public.login", next=_request_next_value()))
+
+
+def _require_research_route_access(*, page_slug: str | None = None, detail_route: str | None = None):
+    if not requires_research_auth(page_slug=page_slug, detail_route=detail_route):
+        return None
+    if getattr(g, "user_id", None):
+        return None
+    return _research_login_redirect()
 
 
 def _require_ui_lang(ui_lang: str) -> str:
@@ -572,30 +593,14 @@ def research_language_root(ui_lang: str, language_slug: str):
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
         abort(404)
-
-    language = get_language(canonical_language_slug)
-    page = build_research_language_root_page(ui_lang, canonical_language_slug)
-    if page is None or language is None:
-        abort(404)
-
-    language_label = get_language_label(language, ui_lang)
-    panel = _panel_config(
-        section_key="research",
-        section_label=get_section_label("research", ui_lang),
-        active_slug="",
-        language_label=language_label,
-        context_mode="language",
-        context_title=language_label,
-        context_root_href=url_for(
-            "public.research_language_root",
+    return _redirect(
+        url_for(
+            "public.research_language_page",
             ui_lang=ui_lang,
             language_slug=canonical_language_slug,
-        ),
-        context_back_href=url_for("public.research_home", ui_lang=ui_lang),
-        context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
-        items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
+            page_slug="design",
+        )
     )
-    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/<page_slug>")
@@ -606,14 +611,19 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
     if canonical_language_slug is None or canonical_page_slug is None:
         abort(404)
 
+    access_response = _require_research_route_access(page_slug=canonical_page_slug)
+    if access_response is not None:
+        return access_response
+
     language = get_language(canonical_language_slug)
-    if canonical_language_slug == "spanish" and canonical_page_slug == "recordings":
+    surface_mode = get_research_page_surface_mode(canonical_language_slug, canonical_page_slug)
+    if surface_mode == "productive" and canonical_page_slug == "recordings":
         page = build_recordings_page(ui_lang, canonical_language_slug, request.args)
-    elif canonical_language_slug == "spanish" and canonical_page_slug == "speakers":
+    elif surface_mode == "productive" and canonical_page_slug == "speakers":
         page = build_speakers_page(ui_lang, canonical_language_slug, request.args)
-    elif canonical_language_slug == "spanish" and canonical_page_slug == "comparison":
+    elif surface_mode == "productive" and canonical_page_slug == "comparison":
         page = build_comparison_page(ui_lang, canonical_language_slug, request.args)
-    elif canonical_language_slug == "spanish" and canonical_page_slug == "phenomena":
+    elif surface_mode == "productive" and canonical_page_slug == "phenomena":
         page = build_phenomena_overview_page(ui_lang, canonical_language_slug)
     else:
         page = build_research_page(ui_lang, canonical_language_slug, canonical_page_slug)
@@ -646,6 +656,10 @@ def research_phenomena_preset_editor(ui_lang: str, language_slug: str, preset_id
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
         abort(404)
+
+    access_response = _require_research_route_access(detail_route="phenomena-preset-editor")
+    if access_response is not None:
+        return access_response
 
     language = get_language(canonical_language_slug)
     page = build_phenomena_preset_editor_page(ui_lang, canonical_language_slug, preset_id)
@@ -684,8 +698,9 @@ def research_phenomena_set_editor(ui_lang: str, language_slug: str, set_id: str)
     if canonical_language_slug is None:
         abort(404)
 
-    if not getattr(g, "user_id", None):
-        return _redirect(url_for("public.login", next=request.full_path or request.path))
+    access_response = _require_research_route_access(detail_route="phenomena-set-editor")
+    if access_response is not None:
+        return access_response
 
     language = get_language(canonical_language_slug)
     page = build_phenomena_set_editor_page(ui_lang, canonical_language_slug, set_id)
@@ -724,6 +739,10 @@ def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
     if canonical_language_slug is None:
         abort(404)
 
+    access_response = _require_research_route_access(detail_route="speaker-profile")
+    if access_response is not None:
+        return access_response
+
     language = get_language(canonical_language_slug)
     page = build_speaker_profile_page(ui_lang, canonical_language_slug, person_id, request.args.get("session"))
     if page is None or language is None:
@@ -755,6 +774,10 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
         abort(404)
+
+    access_response = _require_research_route_access(detail_route="player")
+    if access_response is not None:
+        return access_response
 
     language = get_language(canonical_language_slug)
     source = request.args.get("source")
@@ -829,6 +852,10 @@ def research_player_audio(ui_lang: str, language_slug: str, session_id: str, tas
     if canonical_language_slug is None:
         abort(404)
 
+    access_response = _require_research_route_access(detail_route="player-audio")
+    if access_response is not None:
+        return access_response
+
     artifact_path = resolve_player_audio_artifact(canonical_language_slug, session_id, task)
     if artifact_path is None:
         abort(404)
@@ -842,6 +869,10 @@ def research_player_item_download(ui_lang: str, language_slug: str, session_id: 
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
         abort(404)
+
+    access_response = _require_research_route_access(detail_route="player-item-audio")
+    if access_response is not None:
+        return access_response
 
     artifact = resolve_player_item_download(canonical_language_slug, session_id, task, item_id)
     if artifact is None:

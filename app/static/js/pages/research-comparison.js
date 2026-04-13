@@ -269,8 +269,29 @@ function init() {
     return "all";
   }
 
+  function normalizeWorkbenchState(record) {
+    const nestedState = record && typeof record === "object" && record.workbench_state && typeof record.workbench_state === "object"
+      ? record.workbench_state
+      : {};
+    const preferredTask = Object.prototype.hasOwnProperty.call(nestedState, "preferred_task")
+      ? nestedState.preferred_task
+      : null;
+    const comparisonViewTask = typeof nestedState.comparison_view_task === "string"
+      ? nestedState.comparison_view_task
+      : "all";
+    const sessions = Array.isArray(nestedState.sessions)
+      ? nestedState.sessions
+      : [];
+    return {
+      preferred_task: preferredTask,
+      comparison_view_task: comparisonViewTask || "all",
+      sessions,
+    };
+  }
+
   function normalizeSavedSetPreset(storedSet) {
     const label = (storedSet && storedSet.label) || untitledLabel;
+    const workbenchState = normalizeWorkbenchState(storedSet);
     const items = Array.isArray(storedSet && storedSet.items)
       ? storedSet.items.map((item) => ({
         task: item.task,
@@ -283,7 +304,7 @@ function init() {
       setId: storedSet.set_id,
       optionLabel: `${label} · ${labels.stateCustom || ""}`,
       label,
-      preferredTask: storedSet.comparison_view_task || storedSet.preferred_task || resolveViewTaskForItems(items, null),
+      preferredTask: workbenchState.comparison_view_task || workbenchState.preferred_task || resolveViewTaskForItems(items, null),
       taskSummary: "",
       items,
     };
@@ -434,6 +455,7 @@ function init() {
   }
 
   function enrichSet(record) {
+    const workbenchState = normalizeWorkbenchState(record);
     const taskCounts = { wordlist: 0, text: 0 };
     const enrichedItems = (record.items || []).map((item) => {
       const catalogItem = lookupCatalogItem(item.task, item.item_id);
@@ -447,12 +469,13 @@ function init() {
       };
     });
 
-    const selectedSessions = (record.sessions || [])
+    const selectedSessions = (workbenchState.sessions || [])
       .map((entry) => sessionLookup.get(entry.session_id))
       .filter(Boolean);
 
     return {
       ...record,
+      workbench_state: workbenchState,
       enrichedItems,
       taskCounts,
       selectedSessions,
@@ -461,7 +484,7 @@ function init() {
 
   function applySet(record, options = {}) {
     activeSet = enrichSet(record);
-    visibleViewTask = activeSet.comparison_view_task || visibleViewTask || "all";
+    visibleViewTask = activeSet.workbench_state.comparison_view_task || visibleViewTask || "all";
     if (visibleViewTask === "all") {
       visibleViewTask = activeSet.taskCounts.wordlist > 0 ? "wordlist" : activeSet.taskCounts.text > 0 ? "text" : "all";
     }
@@ -579,7 +602,7 @@ function init() {
   }
 
   function selectedSessionIds() {
-    return activeSet ? (activeSet.sessions || []).map((entry) => entry.session_id) : [];
+    return activeSet ? (activeSet.workbench_state.sessions || []).map((entry) => entry.session_id) : [];
   }
 
   async function ensureDraft() {
@@ -595,7 +618,9 @@ function init() {
       method: "POST",
       body: {
         corpus_language: state.languageSlug,
-        comparison_view_task: visibleViewTask,
+        workbench_state: {
+          comparison_view_task: visibleViewTask,
+        },
       },
     });
     applySet(payload.set);
@@ -627,7 +652,9 @@ function init() {
         method: "POST",
         body: {
           corpus_language: state.languageSlug,
-          comparison_view_task: visibleViewTask,
+          workbench_state: {
+            comparison_view_task: visibleViewTask,
+          },
         },
       });
       const items = defaultSetItems();
@@ -652,7 +679,7 @@ function init() {
   }
 
   function availableBaseSessions() {
-    const selectedIds = new Set((activeSet && activeSet.sessions || []).map((entry) => entry.session_id));
+    const selectedIds = new Set((activeSet && activeSet.workbench_state.sessions || []).map((entry) => entry.session_id));
     return (state.sessionCatalog || []).filter((session) => !selectedIds.has(session.sessionId));
   }
 
@@ -1153,11 +1180,13 @@ function init() {
       nextSet = itemsPayload.set;
     }
 
-    if ((nextSet.comparison_view_task || "all") !== nextViewTask) {
+    if ((normalizeWorkbenchState(nextSet).comparison_view_task || "all") !== nextViewTask) {
       const metadataPayload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(nextSet.set_id)}`, {
         method: "PATCH",
         body: {
-          comparison_view_task: nextViewTask,
+          workbench_state: {
+            comparison_view_task: nextViewTask,
+          },
         },
       });
       nextSet = metadataPayload.set;
@@ -1341,7 +1370,9 @@ function init() {
     const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(activeSet.set_id)}`, {
       method: "PATCH",
       body: {
-        comparison_view_task: nextViewTask,
+        workbench_state: {
+          comparison_view_task: nextViewTask,
+        },
       },
     });
     applySet(payload.set);
@@ -1381,7 +1412,7 @@ function init() {
         return;
       }
       try {
-        const currentIds = activeSet ? (activeSet.sessions || []).map((entry) => entry.session_id) : [];
+        const currentIds = activeSet ? (activeSet.workbench_state.sessions || []).map((entry) => entry.session_id) : [];
         if (currentIds.includes(sessionId)) {
           await updateSessions(currentIds.filter((id) => id !== sessionId));
         } else {

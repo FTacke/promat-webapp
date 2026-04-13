@@ -19,6 +19,7 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app import register_context_processors
 from app.auth.models import Base, User
+from app.routes.auth import blueprint as auth_blueprint
 from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, init_engine, get_session
 from app.research_presets import clear_research_preset_caches
@@ -307,6 +308,7 @@ def comparison_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         g.user_id = app.config.get("TEST_AUTH_USER_ID")
         g.role = None
 
+    app.register_blueprint(auth_blueprint)
     app.register_blueprint(public_blueprint)
     _clear_runtime_caches()
     yield app
@@ -321,7 +323,7 @@ def test_build_comparison_page_exposes_session_catalog_and_filter_state(comparis
 
     assert page is not None
     assert page["template"] == "pages/research_comparison.html"
-    assert page["access"] == "public"
+    assert page["access"] == "protected"
     assert page["client_state"]["defaultViewTask"] == "text"
     assert page["client_state"]["sessionCatalog"][0]["availableItemIdsByTask"]["text"] == ["d_01"]
     assert page["client_state"]["sessionCatalog"][0]["genderKey"] == "female"
@@ -405,7 +407,17 @@ def test_build_comparison_page_includes_saved_custom_sets_in_material_options(co
     assert "Nur Draft · custom" not in option_labels
 
 
+def test_comparison_route_redirects_to_login_without_auth(comparison_app: Flask) -> None:
+    client = comparison_app.test_client()
+    response = client.get("/de/research/spanish/comparison?task=wordlist")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/login?next=/de/research/spanish/comparison?task%3Dwordlist"
+
+
 def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Flask) -> None:
+    comparison_app.config["TEST_AUTH_USER"] = "alice"
+    comparison_app.config["TEST_AUTH_USER_ID"] = "user-1"
     client = comparison_app.test_client()
     response = client.get("/de/research/spanish/comparison?task=wordlist")
 
@@ -447,6 +459,8 @@ def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Fla
 
 
 def test_text_item_route_separates_playback_from_download(comparison_app: Flask) -> None:
+    comparison_app.config["TEST_AUTH_USER"] = "alice"
+    comparison_app.config["TEST_AUTH_USER_ID"] = "user-1"
     client = comparison_app.test_client()
     playback_response = client.get("/de/research/spanish/player/ES-L-0001-2026-S01/text/items/d_01.mp3")
     download_response = client.get("/de/research/spanish/player/ES-L-0001-2026-S01/text/items/d_01.mp3?download=1")
@@ -476,6 +490,8 @@ def test_zero_byte_split_clip_is_not_exposed_as_playable(comparison_app: Flask) 
         session = next(entry for entry in page["client_state"]["sessionCatalog"] if entry["sessionId"] == "ES-L-0001-2026-S01")
         assert "wl_001" not in session["availableItemIdsByTask"]["wordlist"]
 
+        comparison_app.config["TEST_AUTH_USER"] = "alice"
+        comparison_app.config["TEST_AUTH_USER_ID"] = "user-1"
         client = comparison_app.test_client()
         response = client.get("/de/research/spanish/player/ES-L-0001-2026-S01/wordlist/items/wl_001.mp3")
         assert response.status_code == 404
@@ -500,6 +516,8 @@ def test_non_mp3_split_clip_is_not_exposed_as_playable(comparison_app: Flask) ->
         session = next(entry for entry in page["client_state"]["sessionCatalog"] if entry["sessionId"] == "ES-L-0001-2026-S01")
         assert "wl_001" not in session["availableItemIdsByTask"]["wordlist"]
 
+        comparison_app.config["TEST_AUTH_USER"] = "alice"
+        comparison_app.config["TEST_AUTH_USER_ID"] = "user-1"
         client = comparison_app.test_client()
         response = client.get("/de/research/spanish/player/ES-L-0001-2026-S01/wordlist/items/wl_001.mp3")
         assert response.status_code == 404

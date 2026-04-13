@@ -97,6 +97,8 @@ def apply_postgres_migration(reset: bool = False) -> None:
             if reset:
                 # Drop existing tables (in reverse order of dependencies)
                 print("Dropping existing auth tables...")
+                cur.execute("DROP TABLE IF EXISTS research_set_workbench_sessions CASCADE")
+                cur.execute("DROP TABLE IF EXISTS research_set_workbench_state CASCADE")
                 cur.execute("DROP TABLE IF EXISTS research_set_sessions CASCADE")
                 cur.execute("DROP TABLE IF EXISTS research_set_items CASCADE")
                 cur.execute("DROP TABLE IF EXISTS research_sets CASCADE")

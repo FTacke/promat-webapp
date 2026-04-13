@@ -8,11 +8,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping
 
-from .config.data_conventions import TASK_TYPES, get_target_language_for_language_slug
+from .config.data_conventions import get_target_language_for_language_slug
+from .research_capabilities import PLAYER_RENDER_MODES as TEXT_RENDER_MODES, RESEARCH_TASK_KEYS as TASK_TYPES
 from .runtime_paths import get_config_root
 
-
-TEXT_RENDER_MODES: tuple[str, ...] = ("sentence_list", "running_text")
 PLAYER_SOURCE_KINDS: tuple[str, ...] = ("wordlist", "sentence_list", "text")
 PLAYER_CONTENT_MODES: tuple[str, ...] = ("wordlist", "sentence_list", "connected_text")
 PLAYER_VIEWS: tuple[str, ...] = ("list", "text")

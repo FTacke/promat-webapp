@@ -22,8 +22,9 @@ from app.auth.models import Base, User
 from app.routes.auth import blueprint as auth_blueprint
 from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
+from app.research_player_runtime import resolve_player_runtime_state
 from app.research_presets import clear_research_preset_caches
-from app.research_sessions import load_language_sessions, load_person_records
+from app.research_sessions import get_session as get_research_session, load_language_sessions, load_person_records
 from app.research_sets import ResearchSetStorageUnavailableError, create_draft_set, replace_set_items, update_set_metadata
 from app.research_views import build_player_page, _is_playable_audio_artifact
 from app.routes.public import blueprint as public_blueprint
@@ -367,6 +368,75 @@ def _create_set(*, owner_user_id: str, items: list[dict[str, str]]) -> str:
     return updated.set_id
 
 
+def test_player_runtime_resolves_connected_text_set_excerpt_to_list_only_state(player_set_app: Flask) -> None:
+    runtime_root = Path(os.environ["PROMAT_RUNTIME_ROOT"])
+    _write_connected_text_catalog(runtime_root)
+
+    with player_set_app.app_context():
+        set_id = _create_set(owner_user_id="user-1", items=[{"task": "text", "item_id": "d_02"}])
+        _clear_runtime_caches()
+
+    with player_set_app.test_request_context():
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        session = get_research_session("spanish", "ES-L-0001-2026-S01")
+        assert session is not None
+        state = resolve_player_runtime_state(
+            "de",
+            "spanish",
+            session,
+            "text",
+            owner_user_id="user-1",
+            compare_session_id=None,
+            compare_mode=None,
+            set_id=set_id,
+            preset_id=None,
+            focus_item="d_02",
+            render_mode="running_text",
+        )
+
+    assert state.set_context is not None
+    assert state.set_context["status"] == "loaded"
+    assert state.player_source is not None
+    assert state.player_source.source_kind == "set"
+    assert state.player_source.render_mode == "sentence_list"
+    assert state.player_source.allowed_render_modes == ("sentence_list",)
+    assert state.active_render_mode_query is None
+    assert [item["item_id"] for item in state.primary_items] == ["d_02"]
+    assert state.visible_focus_item_id == "d_02"
+    assert state.filtered_task_empty is False
+
+
+def test_player_runtime_marks_invalid_compare_session_without_breaking_primary_state(player_set_app: Flask) -> None:
+    with player_set_app.test_request_context():
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        session = get_research_session("spanish", "ES-L-0001-2026-S01")
+        assert session is not None
+        state = resolve_player_runtime_state(
+            "de",
+            "spanish",
+            session,
+            "text",
+            owner_user_id="user-1",
+            compare_session_id="missing-session",
+            compare_mode="manual",
+            set_id=None,
+            preset_id=None,
+            focus_item=None,
+            render_mode=None,
+        )
+
+    assert state.compare_requested_unavailable is True
+    assert state.compare_session is None
+    assert state.compare_bundle is None
+    assert state.effective_compare_mode == "single"
+    assert [item["item_id"] for item in state.primary_items] == ["d_01", "d_02"]
+    assert state.compare_rows == []
+
+
 def test_player_filters_wordlist_to_active_set_excerpt(player_set_app: Flask) -> None:
     with player_set_app.app_context():
         set_id = _create_set(owner_user_id="user-1", items=[{"task": "wordlist", "item_id": "wl_002"}])
@@ -455,15 +525,36 @@ def test_player_set_select_uses_saved_workbench_list_and_only_keeps_current_draf
         )
 
     assert base_page is not None
-    assert [option["label"] for option in base_page["player"]["set_select"]["options"]] == ["Alle Items", "Gespeichertes Set"]
+    assert [option["label"] for option in base_page["player"]["set_select"]["options"]] == ["Alle Items", "Starter", "Gespeichertes Set"]
 
     assert current_draft_page is not None
     assert [option["label"] for option in current_draft_page["player"]["set_select"]["options"]] == [
         "Alle Items",
+        "Starter",
         "Aktiver Draft",
         "Gespeichertes Set",
     ]
-    assert current_draft_page["player"]["set_select"]["options"][1]["current"] is True
+    assert current_draft_page["player"]["set_select"]["options"][2]["current"] is True
+
+
+def test_player_set_select_marks_curated_preset_as_active_context(player_set_app: Flask) -> None:
+    with player_set_app.test_request_context():
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_player_page(
+            "de",
+            "spanish",
+            "ES-L-0001-2026-S01",
+            "wordlist",
+            "phenomena",
+            preset_id="starter_preset",
+        )
+
+    assert page is not None
+    assert [option["label"] for option in page["player"]["set_select"]["options"][:2]] == ["Alle Items", "Starter"]
+    assert page["player"]["set_select"]["options"][1]["current"] is True
+    assert [item["item_id"] for item in page["player"]["items"]] == ["wl_001"]
 
 
 def test_player_task_switches_keep_set_and_focus_context(player_set_app: Flask) -> None:

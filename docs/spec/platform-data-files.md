@@ -4,6 +4,8 @@
 
 This file is the binding source of truth for PROMAT platform structure, routing, runtime boundaries, IDs, filesystem semantics, and active controlled vocabularies.
 
+Research task and page capability semantics are defined in `docs/spec/research-capabilities.md`.
+
 ## Platform Structure
 
 - `app/` is the only versioned application source root.
@@ -47,6 +49,11 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 /api/research/sets/{set_id}/save-as
 ```
 
+- The canonical server request and response shape for an owner-bound research set nests workbench-specific state under `workbench_state`.
+- `workbench_state` carries `preferred_task`, `comparison_view_task`, and comparison session selections, while the set core keeps identity, lifecycle, label or note, provenance, and explicit item references.
+- Top-level compatibility aliases such as `preferred_task`, `comparison_view_task`, and `sessions` are not part of the active set JSON contract.
+- `/api/research/sets/{set_id}/sessions` mutates the owner-bound workbench session selection attached to that `set_id`; it does not redefine the canonical set item list.
+
 ### Active technical route values
 
 - `ui_lang`: `de`, `en`
@@ -77,12 +84,18 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 
 - Technical slugs and route segments stay English.
 - UI language and technical routing language must not be mixed.
+- Research page order, page access metadata, task subsets, compare capability, set-filter capability, render-mode vocabulary, and corpus-specific workbench readiness are defined centrally through the active research capability contract.
+- For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus_language}/design` is the only public corpus-scoped research page.
+- The corpus root `/{ui_lang}/research/{corpus_language}` resolves to that same public design entry and does not remain a second public research hub.
+- All other corpus-scoped research pages and research detail routes, including protected player-media delivery, are authenticated app surfaces and must enforce access before the workbench or media response is rendered.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
 - `comparison` and `phenomena` remain first-class research page routes; `phenomena` may additionally own dedicated editor subroutes, but neither page may collapse into alternate `player` path shapes.
 - Mixed research selections stay in query context or server-side set state and must not introduce a `mixed` player task value.
 - The current productive `player` query context may add `compare_session` plus optional `compare_mode=manual` for the bounded `wordlist` comparison extension without creating a second route family; omitted `compare_mode` keeps the default compare item-check behavior `Beide abspielen`.
 - Player media delivery stays under the same `player` route family and resolves protected session artifacts through application logic, not through static publication of `data/`.
+- Research access logic must stay corpus-generic; do not add corpus-specific public-workbench exceptions such as a Spanish-only protected path and public placeholders elsewhere.
+- Corpus-specific productive-vs-placeholder research workbench readiness must be expressed through the canonical capability layer, not through router-local language branches.
 - Owner-bound research set writes and reads use the `/api/research/sets` route family under JWT protection and must not trust client-supplied ownership fields.
 - Old German technical slugs and old public routes must not be reintroduced.
 
@@ -139,6 +152,7 @@ This file is the binding source of truth for PROMAT platform structure, routing,
 - Research-data architecture must not diverge into Dev-only fallback stores or shadow structures.
 - PostgreSQL is the binding database strategy for research-data work.
 - The owner-bound research set model persists in PostgreSQL and does not get a second browser-only or file-backed storage path.
+- The PostgreSQL model keeps one canonical set core plus a dedicated owner-bound workbench-state submodel; comparison filters or session selections must not be folded back into the set core columns.
 
 ## Data Spaces
 

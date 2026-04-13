@@ -11,6 +11,8 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 
 - Implement application behavior against `docs/spec/`, not against older local notes or deleted doc paths.
 - If routing, research-access behavior, IDs, vocabularies, or runtime boundaries change, update the relevant file in `docs/spec/` in the same run.
+- Route research task subsets, compare rules, set-filter rules, render-mode vocabularies, and corpus surface readiness through `app/src/app/research_capabilities.py`; do not introduce parallel capability literals in page builders, routes, sessions, sets, or presets.
+- For corpus-scoped research routing, keep the access boundary generic: only `design` may remain public, and all other research pages, profile/detail routes, and protected player-media routes must enforce auth before page or media rendering.
 - If shared app-shell or sidebar-navigation rules change, update `docs/spec/platform-data-files.md` in the same run.
 - If a shared layout element changes on a real page and `sample` showcases it, update `templates/pages/sample_page.html` in the same run.
 - Before adding new template, CSS, or page-JS patterns, inspect the relevant productive templates, shared partials, and shared CSS families first.

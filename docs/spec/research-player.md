@@ -9,6 +9,7 @@ This file is the binding source of truth for the active architecture of the rese
 - This spec defines the active unified research-player architecture.
 - `docs/spec/platform-data-files.md` remains binding for routing, runtime boundaries, and filesystem semantics.
 - `docs/spec/research-access.md` remains binding for research IA and access logic around speakers, recordings, profiles, comparison, and phenomena.
+- `docs/spec/research-capabilities.md` remains binding for task subsets, compare capability, set-filter capability, render-mode vocabulary, and corpus-specific surface readiness.
 - `docs/model_mds/speech_text_sync.md` is a technical reference only and is not normative for PROMAT.
 
 ## Core Architecture
@@ -20,6 +21,16 @@ This file is the binding source of truth for the active architecture of the rese
 - The standalone `comparison` page is separate from the player surface but reuses shared loader, item, and media logic where practical.
 - `phenomena` is a separate curated launcher and selection page; when it opens the player, it does so through the same player route family with additional preset or set context.
 - Shared player logic must be changeable once in the base architecture and must not require parallel task-specific rewrites.
+- Player helpers must derive task subsets, compare eligibility, render-mode vocabulary, and set-aware view degradation from the canonical capability layer instead of local duplicate literals.
+- The canonical player runtime seam is `app/src/app/research_player_runtime.py`; it resolves source, set context, media availability, normalized items, and bounded compare state before page composition.
+- `app/src/app/research_views.py` remains the player-facing page builder, but it must compose navigation, summary cards, task bars, and template payloads from the normalized runtime state instead of re-owning the same resolution logic.
+
+### Internal runtime seams
+
+- Source resolution, set-context resolution, media loading, item normalization, and compare-state resolution are separate bounded responsibilities inside the player runtime layer.
+- View composition stays separate from runtime resolution: page builders may assemble metadata cards, controls, and route-aware links, but they must not become a second source of truth for source or item semantics.
+- Compare remains a bounded extension of the same runtime state and must not fork a second player loading pipeline.
+- Interview remains intentionally separate from the productive item-runtime path until its dedicated segment-oriented renderer is implemented.
 
 ## Source and Item Normalization
 
@@ -133,10 +144,12 @@ The player state must be able to represent at least these values:
 - Switching tasks stays inside the same player architecture and does not jump into separate task-specific player implementations.
 - The task switch retains the primary session, metadata card, and route family.
 - On productive item tasks, the task switch sits in one compact material bar directly below the metadata cards.
+- The player route and its protected media-delivery routes are authenticated research-detail surfaces; unauthenticated access is clarified before the player or media response is rendered.
 - Set context, preset provenance, or focus context should be retained across task switches where they remain valid.
 - Task switching with an active `set_id` retains the same owner-bound set reference and recalculates the task-specific excerpt for the new task instead of dropping back to full-session content.
 - The same material bar places the `Set wählen` control on the right; its default visible value is `Alle Items`, and a selected set filters the visible task-specific sequence without redefining the task switch itself.
-- The visible owner-bound entries in that player set select follow the same saved custom-set subset as `comparison` and productive `phenomena`; unrelated drafts stay hidden, while the currently active draft may remain visible as a contextual option when the player was already opened with that exact `set_id`.
+- The visible player set select offers the same fachlich visible source families as the shared research-set model: curated presets, saved custom sets, and the already active draft as a contextual option when the player was opened with that exact `set_id`.
+- Unrelated drafts stay hidden, and visible labels in that selector use curated or saved set titles rather than raw technical IDs.
 - Source-driven view switching remains separate from task and set controls. If a source supports both list and connected-text rendering, the view switch appears as its own compact control block below the material bar and above playback.
 - Tasks that are not available for the current session may remain visible as disabled, non-interactive controls.
 - `wordlist` and `text` are productive task modes when the session has valid alignment and audio artifacts.
@@ -291,10 +304,13 @@ Optional preset item fields may include:
 - Active user work across `phenomena`, `comparison`, and `player` uses one server-side set model in PostgreSQL.
 - The canonical working reference for user-owned selection state is `set_id`.
 - Draft and saved sets are lifecycle states of the same technical model rather than separate storage mechanisms.
+- The canonical set core stores owner-bound lifecycle, label or note, preset provenance, and explicit item references; it is the only truth for durable set content.
+- Workbench-specific state lives in a dedicated owner-bound `workbench_state` attached to the same `set_id`; it currently carries persisted comparison task filters and comparison session selections without redefining the set core.
+- The active set JSON contract exposes that workbench-specific state only under `workbench_state`; parallel top-level alias fields for those values are not part of the productive API anymore.
 - `phenomena` and `comparison` each expose exactly one visible owner-side persistence action `Als neues Set speichern`; it reuses the canonical set `save-as` flow, creates a new saved copy, and switches the active workbench context to that new `set_id`.
 - `phenomena` may expose presets and launcher structure before login, but draft materialization, owner-bound `set_id` loading, and set mutation always go through authenticated set API access.
 - The first productive set model stores explicit item references as `task + item_id` plus optional `segment_id` and is limited to the curated tasks `wordlist` and `text`.
-- Set-bound session selections and the persisted `comparison_view_task` filter are part of the same owner-bound set aggregate rather than a second comparison-only state store.
+- Comparison session selections and the persisted `comparison_view_task` filter stay server-side and owner-bound, but they are not part of the set core aggregate itself.
 - Drafts refresh `last_accessed_at` and `expires_at` server-side, while saved sets keep `expires_at = null`.
 - Server-side set reads and writes are owner-scoped through the authenticated user and never trust client-supplied ownership fields.
 - In the normal loaded player success state, the surface does not keep a permanent generic set-context container; only targeted exceptional notices such as inaccessible set degradation, storage unavailability, or focus-missed degradation may remain visible.

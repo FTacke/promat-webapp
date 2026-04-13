@@ -8,6 +8,7 @@ from flask import g, request, url_for
 
 from .content_navigation import build_content_header
 from .i18n import translate, translate_many
+from .research_capabilities import get_research_task_label, phenomena_task_keys
 from .research_presets import ResearchConfigError, load_phenomena_preset_map, load_phenomena_presets, load_task_catalogs
 from .research_sets import (
     ResearchSetNotFoundError,
@@ -21,7 +22,7 @@ from .research_sets import (
 from .routes.public_content import get_language, get_language_label, get_research_page_label, get_section_label
 
 
-PHENOMENA_TASKS: tuple[str, ...] = ("wordlist", "text")
+PHENOMENA_TASKS: tuple[str, ...] = phenomena_task_keys()
 
 
 def _t(ui_lang: str, key: str, **kwargs: object) -> str:
@@ -55,8 +56,8 @@ def _editor_status_labels(ui_lang: str) -> dict[str, str]:
 def _catalog_payload(language_slug: str, ui_lang: str) -> tuple[dict[str, list[dict[str, str | None]]], dict[str, str]]:
     catalogs = load_task_catalogs(language_slug)
     task_labels = {
-        "wordlist": _t(ui_lang, "common.task.wordlist"),
-        "text": _t(ui_lang, "common.task.text"),
+        task_key: get_research_task_label(task_key, ui_lang, variant="material", language_slug=language_slug)
+        for task_key in PHENOMENA_TASKS
     }
     payload: dict[str, list[dict[str, str | None]]] = {}
     for task_key in PHENOMENA_TASKS:
@@ -130,7 +131,7 @@ def _base_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any
     return {
         "title": title,
         "page_kind": "workbench",
-        "access": "public",
+        "access": "protected",
         "content_header": build_content_header(
             page_name="research",
             title=title,
@@ -156,7 +157,7 @@ def _editor_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, A
     return {
         "title": title,
         "page_kind": "workbench",
-        "access": "public",
+        "access": "protected",
         "content_header": build_content_header(
             page_name="research",
             title=title,
@@ -251,7 +252,7 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
                     corpus_language=language_slug,
                 )
             ]
-        except (ResearchSetStorageUnavailableError, ResearchSetValidationError):
+        except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
             custom_entries = []
 
     page = _base_page(get_research_page_label("phenomena", ui_lang), ui_lang=ui_lang, language_slug=language_slug)
@@ -329,8 +330,6 @@ def _editor_record_from_preset(language_slug: str, preset_id: str) -> dict[str, 
         "note": None,
         "state": "curated",
         "source_preset_id": preset.preset_id,
-        "preferred_task": None,
-        "comparison_view_task": "all",
         "created_at": None,
         "updated_at": None,
         "last_accessed_at": None,
@@ -345,7 +344,11 @@ def _editor_record_from_preset(language_slug: str, preset_id: str) -> dict[str, 
             }
             for index, reference in enumerate(preset.items, start=1)
         ],
-        "sessions": [],
+        "workbench_state": {
+            "preferred_task": None,
+            "comparison_view_task": "all",
+            "sessions": [],
+        },
     }
 
 
@@ -456,7 +459,7 @@ def build_phenomena_set_editor_page(ui_lang: str, language_slug: str, set_id: st
 
     try:
         stored_set = load_owned_set(owner_user_id=owner_user_id, set_id=set_id, touch_access=True)
-    except (ResearchSetNotFoundError, ResearchSetValidationError, ResearchSetStorageUnavailableError):
+    except (ResearchSetNotFoundError, ResearchSetValidationError, ResearchSetStorageUnavailableError, RuntimeError):
         return None
 
     record = stored_set.to_dict()

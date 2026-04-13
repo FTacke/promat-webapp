@@ -16,6 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
 from .auth.models import Base
 from .config.data_conventions import get_target_language_for_language_slug
 from .extensions.sqlalchemy_ext import get_session
+from .research_capabilities import comparison_view_task_keys, set_filter_task_keys
 from .research_presets import (
     ResearchConfigError,
     TaskItemReference,
@@ -27,10 +28,26 @@ from .research_sessions import get_session as get_research_session
 
 
 SET_STATES: tuple[str, ...] = ("draft", "saved")
-SET_ITEM_TASKS: tuple[str, ...] = ("wordlist", "text")
-COMPARISON_VIEW_TASKS: tuple[str, ...] = ("all", "wordlist", "text")
+SET_ITEM_TASKS: tuple[str, ...] = set_filter_task_keys()
+COMPARISON_VIEW_TASKS: tuple[str, ...] = comparison_view_task_keys()
 UNSET = object()
 StorageResult = TypeVar("StorageResult")
+
+
+def _sql_choice_list(values: tuple[str, ...]) -> str:
+    return ", ".join(f"'{value}'" for value in values)
+
+
+SET_ITEM_TASK_SQL = _sql_choice_list(SET_ITEM_TASKS)
+COMPARISON_VIEW_TASK_SQL = _sql_choice_list(COMPARISON_VIEW_TASKS)
+
+
+def _quoted_task_choices(values: tuple[str, ...]) -> str:
+    if not values:
+        return ""
+    if len(values) == 1:
+        return f"'{values[0]}'"
+    return ", ".join(f"'{value}'" for value in values[:-1]) + f", or '{values[-1]}'"
 
 
 class ResearchSetError(ValueError):
@@ -54,14 +71,6 @@ class ResearchSet(Base):
     __table_args__ = (
         CheckConstraint("state IN ('draft', 'saved')", name="ck_research_sets_state"),
         CheckConstraint(
-            "preferred_task IS NULL OR preferred_task IN ('wordlist', 'text')",
-            name="ck_research_sets_preferred_task",
-        ),
-        CheckConstraint(
-            "comparison_view_task IN ('all', 'wordlist', 'text')",
-            name="ck_research_sets_comparison_view_task",
-        ),
-        CheckConstraint(
             "state = 'draft' OR (label IS NOT NULL AND length(trim(label)) > 0)",
             name="ck_research_sets_saved_label",
         ),
@@ -74,8 +83,6 @@ class ResearchSet(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     state: Mapped[str] = mapped_column(String(16), nullable=False)
     source_preset_id: Mapped[str | None] = mapped_column(Text, nullable=True)
-    preferred_task: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    comparison_view_task: Mapped[str] = mapped_column(String(16), nullable=False, default="all")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_accessed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -87,18 +94,44 @@ class ResearchSet(Base):
         cascade="all, delete-orphan",
         order_by="ResearchSetItem.sort_order",
     )
-    sessions: Mapped[list["ResearchSetSessionLink"]] = relationship(
-        "ResearchSetSessionLink",
+    workbench_state: Mapped["ResearchSetWorkbenchState"] = relationship(
+        "ResearchSetWorkbenchState",
         back_populates="research_set",
         cascade="all, delete-orphan",
-        order_by="ResearchSetSessionLink.sort_order",
+        uselist=False,
+    )
+
+
+class ResearchSetWorkbenchState(Base):
+    __tablename__ = "research_set_workbench_state"
+    __table_args__ = (
+        CheckConstraint(
+            f"preferred_task IS NULL OR preferred_task IN ({SET_ITEM_TASK_SQL})",
+            name="ck_research_set_workbench_state_preferred_task",
+        ),
+        CheckConstraint(
+            f"comparison_view_task IN ({COMPARISON_VIEW_TASK_SQL})",
+            name="ck_research_set_workbench_state_comparison_view_task",
+        ),
+    )
+
+    set_id: Mapped[str] = mapped_column(ForeignKey("research_sets.set_id", ondelete="CASCADE"), primary_key=True)
+    preferred_task: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    comparison_view_task: Mapped[str] = mapped_column(String(16), nullable=False, default="all")
+
+    research_set: Mapped[ResearchSet] = relationship("ResearchSet", back_populates="workbench_state")
+    sessions: Mapped[list["ResearchSetWorkbenchSessionLink"]] = relationship(
+        "ResearchSetWorkbenchSessionLink",
+        back_populates="workbench_state",
+        cascade="all, delete-orphan",
+        order_by="ResearchSetWorkbenchSessionLink.sort_order",
     )
 
 
 class ResearchSetItem(Base):
     __tablename__ = "research_set_items"
     __table_args__ = (
-        CheckConstraint("task IN ('wordlist', 'text')", name="ck_research_set_items_task"),
+        CheckConstraint(f"task IN ({SET_ITEM_TASK_SQL})", name="ck_research_set_items_task"),
         CheckConstraint("sort_order >= 1", name="ck_research_set_items_sort_order"),
     )
 
@@ -112,15 +145,21 @@ class ResearchSetItem(Base):
     research_set: Mapped[ResearchSet] = relationship("ResearchSet", back_populates="items")
 
 
-class ResearchSetSessionLink(Base):
-    __tablename__ = "research_set_sessions"
-    __table_args__ = (CheckConstraint("sort_order >= 1", name="ck_research_set_sessions_sort_order"),)
+class ResearchSetWorkbenchSessionLink(Base):
+    __tablename__ = "research_set_workbench_sessions"
+    __table_args__ = (CheckConstraint("sort_order >= 1", name="ck_research_set_workbench_sessions_sort_order"),)
 
-    set_id: Mapped[str] = mapped_column(ForeignKey("research_sets.set_id", ondelete="CASCADE"), primary_key=True)
+    set_id: Mapped[str] = mapped_column(
+        ForeignKey("research_set_workbench_state.set_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
     session_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    research_set: Mapped[ResearchSet] = relationship("ResearchSet", back_populates="sessions")
+    workbench_state: Mapped[ResearchSetWorkbenchState] = relationship(
+        "ResearchSetWorkbenchState",
+        back_populates="sessions",
+    )
 
 
 @dataclass(frozen=True)
@@ -154,6 +193,20 @@ class StoredResearchSetSession:
 
 
 @dataclass(frozen=True)
+class StoredResearchSetWorkbenchState:
+    preferred_task: str | None
+    comparison_view_task: str
+    sessions: tuple[StoredResearchSetSession, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "preferred_task": self.preferred_task,
+            "comparison_view_task": self.comparison_view_task,
+            "sessions": [entry.to_dict() for entry in self.sessions],
+        }
+
+
+@dataclass(frozen=True)
 class StoredResearchSet:
     set_id: str
     corpus_language: str
@@ -161,14 +214,12 @@ class StoredResearchSet:
     note: str | None
     state: str
     source_preset_id: str | None
-    preferred_task: str | None
-    comparison_view_task: str
     created_at: datetime
     updated_at: datetime
     last_accessed_at: datetime
     expires_at: datetime | None
     items: tuple[StoredResearchSetItem, ...]
-    sessions: tuple[StoredResearchSetSession, ...]
+    workbench_state: StoredResearchSetWorkbenchState
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -184,14 +235,12 @@ class StoredResearchSet:
             ),
             "state": self.state,
             "source_preset_id": self.source_preset_id,
-            "preferred_task": self.preferred_task,
-            "comparison_view_task": self.comparison_view_task,
             "created_at": _serialize_datetime(self.created_at),
             "updated_at": _serialize_datetime(self.updated_at),
             "last_accessed_at": _serialize_datetime(self.last_accessed_at),
             "expires_at": _serialize_datetime(self.expires_at),
             "items": [item.to_dict() for item in self.items],
-            "sessions": [entry.to_dict() for entry in self.sessions],
+            "workbench_state": self.workbench_state.to_dict(),
         }
 
 
@@ -261,7 +310,9 @@ def _normalize_preferred_task(task: Any) -> str | None:
     if not normalized:
         return None
     if normalized not in SET_ITEM_TASKS:
-        raise ResearchSetValidationError("preferred_task must be one of 'wordlist' or 'text'")
+        raise ResearchSetValidationError(
+            f"preferred_task must be one of {_quoted_task_choices(SET_ITEM_TASKS)}"
+        )
     return normalized
 
 
@@ -272,7 +323,9 @@ def _normalize_comparison_view_task(task: Any) -> str:
         raise ResearchSetValidationError("comparison_view_task must be a string when provided")
     normalized = task.strip() or "all"
     if normalized not in COMPARISON_VIEW_TASKS:
-        raise ResearchSetValidationError("comparison_view_task must be one of 'all', 'wordlist', or 'text'")
+        raise ResearchSetValidationError(
+            f"comparison_view_task must be one of {_quoted_task_choices(COMPARISON_VIEW_TASKS)}"
+        )
     return normalized
 
 
@@ -313,6 +366,25 @@ def _touch_access(record: ResearchSet, *, now: datetime) -> None:
     _set_expiration_for_draft(record, now=now)
 
 
+def _serialize_workbench_state(record: ResearchSet) -> StoredResearchSetWorkbenchState:
+    workbench_record = record.workbench_state
+    if workbench_record is None:
+        return StoredResearchSetWorkbenchState(
+            preferred_task=None,
+            comparison_view_task="all",
+            sessions=tuple(),
+        )
+
+    return StoredResearchSetWorkbenchState(
+        preferred_task=workbench_record.preferred_task,
+        comparison_view_task=workbench_record.comparison_view_task,
+        sessions=tuple(
+            StoredResearchSetSession(session_id=entry.session_id, sort_order=entry.sort_order)
+            for entry in sorted(workbench_record.sessions, key=lambda entry: entry.sort_order)
+        ),
+    )
+
+
 def _serialize_set(record: ResearchSet) -> StoredResearchSet:
     return StoredResearchSet(
         set_id=record.set_id,
@@ -321,8 +393,6 @@ def _serialize_set(record: ResearchSet) -> StoredResearchSet:
         note=record.note,
         state=record.state,
         source_preset_id=record.source_preset_id,
-        preferred_task=record.preferred_task,
-        comparison_view_task=record.comparison_view_task,
         created_at=record.created_at,
         updated_at=record.updated_at,
         last_accessed_at=record.last_accessed_at,
@@ -337,17 +407,17 @@ def _serialize_set(record: ResearchSet) -> StoredResearchSet:
             )
             for item in sorted(record.items, key=lambda entry: entry.sort_order)
         ),
-        sessions=tuple(
-            StoredResearchSetSession(session_id=entry.session_id, sort_order=entry.sort_order)
-            for entry in sorted(record.sessions, key=lambda entry: entry.sort_order)
-        ),
+        workbench_state=_serialize_workbench_state(record),
     )
 
 
 def _get_owned_set_record(session, *, owner_user_id: str, set_id: str) -> ResearchSet:
     stmt = (
         select(ResearchSet)
-        .options(selectinload(ResearchSet.items), selectinload(ResearchSet.sessions))
+        .options(
+            selectinload(ResearchSet.items),
+            selectinload(ResearchSet.workbench_state).selectinload(ResearchSetWorkbenchState.sessions),
+        )
         .where(ResearchSet.set_id == set_id, ResearchSet.owner_user_id == owner_user_id)
     )
     record = session.execute(stmt).scalars().first()
@@ -435,6 +505,16 @@ def _materialize_set_items(record: ResearchSet, references: tuple[TaskItemRefere
         )
 
 
+def _ensure_workbench_state(record: ResearchSet) -> ResearchSetWorkbenchState:
+    if record.workbench_state is None:
+        record.workbench_state = ResearchSetWorkbenchState(
+            set_id=record.set_id,
+            preferred_task=None,
+            comparison_view_task="all",
+        )
+    return record.workbench_state
+
+
 def _validated_session_ids(raw_sessions: list[Any], *, language_slug: str, context: str) -> tuple[str, ...]:
     normalized_sessions: list[str] = []
     seen: set[str] = set()
@@ -462,16 +542,32 @@ def _validated_session_ids(raw_sessions: list[Any], *, language_slug: str, conte
     return tuple(normalized_sessions)
 
 
-def _materialize_set_sessions(record: ResearchSet, session_ids: tuple[str, ...]) -> None:
+def _materialize_workbench_sessions(record: ResearchSetWorkbenchState, session_ids: tuple[str, ...]) -> None:
     record.sessions.clear()
     for sort_order, session_id in enumerate(session_ids, start=1):
         record.sessions.append(
-            ResearchSetSessionLink(
+            ResearchSetWorkbenchSessionLink(
                 set_id=record.set_id,
                 session_id=session_id,
                 sort_order=sort_order,
             )
         )
+
+
+def _update_workbench_state(
+    record: ResearchSet,
+    *,
+    preferred_task: object = UNSET,
+    comparison_view_task: object = UNSET,
+    session_ids: object = UNSET,
+) -> None:
+    workbench_state = _ensure_workbench_state(record)
+    if preferred_task is not UNSET:
+        workbench_state.preferred_task = _normalize_preferred_task(preferred_task)
+    if comparison_view_task is not UNSET:
+        workbench_state.comparison_view_task = _normalize_comparison_view_task(comparison_view_task)
+    if session_ids is not UNSET:
+        _materialize_workbench_sessions(workbench_state, session_ids)
 
 
 def create_draft_set(
@@ -526,8 +622,6 @@ def create_draft_set(
                 note=normalized_note,
                 state="draft",
                 source_preset_id=normalized_source_preset_id,
-                preferred_task=normalized_preferred_task,
-                comparison_view_task=normalized_view_task,
                 created_at=now,
                 updated_at=now,
                 last_accessed_at=now,
@@ -535,6 +629,12 @@ def create_draft_set(
             )
             session.add(record)
             _materialize_set_items(record, preset_items)
+            _update_workbench_state(
+                record,
+                preferred_task=normalized_preferred_task,
+                comparison_view_task=normalized_view_task,
+                session_ids=tuple(),
+            )
             session.flush()
             return _serialize_set(record)
 
@@ -565,8 +665,6 @@ def update_set_metadata(
     label: object = UNSET,
     note: object = UNSET,
     state: object = UNSET,
-    preferred_task: object = UNSET,
-    comparison_view_task: object = UNSET,
 ) -> StoredResearchSet:
     owner_id = _normalize_owner_user_id(owner_user_id)
     normalized_set_id = (set_id or "").strip()
@@ -584,14 +682,39 @@ def update_set_metadata(
                 record.note = _normalize_optional_note(note)
             if state is not UNSET:
                 record.state = _normalize_set_state(state)
-            if preferred_task is not UNSET:
-                record.preferred_task = _normalize_preferred_task(preferred_task)
-            if comparison_view_task is not UNSET:
-                record.comparison_view_task = _normalize_comparison_view_task(comparison_view_task)
 
             if record.state == "saved" and not record.label:
                 raise ResearchSetValidationError("Saved sets require a non-empty label")
 
+            record.updated_at = now
+            _touch_access(record, now=now)
+            session.flush()
+            return _serialize_set(record)
+
+    return _run_storage_operation(operation)
+
+
+def update_set_workbench_state(
+    *,
+    owner_user_id: str,
+    set_id: str,
+    preferred_task: object = UNSET,
+    comparison_view_task: object = UNSET,
+) -> StoredResearchSet:
+    owner_id = _normalize_owner_user_id(owner_user_id)
+    normalized_set_id = (set_id or "").strip()
+    if not normalized_set_id:
+        raise ResearchSetValidationError("set_id is required")
+    now = _utcnow()
+
+    def operation() -> StoredResearchSet:
+        with get_session() as session:
+            record = _get_owned_set_record(session, owner_user_id=owner_id, set_id=normalized_set_id)
+            _update_workbench_state(
+                record,
+                preferred_task=preferred_task,
+                comparison_view_task=comparison_view_task,
+            )
             record.updated_at = now
             _touch_access(record, now=now)
             session.flush()
@@ -613,7 +736,10 @@ def list_owned_sets(
         with get_session() as session:
             stmt = (
                 select(ResearchSet)
-                .options(selectinload(ResearchSet.items), selectinload(ResearchSet.sessions))
+                .options(
+                    selectinload(ResearchSet.items),
+                    selectinload(ResearchSet.workbench_state).selectinload(ResearchSetWorkbenchState.sessions),
+                )
                 .where(
                     ResearchSet.owner_user_id == owner_id,
                     ResearchSet.corpus_language == language_slug,
@@ -686,7 +812,7 @@ def replace_set_sessions(*, owner_user_id: str, set_id: str, sessions: list[Any]
         with get_session() as session:
             record = _get_owned_set_record(session, owner_user_id=owner_id, set_id=normalized_set_id)
             session_ids = _validated_session_ids(sessions, language_slug=record.corpus_language, context=f"set '{normalized_set_id}'")
-            _materialize_set_sessions(record, session_ids)
+            _update_workbench_state(record, session_ids=session_ids)
             record.updated_at = now
             _touch_access(record, now=now)
             session.flush()
@@ -707,6 +833,7 @@ def save_set_as_new(*, owner_user_id: str, source_set_id: str, label: str) -> St
         with get_session() as session:
             source_record = _get_owned_set_record(session, owner_user_id=owner_id, set_id=normalized_source_set_id)
             _touch_access(source_record, now=now)
+            source_workbench_state = _serialize_workbench_state(source_record)
 
             saved_record = ResearchSet(
                 set_id=str(uuid.uuid4()),
@@ -716,8 +843,6 @@ def save_set_as_new(*, owner_user_id: str, source_set_id: str, label: str) -> St
                 note=source_record.note,
                 state="saved",
                 source_preset_id=source_record.source_preset_id,
-                preferred_task=source_record.preferred_task,
-                comparison_view_task=source_record.comparison_view_task,
                 created_at=now,
                 updated_at=now,
                 last_accessed_at=now,
@@ -736,9 +861,11 @@ def save_set_as_new(*, owner_user_id: str, source_set_id: str, label: str) -> St
                     for item in sorted(source_record.items, key=lambda entry: entry.sort_order)
                 ),
             )
-            _materialize_set_sessions(
+            _update_workbench_state(
                 saved_record,
-                tuple(entry.session_id for entry in sorted(source_record.sessions, key=lambda entry: entry.sort_order)),
+                preferred_task=source_workbench_state.preferred_task,
+                comparison_view_task=source_workbench_state.comparison_view_task,
+                session_ids=tuple(entry.session_id for entry in source_workbench_state.sessions),
             )
             session.flush()
             return _serialize_set(saved_record)

@@ -10,13 +10,19 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from .config.data_conventions import (
-    TASK_TYPES,
     PersonIdParts,
     SessionIdParts,
     get_corpus_code_for_language_slug,
     get_corpus_code_for_target_language,
     parse_person_id,
     parse_session_id,
+)
+from .research_capabilities import (
+    RESEARCH_TASK_KEYS,
+    ResearchTaskCapability,
+    available_task_keys_for_session as resolve_available_task_keys_for_session,
+    get_research_task_capability,
+    iter_research_task_capabilities,
 )
 from .runtime_paths import get_sessions_root
 
@@ -58,59 +64,10 @@ class ExposureEntry:
     exposure_notes: str | None
 
 
-@dataclass(frozen=True)
-class ResearchTaskDefinition:
-    key: str
-    long_label_de: str
-    long_label_en: str
-    short_label_de: str
-    short_label_en: str
-    description_de: str
-    description_en: str
+ResearchTaskDefinition = ResearchTaskCapability
 
-    def long_label(self, ui_lang: str) -> str:
-        return self.long_label_de if ui_lang == "de" else self.long_label_en
-
-    def short_label(self, ui_lang: str) -> str:
-        return self.short_label_de if ui_lang == "de" else self.short_label_en
-
-    def description(self, ui_lang: str) -> str:
-        return self.description_de if ui_lang == "de" else self.description_en
-
-
-RESEARCH_TASKS: tuple[ResearchTaskDefinition, ...] = (
-    ResearchTaskDefinition(
-        key="wordlist",
-        long_label_de="Wortliste",
-        long_label_en="Wordlist",
-        short_label_de="Wortliste",
-        short_label_en="Wordlist",
-        description_de="Isolierte Aussprache über das Vorlesen einer Wortliste.",
-        description_en="Pronunciation through reading a word list aloud.",
-    ),
-    ResearchTaskDefinition(
-        key="text",
-        long_label_de="Text",
-        long_label_en="Text",
-        short_label_de="Text",
-        short_label_en="Text",
-        description_de="Zusammenhängende Aussprache über das Vorlesen eines Textes oder einer Satzliste.",
-        description_en="Pronunciation through reading a text or sentence list aloud.",
-    ),
-    ResearchTaskDefinition(
-        key="interview",
-        long_label_de="Interview zur Aussprache",
-        long_label_en="Interview",
-        short_label_de="Interview",
-        short_label_en="Interview",
-        description_de="Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.",
-        description_en="Semi-guided conversation with spontaneous pronunciation.",
-    ),
-)
-
+RESEARCH_TASKS: tuple[ResearchTaskDefinition, ...] = tuple(iter_research_task_capabilities())
 RESEARCH_TASK_MAP = {task.key: task for task in RESEARCH_TASKS}
-
-NATIVE_SPEAKER_EXCLUDED_TASKS: frozenset[str] = frozenset({"interview"})
 
 
 @dataclass(frozen=True)
@@ -362,7 +319,7 @@ def _extract_task_types(metadata: dict[str, Any]) -> tuple[str, ...]:
         if not isinstance(task, dict):
             continue
         task_type = task.get("task_type")
-        if isinstance(task_type, str) and task_type in TASK_TYPES and task_type not in resolved:
+        if isinstance(task_type, str) and task_type in RESEARCH_TASK_KEYS and task_type not in resolved:
             resolved.append(task_type)
     return tuple(resolved)
 
@@ -624,14 +581,11 @@ def iter_research_tasks() -> Iterable[ResearchTaskDefinition]:
 
 
 def get_research_task(task_key: str) -> ResearchTaskDefinition | None:
-    return RESEARCH_TASK_MAP.get(task_key)
+    return get_research_task_capability(task_key)
 
 
 def available_task_keys_for_session(session: SessionRecord) -> tuple[str, ...]:
-    available_task_keys = set(session.documented_task_types)
-    if session.speaker_type == "native_speaker":
-        available_task_keys.difference_update(NATIVE_SPEAKER_EXCLUDED_TASKS)
-    return tuple(task.key for task in RESEARCH_TASKS if task.key in available_task_keys)
+    return resolve_available_task_keys_for_session(session.documented_task_types, session.speaker_type)
 
 
 def session_has_task(session: SessionRecord, task_key: str) -> bool:

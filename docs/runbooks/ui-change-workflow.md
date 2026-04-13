@@ -3,6 +3,7 @@
 ## Zugehörige Spezifikation
 
 - `docs/spec/platform-data-files.md`
+- `docs/spec/research-capabilities.md` für Research-Task-Semantik, Workbench-Subsets und Surface-Modes
 - `docs/spec/research-access.md` für Research-Seiten und Workbenches
 - `docs/spec/research-player.md`, wenn Player- oder playernahe Oberflächen betroffen sind
 
@@ -33,10 +34,11 @@ Diesen Ablauf für visuelle oder interaktive UI-Änderungen in `app/templates/`,
 6. `sample` im selben Run aktualisieren, wenn das geänderte reale UI-Element dort bereits repräsentiert wird.
 7. Bei substanziellen UI-Änderungen im Browser validieren: reale Route oder manuellen Klickpfad durchlaufen, Screenshots unter `tmp/ui-qa/` erzeugen und das Ergebnis aktiv gegen die produktiven Referenzflächen prüfen.
 8. Wenn die betroffene Oberfläche als fertig oder produktiv bilingual gilt, denselben realen Pfad in `de` und `en` prüfen. Dabei nicht nur die Hauptansicht, sondern auch Dialoge, Placeholders, Empty States, Overflow-Menüs, Snackbars und Bereiche mit längeren englischen Labels gezielt abdecken.
-9. Gefundene sichtbare Defekte direkt beheben und die Browserprüfung wiederholen, bis die Screenshots für die in-scope Oberflächen sprachlich und visuell sauber sind; grüne Tests allein reichen nicht als UI-Abnahme.
-10. Wenn der Auftrag eine exakte Reihenfolge, Platzierung, Beschriftung oder screenshotgestützte Korrektur nennt, diese Punkte als harte Abnahmekriterien in Tests und Browser-QA abbilden; bloße Existenzprüfungen reichen dafür nicht.
-11. Wenn Browser und Teststand auseinanderlaufen, zuerst die aktive Runtime prüfen: Listener, gerenderte Live-HTML und gegebenenfalls stale Dev-Prozesse verifizieren, bevor der Run als abgeschlossen gilt.
-12. Wenn praktikabel, Render- oder Regressionstests ergänzen beziehungsweise nachziehen, und den Run unter `docs/agent-runs/` dokumentieren.
+9. Wenn der Run sichtbare Access-Grenzen oder geschützte Workbench-Routen ändert, im Browser immer beide Zustände prüfen: unauthenticated Zugriff muss an der Login- oder Access-Schranke enden, und derselbe Pfad muss nach Login normal rendern, ohne die geschützte Oberfläche schon vorher im Hintergrund auszuliefern.
+10. Gefundene sichtbare Defekte direkt beheben und die Browserprüfung wiederholen, bis die Screenshots für die in-scope Oberflächen sprachlich und visuell sauber sind; grüne Tests allein reichen nicht als UI-Abnahme.
+11. Wenn der Auftrag eine exakte Reihenfolge, Platzierung, Beschriftung oder screenshotgestützte Korrektur nennt, diese Punkte als harte Abnahmekriterien in Tests und Browser-QA abbilden; bloße Existenzprüfungen reichen dafür nicht.
+12. Wenn Browser und Teststand auseinanderlaufen, zuerst die aktive Runtime prüfen: Listener, gerenderte Live-HTML und gegebenenfalls stale Dev-Prozesse verifizieren, bevor der Run als abgeschlossen gilt.
+13. Wenn praktikabel, Render- oder Regressionstests ergänzen beziehungsweise nachziehen, und den Run unter `docs/agent-runs/` dokumentieren.
 
 ## Verifikation
 
@@ -48,6 +50,7 @@ Diesen Ablauf für visuelle oder interaktive UI-Änderungen in `app/templates/`,
 - Screenshots erstellt und gegen Referenzseiten geprüft
 - bei fertigen bilingualen Oberflächen dieselben realen Routen in `de` und `en` geprüft
 - Dialoge, Placeholders, Empty States, Overflow-Menüs, Snackbars und längere englische Labels im Scope mitvalidiert
+- bei Access-Änderungen sowohl unauthenticated Gate-Verhalten als auch denselben Pfad nach Login im realen Browser geprüft
 - gefundene sichtbare Defekte iterativ behoben und neu geprüft, statt nur den ersten Screenshot-Stand zu protokollieren
 - bei exakten UI-Vorgaben zusätzlich die konkrete Reihenfolge, Platzierung und sichtbare Beschriftung der betroffenen Controls gegen die Anforderung geprüft
 - bei Diskrepanzen zwischen Code/Test und Browser die aktive Runtime oder stale Listener explizit geprüft und bereinigt

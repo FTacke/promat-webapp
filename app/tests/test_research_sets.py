@@ -237,6 +237,14 @@ def test_research_set_migration_declares_expected_tables() -> None:
     )
     assert "ADD COLUMN IF NOT EXISTS note TEXT NULL" in extension_migration
 
+    workbench_split_migration = (TEST_REPO_ROOT / "app" / "migrations" / "0005_split_research_set_workbench_state.sql").read_text(
+        encoding="utf-8"
+    )
+    assert "CREATE TABLE IF NOT EXISTS research_set_workbench_state" in workbench_split_migration
+    assert "CREATE TABLE IF NOT EXISTS research_set_workbench_sessions" in workbench_split_migration
+    assert "DROP COLUMN IF EXISTS preferred_task" in workbench_split_migration
+    assert "DROP TABLE IF EXISTS research_set_sessions" in workbench_split_migration
+
 
 def test_apply_auth_migration_discovers_full_postgres_chain() -> None:
     script_path = TEST_REPO_ROOT / "app" / "scripts" / "apply_auth_migration.py"
@@ -251,6 +259,7 @@ def test_apply_auth_migration_discovers_full_postgres_chain() -> None:
     assert migration_names[0] == "0001_create_auth_schema_postgres.sql"
     assert "0001_create_auth_schema_sqlite.sql" not in migration_names
     assert "0004_extend_research_sets_for_phenomena_editor.sql" in migration_names
+    assert "0005_split_research_set_workbench_state.sql" in migration_names
 
 
 def test_create_empty_draft_set_service(set_app: Flask) -> None:
@@ -261,7 +270,8 @@ def test_create_empty_draft_set_service(set_app: Flask) -> None:
     assert record.corpus_language == "spanish"
     assert record.label == "Neues Set 1"
     assert record.items == tuple()
-    assert record.sessions == tuple()
+    assert record.workbench_state.sessions == tuple()
+    assert record.workbench_state.comparison_view_task == "all"
     assert record.expires_at is not None
 
 
@@ -269,17 +279,52 @@ def test_create_draft_from_valid_preset_materializes_items(set_app: Flask) -> No
     client = set_app.test_client()
     response = client.post(
         "/api/research/sets",
-        json={"corpus_language": "spanish", "preset_id": "starter_preset", "preferred_task": "text"},
+        json={
+            "corpus_language": "spanish",
+            "preset_id": "starter_preset",
+            "workbench_state": {"preferred_task": "text"},
+        },
         headers=_auth_header(set_app, "user-1", "alice"),
     )
 
     assert response.status_code == 201
     payload = response.get_json()
     assert payload["set"]["source_preset_id"] == "starter_preset"
-    assert payload["set"]["preferred_task"] == "text"
+    assert payload["set"]["workbench_state"]["preferred_task"] == "text"
+    assert payload["set"]["workbench_state"]["comparison_view_task"] == "all"
+    assert "preferred_task" not in payload["set"]
+    assert "comparison_view_task" not in payload["set"]
+    assert "sessions" not in payload["set"]
     assert payload["set"]["label"] == "Starter (modifiziert)"
     assert [item["task"] for item in payload["set"]["items"]] == ["wordlist", "text"]
     assert payload["set"]["items"][1]["segment_id"] == "rise"
+
+
+def test_create_set_rejects_top_level_workbench_aliases(set_app: Flask) -> None:
+    client = set_app.test_client()
+    response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish", "preferred_task": "text"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert response.status_code == 400
+    assert "Top-level 'preferred_task' is no longer supported" in response.get_json()["error"]
+
+
+def test_create_set_rejects_sessions_inside_workbench_state(set_app: Flask) -> None:
+    client = set_app.test_client()
+    response = client.post(
+        "/api/research/sets",
+        json={
+            "corpus_language": "spanish",
+            "workbench_state": {"sessions": [{"session_id": "ES-L-0001-2026-S01"}]},
+        },
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert response.status_code == 400
+    assert "workbench_state.sessions is not supported on create" in response.get_json()["error"]
 
 
 def test_create_draft_rejects_invalid_preset_id(set_app: Flask) -> None:
@@ -356,6 +401,7 @@ def test_save_as_new_set_creates_saved_copy(set_app: Flask) -> None:
     assert saved_payload["suggested_save_label"] == "Mein Set"
     assert saved_payload["expires_at"] is None
     assert saved_payload["items"] == draft_payload["items"]
+    assert saved_payload["workbench_state"] == draft_payload["workbench_state"]
 
 
 def test_preset_derived_draft_exposes_suggested_save_label(set_app: Flask) -> None:
@@ -393,6 +439,87 @@ def test_patch_set_can_store_note_and_promote_to_saved(set_app: Flask) -> None:
     assert payload["label"] == "Mein Fokusset"
     assert payload["note"] == "Gespeichert"
     assert payload["expires_at"] is None
+
+
+def test_patch_set_can_update_nested_workbench_state(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    set_id = create_response.get_json()["set"]["set_id"]
+
+    patch_response = client.patch(
+        f"/api/research/sets/{set_id}",
+        json={"workbench_state": {"preferred_task": "text", "comparison_view_task": "text"}},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert patch_response.status_code == 200
+    payload = patch_response.get_json()["set"]
+    assert payload["workbench_state"]["preferred_task"] == "text"
+    assert payload["workbench_state"]["comparison_view_task"] == "text"
+    assert "preferred_task" not in payload
+    assert "comparison_view_task" not in payload
+
+
+def test_patch_set_rejects_top_level_workbench_aliases(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    set_id = create_response.get_json()["set"]["set_id"]
+
+    response = client.patch(
+        f"/api/research/sets/{set_id}",
+        json={"comparison_view_task": "text"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert response.status_code == 400
+    assert "Top-level 'comparison_view_task' is no longer supported" in response.get_json()["error"]
+
+
+def test_patch_set_rejects_workbench_state_sessions(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    set_id = create_response.get_json()["set"]["set_id"]
+
+    response = client.patch(
+        f"/api/research/sets/{set_id}",
+        json={"workbench_state": {"sessions": [{"session_id": "ES-L-0001-2026-S01"}]}},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert response.status_code == 400
+    assert "workbench_state.sessions is not supported on PATCH" in response.get_json()["error"]
+
+
+def test_replace_sessions_updates_nested_workbench_state(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    set_id = create_response.get_json()["set"]["set_id"]
+
+    response = client.put(
+        f"/api/research/sets/{set_id}/sessions",
+        json={"sessions": [{"session_id": "ES-L-0001-2026-S01"}]},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()["set"]
+    assert [entry["session_id"] for entry in payload["workbench_state"]["sessions"]] == ["ES-L-0001-2026-S01"]
 
 
 def test_list_sets_endpoint_returns_only_saved_sets_by_default(set_app: Flask) -> None:

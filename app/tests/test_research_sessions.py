@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 from flask import Flask, g
@@ -20,6 +21,7 @@ from app.config.data_conventions import build_person_id, build_session_id, parse
 from app import register_context_processors
 from app.research_presets import clear_research_preset_caches
 from app.research_views import build_player_page, build_recordings_page, build_speaker_profile_page, build_speakers_page
+from app.routes.auth import blueprint as auth_blueprint
 from app.routes.public import blueprint as public_blueprint
 from app.research_sessions import (
     load_language_sessions,
@@ -104,6 +106,28 @@ def _write_minimal_research_player_config(runtime_root: Path) -> None:
         + "\n",
         encoding="utf-8",
     )
+    (base_dir / "phenomena_presets.json").write_text(
+        json.dumps(
+            {
+                "language": "spanish",
+                "presets": [
+                    {
+                        "preset_id": "starter_preset",
+                        "label": "Starter",
+                        "description": "Minimal preset for route tests.",
+                        "language": "spanish",
+                        "items": [
+                            {"task": "wordlist", "item_id": "wl_001"},
+                            {"task": "text", "item_id": "d_01"},
+                        ],
+                    }
+                ],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 @pytest.fixture
@@ -134,11 +158,23 @@ def url_app() -> Flask:
 
     @app.before_request
     def _set_test_auth_context() -> None:
-        g.user = None
+        g.user = app.config.get("TEST_AUTH_USER")
+        g.user_id = app.config.get("TEST_AUTH_USER_ID")
         g.role = None
 
+    app.register_blueprint(auth_blueprint)
     app.register_blueprint(public_blueprint)
     return app
+
+
+def _set_test_auth(app: Flask, *, username: str = "alice", user_id: str = "user-1") -> None:
+    app.config["TEST_AUTH_USER"] = username
+    app.config["TEST_AUTH_USER_ID"] = user_id
+
+
+def _clear_test_auth(app: Flask) -> None:
+    app.config["TEST_AUTH_USER"] = None
+    app.config["TEST_AUTH_USER_ID"] = None
 
 
 def _write_session(runtime_root: Path, language_slug: str, session_id: str, payload: dict[str, object]) -> None:
@@ -689,6 +725,7 @@ def test_research_profile_renders_exposure_entries_with_grouped_markup(runtime_e
         ),
     )
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(f"/de/research/spanish/speakers/ES-L-0006?session={session_id}")
 
@@ -808,39 +845,15 @@ def test_project_page_uses_inner_shell_with_section_sidebar_header(url_app: Flas
     assert 'class="pm-breadcrumb' not in html
 
 
-def test_research_language_root_renders_shared_sidebar_header_and_language_context(url_app: Flask) -> None:
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+@pytest.mark.parametrize("language_slug", ["spanish", "french", "german", "english"])
+def test_research_language_root_redirects_to_design(url_app: Flask, ui_lang: str, language_slug: str) -> None:
     client = url_app.test_client()
 
-    response = client.get("/de/research/spanish")
+    response = client.get(f"/{ui_lang}/research/{language_slug}")
 
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert html.count('class="promat-topbar__nav"') == 1
-    assert 'promat-topbar__row--secondary' not in html
-    assert 'class="app-shell app-shell--inner"' in html
-    assert 'data-context-mode="language"' in html
-    assert 'promat-panel__context' in html
-    assert 'promat-panel__inner--language' in html
-    assert 'promat-panel__language-header' in html
-    assert 'promat-panel__section-header' in html
-    assert 'pm-icon-mask--section' in html
-    assert 'pm-icon-mask--back' in html
-    assert '>Forschung<' in html
-    assert 'href="/de/research"' in html
-    assert 'aria-label="Zur Korpusauswahl"' in html
-    assert 'Spanisch' in html
-    assert 'promat-panel__context-line--accent' not in html
-    assert 'pm-grid--selection' not in html
-    assert 'href="/de/research/spanish/design"' in html
-    assert 'href="/de/research/spanish/speakers"' in html
-    assert 'href="/de/research/spanish/recordings"' in html
-    assert 'Überblick' in html
-    assert 'class="pm-breadcrumb pm-breadcrumb--mobile-only"' in html
-    assert 'data-depth="2"' in html
-    assert 'aria-current="page">Spanisch</span>' in html
-    assert 'Vergleich öffnen →' in html
-    assert 'Phänomene öffnen →' in html
-    assert 'Sprecher:innen erschließt den Bestand personbezogen.' in html
+    assert response.status_code == 302
+    assert response.headers["Location"] == f"/{ui_lang}/research/{language_slug}/design"
 
 
 def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> None:
@@ -929,6 +942,82 @@ def test_research_detail_page_uses_full_breadcrumb_from_depth_three(url_app: Fla
     assert 'href="/de/research/spanish"' in html
     assert 'aria-current="page">Design</span>' in html
     assert '>Zusammenfassung<' not in html
+
+
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+@pytest.mark.parametrize("language_slug", ["spanish", "french", "german", "english"])
+def test_research_design_page_stays_public(url_app: Flask, ui_lang: str, language_slug: str) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/{language_slug}/design")
+
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+@pytest.mark.parametrize("language_slug", ["spanish", "french", "german", "english"])
+@pytest.mark.parametrize("page_slug", ["speakers", "recordings", "comparison", "phenomena"])
+def test_research_workbench_pages_require_auth_with_preserved_target(
+    url_app: Flask,
+    ui_lang: str,
+    language_slug: str,
+    page_slug: str,
+) -> None:
+    _clear_test_auth(url_app)
+    client = url_app.test_client()
+    path = f"/{ui_lang}/research/{language_slug}/{page_slug}"
+
+    response = client.get(path)
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == f"/login?next={quote(path, safe='/?')}"
+
+
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+@pytest.mark.parametrize("language_slug", ["spanish", "french", "german", "english"])
+@pytest.mark.parametrize(
+    "path_template",
+    [
+        "/{ui_lang}/research/{language_slug}/speakers/ES-L-0001",
+        "/{ui_lang}/research/{language_slug}/phenomena/presets/starter_preset",
+        "/{ui_lang}/research/{language_slug}/phenomena/sets/demo-set",
+        "/{ui_lang}/research/{language_slug}/player/ES-L-0001-2026-S01/wordlist",
+        "/{ui_lang}/research/{language_slug}/player/ES-L-0001-2026-S01/wordlist/audio.mp3",
+        "/{ui_lang}/research/{language_slug}/player/ES-L-0001-2026-S01/wordlist/items/wl_001.mp3?download=1",
+    ],
+)
+def test_research_detail_routes_require_auth_before_lookup(
+    url_app: Flask,
+    ui_lang: str,
+    language_slug: str,
+    path_template: str,
+) -> None:
+    _clear_test_auth(url_app)
+    client = url_app.test_client()
+    path = path_template.format(ui_lang=ui_lang, language_slug=language_slug)
+
+    response = client.get(path)
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == f"/login?next={quote(path, safe='/?')}"
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "language_slug", "page_slug"),
+    [("de", "spanish", "recordings"), ("en", "english", "comparison")],
+)
+def test_authenticated_research_workbench_pages_render_after_access_gate(
+    url_app: Flask,
+    ui_lang: str,
+    language_slug: str,
+    page_slug: str,
+) -> None:
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/{language_slug}/{page_slug}")
+
+    assert response.status_code == 200
 
 
 def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -> None:
@@ -1024,6 +1113,7 @@ def test_recordings_route_uses_shared_task_action_buttons(runtime_env: Path, url
     )
     _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get("/de/research/spanish/recordings?task=wordlist")
 
@@ -1198,6 +1288,7 @@ def test_player_route_uses_shared_material_choice_family(runtime_env: Path, url_
     )
     _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(f"/de/research/spanish/player/{session_id}/wordlist?source=recordings")
 
@@ -1373,6 +1464,7 @@ def test_player_route_renders_wordlist_runtime_and_profile_back_link(runtime_env
     _write_session(runtime_env, "spanish", session_id, _native_payload("ES-N-0001", session_id, "2026-03-11"))
     _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-N-0001")
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(f"/de/research/spanish/player/{session_id}/wordlist?source=profile")
 
@@ -1410,6 +1502,7 @@ def test_player_route_keeps_compare_optional_until_explicit_activation(runtime_e
     _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
     _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings")
 
@@ -1450,6 +1543,7 @@ def test_player_route_renders_compare_controls_and_secondary_audio(runtime_env: 
     _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
     _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(
         f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}"
@@ -1506,6 +1600,7 @@ def test_player_route_uses_unavailable_fallback_when_wordlist_artifacts_are_miss
         ),
     )
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(f"/de/research/spanish/player/{session_id}/wordlist")
 
@@ -1533,6 +1628,7 @@ def test_player_item_download_route_uses_delivery_filename(runtime_env: Path, ur
     )
     _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
 
+    _set_test_auth(url_app)
     client = url_app.test_client()
     audio_response = client.get(f"/de/research/spanish/player/{session_id}/wordlist/audio.mp3")
     item_response = client.get(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")

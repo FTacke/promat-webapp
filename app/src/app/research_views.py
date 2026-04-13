@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import functools
-import json
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import urlencode
@@ -13,11 +10,33 @@ from flask import g, url_for
 
 from .content_navigation import build_content_header
 from .i18n import translate, translate_many
-from .research_presets import TEXT_RENDER_MODES, load_phenomena_presets, load_task_catalogs
+from .research_capabilities import (
+    PLAYER_RENDER_MODES,
+    comparison_default_view_task,
+    comparison_view_task_keys,
+    get_research_task_label,
+    phenomena_task_keys,
+    set_filter_task_keys,
+    task_supports_player_compare,
+)
+from .research_player_runtime import (
+    NormalizedPlayerSource,
+    build_player_compare_rows as _build_player_compare_rows,
+    build_player_items as _build_player_items,
+    build_player_set_notice as _build_player_set_notice,
+    build_running_text_blocks as _build_running_text_blocks,
+    is_playable_audio_artifact as _is_playable_audio_artifact,
+    load_task_bundle as _load_task_bundle,
+    load_task_ready_sessions as _load_task_ready_sessions,
+    normalized_render_mode_query as _normalized_render_mode_query,
+    normalize_compare_mode as _normalize_compare_mode,
+    resolve_player_audio_artifact as _resolve_player_audio_artifact_runtime,
+    resolve_player_item_download as _resolve_player_item_download_runtime,
+    resolve_player_runtime_state,
+    resolve_player_set_context,
+)
+from .research_presets import load_phenomena_presets, load_task_catalogs
 from .research_sets import (
-    ResearchSetNotFoundError,
-    ResearchSetStorageUnavailableError,
-    ResearchSetValidationError,
     list_selectable_owned_sets,
     load_owned_set,
 )
@@ -86,23 +105,8 @@ EXPOSURE_TYPE_LABELS = {
     "other": {"de": "Sonstiges", "en": "Other"},
 }
 
-PHENOMENA_ITEM_TASKS: tuple[str, ...] = ("wordlist", "text")
-COMPARISON_VIEW_TASKS: tuple[str, ...] = ("all", "wordlist", "text")
-
-
-@dataclass(frozen=True)
-class NormalizedPlayerSource:
-    task_key: str
-    source_kind: str
-    items_title: str
-    default_render_mode: str | None
-    render_mode: str | None
-    allowed_render_modes: tuple[str, ...]
-    primary_audio_mode: str
-    supports_item_audio: bool
-    supports_full_audio: bool
-    supports_text_view: bool
-    is_set_excerpt: bool
+PHENOMENA_ITEM_TASKS: tuple[str, ...] = set_filter_task_keys()
+COMPARISON_VIEW_TASKS: tuple[str, ...] = comparison_view_task_keys()
 
 
 def _label(mapping: dict[str, dict[str, str]], key: str, ui_lang: str) -> str:
@@ -1236,11 +1240,10 @@ def _phenomena_login_href(
 
 
 def _phenomena_task_labels(language_slug: str, ui_lang: str) -> dict[str, str]:
-    del language_slug
-    labels: dict[str, str] = {}
-    for task_key in PHENOMENA_ITEM_TASKS:
-        labels[task_key] = _t(ui_lang, f"common.task.{task_key}")
-    return labels
+    return {
+        task_key: get_research_task_label(task_key, ui_lang, variant="material", language_slug=language_slug)
+        for task_key in PHENOMENA_ITEM_TASKS
+    }
 
 
 def _phenomena_preferred_task(task_counts: Mapping[str, int]) -> str:
@@ -1351,7 +1354,7 @@ def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[
 
     try:
         saved_sets = list_selectable_owned_sets(owner_user_id=owner_user_id, corpus_language=language_slug)
-    except (ResearchSetStorageUnavailableError, ResearchSetValidationError):
+    except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
         return presets
 
     for stored_set in saved_sets:
@@ -1366,7 +1369,7 @@ def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[
                 "setId": stored_set.set_id,
                 "optionLabel": f"{stored_set.label or _t(ui_lang, 'common.untitled')} · {_t(ui_lang, 'common.status.custom')}",
                 "label": stored_set.label or _t(ui_lang, "common.untitled"),
-                "preferredTask": stored_set.comparison_view_task or _phenomena_preferred_task(task_counts),
+                "preferredTask": stored_set.workbench_state.comparison_view_task or _phenomena_preferred_task(task_counts),
                 "taskSummary": _phenomena_task_summary(task_counts, task_labels),
                 "items": [
                     {
@@ -1589,7 +1592,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
     else:
         page_notice = None
 
-    default_view_task = requested_view_task or "wordlist"
+    default_view_task = requested_view_task or comparison_default_view_task()
     workspace_mode = "empty"
     workspace_text = _comparison_empty_text(ui_lang) if is_authenticated else _comparison_login_text(ui_lang)
     if requested_set_id:
@@ -1614,7 +1617,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
         "title": get_research_page_label("comparison", ui_lang),
         "template": "pages/research_comparison.html",
         "page_kind": "workbench",
-        "access": "public",
+        "access": "protected",
         "content_header": build_content_header(
             page_name="research",
             title=get_research_page_label("comparison", ui_lang),
@@ -1966,13 +1969,7 @@ def _current_owner_user_id() -> str | None:
 
 
 def _player_task_display_label(language_slug: str, task_key: str, ui_lang: str) -> str:
-    task_labels = _phenomena_task_labels(language_slug, ui_lang)
-    if task_key in task_labels:
-        return task_labels[task_key]
-    task = get_research_task(task_key)
-    if task is not None:
-        return task.short_label(ui_lang)
-    return task_key
+    return get_research_task_label(task_key, ui_lang, variant="material", language_slug=language_slug)
 
 
 def _load_player_set_context(
@@ -1980,104 +1977,19 @@ def _load_player_set_context(
     language_slug: str,
     task_key: str,
     requested_set_id: str | None,
+    requested_preset_id: str | None,
     requested_focus_item: str | None,
 ) -> dict[str, Any] | None:
-    normalized_set_id = _normalize_text(requested_set_id)
-    if not normalized_set_id:
-        return None
-
-    owner_user_id = _current_owner_user_id()
-    if owner_user_id is None:
-        return {
-            "status": "requires-auth",
-            "requested_set_id": normalized_set_id,
-            "task_items": [],
-            "task_counts": {task_name: 0 for task_name in PHENOMENA_ITEM_TASKS},
-            "focused_item_id": None,
-            "requested_focus_item": requested_focus_item,
-            "effective_preset_id": None,
-        }
-
-    try:
-        stored_set = load_owned_set(owner_user_id=owner_user_id, set_id=normalized_set_id)
-    except (ResearchSetNotFoundError, ResearchSetValidationError):
-        return {
-            "status": "unavailable",
-            "requested_set_id": normalized_set_id,
-            "task_items": [],
-            "task_counts": {task_name: 0 for task_name in PHENOMENA_ITEM_TASKS},
-            "focused_item_id": None,
-            "requested_focus_item": requested_focus_item,
-            "effective_preset_id": None,
-        }
-    except ResearchSetStorageUnavailableError:
-        return {
-            "status": "storage-unavailable",
-            "requested_set_id": normalized_set_id,
-            "task_items": [],
-            "task_counts": {task_name: 0 for task_name in PHENOMENA_ITEM_TASKS},
-            "focused_item_id": None,
-            "requested_focus_item": requested_focus_item,
-            "effective_preset_id": None,
-        }
-
-    if stored_set.corpus_language != language_slug:
-        return {
-            "status": "unavailable",
-            "requested_set_id": normalized_set_id,
-            "task_items": [],
-            "task_counts": {task_name: 0 for task_name in PHENOMENA_ITEM_TASKS},
-            "focused_item_id": None,
-            "requested_focus_item": requested_focus_item,
-            "effective_preset_id": None,
-        }
-
-    task_counts = {task_name: 0 for task_name in PHENOMENA_ITEM_TASKS}
-    for item in stored_set.items:
-        if item.task in task_counts:
-            task_counts[item.task] += 1
-
-    task_items: list[dict[str, Any]] = []
-    catalogs = load_task_catalogs(language_slug)
-    catalog = catalogs.get(task_key) if task_key in PHENOMENA_ITEM_TASKS else None
-    if catalog is not None:
-        for stored_item in stored_set.items:
-            if stored_item.task != task_key:
-                continue
-            catalog_item = catalog.items_by_id.get(stored_item.item_id)
-            if catalog_item is None:
-                continue
-            task_items.append(
-                {
-                    "task": stored_item.task,
-                    "item_id": stored_item.item_id,
-                    "item_number": catalog_item.item_number,
-                    "text": catalog_item.text,
-                    "group_id": catalog_item.group_id,
-                    "text_container_id": catalog_item.text_container_id,
-                    "text_order_index": catalog_item.text_order_index,
-                    "paragraph_break_before": catalog_item.paragraph_break_before,
-                    "paragraph_id": catalog_item.paragraph_id,
-                    "segment_id": stored_item.segment_id,
-                    "note": stored_item.note,
-                }
-            )
-
-    focused_item_id = None
-    if isinstance(requested_focus_item, str) and requested_focus_item:
-        if any(item["item_id"] == requested_focus_item for item in task_items):
-            focused_item_id = requested_focus_item
-
-    return {
-        "status": "loaded",
-        "requested_set_id": normalized_set_id,
-        "stored_set": stored_set,
-        "task_items": task_items,
-        "task_counts": task_counts,
-        "focused_item_id": focused_item_id,
-        "requested_focus_item": requested_focus_item,
-        "effective_preset_id": stored_set.source_preset_id,
-    }
+    del ui_lang
+    return resolve_player_set_context(
+        language_slug,
+        task_key,
+        requested_set_id,
+        requested_preset_id,
+        requested_focus_item,
+        owner_user_id=_current_owner_user_id(),
+        load_owned_set_fn=load_owned_set,
+    )
 
 
 def _build_player_set_notice(
@@ -2129,366 +2041,6 @@ def _player_intro(ui_lang: str) -> str:
     return _t(ui_lang, "research.player.intro")
 
 
-def _session_root(session: SessionRecord) -> Path:
-    return session.metadata_path.parent
-
-
-def _resolve_session_relative_path(session_root: Path, relative_path: str | None) -> Path | None:
-    normalized = (relative_path or "").strip()
-    if not normalized:
-        return None
-
-    candidate = (session_root / normalized).resolve()
-    root = session_root.resolve()
-    try:
-        candidate.relative_to(root)
-    except ValueError:
-        return None
-    return candidate
-
-
-@functools.lru_cache(maxsize=4096)
-def _is_playable_audio_artifact(path: Path | None) -> bool:
-    if path is None or not path.is_file():
-        return False
-
-    try:
-        file_size = path.stat().st_size
-    except OSError:
-        return False
-
-    if file_size < 4:
-        return False
-
-    try:
-        with path.open("rb") as handle:
-            probe = handle.read(min(file_size, 65536))
-    except OSError:
-        return False
-
-    if len(probe) < 4:
-        return False
-
-    start_offset = 0
-    if probe.startswith(b"ID3"):
-        if len(probe) < 10:
-            return False
-        start_offset = 10 + ((probe[6] & 0x7F) << 21) + ((probe[7] & 0x7F) << 14) + ((probe[8] & 0x7F) << 7) + (probe[9] & 0x7F)
-
-    if start_offset >= len(probe) - 1:
-        return False
-
-    for index in range(start_offset, len(probe) - 1):
-        if probe[index] != 0xFF:
-            continue
-        next_byte = probe[index + 1]
-        if next_byte & 0xE0 == 0xE0 and next_byte & 0x18 != 0x08:
-            return True
-    return False
-
-
-def _load_alignment_payload(session: SessionRecord, task_key: str) -> dict[str, Any] | None:
-    session_root = _session_root(session)
-    alignment_path = _resolve_session_relative_path(session_root, f"alignment/{task_key}.json")
-    if alignment_path is None or not alignment_path.is_file():
-        return None
-
-    try:
-        payload = json.loads(alignment_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-        return None
-
-    if not isinstance(payload, dict):
-        return None
-    if payload.get("session_id") != session.session_id or payload.get("person_id") != session.person_id or payload.get("task") != task_key:
-        return None
-    return payload
-
-
-def _coerce_milliseconds(value: Any) -> int | None:
-    if isinstance(value, int):
-        return value
-    if isinstance(value, float) and value.is_integer():
-        return int(value)
-    return None
-
-
-def _load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | None:
-    if task_key not in PHENOMENA_ITEM_TASKS:
-        return None
-
-    payload = _load_alignment_payload(session, task_key)
-    if payload is None:
-        return None
-
-    session_root = _session_root(session)
-    audio = payload.get("audio")
-    if not isinstance(audio, dict):
-        return None
-
-    full_mp3 = audio.get("full_mp3")
-    if not isinstance(full_mp3, str):
-        return None
-
-    full_audio_path = _resolve_session_relative_path(session_root, full_mp3)
-    if not _is_playable_audio_artifact(full_audio_path):
-        return None
-
-    raw_items = payload.get("items")
-    if not isinstance(raw_items, list) or not raw_items:
-        return None
-
-    items: list[dict[str, Any]] = []
-    for raw_item in raw_items:
-        if not isinstance(raw_item, dict):
-            return None
-
-        item_id = raw_item.get("item_id")
-        item_number = raw_item.get("item_number")
-        text_value = raw_item.get("text")
-        start_ms = _coerce_milliseconds(raw_item.get("start_ms"))
-        end_ms = _coerce_milliseconds(raw_item.get("end_ms"))
-        if not isinstance(item_id, str) or not isinstance(item_number, str) or not isinstance(text_value, str):
-            return None
-        if start_ms is None or end_ms is None or end_ms < start_ms:
-            return None
-
-        split_mp3 = raw_item.get("split_mp3")
-        split_audio_path = _resolve_session_relative_path(session_root, split_mp3) if isinstance(split_mp3, str) else None
-        items.append(
-            {
-                "item_id": item_id,
-                "item_number": item_number,
-                "text": text_value,
-                "start_ms": start_ms,
-                "end_ms": end_ms,
-                "split_audio_path": split_audio_path if _is_playable_audio_artifact(split_audio_path) else None,
-            }
-        )
-
-    return {"full_audio_path": full_audio_path, "items": items}
-
-
-def _load_wordlist_bundle(session: SessionRecord) -> dict[str, Any] | None:
-    return _load_task_bundle(session, "wordlist")
-
-
-def _normalize_compare_mode(raw_value: str | None, *, compare_selected: bool) -> str:
-    normalized = (raw_value or "").strip().lower()
-    if not compare_selected:
-        return "single"
-    if normalized == "manual":
-        return "manual"
-    return "sequence"
-
-
-def _normalize_render_mode(raw_value: str | None) -> str | None:
-    normalized = (raw_value or "").strip().lower()
-    if normalized in TEXT_RENDER_MODES:
-        return normalized
-    return None
-
-
-def _render_mode_from_view(view_key: str) -> str:
-    if view_key == "text":
-        return "running_text"
-    return "sentence_list"
-
-
-def _render_mode_to_view(render_mode: str) -> str:
-    if render_mode == "running_text":
-        return "text"
-    return "list"
-
-
-def _normalized_render_mode_query(player_source: NormalizedPlayerSource) -> str | None:
-    if player_source.task_key != "text":
-        return None
-    if player_source.render_mode and player_source.render_mode != player_source.default_render_mode:
-        return player_source.render_mode
-    return None
-
-
-def _build_normalized_player_source(
-    ui_lang: str,
-    language_slug: str,
-    task_key: str,
-    *,
-    bundle: Mapping[str, Any] | None,
-    compare_selected: bool,
-    requested_render_mode: str | None,
-    set_context: dict[str, Any] | None,
-) -> NormalizedPlayerSource:
-    task_label = _player_task_display_label(language_slug, task_key, ui_lang)
-    if task_key == "wordlist":
-        return NormalizedPlayerSource(
-            task_key=task_key,
-            source_kind="set" if set_context is not None and set_context.get("status") == "loaded" else "wordlist",
-            items_title=task_label,
-            default_render_mode=None,
-            render_mode=None,
-            allowed_render_modes=(),
-            primary_audio_mode="item",
-            supports_item_audio=True,
-            supports_full_audio=bundle is not None and bundle.get("full_audio_path") is not None,
-            supports_text_view=False,
-            is_set_excerpt=set_context is not None and set_context.get("status") == "loaded",
-        )
-
-    catalog = load_task_catalogs(language_slug)[task_key]
-    catalog_source = catalog.player_source
-    is_set_excerpt = set_context is not None and set_context.get("status") == "loaded"
-    source_kind = "set" if is_set_excerpt else catalog_source.source_kind
-    supports_text_view = (
-        not is_set_excerpt
-        and catalog_source.source_kind == "text"
-        and catalog_source.content_mode == "connected_text"
-        and catalog_source.supports_text_view
-    )
-    if supports_text_view and compare_selected:
-        allowed_render_modes = ("sentence_list",)
-        default_render_mode = "sentence_list"
-    else:
-        allowed_render_modes = tuple(
-            mode for mode in TEXT_RENDER_MODES if _render_mode_to_view(mode) in catalog_source.allowed_views
-        ) if supports_text_view else ("sentence_list",)
-        default_render_mode = (
-            _render_mode_from_view(catalog_source.default_view)
-            if supports_text_view
-            else "sentence_list"
-        )
-    render_mode = _normalize_render_mode(requested_render_mode)
-    if render_mode not in allowed_render_modes:
-        render_mode = default_render_mode
-
-    return NormalizedPlayerSource(
-        task_key=task_key,
-        source_kind=source_kind,
-        items_title=catalog.display_label or task_label,
-        default_render_mode=default_render_mode,
-        render_mode=render_mode,
-        allowed_render_modes=allowed_render_modes,
-        primary_audio_mode="item" if is_set_excerpt else catalog_source.primary_audio_mode,
-        supports_item_audio=catalog_source.supports_item_audio,
-        supports_full_audio=(
-            False
-            if is_set_excerpt
-            else catalog_source.supports_full_audio and bundle is not None and bundle.get("full_audio_path") is not None
-        ),
-        supports_text_view=supports_text_view,
-        is_set_excerpt=is_set_excerpt,
-    )
-
-
-def _build_player_items(
-    ui_lang: str,
-    language_slug: str,
-    session: SessionRecord,
-    task_key: str,
-    bundle: Mapping[str, Any],
-    *,
-    item_filter: list[dict[str, Any]] | None = None,
-) -> list[dict[str, Any]]:
-    catalog = load_task_catalogs(language_slug)[task_key]
-    bundle_items = {item["item_id"]: item for item in bundle["items"]}
-    if item_filter is not None:
-        visible_items = item_filter
-    else:
-        visible_items = []
-        for bundle_item in bundle["items"]:
-            catalog_item = catalog.items_by_id.get(bundle_item["item_id"])
-            visible_items.append(
-                {
-                    "item_id": bundle_item["item_id"],
-                    "item_number": catalog_item.item_number if catalog_item is not None else bundle_item["item_number"],
-                    "text": catalog_item.text if catalog_item is not None else bundle_item["text"],
-                    "group_id": catalog_item.group_id if catalog_item is not None else None,
-                    "text_container_id": catalog_item.text_container_id if catalog_item is not None else None,
-                    "text_order_index": catalog_item.text_order_index if catalog_item is not None else None,
-                    "paragraph_break_before": catalog_item.paragraph_break_before if catalog_item is not None else False,
-                    "paragraph_id": catalog_item.paragraph_id if catalog_item is not None else None,
-                    "segment_id": None,
-                    "note": None,
-                }
-            )
-
-    rows: list[dict[str, Any]] = []
-    for visible_item in visible_items:
-        bundle_item = bundle_items.get(visible_item["item_id"])
-        if bundle_item is None:
-            rows.append(
-                {
-                    "item_id": visible_item["item_id"],
-                    "item_number": visible_item["item_number"],
-                    "text": visible_item["text"],
-                    "group_id": visible_item.get("group_id"),
-                    "text_container_id": visible_item.get("text_container_id"),
-                    "text_order_index": visible_item.get("text_order_index"),
-                    "paragraph_break_before": bool(visible_item.get("paragraph_break_before")),
-                    "paragraph_id": visible_item.get("paragraph_id"),
-                    "segment_id": visible_item.get("segment_id"),
-                    "note": visible_item.get("note"),
-                    "start_label": "",
-                    "end_label": "",
-                    "download_href": None,
-                    "start_ms": None,
-                    "end_ms": None,
-                    "is_available": False,
-                    "missing_label": _t(ui_lang, "research.player.no_clip_in_session"),
-                }
-            )
-            continue
-
-        rows.append(
-            {
-                "item_id": bundle_item["item_id"],
-                "item_number": visible_item.get("item_number") or bundle_item["item_number"],
-                "text": visible_item.get("text") or bundle_item["text"],
-                "group_id": visible_item.get("group_id"),
-                "text_container_id": visible_item.get("text_container_id"),
-                "text_order_index": visible_item.get("text_order_index"),
-                "paragraph_break_before": bool(visible_item.get("paragraph_break_before")),
-                "paragraph_id": visible_item.get("paragraph_id"),
-                "segment_id": visible_item.get("segment_id"),
-                "note": visible_item.get("note"),
-                "start_label": _format_player_clock(bundle_item["start_ms"]),
-                "end_label": _format_player_clock(bundle_item["end_ms"]),
-                "download_href": url_for(
-                    "public.research_player_item_download",
-                    ui_lang=ui_lang,
-                    language_slug=language_slug,
-                    session_id=session.session_id,
-                    task=task_key,
-                    item_id=bundle_item["item_id"],
-                ) if bundle_item["split_audio_path"] else None,
-                "start_ms": bundle_item["start_ms"],
-                "end_ms": bundle_item["end_ms"],
-                "is_available": True,
-                "missing_label": None,
-            }
-        )
-    return rows
-
-
-def _build_running_text_blocks(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    if not items:
-        return []
-
-    blocks: list[dict[str, Any]] = []
-    current_items: list[dict[str, Any]] = []
-    block_index = 1
-    for item in items:
-        if current_items and item.get("paragraph_break_before"):
-            blocks.append({"block_id": f"paragraph-{block_index}", "items": current_items})
-            block_index += 1
-            current_items = []
-        current_items.append(item)
-
-    if current_items:
-        blocks.append({"block_id": f"paragraph-{block_index}", "items": current_items})
-    return blocks
-
-
 def _build_player_query(
     source: str | None,
     compare_session_id: str | None = None,
@@ -2511,7 +2063,7 @@ def _build_player_query(
         query["preset_id"] = preset_id
     if focus_item:
         query["focus_item"] = focus_item
-    if render_mode in TEXT_RENDER_MODES:
+    if render_mode in PLAYER_RENDER_MODES:
         query["render_mode"] = render_mode
     return query or None
 
@@ -2538,34 +2090,6 @@ def _player_page_href(
         task=task_key,
         query=_build_player_query(source, compare_session_id, compare_mode, set_id, preset_id, focus_item, render_mode),
     )
-
-
-def _load_wordlist_ready_sessions(language_slug: str) -> tuple[list[SessionRecord], dict[str, dict[str, Any]]]:
-    ready_sessions: list[SessionRecord] = []
-    bundles: dict[str, dict[str, Any]] = {}
-    for candidate in sort_sessions_by_recency(load_language_sessions(language_slug)):
-        if not session_has_task(candidate, "wordlist"):
-            continue
-        bundle = _load_wordlist_bundle(candidate)
-        if bundle is None:
-            continue
-        ready_sessions.append(candidate)
-        bundles[candidate.session_id] = bundle
-    return ready_sessions, bundles
-
-
-def _load_task_ready_sessions(language_slug: str, task_key: str) -> tuple[list[SessionRecord], dict[str, dict[str, Any]]]:
-    ready_sessions: list[SessionRecord] = []
-    bundles: dict[str, dict[str, Any]] = {}
-    for candidate in sort_sessions_by_recency(load_language_sessions(language_slug)):
-        if not session_has_task(candidate, task_key):
-            continue
-        bundle = _load_task_bundle(candidate, task_key)
-        if bundle is None:
-            continue
-        ready_sessions.append(candidate)
-        bundles[candidate.session_id] = bundle
-    return ready_sessions, bundles
 
 
 def _player_session_option_label(session: SessionRecord, ui_lang: str) -> str:
@@ -2767,43 +2291,6 @@ def _build_wordlist_player_items(
                 "end_ms": bundle_item["end_ms"],
                 "is_available": True,
                 "missing_label": None,
-            }
-        )
-    return rows
-
-
-def _build_player_compare_rows(
-    primary_items: list[dict[str, Any]],
-    secondary_items: list[dict[str, Any]],
-    ui_lang: str,
-) -> list[dict[str, Any]]:
-    secondary_by_item = {item["item_id"]: item for item in secondary_items}
-    rows: list[dict[str, Any]] = []
-    for primary in primary_items:
-        secondary = secondary_by_item.get(primary["item_id"])
-        rows.append(
-            {
-                "item_id": primary["item_id"],
-                "primary": primary,
-                "secondary": secondary or {
-                    "item_id": primary["item_id"],
-                    "item_number": primary["item_number"],
-                    "text": _t(ui_lang, "research.player.unavailable"),
-                    "group_id": primary.get("group_id"),
-                    "text_container_id": primary.get("text_container_id"),
-                    "text_order_index": primary.get("text_order_index"),
-                    "paragraph_break_before": primary.get("paragraph_break_before"),
-                    "paragraph_id": primary.get("paragraph_id"),
-                    "segment_id": primary.get("segment_id"),
-                    "note": None,
-                    "start_label": "",
-                    "end_label": "",
-                    "download_href": None,
-                    "start_ms": None,
-                    "end_ms": None,
-                    "is_available": False,
-                    "missing_label": _t(ui_lang, "research.player.no_clip_in_session"),
-                },
             }
         )
     return rows
@@ -3082,7 +2569,7 @@ def _build_player_set_select(
     compare_session_id: str | None,
     compare_mode: str | None,
     active_set_id: str | None,
-    preset_id: str | None,
+    active_preset_id: str | None,
     render_mode: str | None,
 ) -> dict[str, Any] | None:
     if task_key not in PHENOMENA_ITEM_TASKS:
@@ -3099,12 +2586,30 @@ def _build_player_set_select(
                 source,
                 compare_session_id=compare_session_id,
                 compare_mode=compare_mode,
-                preset_id=preset_id,
                 render_mode=render_mode if task_key == "text" else None,
             ),
-            "current": active_set_id is None,
+            "current": active_set_id is None and active_preset_id is None,
         }
     ]
+
+    for preset in load_phenomena_presets(language_slug):
+        options.append(
+            {
+                "label": preset.label,
+                "href": _player_page_href(
+                    ui_lang,
+                    language_slug,
+                    session_id,
+                    task_key,
+                    source,
+                    compare_session_id=compare_session_id,
+                    compare_mode=compare_mode,
+                    preset_id=preset.preset_id,
+                    render_mode=render_mode if task_key == "text" else None,
+                ),
+                "current": active_set_id is None and preset.preset_id == active_preset_id,
+            }
+        )
 
     owner_user_id = _current_owner_user_id()
     if owner_user_id is not None:
@@ -3114,7 +2619,7 @@ def _build_player_set_select(
                 corpus_language=language_slug,
                 current_set_id=active_set_id,
             )
-        except (ResearchSetStorageUnavailableError, ResearchSetValidationError):
+        except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
             stored_sets = []
 
         for stored_set in stored_sets:
@@ -3130,7 +2635,6 @@ def _build_player_set_select(
                         compare_session_id=compare_session_id,
                         compare_mode=compare_mode,
                         set_id=stored_set.set_id,
-                        preset_id=preset_id,
                         render_mode=render_mode if task_key == "text" else None,
                     ),
                     "current": stored_set.set_id == active_set_id,
@@ -3164,9 +2668,24 @@ def build_player_page(
     if session is None or task is None or not session_has_task(session, task_key):
         return None
 
-    set_context = _load_player_set_context(ui_lang, language_slug, task_key, set_id, focus_item)
-    effective_set_id = set_context["requested_set_id"] if set_context is not None else set_id
-    effective_preset_id = set_context["effective_preset_id"] if set_context is not None else preset_id
+    runtime_state = resolve_player_runtime_state(
+        ui_lang,
+        language_slug,
+        session,
+        task_key,
+        owner_user_id=_current_owner_user_id(),
+        compare_session_id=compare_session_id,
+        compare_mode=compare_mode,
+        set_id=set_id,
+        preset_id=preset_id,
+        focus_item=focus_item,
+        render_mode=render_mode,
+        load_owned_set_fn=load_owned_set,
+    )
+    set_context = runtime_state.set_context
+    effective_set_id = runtime_state.effective_set_id
+    effective_preset_id = runtime_state.effective_preset_id
+    active_selector_preset_id = runtime_state.active_selector_preset_id
 
     profile_href = _url_with_query(
         "public.research_speaker_profile",
@@ -3191,32 +2710,16 @@ def build_player_page(
     detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
     text_bundle = _load_task_bundle(session, "text") if session_has_task(session, "text") else None
     text_ready = text_bundle is not None
-    wordlist_bundle = _load_wordlist_bundle(session) if session_has_task(session, "wordlist") else None
+    wordlist_bundle = _load_task_bundle(session, "wordlist") if session_has_task(session, "wordlist") else None
     wordlist_ready = wordlist_bundle is not None
-    task_bundle = _load_task_bundle(session, task_key) if task_key in PHENOMENA_ITEM_TASKS else None
-    ready_sessions, ready_bundles = _load_task_ready_sessions(language_slug, task_key) if task_key in PHENOMENA_ITEM_TASKS else ([], {})
-    compare_session = None
-    compare_bundle = None
-    compare_notice = None
-    if task_key in {"wordlist", "text"} and compare_session_id and compare_session_id != session.session_id:
-        compare_session = next((candidate for candidate in ready_sessions if candidate.session_id == compare_session_id), None)
-        compare_bundle = ready_bundles.get(compare_session_id)
-        if compare_session is None or compare_bundle is None:
-            compare_session = None
-            compare_bundle = None
-            compare_notice = _player_compare_invalid_notice(language_slug, task_key, ui_lang)
-
-    effective_compare_mode = _normalize_compare_mode(compare_mode, compare_selected=compare_session is not None)
-    player_source = _build_normalized_player_source(
-        ui_lang,
-        language_slug,
-        task_key,
-        bundle=task_bundle,
-        compare_selected=compare_session is not None,
-        requested_render_mode=render_mode,
-        set_context=set_context if task_key in PHENOMENA_ITEM_TASKS else None,
-    ) if task_key in PHENOMENA_ITEM_TASKS else None
-    active_render_mode_query = _normalized_render_mode_query(player_source) if player_source is not None else None
+    task_bundle = runtime_state.task_bundle
+    ready_sessions = runtime_state.ready_sessions
+    compare_session = runtime_state.compare_session
+    compare_bundle = runtime_state.compare_bundle
+    compare_notice = _player_compare_invalid_notice(language_slug, task_key, ui_lang) if runtime_state.compare_requested_unavailable else None
+    effective_compare_mode = runtime_state.effective_compare_mode
+    player_source = runtime_state.player_source
+    active_render_mode_query = runtime_state.active_render_mode_query
     task_panels = _build_player_task_panels(
         ui_lang,
         language_slug,
@@ -3235,13 +2738,7 @@ def build_player_page(
     summary_cards: list[dict[str, Any]] = []
 
     player_view: dict[str, Any]
-    filtered_task_items = set_context["task_items"] if set_context is not None and set_context["status"] == "loaded" else None
-    filtered_task_empty = bool(
-        set_context is not None
-        and set_context["status"] == "loaded"
-        and task_key in PHENOMENA_ITEM_TASKS
-        and not set_context["task_items"]
-    )
+    filtered_task_empty = runtime_state.filtered_task_empty
 
     if task_key in PHENOMENA_ITEM_TASKS and task_bundle is not None and player_source is not None:
         player_switchers = _build_player_switchers(
@@ -3278,26 +2775,10 @@ def build_player_page(
         compare_session_options = player_switchers["compare"]["options"][1:] if player_switchers else []
         compare_is_ready = compare_session is not None and compare_bundle is not None
         can_compare = bool(compare_session_options)
-        primary_items = _build_player_items(
-            ui_lang,
-            language_slug,
-            session,
-            task_key,
-            task_bundle,
-            item_filter=filtered_task_items,
-        )
-        secondary_items = _build_player_items(
-            ui_lang,
-            language_slug,
-            compare_session,
-            task_key,
-            compare_bundle,
-            item_filter=filtered_task_items,
-        ) if compare_session and compare_bundle else []
-        compare_rows = _build_player_compare_rows(primary_items, secondary_items, ui_lang) if compare_is_ready else []
-        visible_focus_item = None
-        if isinstance(focus_item, str) and focus_item and any(item["item_id"] == focus_item for item in primary_items):
-            visible_focus_item = focus_item
+        primary_items = runtime_state.primary_items
+        secondary_items = runtime_state.secondary_items
+        compare_rows = runtime_state.compare_rows if compare_is_ready else []
+        visible_focus_item = runtime_state.visible_focus_item_id
         manual_compare_href = _player_page_href(
             ui_lang,
             language_slug,
@@ -3405,7 +2886,7 @@ def build_player_page(
             compare_session_id=compare_session.session_id if compare_session else None,
             compare_mode=effective_compare_mode if compare_session else None,
             active_set_id=effective_set_id,
-            preset_id=effective_preset_id,
+            active_preset_id=active_selector_preset_id,
             render_mode=active_render_mode_query,
         )
         player_view = {
@@ -3600,7 +3081,7 @@ def build_player_page(
                 compare_session_id=compare_session.session_id if compare_session else None,
                 compare_mode=effective_compare_mode if compare_session else None,
                 active_set_id=effective_set_id,
-                preset_id=effective_preset_id,
+                active_preset_id=active_selector_preset_id,
                 render_mode=active_render_mode_query,
             ) if task_key in PHENOMENA_ITEM_TASKS else None,
             "set_notice": _build_player_set_notice(
@@ -3671,33 +3152,8 @@ def build_player_page(
 
 
 def resolve_player_audio_artifact(language_slug: str, session_id: str, task_key: str) -> Path | None:
-    session = get_session(language_slug, session_id)
-    if session is None or task_key not in PHENOMENA_ITEM_TASKS or not session_has_task(session, task_key):
-        return None
-
-    bundle = _load_task_bundle(session, task_key)
-    if bundle is None:
-        return None
-    return bundle["full_audio_path"]
+    return _resolve_player_audio_artifact_runtime(language_slug, session_id, task_key)
 
 
 def resolve_player_item_download(language_slug: str, session_id: str, task_key: str, item_id: str) -> dict[str, Any] | None:
-    session = get_session(language_slug, session_id)
-    if session is None or task_key not in PHENOMENA_ITEM_TASKS or not session_has_task(session, task_key):
-        return None
-
-    bundle = _load_task_bundle(session, task_key)
-    if bundle is None:
-        return None
-
-    for item in bundle["items"]:
-        if item["item_id"] != item_id or item["split_audio_path"] is None:
-            continue
-        return {
-            "path": item["split_audio_path"],
-            "person_id": session.person_id,
-            "task_key": task_key,
-            "item_id": item["item_id"],
-            "download_label": item["text"],
-        }
-    return None
+    return _resolve_player_item_download_runtime(language_slug, session_id, task_key, item_id)

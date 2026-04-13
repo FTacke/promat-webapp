@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from ..research_capabilities import RESEARCH_TASK_KEYS
+
 
 SPEAKER_TYPES: tuple[str, ...] = (
     "learner",
@@ -13,11 +15,7 @@ SPEAKER_TYPES: tuple[str, ...] = (
 
 TARGET_LANGUAGES: tuple[str, ...] = ("es", "fr", "en", "de")
 
-TASK_TYPES: tuple[str, ...] = (
-    "wordlist",
-    "text",
-    "interview",
-)
+TASK_TYPES: tuple[str, ...] = RESEARCH_TASK_KEYS
 
 CONTEXT_VALUES: tuple[str, ...] = ("baseline", "follow_up")
 

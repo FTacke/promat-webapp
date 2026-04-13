@@ -22,6 +22,7 @@ from ..research_sets import (
     replace_set_sessions,
     save_set_as_new,
     update_set_metadata,
+    update_set_workbench_state,
 )
 
 blueprint = Blueprint("research_api", __name__, url_prefix="/api/research")
@@ -47,6 +48,38 @@ def _current_owner_user_id() -> str:
     return identity.strip()
 
 
+def _workbench_state_object(payload: dict[str, Any], *, required: bool = False) -> dict[str, Any]:
+    raw_workbench_state = payload.get("workbench_state", UNSET)
+    if raw_workbench_state is UNSET:
+        if required:
+            raise ResearchSetValidationError("workbench_state must be a JSON object when provided")
+        return {}
+    if not isinstance(raw_workbench_state, dict):
+        raise ResearchSetValidationError("workbench_state must be a JSON object when provided")
+    return raw_workbench_state
+
+
+def _validate_no_top_level_workbench_aliases(payload: dict[str, Any]) -> None:
+    for field_name in ("preferred_task", "comparison_view_task", "sessions"):
+        if field_name in payload:
+            raise ResearchSetValidationError(
+                f"Top-level '{field_name}' is no longer supported; use 'workbench_state.{field_name}' or the dedicated /sessions route"
+            )
+
+
+def _workbench_patch_values(payload: dict[str, Any]) -> dict[str, Any]:
+    values: dict[str, Any] = {}
+    workbench_state = _workbench_state_object(payload)
+    for field_name in ("preferred_task", "comparison_view_task"):
+        if field_name in workbench_state:
+            values[field_name] = workbench_state[field_name]
+    if "sessions" in workbench_state:
+        raise ResearchSetValidationError(
+            "workbench_state.sessions is not supported on PATCH; use the dedicated /api/research/sets/{set_id}/sessions route"
+        )
+    return values
+
+
 def _set_response_payload(record) -> dict[str, Any]:
     return {"set": record.to_dict()}
 
@@ -56,14 +89,20 @@ def _set_response_payload(record) -> dict[str, Any]:
 def create_set() -> tuple[Response, int]:
     try:
         payload = _json_object_payload()
+        _validate_no_top_level_workbench_aliases(payload)
+        workbench_state = _workbench_state_object(payload)
+        if "sessions" in workbench_state:
+            raise ResearchSetValidationError(
+                "workbench_state.sessions is not supported on create; use the dedicated /api/research/sets/{set_id}/sessions route after draft creation"
+            )
         record = create_draft_set(
             owner_user_id=_current_owner_user_id(),
             corpus_language=payload.get("corpus_language", ""),
             source_preset_id=payload.get("preset_id"),
-            preferred_task=payload.get("preferred_task"),
+            preferred_task=workbench_state.get("preferred_task"),
             label=payload.get("label"),
             note=payload.get("note"),
-            comparison_view_task=payload.get("comparison_view_task"),
+            comparison_view_task=workbench_state.get("comparison_view_task"),
         )
     except ResearchSetValidationError as exc:
         return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
@@ -114,15 +153,29 @@ def get_set(set_id: str) -> tuple[Response, int]:
 def patch_set(set_id: str) -> tuple[Response, int]:
     try:
         payload = _json_object_payload()
-        record = update_set_metadata(
-            owner_user_id=_current_owner_user_id(),
-            set_id=set_id,
-            label=payload["label"] if "label" in payload else UNSET,
-            note=payload["note"] if "note" in payload else UNSET,
-            state=payload["state"] if "state" in payload else UNSET,
-            preferred_task=payload["preferred_task"] if "preferred_task" in payload else UNSET,
-            comparison_view_task=payload["comparison_view_task"] if "comparison_view_task" in payload else UNSET,
-        )
+        _validate_no_top_level_workbench_aliases(payload)
+        owner_user_id = _current_owner_user_id()
+        record = None
+        if any(field_name in payload for field_name in ("label", "note", "state")):
+            record = update_set_metadata(
+                owner_user_id=owner_user_id,
+                set_id=set_id,
+                label=payload["label"] if "label" in payload else UNSET,
+                note=payload["note"] if "note" in payload else UNSET,
+                state=payload["state"] if "state" in payload else UNSET,
+            )
+
+        workbench_values = _workbench_patch_values(payload)
+        if workbench_values:
+            record = update_set_workbench_state(
+                owner_user_id=owner_user_id,
+                set_id=set_id,
+                preferred_task=workbench_values.get("preferred_task", UNSET),
+                comparison_view_task=workbench_values.get("comparison_view_task", UNSET),
+            )
+
+        if record is None:
+            record = load_owned_set(owner_user_id=owner_user_id, set_id=set_id)
     except ResearchSetValidationError as exc:
         return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
     except ResearchSetNotFoundError as exc:

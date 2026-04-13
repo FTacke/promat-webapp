@@ -299,7 +299,17 @@ def test_phenomena_pages_expose_english_labels_for_migrated_surfaces(phenomena_a
     assert editor_page["client_state"]["labels"]["untitled"] == "Untitled"
 
 
+def test_public_phenomena_overview_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:
+    client = phenomena_app.test_client()
+    response = client.get("/de/research/spanish/phenomena")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/login?next=/de/research/spanish/phenomena"
+
+
 def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: Flask) -> None:
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
     client = phenomena_app.test_client()
     response = client.get("/de/research/spanish/phenomena")
 
@@ -332,7 +342,17 @@ def test_public_phenomena_overview_route_renders_edit_action_for_owned_custom_se
     assert "Öffnen" not in html
 
 
+def test_public_preset_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:
+    client = phenomena_app.test_client()
+    response = client.get("/de/research/spanish/phenomena/presets/starter_preset")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/login?next=/de/research/spanish/phenomena/presets/starter_preset"
+
+
 def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) -> None:
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
     client = phenomena_app.test_client()
     response = client.get("/de/research/spanish/phenomena/presets/starter_preset")
 
@@ -353,7 +373,7 @@ def test_public_set_editor_route_redirects_to_login_without_auth(phenomena_app: 
     response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
 
     assert response.status_code == 302
-    assert "/login" in response.headers["Location"]
+    assert response.headers["Location"] == f"/login?next=/de/research/spanish/phenomena/sets/{draft.set_id}"
 
 
 def test_public_set_editor_route_renders_for_authenticated_owner(phenomena_app: Flask) -> None:

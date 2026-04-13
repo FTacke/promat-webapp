@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
+from ..research_capabilities import get_research_page_capability, get_research_page_order
 from ..research_sessions import load_language_sessions
 
 
@@ -91,13 +92,7 @@ PROJECT_PAGE_ORDER: tuple[tuple[str, str], ...] = (
     ("team", "project.team"),
 )
 
-RESEARCH_PAGE_ORDER: tuple[tuple[str, str], ...] = (
-    ("design", "research.design"),
-    ("speakers", "research.speakers"),
-    ("recordings", "research.recordings"),
-    ("comparison", "research.comparison"),
-    ("phenomena", "research.phenomena"),
-)
+RESEARCH_PAGE_ORDER: tuple[tuple[str, str], ...] = get_research_page_order()
 
 TEACHING_PAGE_ORDER: tuple[tuple[str, str], ...] = (
     ("phenomena", "teaching.phenomena"),
@@ -117,8 +112,8 @@ def get_supported_ui_language(ui_lang: str) -> str | None:
     return None
 
 
-def get_text(ui_lang: str, key: str) -> str:
-    return translate(ui_lang, key)
+def get_text(ui_lang: str, key: str, **kwargs: object) -> str:
+    return translate(ui_lang, key, **kwargs)
 
 
 def get_section_label(section_key: str, ui_lang: str) -> str:
@@ -178,7 +173,10 @@ def get_project_page_label(page_slug: str, ui_lang: str) -> str:
 
 
 def get_research_page_label(page_slug: str, ui_lang: str) -> str:
-    label_key = dict(RESEARCH_PAGE_ORDER)[page_slug]
+    capability = get_research_page_capability(page_slug)
+    if capability is None:
+        raise KeyError(page_slug)
+    label_key = capability.label_key
     return get_text(ui_lang, label_key)
 
 
@@ -589,7 +587,10 @@ def build_research_language_root_page(ui_lang: str, language_slug: str) -> dict[
 
 def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dict[str, Any] | None:
     language = get_language(language_slug)
+    capability = get_research_page_capability(page_slug)
     if language is None:
+        return None
+    if capability is None:
         return None
 
     title = get_language_label(language, ui_lang)
@@ -599,15 +600,20 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
         return {
             "title": page_title,
             "eyebrow": f"{get_section_label('research', ui_lang)} · {title}",
-            "intro": f"Die Seite {page_title} für {title} ist strukturell angelegt, inhaltlich aber noch nicht ausgebaut.",
-            "page_kind": "reading" if page_slug == "design" else "workbench",
-            "access": "prepared",
+            "intro": get_text(
+                ui_lang,
+                "research.placeholder.intro",
+                page_title=page_title,
+                language_title=title,
+            ),
+            "page_kind": capability.page_kind,
+            "access": capability.access,
             "sections": [
                 {
-                    "heading": "Vorbereitung statt Endausbau",
+                    "heading": get_text(ui_lang, "research.placeholder.heading"),
                     "paragraphs": [
-                        "Die Route existiert bereits mit dem finalen englischen technischen Schlüssel.",
-                        "Datenbindung, Freigabestufen und inhaltliche Kuratierung werden später sprachspezifisch ergänzt.",
+                        get_text(ui_lang, "research.placeholder.route_ready"),
+                        get_text(ui_lang, "research.placeholder.future_content"),
                     ],
                 }
             ],

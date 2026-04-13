@@ -6,9 +6,10 @@ For active PROMAT rules, consult these files first:
 
 1. `docs/spec/platform-data-files.md`
 2. `docs/spec/research-access.md`
-3. `docs/spec/intake-workbook.md`
-4. relevant scoped `AGENTS.md`
-5. runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `app/infra/docker-compose.prod.yml`
+3. `docs/spec/research-capabilities.md`
+4. `docs/spec/intake-workbook.md`
+5. relevant scoped `AGENTS.md`
+6. runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `app/infra/docker-compose.prod.yml`
 
 `docs/spec/` is the only active source of truth for current factual rules.
 
@@ -50,6 +51,8 @@ For active PROMAT rules, consult these files first:
 ## Change Discipline
 
 - If routing, data paths, IDs, vocabularies, research-access logic, or intake rules change, update the relevant file in `docs/spec/` in the same run.
+- If research task subsets, page capability metadata, render-mode vocabularies, or corpus-specific workbench readiness change, update `docs/spec/research-capabilities.md` in the same run.
+- Research-access changes must keep the corpus-scoped rule generic: under `/{ui_lang}/research/{corpus}` only `design` may stay public, while all other research pages, detail routes, and player-media routes must gate access before rendering and must not rely on corpus-specific exceptions.
 - If the shared app-shell or navigation hierarchy changes, update the active rule in `docs/spec/platform-data-files.md` in the same run.
 - If an active layout element changes on a real page and `sample` contains that element, update `app/templates/pages/sample_page.html` in the same run.
 - If a durable architectural decision is accepted, add or update an ADR in `docs/decisions/`.
