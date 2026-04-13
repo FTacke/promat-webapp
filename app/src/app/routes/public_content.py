@@ -240,6 +240,33 @@ def _research_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, 
     ]
 
 
+def _build_research_language_root_entries(
+    ui_lang: str,
+    language_slug: str,
+    *,
+    is_authenticated: bool,
+) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    for page_slug, _ in RESEARCH_PAGE_ORDER:
+        capability = get_research_page_capability(page_slug)
+        if capability is None:
+            continue
+        is_protected = capability.access == "protected"
+        is_muted = is_protected and not is_authenticated
+        entries.append(
+            {
+                "title": get_research_page_label(page_slug, ui_lang),
+                "text": get_text(ui_lang, f"research.root.{page_slug}.text"),
+                "href_key": f"research:{language_slug}:{page_slug}",
+                "button_label": get_research_page_label(page_slug, ui_lang),
+                "is_protected": is_protected,
+                "is_muted": is_muted,
+                "show_lock": is_muted,
+            }
+        )
+    return entries
+
+
 def _teaching_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, str]]:
     labels = {
         "phenomena": "Reduzierter Einstieg in didaktisch relevante Aussprachephänomene.",
@@ -447,140 +474,31 @@ PROJECT_PAGES: dict[str, dict[str, Any]] = {
 }
 
 
-def build_research_language_root_page(ui_lang: str, language_slug: str) -> dict[str, Any] | None:
+def build_research_language_root_page(
+    ui_lang: str,
+    language_slug: str,
+    *,
+    is_authenticated: bool,
+) -> dict[str, Any] | None:
     language = get_language(language_slug)
     if language is None:
         return None
 
-    title = get_language_label(language, ui_lang)
-    if language_slug == "spanish":
-        intro = (
-            "Der spanische Forschungsbereich bündelt die methodische Dokumentation des Korpus und die vorbereiteten Zugänge zu seinen Analyseoberflächen. Er ordnet personbezogene, sessionbezogene und phänomenbezogene Perspektiven in einer gemeinsamen Struktur."
-            if ui_lang == "de"
-            else "The Spanish research area brings together the corpus methodology and the prepared access paths to its analysis surfaces. It aligns person-based, session-based, and phenomenon-based perspectives within one shared structure."
-        )
-        hero_labels = {
-            "design": "Design öffnen →" if ui_lang == "de" else "Open design →",
-            "speakers": "Sprecher:innen öffnen →" if ui_lang == "de" else "Open speakers →",
-            "recordings": "Aufnahmen öffnen →" if ui_lang == "de" else "Open recordings →",
-            "comparison": "Vergleich öffnen →" if ui_lang == "de" else "Open comparison →",
-            "phenomena": "Phänomene öffnen →" if ui_lang == "de" else "Open phenomena →",
-        }
-        sections = [
-            {
-                "heading": "Überblick" if ui_lang == "de" else "Overview",
-                "paragraphs": [
-                    (
-                        "Die öffentlichen Seiten des spanischen Forschungsbereichs dokumentieren Aufbau, Zugriff und Auswertungsperspektiven des Korpus. Sie verbinden bereits verfügbare Arbeitsflächen mit konzeptionell vorbereiteten Modulen, die demselben Routen- und Navigationsschema folgen."
-                        if ui_lang == "de"
-                        else "The public pages in the Spanish research area document the corpus structure, access paths, and evaluation perspectives. They connect already available work surfaces with conceptually prepared modules that follow the same routing and navigation pattern."
-                    ),
-                ],
-            },
-            {
-                "heading": "Design",
-                "paragraphs": [
-                    (
-                        "Design dokumentiert Erhebungslogik, Materialauswahl und die methodischen Entscheidungen, die dem spanischen Korpus zugrunde liegen."
-                        if ui_lang == "de"
-                        else "Design documents the elicitation logic, material selection, and the methodological decisions behind the Spanish corpus."
-                    ),
-                ],
-            },
-            {
-                "heading": "Sprecher:innen" if ui_lang == "de" else "Speakers",
-                "paragraphs": [
-                    (
-                        "Sprecher:innen erschließt den Bestand personbezogen. Von dort führen Karten in Profile und zu den Aufnahmen der jeweils ausgewählten Session."
-                        if ui_lang == "de"
-                        else "Speakers opens the corpus from a person-based perspective. From there, cards lead into profiles and to the recordings for the selected session."
-                    ),
-                ],
-            },
-            {
-                "heading": "Aufnahmen" if ui_lang == "de" else "Recordings",
-                "paragraphs": [
-                    (
-                        "Aufnahmen ordnet denselben Bestand session- und taskbasiert. Die Oberfläche bündelt Wortliste, Text und Interview über gemeinsame Filter und Tabellenansichten."
-                        if ui_lang == "de"
-                        else "Recordings arranges the same corpus by session and task. The surface brings together wordlist, text, and interview views through shared filters and table-based access."
-                    ),
-                ],
-            },
-            {
-                "heading": "Vergleich" if ui_lang == "de" else "Comparison",
-                "paragraphs": [
-                    (
-                        "Vergleich ist als Zugriff auf einzelne Items über mehrere Sprecher:innen hinweg vorgesehen. Die Seite dient dem systematischen Gegenüberstellen vergleichbarer Realisationen."
-                        if ui_lang == "de"
-                        else "Comparison is designed as an item-based access path across multiple speakers. The page supports the systematic juxtaposition of comparable realizations."
-                    ),
-                ],
-            },
-            {
-                "heading": "Phänomene" if ui_lang == "de" else "Phenomena",
-                "paragraphs": [
-                    (
-                        "Phänomene ist als phänomenbezogener Zugang geplant. Die Seite soll Beobachtungen nach lautlichen oder prosodischen Kategorien bündeln, ohne die Person- und Sessionpfade zu ersetzen."
-                        if ui_lang == "de"
-                        else "Phenomena is planned as a phenomenon-based access path. The page groups observations by phonetic or prosodic categories without replacing the person and session paths."
-                    ),
-                ],
-            },
-        ]
-        return {
-            "title": title,
-            "eyebrow": get_section_label("research", ui_lang),
-            "intro": intro,
-            "page_kind": "reading",
-            "access": "public",
-            "hero_links": [
-                {
-                    "label": hero_labels["design"],
-                    "href_key": f"research:{language_slug}:design",
-                    "variant": "subtle",
-                },
-                {
-                    "label": hero_labels["speakers"],
-                    "href_key": f"research:{language_slug}:speakers",
-                    "variant": "subtle",
-                },
-                {
-                    "label": hero_labels["recordings"],
-                    "href_key": f"research:{language_slug}:recordings",
-                    "variant": "subtle",
-                },
-                {
-                    "label": hero_labels["comparison"],
-                    "href_key": f"research:{language_slug}:comparison",
-                    "variant": "subtle",
-                },
-                {
-                    "label": hero_labels["phenomena"],
-                    "href_key": f"research:{language_slug}:phenomena",
-                    "variant": "subtle",
-                },
-            ],
-            "sections": sections,
-            "is_language_root": True,
-        }
-
+    title = _research_corpus_card_title(language, ui_lang)
     return {
         "title": title,
         "eyebrow": get_section_label("research", ui_lang),
-        "intro": f"Der Forschungsbereich für {title} ist strukturell vorbereitet und folgt bereits dem neuen Route-Schema.",
+        "template": "pages/research_language_root.html",
+        "intro": get_text(ui_lang, "research.root.intro", corpus_title=title),
+        "access_note": get_text(ui_lang, "research.root.access_note"),
         "page_kind": "reading",
-        "access": "prepared",
-        "feature_cards": _research_feature_cards(language_slug, ui_lang),
-        "sections": [
-            {
-                "heading": "Vorbereiteter Stand",
-                "paragraphs": [
-                    "Die Sprach-Landingpage sowie die Seiten design, speakers, recordings, comparison und phenomena sind als konsistente Platzhalter angelegt.",
-                    "Fachinhalte, finale Datenbindung und spätere Restricted-Logik folgen in einem nächsten Ausbauschritt.",
-                ],
-            }
-        ],
+        "access": "public",
+        "research_entries": _build_research_language_root_entries(
+            ui_lang,
+            language_slug,
+            is_authenticated=is_authenticated,
+        ),
+        "sections": [],
         "is_language_root": True,
     }
 

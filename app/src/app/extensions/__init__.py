@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+from urllib.parse import unquote, urlparse
+
 from flask import Flask, jsonify, request
 from flask_caching import Cache
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+
+from ..i18n import resolve_ui_language, translate
 
 jwt = JWTManager()
 limiter = Limiter(
@@ -16,6 +20,27 @@ limiter = Limiter(
     strategy="fixed-window",
 )
 cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
+
+
+def _resolve_auth_ui_language() -> str:
+    raw_value = (request.view_args or {}).get("ui_lang") or request.values.get("ui_lang")
+    if not raw_value:
+        for candidate in (
+            request.values.get("next"),
+            request.args.get("next"),
+            request.referrer,
+            request.path,
+        ):
+            if not candidate:
+                continue
+            parsed = urlparse(unquote(candidate))
+            path = parsed.path or str(candidate)
+            if not path.startswith("/"):
+                continue
+            raw_value = path.lstrip("/").split("/", 1)[0]
+            if raw_value:
+                break
+    return resolve_ui_language(raw_value)
 
 
 def register_extensions(app: Flask) -> None:
@@ -46,7 +71,10 @@ def register_jwt_handlers() -> None:
 
         save_return_url()
         try:
-            flash("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.", "info")
+            flash(
+                translate(_resolve_auth_ui_language(), "auth.flash.session_expired"),
+                "info",
+            )
         except RuntimeError:
             pass
         return redirect(url_for("public.login"), 303)
@@ -61,7 +89,10 @@ def register_jwt_handlers() -> None:
 
         save_return_url()
         try:
-            flash("Ihre Anmeldung ist ungültig. Bitte melden Sie sich erneut an.", "info")
+            flash(
+                translate(_resolve_auth_ui_language(), "auth.flash.invalid_session"),
+                "info",
+            )
         except RuntimeError:
             pass
         return redirect(url_for("public.login"), 303)
@@ -76,7 +107,10 @@ def register_jwt_handlers() -> None:
 
         save_return_url()
         try:
-            flash("Bitte melden Sie sich an, um diesen Bereich zu nutzen.", "info")
+            flash(
+                translate(_resolve_auth_ui_language(), "auth.flash.login_required"),
+                "info",
+            )
         except RuntimeError:
             pass
         return redirect(url_for("public.login"), 303)

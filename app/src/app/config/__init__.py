@@ -56,6 +56,11 @@ class BaseConfig:
     AUTH_ARGON2_MEMORY_COST = int(_normalize_value(os.getenv("AUTH_ARGON2_MEMORY_COST") or "102400"))
     AUTH_ARGON2_PARALLELISM = int(_normalize_value(os.getenv("AUTH_ARGON2_PARALLELISM") or "4"))
     AUTH_ACCOUNT_ANONYMIZE_AFTER_DAYS = int(_normalize_value(os.getenv("AUTH_ACCOUNT_ANONYMIZE_AFTER_DAYS") or "30"))
+    AUTH_RESET_TOKEN_EXP_DAYS = int(_normalize_value(os.getenv("AUTH_RESET_TOKEN_EXP_DAYS") or "14"))
+    AUTH_ACCESS_REQUEST_EMAIL = _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_EMAIL") or "")
+    AUTH_ACCESS_REQUEST_SUBJECT = _normalize_value(
+        os.getenv("AUTH_ACCESS_REQUEST_SUBJECT") or 'Zugangsanfrage "Pronunciation Matters"'
+    )
     RESEARCH_SET_DRAFT_TTL_DAYS = int(_normalize_value(os.getenv("RESEARCH_SET_DRAFT_TTL_DAYS") or "14"))
 
     APP_REPOSITORY_URL = _normalize_value(os.getenv("APP_REPOSITORY_URL") or "")

@@ -8,7 +8,7 @@ This helper requires `AUTH_DATABASE_URL` and only supports PostgreSQL for
 auth/core workflows.
 
 Usage (PowerShell):
-    $env:START_ADMIN_USERNAME='admin'; $env:START_ADMIN_PASSWORD='change-me'; python scripts/create_initial_admin.py
+    $env:START_ADMIN_USERNAME='admin_dev'; $env:START_ADMIN_EMAIL='felix.tacke@uni-marburg.de'; $env:START_ADMIN_PASSWORD='change-me'; python scripts/create_initial_admin.py
 
 This script creates tables if missing and will either create a new admin user
 or update an existing user with the same username. When updating it will
@@ -36,8 +36,8 @@ def main():
     )
     parser.add_argument(
         "--email",
-        default=None,
-        help="Optional email for the admin (defaults to <username>@example.org)",
+        default=os.environ.get("START_ADMIN_EMAIL"),
+        help="Optional email for the admin (defaults to <username>@example.org unless START_ADMIN_EMAIL is set).",
     )
     parser.add_argument(
         "--display-name",
@@ -135,6 +135,9 @@ def main():
             existing = (
                 session.query(User).filter(User.username == args.username).first()
             )
+            normalized_email = (args.email or f"{args.username}@example.org").strip().lower()
+            if existing is None and normalized_email:
+                existing = session.query(User).filter(User.email == normalized_email).first()
             now = datetime.now(timezone.utc)
 
             def _safe_hash(pw: str) -> str:
@@ -149,6 +152,8 @@ def main():
 
             if existing:
                 # Idempotent update: unlock and reset password so admin is always usable in dev/staging
+                existing.username = args.username
+                existing.email = normalized_email
                 existing.role = "admin"
                 existing.is_active = True
                 existing.must_reset_password = False
@@ -171,7 +176,7 @@ def main():
                 u = User(
                     id=str(uuid.uuid4()),
                     username=args.username,
-                    email=args.email or f"{args.username}@example.org",
+                    email=normalized_email,
                     password_hash=_safe_hash(args.password),
                     role="admin",
                     is_active=True,

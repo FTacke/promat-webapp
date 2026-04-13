@@ -1,0 +1,46 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run research sessions tests",
+			"type": "shell",
+			"command": "c:/dev/promat/.venv/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"app/tests/test_research_sessions.py",
+				"-q"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run focused research root test",
+			"type": "shell",
+			"command": "c:/dev/promat/.venv/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"app/tests/test_research_sessions.py",
+				"-q",
+				"-k",
+				"research_language_root_shows_muted_locked_entries_for_signed_out_users"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run auth phase tests",
+			"type": "shell",
+			"command": "c:/dev/promat/.venv/Scripts/python.exe",
+			"args": [
+				"-m",
+				"pytest",
+				"app/tests/test_auth_phase1.py",
+				"-q"
+			],
+			"isBackground": false,
+			"group": "build"
+		}
+	]
+}

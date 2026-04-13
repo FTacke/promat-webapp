@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+
+{% block content %}
+<article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }} pm-research-language-root" aria-labelledby="promat-page-title">
+  {% set content_header = promat_page.content_header %}
+  {% include 'partials/_content_header.html' %}
+
+  <section class="pm-research-language-root__intro pm-reading" aria-label="{{ promat_page.title }}">
+    <p class="pm-research-language-root__note">{{ promat_page.access_note }}</p>
+  </section>
+
+  <div class="pm-research-language-root__list pm-reading" aria-label="{{ promat_page.title }}">
+    {% for entry in promat_page.research_entries %}
+    <section class="pm-research-language-root__item">
+      <div class="pm-research-language-root__body">
+        <h2 class="pm-research-language-root__title">{{ entry.title }}</h2>
+        <p class="pm-research-language-root__text">{{ entry.text }}</p>
+      </div>
+      <div class="pm-research-language-root__action-row">
+        <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action{{ ' is-muted' if entry.is_muted else '' }}" href="{{ entry.href }}">
+          {% if entry.show_lock %}
+          <span class="pm-icon-mask pm-icon-mask--lock" aria-hidden="true"></span>
+          {% endif %}
+          <span>{{ entry.button_label }}</span>
+        </a>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+</article>
+{% endblock %}

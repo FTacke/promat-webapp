@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run isolated QA server 8001",
+			"type": "shell",
+			"command": "c:/dev/promat/.venv/Scripts/python.exe",
+			"args": [
+				"c:/dev/promat/tmp/ui-qa/2026-04-13-research-corpus-landing-106/serve_research_corpus_landing_106.py"
+			],
+			"isBackground": true,
+			"group": "build"
+		}
+	]
+}

@@ -5,11 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 import re
+from urllib.parse import unquote, urlparse
 
 from flask import Blueprint, abort, g, jsonify, make_response, render_template, request, send_file, url_for
 from sqlalchemy import text
 
+from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
+from ..i18n import resolve_ui_language
 from ..research_capabilities import get_research_page_surface_mode
 from ..research_access import requires_research_auth
 from ..research_phenomena_views import (
@@ -71,6 +74,22 @@ def _request_next_value() -> str:
 
 def _research_login_redirect():
     return _redirect(url_for("public.login", next=_request_next_value()))
+
+
+def _resolve_auth_ui_lang(next_value: str | None = None) -> str:
+    raw_value = request.args.get("ui_lang") or request.values.get("ui_lang")
+    if not raw_value:
+        for candidate in (next_value, request.referrer, request.path):
+            if not candidate:
+                continue
+            parsed = urlparse(unquote(candidate))
+            path = parsed.path or str(candidate)
+            if not path.startswith("/"):
+                continue
+            raw_value = path.lstrip("/").split("/", 1)[0]
+            if raw_value:
+                break
+    return resolve_ui_language(raw_value)
 
 
 def _require_research_route_access(*, page_slug: str | None = None, detail_route: str | None = None):
@@ -194,6 +213,7 @@ def _panel_items_for_project(ui_lang: str) -> list[dict[str, str]]:
 
 def _panel_items_for_language(section_key: str, language_slug: str, ui_lang: str) -> list[dict[str, str]]:
     if section_key == "research":
+        is_authenticated = getattr(g, "user_id", None) is not None
         return [
             {
                 "label": get_research_page_label(page_slug, ui_lang),
@@ -204,6 +224,9 @@ def _panel_items_for_language(section_key: str, language_slug: str, ui_lang: str
                     page_slug=page_slug,
                 ),
                 "page_slug": page_slug,
+                "is_protected": requires_research_auth(page_slug=page_slug),
+                "is_muted": requires_research_auth(page_slug=page_slug) and not is_authenticated,
+                "show_lock": requires_research_auth(page_slug=page_slug) and not is_authenticated,
             }
             for page_slug, _ in RESEARCH_PAGE_ORDER
         ]
@@ -264,6 +287,7 @@ def _render_promat_page(
     page_context["feature_cards"] = _linkify(page_context.get("feature_cards", []), ui_lang)
     page_context["corpus_cards"] = _linkify(page_context.get("corpus_cards", []), ui_lang)
     page_context["landing_cards"] = _linkify(page_context.get("landing_cards", []), ui_lang)
+    page_context["research_entries"] = _linkify(page_context.get("research_entries", []), ui_lang)
     if page_context.get("more_link"):
         page_context["more_link"] = _linkify([page_context["more_link"]], ui_lang)[0]
 
@@ -457,7 +481,7 @@ def sample_page(ui_lang: str):
     landing_page = build_start_page(ui_lang)
     research_select_page = build_research_select_page(ui_lang)
     teaching_select_page = build_teaching_select_page(ui_lang)
-    research_feature_page = build_research_language_root_page(ui_lang, "french") or {}
+    research_feature_page = build_research_language_root_page(ui_lang, "french", is_authenticated=False) or {}
     teaching_feature_page = build_teaching_language_root_page(ui_lang, "spanish") or {}
     page = {
         "title": "Sample",
@@ -470,7 +494,7 @@ def sample_page(ui_lang: str):
         "sample_landing_cards": _linkify(landing_page.get("landing_cards", []), ui_lang),
         "sample_research_cards": _linkify(research_select_page.get("corpus_cards", []), ui_lang),
         "sample_teaching_cards": _linkify(teaching_select_page.get("corpus_cards", []), ui_lang),
-        "sample_research_feature_cards": _linkify(research_feature_page.get("feature_cards", []), ui_lang),
+        "sample_research_root_entries": _linkify(research_feature_page.get("research_entries", []), ui_lang),
         "sample_teaching_feature_cards": _linkify(teaching_feature_page.get("feature_cards", []), ui_lang),
         "sample_speaker_cards": _sample_speaker_cards(ui_lang),
     }
@@ -494,13 +518,16 @@ def sample_page(ui_lang: str):
 @blueprint.get("/login", endpoint="login")
 def login_page():
     next_url = request.args.get("next") or ""
+    ui_lang = _resolve_auth_ui_lang(next_url)
     response = make_response(
         render_template(
             "auth/login.html",
             next=next_url,
+            auth_ui_lang=ui_lang,
+            access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
             page_name="login",
             shell_class="app-shell--panel-hidden",
-            ui_lang=DEFAULT_UI_LANGUAGE,
+            ui_lang=ui_lang,
         )
     )
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
@@ -593,14 +620,33 @@ def research_language_root(ui_lang: str, language_slug: str):
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
         abort(404)
-    return _redirect(
-        url_for(
-            "public.research_language_page",
+    language = get_language(canonical_language_slug)
+    page = build_research_language_root_page(
+        ui_lang,
+        canonical_language_slug,
+        is_authenticated=getattr(g, "user_id", None) is not None,
+    )
+    if page is None or language is None:
+        abort(404)
+
+    language_label = get_language_label(language, ui_lang)
+    panel = _panel_config(
+        section_key="research",
+        section_label=get_section_label("research", ui_lang),
+        active_slug="language-root",
+        language_label=language_label,
+        context_mode="language",
+        context_title=language_label,
+        context_root_href=url_for(
+            "public.research_language_root",
             ui_lang=ui_lang,
             language_slug=canonical_language_slug,
-            page_slug="design",
-        )
+        ),
+        context_back_href=url_for("public.research_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
+        items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
+    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/<page_slug>")

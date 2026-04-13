@@ -8,6 +8,11 @@
  * Show MD3 Snackbar for expired session
  * Persists until user interacts (no auto-dismiss)
  */
+function getSnackbarHost() {
+  const openDialogs = Array.from(document.querySelectorAll('dialog[open]'));
+  return openDialogs.at(-1) || document.body;
+}
+
 export function showAuthExpiredSnackbar() {
   // Check if snackbar already exists
   if (document.querySelector(".md3-snackbar--auth-expired")) {
@@ -38,7 +43,7 @@ export function showAuthExpiredSnackbar() {
   `;
 
   // Add to DOM
-  document.body.appendChild(snackbar);
+  getSnackbarHost().appendChild(snackbar);
 
   // Animate in
   requestAnimationFrame(() => {

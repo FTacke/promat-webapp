@@ -11,6 +11,11 @@ const ANIMATION_DURATION = 300; // Match CSS transition
 let currentSnackbar = null;
 let hideTimeout = null;
 
+function getSnackbarHost() {
+  const openDialogs = Array.from(document.querySelectorAll('dialog[open]'));
+  return openDialogs.at(-1) || document.body;
+}
+
 /**
  * Show a snackbar notification
  * @param {string} message - The message to display
@@ -46,7 +51,7 @@ export function showSnackbar(message, type = 'success', duration = SNACKBAR_DURA
   dismissBtn.addEventListener('click', () => hideSnackbar());
 
   // Add to DOM
-  document.body.appendChild(snackbar);
+  getSnackbarHost().appendChild(snackbar);
   currentSnackbar = snackbar;
 
   // Trigger animation (need a frame delay for CSS transition)
@@ -131,3 +136,4 @@ if (document.readyState === 'loading') {
 
 // Export for global access
 window.MD3Snackbar = { showSnackbar, hideSnackbar };
+window.showSnackbar = showSnackbar;

@@ -845,15 +845,79 @@ def test_project_page_uses_inner_shell_with_section_sidebar_header(url_app: Flas
     assert 'class="pm-breadcrumb' not in html
 
 
-@pytest.mark.parametrize("ui_lang", ["de", "en"])
-@pytest.mark.parametrize("language_slug", ["spanish", "french", "german", "english"])
-def test_research_language_root_redirects_to_design(url_app: Flask, ui_lang: str, language_slug: str) -> None:
+@pytest.mark.parametrize(
+    ("ui_lang", "language_slug", "expected_title"),
+    [
+        ("de", "spanish", "Spanisch-Korpus"),
+        ("de", "french", "Französisch-Korpus"),
+        ("de", "german", "Deutsch-Korpus"),
+        ("de", "english", "Englisch-Korpus"),
+        ("en", "spanish", "Spanish corpus"),
+        ("en", "french", "French corpus"),
+        ("en", "german", "German corpus"),
+        ("en", "english", "English corpus"),
+    ],
+)
+def test_research_language_root_renders_public_landing_with_real_page_links(
+    url_app: Flask,
+    ui_lang: str,
+    language_slug: str,
+    expected_title: str,
+) -> None:
     client = url_app.test_client()
 
     response = client.get(f"/{ui_lang}/research/{language_slug}")
 
-    assert response.status_code == 302
-    assert response.headers["Location"] == f"/{ui_lang}/research/{language_slug}/design"
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'href="/{ui_lang}/research/{language_slug}/design"' in html
+    assert f'href="/{ui_lang}/research/{language_slug}/speakers"' in html
+    assert f'href="/{ui_lang}/research/{language_slug}/recordings"' in html
+    assert f'href="/{ui_lang}/research/{language_slug}/comparison"' in html
+    assert f'href="/{ui_lang}/research/{language_slug}/phenomena"' in html
+    assert expected_title in html
+    if ui_lang == "de":
+        assert "Nicht alle Bereiche sind öffentlich." in html
+        assert html.count(f"{expected_title} bietet einen öffentlichen Einstieg") == 1
+    else:
+        assert "Not every area is public." in html
+        assert html.count(f"{expected_title} offers a public entry point") == 1
+
+
+def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/research/spanish")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "pm-research-language-root__action is-muted" in html
+    assert 'pm-research-language-root__item is-muted' not in html
+    assert "pm-nav__item--muted" in html
+    assert "pm-icon-mask--lock" in html
+    assert "Login erforderlich" not in html
+
+
+def test_research_design_page_shows_muted_locked_sidebar_entries_for_signed_out_users(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "pm-nav__item--muted" in html
+    assert "pm-icon-mask--lock" in html
+
+
+def test_research_design_page_keeps_sidebar_entries_unmuted_for_authenticated_users(url_app: Flask) -> None:
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    response = client.get("/de/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "pm-nav__item--muted" not in html
 
 
 def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> None:
@@ -1034,6 +1098,9 @@ def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -
     assert 'Korpus öffnen →' in html
     assert 'Materialien öffnen →' in html
     assert 'Aktuell keine erfassten Learner-Sessions im Bestand.' in html
+    assert 'Research-Einstieg auf Sprach-Unterseiten' in html
+    assert 'pm-research-language-root__item' in html
+    assert 'pm-icon-mask--lock' in html
 
 
 def test_sample_page_uses_current_research_component_patterns(url_app: Flask) -> None:

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from importlib import metadata
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -17,6 +18,29 @@ from .extensions import register_extensions
 from .routes import register_blueprints
 from .runtime_paths import get_logs_dir
 from .config import load_config
+
+
+def _resolve_request_ui_language() -> str:
+    """Resolve UI language for routes that do not carry a ui_lang path segment."""
+    raw_value = (request.view_args or {}).get("ui_lang") or request.values.get("ui_lang")
+    if not raw_value:
+        for candidate in (
+            request.values.get("next"),
+            request.args.get("next"),
+            request.referrer,
+            request.path,
+        ):
+            if not candidate:
+                continue
+            parsed = urlparse(unquote(candidate))
+            path = parsed.path or str(candidate)
+            if not path.startswith("/"):
+                continue
+            first_segment = path.lstrip("/").split("/", 1)[0]
+            if first_segment:
+                raw_value = first_segment
+                break
+    return resolve_ui_language(raw_value)
 
 
 def _verify_critical_dependencies() -> list[str]:
@@ -175,15 +199,23 @@ def register_context_processors(app: Flask) -> None:
     if app.extensions.get("promat_context_processors_registered"):
         return
 
+    def static_asset(filename: str) -> str:
+        static_root = Path(app.static_folder or "")
+        target = static_root / filename
+        if target.exists():
+            return url_for("static", filename=filename, v=str(target.stat().st_mtime_ns))
+        return url_for("static", filename=filename)
+
     @app.context_processor
     def inject_utilities():  # pragma: no cover - thin wrapper
-        current_ui_lang = resolve_ui_language((request.view_args or {}).get("ui_lang"))
+        current_ui_lang = _resolve_request_ui_language()
         return {
             "now": lambda: datetime.now(timezone.utc),
             "app_version": app.config.get("APP_VERSION", ""),
             "app_release_tag": app.config.get("APP_RELEASE_TAG", ""),
             "app_release_url": app.config.get("APP_RELEASE_URL", ""),
             "format_page_title": format_page_title,
+            "static_asset": static_asset,
             "current_ui_lang": current_ui_lang,
             "t": lambda key, **kwargs: translate(current_ui_lang, key, **kwargs),
             **BRANDING,

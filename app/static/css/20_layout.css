@@ -803,6 +803,15 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-inline: auto;
 }
 
+.promat-auth-page {
+  gap: clamp(1.5rem, 2vw, 2rem);
+}
+
+.promat-auth-page__section--public {
+  display: grid;
+  gap: clamp(1.4rem, 2.4vw, 1.8rem);
+}
+
 .md3-page__header,
 .md3-page__main,
 .md3-text-page {

@@ -1,556 +1,562 @@
-/**
- * Admin User Management
- * 
- * Handles user listing, creation, editing, and password reset.
- * MD3-conform implementation with filter chips and edit dialog.
- */
-document.addEventListener('DOMContentLoaded', function () {
-  // Helper function to get CSRF token from cookie
+document.addEventListener('DOMContentLoaded', () => {
+  function readConfig() {
+    const element = document.getElementById('admin-users-config');
+    if (!element) {
+      return {};
+    }
+    try {
+      const raw = (element.content && element.content.textContent) || element.innerHTML || '{}';
+      return JSON.parse(raw);
+    } catch (error) {
+      console.error('Failed to parse admin users config.', error);
+      return {};
+    }
+  }
+
   function getCsrfToken() {
     const match = document.cookie.match(/csrf_access_token=([^;]+)/);
     return match ? match[1] : '';
   }
 
-  // DOM Elements - List
+  function buildAdminUrl(path, params) {
+    const url = new URL(path, window.location.origin);
+    if (uiLang) {
+      url.searchParams.set('ui_lang', uiLang);
+    }
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          url.searchParams.set(key, value);
+        }
+      });
+    }
+    return `${url.pathname}${url.search}`;
+  }
+
+  const config = readConfig();
+  const text = config.i18n || {};
+  const uiLang = config.uiLang || 'de';
+  const locale = uiLang === 'en' ? 'en-GB' : 'de-DE';
+  const roleLabels = {
+    user: text.roleUser || 'User',
+    editor: text.roleEditor || 'Editor',
+    admin: text.roleAdmin || 'Admin',
+  };
+  const roleIcons = {
+    user: 'person',
+    editor: 'edit_note',
+    admin: 'verified_user',
+  };
+  const statusLabels = {
+    active: text.statusActive || 'Active',
+    inactive: text.statusInactive || 'Inactive',
+    expired: text.statusExpired || 'Expired',
+  };
+  const statusIcons = {
+    active: 'check_circle',
+    inactive: 'cancel',
+    expired: 'schedule',
+  };
+
   const listBody = document.getElementById('list-body');
   const refreshBtn = document.getElementById('refresh');
   const searchInput = document.getElementById('admin-search');
   const filterInactiveBtn = document.getElementById('filter-inactive');
-  
-  // DOM Elements - Create Dialog
+
   const createBtn = document.getElementById('create');
   const createDialog = document.getElementById('create-user-dialog');
   const createForm = document.getElementById('create-user-form');
   const cancelCreateBtn = document.getElementById('cancel-create');
-  
-  // DOM Elements - Invite Dialog
+
   const inviteDialog = document.getElementById('invite-dialog');
   const inviteLinkCode = document.getElementById('invite-link');
-  const closeInviteBtn = document.getElementById('close-invite');
-  const copyInviteBtn = document.getElementById('copy-invite');
+  const inviteMailSubject = document.getElementById('invite-mail-subject');
+  const inviteMailBody = document.getElementById('invite-mail-body');
   const inviteMeta = document.getElementById('invite-meta');
-  
-  // DOM Elements - Edit Dialog
+  const copyInviteBtn = document.getElementById('copy-invite');
+  const copyInviteMailBtn = document.getElementById('copy-invite-mail');
+  const closeInviteBtn = document.getElementById('close-invite');
+  const inviteCopyStatus = document.getElementById('invite-copy-status');
+
   const editDialog = document.getElementById('user-edit-dialog');
-  const cancelEditBtn = document.getElementById('cancel-edit');
   const saveEditBtn = document.getElementById('save-edit');
+  const cancelEditBtn = document.getElementById('cancel-edit');
   const editUserId = document.getElementById('edit-user-id');
-  const editUsername = document.getElementById('edit-username');
   const editEmail = document.getElementById('edit-email');
   const editEmailError = document.getElementById('edit-email-error');
+  const editAccessExpiresOn = document.getElementById('edit-access-expires-on');
   const editRole = document.getElementById('edit-role');
   const editIsActive = document.getElementById('edit-is-active');
   const editResetPasswordBtn = document.getElementById('edit-reset-password');
   const editError = document.getElementById('user-edit-error');
 
-  // State
   let includeInactive = false;
   let searchDebounce = null;
+  let toastTimer = null;
 
-  // Utility functions
-  function formatDate(isoString) {
-    if (!isoString) return '-';
-    return new Date(isoString).toLocaleString('de-DE');
+  function t(key, fallback = '') {
+    return text[key] || fallback;
   }
 
-  function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+  function escapeHtml(value) {
+    const node = document.createElement('div');
+    node.textContent = value || '';
+    return node.innerHTML;
   }
 
-  // Role icon mapping for badges
-  const roleIcons = {
-    admin: 'verified_user',
-    editor: 'edit',
-    user: 'person'
-  };
+  function formatDateTime(value) {
+    if (!value) {
+      return '–';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString(locale);
+  }
+
+  function setDialogOpen(dialog, open) {
+    if (!dialog) {
+      return;
+    }
+    if (open) {
+      try {
+        dialog.showModal();
+      } catch (error) {
+        dialog.setAttribute('open', 'true');
+      }
+      return;
+    }
+    try {
+      dialog.close();
+    } catch (error) {
+      dialog.removeAttribute('open');
+    }
+  }
+
+  function dismissToast() {
+    const existing = document.querySelector('.pm-admin-toast');
+    if (existing) {
+      existing.remove();
+    }
+    if (toastTimer) {
+      window.clearTimeout(toastTimer);
+      toastTimer = null;
+    }
+  }
+
+  function getToastHost() {
+    const openDialogs = Array.from(document.querySelectorAll('dialog[open]'));
+    return openDialogs.at(-1) || document.body;
+  }
+
+  function showToast(message, type = 'success') {
+    const globalSnackbar = window.showSnackbar || window.MD3Snackbar?.showSnackbar;
+    if (globalSnackbar) {
+      globalSnackbar(message, type);
+      return;
+    }
+    dismissToast();
+    const toast = document.createElement('div');
+    toast.className = `pm-admin-toast${type === 'error' ? ' pm-admin-toast--error' : ''}`;
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.innerHTML = `
+      <p class="pm-admin-toast__eyebrow">${escapeHtml(t('notice', 'Notice'))}</p>
+      <p class="pm-admin-toast__text">${escapeHtml(message)}</p>
+      <button type="button" class="pm-research-inline-action pm-research-inline-action--secondary pm-research-inline-action--compact pm-admin-toast__action">${escapeHtml(t('close', 'Close'))}</button>
+    `;
+    getToastHost().appendChild(toast);
+    const action = toast.querySelector('.pm-admin-toast__action');
+    if (action) {
+      action.addEventListener('click', dismissToast);
+    }
+    toastTimer = window.setTimeout(dismissToast, 4000);
+  }
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || '');
+  }
 
   function renderRoleBadge(role) {
-    const icon = roleIcons[role] || 'person';
     return `
-      <span class="md3-badge md3-badge--small md3-badge--role-${role}">
-        <span class="material-symbols-rounded md3-badge__icon" aria-hidden="true">${icon}</span>
-        ${role}
+      <span class="pm-admin-badge pm-admin-badge--role-${escapeHtml(role)}">
+        <span class="material-symbols-rounded pm-admin-badge__icon" aria-hidden="true">${roleIcons[role] || 'person'}</span>
+        <span>${escapeHtml(roleLabels[role] || role)}</span>
       </span>
     `;
   }
 
-  function renderStatusBadge(isActive) {
-    if (isActive) {
-      return `
-        <span class="md3-badge md3-badge--small md3-badge--status-active">
-          <span class="material-symbols-rounded md3-badge__icon" aria-hidden="true">check_circle</span>
-          Aktiv
-        </span>
-      `;
-    }
+  function renderStatusBadge(statusCode) {
     return `
-      <span class="md3-badge md3-badge--small md3-badge--status-inactive">
-        <span class="material-symbols-rounded md3-badge__icon" aria-hidden="true">cancel</span>
-        Inaktiv
+      <span class="pm-admin-badge pm-admin-badge--status-${escapeHtml(statusCode)}">
+        <span class="material-symbols-rounded pm-admin-badge__icon" aria-hidden="true">${statusIcons[statusCode] || 'info'}</span>
+        <span>${escapeHtml(statusLabels[statusCode] || statusCode)}</span>
       </span>
     `;
   }
 
   function renderRow(user) {
-    const tr = document.createElement('tr');
-    tr.dataset.userId = user.id;
-    tr.innerHTML = `
-      <td><span class="md3-body-medium">${escapeHtml(user.username)}</span></td>
-      <td><span class="md3-body-small">${escapeHtml(user.email || '-')}</span></td>
+    const row = document.createElement('tr');
+    row.dataset.userId = user.id;
+    row.innerHTML = `
+      <td>
+        <div class="pm-admin-table__email">
+          <span class="pm-admin-table__primary">${escapeHtml(user.email || '–')}</span>
+          <span class="pm-admin-table__meta">${escapeHtml(t('createdAtLabel', 'Created at'))}: ${escapeHtml(formatDateTime(user.created_at))}</span>
+        </div>
+      </td>
       <td>${renderRoleBadge(user.role)}</td>
-      <td>${renderStatusBadge(user.is_active)}</td>
-      <td class="md3-hide-mobile"><span class="md3-body-small">${formatDate(user.created_at)}</span></td>
-      <td class="md3-table__actions">
-        <button class="md3-button md3-button--icon edit-user-btn" data-id="${user.id}" title="Benutzer bearbeiten" aria-label="Benutzer bearbeiten">
-          <span class="material-symbols-rounded">edit</span>
-        </button>
+      <td>${renderStatusBadge(user.status_code)}</td>
+      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(user.access_expires_on || '–')}</span></td>
+      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(formatDateTime(user.created_at))}</span></td>
+      <td>
+        <div class="pm-admin-table__actions">
+          <button class="pm-research-inline-action pm-research-inline-action--secondary pm-research-inline-action--compact pm-admin-table__action edit-user-btn" type="button" data-id="${escapeHtml(user.id)}" title="${escapeHtml(t('editTitle', 'Edit user'))}" aria-label="${escapeHtml(t('editTitle', 'Edit user'))}">
+            <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+            <span>${escapeHtml(t('editTitle', 'Edit user'))}</span>
+          </button>
+        </div>
       </td>
     `;
-    return tr;
+    return row;
+  }
+
+  function setLoadingState() {
+    if (!listBody) {
+      return;
+    }
+    listBody.innerHTML = `<tr><td colspan="6" class="pm-admin-table__empty">${escapeHtml(t('loading', 'Loading...'))}</td></tr>`;
+  }
+
+  function showEditError(message) {
+    if (!editError) {
+      showToast(message, 'error');
+      return;
+    }
+    const messageElement = editError.querySelector('.pm-admin-alert__text');
+    if (messageElement) {
+      messageElement.textContent = message;
+    }
+    editError.hidden = false;
+  }
+
+  function clearEditError() {
+    if (editError) {
+      editError.hidden = true;
+    }
+    if (editEmailError) {
+      editEmailError.textContent = '';
+    }
+  }
+
+  function populateInviteDialog(payload) {
+    if (inviteLinkCode) {
+      inviteLinkCode.textContent = payload.inviteLink || '';
+    }
+    if (inviteMailSubject) {
+      inviteMailSubject.value = payload.inviteMailSubject || '';
+    }
+    if (inviteMailBody) {
+      inviteMailBody.value = payload.inviteMailBody || '';
+    }
+    if (inviteMeta) {
+      inviteMeta.textContent = payload.inviteExpiresAt ? `${t('expiresPrefix', 'Valid until')}: ${formatDateTime(payload.inviteExpiresAt)}` : '';
+    }
+  }
+
+  function copyText(value, successMessage) {
+    if (!navigator.clipboard) {
+      showToast(t('copyFailed', 'Copy failed.'), 'error');
+      return;
+    }
+    navigator.clipboard.writeText(value)
+      .then(() => {
+        if (inviteCopyStatus) {
+          inviteCopyStatus.textContent = successMessage;
+        }
+        showToast(successMessage, 'success');
+        window.setTimeout(() => {
+          if (inviteCopyStatus) {
+            inviteCopyStatus.textContent = '';
+          }
+        }, 1500);
+      })
+      .catch((error) => {
+        console.error(error);
+        showToast(t('copyFailed', 'Copy failed.'), 'error');
+      });
+  }
+
+  function openEditDialog(userId) {
+    if (!userId) {
+      return;
+    }
+    clearEditError();
+    fetch(buildAdminUrl(`/admin/users/${encodeURIComponent(userId)}`), {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(t('loadError', 'Could not load users.'));
+        }
+        return response.json();
+      })
+      .then((user) => {
+        if (editUserId) {
+          editUserId.value = user.id;
+        }
+        if (editEmail) {
+          editEmail.value = user.email || '';
+        }
+        if (editAccessExpiresOn) {
+          editAccessExpiresOn.value = user.access_expires_on || '';
+        }
+        if (editRole) {
+          editRole.value = user.role;
+        }
+        if (editIsActive) {
+          editIsActive.checked = Boolean(user.is_active);
+        }
+        setDialogOpen(editDialog, true);
+      })
+      .catch((error) => {
+        console.error(error);
+        showToast(error.message || t('loadError', 'Could not load users.'), 'error');
+      });
+  }
+
+  function bindEditButtons() {
+    document.querySelectorAll('.edit-user-btn').forEach((button) => {
+      button.addEventListener('click', () => openEditDialog(button.dataset.id));
+    });
   }
 
   function reload() {
-    listBody.innerHTML = '<tr class="md3-table__empty-row"><td colspan="6"><div class="md3-empty-inline"><span class="material-symbols-rounded" aria-hidden="true">hourglass_empty</span><span>Lade...</span></div></td></tr>';
-    
+    if (!listBody) {
+      return;
+    }
+    setLoadingState();
     const params = new URLSearchParams();
     if (includeInactive) {
       params.set('include_inactive', '1');
     }
-    const q = searchInput?.value?.trim();
-    if (q) {
-      params.set('q', q);
+    const query = searchInput ? searchInput.value.trim() : '';
+    if (query) {
+      params.set('q', query);
     }
-    
-    const url = '/admin/users' + (params.toString() ? '?' + params.toString() : '');
-    
-    fetch(url, { credentials: 'same-origin' })
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to load users');
-        return r.json();
+
+    fetch(buildAdminUrl('/admin/users', Object.fromEntries(params.entries())), {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(t('loadError', 'Could not load users.'));
+        }
+        return response.json();
       })
-      .then((data) => {
+      .then((payload) => {
         listBody.innerHTML = '';
-        if (!data.items || data.items.length === 0) {
-          listBody.innerHTML = `
-            <tr class="md3-table__empty-row">
-              <td colspan="6">
-                <div class="md3-empty-inline">
-                  <span class="material-symbols-rounded" aria-hidden="true">person_off</span>
-                  <span>Keine Benutzer gefunden.</span>
-                </div>
-              </td>
-            </tr>
-          `;
+        if (!payload.items || payload.items.length === 0) {
+          listBody.innerHTML = `<tr><td colspan="6" class="pm-admin-table__empty">${escapeHtml(t('noUsers', 'No users found.'))}</td></tr>`;
           return;
         }
-        data.items.forEach(user => {
-          listBody.appendChild(renderRow(user));
-        });
-        
-        attachRowEventListeners();
+        payload.items.forEach((user) => listBody.appendChild(renderRow(user)));
+        bindEditButtons();
       })
-      .catch((err) => {
-        console.error(err);
-        listBody.innerHTML = '<tr><td colspan="6" class="md3-text-center md3-text-error">Fehler beim Laden der Benutzer.</td></tr>';
+      .catch((error) => {
+        console.error(error);
+        listBody.innerHTML = `<tr><td colspan="6" class="pm-admin-table__empty">${escapeHtml(error.message || t('loadError', 'Could not load users.'))}</td></tr>`;
       });
-  }
-
-  function attachRowEventListeners() {
-    // Edit button handlers
-    document.querySelectorAll('.edit-user-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const uid = e.currentTarget.dataset.id;
-        openEditDialog(uid);
-      });
-    });
-  }
-
-  // Edit Dialog Functions
-  function openEditDialog(userId) {
-    // Reset form state
-    if (editError) editError.hidden = true;
-    if (editEmailError) editEmailError.textContent = '';
-    if (editEmail) editEmail.classList.remove('md3-outlined-textfield__input--error');
-    
-    // Fetch user data
-    fetch(`/admin/users/${encodeURIComponent(userId)}`, { credentials: 'same-origin' })
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        
-        // Populate form
-        if (editUserId) editUserId.value = data.id;
-        if (editUsername) editUsername.value = data.username;
-        if (editEmail) editEmail.value = data.email || '';
-        if (editRole) editRole.value = data.role;
-        if (editIsActive) editIsActive.checked = data.is_active;
-        
-        // Add floating label class if email has value
-        updateFloatingLabel(editEmail);
-        
-        // Open dialog
-        if (editDialog) {
-          try { editDialog.showModal(); } catch (e) { editDialog.setAttribute('open', 'true'); }
-        }
-      })
-      .catch(err => {
-        console.error('Error loading user:', err);
-        showSnackbar('Fehler beim Laden der Benutzerdaten.', 'error');
-      });
-  }
-
-  function updateFloatingLabel(input) {
-    if (!input) return;
-    const textfield = input.closest('.md3-outlined-textfield');
-    const label = textfield?.querySelector('.md3-outlined-textfield__label');
-    if (label) {
-      if (input.value) {
-        label.classList.add('md3-outlined-textfield__label--floating');
-      } else {
-        label.classList.remove('md3-outlined-textfield__label--floating');
-      }
-    }
-  }
-
-  function validateEmail(email) {
-    if (!email) return true; // Empty is valid (optional)
-    const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return regex.test(email);
   }
 
   function saveEdit() {
-    const userId = editUserId?.value;
-    const email = editEmail?.value?.trim() || '';
-    const role = editRole?.value;
-    const isActive = editIsActive?.checked;
-    
-    // Client-side validation
-    if (email && !validateEmail(email)) {
-      if (editEmailError) editEmailError.textContent = 'Ungültiges E-Mail-Format';
-      if (editEmail) editEmail.classList.add('md3-outlined-textfield__input--error');
+    if (!editUserId || !editUserId.value) {
       return;
     }
-    
-    if (editEmailError) editEmailError.textContent = '';
-    if (editEmail) editEmail.classList.remove('md3-outlined-textfield__input--error');
-    if (editError) editError.hidden = true;
-    
-    // Disable save button during request
+    clearEditError();
+    const email = editEmail ? editEmail.value.trim() : '';
+    if (!validateEmail(email)) {
+      if (editEmailError) {
+        editEmailError.textContent = t('invalidEmail', 'Please enter a valid email address.');
+      }
+      showEditError(t('invalidEmail', 'Please enter a valid email address.'));
+      return;
+    }
+
+    const originalLabel = saveEditBtn ? saveEditBtn.textContent : '';
     if (saveEditBtn) {
       saveEditBtn.disabled = true;
-      saveEditBtn.innerHTML = '<span class="material-symbols-rounded md3-button__icon md3-button__icon--loading" aria-hidden="true">progress_activity</span>Speichern...';
+      saveEditBtn.textContent = t('saving', 'Saving...');
     }
-    
-    fetch(`/admin/users/${encodeURIComponent(userId)}`, {
+
+    fetch(buildAdminUrl(`/admin/users/${encodeURIComponent(editUserId.value)}`), {
       method: 'PATCH',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': getCsrfToken()
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
       },
       credentials: 'same-origin',
       body: JSON.stringify({
-        email: email || null,
-        role: role,
-        is_active: isActive
-      })
+        email,
+        role: editRole ? editRole.value : 'user',
+        is_active: editIsActive ? editIsActive.checked : true,
+        access_expires_on: editAccessExpiresOn ? editAccessExpiresOn.value : '',
+      }),
     })
-    .then(r => r.json())
-    .then(resp => {
-      if (saveEditBtn) {
-        saveEditBtn.disabled = false;
-        saveEditBtn.innerHTML = 'Speichern';
-      }
-      
-      if (resp.ok) {
-        if (editDialog) {
-          try { editDialog.close(); } catch (e) { editDialog.removeAttribute('open'); }
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!payload.ok) {
+          throw new Error(payload.error || t('networkError', 'Network error. Please try again.'));
         }
+        setDialogOpen(editDialog, false);
         reload();
-        showSnackbar('Benutzer wurde aktualisiert.', 'success');
-      } else {
-        // Show error in dialog
-        const errorMsg = resp.message || resp.error || 'Unbekannter Fehler';
-        if (editError) {
-          const msgEl = editError.querySelector('.md3-alert__message');
-          if (msgEl) msgEl.textContent = errorMsg;
-          editError.hidden = false;
+        showToast(t('updated', 'User updated.'), 'success');
+      })
+      .catch((error) => {
+        console.error(error);
+        showEditError(error.message || t('networkError', 'Network error. Please try again.'));
+      })
+      .finally(() => {
+        if (saveEditBtn) {
+          saveEditBtn.disabled = false;
+          saveEditBtn.textContent = originalLabel || t('save', 'Save');
         }
-      }
-    })
-    .catch(err => {
-      if (saveEditBtn) {
-        saveEditBtn.disabled = false;
-        saveEditBtn.innerHTML = 'Speichern';
-      }
-      console.error('Save error:', err);
-      if (editError) {
-        const msgEl = editError.querySelector('.md3-alert__message');
-        if (msgEl) msgEl.textContent = 'Netzwerkfehler beim Speichern.';
-        editError.hidden = false;
-      }
-    });
+      });
   }
 
-  function resetPasswordFromEditDialog() {
-    const userId = editUserId?.value;
-    if (!userId) return;
-    
-    // Disable button during request
-    if (editResetPasswordBtn) {
-      editResetPasswordBtn.disabled = true;
-      editResetPasswordBtn.innerHTML = '<span class="material-symbols-rounded md3-button__icon md3-button__icon--loading" aria-hidden="true">progress_activity</span>Wird gesendet...';
-    }
-    
-    fetch(`/admin/users/${encodeURIComponent(userId)}/reset-password`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': getCsrfToken()
-      },
-      credentials: 'same-origin'
-    })
-    .then(r => r.json())
-    .then(resp => {
-      if (editResetPasswordBtn) {
-        editResetPasswordBtn.disabled = false;
-        editResetPasswordBtn.innerHTML = '<span class="material-symbols-rounded md3-button__icon" aria-hidden="true">mail</span>Passwort zurücksetzen';
-      }
-      
-      if (resp.ok && resp.inviteLink) {
-        // Show the invite link dialog
-        if (inviteLinkCode) inviteLinkCode.textContent = resp.inviteLink;
-        if (inviteMeta && resp.inviteExpiresAt) {
-          inviteMeta.textContent = `Gültig bis: ${new Date(resp.inviteExpiresAt).toLocaleString('de-DE')}`;
-        } else if (inviteMeta) {
-          inviteMeta.textContent = '';
-        }
-        // Close edit dialog first, then show invite dialog
-        if (editDialog) {
-          try { editDialog.close(); } catch (e) { editDialog.removeAttribute('open'); }
-        }
-        if (inviteDialog) inviteDialog.showModal();
-      } else if (resp.ok) {
-        showSnackbar('Passwort-Reset wurde erstellt.', 'success');
-      } else {
-        showSnackbar('Fehler: ' + (resp.error || 'Unbekannter Fehler'), 'error');
-      }
-    })
-    .catch(err => {
-      if (editResetPasswordBtn) {
-        editResetPasswordBtn.disabled = false;
-        editResetPasswordBtn.innerHTML = '<span class="material-symbols-rounded md3-button__icon" aria-hidden="true">mail</span>Passwort zurücksetzen';
-      }
-      console.error('Reset error:', err);
-      showSnackbar('Netzwerkfehler beim Zurücksetzen.', 'error');
-    });
-  }
-
-  // Snackbar function (fallback if core module not available)
-  function showSnackbar(message, type = 'success') {
-    // Check if the core snackbar module is available
-    if (window.showSnackbar) {
-      window.showSnackbar(message, type);
+  function prepareReset() {
+    if (!editUserId || !editUserId.value) {
       return;
     }
-    
-    // Fallback: create a basic snackbar
-    const existing = document.querySelector('.md3-snackbar');
-    if (existing) existing.remove();
-    
-    const snackbar = document.createElement('div');
-    snackbar.className = `md3-snackbar md3-snackbar--${type}`;
-    snackbar.setAttribute('role', 'status');
-    snackbar.setAttribute('aria-live', 'polite');
-    
-    const iconMap = { success: 'check_circle', error: 'error', info: 'info' };
-    snackbar.innerHTML = `
-      <span class="material-symbols-rounded md3-snackbar__icon" aria-hidden="true">${iconMap[type] || 'info'}</span>
-      <span class="md3-snackbar__message">${escapeHtml(message)}</span>
-      <button class="md3-snackbar__action" type="button" aria-label="Schließen">OK</button>
-    `;
-    
-    document.body.appendChild(snackbar);
-    requestAnimationFrame(() => snackbar.classList.add('visible'));
-    
-    const dismiss = () => {
-      snackbar.classList.remove('visible');
-      setTimeout(() => snackbar.remove(), 300);
-    };
-    
-    snackbar.querySelector('.md3-snackbar__action').addEventListener('click', dismiss);
-    setTimeout(dismiss, 4000);
+    const originalLabel = editResetPasswordBtn ? editResetPasswordBtn.textContent : '';
+    if (editResetPasswordBtn) {
+      editResetPasswordBtn.disabled = true;
+      editResetPasswordBtn.textContent = t('sending', 'Preparing...');
+    }
+
+    fetch(buildAdminUrl(`/admin/users/${encodeURIComponent(editUserId.value)}/reset-password`), {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
+      },
+      credentials: 'same-origin',
+    })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!payload.ok) {
+          throw new Error(payload.error || t('networkError', 'Network error. Please try again.'));
+        }
+        populateInviteDialog(payload);
+        setDialogOpen(editDialog, false);
+        setDialogOpen(inviteDialog, true);
+        showToast(t('resetPrepared', 'Password link prepared.'), 'success');
+      })
+      .catch((error) => {
+        console.error(error);
+        showToast(error.message || t('networkError', 'Network error. Please try again.'), 'error');
+      })
+      .finally(() => {
+        if (editResetPasswordBtn) {
+          editResetPasswordBtn.disabled = false;
+          editResetPasswordBtn.textContent = originalLabel || t('resetPassword', 'Prepare new link');
+        }
+      });
   }
 
-  // Event Listeners
-  if (refreshBtn) refreshBtn.addEventListener('click', reload);
-  
-  // Filter chip toggle
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', reload);
+  }
   if (filterInactiveBtn) {
     filterInactiveBtn.addEventListener('click', () => {
       includeInactive = !includeInactive;
-      filterInactiveBtn.classList.toggle('md3-chip--selected', includeInactive);
-      filterInactiveBtn.setAttribute('aria-pressed', includeInactive.toString());
-      
-      // Update icon
-      const icon = filterInactiveBtn.querySelector('.md3-chip__icon');
+      filterInactiveBtn.classList.toggle('is-active', includeInactive);
+      filterInactiveBtn.setAttribute('aria-pressed', includeInactive ? 'true' : 'false');
+      const icon = filterInactiveBtn.querySelector('.material-symbols-rounded');
       if (icon) {
         icon.textContent = includeInactive ? 'visibility' : 'visibility_off';
       }
-      
       reload();
     });
   }
-  
-  // Search input with debounce
   if (searchInput) {
     searchInput.addEventListener('input', () => {
-      clearTimeout(searchDebounce);
-      searchDebounce = setTimeout(reload, 300);
+      window.clearTimeout(searchDebounce);
+      searchDebounce = window.setTimeout(reload, 250);
     });
   }
-  
-  // Copy invite link
-  if (copyInviteBtn && inviteLinkCode) {
-    copyInviteBtn.addEventListener('click', () => {
-      const text = inviteLinkCode.textContent || inviteLinkCode.innerText || '';
-      navigator.clipboard.writeText(text).then(() => {
-        const icon = copyInviteBtn.querySelector('.material-symbols-rounded');
-        if (icon) icon.textContent = 'check';
-        copyInviteBtn.classList.add('is-success');
-        const status = document.getElementById('invite-copy-status');
-        if (status) status.textContent = 'Invite-Link in die Zwischenablage kopiert.';
-        setTimeout(() => {
-          if (icon) icon.textContent = 'content_copy';
-          copyInviteBtn.classList.remove('is-success');
-          if (status) status.textContent = '';
-        }, 2000);
-      }).catch(err => {
-        const status = document.getElementById('invite-copy-status');
-        if (status) status.textContent = 'Kopieren fehlgeschlagen.';
-        copyInviteBtn.classList.add('is-error');
-        const icon = copyInviteBtn.querySelector('.material-symbols-rounded');
-        if (icon) icon.textContent = 'error';
-        setTimeout(() => {
-          if (icon) icon.textContent = 'content_copy';
-          copyInviteBtn.classList.remove('is-error');
-          if (status) status.textContent = '';
-        }, 2000);
-        console.error('Clipboard error', err);
-      });
-    });
-  }
-  
-  // Create user dialog
-  if (createBtn && createDialog) {
+  if (createBtn) {
     createBtn.addEventListener('click', () => {
-      createForm.reset();
-      createDialog.showModal();
-      const first = document.getElementById('new-username');
-      if (first) {
-        setTimeout(() => first.focus(), 40);
+      if (createForm) {
+        createForm.reset();
       }
+      setDialogOpen(createDialog, true);
     });
   }
-
-  if (cancelCreateBtn && createDialog) {
-    cancelCreateBtn.addEventListener('click', () => {
-      createDialog.close();
-    });
+  if (cancelCreateBtn) {
+    cancelCreateBtn.addEventListener('click', () => setDialogOpen(createDialog, false));
   }
-
   if (createForm) {
-    createForm.addEventListener('submit', (e) => {
-      e.preventDefault();
+    createForm.addEventListener('submit', (event) => {
+      event.preventDefault();
       const formData = new FormData(createForm);
-      const data = Object.fromEntries(formData.entries());
-
-      fetch('/admin/users', {
+      const payload = Object.fromEntries(formData.entries());
+      if (!validateEmail((payload.email || '').trim())) {
+        showToast(t('invalidEmail', 'Please enter a valid email address.'), 'error');
+        return;
+      }
+      fetch(buildAdminUrl('/admin/users'), {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'Accept': 'application/json',
-          'X-CSRF-TOKEN': getCsrfToken()
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': getCsrfToken(),
         },
         credentials: 'same-origin',
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       })
-      .then(r => r.json())
-      .then(resp => {
-        if (resp.ok) {
-          createDialog.close();
-          reload();
-          if (resp.inviteLink) {
-            inviteLinkCode.textContent = resp.inviteLink;
-            if (resp.inviteExpiresAt) {
-              inviteMeta.textContent = `Gültig bis: ${new Date(resp.inviteExpiresAt).toLocaleString('de-DE')}`;
-            } else {
-              inviteMeta.textContent = '';
-            }
-            inviteDialog.showModal();
-          } else {
-            showSnackbar('Benutzer angelegt.', 'success');
+        .then((response) => response.json())
+        .then((payloadResponse) => {
+          if (!payloadResponse.ok) {
+            throw new Error(payloadResponse.error || t('networkError', 'Network error. Please try again.'));
           }
-        } else {
-          showSnackbar('Fehler: ' + (resp.error || 'Unbekannter Fehler'), 'error');
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        showSnackbar('Netzwerkfehler beim Anlegen des Benutzers.', 'error');
-      });
+          setDialogOpen(createDialog, false);
+          populateInviteDialog(payloadResponse);
+          setDialogOpen(inviteDialog, true);
+          reload();
+          showToast(t('created', 'User created.'), 'success');
+        })
+        .catch((error) => {
+          console.error(error);
+          showToast(error.message || t('networkError', 'Network error. Please try again.'), 'error');
+        });
     });
   }
-
-  if (closeInviteBtn && inviteDialog) {
-    closeInviteBtn.addEventListener('click', () => {
-      inviteDialog.close();
-      inviteLinkCode.textContent = '';
-      if (inviteMeta) inviteMeta.textContent = '';
+  if (copyInviteBtn) {
+    copyInviteBtn.addEventListener('click', () => copyText(inviteLinkCode ? inviteLinkCode.textContent || '' : '', t('copiedLink', 'Link copied.')));
+  }
+  if (copyInviteMailBtn) {
+    copyInviteMailBtn.addEventListener('click', () => {
+      const mailText = `${inviteMailSubject ? inviteMailSubject.value : ''}\n\n${inviteMailBody ? inviteMailBody.value : ''}`.trim();
+      copyText(mailText, t('copiedMail', 'Email copied.'));
     });
   }
-
-  // Edit dialog handlers
-  if (cancelEditBtn && editDialog) {
-    cancelEditBtn.addEventListener('click', () => {
-      try { editDialog.close(); } catch (e) { editDialog.removeAttribute('open'); }
-    });
+  if (closeInviteBtn) {
+    closeInviteBtn.addEventListener('click', () => setDialogOpen(inviteDialog, false));
   }
-
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener('click', () => setDialogOpen(editDialog, false));
+  }
   if (saveEditBtn) {
     saveEditBtn.addEventListener('click', saveEdit);
   }
-
   if (editResetPasswordBtn) {
-    editResetPasswordBtn.addEventListener('click', resetPasswordFromEditDialog);
+    editResetPasswordBtn.addEventListener('click', prepareReset);
   }
 
-  // Update floating labels on input
-  if (editEmail) {
-    editEmail.addEventListener('input', () => updateFloatingLabel(editEmail));
-    editEmail.addEventListener('focus', () => {
-      const label = editEmail.closest('.md3-outlined-textfield')?.querySelector('.md3-outlined-textfield__label');
-      if (label) label.classList.add('md3-outlined-textfield__label--floating');
-    });
-    editEmail.addEventListener('blur', () => updateFloatingLabel(editEmail));
-  }
-
-  // Close dialogs on backdrop click
-  [createDialog, inviteDialog, editDialog].forEach(dialog => {
-    if (dialog) {
-      dialog.addEventListener('click', (e) => {
-        if (e.target === dialog) {
-          dialog.close();
-        }
-      });
-    }
-  });
-
-  // Initial load
   reload();
 });

@@ -2,6 +2,9 @@ param(
 	[switch]$SkipInstall,
 	[switch]$SkipDevServer,
 	[switch]$ResetAuth,
+	[string]$StartAdminUsername = 'admin_dev',
+	[string]$StartAdminEmail = 'felix.tacke@uni-marburg.de',
+	[string]$StartAdminDisplayName = 'Felix Tacke',
 	[string]$StartAdminPassword = 'change-me'
 )
 
@@ -36,6 +39,9 @@ if (-not $env:PROMAT_PUBLIC_ROOT) {
 }
 if (-not $env:AUTH_DATABASE_URL) {
 	$env:AUTH_DATABASE_URL = 'postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth'
+}
+if (-not $env:AUTH_ACCESS_REQUEST_EMAIL) {
+	$env:AUTH_ACCESS_REQUEST_EMAIL = 'felix.tacke@uni-marburg.de'
 }
 if (-not $env:FLASK_ENV) {
 	$env:FLASK_ENV = 'development'
@@ -92,7 +98,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if ($StartAdminPassword) {
-	& $pythonSource (Join-Path $appRoot 'scripts\create_initial_admin.py') --password $StartAdminPassword
+	& $pythonSource (Join-Path $appRoot 'scripts\create_initial_admin.py') --username $StartAdminUsername --email $StartAdminEmail --display-name $StartAdminDisplayName --password $StartAdminPassword
 	if ($LASTEXITCODE -ne 0) {
 		throw 'Initialer Admin konnte nicht angelegt werden.'
 	}

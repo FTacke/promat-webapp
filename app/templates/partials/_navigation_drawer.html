@@ -23,8 +23,13 @@
     <nav class="promat-panel__nav" aria-label="{{ t('shell.panel.navigation') }}">
       {% for item in panel['items'] %}
       <a href="{{ item.href }}"
-         class="promat-panel__link pm-nav__item {{ 'is-active pm-nav__item--active' if panel['active_slug'] == item.page_slug else '' }}"
-         aria-current="{{ 'page' if panel['active_slug'] == item.page_slug else 'false' }}">{{ item.label }}</a>
+         class="promat-panel__link pm-nav__item {{ 'is-active pm-nav__item--active' if panel['active_slug'] == item.page_slug else '' }}{{ ' pm-nav__item--muted' if item.get('is_muted') else '' }}"
+         aria-current="{{ 'page' if panel['active_slug'] == item.page_slug else 'false' }}">
+        {% if item.get('show_lock') %}
+        <span class="pm-icon-mask pm-icon-mask--lock promat-panel__item-lock" aria-hidden="true"></span>
+        {% endif %}
+        <span class="promat-panel__item-label">{{ item.label }}</span>
+      </a>
       {% endfor %}
     </nav>
 

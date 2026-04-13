@@ -8,6 +8,13 @@ auth_login_plan.md
 
 ## Status und Zweck
 
+Stand 2026-04-13:
+
+- Die erste produktive Auth-Phase wurde umgesetzt.
+- Der nachfolgende Korrektur- und Polish-Run schärft sichtbare Copy, Branding, `mailto`-Vollständigkeit, Dev-Admin-Bootstrap und Browser-QA nach.
+- Der anschließende Layout-/UX-Konsolidierungsrun hat die öffentlichen Login-, Passwort-Reset- und Passwort-vergessen-Flächen in die aktuelle PROMAT-Formensprache überführt und die Zugangsanfrage als sekundären Bereich unter dem Primärflow stabilisiert.
+- Die aktiven bindenden Regeln dazu liegen nicht mehr nur in diesem Plan, sondern insbesondere in `docs/spec/platform-data-files.md`.
+
 Dieses Dokument legt die fachliche und technische Zielrichtung für Auth, Login, Zugangsanfrage, Account-Erstellung, Einladungslogik, Passwort-Setup, Passwort-Reset und accountbezogene Statusmeldungen in der PROMAT-Webapp fest.
 
 Es dient als Referenz für die nächsten Umsetzungsruns rund um:

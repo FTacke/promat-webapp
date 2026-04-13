@@ -10,8 +10,10 @@ import hashlib
 import secrets
 import uuid
 from dataclasses import dataclass
+from datetime import date
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
+from urllib.parse import quote
 
 from flask import current_app
 from flask_jwt_extended import create_access_token
@@ -22,6 +24,8 @@ from werkzeug.security import (
     check_password_hash,
 )  # supports scrypt, pbkdf2_sha256, etc.
 
+from ..branding import BRANDING
+from ..i18n import translate
 from ..extensions.sqlalchemy_ext import get_session
 from .models import User, RefreshToken, ResetToken
 
@@ -35,6 +39,9 @@ class AccountStatus:
     ok: bool
     code: Optional[str] = None
     message: Optional[str] = None
+
+
+_UNSET = object()
 
 
 # Password hashing
@@ -377,10 +384,181 @@ def find_user_by_username_or_email(identifier: str) -> Optional[User]:
         return session.execute(stmt2).scalars().first()
 
 
+def normalize_email(email: str) -> str:
+    return (email or "").strip().lower()
+
+
+def access_request_contact_email() -> str:
+    return current_app.config.get("AUTH_ACCESS_REQUEST_EMAIL") or BRANDING["contact_email"]
+
+
+def access_request_subject() -> str:
+    return current_app.config.get("AUTH_ACCESS_REQUEST_SUBJECT") or 'Zugangsanfrage "Pronunciation Matters"'
+
+
+def build_access_request_mailto(ui_lang: str) -> str:
+    body = translate(
+        ui_lang,
+        "auth.access_request.body",
+        app_name=BRANDING["app_display_name"],
+        institution=BRANDING["institution_name"],
+    )
+    return f"mailto:{access_request_contact_email()}?subject={quote(access_request_subject())}&body={quote(body)}"
+
+
+def find_user_by_email(email: str) -> Optional[User]:
+    normalized = normalize_email(email)
+    if not normalized:
+        return None
+    with get_session() as session:
+        stmt = select(User).where(User.email == normalized)
+        return session.execute(stmt).scalars().first()
+
+
+def _build_internal_username(email: str, session) -> str:
+    base = normalize_email(email)
+    candidate = base
+    suffix = 1
+    while session.execute(select(User).where(User.username == candidate)).scalars().first():
+        candidate = f"{base}-{suffix}"
+        suffix += 1
+    return candidate
+
+
 def get_user_by_id(user_id: str) -> Optional[User]:
     with get_session() as session:
         stmt = select(User).where(User.id == user_id)
         return session.execute(stmt).scalars().first()
+
+
+def list_users(*, include_inactive: bool = False, search_query: str | None = None) -> list[User]:
+    normalized_query = (search_query or "").strip().lower()
+    with get_session() as session:
+        stmt = select(User).order_by(User.created_at.desc(), User.email.asc(), User.username.asc())
+        items = list(session.execute(stmt).scalars().all())
+        if not include_inactive:
+            items = [item for item in items if item.deleted_at is None]
+        if normalized_query:
+            items = [
+                item
+                for item in items
+                if normalized_query in (item.email or "").lower()
+                or normalized_query in (item.username or "").lower()
+                or normalized_query in (item.display_name or "").lower()
+            ]
+        return items
+
+
+def create_user(
+    *,
+    email: str,
+    role: str = "user",
+    display_name: str | None = None,
+    is_active: bool = True,
+    access_expires_at: datetime | None = None,
+) -> User:
+    normalized_email = normalize_email(email)
+    if not normalized_email:
+        raise ValueError("email_required")
+
+    now = datetime.now(timezone.utc)
+    with get_session() as session:
+        existing = session.execute(select(User).where(User.email == normalized_email)).scalars().first()
+        if existing:
+            raise ValueError("email_exists")
+
+        user = User(
+            id=str(uuid.uuid4()),
+            username=_build_internal_username(normalized_email, session),
+            email=normalized_email,
+            password_hash=hash_password(secrets.token_urlsafe(32)),
+            role=role,
+            is_active=bool(is_active),
+            must_reset_password=True,
+            created_at=now,
+            updated_at=now,
+            access_expires_at=access_expires_at,
+            display_name=(display_name or "").strip() or None,
+        )
+        session.add(user)
+        session.flush()
+        return user
+
+
+def update_user_admin(
+    user_id: str,
+    *,
+    email: str | None = None,
+    role: str | None = None,
+    is_active: bool | None = None,
+    access_expires_at: Any = _UNSET,
+) -> User:
+    with get_session() as session:
+        stmt = select(User).where(User.id == user_id)
+        user = session.execute(stmt).scalars().first()
+        if not user:
+            raise KeyError("user_not_found")
+
+        if email is not None:
+            normalized_email = normalize_email(email)
+            if not normalized_email:
+                raise ValueError("email_required")
+            existing = session.execute(select(User).where(User.email == normalized_email, User.id != user_id)).scalars().first()
+            if existing:
+                raise ValueError("email_exists")
+            user.email = normalized_email
+
+        if role is not None:
+            user.role = role
+
+        if is_active is not None:
+            user.is_active = bool(is_active)
+
+        if access_expires_at is not _UNSET:
+            user.access_expires_at = access_expires_at
+
+        user.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        return user
+
+
+def mark_user_for_password_reset(user_id: str) -> User:
+    with get_session() as session:
+        stmt = select(User).where(User.id == user_id)
+        user = session.execute(stmt).scalars().first()
+        if not user:
+            raise KeyError("user_not_found")
+        user.must_reset_password = True
+        user.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        return user
+
+
+def admin_status_code(user: User) -> str:
+    if user.deleted_at is not None:
+        return "inactive"
+    if not user.is_active:
+        return "inactive"
+    if user.access_expires_at and _ensure_utc(user.access_expires_at) < datetime.now(timezone.utc):
+        return "expired"
+    return "active"
+
+
+def serialize_user_for_admin(user: User) -> dict[str, Any]:
+    return {
+        "id": str(user.id),
+        "username": user.username,
+        "email": user.email,
+        "display_name": user.display_name,
+        "role": user.role,
+        "is_active": bool(user.is_active),
+        "must_reset_password": bool(user.must_reset_password),
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "updated_at": user.updated_at.isoformat() if user.updated_at else None,
+        "access_expires_at": user.access_expires_at.isoformat() if user.access_expires_at else None,
+        "access_expires_on": _ensure_utc(user.access_expires_at).date().isoformat() if user.access_expires_at else "",
+        "status_code": admin_status_code(user),
+    }
 
 
 def update_user_password(user_id: str, new_hashed: str) -> None:
@@ -391,6 +569,7 @@ def update_user_password(user_id: str, new_hashed: str) -> None:
             raise KeyError("user_not_found")
         user.password_hash = new_hashed
         user.must_reset_password = False
+        user.updated_at = datetime.now(timezone.utc)
 
 
 def update_user_profile(
@@ -417,7 +596,12 @@ def update_user_profile(
         if display_name is not None:
             setattr(user, "display_name", display_name)
         if email is not None:
-            user.email = email.lower()
+            normalized_email = normalize_email(email)
+            existing = session.execute(select(User).where(User.email == normalized_email, User.id != user_id)).scalars().first()
+            if existing:
+                raise ValueError("email_exists")
+            user.email = normalized_email
+        user.updated_at = datetime.now(timezone.utc)
 
 
 def mark_user_deleted(user_id: str) -> None:
@@ -435,14 +619,13 @@ def create_reset_token_for_user(user: User) -> Tuple[str, ResetToken]:
     """Create a reset token for a user.
 
     Expiration is configurable via the Flask config key
-    'AUTH_RESET_TOKEN_EXP_DAYS' (default: 7 days).
+    'AUTH_RESET_TOKEN_EXP_DAYS' (default: 14 days).
     Returns the raw token string and the created ResetToken row.
     """
     raw = secrets.token_urlsafe(48)
     token_hash = _hash_refresh_token(raw)
     rid = str(uuid.uuid4())
-    # Default to 7 days unless overridden in app config
-    days = int(current_app.config.get("AUTH_RESET_TOKEN_EXP_DAYS", 7))
+    days = int(current_app.config.get("AUTH_RESET_TOKEN_EXP_DAYS", 14))
     expires_at = datetime.now(timezone.utc) + timedelta(days=days)
     rt = ResetToken(
         id=rid,
@@ -452,8 +635,27 @@ def create_reset_token_for_user(user: User) -> Tuple[str, ResetToken]:
         expires_at=expires_at,
     )
     with get_session() as session:
+        session.query(ResetToken).filter(
+            ResetToken.user_id == str(user.id),
+            ResetToken.used_at.is_(None),
+        ).update({ResetToken.used_at: datetime.now(timezone.utc)})
         session.add(rt)
     return raw, rt
+
+
+def inspect_reset_token(raw: str) -> Tuple[Optional[ResetToken], str]:
+    """Verify reset token without consuming it. Returns (row, status)."""
+    h = _hash_refresh_token(raw)
+    with get_session() as session:
+        stmt = select(ResetToken).where(ResetToken.token_hash == h)
+        r = session.execute(stmt).scalars().first()
+        if not r:
+            return None, "invalid"
+        if r.used_at is not None:
+            return None, "used"
+        if _ensure_utc(r.expires_at) < datetime.now(timezone.utc):
+            return None, "expired"
+        return r, "ok"
 
 
 def verify_and_use_reset_token(raw: str) -> Tuple[Optional[ResetToken], str]:
@@ -481,6 +683,7 @@ def on_successful_login(user: User) -> None:
             dbu.login_failed_count = 0
             dbu.locked_until = None
             dbu.last_login_at = datetime.now(timezone.utc)
+            dbu.updated_at = datetime.now(timezone.utc)
 
 
 def on_failed_login(user: Optional[User]) -> None:
@@ -494,3 +697,4 @@ def on_failed_login(user: Optional[User]) -> None:
             # Lockout policy: 5 failed attempts -> lock for 10 minutes
             if dbu.login_failed_count >= 5:
                 dbu.locked_until = datetime.now(timezone.utc) + timedelta(minutes=10)
+            dbu.updated_at = datetime.now(timezone.utc)

@@ -38,10 +38,11 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 ### Corpus-scoped public boundary
 
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page.
-- The corpus root `/{ui_lang}/research/{corpus}` resolves to that same design entry and does not remain a second public research overview page.
+- The corpus root `/{ui_lang}/research/{corpus}` is a public orientation page that explains the available research paths for that corpus and links to the canonical page routes.
 - All other research pages and detail routes under one concrete corpus path are authenticated research-app surfaces.
 - Access clarification belongs at the route boundary: unauthenticated requests are redirected to login with a safe return target, and the protected workbench or media response must not already render in the background.
 - There are no corpus-specific access exceptions such as public comparison or public phenomena variants outside `design`.
+- On public research pages for unauthenticated users, protected research destinations remain visibly linked but render in a muted locked state without repeating login CTA copy at each entry.
 
 ### Protected research surfaces
 

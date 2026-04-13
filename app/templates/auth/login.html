@@ -1,93 +1,86 @@
 {% extends "_md3_skeletons/auth_login_skeleton.html" %}
 
-{% block page_title %}{{ format_page_title('Login') }}{% endblock %}
+{% block page_title %}{{ format_page_title(t('auth.login.page_title')) }}{% endblock %}
 
-{% set auth_heading = 'Login' %}
-{% set auth_intro = 'Melden Sie sich an, um den geschützten Bereich von PROMAT zu nutzen.' %}
+{% set auth_heading = t('auth.login.heading') %}
+{% set auth_intro = t('auth.login.intro') %}
 {% set auth_breadcrumbs = [
-  { 'label': 'Start', 'href': url_for('public.landing_page'), 'current': false },
-  { 'label': 'Login', 'href': none, 'current': true },
+  { 'label': BRANDING.app_display_name if BRANDING is defined else 'Pronunciation Matters', 'href': url_for('public.landing_page'), 'current': false },
+  { 'label': t('auth.login.heading'), 'href': none, 'current': true },
 ] %}
 
 {% block auth_body %}
-<article class="md3-card md3-card--outlined md3-auth-card login-card">
-  <div class="md3-card__content">
-
-          <!-- Error Messages (if any) -->
-          {# Global form error banner (MD3, compact inline) #}
-          {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-              <div class="md3-alert md3-alert--error md3-alert--inline md3-alert--field" role="alert" aria-live="assertive">
-                <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">error</span>
-                <div class="md3-alert__content">
-                  <p class="md3-alert__title">Error</p>
-                  {% for category, message in messages %}
-                    <p class="md3-alert__text">{{ message }}</p>
-                  {% endfor %}
-                </div>
-              </div>
-            {% endif %}
-          {% endwith %}
-
-          <!-- Login Form - Standard HTML POST (no HTMX) -->
-          <form id="login-form" 
-              class="md3-auth-form" 
-              method="post" 
-              action="{{ url_for('auth.login_post') }}"
-              novalidate>
-            
-            <!-- Username Field -->
-            <div class="md3-outlined-textfield md3-outlined-textfield--block">
-              <input 
-                type="text" 
-                class="md3-outlined-textfield__input" 
-                name="username" 
-                id="login-username"
-                autocomplete="username" 
-                required
-                aria-label="Benutzername"
-                minlength="1"
-                maxlength="50">
-              <label class="md3-outlined-textfield__label" for="login-username">Benutzername oder E-Mail</label>
-              <span class="md3-outlined-textfield__outline">
-                <span class="md3-outlined-textfield__outline-start"></span>
-                <span class="md3-outlined-textfield__outline-notch"></span>
-                <span class="md3-outlined-textfield__outline-end"></span>
-              </span>
+<article class="pm-auth-surface">
+  <div class="pm-auth-stack">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="pm-auth-message{% if category == 'error' %} is-error{% elif category == 'success' %} is-success{% endif %}" role="alert" aria-live="assertive">
+            <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">{% if category == 'success' %}check_circle{% elif category == 'info' %}info{% else %}error{% endif %}</span>
+            <div class="pm-auth-message__body">
+              <p class="pm-auth-message__eyebrow">{{ t('auth.common.notice') }}</p>
+              <p class="pm-auth-message__text">{{ message }}</p>
             </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-            <!-- Password Field -->
-            <div class="md3-outlined-textfield md3-outlined-textfield--block">
-              <input 
-                type="password" 
-                class="md3-outlined-textfield__input" 
-                name="password" 
-                id="login-password"
-                autocomplete="current-password" 
-                required
-                aria-label="Passwort"
-                minlength="1">
-              <label class="md3-outlined-textfield__label" for="login-password">Passwort</label>
-              <span class="md3-outlined-textfield__outline">
-                <span class="md3-outlined-textfield__outline-start"></span>
-                <span class="md3-outlined-textfield__outline-notch"></span>
-                <span class="md3-outlined-textfield__outline-end"></span>
-              </span>
-            </div>
+    <form id="login-form" class="pm-auth-form" method="post" action="{{ url_for('auth.login_post') }}" novalidate>
+      <label class="pm-auth-field" for="login-email">
+        <span class="pm-auth-field__label">{{ t('auth.login.email_label') }}</span>
+        <input
+          type="email"
+          class="pm-phenomena-field__input pm-auth-field__input"
+          name="email"
+          id="login-email"
+          autocomplete="email"
+          value="{{ login_email }}"
+          required
+          aria-label="{{ t('auth.login.email_label') }}">
+      </label>
 
-            <div class="md3-row--between md3-actions">
-               <a class="md3-button md3-button--text" href="{{ url_for('auth.password_forgot_page') }}">Passwort vergessen?</a>
-               <button type="submit" class="md3-button md3-button--filled">
-                <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">login</span>
-                Login
-              </button>
-            </div>
+      <label class="pm-auth-field" for="login-password">
+        <span class="pm-auth-field__label">{{ t('auth.login.password_label') }}</span>
+        <input
+          type="password"
+          class="pm-phenomena-field__input pm-auth-field__input"
+          name="password"
+          id="login-password"
+          autocomplete="current-password"
+          required
+          aria-label="{{ t('auth.login.password_label') }}">
+      </label>
 
-            <!-- Hidden next URL (for redirect after login) -->
-            {% if next %}
-              <input type="hidden" name="next" value="{{ next }}">
-            {% endif %}
-          </form>
+      <div class="pm-auth-actions">
+        <a class="pm-research-inline-action pm-research-inline-action--secondary" href="{{ url_for('auth.password_forgot_page', ui_lang=auth_ui_lang) }}">{{ t('auth.login.forgot_password') }}</a>
+        <button type="submit" class="pm-research-button pm-auth-submit">
+          <span class="material-symbols-rounded" aria-hidden="true">login</span>
+          {{ t('auth.login.submit') }}
+        </button>
+      </div>
+
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+      <input type="hidden" name="ui_lang" value="{{ auth_ui_lang }}">
+    </form>
   </div>
 </article>
+
+<aside class="pm-auth-secondary" aria-labelledby="auth-access-request-title">
+  <div class="pm-auth-secondary__header">
+    <p class="pm-auth-secondary__eyebrow">{{ t('auth.access_request.heading') }}</p>
+    <h2 id="auth-access-request-title" class="pm-auth-secondary__title">{{ t('auth.access_request.secondary_heading') }}</h2>
+  </div>
+  <div class="pm-auth-secondary__body">
+    <p class="pm-auth-secondary__text">{{ t('auth.access_request.text') }}</p>
+    <div class="pm-auth-secondary__actions">
+      <a class="pm-research-inline-action pm-research-inline-action--secondary pm-auth-secondary__action-link" href="{{ access_request_mailto }}">
+        <span class="material-symbols-rounded" aria-hidden="true">mail</span>
+        {{ t('auth.access_request.cta') }}
+      </a>
+    </div>
+  </div>
+</aside>
 {% endblock %}

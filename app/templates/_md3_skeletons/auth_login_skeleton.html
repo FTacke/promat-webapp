@@ -1,10 +1,7 @@
 {% set shell_class = 'app-shell--panel-hidden app-shell--auth' %}
 {% extends 'base.html' %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/auth.css') }}">
-{% block auth_extra_head %}{% endblock %}
-{% endblock %}
+{% block extra_head %}{% block auth_extra_head %}{% endblock %}{% endblock %}
 
 {% block content %}
 {% set content_header = {
@@ -15,7 +12,7 @@
 } %}
 <div class="promat-auth-page pm-content pm-content--reading">
   {% include 'partials/_content_header.html' %}
-  <section class="promat-auth-page__section pm-reading {{ auth_section_classes | default('md3-auth-page md3-stack--section') }}">
+  <section class="promat-auth-page__section pm-reading {{ auth_section_classes | default('promat-auth-page__section--public') }}">
     {% block auth_body %}{% endblock %}
   </section>
 </div>

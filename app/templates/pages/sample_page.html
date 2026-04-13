@@ -78,19 +78,28 @@
 
       <section class="pm-entry-showcase__variant" aria-labelledby="sample-selection-cards-variant">
         <div class="pm-entry-showcase__heading">
-          <p id="sample-selection-cards-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Auswahlkarten auf Sprach-Unterseiten</p>
-          <p class="pm-entry-showcase__note">Die Auswahlkarten spiegeln die produktiven `pm-card--selection`-Grids der Sprach-Landingpages. Auch als Einzelkarte bleiben sie im Grid begrenzt.</p>
+          <p id="sample-selection-cards-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Research-Einstieg auf Sprach-Unterseiten</p>
+          <p class="pm-entry-showcase__note">Die Research-Sprachwurzeln nutzen jetzt eine ruhige, lineare Liste mit echten Ziel-Links und Lock-/Muted-Zuständen statt eines Auswahlkarten-Grids.</p>
         </div>
 
-        <section class="pm-feature-band pm-grid pm-grid--feature pm-grid--selection" aria-label="Research-Auswahlkarten">
-          {% for card in promat_page.sample_research_feature_cards %}
-          <a class="pm-card pm-card--{{ card.variant | default('selection') }}" href="{{ card.href }}">
-            <h3 class="pm-card__title">{{ card.title }}</h3>
-            <p class="pm-card__text">{{ card.text }}</p>
-            <span class="pm-card__link">{{ card.link_label }}</span>
-          </a>
+        <div class="pm-research-language-root__list pm-reading" aria-label="Research-Einstiegsliste">
+          {% for entry in promat_page.sample_research_root_entries %}
+          <section class="pm-research-language-root__item">
+            <div class="pm-research-language-root__body">
+              <h3 class="pm-research-language-root__title">{{ entry.title }}</h3>
+              <p class="pm-research-language-root__text">{{ entry.text }}</p>
+            </div>
+            <div class="pm-research-language-root__action-row">
+              <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action{{ ' is-muted' if entry.is_muted else '' }}" href="{{ entry.href }}">
+                {% if entry.show_lock %}
+                <span class="pm-icon-mask pm-icon-mask--lock" aria-hidden="true"></span>
+                {% endif %}
+                <span>{{ entry.button_label }}</span>
+              </a>
+            </div>
+          </section>
           {% endfor %}
-        </section>
+        </div>
 
         <section class="pm-feature-band pm-grid pm-grid--feature pm-grid--selection" aria-label="Teaching-Auswahlkarten">
           {% for card in promat_page.sample_teaching_feature_cards %}

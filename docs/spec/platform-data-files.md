@@ -60,6 +60,17 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `section`: `project`, `research`, `teaching`, `sample`
 - `corpus_language`: `spanish`, `french`, `german`, `english`
 
+### Auth route schema
+
+```text
+/login
+/auth/login
+/auth/password/forgot
+/auth/password/reset
+/admin/users/page
+/admin/users
+```
+
 ### Active research pages
 
 - `design`
@@ -84,9 +95,16 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 
 - Technical slugs and route segments stay English.
 - UI language and technical routing language must not be mixed.
+- The public login surface stays on `/login`, while mutating auth actions stay under `/auth/*`.
+- PROMAT login is email-only. Public username login and self-registration are not part of the active product contract.
+- Access requests are handled through one configurable `mailto` target instead of a public registration form.
+- The configurable access-request `mailto` keeps the exact subject `Zugangsanfrage "Pronunciation Matters"` and prefills at least last name plus first name, institution, role or function, institutional email address, purpose of use, the notice that this email becomes the later login identifier, and the confirmation to respect data-protection requirements plus the confidentiality of pseudonymized research data.
+- Accounts are created administratively and use one password-setup/reset token flow that is valid for 14 days unless an active environment setting shortens or extends it.
+- Account access must be blocked before session issuance when the account is inactive, not yet valid, expired, deleted, or temporarily locked.
+- Admin user management uses the canonical `/admin/users` route family for account creation, status updates, optional expiry dates, and invitation/reset preparation.
 - Research page order, page access metadata, task subsets, compare capability, set-filter capability, render-mode vocabulary, and corpus-specific workbench readiness are defined centrally through the active research capability contract.
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus_language}/design` is the only public corpus-scoped research page.
-- The corpus root `/{ui_lang}/research/{corpus_language}` resolves to that same public design entry and does not remain a second public research hub.
+- The corpus root `/{ui_lang}/research/{corpus_language}` is a public corpus landing page that orients users to `design`, `speakers`, `recordings`, `comparison`, and `phenomena` through their canonical routes.
 - All other corpus-scoped research pages and research detail routes, including protected player-media delivery, are authenticated app surfaces and must enforce access before the workbench or media response is rendered.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
@@ -108,6 +126,8 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The local page shell uses a left sidebar for area navigation and a right main-content column.
 - The sidebar begins with a permanent area header: section icon, section title, and a subtle divider.
 - Language-context pages keep their language back-link and language title below that permanent area header, not instead of it.
+- On public research pages for unauthenticated users, protected research targets stay visible in the sidebar but use muted locked navigation states rather than per-item login notices.
+- In those muted locked research sidebar states, the lock icon renders before the page label and no additional visible `login required` helper line is repeated inside the navigation list.
 - Breadcrumbs are rendered only when they add real orientation value, not as a pseudo-context line that merely repeats section or language.
 - Desktop shows breadcrumbs only from hierarchy depth 3 onward because the sidebar already carries orientation on flatter levels.
 - Mobile shows breadcrumbs from hierarchy depth 2 onward because the sidebar is reduced or absent there.
@@ -126,6 +146,10 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Finished or newly completed UI surfaces must ship with both `de` and `en` display strings in the same run; do not treat English as a later copy-only follow-up for already-finished visible UI.
 - Visible UI strings for finished surfaces must resolve through the shared translation layer and server-provided localized payloads; do not hardcode visible `de`/`en` branches or fallback copy in Python builders, Jinja templates, or page JavaScript.
 - Technical keys, route values, IDs, and client-state field names remain stable English machine values and must stay separate from translated display labels.
+- Standalone auth surfaces on `/login` and `/auth/password/*` use the dedicated auth shell without research sidebar, corpus navigation, or workbench framing.
+- Visible auth-facing product naming uses `Pronunciation Matters`; `PROMAT` remains the internal or technical shorthand unless an active spec explicitly requires a visible exception.
+- The public auth surfaces on `/login` and `/auth/password/*` reuse the current PROMAT action, input, and message families instead of page-local MD3 or legacy CORAPAN-looking controls; the access request remains a quieter secondary section below the primary sign-in or reset flow.
+- The public corpus landing page `/{ui_lang}/research/{corpus_language}` uses a localized corpus title, one calm intro block, one quiet access note, and a linear list of the canonical research targets whose visible action labels stay the plain page names.
 - Visible UI must not expose raw technical values such as UUID-like set identifiers, internal translation keys, or internal handoff/debug vocabulary when a user-facing label or omission is the truthful product behavior.
 - When a recurring UI family already exists, it must be extended or reused before a page-local variant is introduced.
 - Repeated UI families that must be treated systemically include action hierarchy (`buttons`, inline actions, overflow actions), form controls (`inputs`, `selects`, `textareas`), badges and chips, cards and list rows, step containers and work blocks, dialogs and confirm flows, empty states, sticky headers or anchors, and muted, active, or selected states.
@@ -143,6 +167,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `PROMAT_PUBLIC_ROOT` is the canonical public root.
 - Paths are derived through runtime/config wiring, not freehand string paths.
 - For the default local development PostgreSQL URL `postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth`, `scripts/dev-start.ps1` is the canonical app entrypoint and must ensure the local `promat_auth_db` service plus the idempotent auth/core and research-set migrations are applied before the Flask app starts.
+- In that canonical local dev flow, `scripts/dev-start.ps1` also seeds or updates one reliable default admin account with the reachable email `felix.tacke@uni-marburg.de` unless explicit overrides are supplied.
 - `app/scripts/dev-setup.ps1` remains the canonical initial bootstrap path for the same local PostgreSQL setup; it provisions the local database, applies the same migration chain, and then may hand off to `dev-start` without re-running bootstrap work.
 
 ## Dev/Prod Parity

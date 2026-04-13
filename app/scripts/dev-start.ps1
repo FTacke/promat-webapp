@@ -1,6 +1,8 @@
 param(
 	[switch]$SkipBootstrap,
 	[string]$StartAdminUsername = 'admin_dev',
+	[string]$StartAdminEmail = 'felix.tacke@uni-marburg.de',
+	[string]$StartAdminDisplayName = 'Felix Tacke',
 	[string]$StartAdminPassword = 'Admin0000!'
 )
 
@@ -19,6 +21,9 @@ if (-not $env:PROMAT_PUBLIC_ROOT) {
 }
 if (-not $env:AUTH_DATABASE_URL) {
 	$env:AUTH_DATABASE_URL = $defaultAuthDatabaseUrl
+}
+if (-not $env:AUTH_ACCESS_REQUEST_EMAIL) {
+	$env:AUTH_ACCESS_REQUEST_EMAIL = 'felix.tacke@uni-marburg.de'
 }
 if (-not $env:FLASK_ENV) {
 	$env:FLASK_ENV = 'development'
@@ -102,7 +107,7 @@ if ($shouldBootstrapLocalPostgres) {
 }
 
 if ($shouldSeedDefaultAdmin -and $StartAdminPassword) {
-	& $pythonSource (Join-Path $appRoot 'scripts\create_initial_admin.py') --username $StartAdminUsername --password $StartAdminPassword
+	& $pythonSource (Join-Path $appRoot 'scripts\create_initial_admin.py') --username $StartAdminUsername --email $StartAdminEmail --display-name $StartAdminDisplayName --password $StartAdminPassword
 	if ($LASTEXITCODE -ne 0) {
 		throw 'Standard-Dev-Admin konnte nicht angelegt oder aktualisiert werden.'
 	}

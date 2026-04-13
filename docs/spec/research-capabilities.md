@@ -15,6 +15,8 @@ This file is the binding source of truth for the active research capability mode
 
 ## Canonical Research Pages
 
+- The corpus root `/{ui_lang}/research/{corpus}` is a public orientation surface and not part of the fixed page-slug set below; page capability rules continue to apply only to the canonical corpus-scoped page slugs and detail routes.
+
 ### Active page slugs
 
 - `design`
