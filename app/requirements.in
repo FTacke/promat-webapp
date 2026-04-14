@@ -17,3 +17,4 @@ requests
 gunicorn
 psycopg2-binary
 argon2-cffi
+openpyxl

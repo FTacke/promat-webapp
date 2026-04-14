@@ -75,6 +75,10 @@ markupsafe==3.0.3
     #   werkzeug
 mdurl==0.1.2
     # via markdown-it-py
+et-xmlfile==2.0.0
+    # via openpyxl
+openpyxl==3.1.5
+    # via -r requirements.in
 ordered-set==4.1.0
     # via flask-limiter
 packaging==25.0

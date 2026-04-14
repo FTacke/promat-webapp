@@ -56,6 +56,7 @@ Wenn für einen Task ein kanonischer Katalog unter `data/config/research_player/
 - `alignment_export/prepare_text_mfa_corpus.py` erzeugt aus `working/{person_id}/text/` den MFA-Zwischenstand aus segmentierten `.wav`-Dateien, `.lab`-Dateien, `mfa_output/` und `mfa_manifest.json`.
 - `alignment_export/import_text_mfa_alignment.py` importiert die MFA-Ergebnisse aus `working/{person_id}/text/mfa_output/` zurück in `working/{person_id}/text/alignment/text.json`.
 - Dieses `alignment/text.json` ist ein bewusst batch-lokales Zwischenartefakt im Working-Tree und noch kein finaler Transfer nach `data/`.
+- `import_batch_to_production.py` ist der zentrale orchestrierende Produktionsimport: Workbook lesen, Session-ID ableiten, PostgreSQL-Metadaten schreiben, Runtime-Session-Verzeichnisse erzeugen und produktive `wordlist`-/`text`-Artefakte delegieren.
 - Der aktuelle `text`-Workflow arbeitet mit kanonischen Zieltexten aus einer expliziten Textquelle und benutzt das vorhandene `text.TextGrid` nur als Segmentgrenzenquelle.
 - MFA-Warnungen zu OOVs, Dysfluencies und Selbstreparaturen sind Qualitätssignale, aber im aktuellen Working-Pfad nicht automatisch Abbruchgründe.
 - Für `text` wird bewusst auf kanonische Zielwörter aligned; Dysfluency-Elemente müssen in diesem Schritt nicht vollständig als eigene Zielstruktur modelliert werden.
@@ -84,17 +85,17 @@ Wenn für einen Task ein kanonischer Katalog unter `data/config/research_player/
 - Batch-Läufe nennen in ihrer Ausgabe immer den tatsächlich verarbeiteten Batch-Pfad.
 - Bestehende reale Ergebnisse im `working/`-Baum werden ohne `--replace-existing` nicht stillschweigend überschrieben.
 
-## Bewusst noch nachgelagert
+## Aktueller Produktionsstand
 
-- finaler Import aus Batch/Working nach `data/`
-- vollständige Session-/Metadata-/XLSX-Integration
-- finale `session_id`-Setzung
-- Produktions-`derived/*.mp3` für `text`
-- finale `alignment/wordlist.json` jenseits der bestehenden `wordlist`-Produktionspipeline
-- evtl. Interview-Integration über den aktuellen Strukturplatzhalter hinaus
-- produktive MFA-Ausführung als integrierter Pflichtschritt der Batch-Pipeline
+- Der finale Import aus Batch/Working nach `data/` läuft über `import_batch_to_production.py`.
+- Die finale `session_id`-Setzung ist Teil dieses zentralen Imports.
+- Produktions-`derived/*.mp3` für `wordlist` und `text` werden dort über die wiederverwendbaren Task-Prozessoren erzeugt.
+- `interview` bleibt über den aktuellen Strukturplatzhalter hinaus noch unproduktiv.
+- Produktive MFA-Ausführung bleibt weiterhin ein vorgelagerter externer oder manueller Schritt vor dem finalen Import.
 
 ## Einstiegspunkte
 
 - Die bestehende `wordlist`-Produktionspipeline bleibt in `scripts/research_data_intake/produce_wordlist_artifacts.py` separat bestehen.
+- Die `text`-Produktionspipeline steht wiederverwendbar in `scripts/research_data_intake/produce_text_artifacts.py` bereit.
+- Der zentrale Workbook-plus-Working-Import steht in `scripts/research_data_intake/import_batch_to_production.py`.
 - Der wiederholbare Ablauf für den generischen Batch- und Working-Pfad steht ergänzend in `docs/runbooks/research-intake-working-pipeline.md`.

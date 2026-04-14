@@ -177,6 +177,10 @@ def _mother_l1_label(ui_lang: str) -> str:
     return _t(ui_lang, "common.labels.mother_l1")
 
 
+def _l1_additional_label(ui_lang: str) -> str:
+    return _t(ui_lang, "common.labels.l1_additional")
+
+
 def _father_l1_label(ui_lang: str) -> str:
     return _t(ui_lang, "common.labels.father_l1")
 
@@ -1050,6 +1054,7 @@ def _person_section_rows(person: PersonRecord, ui_lang: str) -> list[dict[str, s
     rows.extend(
         [
             {"label": "L1", "value": person.l1 or "-"},
+            {"label": _l1_additional_label(ui_lang), "value": _format_additional_languages(person.l1_additional)},
             {"label": _mother_l1_label(ui_lang), "value": person.mother_l1 or "-"},
             {"label": _father_l1_label(ui_lang), "value": person.father_l1 or "-"},
             {"label": _additional_languages_label(ui_lang), "value": _format_additional_languages(person.additional_languages)},
@@ -1535,6 +1540,7 @@ def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[s
         detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
         level_value = "-" if session.is_native else (_format_level(session, ui_lang) or "-")
         l1_value = "-" if session.is_native else (session.l1 or "-")
+        l1_additional_values = [] if session.is_native else list(session.l1_additional)
         gender_key = (session.gender or "unknown").strip().lower() if isinstance(session.gender, str) else "unknown"
         if session.is_native:
             target_country_stay_key = "unknown"
@@ -1559,6 +1565,8 @@ def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[s
                 "detailValue": detail_value,
                 "levelValue": level_value,
                 "l1Value": l1_value,
+                "l1AdditionalValue": _format_additional_languages(tuple(l1_additional_values)),
+                "l1AdditionalValues": l1_additional_values,
                 "l1BadgeLabel": f"L1: {session.l1}" if session.l1 and not session.is_native else "",
                 "standardVarietyLabel": _standard_variety_label(ui_lang),
                 "standardVarietyValue": _format_standard_variety_value(session.standard_variety, ui_lang) if session.is_native else "",

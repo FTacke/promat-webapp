@@ -78,7 +78,7 @@ def probe_audio_profile(path: Path) -> dict[str, object]:
     }
 
 
-def create_full_wordlist_mp3(source_wav: Path, target_mp3: Path) -> None:
+def create_full_task_mp3(source_wav: Path, target_mp3: Path) -> None:
     ensure_media_tools()
     target_mp3.parent.mkdir(parents=True, exist_ok=True)
     _run_command(
@@ -109,6 +109,10 @@ def create_full_wordlist_mp3(source_wav: Path, target_mp3: Path) -> None:
             str(target_mp3),
         ]
     )
+
+
+def create_full_wordlist_mp3(source_wav: Path, target_mp3: Path) -> None:
+    create_full_task_mp3(source_wav, target_mp3)
 
 
 def create_split_mp3(source_mp3: Path, target_mp3: Path, start_seconds: float, end_seconds: float) -> None:

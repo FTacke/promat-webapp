@@ -8,7 +8,7 @@ This file is the binding source of truth for the PROMAT intake workbook contract
 
 - The workbook is the intake contract for structured acquisition of PROMAT data.
 - It is not the runtime data source.
-- Runtime session metadata is derived later from the workbook contract.
+- Runtime session metadata and PostgreSQL research metadata are derived later from the workbook contract by the central production importer.
 
 ## Binding Workbook Logic
 
@@ -35,12 +35,19 @@ The active import-relevant sheets are exactly:
 - `person_id` follows `{CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}`.
 - `session_ref` is the local intake session reference such as `S01`.
 - `session_id` stays empty in intake and is generated later.
+- If `session_id` is accidentally filled in intake, the active importer ignores that cell and still derives the canonical runtime `session_id`.
 
 ### Exposure linkage
 
 - `Exposure` is session-related.
 - `Exposure` links to intake sessions through `person_id` plus `session_ref`.
 - `Exposure` does not link through `session_id`.
+
+### Scope-aware import
+
+- The central production importer scopes one run by requested `target_language` first and validates only the workbook rows for that in-scope language strictly.
+- Out-of-scope workbook rows may remain incomplete for later corpus runs and do not block an in-scope import.
+- The first productive import scope is `ES`.
 
 ### Empty fields and `unknown`
 
@@ -88,6 +95,7 @@ Rules:
 person_id
 speaker_type
 l1
+l1_additional
 mother_l1
 father_l1
 additional_languages
@@ -104,7 +112,8 @@ person_notes
 Rules:
 
 - `speaker_type` is a person-level field.
-- `l1`, `mother_l1`, and `father_l1` use the same value list as `l1_code`.
+- `l1`, `l1_additional`, `mother_l1`, and `father_l1` use the same value list as `l1_code`.
+- `l1_additional` is optional, remains separate from `additional_languages`, and stores multiple values as semicolon-separated L1 codes.
 - `current_region` and `childhood_region` are learner-oriented fields.
 - `origin_country` and `origin_region` are native-comparison fields.
 
@@ -131,7 +140,8 @@ Rules:
 - The sheet begins with `person_id`, `session_ref`, `session_id`.
 - `session_ref` is filled in intake.
 - `session_id` stays empty in intake.
-- `target_language` uses the controlled lowercase values.
+- `target_language` uses the active language codes and may appear in workbook practice as uppercase corpus codes such as `ES`; the importer normalizes them to lowercase runtime values.
+- `standard_variety` may appear in workbook practice as uppercase values such as `ES_STD`; the importer normalizes them to lowercase runtime values.
 - `context` uses `baseline` or `follow_up` when relevant.
 - If `level_self = B1-B2`, then `level_code = B1`.
 
@@ -143,7 +153,7 @@ session_ref
 target_language
 country
 duration_months
-exposure_type
+type
 exposure_notes
 needs_review
 ```
@@ -154,6 +164,7 @@ Rules:
 - If there is no exposure, there is no row.
 - `country` may be `unknown` if exposure exists but country is not known.
 - `duration_months` stays empty if the duration is not known reliably.
+- The workbook header is the literal column name `type`; the importer maps it to session exposure metadata internally.
 
 ### `Vocabularies`
 
@@ -203,23 +214,35 @@ RU
 
 ### `target_language`
 
+Examples:
+
 ```text
-es
-fr
-en
-de
+ES
+FR
+EN
+DE
 ```
+
+Rule:
+
+- The workbook may use uppercase corpus-style codes.
+- The importer normalizes them to the canonical lowercase runtime values `es`, `fr`, `en`, and `de`.
 
 ### `standard_variety`
 
 Examples:
 
 ```text
-es_std
-mx_std
-fr_ch_std
-de_ch_std
+ES_STD
+MX_STD
+FR_CH_STD
+DE_CH_STD
 ```
+
+Rule:
+
+- Workbook values may use uppercase forms.
+- The importer normalizes them to the canonical lowercase runtime values.
 
 ### `context`
 
@@ -252,6 +275,7 @@ unknown
 person_id: ES-L-0001
 speaker_type: learner
 l1: DE
+l1_additional: IT; EN
 mother_l1: IT
 father_l1: DE
 additional_languages: EN; FR
@@ -304,6 +328,7 @@ needs_review: no
 person_id: ES-N-0001
 speaker_type: native_speaker
 l1: ES
+l1_additional:
 mother_l1: ES
 father_l1: ES
 additional_languages:

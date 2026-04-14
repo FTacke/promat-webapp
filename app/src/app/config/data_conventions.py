@@ -15,6 +15,8 @@ SPEAKER_TYPES: tuple[str, ...] = (
 
 TARGET_LANGUAGES: tuple[str, ...] = ("es", "fr", "en", "de")
 
+L1_CODES: tuple[str, ...] = ("DE", "ES", "EN", "FR", "IT", "PT", "RU")
+
 TASK_TYPES: tuple[str, ...] = RESEARCH_TASK_KEYS
 
 CONTEXT_VALUES: tuple[str, ...] = ("baseline", "follow_up")
@@ -60,6 +62,7 @@ ID_MARKER_TO_SPEAKER_TYPE: dict[str, str] = {
 }
 
 PERSON_ID_PATTERN = re.compile(r"^(?P<corpus_code>[A-Z]{2})-(?P<speaker_marker>[LN])-(?P<sequence>\d{4})$")
+SESSION_REF_PATTERN = re.compile(r"^S(?P<session_number>\d{2})$")
 SESSION_ID_PATTERN = re.compile(
     r"^(?P<person_id>[A-Z]{2}-[LN]-\d{4})-(?P<recording_year>\d{4})-S(?P<session_number>\d{2})$"
 )
@@ -106,6 +109,35 @@ def get_corpus_code_for_language_slug(language_slug: str) -> str | None:
     return get_corpus_code_for_target_language(target_language)
 
 
+def normalize_l1_code(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().upper()
+    if not normalized:
+        return None
+    return normalized if normalized in L1_CODES else None
+
+
+def normalize_l1_code_list(value: object) -> tuple[str, ...]:
+    raw_values: list[str]
+    if isinstance(value, list):
+        raw_values = [item for item in value if isinstance(item, str)]
+    elif isinstance(value, str):
+        raw_values = [part.strip() for part in value.split(";")]
+    else:
+        return tuple()
+
+    normalized_values: list[str] = []
+    seen: set[str] = set()
+    for raw_value in raw_values:
+        normalized = normalize_l1_code(raw_value)
+        if normalized is None or normalized in seen:
+            continue
+        normalized_values.append(normalized)
+        seen.add(normalized)
+    return tuple(normalized_values)
+
+
 def parse_person_id(person_id: str) -> PersonIdParts | None:
     match = PERSON_ID_PATTERN.fullmatch((person_id or "").strip())
     if match is None:
@@ -148,3 +180,29 @@ def build_session_id(person_id: str, recording_year: int, session_number: int) -
     if session_number <= 0 or session_number > 99:
         raise ValueError("session_number must be between 1 and 99")
     return f"{person_id}-{recording_year:04d}-S{session_number:02d}"
+
+
+def normalize_session_ref(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().upper()
+    if SESSION_REF_PATTERN.fullmatch(normalized) is None:
+        return None
+    return normalized
+
+
+def session_number_from_ref(session_ref: str) -> int | None:
+    normalized = normalize_session_ref(session_ref)
+    if normalized is None:
+        return None
+    match = SESSION_REF_PATTERN.fullmatch(normalized)
+    if match is None:
+        return None
+    return int(match.group("session_number"))
+
+
+def build_session_id_from_ref(person_id: str, recording_year: int, session_ref: str) -> str:
+    session_number = session_number_from_ref(session_ref)
+    if session_number is None:
+        raise ValueError(f"Unsupported session_ref for session_id: {session_ref}")
+    return build_session_id(person_id, recording_year, session_number)

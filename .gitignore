@@ -25,7 +25,6 @@ tmp/
 data/*
 !data/.gitkeep
 !data/README.md
-!data/research.db
 !data/config/
 !data/db/
 !data/sessions/
@@ -38,8 +37,6 @@ data/sessions/*
 !data/sessions/spanish/
 data/sessions/spanish/*
 !data/sessions/spanish/.gitkeep
-!data/sessions/spanish/ES-L-0901-2024-S01/
-!data/sessions/spanish/ES-L-0901-2024-S01/**
 secure/*
 !secure/.gitkeep
 !secure/README.md

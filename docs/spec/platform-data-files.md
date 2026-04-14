@@ -301,6 +301,8 @@ metadata.json
 - Reduced alignment JSON belongs under `alignment/{task}.json`, never under `items/`.
 - Player-facing full-task MP3 files use `derived/{task}.mp3`.
 - Player-facing split MP3 paths use `items/{task}/{item_id}.mp3`.
+- Versioned runtime session trees under `data/sessions/` must not ship fictional, placeholder, or other dummy research sessions; production population of that tree is reserved for the central orchestrating import path.
+- The only active path that may populate or update production runtime session trees from intake batches is `scripts/research_data_intake/import_batch_to_production.py`.
 - For the current Spanish sentence-list catalog, visible numbering remains `D1` through `D30`, `QY1` through `QY10`, and `QW1` through `QW10`, while stable technical IDs remain `d_01` through `d_30`, `qy_01` through `qy_10`, and `qw_01` through `qw_10`.
 - The current player delivery routes map full-task playback to `.../player/{session_id}/{task}/audio.mp3` and single-item item-media delivery to `.../player/{session_id}/{task}/items/{item_id}.mp3` without exposing internal runtime paths.
 - The canonical single-item player route serves a playback-safe inline `audio/mpeg` response by default; explicit download semantics stay on the same route family through explicit download intent rather than through a separate media path.
@@ -336,6 +338,7 @@ working/
 - `processed/` is the primary intake input for file-based organization of task WAVs and TextGrids.
 - `raw/` is optional and may provide fallback or additional WAV inputs where `processed/` does not yet contain the needed task audio.
 - `intake_data/` is optional and may carry workbook or helper material, but it is not itself the derived working tree.
+- The active production importer reads workbook steering data from `intake_data/*.xlsx` together with the batch-local `working/` tree.
 - `working/` is a pre-production, person- and task-centered preparation area inside one concrete batch.
 - Batch-local `working/` outputs are preparatory only: they must not write into `data/`, must not create production session metadata, and any `alignment/text.json` created there remains a working-tree intermediate artifact rather than a transferred production session artifact.
 
@@ -365,7 +368,10 @@ working/{person_id}/interview/alignment/interview.TextGrid
 - In this working-tree-only `text` JSON step, `session_id` may remain `null` until later metadata integration resolves the final production session identity.
 - The preparatory `text` MFA step must obtain canonical item texts from an explicit external source such as a task catalog or mapping JSON and must not guess final texts from TextGrid labels.
 - The current intake language configuration for this working path is prepared generically for `es`, `de`, `fr`, and `en`, including the mapped MFA acoustic and dictionary models per language.
-- Final production transfer from intake batches into `data/sessions/`, final session metadata generation, productive MFA execution, and the handoff from working-tree `alignment/text.json` into production session artifacts are separate downstream pipeline stages.
+- Final production transfer from intake batches into `data/sessions/` is executed only by the central importer `scripts/research_data_intake/import_batch_to_production.py`.
+- That importer may populate PostgreSQL research metadata tables `research_people`, `research_sessions`, and `research_session_exposures` from workbook sheets `Research_Person`, `Research_Session_Intake`, and `Exposure`.
+- The same importer projects canonical runtime `metadata.json` plus task artifacts into `data/sessions/{language}/{session_id}/` and may sync only the tasks whose working inputs are actually available.
+- Interview remains a declared task key and structure slot, but no productive interview artifact import exists yet.
 
 ## Active Metadata Semantics
 
@@ -373,6 +379,7 @@ working/{person_id}/interview/alignment/interview.TextGrid
 
 - `person_id`
 - `l1`
+- `l1_additional`
 - `mother_l1`
 - `father_l1`
 - `additional_languages`
@@ -456,7 +463,8 @@ RU
 
 Rule:
 
-- `l1`, `mother_l1`, and `father_l1` use the same uppercase value list as `l1_code`.
+- `l1`, `l1_additional`, `mother_l1`, and `father_l1` use the same uppercase value list as `l1_code`.
+- `l1_additional` is optional, stores one or more semicolon-separated L1 codes, and stays separate from `additional_languages`.
 
 ### `level_code`
 

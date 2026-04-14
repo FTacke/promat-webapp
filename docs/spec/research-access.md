@@ -271,6 +271,7 @@ Rules:
 
 - `person_id`
 - `l1`
+- `l1_additional`
 - `mother_l1`
 - `father_l1`
 - `additional_languages`

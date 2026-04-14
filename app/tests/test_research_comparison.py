@@ -68,6 +68,7 @@ def _session_payload(
     *,
     speaker_type: str = "learner",
     l1: str | None = "DE",
+    l1_additional: str | None = "IT; EN",
     gender: str = "female",
     level_code: str | None = "B1",
     standard_variety: str | None = None,
@@ -79,6 +80,7 @@ def _session_payload(
         "target_language": "es",
         "speaker_type": speaker_type,
         "l1": l1,
+        "l1_additional": l1_additional,
         "gender": gender,
         "birth_year": 1998,
         "level_code": level_code,
@@ -205,6 +207,7 @@ def _write_minimal_research_runtime(runtime_root: Path) -> None:
             ("wordlist",),
             speaker_type="native_speaker",
             l1=None,
+            l1_additional=None,
             gender="male",
             level_code=None,
             standard_variety="castellano",
@@ -346,6 +349,8 @@ def test_build_comparison_page_exposes_session_catalog_and_filter_state(comparis
     learner_session = next(entry for entry in page["client_state"]["sessionCatalog"] if entry["sessionId"] == "ES-L-0001-2026-S01")
     native_session = next(entry for entry in page["client_state"]["sessionCatalog"] if entry["sessionId"] == "ES-N-0001-2026-S01")
     assert learner_session["l1BadgeLabel"] == "L1: DE"
+    assert learner_session["l1AdditionalValues"] == ["IT", "EN"]
+    assert learner_session["l1AdditionalValue"] == "IT, EN"
     assert native_session["speakerTypeLabel"] == "Native"
     assert native_session["standardVarietyValue"] == "Kastilisches Spanisch"
 

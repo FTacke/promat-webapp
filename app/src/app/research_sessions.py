@@ -14,6 +14,8 @@ from .config.data_conventions import (
     SessionIdParts,
     get_corpus_code_for_language_slug,
     get_corpus_code_for_target_language,
+    normalize_l1_code,
+    normalize_l1_code_list,
     parse_person_id,
     parse_session_id,
 )
@@ -79,6 +81,7 @@ class SessionRecord:
     target_language: str | None
     speaker_type: str
     l1: str | None
+    l1_additional: tuple[str, ...]
     mother_l1: str | None
     father_l1: str | None
     additional_languages: tuple[str, ...]
@@ -141,6 +144,7 @@ class PersonRecord:
     speaker_type: str
     target_language: str | None
     l1: str | None
+    l1_additional: tuple[str, ...]
     mother_l1: str | None
     father_l1: str | None
     additional_languages: tuple[str, ...]
@@ -398,9 +402,10 @@ def _read_session_record(metadata_path: Path) -> SessionRecord:
         session_id_parts=session_id_parts,
         target_language=target_language,
         speaker_type=speaker_type,
-        l1=_metadata_string(payload, "l1"),
-        mother_l1=_metadata_string(payload, "mother_l1"),
-        father_l1=_metadata_string(payload, "father_l1"),
+        l1=normalize_l1_code(payload.get("l1")),
+        l1_additional=normalize_l1_code_list(payload.get("l1_additional")),
+        mother_l1=normalize_l1_code(payload.get("mother_l1")),
+        father_l1=normalize_l1_code(payload.get("father_l1")),
         additional_languages=_normalize_string_list(payload.get("additional_languages")),
         gender=_metadata_string(payload, "gender"),
         birth_year=_metadata_int(payload, "birth_year"),
@@ -437,7 +442,7 @@ def _latest_non_empty_value(sessions: Iterable[SessionRecord], field_name: str) 
             continue
         if value not in (None, ""):
             return value
-    return tuple() if field_name == "additional_languages" else None
+    return tuple() if field_name in {"l1_additional", "additional_languages"} else None
 
 
 def _validate_language_scope(language_slug: str, session: SessionRecord) -> None:
@@ -469,6 +474,7 @@ def _aggregate_person_record(person_id: str, sessions: Iterable[SessionRecord]) 
         speaker_type=speaker_type,
         target_language=_latest_non_empty_value(sorted_sessions, "target_language"),
         l1=_latest_non_empty_value(sorted_sessions, "l1"),
+        l1_additional=_latest_non_empty_value(sorted_sessions, "l1_additional"),
         mother_l1=_latest_non_empty_value(sorted_sessions, "mother_l1"),
         father_l1=_latest_non_empty_value(sorted_sessions, "father_l1"),
         additional_languages=_latest_non_empty_value(sorted_sessions, "additional_languages"),

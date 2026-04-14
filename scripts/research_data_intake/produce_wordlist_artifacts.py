@@ -227,66 +227,94 @@ def _print_header(title: str) -> None:
     print(f"\n[{title}]")
 
 
-def _process_session(session_dir: Path, catalog_path: Path, dry_run: bool, validate_labels: str) -> dict[str, Any]:
-    metadata = _load_metadata(session_dir / "metadata.json")
-    session_id = str(metadata.get("session_id") or session_dir.name)
-    person_id = str(metadata.get("person_id") or "")
-    task_definition = _task_definition(metadata)
-    if task_definition is None:
-        raise ValueError(f"No wordlist task documented for {session_id}")
+def produce_wordlist_artifacts(
+    session_dir: Path,
+    *,
+    session_id: str | None = None,
+    person_id: str | None = None,
+    source_wav: Path | None = None,
+    alignment_textgrid: Path | None = None,
+    catalog_path: Path = CATALOG_PATH,
+    dry_run: bool = False,
+    validate_labels: str = "off",
+    update_metadata: bool = True,
+) -> dict[str, Any]:
+    if source_wav is None or alignment_textgrid is None or session_id is None or person_id is None:
+        metadata = _load_metadata(session_dir / "metadata.json")
+        resolved_session_id = session_id or str(metadata.get("session_id") or session_dir.name)
+        resolved_person_id = person_id or str(metadata.get("person_id") or "")
+        task_definition = _task_definition(metadata)
+        if task_definition is None:
+            raise ValueError(f"No wordlist task documented for {resolved_session_id}")
+        resolved_source_wav = source_wav or session_dir / str(task_definition.get("source_file") or "source/wordlist.wav")
+        resolved_alignment_textgrid = alignment_textgrid or session_dir / str(task_definition.get("alignment_file") or "alignment/wordlist.TextGrid")
+    else:
+        resolved_session_id = session_id
+        resolved_person_id = person_id
+        resolved_source_wav = source_wav
+        resolved_alignment_textgrid = alignment_textgrid
 
-    source_wav = session_dir / str(task_definition.get("source_file") or "source/wordlist.wav")
-    alignment_textgrid = session_dir / str(task_definition.get("alignment_file") or "alignment/wordlist.TextGrid")
     derived_mp3 = session_dir / "derived" / "wordlist.mp3"
     alignment_json_path = session_dir / "alignment" / "wordlist.json"
 
-    if not source_wav.exists() or source_wav.stat().st_size == 0:
-        raise FileNotFoundError(f"Missing or empty wordlist source WAV for {session_id}: {source_wav}")
-    if not alignment_textgrid.exists() or alignment_textgrid.stat().st_size == 0:
-        raise FileNotFoundError(f"Missing or empty wordlist TextGrid for {session_id}: {alignment_textgrid}")
+    if not resolved_source_wav.exists() or resolved_source_wav.stat().st_size == 0:
+        raise FileNotFoundError(f"Missing or empty wordlist source WAV for {resolved_session_id}: {resolved_source_wav}")
+    if not resolved_alignment_textgrid.exists() or resolved_alignment_textgrid.stat().st_size == 0:
+        raise FileNotFoundError(f"Missing or empty wordlist TextGrid for {resolved_session_id}: {resolved_alignment_textgrid}")
 
     catalog_items = load_wordlist_catalog(catalog_path)
-    intervals = parse_textgrid_intervals(alignment_textgrid)
+    intervals = parse_textgrid_intervals(resolved_alignment_textgrid)
     timed_items, label_warnings = build_timed_items(catalog_items, intervals, validate_labels)
     split_paths = [item.split_mp3 for item in timed_items]
-    source_profile = probe_audio_profile(source_wav)
+    source_profile = probe_audio_profile(resolved_source_wav)
     source_duration = float(source_profile.get("duration") or 0.0)
     if source_duration <= 0:
-        raise ValueError(f"Source audio has no readable duration for {session_id}: {source_wav}")
+        raise ValueError(f"Source audio has no readable duration for {resolved_session_id}: {resolved_source_wav}")
     last_item = timed_items[-1]
     if last_item.end_seconds > source_duration:
         raise ValueError(
-            f"Canonical wordlist boundaries exceed source audio duration for {session_id}: "
+            f"Canonical wordlist boundaries exceed source audio duration for {resolved_session_id}: "
             f"last_end={last_item.end_seconds:.4f}s duration={source_duration:.4f}s"
         )
 
     if dry_run:
         return {
-            "session_id": session_id,
-            "person_id": person_id,
+            "session_id": resolved_session_id,
+            "person_id": resolved_person_id,
             "warnings": label_warnings,
             "source_profile": source_profile,
             "item_count": len(timed_items),
             "mode": "dry-run",
         }
 
-    create_full_wordlist_mp3(source_wav, derived_mp3)
+    create_full_wordlist_mp3(resolved_source_wav, derived_mp3)
     derived_duration_seconds = probe_duration_seconds(derived_mp3)
     split_boundaries = build_split_boundaries(session_dir, timed_items, derived_duration_seconds)
     create_wordlist_splits(derived_mp3, split_boundaries)
-    alignment_payload = build_alignment_payload(session_id=session_id, person_id=person_id, items=timed_items)
+    alignment_payload = build_alignment_payload(session_id=resolved_session_id, person_id=resolved_person_id, items=timed_items)
     write_alignment_json(alignment_json_path, alignment_payload)
-    _update_metadata(session_dir, alignment_payload, split_paths)
+    if update_metadata and (session_dir / "metadata.json").exists():
+        _update_metadata(session_dir, alignment_payload, split_paths)
     verification = _validate_generated_outputs(session_dir, [item.item_id for item in timed_items])
 
     return {
-        "session_id": session_id,
-        "person_id": person_id,
+        "session_id": resolved_session_id,
+        "person_id": resolved_person_id,
         "warnings": label_warnings,
         "verification": verification,
         "item_count": len(timed_items),
         "mode": "write",
     }
+
+
+def _process_session(session_dir: Path, catalog_path: Path, dry_run: bool, validate_labels: str) -> dict[str, Any]:
+    return produce_wordlist_artifacts(
+        session_dir,
+        catalog_path=catalog_path,
+        dry_run=dry_run,
+        validate_labels=validate_labels,
+        update_metadata=True,
+    )
 
 
 def main() -> int:

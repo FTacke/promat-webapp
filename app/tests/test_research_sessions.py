@@ -361,6 +361,7 @@ def _learner_payload(
     target_language: str = "es",
     exposure_entries: list[dict[str, object]] | None = None,
     stays_in_target_country: bool | None = True,
+    l1_additional: str | list[str] | None = None,
 ) -> dict[str, object]:
     return {
         "person_id": person_id,
@@ -368,6 +369,7 @@ def _learner_payload(
         "target_language": target_language,
         "speaker_type": "learner",
         "l1": "DE",
+        "l1_additional": l1_additional if l1_additional is not None else ["IT", "EN"],
         "mother_l1": "DE",
         "father_l1": "PL",
         "additional_languages": ["English", "French"],
@@ -464,6 +466,7 @@ def test_load_person_records_aggregates_multi_session_person(runtime_env: Path) 
     assert person.session_count == 2
     assert person.latest_session.session_id == newer_session
     assert person.level_codes == ("A1", "A2")
+    assert person.l1_additional == ("IT", "EN")
     assert person.recording_years == (2026, 2027)
     assert person.available_task_keys == ("wordlist", "text", "interview")
 
@@ -577,6 +580,7 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
             level_code="B1",
             context="baseline",
             task_types=("wordlist", "text", "interview"),
+            l1_additional="IT; EN",
             exposure_entries=[
                 {"country": "Spain", "duration_months": 6, "type": "erasmus", "exposure_notes": "Austauschsemester in Madrid."},
                 {"country": "Mexico", "duration_months": 2, "type": "travel", "exposure_notes": ""},
@@ -595,6 +599,9 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
     assert page["content_header"]["intro"] == "Profil mit Personendaten und allen zugehörigen Sessions und Aufzeichnungen."
     assert page["profile_header"]["session_count_label"] == "Zugeordnete Sessions"
     assert page["profile_header"]["session_count_value"] == 1
+    person_rows = {row["label"]: row["value"] for row in page["person_section"]["rows"]}
+    assert person_rows["Weitere L1"] == "IT, EN"
+    assert person_rows["Zusätzliche Sprachen"] == "English, French"
 
     exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
     assert [entry["text"] for entry in exposure_row["entries"]] == [
