@@ -32,7 +32,16 @@ from app.research_capabilities import RESEARCH_TASK_KEYS, get_research_task_capa
 from app.research_metadata import ResearchPerson, ResearchSession, ResearchSessionExposure  # noqa: E402
 from app.runtime_paths import get_sessions_root  # noqa: E402
 from audio_conversion.ffmpeg_audio import ensure_media_tools  # noqa: E402
-from intake_batch_common import resolve_batch_dir, working_alignment_path, working_source_path, working_task_root  # noqa: E402
+from intake_batch_common import (  # noqa: E402
+    build_batch_inventory,
+    choose_unique_candidate,
+    collect_batch_files,
+    files_match,
+    resolve_batch_dir,
+    working_alignment_path,
+    working_source_path,
+    working_task_root,
+)
 from intake_workbook_reader import IntakeExposureRow, IntakePersonRow, IntakeSessionRow, SessionLinkKey, load_intake_workbook  # noqa: E402
 from language_config import resolve_language_config  # noqa: E402
 from produce_text_artifacts import produce_text_artifacts  # noqa: E402
@@ -56,6 +65,17 @@ class TaskSyncPlan:
 
 
 @dataclass(frozen=True, slots=True)
+class RawSyncPlan:
+    task_key: str
+    action: str
+    status: str
+    reason: str | None
+    source_path: Path | None
+    target_path: Path
+    relative_source: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class SessionImportPlan:
     person: IntakePersonRow
     session: IntakeSessionRow
@@ -68,6 +88,7 @@ class SessionImportPlan:
     existing_session_dir: Path | None
     target_runtime_exists: bool
     task_plans: tuple[TaskSyncPlan, ...]
+    raw_plans: tuple[RawSyncPlan, ...]
     warnings: tuple[str, ...]
     conflicts: tuple[str, ...]
 
@@ -81,6 +102,10 @@ class ImportRunSummary:
     conflict_count: int
     task_sync_count: int
     task_available_count: int
+    raw_sync_count: int
+    raw_keep_count: int
+    raw_missing_count: int
+    raw_conflict_count: int
 
 
 @dataclass(slots=True)
@@ -157,6 +182,11 @@ def parse_args() -> argparse.Namespace:
         help="Delegate task artifact production to wordlist/text when working sources are ready.",
     )
     parser.add_argument(
+        "--sync-raw-only",
+        action="store_true",
+        help="Only backfill or validate raw master archival into existing runtime sessions without task regeneration.",
+    )
+    parser.add_argument(
         "--allow-session-id-change",
         action="store_true",
         help="Allow a workbook metadata change that derives a new session_id for an existing (person_id, session_ref) slot.",
@@ -214,6 +244,10 @@ def _task_label(task_key: str) -> str:
     return capability.long_label("de")
 
 
+def _raw_target_path(session_dir: Path, task_key: str) -> Path:
+    return session_dir / "raw" / f"{task_key}.wav"
+
+
 def _task_status_from_session_dir(session_dir: Path, task_key: str) -> bool:
     source_path = session_dir / "source" / f"{task_key}.wav"
     alignment_path = session_dir / "alignment" / f"{task_key}.TextGrid"
@@ -228,6 +262,94 @@ def _documented_tasks_from_session_dir(session_dir: Path) -> tuple[str, ...]:
         if _task_status_from_session_dir(session_dir, task_key):
             documented.append(task_key)
     return tuple(documented)
+
+
+def _plan_raw_syncs(
+    *,
+    batch_inventory: dict[str, dict[str, Any]],
+    person_id: str,
+    target_session_dir: Path,
+    warnings: list[str],
+    conflicts: list[str],
+) -> tuple[RawSyncPlan, ...]:
+    raw_plans: list[RawSyncPlan] = []
+    person_inventory = batch_inventory.get(person_id, {})
+    for task_key in RESEARCH_TASK_KEYS:
+        bucket = person_inventory.get(task_key)
+        candidates = [] if bucket is None else bucket.raw_wav
+        target_path = _raw_target_path(target_session_dir, task_key)
+        selected_entry, candidate_warning = choose_unique_candidate(
+            candidates,
+            source_label="batch/raw",
+            selection_label=f"{person_id}/{task_key} raw master",
+        )
+        if candidate_warning is not None:
+            warnings.append(candidate_warning)
+            conflicts.append(f"raw master mapping is ambiguous for {person_id}/{task_key}")
+            raw_plans.append(
+                RawSyncPlan(
+                    task_key=task_key,
+                    action="conflict",
+                    status="ambiguous",
+                    reason=candidate_warning,
+                    source_path=None,
+                    target_path=target_path,
+                    relative_source=None,
+                )
+            )
+            continue
+        if selected_entry is None:
+            raw_plans.append(
+                RawSyncPlan(
+                    task_key=task_key,
+                    action="missing",
+                    status="missing",
+                    reason="no batch raw master found",
+                    source_path=None,
+                    target_path=target_path,
+                    relative_source=None,
+                )
+            )
+            continue
+        if target_path.exists():
+            if files_match(selected_entry.source_path, target_path):
+                raw_plans.append(
+                    RawSyncPlan(
+                        task_key=task_key,
+                        action="keep",
+                        status="present",
+                        reason="identical raw master already archived",
+                        source_path=selected_entry.source_path,
+                        target_path=target_path,
+                        relative_source=selected_entry.relative_source,
+                    )
+                )
+                continue
+            conflicts.append(f"existing raw file differs for {person_id}/{task_key}")
+            raw_plans.append(
+                RawSyncPlan(
+                    task_key=task_key,
+                    action="conflict",
+                    status="conflict",
+                    reason=f"existing archived raw differs from batch source {selected_entry.relative_source}",
+                    source_path=selected_entry.source_path,
+                    target_path=target_path,
+                    relative_source=selected_entry.relative_source,
+                )
+            )
+            continue
+        raw_plans.append(
+            RawSyncPlan(
+                task_key=task_key,
+                action="sync",
+                status="ready",
+                reason=None,
+                source_path=selected_entry.source_path,
+                target_path=target_path,
+                relative_source=selected_entry.relative_source,
+            )
+        )
+    return tuple(raw_plans)
 
 
 def _detect_working_task(batch_dir: Path, person_id: str, task_key: str, sync_tasks: bool) -> TaskSyncPlan:
@@ -332,9 +454,12 @@ def _build_import_plans(
     workbook_data,
     create_missing_only: bool,
     sync_tasks: bool,
+    sync_raw_only: bool,
     allow_session_id_change: bool,
     db_session: Session,
 ) -> tuple[list[SessionImportPlan], list[str]]:
+    parsed_batch_files, batch_warnings = collect_batch_files(batch_dir)
+    batch_inventory = build_batch_inventory(parsed_batch_files)
     sessions = db_session.scalars(
         select(ResearchSession).options(selectinload(ResearchSession.exposures)).where(
             ResearchSession.target_language == workbook_data.target_language
@@ -343,7 +468,7 @@ def _build_import_plans(
     by_slot = {(row.person_id, row.session_ref): row for row in sessions}
     by_session_id = {row.session_id: row for row in sessions}
     runtime_dirs = _existing_runtime_dirs(workbook_data.sessions[0].corpus_language) if workbook_data.sessions else {}
-    plan_warnings: list[str] = []
+    plan_warnings: list[str] = list(batch_warnings)
     plans: list[SessionImportPlan] = []
 
     for workbook_session in workbook_data.sessions:
@@ -390,7 +515,10 @@ def _build_import_plans(
         target_session_dir = (get_sessions_root() / workbook_session.corpus_language / workbook_session.session_id).resolve()
         target_runtime_exists = target_session_dir.exists()
 
-        if create_missing_only and (existing_slot is not None or existing_by_id is not None or target_runtime_exists):
+        if sync_raw_only and not target_runtime_exists:
+            mode_action = "skip"
+            reason = "raw-only mode requires an existing runtime session directory"
+        elif create_missing_only and (existing_slot is not None or existing_by_id is not None or target_runtime_exists):
             mode_action = "skip"
             reason = "existing session already present; create-missing-only requested"
         elif conflicts:
@@ -412,6 +540,16 @@ def _build_import_plans(
             _detect_working_task(batch_dir=batch_dir, person_id=workbook_session.person_id, task_key=task_key, sync_tasks=sync_tasks)
             for task_key in RESEARCH_TASK_KEYS
         )
+        raw_plans = _plan_raw_syncs(
+            batch_inventory=batch_inventory,
+            person_id=workbook_session.person_id,
+            target_session_dir=target_session_dir,
+            warnings=warnings,
+            conflicts=conflicts,
+        )
+        if mode_action not in {"skip", "conflict"} and conflicts:
+            mode_action = "conflict"
+            reason = "; ".join(conflicts)
         if mode_action in {"skip", "conflict"}:
             task_plans = tuple(
                 TaskSyncPlan(
@@ -425,6 +563,18 @@ def _build_import_plans(
                     working_alignment_json=task_plan.working_alignment_json,
                 )
                 for task_plan in task_plans
+            )
+            raw_plans = tuple(
+                RawSyncPlan(
+                    task_key=raw_plan.task_key,
+                    action="keep" if raw_plan.action == "keep" else "skip",
+                    status=raw_plan.status,
+                    reason=raw_plan.reason if raw_plan.reason is not None else f"session {mode_action}",
+                    source_path=raw_plan.source_path,
+                    target_path=raw_plan.target_path,
+                    relative_source=raw_plan.relative_source,
+                )
+                for raw_plan in raw_plans
             )
 
         plans.append(
@@ -440,6 +590,7 @@ def _build_import_plans(
                 existing_session_dir=existing_runtime_dir,
                 target_runtime_exists=target_runtime_exists,
                 task_plans=task_plans,
+                raw_plans=raw_plans,
                 warnings=tuple(warnings),
                 conflicts=tuple(conflicts),
             )
@@ -468,6 +619,10 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
     conflict_count = 0
     task_sync_count = 0
     task_available_count = 0
+    raw_sync_count = 0
+    raw_keep_count = 0
+    raw_missing_count = 0
+    raw_conflict_count = 0
     for plan in plans:
         if plan.mode_action == "create":
             create_count += 1
@@ -479,6 +634,7 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
             conflict_count += 1
 
         task_summary_parts: list[str] = []
+        raw_summary_parts: list[str] = []
         for task_plan in plan.task_plans:
             if task_plan.action == "sync":
                 task_sync_count += 1
@@ -489,11 +645,26 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
                 suffix = f"/{task_plan.status}:{task_plan.reason}"
             task_summary_parts.append(f"{task_plan.task_key}={task_plan.action}{suffix}")
 
+        for raw_plan in plan.raw_plans:
+            if raw_plan.action == "sync":
+                raw_sync_count += 1
+            elif raw_plan.action == "keep":
+                raw_keep_count += 1
+            elif raw_plan.action == "missing":
+                raw_missing_count += 1
+            elif raw_plan.action == "conflict":
+                raw_conflict_count += 1
+            suffix = f"/{raw_plan.status}"
+            if raw_plan.reason is not None and raw_plan.action != "keep":
+                suffix = f"/{raw_plan.status}:{raw_plan.reason}"
+            raw_summary_parts.append(f"{raw_plan.task_key}={raw_plan.action}{suffix}")
+
         details = [
             f"{plan.mode_action:8}",
             plan.session.session_id,
             f"({plan.person.person_id}/{plan.session.session_ref})",
             f"tasks[{', '.join(task_summary_parts)}]",
+            f"raw[{', '.join(raw_summary_parts)}]",
         ]
         if plan.reason:
             details.append(f"reason={plan.reason}")
@@ -511,6 +682,10 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
         conflict_count=conflict_count,
         task_sync_count=task_sync_count,
         task_available_count=task_available_count,
+        raw_sync_count=raw_sync_count,
+        raw_keep_count=raw_keep_count,
+        raw_missing_count=raw_missing_count,
+        raw_conflict_count=raw_conflict_count,
     )
     print()
     print("[summary]")
@@ -524,6 +699,10 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
                 f"conflict={summary.conflict_count}",
                 f"task_sync={summary.task_sync_count}",
                 f"task_available={summary.task_available_count}",
+                f"raw_sync={summary.raw_sync_count}",
+                f"raw_keep={summary.raw_keep_count}",
+                f"raw_missing={summary.raw_missing_count}",
+                f"raw_conflict={summary.raw_conflict_count}",
             ]
         )
     )
@@ -539,6 +718,16 @@ def _build_task_entries(session_dir: Path) -> tuple[list[dict[str, Any]], list[d
     tasks: list[dict[str, Any]] = []
     files: list[dict[str, Any]] = []
     for task_key in RESEARCH_TASK_KEYS:
+        raw_path = _raw_target_path(session_dir, task_key)
+        if raw_path.exists():
+            files.append(
+                {
+                    "path": str(raw_path.relative_to(session_dir)).replace("\\", "/"),
+                    "file_role": "audio_raw",
+                    "format": "wav",
+                    "status": "archived",
+                }
+            )
         if not _task_status_from_session_dir(session_dir, task_key):
             continue
         source_rel = f"source/{task_key}.wav"
@@ -716,6 +905,7 @@ def _sync_wordlist_task(plan: SessionImportPlan, task_plan: TaskSyncPlan, valida
     assert task_plan.source_wav is not None
     assert task_plan.alignment_textgrid is not None
     session_dir = plan.target_session_dir
+    language_slug = resolve_language_config(plan.session.target_language).corpus_slug
     source_target = session_dir / "source" / "wordlist.wav"
     alignment_target = session_dir / "alignment" / "wordlist.TextGrid"
     _copy_file(task_plan.source_wav, source_target)
@@ -726,6 +916,7 @@ def _sync_wordlist_task(plan: SessionImportPlan, task_plan: TaskSyncPlan, valida
         person_id=plan.person.person_id,
         source_wav=source_target,
         alignment_textgrid=alignment_target,
+        language_slug=language_slug,
         dry_run=False,
         validate_labels=validate_wordlist_labels,
         update_metadata=False,
@@ -750,6 +941,15 @@ def _sync_text_task(plan: SessionImportPlan, task_plan: TaskSyncPlan) -> dict[st
     )
 
 
+def _sync_raw_files(raw_plans: tuple[RawSyncPlan, ...]) -> None:
+    for raw_plan in raw_plans:
+        if raw_plan.action != "sync":
+            continue
+        if raw_plan.source_path is None:
+            raise ProductionImportError(f"Raw sync planned without source path for {raw_plan.task_key}")
+        _copy_file(raw_plan.source_path, raw_plan.target_path)
+
+
 def _apply_plan(
     db_session: Session,
     plan: SessionImportPlan,
@@ -759,6 +959,7 @@ def _apply_plan(
     workspace = SessionWorkspace(target_dir=plan.target_session_dir, seed_dir=plan.existing_session_dir)
     workspace.prepare()
     try:
+        _sync_raw_files(plan.raw_plans)
         for task_plan in plan.task_plans:
             if task_plan.action != "sync":
                 continue
@@ -780,6 +981,34 @@ def _apply_plan(
         raise
 
 
+def _apply_raw_only_backfill(plan: SessionImportPlan) -> None:
+    target_dir = plan.target_session_dir
+    if not target_dir.exists():
+        raise ProductionImportError(f"Raw-only mode requires an existing runtime session directory: {target_dir}")
+    metadata_path = target_dir / "metadata.json"
+    if not metadata_path.exists():
+        raise ProductionImportError(f"Raw-only mode requires metadata.json in the existing session directory: {metadata_path}")
+
+    original_metadata = metadata_path.read_text(encoding="utf-8")
+    created_raw_paths: list[Path] = []
+    try:
+        for raw_plan in plan.raw_plans:
+            if raw_plan.action != "sync":
+                continue
+            if raw_plan.source_path is None:
+                raise ProductionImportError(f"Raw sync planned without source path for {plan.session.session_id}/{raw_plan.task_key}")
+            _copy_file(raw_plan.source_path, raw_plan.target_path)
+            created_raw_paths.append(raw_plan.target_path)
+        metadata_payload, _ = _build_metadata_payload(plan, target_dir)
+        _write_metadata_json(target_dir, metadata_payload)
+    except Exception:
+        metadata_path.write_text(original_metadata, encoding="utf-8")
+        for created_path in reversed(created_raw_paths):
+            if created_path.exists():
+                created_path.unlink()
+        raise
+
+
 def _assert_schema_ready(engine) -> None:
     inspector = inspect(engine)
     required_tables = ("research_people", "research_sessions", "research_session_exposures")
@@ -793,6 +1022,10 @@ def _assert_schema_ready(engine) -> None:
 def main() -> int:
     args = parse_args()
     try:
+        if args.sync_raw_only and args.sync_tasks:
+            raise ProductionImportError("--sync-raw-only cannot be combined with --sync-tasks")
+        if args.sync_raw_only and args.create_missing_only:
+            raise ProductionImportError("--sync-raw-only cannot be combined with --create-missing-only")
         batch_dir = resolve_batch_dir(args.batch_dir, require_processed=False)
         workbook_path = _discover_workbook_path(batch_dir, args.workbook)
         target_language = resolve_language_config(args.target_language).code
@@ -820,6 +1053,7 @@ def main() -> int:
                 workbook_data=workbook_data,
                 create_missing_only=args.create_missing_only,
                 sync_tasks=args.sync_tasks,
+                sync_raw_only=args.sync_raw_only,
                 allow_session_id_change=args.allow_session_id_change,
                 db_session=db_session,
             )
@@ -833,11 +1067,14 @@ def main() -> int:
             for plan in plans:
                 if plan.mode_action not in {"create", "update"}:
                     continue
-                _apply_plan(
-                    db_session,
-                    plan,
-                    validate_wordlist_labels=args.validate_wordlist_labels,
-                )
+                if args.sync_raw_only:
+                    _apply_raw_only_backfill(plan)
+                else:
+                    _apply_plan(
+                        db_session,
+                        plan,
+                        validate_wordlist_labels=args.validate_wordlist_labels,
+                    )
         return 0
     except ProductionImportError as exc:
         print(f"ERROR: {exc}")

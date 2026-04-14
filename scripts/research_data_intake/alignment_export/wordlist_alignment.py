@@ -6,7 +6,6 @@ import re
 from pathlib import Path
 
 
-EXPECTED_WORDLIST_COUNT = 92
 SILENCE_MARKERS = {"", "sp", "sil", "silence", "silent"}
 
 
@@ -50,13 +49,12 @@ def load_wordlist_catalog(path: Path) -> list[CatalogItem]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("task") != "wordlist":
         raise ValueError(f"Catalog task must be 'wordlist': {path}")
-    if payload.get("language") != "spanish":
-        raise ValueError(f"Catalog language must be 'spanish': {path}")
+    language_value = payload.get("language")
+    if not isinstance(language_value, str) or not language_value.strip():
+        raise ValueError(f"Catalog language must be a non-empty string: {path}")
     items_payload = payload.get("items")
-    if not isinstance(items_payload, list):
+    if not isinstance(items_payload, list) or not items_payload:
         raise ValueError(f"Catalog items must be a list: {path}")
-    if len(items_payload) != EXPECTED_WORDLIST_COUNT:
-        raise ValueError(f"Catalog must define exactly {EXPECTED_WORDLIST_COUNT} items: {path}")
 
     catalog_items: list[CatalogItem] = []
     for index, item_payload in enumerate(items_payload, start=1):
@@ -108,9 +106,10 @@ def build_timed_items(
     validate_labels: str,
 ) -> tuple[list[TimedWordlistItem], list[str]]:
     non_silence_intervals = [interval for interval in intervals if interval.text.strip().lower() not in SILENCE_MARKERS]
-    if len(non_silence_intervals) != EXPECTED_WORDLIST_COUNT:
+    expected_count = len(catalog_items)
+    if len(non_silence_intervals) != expected_count:
         raise ValueError(
-            f"TextGrid must provide exactly {EXPECTED_WORDLIST_COUNT} non-silence intervals, got {len(non_silence_intervals)}"
+            f"TextGrid must provide exactly {expected_count} non-silence intervals, got {len(non_silence_intervals)}"
         )
 
     warnings: list[str] = []

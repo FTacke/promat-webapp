@@ -22,7 +22,6 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(REPO_ROOT / "public"))
 
 from app.runtime_paths import get_sessions_root  # noqa: E402
 from alignment_export.wordlist_alignment import (  # noqa: E402
-    EXPECTED_WORDLIST_COUNT,
     build_alignment_payload,
     build_timed_items,
     load_wordlist_catalog,
@@ -39,21 +38,34 @@ from audio_conversion.ffmpeg_audio import (  # noqa: E402
     probe_duration_seconds,
 )
 from item_split.wordlist_splits import build_split_boundaries, create_wordlist_splits  # noqa: E402
+from language_config import resolve_language_config  # noqa: E402
 
 
-LANGUAGE_SLUG = "spanish"
+DEFAULT_LANGUAGE_SLUG = "spanish"
 TASK_KEY = "wordlist"
-CATALOG_PATH = REPO_ROOT / "data" / "config" / "research_player" / LANGUAGE_SLUG / "task_catalogs" / "wordlist.json"
+
+
+def _resolve_language_slug(value: str | None) -> str:
+    return resolve_language_config(value or DEFAULT_LANGUAGE_SLUG).corpus_slug
+
+
+def _catalog_path_for_language(language_slug: str) -> Path:
+    return REPO_ROOT / "data" / "config" / "research_player" / language_slug / "task_catalogs" / "wordlist.json"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Produce wordlist player artifacts from Spanish dev sessions.")
+    parser = argparse.ArgumentParser(description="Produce wordlist player artifacts from runtime sessions.")
     selection_group = parser.add_mutually_exclusive_group(required=True)
     selection_group.add_argument("--session-id", help="Process one concrete session_id.")
     selection_group.add_argument(
         "--all-suitable-sessions",
         action="store_true",
-        help="Process all current Spanish sessions with non-empty source/wordlist.wav and alignment/wordlist.TextGrid.",
+        help="Process all suitable sessions for the selected corpus language with non-empty source/wordlist.wav and alignment/wordlist.TextGrid.",
+    )
+    parser.add_argument(
+        "--language",
+        default=DEFAULT_LANGUAGE_SLUG,
+        help="Target intake language code or corpus slug for runtime session selection and catalog lookup. Default: spanish.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Validate inputs and plan outputs without writing files.")
     parser.add_argument(
@@ -82,8 +94,8 @@ def _task_definition(metadata: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
-def _suitable_session_targets() -> tuple[list[Path], list[str]]:
-    sessions_root = get_sessions_root() / LANGUAGE_SLUG
+def _suitable_session_targets(language_slug: str) -> tuple[list[Path], list[str]]:
+    sessions_root = get_sessions_root() / language_slug
     targets: list[Path] = []
     skipped: list[str] = []
     for metadata_path in sorted(sessions_root.glob("*/metadata.json")):
@@ -110,13 +122,13 @@ def _suitable_session_targets() -> tuple[list[Path], list[str]]:
     return targets, skipped
 
 
-def _resolve_session_dir(args: argparse.Namespace) -> tuple[list[Path], list[str]]:
+def _resolve_session_dir(args: argparse.Namespace, language_slug: str) -> tuple[list[Path], list[str]]:
     if args.session_id:
-        session_dir = get_sessions_root() / LANGUAGE_SLUG / args.session_id
+        session_dir = get_sessions_root() / language_slug / args.session_id
         if not session_dir.exists():
             raise FileNotFoundError(f"Unknown session_id: {args.session_id}")
         return [session_dir], []
-    return _suitable_session_targets()
+    return _suitable_session_targets(language_slug)
 
 
 def _update_metadata(session_dir: Path, payload: dict[str, Any], split_paths: list[str]) -> None:
@@ -171,6 +183,7 @@ def _validate_generated_outputs(session_dir: Path, expected_ids: list[str]) -> d
     derived_mp3 = session_dir / "derived" / "wordlist.mp3"
     alignment_json_path = session_dir / "alignment" / "wordlist.json"
     items_dir = session_dir / "items" / "wordlist"
+    expected_count = len(expected_ids)
 
     if not derived_mp3.exists() or derived_mp3.stat().st_size == 0:
         raise RuntimeError(f"Missing derived MP3: {derived_mp3}")
@@ -179,16 +192,16 @@ def _validate_generated_outputs(session_dir: Path, expected_ids: list[str]) -> d
 
     payload = json.loads(alignment_json_path.read_text(encoding="utf-8"))
     items = payload.get("items")
-    if not isinstance(items, list) or len(items) != EXPECTED_WORDLIST_COUNT:
-        raise RuntimeError(f"alignment/wordlist.json must contain exactly {EXPECTED_WORDLIST_COUNT} items: {alignment_json_path}")
+    if not isinstance(items, list) or len(items) != expected_count:
+        raise RuntimeError(f"alignment/wordlist.json must contain exactly {expected_count} items: {alignment_json_path}")
 
     observed_ids = [item.get("item_id") for item in items if isinstance(item, dict)]
     if observed_ids != expected_ids:
         raise RuntimeError(f"alignment/wordlist.json item_id sequence mismatch: {alignment_json_path}")
 
     item_paths = sorted(items_dir.glob("*.mp3"))
-    if len(item_paths) != EXPECTED_WORDLIST_COUNT:
-        raise RuntimeError(f"Expected {EXPECTED_WORDLIST_COUNT} split MP3s in {items_dir}, found {len(item_paths)}")
+    if len(item_paths) != expected_count:
+        raise RuntimeError(f"Expected {expected_count} split MP3s in {items_dir}, found {len(item_paths)}")
 
     expected_split_paths = {f"items/wordlist/{item_id}.mp3" for item_id in expected_ids}
     payload_split_paths = {
@@ -234,7 +247,8 @@ def produce_wordlist_artifacts(
     person_id: str | None = None,
     source_wav: Path | None = None,
     alignment_textgrid: Path | None = None,
-    catalog_path: Path = CATALOG_PATH,
+    catalog_path: Path | None = None,
+    language_slug: str = DEFAULT_LANGUAGE_SLUG,
     dry_run: bool = False,
     validate_labels: str = "off",
     update_metadata: bool = True,
@@ -262,7 +276,8 @@ def produce_wordlist_artifacts(
     if not resolved_alignment_textgrid.exists() or resolved_alignment_textgrid.stat().st_size == 0:
         raise FileNotFoundError(f"Missing or empty wordlist TextGrid for {resolved_session_id}: {resolved_alignment_textgrid}")
 
-    catalog_items = load_wordlist_catalog(catalog_path)
+    resolved_catalog_path = catalog_path or _catalog_path_for_language(language_slug)
+    catalog_items = load_wordlist_catalog(resolved_catalog_path)
     intervals = parse_textgrid_intervals(resolved_alignment_textgrid)
     timed_items, label_warnings = build_timed_items(catalog_items, intervals, validate_labels)
     split_paths = [item.split_mp3 for item in timed_items]
@@ -319,17 +334,19 @@ def _process_session(session_dir: Path, catalog_path: Path, dry_run: bool, valid
 
 def main() -> int:
     args = parse_args()
+    language_slug = _resolve_language_slug(args.language)
+    catalog_path = _catalog_path_for_language(language_slug)
     ensure_media_tools()
-    targets, skipped = _resolve_session_dir(args)
+    targets, skipped = _resolve_session_dir(args, language_slug)
     if not targets:
-        raise RuntimeError("No suitable Spanish sessions found for wordlist processing.")
+        raise RuntimeError(f"No suitable {language_slug} sessions found for wordlist processing.")
 
     results: list[dict[str, Any]] = []
     for session_dir in targets:
         try:
             result = _process_session(
                 session_dir=session_dir,
-                catalog_path=CATALOG_PATH,
+                catalog_path=catalog_path,
                 dry_run=args.dry_run,
                 validate_labels=args.validate_labels,
             )
@@ -342,7 +359,8 @@ def main() -> int:
         results.append(result)
 
     _print_header("wordlist-production-summary")
-    print(f"catalog={CATALOG_PATH}")
+    print(f"language={language_slug}")
+    print(f"catalog={catalog_path}")
     print(f"mode={'dry-run' if args.dry_run else 'write'} validate_labels={args.validate_labels}")
     print(f"target_bitrate={TARGET_BITRATE} mono={TARGET_CHANNELS} cbr=true")
     for result in results:

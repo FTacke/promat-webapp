@@ -39,6 +39,7 @@ from .research_presets import load_phenomena_presets, load_task_catalogs
 from .research_sets import (
     list_selectable_owned_sets,
     load_owned_set,
+    ResearchSetStorageUnavailableError,
 )
 from .research_sessions import (
     LEVEL_ORDER,

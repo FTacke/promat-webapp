@@ -168,14 +168,31 @@ DEFAULT_RESEARCH_PAGE_SURFACE_MODES: dict[str, ResearchPageSurfaceMode] = {
     "phenomena": "placeholder",
 }
 
-CORPUS_RESEARCH_PAGE_SURFACE_OVERRIDES: dict[str, dict[str, ResearchPageSurfaceMode]] = {
-    "spanish": {
-        "speakers": "productive",
-        "recordings": "productive",
-        "comparison": "productive",
-        "phenomena": "productive",
-    }
-}
+
+def _corpus_has_session_runtime(language_slug: str) -> bool:
+    from .research_sessions import load_language_sessions
+
+    return len(load_language_sessions(language_slug)) > 0
+
+
+def _corpus_has_compare_runtime(language_slug: str) -> bool:
+    from .research_player_runtime import load_task_ready_sessions
+
+    return any(load_task_ready_sessions(language_slug, task_key)[0] for task_key in player_compare_task_keys())
+
+
+def _corpus_has_phenomena_runtime(language_slug: str) -> bool:
+    from .research_presets import ResearchConfigError, load_phenomena_presets, load_task_catalogs
+
+    try:
+        catalogs = load_task_catalogs(language_slug)
+        presets = load_phenomena_presets(language_slug)
+    except ResearchConfigError:
+        return False
+
+    if any(task_key not in catalogs for task_key in phenomena_task_keys()):
+        return False
+    return isinstance(presets, tuple)
 
 
 def _render_mode_to_view(render_mode: str) -> str:
@@ -215,10 +232,15 @@ def get_research_page_surface_mode(language_slug: str, page_slug: str) -> Resear
     if capability is None:
         return None
     normalized_language = (language_slug or "").strip().lower()
-    override = CORPUS_RESEARCH_PAGE_SURFACE_OVERRIDES.get(normalized_language, {}).get(capability.slug)
-    if override is not None:
-        return override
-    return DEFAULT_RESEARCH_PAGE_SURFACE_MODES[capability.slug]
+    surface_mode = DEFAULT_RESEARCH_PAGE_SURFACE_MODES[capability.slug]
+
+    if capability.slug in {"speakers", "recordings"} and _corpus_has_session_runtime(normalized_language):
+        return "productive"
+    if capability.slug == "comparison" and _corpus_has_compare_runtime(normalized_language):
+        return "productive"
+    if capability.slug == "phenomena" and _corpus_has_phenomena_runtime(normalized_language):
+        return "productive"
+    return surface_mode
 
 
 def is_public_research_page(page_slug: str) -> bool:

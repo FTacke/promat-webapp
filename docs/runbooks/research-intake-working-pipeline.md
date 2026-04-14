@@ -16,6 +16,7 @@ Wiederholbarer Ablauf für den generischen Batch-zu-Working-Pfad unter `scripts/
 - Zentrale Konfiguration: `scripts/research_data_intake/language_config.py`
 - Aktuell vorbereitete Codes: `es`, `de`, `fr`, `en`
 - Die Sprachkonfiguration hält die geplanten MFA-Akustik- und Dictionary-Modelle pro Sprache zusammen.
+- Für `en` sind die kanonischen Katalogquellen `data/config/research_player/english/task_catalogs/wordlist.json` und `data/config/research_player/english/task_catalogs/text.json`; der englische `text`-Katalog bleibt unter dem Task-Key `text`, ist aber als connected text modelliert.
 
 ## Schritt 1: Working-Tree organisieren
 
@@ -31,6 +32,7 @@ Wiederholbarer Ablauf für den generischen Batch-zu-Working-Pfad unter `scripts/
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/alignment_export/prepare_text_mfa_corpus.py --batch-dir spanisch_batch --language es --text-source-json data/config/research_player/spanish/task_catalogs/text.json --dry-run`
 - Schreiben:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/alignment_export/prepare_text_mfa_corpus.py --batch-dir spanisch_batch --language es --text-source-json data/config/research_player/spanish/task_catalogs/text.json`
+- Für einen späteren englischen Working-Lauf wird derselbe Schritt generisch mit `--language en --text-source-json data/config/research_player/english/task_catalogs/text.json` ausgeführt.
 
 ## Schritt 3: Optionale MFA-Modellprüfung oder Downloads
 
@@ -54,12 +56,14 @@ Wiederholbarer Ablauf für den generischen Batch-zu-Working-Pfad unter `scripts/
 
 ## Schritt 6: Produktionsimport planen oder ausführen
 
-- Voller Dry-Run für einen Batch mit Metadaten-Update und Task-Sync-Plan:
+- Voller Dry-Run für einen Batch mit Metadaten-, Raw- und Task-Sync-Plan:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanisch_batch --target-language es --sync-tasks --dry-run`
 - Kontrollierter Ein-Personen-Run:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanisch_batch --target-language es --person-id ES-L-0001 --sync-tasks`
 - Reiner Metadata-Reimport gegen bestehende Sessions ohne erneute Task-Produktion:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanisch_batch --target-language es --update-metadata`
+- Reiner Raw-Backfill gegen bereits importierte Sessions:
+  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanisch_batch --target-language es --sync-raw-only --dry-run`
 - Nur fehlende Sessions anlegen, bestehende aber exakt überspringen:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanisch_batch --target-language es --create-missing-only --dry-run`
 
@@ -67,7 +71,10 @@ Regeln:
 
 - Der Import liest Workbook-Steuerdaten aus `intake_data/*.xlsx` und technische Inputs aus `working/{person_id}/{task}/`.
 - Er schreibt person-, session- und exposure-bezogene Metadaten nach PostgreSQL und projiziert die Laufzeitstruktur nach `data/sessions/{language}/{session_id}/`.
+- Wenn der Batch für eine Person und einen Task einen echten unveränderten Raw-Master unter `raw/` enthält, archiviert derselbe Import ihn zusätzlich unter `data/sessions/{language}/{session_id}/raw/{task}.wav`.
+- Fehlt ein echter Raw-Master, bleibt das transparent; der Import darf `source/`-Dateien niemals als Ersatz nach `raw/` kopieren.
 - `--sync-tasks` delegiert produktive Artefakt-Erzeugung an die wiederverwendbaren `wordlist`- und `text`-Prozessoren.
+- `--sync-raw-only` ist der Nachholmodus für bereits importierte Sessions und ergänzt nur die Archivschicht `raw/` plus die zugehörigen `metadata.json`-Dateieinträge.
 - Sessions ohne vollständige Task-Verfügbarkeit bleiben importierbar; nur die tatsächlich vorbereiteten Tasks werden synchronisiert.
 - Ein abgeleiteter `session_id`-Wechsel für ein bestehendes `(person_id, session_ref)`-Slot ist ohne explizites `--allow-session-id-change` ein harter Konflikt.
 - Interview bleibt aktuell nur als Strukturslot ohne produktiven Artefakt-Import.
@@ -76,7 +83,7 @@ Regeln:
 
 - Ziel ist ein batch-lokaler `working/`-Baum pro `person_id` und `task` plus ein kontrollierter Produktionsimport nach `data/sessions/` und PostgreSQL.
 - Für `text` bleibt `working/{person_id}/text/alignment/text.json` das Zwischenartefakt vor dem Produktionsimport.
-- Der finale Produktionsimport kann daraus `derived/text.mp3`, `items/text/{item_id}.mp3`, `alignment/text.json` und `metadata.json` im Laufzeitbaum erzeugen.
+- Der finale Produktionsimport kann daraus `raw/{task}.wav`, `derived/text.mp3`, `items/text/{item_id}.mp3`, `alignment/text.json` und `metadata.json` im Laufzeitbaum erzeugen.
 
 ## Bewusst nicht Teil dieses Runbooks
 

@@ -37,6 +37,14 @@ class ParsedBatchFile:
         return f"{self.task}.TextGrid"
 
 
+@dataclass(slots=True)
+class BatchTaskCandidates:
+    processed_wav: list[ParsedBatchFile]
+    raw_wav: list[ParsedBatchFile]
+    processed_textgrid: list[ParsedBatchFile]
+    raw_textgrid: list[ParsedBatchFile]
+
+
 def is_relative_to(path: Path, other: Path) -> bool:
     try:
         path.relative_to(other)
@@ -163,6 +171,39 @@ def collect_batch_files(batch_dir: Path) -> tuple[list[ParsedBatchFile], list[st
                 continue
             parsed_files.append(parsed)
     return parsed_files, warnings
+
+
+def empty_batch_task_candidates() -> BatchTaskCandidates:
+    return BatchTaskCandidates(processed_wav=[], raw_wav=[], processed_textgrid=[], raw_textgrid=[])
+
+
+def build_batch_inventory(parsed_files: list[ParsedBatchFile]) -> dict[str, dict[str, BatchTaskCandidates]]:
+    inventory: dict[str, dict[str, BatchTaskCandidates]] = {}
+    for entry in parsed_files:
+        person_inventory = inventory.setdefault(entry.person_id, {})
+        task_bucket = person_inventory.setdefault(entry.task, empty_batch_task_candidates())
+        bucket_name = f"{entry.source_root}_{entry.file_kind}"
+        getattr(task_bucket, bucket_name).append(entry)
+    return inventory
+
+
+def collect_batch_inventory(batch_dir: Path) -> tuple[dict[str, dict[str, BatchTaskCandidates]], list[str]]:
+    parsed_files, warnings = collect_batch_files(batch_dir)
+    return build_batch_inventory(parsed_files), warnings
+
+
+def choose_unique_candidate(
+    candidates: list[ParsedBatchFile],
+    *,
+    source_label: str,
+    selection_label: str,
+) -> tuple[ParsedBatchFile | None, str | None]:
+    if not candidates:
+        return None, None
+    if len(candidates) > 1:
+        joined = ", ".join(candidate.relative_source for candidate in candidates)
+        return None, f"ambiguous {selection_label} candidates in {source_label}: {joined}"
+    return candidates[0], None
 
 
 def working_task_root(batch_dir: Path, person_id: str, task: str) -> Path:

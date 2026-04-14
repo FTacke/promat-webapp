@@ -7,7 +7,7 @@ import re
 
 SILENCE_MARKERS = {"", "sp", "sil", "silence", "silent", "<sil>", "_"}
 _TEXTGRID_INTERVAL_PATTERN = re.compile(
-    r"intervals \[\d+\]:\s*xmin = ([0-9.]+)\s*xmax = ([0-9.]+)\s*text = \"(.*?)\"",
+    r'intervals \[\d+\]:\s*xmin = ([0-9.]+)\s*xmax = ([0-9.]+)\s*text = "((?:""|[^"])*)"',
     re.DOTALL,
 )
 _TEXTGRID_TIER_PATTERN = re.compile(
@@ -49,7 +49,7 @@ def parse_textgrid_intervals(path: Path) -> list[TextGridInterval]:
 
 def _parse_intervals_from_text(raw_text: str) -> list[TextGridInterval]:
     return [
-        TextGridInterval(start_seconds=float(start), end_seconds=float(end), text=text)
+        TextGridInterval(start_seconds=float(start), end_seconds=float(end), text=text.replace('""', '"'))
         for start, end, text in _TEXTGRID_INTERVAL_PATTERN.findall(raw_text)
     ]
 

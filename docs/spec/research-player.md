@@ -258,6 +258,7 @@ The player state must be able to represent at least these values:
 - A task catalog also carries the active player-source contract under `player_source`.
 - A task catalog may additionally carry corpus-specific `display_label` and top-level `groups` metadata when grouped task structure is part of the canonical content model.
 - Connected-text catalogs may additionally carry item-level `text_container_id`, `text_order_index`, `paragraph_break_before`, and `paragraph_id` fields for running-text rendering.
+- If connected-text source material begins with a separate title line that is not part of the spoken item sequence, that title remains source metadata and must not be auto-promoted to the first catalog item.
 - Session-specific `alignment/{task}.json` files are derived from the task catalog plus session-specific alignment and audio data.
 - Production pipelines must not reconstruct canonical task texts from TextGrid labels, PDF extraction, or loose TXT sources when a canonical task catalog already exists.
 - TextGrid labels may be used only for validation, explicit warning, or controlled failure and must not silently override task-catalog content.

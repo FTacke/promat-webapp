@@ -133,6 +133,13 @@ def _require_string(payload: Mapping[str, Any], field_name: str, *, context: str
     return value.strip()
 
 
+def _require_nonblank_string(payload: Mapping[str, Any], field_name: str, *, context: str) -> str:
+    value = payload.get(field_name)
+    if not isinstance(value, str) or not value.strip():
+        raise ResearchConfigError(f"Missing or invalid string field '{field_name}' in {context}")
+    return value
+
+
 def _optional_string(payload: Mapping[str, Any], field_name: str, *, context: str) -> str | None:
     value = payload.get(field_name)
     if value is None:
@@ -372,7 +379,7 @@ def load_task_catalog(language_slug: str, task_key: str) -> TaskCatalog:
             task=normalized_task,
             item_id=item_id,
             item_number=_require_string(raw_item, "item_number", context=context),
-            text=_require_string(raw_item, "text", context=context),
+            text=_require_nonblank_string(raw_item, "text", context=context),
             group_id=_optional_string(raw_item, "group_id", context=context),
             text_container_id=text_container_id or (f"{normalized_language}:{normalized_task}" if player_source.source_kind == "text" else None),
             text_order_index=text_order_index if text_order_index is not None else (index if player_source.source_kind == "text" else None),

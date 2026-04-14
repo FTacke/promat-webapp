@@ -147,6 +147,42 @@ def test_load_task_catalog_reads_existing_text_display_label_from_repo(monkeypat
     assert "qw_10" in catalog.items_by_id
 
 
+def test_load_english_repo_catalogs_define_connected_text_and_wordlist(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
+    monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
+    clear_research_preset_caches()
+
+    text_catalog = load_task_catalog("english", "text")
+    wordlist_catalog = load_task_catalog("english", "wordlist")
+    player_config = load_player_config("english")
+
+    assert text_catalog.display_label == "Text"
+    assert text_catalog.player_source.source_kind == "text"
+    assert text_catalog.player_source.content_mode == "connected_text"
+    assert text_catalog.player_source.default_view == "text"
+    assert text_catalog.player_source.allowed_views == ("text", "list")
+    assert len(text_catalog.items_by_id) == 56
+    assert text_catalog.items_by_id["t_01"].text == "The Boy who Cried Wolf"
+    assert text_catalog.items_by_id["t_01"].item_number == "T1"
+    assert text_catalog.items_by_id["t_56"].item_number == "T56"
+    assert len(wordlist_catalog.items_by_id) == 95
+    assert wordlist_catalog.items_by_id["wl_095"].text == "Annie - Kenny"
+    assert player_config.language == "english"
+    assert player_config.text.default_render_mode == "running_text"
+    assert player_config.text.display_label == "Text"
+
+
+def test_load_english_repo_presets_are_catalog_valid(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
+    monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
+    clear_research_preset_caches()
+
+    presets = load_phenomena_presets("english")
+
+    assert len(presets) == 1
+    assert [reference.task for reference in presets[0].items] == ["wordlist", "text", "text"]
+
+
 def test_load_task_catalog_accepts_explicit_connected_text_metadata(runtime_env: Path) -> None:
     _write_minimal_language_config(runtime_env, presets=[])
     _write_json(
@@ -188,6 +224,40 @@ def test_load_task_catalog_accepts_explicit_connected_text_metadata(runtime_env:
     assert catalog.items_by_id["d_01"].text_container_id == "story_01"
     assert catalog.items_by_id["d_01"].text_order_index == 1
     assert catalog.items_by_id["d_01"].paragraph_break_before is True
+
+
+def test_load_task_catalog_preserves_exact_item_text_whitespace(runtime_env: Path) -> None:
+    _write_minimal_language_config(runtime_env, presets=[])
+    _write_json(
+        runtime_env / "data" / "config" / "research_player" / "spanish" / "task_catalogs" / "text.json",
+        {
+            "task": "text",
+            "language": "spanish",
+            "display_label": "Text",
+            "player_source": {
+                "source_kind": "text",
+                "content_mode": "connected_text",
+                "default_view": "text",
+                "allowed_views": ["text", "list"],
+                "primary_audio_mode": "full",
+                "supports_item_audio": True,
+                "supports_full_audio": True,
+                "supports_text_view": True,
+                "paragraph_model": "none"
+            },
+            "items": [
+                {
+                    "item_id": "t_01",
+                    "item_number": "T1",
+                    "text": "\u0020Exact source line with preserved edge spaces.\u0020"
+                }
+            ]
+        }
+    )
+
+    catalog = load_task_catalog("spanish", "text")
+
+    assert catalog.items_by_id["t_01"].text == " Exact source line with preserved edge spaces. "
 
 
 def test_normalize_task_item_reference_keeps_optional_fields() -> None:

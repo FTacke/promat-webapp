@@ -31,11 +31,16 @@ from audio_conversion.ffmpeg_audio import (  # noqa: E402
     probe_audio_profile,
     probe_duration_seconds,
 )
+from language_config import resolve_language_config  # noqa: E402
 
 
-LANGUAGE_SLUG = "spanish"
+DEFAULT_LANGUAGE_SLUG = "spanish"
 TASK_KEY = "text"
 SPLIT_PADDING_SECONDS = 0.25
+
+
+def _resolve_language_slug(value: str | None) -> str:
+    return resolve_language_config(value or DEFAULT_LANGUAGE_SLUG).corpus_slug
 
 
 def parse_args() -> argparse.Namespace:
@@ -45,7 +50,12 @@ def parse_args() -> argparse.Namespace:
     selection_group.add_argument(
         "--all-suitable-sessions",
         action="store_true",
-        help="Process all current Spanish sessions with non-empty source/text.wav and alignment/text.json.",
+        help="Process all suitable sessions for the selected corpus language with non-empty source/text.wav and alignment/text.json.",
+    )
+    parser.add_argument(
+        "--language",
+        default=DEFAULT_LANGUAGE_SLUG,
+        help="Target intake language code or corpus slug for runtime session selection. Default: spanish.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Validate inputs and plan outputs without writing files.")
     return parser.parse_args()
@@ -68,14 +78,14 @@ def _task_definition(metadata: dict[str, Any]) -> dict[str, Any] | None:
     return None
 
 
-def _resolve_session_dir(args: argparse.Namespace) -> tuple[list[Path], list[str]]:
+def _resolve_session_dir(args: argparse.Namespace, language_slug: str) -> tuple[list[Path], list[str]]:
     if args.session_id:
-        session_dir = get_sessions_root() / LANGUAGE_SLUG / args.session_id
+        session_dir = get_sessions_root() / language_slug / args.session_id
         if not session_dir.exists():
             raise FileNotFoundError(f"Unknown session_id: {args.session_id}")
         return [session_dir], []
 
-    sessions_root = get_sessions_root() / LANGUAGE_SLUG
+    sessions_root = get_sessions_root() / language_slug
     targets: list[Path] = []
     skipped: list[str] = []
     for metadata_path in sorted(sessions_root.glob("*/metadata.json")):
@@ -256,10 +266,11 @@ def _print_header(title: str) -> None:
 
 def main() -> int:
     args = parse_args()
+    language_slug = _resolve_language_slug(args.language)
     ensure_media_tools()
-    targets, skipped = _resolve_session_dir(args)
+    targets, skipped = _resolve_session_dir(args, language_slug)
     if not targets:
-        raise RuntimeError("No suitable Spanish sessions found for text processing.")
+        raise RuntimeError(f"No suitable {language_slug} sessions found for text processing.")
 
     results: list[dict[str, Any]] = []
     for session_dir in targets:
@@ -274,6 +285,7 @@ def main() -> int:
         results.append(result)
 
     _print_header("text-production-summary")
+    print(f"language={language_slug}")
     print(f"mode={'dry-run' if args.dry_run else 'write'} target_bitrate={TARGET_BITRATE} mono={TARGET_CHANNELS} cbr=true")
     for result in results:
         print(f"processed {result['session_id']} ({result['person_id']}) items={result['item_count']}")

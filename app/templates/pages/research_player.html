@@ -332,7 +332,7 @@
           <div class="pm-player-text-flow" aria-label="{{ promat_page.player.items_title }}">
             {% for block in promat_page.player.text_blocks %}
             <p class="pm-player-text-flow__paragraph" data-player-text-block="{{ block.block_id }}">
-              {% for item in block.items %}
+              {% for item in block['items'] %}
               <span class="pm-player-text-flow__sentence" data-player-focus-item="{{ item.item_id }}">
                 <span class="pm-player-text-flow__number">{{ item.item_number }}</span>
                 {% if item.is_available %}

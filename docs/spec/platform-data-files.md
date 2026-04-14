@@ -218,6 +218,8 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Session-specific player artifacts such as `alignment/{task}.json` are derived from these task catalogs plus session alignment and audio data; task catalogs are not session outputs.
 - Task catalogs may later support raw material views in the webapp, but this does not imply public release and does not bypass separate access or publication decisions.
 - For the current Spanish sentence-list path, `data/config/research_player/spanish/task_catalogs/text.json` is the canonical content catalog for grouped block structure, visible `item_number`, stable `item_id`, and exact sentence strings.
+- For the current English running-text path, `data/config/research_player/english/task_catalogs/text.json` is the canonical connected-text catalog under the technical task key `text`; it keeps visible item numbers `T1`, `T2`, `T3`, ... together with stable item IDs `t_01`, `t_02`, `t_03`, ... and includes `The Boy who Cried Wolf` as `T1` because the real material and the segment TextGrid show that title as spoken content.
+- For the current English wordlist path, `data/config/research_player/english/task_catalogs/wordlist.json` is the canonical content catalog for the exact provided word and minimal-pair forms, including multi-word entries and punctuation exactly as sourced.
 
 ### `public/`
 
@@ -290,7 +292,9 @@ metadata.json
 ### Semantics
 
 - `raw/` contains untouched original WAV masters only.
+- When a batch provides real untouched original WAV masters under `scripts/research_data_intake/import/{batch_name}/raw/`, the productive session tree under `data/sessions/{language}/{session_id}/raw/` must archive them.
 - `source/` contains processed working WAVs and remains the operative audio basis for analysis-aware derivation steps.
+- `raw/` and `source/` are distinct archive versus working layers and must not be silently mixed or substituted for one another.
 - `alignment/` contains whole-session TextGrid files and reduced alignment JSON such as `alignment/wordlist.json`, derived from canonical task catalogs plus session-specific alignment and audio data.
 - `derived/` contains webapp-facing derivatives such as MP3 and does not replace the WAV-based analysis basis in `raw/` or `source/`.
 - `items/{task}/` contains split MP3 files only.
@@ -303,6 +307,9 @@ metadata.json
 - Player-facing split MP3 paths use `items/{task}/{item_id}.mp3`.
 - Versioned runtime session trees under `data/sessions/` must not ship fictional, placeholder, or other dummy research sessions; production population of that tree is reserved for the central orchestrating import path.
 - The only active path that may populate or update production runtime session trees from intake batches is `scripts/research_data_intake/import_batch_to_production.py`.
+- That central importer must copy real batch raw masters into `raw/{task}.wav` whenever the batch provides an unambiguous untouched original WAV for that person and task.
+- It must never synthesize `raw/` by copying processed `source/` WAVs, and a missing real raw master must remain visibly missing rather than be masked.
+- If multiple raw-master candidates exist for one person and task or an archived raw file already differs from the current batch raw source, the importer must report a conflict instead of silently overwriting or guessing.
 - For the current Spanish sentence-list catalog, visible numbering remains `D1` through `D30`, `QY1` through `QY10`, and `QW1` through `QW10`, while stable technical IDs remain `d_01` through `d_30`, `qy_01` through `qy_10`, and `qw_01` through `qw_10`.
 - The current player delivery routes map full-task playback to `.../player/{session_id}/{task}/audio.mp3` and single-item item-media delivery to `.../player/{session_id}/{task}/items/{item_id}.mp3` without exposing internal runtime paths.
 - The canonical single-item player route serves a playback-safe inline `audio/mpeg` response by default; explicit download semantics stay on the same route family through explicit download intent rather than through a separate media path.
@@ -336,7 +343,8 @@ working/
 - Batch directories under `scripts/research_data_intake/import/` are generic intake areas and are not hard-wired to one corpus language.
 - A processable batch directory must keep `batch` in its directory name and must provide at least `processed/`.
 - `processed/` is the primary intake input for file-based organization of task WAVs and TextGrids.
-- `raw/` is optional and may provide fallback or additional WAV inputs where `processed/` does not yet contain the needed task audio.
+- `raw/` is optional at batch level, but when it contains real untouched original WAV masters it is the archival source for the productive session-tree `raw/` layer.
+- Batch `raw/` must not be collapsed into `source/`; processed working WAVs remain a separate operative layer.
 - `intake_data/` is optional and may carry workbook or helper material, but it is not itself the derived working tree.
 - The active production importer reads workbook steering data from `intake_data/*.xlsx` together with the batch-local `working/` tree.
 - `working/` is a pre-production, person- and task-centered preparation area inside one concrete batch.
@@ -370,7 +378,8 @@ working/{person_id}/interview/alignment/interview.TextGrid
 - The current intake language configuration for this working path is prepared generically for `es`, `de`, `fr`, and `en`, including the mapped MFA acoustic and dictionary models per language.
 - Final production transfer from intake batches into `data/sessions/` is executed only by the central importer `scripts/research_data_intake/import_batch_to_production.py`.
 - That importer may populate PostgreSQL research metadata tables `research_people`, `research_sessions`, and `research_session_exposures` from workbook sheets `Research_Person`, `Research_Session_Intake`, and `Exposure`.
-- The same importer projects canonical runtime `metadata.json` plus task artifacts into `data/sessions/{language}/{session_id}/` and may sync only the tasks whose working inputs are actually available.
+- The same importer projects canonical runtime `metadata.json` plus task artifacts into `data/sessions/{language}/{session_id}/`, archives real raw masters into `raw/`, and may sync only the productive task layers whose working inputs are actually available.
+- For archive sync, raw master mapping must stay explicit and filename-driven by person and task; it must not be inferred heuristically from workbook prose or substituted from processed working files.
 - Interview remains a declared task key and structure slot, but no productive interview artifact import exists yet.
 
 ## Active Metadata Semantics
