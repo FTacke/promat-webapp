@@ -464,6 +464,17 @@ The top level may additionally include:
 - The primary future correspondence between sentence-list material and wordlist material lives on token-level alignment data, not in the top-level sentence-list catalog structure.
 - The same canonical sentence-list catalog may later support raw material views in the webapp without implying public audio release, automatic corpus release, or a second competing text source.
 
+### Current working-tree `text` MFA import rules
+
+- The current prepared `text` import step reads one batch-local manifest item sequence plus one MFA `words` tier TextGrid per utterance from `working/{person_id}/text/mfa_output/`.
+- Manifest items remain the leading `items` container and define the canonical sentence boundaries for `start_ms` and `end_ms`.
+- MFA-derived word intervals are imported as nested `tokens` on the corresponding item and do not redefine the sentence-level item structure.
+- MFA token times are converted from utterance-relative time to source-audio-global time by adding the manifest `source_start_seconds` offset before the canonical ms conversion.
+- Silence, empty intervals, and technical non-words from the MFA output must not become visible `tokens`.
+- The current working import aligns canonical target words; dysfluencies, self-repairs, and OOV findings may remain MFA quality warnings without becoming a second mandatory token model in this step.
+- Batch-local working import may serialize `session_id = null` until later metadata integration resolves the final session identity; this is a temporary working-tree state only and not the final production metadata contract.
+- Batch-local working import may already serialize `audio.full_mp3 = derived/text.mp3` as the expected future relative full-audio artifact path even though this step does not generate the MP3 itself.
+
 ### `interview` container contract
 
 - In `interview`, the leading container level is `segments`.

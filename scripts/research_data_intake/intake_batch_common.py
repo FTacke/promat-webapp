@@ -9,6 +9,7 @@ import shutil
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 IMPORT_ROOT = REPO_ROOT / "scripts" / "research_data_intake" / "import"
+BATCH_NAME_TOKEN = "batch"
 SUPPORTED_TASKS = ("wordlist", "text", "interview")
 SUPPORTED_TRANSFER_MODES = ("copy", "move", "symlink")
 
@@ -44,7 +45,42 @@ def is_relative_to(path: Path, other: Path) -> bool:
     return True
 
 
-def resolve_batch_dir(batch_dir_arg: str) -> Path:
+def is_batch_directory_name(name: str) -> bool:
+    return BATCH_NAME_TOKEN in name.strip().lower()
+
+
+def batch_validation_issues(path: Path, require_processed: bool = True) -> list[str]:
+    issues: list[str] = []
+    if not is_batch_directory_name(path.name):
+        issues.append(f"batch directory name must contain '{BATCH_NAME_TOKEN}'")
+    if require_processed and not (path / "processed").is_dir():
+        issues.append("missing required processed/ directory")
+    return issues
+
+
+def list_available_batch_dirs(require_processed: bool = True) -> list[Path]:
+    if not IMPORT_ROOT.exists() or not IMPORT_ROOT.is_dir():
+        return []
+
+    available: list[Path] = []
+    for candidate in sorted(IMPORT_ROOT.iterdir()):
+        if not candidate.is_dir():
+            continue
+        if batch_validation_issues(candidate, require_processed=require_processed):
+            continue
+        available.append(candidate.resolve())
+    return available
+
+
+def _available_batch_hint(require_processed: bool) -> str:
+    available_batches = list_available_batch_dirs(require_processed=require_processed)
+    if not available_batches:
+        return f"No processable batch directories are currently available below {IMPORT_ROOT}."
+    joined = ", ".join(batch.name for batch in available_batches)
+    return f"Available batch directories below {IMPORT_ROOT}: {joined}"
+
+
+def resolve_batch_dir(batch_dir_arg: str, require_processed: bool = True) -> Path:
     raw_path = Path(batch_dir_arg)
     candidates: list[Path] = []
     if raw_path.is_absolute():
@@ -55,6 +91,8 @@ def resolve_batch_dir(batch_dir_arg: str) -> Path:
         candidates.append(Path.cwd() / batch_dir_arg)
 
     seen: set[Path] = set()
+    invalid_messages: list[str] = []
+    import_root = IMPORT_ROOT.resolve()
     for candidate in candidates:
         resolved = candidate.resolve()
         if resolved in seen:
@@ -62,10 +100,19 @@ def resolve_batch_dir(batch_dir_arg: str) -> Path:
         seen.add(resolved)
         if not resolved.exists() or not resolved.is_dir():
             continue
-        if not is_relative_to(resolved, IMPORT_ROOT.resolve()):
-            raise ValueError(f"Batch directory must stay under {IMPORT_ROOT}: {resolved}")
+        if not is_relative_to(resolved, import_root):
+            invalid_messages.append(f"Batch directory must stay under {IMPORT_ROOT}: {resolved}")
+            continue
+        issues = batch_validation_issues(resolved, require_processed=require_processed)
+        if issues:
+            invalid_messages.append(f"{resolved}: {'; '.join(issues)}")
+            continue
         return resolved
-    raise FileNotFoundError(f"Unknown batch directory: {batch_dir_arg}")
+
+    hint = _available_batch_hint(require_processed=require_processed)
+    if invalid_messages:
+        raise ValueError(f"Unusable batch directory {batch_dir_arg!r}. {' | '.join(invalid_messages)}. {hint}")
+    raise FileNotFoundError(f"Unknown batch directory: {batch_dir_arg}. {hint}")
 
 
 def canonical_person_id(corpus: str, speaker_marker: str, person_number: str) -> str:

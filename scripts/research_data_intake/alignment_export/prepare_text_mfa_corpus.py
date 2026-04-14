@@ -19,6 +19,7 @@ from intake_batch_common import (  # noqa: E402
     working_text_mfa_corpus_dir,
     working_text_mfa_output_dir,
 )
+from language_config import describe_language_config, maybe_resolve_language_config  # noqa: E402
 from textgrid_support import parse_textgrid_intervals, round_textgrid_seconds, spoken_intervals  # noqa: E402
 
 
@@ -54,6 +55,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--batch-dir", required=True, help="Batch directory path or batch name under scripts/research_data_intake/import/.")
     parser.add_argument("--text-source-json", required=True, help="JSON file that provides canonical text items for the text task.")
+    parser.add_argument(
+        "--language",
+        help="Optional intake language code or corpus slug for shared MFA/text-workflow validation, for example es or spanish.",
+    )
     parser.add_argument("--person-id", help="Restrict processing to one canonical person_id such as ES-L-0001.")
     parser.add_argument("--dry-run", action="store_true", help="Validate inputs and planned MFA outputs without writing files.")
     parser.add_argument("--replace-existing", action="store_true", help="Replace existing utterance files and the manifest for the target person(s).")
@@ -64,12 +69,16 @@ def _print_header(title: str) -> None:
     print(f"\n[{title}]")
 
 
-def _load_text_source_items(path: Path) -> list[TextSourceItem]:
+def _load_text_source_items(path: Path) -> tuple[list[TextSourceItem], str | None]:
     payload = json.loads(path.read_text(encoding="utf-8"))
+    declared_language: str | None = None
     if isinstance(payload, dict):
         task_value = payload.get("task")
         if task_value not in (None, "text"):
             raise ValueError(f"Text source task must be 'text' when declared: {path}")
+        language_value = payload.get("language")
+        if isinstance(language_value, str) and language_value.strip():
+            declared_language = language_value.strip()
         items_payload = payload.get("items")
     else:
         items_payload = payload
@@ -91,7 +100,7 @@ def _load_text_source_items(path: Path) -> list[TextSourceItem]:
         if not isinstance(text, str) or not text.strip():
             raise ValueError(f"Text source text must be a non-empty string at index {index}: {path}")
         items.append(TextSourceItem(item_id=item_id, item_number=item_number, text=text))
-    return items
+    return items, declared_language
 
 
 def _normalize_person_id(person_id: str) -> str:
@@ -108,6 +117,19 @@ def _resolve_people(batch_dir: Path, requested_person_id: str | None) -> list[st
             raise FileNotFoundError(f"Unknown person_id in batch working tree: {person_id}")
         return [person_id]
     return sorted(path.name for path in working_root.iterdir() if path.is_dir())
+
+
+def _resolve_language(cli_value: str | None, source_value: str | None, source_path: Path) -> str | None:
+    cli_config = maybe_resolve_language_config(cli_value)
+    source_config = maybe_resolve_language_config(source_value)
+    if cli_config is not None and source_config is not None and cli_config.code != source_config.code:
+        raise ValueError(
+            f"Conflicting text workflow language values for {source_path}: cli={cli_config.code} text_source={source_config.code}"
+        )
+    resolved = cli_config or source_config
+    if resolved is None:
+        return None
+    return resolved.code
 
 
 def _source_paths(batch_dir: Path, person_id: str) -> tuple[Path, Path]:
@@ -186,6 +208,8 @@ def _process_person(
     batch_dir: Path,
     person_id: str,
     text_items: list[TextSourceItem],
+    language_code: str | None,
+    language_slug: str | None,
     dry_run: bool,
     replace_existing: bool,
 ) -> tuple[int, dict[str, object]]:
@@ -250,6 +274,8 @@ def _process_person(
     manifest_payload = {
         "person_id": person_id,
         "task": "text",
+        "language_code": language_code,
+        "language": language_slug,
         "source_wav": str(source_wav.relative_to(batch_dir)).replace("\\", "/"),
         "source_textgrid": str(source_textgrid.relative_to(batch_dir)).replace("\\", "/"),
         "items": [asdict(item) for item in manifest_items],
@@ -263,13 +289,15 @@ def _process_person(
     }
 
 
-def main() -> int:
+def _run() -> int:
     args = parse_args()
     batch_dir = resolve_batch_dir(args.batch_dir)
     text_source_path = Path(args.text_source_json)
     if not text_source_path.is_absolute():
         text_source_path = (Path.cwd() / text_source_path).resolve()
-    text_items = _load_text_source_items(text_source_path)
+    text_items, declared_language = _load_text_source_items(text_source_path)
+    language_code = _resolve_language(args.language, declared_language, text_source_path)
+    language_config = maybe_resolve_language_config(language_code)
     people = _resolve_people(batch_dir, args.person_id)
     summary = Summary()
     warnings: list[str] = []
@@ -280,6 +308,8 @@ def main() -> int:
                 batch_dir=batch_dir,
                 person_id=person_id,
                 text_items=text_items,
+                language_code=None if language_config is None else language_config.code,
+                language_slug=None if language_config is None else language_config.corpus_slug,
                 dry_run=args.dry_run,
                 replace_existing=args.replace_existing,
             )
@@ -304,6 +334,8 @@ def main() -> int:
     print(f"batch={str(batch_dir).replace('\\', '/')}")
     print(f"mode={'dry-run' if args.dry_run else 'write'} replace_existing={args.replace_existing}")
     print(f"text_source_json={str(text_source_path).replace('\\', '/')}")
+    if language_config is not None:
+        print(f"language={describe_language_config(language_config)}")
     print(
         "summary "
         f"processed_people={summary.processed_people} planned_segments={summary.planned_segments} "
@@ -312,6 +344,14 @@ def main() -> int:
     for warning in warnings:
         print(f"warning: {warning}")
     return 1 if summary.errors else 0
+
+
+def main() -> int:
+    try:
+        return _run()
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
