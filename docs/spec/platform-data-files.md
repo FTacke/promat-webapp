@@ -312,6 +312,55 @@ metadata.json
 - Longer filenames with `session_id` and labels are for later download logic, not canonical storage.
 - Current Spanish dev example WAVs are processed `source` audio, not `raw` masters.
 
+## Intake Batch Working Filesystem
+
+### Batch root
+
+```text
+scripts/research_data_intake/import/{batch_name}/
+```
+
+### Batch substructure
+
+```text
+processed/
+raw/
+intake_data/
+working/
+```
+
+### Semantics
+
+- Batch directories under `scripts/research_data_intake/import/` are generic intake areas and are not hard-wired to one corpus language.
+- `processed/` is the primary intake input for file-based organization of task WAVs and TextGrids.
+- `raw/` is optional and may provide fallback or additional WAV inputs where `processed/` does not yet contain the needed task audio.
+- `intake_data/` is optional and may carry workbook or helper material, but it is not itself the derived working tree.
+- `working/` is a pre-production, person- and task-centered preparation area inside one concrete batch.
+- Batch-local `working/` outputs are preparatory only: they must not write into `data/`, must not create production session metadata, and must not claim final player-ready `alignment/text.json` artifacts.
+
+### Working subtree
+
+```text
+working/{person_id}/wordlist/source/wordlist.wav
+working/{person_id}/wordlist/alignment/wordlist.TextGrid
+working/{person_id}/text/source/text.wav
+working/{person_id}/text/alignment/text.TextGrid
+working/{person_id}/text/mfa_corpus/
+working/{person_id}/text/mfa_output/
+working/{person_id}/text/mfa_manifest.json
+working/{person_id}/interview/source/interview.wav
+working/{person_id}/interview/alignment/interview.TextGrid
+```
+
+### Working rules
+
+- The canonical task filenames inside `working/` are always task-based, for example `source/text.wav` and `alignment/text.TextGrid`, regardless of the intake filename that carried the file into the batch.
+- Person and task assignment for batch-file organization must come from explicit filename logic only; the pipeline must not invent person IDs or task names heuristically.
+- In the current preparatory `text` path, the TextGrid is only the segment-boundary source.
+- The preparatory `text` MFA step may create only segmented WAVs, matching `.lab` transcripts, `mfa_output/` target directories, and a batch-local manifest for reverse mapping.
+- The preparatory `text` MFA step must obtain canonical item texts from an explicit external source such as a task catalog or mapping JSON and must not guess final texts from TextGrid labels.
+- Final production transfer from intake batches into `data/sessions/`, final session metadata generation, MFA execution, and final `alignment/text.json` derivation are separate downstream pipeline stages.
+
 ## Active Metadata Semantics
 
 ### Person-level fields
