@@ -14,7 +14,13 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "spanish",
         "lang_code": "es",
         "labels": {"de": "Spanisch", "en": "Spanish"},
-        "corpus_lead": "Prof. Dr. Felix Tacke",
+        "root_subtitle": {
+            "de": "Forschungsbereich zur spanischen Lernendenaussprache.",
+            "en": "Research area for Spanish learner pronunciation.",
+        },
+        "project_lead": "Prof. Dr. Felix Tacke",
+        "conducted_by": "Marlon Merte",
+        "material_conception": ("Felix Tacke", "Ana Goás Pérez"),
         "summary": {
             "de": "Referenzkorpus für plurizentrisches Spanisch zwischen methodischer Dokumentation, Vergleich und didaktischer Weitergabe.",
             "en": "Reference corpus for pluricentric Spanish across method documentation, comparison, and teaching transfer.",
@@ -32,7 +38,13 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "french",
         "lang_code": "fr",
         "labels": {"de": "Französisch", "en": "French"},
-        "corpus_lead": "Prof. Dr. Janina Reinhardt",
+        "root_subtitle": {
+            "de": "Forschungsbereich zur französischen Lernendenaussprache.",
+            "en": "Research area for French learner pronunciation.",
+        },
+        "project_lead": "Prof. Dr. Janina Reinhardt",
+        "conducted_by": "Amelie Spieß",
+        "material_conception": ("Janina Reinhardt",),
         "summary": {
             "de": "Vorbereiteter Korpusbereich für Rhythmus, Vokalqualität und frankophone Variationslagen.",
             "en": "Prepared corpus area for rhythm, vowel quality, and francophone variation.",
@@ -50,7 +62,13 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "german",
         "lang_code": "de",
         "labels": {"de": "Deutsch", "en": "German"},
-        "corpus_lead": "Prof. Dr. Kathrin Siebold",
+        "root_subtitle": {
+            "de": "Forschungsbereich zur deutschen Lernendenaussprache.",
+            "en": "Research area for German learner pronunciation.",
+        },
+        "project_lead": "Prof. Dr. Kathrin Siebold",
+        "conducted_by": "Theresa Fischer",
+        "material_conception": ("Kathrin Siebold",),
         "summary": {
             "de": "Vorbereiteter Korpusbereich für deutsche Ausspracheprofile in Lern- und Vergleichskontexten.",
             "en": "Prepared corpus area for German pronunciation profiles in learning and comparison contexts.",
@@ -68,7 +86,13 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         "slug": "english",
         "lang_code": "en",
         "labels": {"de": "Englisch", "en": "English"},
-        "corpus_lead": "Prof. Dr. Rolf Kreyer",
+        "root_subtitle": {
+            "de": "Forschungsbereich zur englischen Lernendenaussprache.",
+            "en": "Research area for English learner pronunciation.",
+        },
+        "project_lead": "Prof. Dr. Rolf Kreyer",
+        "conducted_by": "Marlon Merte",
+        "material_conception": ("Rolf Kreyer",),
         "summary": {
             "de": "Vorbereiteter Korpusbereich für Akzentprofil, Intonation und intelligibility-orientierte Vergleichsachsen.",
             "en": "Prepared corpus area for accent profile, intonation, and intelligibility-oriented comparison.",
@@ -192,32 +216,69 @@ def _research_corpus_card_title(language: dict[str, Any], ui_lang: str) -> str:
     return f"{label} corpus"
 
 
-def _research_learner_session_count(language_slug: str) -> int:
-    return sum(1 for session in load_language_sessions(language_slug) if session.speaker_type == "learner")
-
-
-def _research_learner_session_count_copy(count: int, ui_lang: str) -> str:
-    if ui_lang == "de":
-        if count == 0:
-            return "Aktuell keine erfassten Learner-Sessions im Bestand."
-        if count == 1:
-            return "Aktuell 1 erfasste Learner-Session im Bestand."
-        return f"Aktuell {count} erfasste Learner-Sessions im Bestand."
-
-    if count == 0:
-        return "Currently no learner sessions are available."
-    if count == 1:
-        return "Currently 1 learner session is available."
-    return f"Currently {count} learner sessions are available."
-
-
-def _research_corpus_card_copy(language_slug: str, ui_lang: str) -> str:
-    base_copy = {
-        "de": "Kontrolliert angelegtes Korpus zur Lernendenaussprache mit Wortliste, Satzliste und Interview als vergleichbaren Erhebungsformaten.",
-        "en": "Structured learner-pronunciation corpus with wordlist, sentence-list, and interview tasks as comparable elicitation formats.",
+def _research_learner_recording_count(language_slug: str) -> int:
+    learner_person_ids = {
+        session.person_id
+        for session in load_language_sessions(language_slug)
+        if session.speaker_type == "learner"
     }
-    count_copy = _research_learner_session_count_copy(_research_learner_session_count(language_slug), ui_lang)
-    return f"{base_copy.get(ui_lang, base_copy['de'])} {count_copy}"
+    return len(learner_person_ids)
+
+
+def _research_reference_variety_count(language_slug: str) -> int:
+    standard_varieties = {
+        session.standard_variety
+        for session in load_language_sessions(language_slug)
+        if session.speaker_type == "native_speaker" and session.standard_variety
+    }
+    return len(standard_varieties)
+
+
+def _research_learner_recording_copy(count: int, ui_lang: str) -> str:
+    if count == 1:
+        return get_text(ui_lang, "research.overview.card.learner_recordings.one", count=count)
+    return get_text(ui_lang, "research.overview.card.learner_recordings.other", count=count)
+
+
+def _research_corpus_card_metadata_rows(language: dict[str, Any], ui_lang: str) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = [
+        {
+            "label": get_text(ui_lang, "research.overview.card.project_lead"),
+            "value": language["project_lead"],
+        },
+        {
+            "label": get_text(ui_lang, "research.overview.card.material_conception"),
+            "value": ", ".join(language["material_conception"]),
+        },
+        {
+            "label": get_text(ui_lang, "research.overview.card.conducted_by"),
+            "value": language["conducted_by"],
+        },
+    ]
+
+    learner_recording_count = _research_learner_recording_count(language["slug"])
+    if learner_recording_count > 0:
+        rows.append(
+            {
+                "text": _research_learner_recording_copy(learner_recording_count, ui_lang)
+            }
+        )
+    else:
+        rows.append({"text": get_text(ui_lang, "research.overview.card.in_progress")})
+
+    reference_variety_count = _research_reference_variety_count(language["slug"])
+    if reference_variety_count >= 2:
+        rows.append(
+            {
+                "text": get_text(
+                    ui_lang,
+                    "research.overview.card.reference_recordings",
+                    count=reference_variety_count,
+                )
+            }
+        )
+
+    return rows
 
 
 def _research_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, str]]:
@@ -238,33 +299,6 @@ def _research_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, 
         }
         for page_slug, _ in RESEARCH_PAGE_ORDER
     ]
-
-
-def _build_research_language_root_entries(
-    ui_lang: str,
-    language_slug: str,
-    *,
-    is_authenticated: bool,
-) -> list[dict[str, Any]]:
-    entries: list[dict[str, Any]] = []
-    for page_slug, _ in RESEARCH_PAGE_ORDER:
-        capability = get_research_page_capability(page_slug)
-        if capability is None:
-            continue
-        is_protected = capability.access == "protected"
-        is_muted = is_protected and not is_authenticated
-        entries.append(
-            {
-                "title": get_research_page_label(page_slug, ui_lang),
-                "text": get_text(ui_lang, f"research.root.{page_slug}.text"),
-                "href_key": f"research:{language_slug}:{page_slug}",
-                "button_label": get_research_page_label(page_slug, ui_lang),
-                "is_protected": is_protected,
-                "is_muted": is_muted,
-                "show_lock": is_muted,
-            }
-        )
-    return entries
 
 
 def _teaching_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, str]]:
@@ -318,19 +352,14 @@ def build_start_page(ui_lang: str) -> dict[str, Any]:
     }
 
 
-def build_corpus_cards_research(ui_lang: str) -> list[dict[str, str]]:
-    cards: list[dict[str, str]] = []
+def build_corpus_cards_research(ui_lang: str) -> list[dict[str, Any]]:
+    cards: list[dict[str, Any]] = []
     for language in LANGUAGES:
         cards.append(
             {
                 "title": _research_corpus_card_title(language, ui_lang),
-                "modifier": "pm-card--corpus-research",
-                "meta": (
-                    f"Projekt-Leitung: {language['corpus_lead']}"
-                    if ui_lang == "de"
-                    else f"Project lead: {language['corpus_lead']}"
-                ),
-                "text": _research_corpus_card_copy(language["slug"], ui_lang),
+                "modifier": f"pm-card--corpus-research pm-card--lang-{language['lang_code']}",
+                "metadata_rows": _research_corpus_card_metadata_rows(language, ui_lang),
                 "action_label": get_text(ui_lang, "nav.open_corpus"),
                 "href_key": f"research:{language['slug']}",
             }
@@ -358,12 +387,6 @@ def build_research_select_page(ui_lang: str) -> dict[str, Any]:
     return {
         "title": get_section_label("research", ui_lang),
         "eyebrow": get_section_label("research", ui_lang),
-        "intro": (
-            "Vier Sprachkorpora zur Lernendenaussprache mit einheitlicher Route-Struktur, "
-            "vorbereiteter Zugriffslogik und zweisprachiger UI."
-            if ui_lang == "de"
-            else "Four learner-pronunciation corpora with a shared route structure, prepared access logic, and a bilingual UI."
-        ),
         "page_kind": "workbench",
         "corpus_cards": build_corpus_cards_research(ui_lang),
         "sections": [],
@@ -489,15 +512,23 @@ def build_research_language_root_page(
         "title": title,
         "eyebrow": get_section_label("research", ui_lang),
         "template": "pages/research_language_root.html",
-        "intro": get_text(ui_lang, "research.root.intro", corpus_title=title),
-        "access_note": get_text(ui_lang, "research.root.access_note"),
+        "intro": _localized(language["root_subtitle"], ui_lang),
+        "body_paragraphs": [
+            get_text(ui_lang, "research.root.body", corpus_title=title),
+            get_text(ui_lang, "research.root.access_text"),
+        ],
+        "action_links": [
+            {
+                "label": get_text(ui_lang, "research.root.action.access_request"),
+                "href_key": "access_request",
+            },
+            {
+                "label": get_text(ui_lang, "research.root.action.login"),
+                "href_key": "login",
+            },
+        ],
         "page_kind": "reading",
         "access": "public",
-        "research_entries": _build_research_language_root_entries(
-            ui_lang,
-            language_slug,
-            is_authenticated=is_authenticated,
-        ),
         "sections": [],
         "is_language_root": True,
     }

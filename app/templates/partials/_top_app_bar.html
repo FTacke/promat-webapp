@@ -4,6 +4,7 @@
 {% set role_value = user_role.value if user_role else '' %}
 
 {% set current_ui_lang = ui_lang | default('de') %}
+{% set topbar_login_next = request.args.get('next') or (request.full_path[:-1] if request.full_path and request.full_path.endswith('?') else request.full_path) or request.path %}
 {% set top_nav_items = promat_top_nav_items | default([
   { 'label': t('section.project'), 'href': url_for('public.project_home', ui_lang=current_ui_lang), 'key': 'project' },
   { 'label': t('section.research'), 'href': url_for('public.research_home', ui_lang=current_ui_lang), 'key': 'research' },
@@ -96,7 +97,7 @@
             </div>
           </div>
           {% else %}
-           <a href="{{ url_for('public.login', next=request.full_path|default(request.path), ui_lang=current_ui_lang) }}"
+           <a href="{{ url_for('public.login', next=topbar_login_next, ui_lang=current_ui_lang) }}"
              class="promat-topbar__action promat-topbar__action--utility"
              aria-label="{{ t('shell.topbar.login') }}"
              title="{{ t('shell.topbar.login') }}">

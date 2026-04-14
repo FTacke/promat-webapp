@@ -188,6 +188,29 @@ def _extract_element_by_id(html: str, tag: str, element_id: str) -> str:
     return match.group(0)
 
 
+def _extract_corpus_card_by_title(html: str, title: str) -> str:
+    title_index = html.find(title)
+    assert title_index != -1
+    anchor_start_index = html.rfind('<a class="pm-card pm-card--corpus', 0, title_index)
+    article_start_index = html.rfind('<article class="pm-card pm-card--interactive pm-card--corpus', 0, title_index)
+    start_index = max(anchor_start_index, article_start_index)
+    assert start_index != -1
+    end_anchor_index = html.find('</a>', title_index)
+    end_article_index = html.find('</article>', title_index)
+    end_index = min(index for index in (end_anchor_index, end_article_index) if index != -1)
+    assert end_index != -1
+    closing_tag = '</article>' if html[start_index:start_index + 8] == '<article' else '</a>'
+    return html[start_index : end_index + len(closing_tag)]
+
+
+def _assert_muted_locked_nav_item_order(drawer_html: str, label: str) -> None:
+    pattern = re.compile(
+        rf'<a[^>]*pm-nav__item--muted[^>]*>\s*<span class="promat-panel__item-label">{re.escape(label)}</span>\s*<span class="pm-icon-mask pm-icon-mask--lock promat-panel__item-lock"',
+        re.DOTALL,
+    )
+    assert pattern.search(drawer_html) is not None
+
+
 def _write_session(runtime_root: Path, language_slug: str, session_id: str, payload: dict[str, object]) -> None:
     session_dir = runtime_root / "data" / "sessions" / language_slug / session_id
     session_dir.mkdir(parents=True, exist_ok=True)
@@ -799,12 +822,18 @@ def test_research_sidebar_stays_area_only_when_authenticated(url_app: Flask) -> 
     assert "Logout" not in drawer_html
 
 
-def test_research_overview_renders_corpus_titles_and_data_driven_session_counts(runtime_env: Path, url_app: Flask) -> None:
+def test_research_overview_renders_structured_corpus_metadata_and_dynamic_counts(runtime_env: Path, url_app: Flask) -> None:
     spanish_person_id = build_person_id("es", "learner", 1)
     spanish_session_one = build_session_id(spanish_person_id, 2026, 1)
     spanish_session_two = build_session_id(spanish_person_id, 2027, 2)
     english_person_id = build_person_id("en", "learner", 1)
     english_session_one = build_session_id(english_person_id, 2026, 1)
+    spanish_native_one = build_person_id("es", "native_speaker", 1)
+    spanish_native_session_one = build_session_id(spanish_native_one, 2026, 1)
+    spanish_native_two = build_person_id("es", "native_speaker", 2)
+    spanish_native_session_two = build_session_id(spanish_native_two, 2026, 1)
+    english_native_one = build_person_id("en", "native_speaker", 1)
+    english_native_session_one = build_session_id(english_native_one, 2026, 1)
 
     _write_session(
         runtime_env,
@@ -851,20 +880,152 @@ def test_research_overview_renders_corpus_titles_and_data_driven_session_counts(
             target_language="en",
         ),
     )
+    _write_session(
+        runtime_env,
+        "spanish",
+        spanish_native_session_one,
+        _native_payload(spanish_native_one, spanish_native_session_one, "2026-03-10"),
+    )
+    _write_session(
+        runtime_env,
+        "spanish",
+        spanish_native_session_two,
+        {
+            **_native_payload(spanish_native_two, spanish_native_session_two, "2026-03-11"),
+            "standard_variety": "rioplatense",
+            "origin_country": "Argentina",
+            "origin_region": "Buenos Aires",
+        },
+    )
+    _write_session(
+        runtime_env,
+        "english",
+        english_native_session_one,
+        {
+            **_native_payload(english_native_one, english_native_session_one, "2026-04-08"),
+            "target_language": "en",
+            "standard_variety": "rp",
+            "origin_country": "United Kingdom",
+            "origin_region": "England",
+        },
+    )
 
     client = url_app.test_client()
     response = client.get("/de/research")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
+    assert 'Vier Sprachkorpora zur Lernendenaussprache.' not in html
+    assert 'einheitlicher Route-Struktur' not in html
     assert 'Spanisch-Korpus' in html
     assert 'Französisch-Korpus' in html
     assert 'Deutsch-Korpus' in html
     assert 'Englisch-Korpus' in html
-    assert 'Kontrolliert angelegtes Korpus zur Lernendenaussprache mit Wortliste, Satzliste und Interview als vergleichbaren Erhebungsformaten.' in html
-    assert 'Aktuell 2 erfasste Learner-Sessions im Bestand.' in html
-    assert 'Aktuell 1 erfasste Learner-Session im Bestand.' in html
-    assert 'Aktuell keine erfassten Learner-Sessions im Bestand.' in html
+
+    spanish_card = _extract_corpus_card_by_title(html, 'Spanisch-Korpus')
+    assert 'Projektleitung' in spanish_card
+    assert 'Prof. Dr. Felix Tacke' in spanish_card
+    assert 'Materialkonzeption' in spanish_card
+    assert 'Felix Tacke, Ana Goás Pérez' in spanish_card
+    assert 'Durchführung' in spanish_card
+    assert 'Marlon Merte' in spanish_card
+    assert spanish_card.index('Projektleitung') < spanish_card.index('Materialkonzeption') < spanish_card.index('Durchführung')
+    assert 'pm-corpus-overview-card__section--primary' in spanish_card
+    assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in spanish_card
+    assert 'pm-speaker-card__footer pm-corpus-overview-card__footer' in spanish_card
+    assert 'pm-speaker-card__footer-section pm-corpus-overview-card__footer-section' in spanish_card
+    assert 'pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-corpus-overview-card__action' in spanish_card
+    assert 'Aufnahmen von 1 Lernenden' in spanish_card
+    assert 'Referenzaufnahmen zu 2 Standardvarietäten' in spanish_card
+    assert spanish_card.index('Aufnahmen von 1 Lernenden') < spanish_card.index('Referenzaufnahmen zu 2 Standardvarietäten')
+
+    french_card = _extract_corpus_card_by_title(html, 'Französisch-Korpus')
+    assert 'Prof. Dr. Janina Reinhardt' in french_card
+    assert 'Amelie Spieß' in french_card
+    assert 'Materialkonzeption' in french_card
+    assert 'Janina Reinhardt' in french_card
+    assert 'Korpus im Aufbau' in french_card
+    assert 'Referenzaufnahmen' not in french_card
+
+    german_card = _extract_corpus_card_by_title(html, 'Deutsch-Korpus')
+    assert 'Prof. Dr. Kathrin Siebold' in german_card
+    assert 'Theresa Fischer' in german_card
+    assert 'Kathrin Siebold' in german_card
+    assert 'Korpus im Aufbau' in german_card
+    assert 'Referenzaufnahmen' not in german_card
+
+    english_card = _extract_corpus_card_by_title(html, 'Englisch-Korpus')
+    assert 'Prof. Dr. Rolf Kreyer' in english_card
+    assert 'Marlon Merte' in english_card
+    assert 'Rolf Kreyer' in english_card
+    assert 'Aufnahmen von 1 Lernenden' in english_card
+    assert 'Referenzaufnahmen' not in english_card
+
+    assert 'Learner-Sessions' not in html
+    assert 'Kontrolliert angelegtes Korpus' not in html
+
+
+def test_research_overview_localizes_structured_corpus_cards_in_english(runtime_env: Path, url_app: Flask) -> None:
+    spanish_person_id = build_person_id("es", "learner", 1)
+    spanish_session = build_session_id(spanish_person_id, 2026, 1)
+    spanish_native_one = build_person_id("es", "native_speaker", 1)
+    spanish_native_session_one = build_session_id(spanish_native_one, 2026, 1)
+    spanish_native_two = build_person_id("es", "native_speaker", 2)
+    spanish_native_session_two = build_session_id(spanish_native_two, 2026, 1)
+
+    _write_session(
+        runtime_env,
+        "spanish",
+        spanish_session,
+        _learner_payload(
+            person_id=spanish_person_id,
+            session_id=spanish_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist",),
+        ),
+    )
+    _write_session(
+        runtime_env,
+        "spanish",
+        spanish_native_session_one,
+        _native_payload(spanish_native_one, spanish_native_session_one, "2026-03-10"),
+    )
+    _write_session(
+        runtime_env,
+        "spanish",
+        spanish_native_session_two,
+        {
+            **_native_payload(spanish_native_two, spanish_native_session_two, "2026-03-11"),
+            "standard_variety": "rioplatense",
+            "origin_country": "Argentina",
+            "origin_region": "Buenos Aires",
+        },
+    )
+
+    client = url_app.test_client()
+    response = client.get("/en/research")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Four learner-pronunciation corpora.' not in html
+    assert 'bilingual UI' not in html
+
+    spanish_card = _extract_corpus_card_by_title(html, 'Spanish corpus')
+    assert 'Project lead' in spanish_card
+    assert 'Material design' in spanish_card
+    assert 'Conducted by' in spanish_card
+    assert 'pm-corpus-overview-card__section--primary' in spanish_card
+    assert 'pm-corpus-overview-card__section--secondary' in spanish_card
+    assert 'Recordings from 1 learner' in spanish_card
+    assert 'Reference recordings for 2 standard varieties' in spanish_card
+    assert spanish_card.index('Project lead') < spanish_card.index('Material design') < spanish_card.index('Conducted by')
+    assert spanish_card.index('Recordings from 1 learner') < spanish_card.index('Reference recordings for 2 standard varieties')
+
+    french_card = _extract_corpus_card_by_title(html, 'French corpus')
+    assert 'Corpus in progress' in french_card
 
 
 def test_project_page_uses_inner_shell_with_section_sidebar_header(url_app: Flask) -> None:
@@ -886,16 +1047,64 @@ def test_project_page_uses_inner_shell_with_section_sidebar_header(url_app: Flas
 
 
 @pytest.mark.parametrize(
-    ("ui_lang", "language_slug", "expected_title"),
+    ("ui_lang", "language_slug", "expected_title", "expected_subtitle", "expected_body"),
     [
-        ("de", "spanish", "Spanisch-Korpus"),
-        ("de", "french", "Französisch-Korpus"),
-        ("de", "german", "Deutsch-Korpus"),
-        ("de", "english", "Englisch-Korpus"),
-        ("en", "spanish", "Spanish corpus"),
-        ("en", "french", "French corpus"),
-        ("en", "german", "German corpus"),
-        ("en", "english", "English corpus"),
+        (
+            "de",
+            "spanish",
+            "Spanisch-Korpus",
+            "Forschungsbereich zur spanischen Lernendenaussprache.",
+            "Das Spanisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+        ),
+        (
+            "de",
+            "french",
+            "Französisch-Korpus",
+            "Forschungsbereich zur französischen Lernendenaussprache.",
+            "Das Französisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+        ),
+        (
+            "de",
+            "german",
+            "Deutsch-Korpus",
+            "Forschungsbereich zur deutschen Lernendenaussprache.",
+            "Das Deutsch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+        ),
+        (
+            "de",
+            "english",
+            "Englisch-Korpus",
+            "Forschungsbereich zur englischen Lernendenaussprache.",
+            "Das Englisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+        ),
+        (
+            "en",
+            "spanish",
+            "Spanish corpus",
+            "Research area for Spanish learner pronunciation.",
+            "The Spanish corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+        ),
+        (
+            "en",
+            "french",
+            "French corpus",
+            "Research area for French learner pronunciation.",
+            "The French corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+        ),
+        (
+            "en",
+            "german",
+            "German corpus",
+            "Research area for German learner pronunciation.",
+            "The German corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+        ),
+        (
+            "en",
+            "english",
+            "English corpus",
+            "Research area for English learner pronunciation.",
+            "The English corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+        ),
     ],
 )
 def test_research_language_root_renders_public_landing_with_real_page_links(
@@ -903,6 +1112,8 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
     ui_lang: str,
     language_slug: str,
     expected_title: str,
+    expected_subtitle: str,
+    expected_body: str,
 ) -> None:
     client = url_app.test_client()
 
@@ -916,12 +1127,25 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
     assert f'href="/{ui_lang}/research/{language_slug}/comparison"' in html
     assert f'href="/{ui_lang}/research/{language_slug}/phenomena"' in html
     assert expected_title in html
+    assert expected_subtitle in html
+    assert expected_body in html
+    assert 'pm-research-language-root__list' not in html
+    assert 'pm-research-language-root__item' not in html
+    path = f"/{ui_lang}/research/{language_slug}"
     if ui_lang == "de":
-        assert "Nicht alle Bereiche sind öffentlich." in html
-        assert html.count(f"{expected_title} bietet einen öffentlichen Einstieg") == 1
+        assert "Zum Schutz personenbezogener und forschungsbezogener Daten sind nicht alle Bereiche öffentlich zugänglich." in html
+        assert "Als legitime Nutzer:innen gelten Angehörige von Forschungs- und Bildungseinrichtungen." in html
+        assert f'href="/access-request?next={quote(path, safe="/?")}"' in html
+        assert f'href="/login?next={quote(path, safe="/?")}"' in html
+        assert "Zugang beantragen →" in html
+        assert "Zum Login →" in html
     else:
-        assert "Not every area is public." in html
-        assert html.count(f"{expected_title} offers a public entry point") == 1
+        assert "To protect personal and research-related data, not every area is publicly accessible." in html
+        assert "Legitimate users are members of research and educational institutions." in html
+        assert f'href="/access-request?next={quote(path, safe="/?")}"' in html
+        assert f'href="/login?next={quote(path, safe="/?")}"' in html
+        assert "Request access →" in html
+        assert "Go to login →" in html
 
 
 def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(url_app: Flask) -> None:
@@ -931,11 +1155,18 @@ def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "pm-research-language-root__action is-muted" in html
+    drawer_html = _extract_element_by_id(html, "aside", "navigation-drawer-standard")
+    assert "pm-research-language-root__action is-muted" not in html
     assert 'pm-research-language-root__item is-muted' not in html
     assert "pm-nav__item--muted" in html
     assert "pm-icon-mask--lock" in html
     assert "Login erforderlich" not in html
+    assert f'href="/access-request?next={quote("/de/research/spanish", safe="/?")}"' in html
+    assert f'href="/login?next={quote("/de/research/spanish", safe="/?")}"' in html
+    _assert_muted_locked_nav_item_order(drawer_html, "Sprecher:innen")
+    _assert_muted_locked_nav_item_order(drawer_html, "Aufnahmen")
+    _assert_muted_locked_nav_item_order(drawer_html, "Vergleich")
+    _assert_muted_locked_nav_item_order(drawer_html, "Phänomene")
 
 
 def test_research_design_page_shows_muted_locked_sidebar_entries_for_signed_out_users(url_app: Flask) -> None:
@@ -1137,10 +1368,22 @@ def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -
     assert 'Französisch-Korpus' in html
     assert 'Korpus öffnen →' in html
     assert 'Materialien öffnen →' in html
-    assert 'Aktuell keine erfassten Learner-Sessions im Bestand.' in html
+    assert 'Projektleitung' in html
+    assert 'Durchführung' in html
+    assert 'Materialkonzeption' in html
+    assert re.search(r'Aufnahmen von \d+ Lernenden', html) is not None
+    assert 'Korpus im Aufbau' in html
+    assert 'pm-corpus-overview-card__section--primary' in html
+    assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in html
+    assert 'pm-corpus-overview-card__action' in html
+    assert 'pm-corpus-overview-card__footer' in html
+    assert 'Learner-Sessions' not in html
     assert 'Research-Einstieg auf Sprach-Unterseiten' in html
-    assert 'pm-research-language-root__item' in html
-    assert 'pm-icon-mask--lock' in html
+    assert 'pm-research-language-root__item' not in html
+    assert 'pm-research-language-root__list' not in html
+    assert 'Forschungsbereich zur französischen Lernendenaussprache.' in html
+    assert 'Zugang beantragen →' in html
+    assert 'Zum Login →' in html
 
 
 def test_sample_page_uses_current_research_component_patterns(url_app: Flask) -> None:
@@ -1150,6 +1393,9 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
+    assert 'pm-speaker-card__body pm-card__divider-buffer' in html
+    assert 'pm-speaker-card__footer-section--recordings pm-card__divider-buffer' in html
+    assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in html
     assert 'pm-speaker-card__footer-section--recordings' in html
     assert 'pm-speaker-card__footer-section--actions' in html
     assert 'pm-research-inline-action--task' in html

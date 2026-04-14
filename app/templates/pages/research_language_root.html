@@ -7,27 +7,18 @@
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
 
-  <section class="pm-research-language-root__intro pm-reading" aria-label="{{ promat_page.title }}">
-    <p class="pm-research-language-root__note">{{ promat_page.access_note }}</p>
-  </section>
+  <section class="pm-research-language-root__body pm-reading" aria-label="{{ promat_page.title }}">
+    <div class="pm-research-language-root__copy">
+      {% for paragraph in promat_page.body_paragraphs %}
+      <p class="pm-research-language-root__paragraph">{{ paragraph }}</p>
+      {% endfor %}
+    </div>
 
-  <div class="pm-research-language-root__list pm-reading" aria-label="{{ promat_page.title }}">
-    {% for entry in promat_page.research_entries %}
-    <section class="pm-research-language-root__item">
-      <div class="pm-research-language-root__body">
-        <h2 class="pm-research-language-root__title">{{ entry.title }}</h2>
-        <p class="pm-research-language-root__text">{{ entry.text }}</p>
-      </div>
-      <div class="pm-research-language-root__action-row">
-        <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action{{ ' is-muted' if entry.is_muted else '' }}" href="{{ entry.href }}">
-          {% if entry.show_lock %}
-          <span class="pm-icon-mask pm-icon-mask--lock" aria-hidden="true"></span>
-          {% endif %}
-          <span>{{ entry.button_label }}</span>
-        </a>
-      </div>
-    </section>
-    {% endfor %}
-  </div>
+    <nav class="promat-page__actions pm-stack--inline pm-research-language-root__actions" aria-label="{{ promat_page.title }}">
+      {% for action in promat_page.action_links %}
+      <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action" href="{{ action.href }}">{{ action.label }}</a>
+      {% endfor %}
+    </nav>
+  </section>
 </article>
 {% endblock %}

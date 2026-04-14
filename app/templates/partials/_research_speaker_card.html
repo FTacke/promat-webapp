@@ -1,6 +1,6 @@
 {% macro render_speaker_card(card) -%}
 <article class="pm-card pm-card--interactive pm-speaker-card pm-speaker-card--{{ card.accent_modifier }}">
-  <a class="pm-speaker-card__body" href="{{ card.profile_href }}">
+  <a class="pm-speaker-card__body pm-card__divider-buffer" href="{{ card.profile_href }}">
     <div class="pm-speaker-card__header">
       <p class="pm-speaker-card__eyebrow">{{ card.eyebrow }}</p>
       <p class="pm-speaker-card__person">{{ card.person_id }}</p>
@@ -19,7 +19,7 @@
     </div>
   </a>
   <footer class="pm-speaker-card__footer">
-    <div class="pm-speaker-card__footer-section pm-speaker-card__footer-section--recordings">
+    <div class="pm-speaker-card__footer-section pm-speaker-card__footer-section--recordings pm-card__divider-buffer">
       <p class="pm-speaker-card__task-label">{{ card.recordings_label }}</p>
       <div class="pm-speaker-card__tasks" aria-label="{{ card.recording_links_aria_label }}">
         {% for task_link in card.task_links %}

@@ -198,6 +198,43 @@ def test_login_page_mailto_contains_required_english_fields(auth_app: Flask) -> 
     assert "Best regards" not in mailto
 
 
+def test_access_request_page_renders_mailto_and_login_link_with_return_target(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/access-request?next=/de/research/spanish")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Zugangspfad für neue legitime Nutzer:innen aus Forschungs- und Bildungseinrichtungen." in html
+    assert "Wenn Sie bereits freigeschaltet sind, nutzen Sie stattdessen den Login." in html
+    assert 'href="/login?next=/de/research/spanish"' in html
+    assert "Zugang per E-Mail anfragen" in html
+    mailto = _extract_mailto(html)
+    assert "Nachname, Vorname:" in mailto
+
+
+def test_login_from_corpus_root_returns_to_same_corpus_root(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    landing_response = client.get("/de/research/spanish")
+
+    assert landing_response.status_code == 200
+    assert 'href="/login?next=/de/research/spanish"' in landing_response.get_data(as_text=True)
+
+    login_response = client.post(
+        "/auth/login",
+        data={
+            "email": "alice@example.org",
+            "password": "ValidPass1",
+            "next": "/de/research/spanish",
+        },
+        follow_redirects=False,
+    )
+
+    assert login_response.status_code == 303
+    assert login_response.headers["Location"] == "/de/research/spanish"
+
+
 def test_login_accepts_email_only_and_rejects_username(auth_app: Flask) -> None:
     client = auth_app.test_client()
 

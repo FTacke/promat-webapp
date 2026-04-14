@@ -72,6 +72,20 @@ def _request_next_value() -> str:
     return next_value
 
 
+def _safe_next_value(raw: str | None) -> str | None:
+    if not raw:
+        return None
+    parsed = urlparse(unquote(raw))
+    if parsed.netloc and parsed.netloc != request.host:
+        return None
+    if parsed.path.startswith(("/auth/login", "/auth/logout", "/login", "/access-request")):
+        return None
+    safe = parsed.path or ""
+    if parsed.query:
+        safe += f"?{parsed.query}"
+    return safe or None
+
+
 def _research_login_redirect():
     return _redirect(url_for("public.login", next=_request_next_value()))
 
@@ -151,7 +165,9 @@ def _resolve_href_key(href_key: str, ui_lang: str) -> str:
     if href_key == "sample_root":
         return url_for("public.sample_page", ui_lang=ui_lang)
     if href_key == "login":
-        return url_for("public.login", next=request.full_path or request.path)
+        return url_for("public.login", next=_request_next_value())
+    if href_key == "access_request":
+        return url_for("public.access_request_page", next=_request_next_value())
 
     if ":" not in href_key:
         return href_key
@@ -287,6 +303,7 @@ def _render_promat_page(
     page_context["feature_cards"] = _linkify(page_context.get("feature_cards", []), ui_lang)
     page_context["corpus_cards"] = _linkify(page_context.get("corpus_cards", []), ui_lang)
     page_context["landing_cards"] = _linkify(page_context.get("landing_cards", []), ui_lang)
+    page_context["action_links"] = _linkify(page_context.get("action_links", []), ui_lang)
     page_context["research_entries"] = _linkify(page_context.get("research_entries", []), ui_lang)
     if page_context.get("more_link"):
         page_context["more_link"] = _linkify([page_context["more_link"]], ui_lang)[0]
@@ -494,7 +511,12 @@ def sample_page(ui_lang: str):
         "sample_landing_cards": _linkify(landing_page.get("landing_cards", []), ui_lang),
         "sample_research_cards": _linkify(research_select_page.get("corpus_cards", []), ui_lang),
         "sample_teaching_cards": _linkify(teaching_select_page.get("corpus_cards", []), ui_lang),
-        "sample_research_root_entries": _linkify(research_feature_page.get("research_entries", []), ui_lang),
+        "sample_research_root_page": {
+            "title": research_feature_page.get("title"),
+            "intro": research_feature_page.get("intro"),
+            "body_paragraphs": research_feature_page.get("body_paragraphs", []),
+            "action_links": _linkify(research_feature_page.get("action_links", []), ui_lang),
+        },
         "sample_teaching_feature_cards": _linkify(teaching_feature_page.get("feature_cards", []), ui_lang),
         "sample_speaker_cards": _sample_speaker_cards(ui_lang),
     }
@@ -517,7 +539,7 @@ def sample_page(ui_lang: str):
 
 @blueprint.get("/login", endpoint="login")
 def login_page():
-    next_url = request.args.get("next") or ""
+    next_url = _safe_next_value(request.args.get("next")) or ""
     ui_lang = _resolve_auth_ui_lang(next_url)
     response = make_response(
         render_template(
@@ -526,6 +548,29 @@ def login_page():
             auth_ui_lang=ui_lang,
             access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
             page_name="login",
+            shell_class="app-shell--panel-hidden",
+            ui_lang=ui_lang,
+        )
+    )
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Vary"] = "Cookie"
+    return response, 200
+
+
+@blueprint.get("/access-request", endpoint="access_request_page")
+def access_request_page():
+    next_url = _safe_next_value(request.args.get("next")) or ""
+    ui_lang = _resolve_auth_ui_lang(next_url)
+    login_href = url_for("public.login", next=next_url) if next_url else url_for("public.login", ui_lang=ui_lang)
+    response = make_response(
+        render_template(
+            "auth/access_request.html",
+            next=next_url,
+            login_href=login_href,
+            auth_ui_lang=ui_lang,
+            access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
+            page_name="access-request",
             shell_class="app-shell--panel-hidden",
             ui_lang=ui_lang,
         )

@@ -17,6 +17,9 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 ### Research landing and sections
 
 - The research section root is a corpus selection in the German UI (`Korpus wählen`), not a teaching-style language selection.
+- The research section root uses metadata-first corpus cards and does not render an extra intro or subtitle line below the page heading.
+- Those corpus cards always show project lead, material design, and execution in that order; they show learner-recordings counts or the status `Korpus im Aufbau`/`Corpus in progress` before any optional reference-recordings line, and they show reference recordings only from two distinct native-speaker standard varieties upward.
+- Those corpus cards remain part of the shared card system of the app: speaker cards are the primary visual reference, the visible card structure stays title, primary block, secondary block, and footer CTA, and the secondary status block keeps the same minimum inset above and below the surrounding divider rhythm instead of visually touching the footer divider.
 - `design` documents corpus design.
 - `speakers` is the person-based access path.
 - `recordings` is the session- and task-based access path.
@@ -38,11 +41,13 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 ### Corpus-scoped public boundary
 
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page.
-- The corpus root `/{ui_lang}/research/{corpus}` is a public orientation page that explains the available research paths for that corpus and links to the canonical page routes.
+- The corpus root `/{ui_lang}/research/{corpus}` is a public reduced orientation page. The canonical research paths remain visible in the left sidebar only, while the main column stays limited to title, short subtitle, two short prose paragraphs, and the two actions `Zugang beantragen`/`Request access` and `Zum Login`/`Go to login`.
+- The corpus-root main column does not rebuild the area navigation as a second list of `design`, `speakers`, `recordings`, `comparison`, or `phenomena` entries with separate body CTAs.
 - All other research pages and detail routes under one concrete corpus path are authenticated research-app surfaces.
 - Access clarification belongs at the route boundary: unauthenticated requests are redirected to login with a safe return target, and the protected workbench or media response must not already render in the background.
 - There are no corpus-specific access exceptions such as public comparison or public phenomena variants outside `design`.
 - On public research pages for unauthenticated users, protected research destinations remain visibly linked but render in a muted locked state without repeating login CTA copy at each entry.
+- When the public corpus root links to login, that login path preserves the exact corpus-root return target so successful authentication returns the user to the same corpus landing page.
 
 ### Protected research surfaces
 

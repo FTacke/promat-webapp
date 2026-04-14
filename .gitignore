@@ -46,3 +46,4 @@ secure/*
 public/*
 !public/.gitkeep
 !public/README.md
+scripts/research_data_intake/import/*

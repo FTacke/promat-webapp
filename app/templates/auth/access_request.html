@@ -1,0 +1,27 @@
+{% extends "_md3_skeletons/auth_login_skeleton.html" %}
+
+{% block page_title %}{{ format_page_title(t('auth.access_request.heading')) }}{% endblock %}
+
+{% set auth_heading = t('auth.access_request.heading') %}
+{% set auth_intro = t('auth.access_request.page_intro') %}
+{% set auth_breadcrumbs = [
+  { 'label': BRANDING.app_display_name if BRANDING is defined else 'Pronunciation Matters', 'href': url_for('public.landing_page'), 'current': false },
+  { 'label': t('auth.access_request.heading'), 'href': none, 'current': true },
+] %}
+
+{% block auth_body %}
+<article class="pm-auth-secondary pm-auth-secondary--inline pm-access-request-page" aria-labelledby="access-request-page-title">
+  <div class="pm-auth-secondary__header">
+    <p class="pm-auth-secondary__eyebrow">{{ t('auth.access_request.heading') }}</p>
+    <h2 id="access-request-page-title" class="pm-auth-secondary__title">{{ t('auth.access_request.secondary_heading') }}</h2>
+  </div>
+  <div class="pm-auth-secondary__body">
+    <p class="pm-auth-secondary__text">{{ t('auth.access_request.text') }}</p>
+    <p class="pm-auth-secondary__text">{{ t('auth.access_request.page_detail') }}</p>
+    <div class="promat-page__actions pm-stack--inline pm-access-request-page__actions">
+      <a class="pm-research-inline-action pm-research-inline-action--secondary" href="{{ access_request_mailto }}">{{ t('auth.access_request.cta') }}</a>
+      <a class="pm-research-inline-action pm-research-inline-action--secondary" href="{{ login_href }}">{{ t('auth.access_request.login_link') }}</a>
+    </div>
+  </div>
+</article>
+{% endblock %}

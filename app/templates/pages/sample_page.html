@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
+{% from 'partials/_corpus_card.html' import render_corpus_card %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -40,20 +41,11 @@
       <section class="pm-entry-showcase__variant" aria-labelledby="sample-research-corpus-variant">
         <div class="pm-entry-showcase__heading">
           <p id="sample-research-corpus-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Korpus-Karten · Forschung</p>
-          <p class="pm-entry-showcase__note">Direkt aus der aktuellen Research-Auswahlseite übernommen, inklusive Projektleitungen und datengetriebener Learner-Session-Zählung.</p>
+          <p class="pm-entry-showcase__note">Direkt aus der aktuellen Research-Auswahlseite übernommen, mit speaker-card-naher Segmentierung aus Titel, Primärblock, Sekundärblock und Footer-CTA.</p>
         </div>
         <div class="pm-card-grid" aria-label="Korpus-Karten Forschung">
           {% for card in promat_page.sample_research_cards %}
-          <a class="pm-card pm-card--corpus {{ card.modifier }}" href="{{ card.href }}">
-            <div class="pm-card__body">
-              <h3 class="pm-card__title">{{ card.title }}</h3>
-              {% if card.meta %}
-              <div class="pm-card__meta">{{ card.meta }}</div>
-              {% endif %}
-              <p class="pm-card__text">{{ card.text }}</p>
-              <div class="pm-card__action">{{ card.action_label }}</div>
-            </div>
-          </a>
+          {{ render_corpus_card(card, 'h3') }}
           {% endfor %}
         </div>
       </section>
@@ -79,27 +71,22 @@
       <section class="pm-entry-showcase__variant" aria-labelledby="sample-selection-cards-variant">
         <div class="pm-entry-showcase__heading">
           <p id="sample-selection-cards-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Research-Einstieg auf Sprach-Unterseiten</p>
-          <p class="pm-entry-showcase__note">Die Research-Sprachwurzeln nutzen jetzt eine ruhige, lineare Liste mit echten Ziel-Links und Lock-/Muted-Zuständen statt eines Auswahlkarten-Grids.</p>
+          <p class="pm-entry-showcase__note">Die Research-Sprachwurzeln nutzen jetzt einen reduzierten Einstieg mit kurzer Einordnung, Datenschutzrahmen und genau zwei Aktionen; die linke Seitennavigation bleibt die einzige Bereichsnavigation.</p>
         </div>
 
-        <div class="pm-research-language-root__list pm-reading" aria-label="Research-Einstiegsliste">
-          {% for entry in promat_page.sample_research_root_entries %}
-          <section class="pm-research-language-root__item">
-            <div class="pm-research-language-root__body">
-              <h3 class="pm-research-language-root__title">{{ entry.title }}</h3>
-              <p class="pm-research-language-root__text">{{ entry.text }}</p>
-            </div>
-            <div class="pm-research-language-root__action-row">
-              <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action{{ ' is-muted' if entry.is_muted else '' }}" href="{{ entry.href }}">
-                {% if entry.show_lock %}
-                <span class="pm-icon-mask pm-icon-mask--lock" aria-hidden="true"></span>
-                {% endif %}
-                <span>{{ entry.button_label }}</span>
-              </a>
-            </div>
-          </section>
-          {% endfor %}
-        </div>
+        <section class="pm-research-language-root__body pm-reading" aria-label="Research-Einstiegsseite">
+          <p class="promat-page__intro pm-content-header__intro">{{ promat_page.sample_research_root_page.intro }}</p>
+          <div class="pm-research-language-root__copy">
+            {% for paragraph in promat_page.sample_research_root_page.body_paragraphs %}
+            <p class="pm-research-language-root__paragraph">{{ paragraph }}</p>
+            {% endfor %}
+          </div>
+          <nav class="promat-page__actions pm-stack--inline pm-research-language-root__actions" aria-label="Research-Einstiegsaktionen">
+            {% for action in promat_page.sample_research_root_page.action_links %}
+            <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action" href="{{ action.href }}">{{ action.label }}</a>
+            {% endfor %}
+          </nav>
+        </section>
 
         <section class="pm-feature-band pm-grid pm-grid--feature pm-grid--selection" aria-label="Teaching-Auswahlkarten">
           {% for card in promat_page.sample_teaching_feature_cards %}
@@ -659,14 +646,36 @@
           </div>
         </a>
 
-        <a class="pm-card pm-card--corpus pm-card--corpus-research" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='spanish', page_slug='design') }}">
-          <div class="pm-card__body">
-            <h3 class="pm-card__title">Spanisch</h3>
-            <div class="pm-card__meta">Projekt-Leitung: Prof. Marín</div>
-            <p class="pm-card__text">Forschungskarte im gemischten Kontext: neutral, ruhig und klar von der Entry-Card daneben getrennt.</p>
-            <div class="pm-card__action">Korpus öffnen &rarr;</div>
+        <article class="pm-card pm-card--interactive pm-card--corpus pm-card--corpus-research pm-card--lang-es pm-corpus-overview-card">
+          <div class="pm-card__body pm-corpus-overview-card__body">
+            <div class="pm-corpus-overview-card__header">
+              <h3 class="pm-card__title pm-corpus-overview-card__title">Spanisch-Korpus</h3>
+            </div>
+            <div class="pm-corpus-overview-card__section pm-corpus-overview-card__section--primary">
+              <div class="pm-speaker-card__meta-item pm-corpus-overview-card__meta-item">
+                <p class="pm-speaker-card__meta-label">Projektleitung</p>
+                <p class="pm-speaker-card__meta-value pm-corpus-overview-card__meta-value">Prof. Marín</p>
+              </div>
+              <div class="pm-speaker-card__meta-item pm-corpus-overview-card__meta-item">
+                <p class="pm-speaker-card__meta-label">Materialkonzeption</p>
+                <p class="pm-speaker-card__meta-value pm-corpus-overview-card__meta-value">Prof. Marín, Ana Romero</p>
+              </div>
+              <div class="pm-speaker-card__meta-item pm-corpus-overview-card__meta-item">
+                <p class="pm-speaker-card__meta-label">Durchführung</p>
+                <p class="pm-speaker-card__meta-value pm-corpus-overview-card__meta-value">Ana Romero</p>
+              </div>
+            </div>
+            <div class="pm-corpus-overview-card__section pm-corpus-overview-card__section--secondary pm-card__divider-buffer">
+              <p class="pm-corpus-overview-card__status">Aufnahmen von 3 Lernenden</p>
+              <p class="pm-corpus-overview-card__status">Referenzaufnahmen zu 2 Standardvarietäten</p>
+            </div>
+            <footer class="pm-speaker-card__footer pm-corpus-overview-card__footer">
+              <div class="pm-speaker-card__footer-section pm-corpus-overview-card__footer-section">
+                <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-corpus-overview-card__action" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='spanish', page_slug='design') }}">Korpus öffnen &rarr;</a>
+              </div>
+            </footer>
           </div>
-        </a>
+        </article>
       </div>
     </div>
   </section>

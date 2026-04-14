@@ -49,6 +49,7 @@ textarea {
 .promat-content-block__text,
 .promat-content-block__list,
 .pm-card__text,
+.pm-research-language-root__paragraph,
 .md3-hero__intro,
 .md3-text-content,
 .md3-text-content p,
@@ -447,6 +448,13 @@ textarea {
   margin: 0;
 }
 
+.pm-card__meta-list,
+.pm-card__meta-row,
+.pm-card__meta-label,
+.pm-card__meta-value {
+  margin: 0;
+}
+
 .pm-card__meta {
   font-family: var(--pm-type-meta-family);
   font-size: 0.82em;
@@ -454,6 +462,44 @@ textarea {
   letter-spacing: var(--pm-type-meta-tracking);
   color: var(--book-muted);
   opacity: 0.64;
+}
+
+.pm-card__meta-list {
+  font-family: var(--book-font-ui);
+  font-size: 0.93rem;
+  line-height: 1.5;
+  color: var(--book-fg);
+}
+
+.pm-corpus-overview-card .pm-card__title,
+.pm-corpus-overview-card__title {
+  margin: 0;
+}
+
+.pm-corpus-overview-card__meta-value,
+.pm-corpus-overview-card__status {
+  overflow-wrap: anywhere;
+}
+
+.pm-corpus-overview-card__meta-value {
+  line-height: 1.48;
+}
+
+.pm-corpus-overview-card__status {
+  margin: 0;
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.pm-card__meta-label {
+  font-weight: 600;
+  color: var(--book-fg);
+}
+
+.pm-card__meta-row--text {
+  color: var(--book-muted);
 }
 
 .pm-card__action {

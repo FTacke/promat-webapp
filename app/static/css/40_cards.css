@@ -137,13 +137,44 @@
   margin-top: 0;
 }
 
+.pm-card__title + .pm-card__meta-list {
+  margin-top: 0;
+}
+
 .pm-card__meta + .pm-card__text,
 .pm-card__title + .pm-card__text {
   margin-top: 0;
 }
 
+.pm-card__meta-list + .pm-card__text,
+.pm-card__meta-list + .pm-card__action {
+  margin-top: 0;
+}
+
 .pm-card__meta {
   margin-bottom: 0.75rem;
+}
+
+.pm-card__meta-list {
+  display: grid;
+  gap: 0.42rem;
+  margin-bottom: 0.85rem;
+}
+
+.pm-card__meta-row {
+  margin: 0;
+}
+
+.pm-card__divider-buffer {
+  padding-bottom: var(--pm-divider-space-before);
+}
+
+.pm-card__body > .pm-card__action,
+.pm-card__body > .pm-card__link,
+.pm-card__body > footer,
+.pm-card__body > .pm-player-meta-card__footer,
+.pm-card__body > .pm-corpus-overview-card__footer {
+  margin-top: auto;
 }
 
 .pm-card__action,
@@ -249,6 +280,67 @@
 
 .pm-speaker-card--native {
   --pm-speaker-accent: var(--pm-research-native-accent);
+}
+
+.pm-corpus-overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pm-corpus-overview-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 100%;
+  gap: 0;
+}
+
+.pm-corpus-overview-card__header {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pm-corpus-overview-card__section {
+  display: grid;
+  min-width: 0;
+}
+
+.pm-corpus-overview-card__section--primary,
+.pm-corpus-overview-card__section--secondary {
+  margin-block-start: var(--pm-divider-space-before);
+  padding-top: var(--pm-divider-space-after);
+  border-top: 1px solid var(--pm-border-subtle);
+}
+
+.pm-corpus-overview-card__section--primary {
+  gap: 0.85rem;
+}
+
+.pm-corpus-overview-card__section--secondary {
+  gap: 0.55rem;
+}
+
+.pm-corpus-overview-card__footer {
+  gap: 0.45rem;
+}
+
+.pm-corpus-overview-card__footer-section {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.pm-corpus-overview-card__action {
+  margin-top: 0;
+}
+
+.pm-corpus-overview-card.pm-card--lang-es,
+.pm-corpus-overview-card.pm-card--lang-fr,
+.pm-corpus-overview-card.pm-card--lang-en,
+.pm-corpus-overview-card.pm-card--lang-de {
+  border-top-color: var(--pm-card-accent-color);
 }
 
 .pm-speaker-card__body {
@@ -446,7 +538,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.55rem;
-  margin-top: auto;
   padding-top: var(--pm-divider-space-after);
   border-top: 1px solid var(--pm-border-subtle);
 }
@@ -493,6 +584,12 @@
 }
 
 .pm-card--lang-en .pm-card__action {
+  color: var(--pm-card-action-color);
+}
+
+.pm-card--lang-fr .pm-card__action,
+.pm-card--lang-en .pm-card__action,
+.pm-card--lang-de .pm-card__action {
   color: var(--pm-card-action-color);
 }
 
