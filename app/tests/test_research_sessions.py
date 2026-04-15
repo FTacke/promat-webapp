@@ -261,7 +261,14 @@ def _write_wordlist_player_artifacts(runtime_root: Path, language_slug: str, ses
     _write_session_file(runtime_root, language_slug, session_id, "items/wordlist/wl_002.mp3", _minimal_mp3_bytes())
 
 
-def _write_text_player_artifacts(runtime_root: Path, language_slug: str, session_id: str, person_id: str) -> None:
+def _write_text_player_artifacts(
+    runtime_root: Path,
+    language_slug: str,
+    session_id: str,
+    person_id: str,
+    *,
+    include_tokens: bool = False,
+) -> None:
     payload = {
         "session_id": session_id,
         "person_id": person_id,
@@ -274,6 +281,28 @@ def _write_text_player_artifacts(runtime_root: Path, language_slug: str, session
                 "text": "Hoy miro el reloj con calma antes de salir.",
                 "start_ms": 1200,
                 "end_ms": 2600,
+                **({
+                    "tokens": [
+                        {
+                            "token_id": "d_01_tok_01",
+                            "text": "Hoy",
+                            "start_ms": 1200,
+                            "end_ms": 1500,
+                        },
+                        {
+                            "token_id": "d_01_tok_02",
+                            "text": "miro",
+                            "start_ms": 1500,
+                            "end_ms": 1900,
+                        },
+                        {
+                            "token_id": "d_01_tok_invalid",
+                            "text": "salir",
+                            "start_ms": 2700,
+                            "end_ms": 2900,
+                        },
+                    ]
+                } if include_tokens else {}),
                 "split_mp3": "items/text/d_01.mp3",
             },
             {
@@ -1721,6 +1750,101 @@ def test_player_page_accepts_explicit_sentence_list_override_for_connected_text_
     assert page["player"]["client_state"]["singleViewHref"].endswith(
         f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
     )
+
+
+def test_player_page_preserves_renderable_text_tokens_in_existing_client_state(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001", include_tokens=True)
+
+    with url_app.test_request_context():
+        page = build_player_page("de", "spanish", session_id, "text", "recordings")
+
+    assert page is not None
+    first_item = page["player"]["items"][0]
+    assert first_item["item_id"] == "d_01"
+    assert [token["token_id"] for token in first_item["tokens"]] == ["d_01_tok_01", "d_01_tok_02"]
+    assert [segment["kind"] for segment in first_item["text_segments"]] == ["token", "text", "token", "text"]
+    speaker_item = page["player"]["client_state"]["speakers"][0]["items"][0]
+    assert speaker_item["itemId"] == "d_01"
+    assert [token["tokenId"] for token in speaker_item["tokens"]] == ["d_01_tok_01", "d_01_tok_02"]
+
+
+def test_player_route_renders_text_token_spans_when_alignment_tokens_exist(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001", include_tokens=True)
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-player-token-id="d_01_tok_01"' in html
+    assert 'data-player-token-id="d_01_tok_02"' in html
+    assert 'data-player-token-id="d_01_tok_invalid"' not in html
+    assert 'pm-player-token' in html
+    assert 'class="pm-player-list__meta-inline">d_01<' not in html
+    assert 'class="pm-player-list__meta-inline">D<' not in html
+    assert 'class="pm-player-list__meta-time">' in html
+
+
+def test_player_route_keeps_sentence_only_text_markup_when_no_tokens_exist(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'pm-player-token' not in html
+    assert 'data-player-token-id=' not in html
 
 
 def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path, url_app: Flask) -> None:

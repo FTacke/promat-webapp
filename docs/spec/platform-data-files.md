@@ -188,6 +188,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `PROMAT_PUBLIC_ROOT` is the canonical public root.
 - Paths are derived through runtime/config wiring, not freehand string paths.
 - For the default local development PostgreSQL URL `postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth`, `scripts/dev-start.ps1` is the canonical app entrypoint and must ensure the local `promat_auth_db` service plus the idempotent auth/core and research-set migrations are applied before the Flask app starts.
+- If that default host port cannot be published on a dev machine, `scripts/dev-start.ps1` and `app/scripts/dev-setup.ps1` may select a free local fallback port through `PROMAT_DEV_DB_PORT`, but they must keep `AUTH_DATABASE_URL` aligned to the actually published local PostgreSQL host port before migrations, admin seeding, or app startup.
 - In that canonical local dev flow, `scripts/dev-start.ps1` also seeds or updates one reliable default admin account with the reachable email `felix.tacke@uni-marburg.de` unless explicit overrides are supplied.
 - `app/scripts/dev-setup.ps1` remains the canonical initial bootstrap path for the same local PostgreSQL setup; it provisions the local database, applies the same migration chain, and then may hand off to `dev-start` without re-running bootstrap work.
 

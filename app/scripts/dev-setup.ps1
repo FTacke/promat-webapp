@@ -13,32 +13,20 @@ $ErrorActionPreference = 'Stop'
 $appRoot = Split-Path -Parent $PSScriptRoot
 $workspaceRoot = Split-Path -Parent $appRoot
 $composeFile = Join-Path $workspaceRoot 'docker-compose.dev-postgres.yml'
-
-function Wait-ForLocalDevPostgres {
-	param(
-		[string]$ComposeFilePath,
-		[string]$DockerExecutable
-	)
-
-	for ($attempt = 1; $attempt -le 30; $attempt++) {
-		& $DockerExecutable compose -f $ComposeFilePath exec -T promat_auth_db pg_isready -U promat_auth -d promat_auth *> $null
-		if ($LASTEXITCODE -eq 0) {
-			return
-		}
-		Start-Sleep -Seconds 1
-	}
-
-	throw 'Lokale PostgreSQL-Dev-Datenbank wurde nicht rechtzeitig bereit. Bitte Docker-Status prüfen.'
+$devPostgresHelpers = Join-Path $PSScriptRoot 'dev-postgres.ps1'
+if (-not (Test-Path $devPostgresHelpers)) {
+	throw "Could not resolve dev-postgres helpers: $devPostgresHelpers"
 }
+
+. $devPostgresHelpers
+
+$defaultAuthDatabaseUrl = Get-LocalDevPostgresDatabaseUrl -Port (Get-DefaultLocalDevPostgresPort)
 
 if (-not $env:PROMAT_RUNTIME_ROOT) {
 	$env:PROMAT_RUNTIME_ROOT = $workspaceRoot
 }
 if (-not $env:PROMAT_PUBLIC_ROOT) {
 	$env:PROMAT_PUBLIC_ROOT = Join-Path $workspaceRoot 'public'
-}
-if (-not $env:AUTH_DATABASE_URL) {
-	$env:AUTH_DATABASE_URL = 'postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth'
 }
 if (-not $env:AUTH_ACCESS_REQUEST_EMAIL) {
 	$env:AUTH_ACCESS_REQUEST_EMAIL = 'felix.tacke@uni-marburg.de'
@@ -67,13 +55,12 @@ foreach ($dir in $dirs) {
 	}
 }
 
+$localDevPostgres = Initialize-LocalDevPostgresEnvironment -DefaultDatabaseUrl $defaultAuthDatabaseUrl
+$localDevPostgresPort = $localDevPostgres.Port
+
 if (Get-Command docker -ErrorAction SilentlyContinue) {
 	$docker = (Get-Command docker -ErrorAction SilentlyContinue | Select-Object -First 1).Source
-	& $docker compose -f $composeFile up -d promat_auth_db
-	if ($LASTEXITCODE -ne 0) {
-		throw 'Failed to start promat_auth_db via docker compose.'
-	}
-	Wait-ForLocalDevPostgres -ComposeFilePath $composeFile -DockerExecutable $docker
+	$localDevPostgresPort = Ensure-LocalDevPostgres -ComposeFilePath $composeFile -DockerExecutable $docker -Port $localDevPostgresPort -AllowPortFallback:$localDevPostgres.AllowPortFallback -UpdateAuthDatabaseUrl:$localDevPostgres.UpdateAuthDatabaseUrl
 }
 
 if (-not $SkipInstall) {

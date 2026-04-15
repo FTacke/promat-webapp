@@ -40,6 +40,7 @@ from .research_sets import (
     list_selectable_owned_sets,
     load_owned_set,
     ResearchSetStorageUnavailableError,
+    ResearchSetValidationError,
 )
 from .research_sessions import (
     LEVEL_ORDER,
@@ -2788,6 +2789,31 @@ def build_player_page(
         secondary_items = runtime_state.secondary_items
         compare_rows = runtime_state.compare_rows if compare_is_ready else []
         visible_focus_item = runtime_state.visible_focus_item_id
+        def _client_sync_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            payload: list[dict[str, Any]] = []
+            for item_index, item in enumerate(items):
+                if not item["is_available"] or item["start_ms"] is None or item["end_ms"] is None:
+                    continue
+                payload.append(
+                    {
+                        "itemId": item["item_id"],
+                        "itemIndex": item_index,
+                        "startMs": item["start_ms"],
+                        "endMs": item["end_ms"],
+                        "tokens": [
+                            {
+                                "tokenId": token["token_id"],
+                                "tokenIndex": token["token_index"],
+                                "startMs": token["start_ms"],
+                                "endMs": token["end_ms"],
+                            }
+                            for token in item.get("tokens", [])
+                            if token.get("start_ms") is not None and token.get("end_ms") is not None
+                        ],
+                    }
+                )
+            return payload
+
         manual_compare_href = _player_page_href(
             ui_lang,
             language_slug,
@@ -2898,6 +2924,8 @@ def build_player_page(
             active_preset_id=active_selector_preset_id,
             render_mode=active_render_mode_query,
         )
+        primary_client_sync_items = _client_sync_items(primary_items)
+        secondary_client_sync_items = _client_sync_items(secondary_items) if compare_session and compare_bundle else []
         player_view = {
             "mode": task_key,
             "source_kind": player_source.source_kind,
@@ -3002,30 +3030,14 @@ def build_player_page(
                         "key": "primary",
                         "sessionId": session.session_id,
                         "label": session.session_id,
-                        "items": [
-                            {
-                                "itemId": item["item_id"],
-                                "startMs": item["start_ms"],
-                                "endMs": item["end_ms"],
-                            }
-                            for item in primary_items
-                            if item["is_available"] and item["start_ms"] is not None and item["end_ms"] is not None
-                        ],
+                        "items": primary_client_sync_items,
                     }
                 ] + ([
                     {
                         "key": "secondary",
                         "sessionId": compare_session.session_id,
                         "label": compare_session.session_id,
-                        "items": [
-                            {
-                                "itemId": item["item_id"],
-                                "startMs": item["start_ms"],
-                                "endMs": item["end_ms"],
-                            }
-                            for item in secondary_items
-                            if item["is_available"] and item["start_ms"] is not None and item["end_ms"] is not None
-                        ],
+                        "items": secondary_client_sync_items,
                     }
                 ] if compare_session and compare_bundle else []),
                 "compareReady": compare_is_ready,
@@ -3033,15 +3045,7 @@ def build_player_page(
                 "statusLabel": _player_controls_status_label(ui_lang),
                 "togglePlay": _player_play_label(ui_lang),
                 "togglePause": _player_pause_label(ui_lang),
-                "items": [
-                    {
-                        "itemId": item["item_id"],
-                        "startMs": item["start_ms"],
-                        "endMs": item["end_ms"],
-                    }
-                    for item in primary_items
-                    if item["is_available"] and item["start_ms"] is not None and item["end_ms"] is not None
-                ],
+                "items": primary_client_sync_items,
             },
             "items": primary_items,
         }

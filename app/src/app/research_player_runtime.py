@@ -163,6 +163,103 @@ def _coerce_milliseconds(value: Any) -> int | None:
     return None
 
 
+def _normalize_bundle_tokens(
+    item_id: str,
+    raw_tokens: Any,
+    *,
+    item_start_ms: int,
+    item_end_ms: int,
+) -> list[dict[str, Any]]:
+    if not isinstance(raw_tokens, list) or not raw_tokens:
+        return []
+
+    tokens: list[dict[str, Any]] = []
+    for index, raw_token in enumerate(raw_tokens):
+        if not isinstance(raw_token, dict):
+            continue
+
+        token_text = raw_token.get("text")
+        token_start_ms = _coerce_milliseconds(raw_token.get("start_ms"))
+        token_end_ms = _coerce_milliseconds(raw_token.get("end_ms"))
+        if not isinstance(token_text, str) or not token_text.strip():
+            continue
+        if token_start_ms is None or token_end_ms is None or token_end_ms < token_start_ms:
+            continue
+        if token_start_ms < item_start_ms or token_end_ms > item_end_ms:
+            continue
+
+        raw_token_id = raw_token.get("token_id")
+        tokens.append(
+            {
+                "token_id": raw_token_id if isinstance(raw_token_id, str) and raw_token_id else f"{item_id}_token_{index}",
+                "text": token_text,
+                "start_ms": token_start_ms,
+                "end_ms": token_end_ms,
+            }
+        )
+
+    return tokens
+
+
+def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    if not text_value:
+        return ([], [])
+    if not tokens:
+        return ([{"kind": "text", "text": text_value}], [])
+
+    normalized_text = text_value.casefold()
+    cursor = 0
+    segments: list[dict[str, Any]] = []
+    renderable_tokens: list[dict[str, Any]] = []
+
+    for token in tokens:
+        token_text = token.get("text")
+        token_id = token.get("token_id")
+        token_start_ms = token.get("start_ms")
+        token_end_ms = token.get("end_ms")
+        if not isinstance(token_text, str) or not token_text:
+            continue
+        if not isinstance(token_id, str) or not token_id:
+            continue
+        if not isinstance(token_start_ms, int) or not isinstance(token_end_ms, int):
+            continue
+
+        match_start = normalized_text.find(token_text.casefold(), cursor)
+        if match_start < 0:
+            continue
+
+        if match_start > cursor:
+            segments.append({"kind": "text", "text": text_value[cursor:match_start]})
+
+        match_end = match_start + len(token_text)
+        token_index = len(renderable_tokens)
+        renderable_token = {
+            "token_id": token_id or f"{item_id}_token_{token_index}",
+            "token_index": token_index,
+            "text": text_value[match_start:match_end],
+            "start_ms": token_start_ms,
+            "end_ms": token_end_ms,
+        }
+        renderable_tokens.append(renderable_token)
+        segments.append(
+            {
+                "kind": "token",
+                "token_id": renderable_token["token_id"],
+                "token_index": token_index,
+                "text": renderable_token["text"],
+            }
+        )
+        cursor = match_end
+
+    if not renderable_tokens:
+        return ([{"kind": "text", "text": text_value}], [])
+
+    if cursor < len(text_value):
+        segments.append({"kind": "text", "text": text_value[cursor:]})
+
+    return (segments, renderable_tokens)
+
+
 def load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | None:
     if not task_supports_set_filtering(task_key):
         return None
@@ -212,6 +309,12 @@ def load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | 
                 "text": text_value,
                 "start_ms": start_ms,
                 "end_ms": end_ms,
+                "tokens": _normalize_bundle_tokens(
+                    item_id,
+                    raw_item.get("tokens"),
+                    item_start_ms=start_ms,
+                    item_end_ms=end_ms,
+                ),
                 "split_audio_path": split_audio_path if is_playable_audio_artifact(split_audio_path) else None,
             }
         )
@@ -563,12 +666,13 @@ def build_player_items(
     rows: list[dict[str, Any]] = []
     for visible_item in visible_items:
         bundle_item = bundle_items.get(visible_item["item_id"])
+        row_text = visible_item.get("text") or ""
         if bundle_item is None:
             rows.append(
                 {
                     "item_id": visible_item["item_id"],
                     "item_number": visible_item["item_number"],
-                    "text": visible_item["text"],
+                    "text": row_text,
                     "group_id": visible_item.get("group_id"),
                     "text_container_id": visible_item.get("text_container_id"),
                     "text_order_index": visible_item.get("text_order_index"),
@@ -576,6 +680,8 @@ def build_player_items(
                     "paragraph_id": visible_item.get("paragraph_id"),
                     "segment_id": visible_item.get("segment_id"),
                     "note": visible_item.get("note"),
+                    "tokens": [],
+                    "text_segments": [{"kind": "text", "text": row_text}] if row_text else [],
                     "start_label": "",
                     "end_label": "",
                     "download_href": None,
@@ -587,11 +693,18 @@ def build_player_items(
             )
             continue
 
+        row_text = visible_item.get("text") or bundle_item["text"]
+        text_segments, renderable_tokens = _build_text_segments(
+            bundle_item["item_id"],
+            row_text,
+            bundle_item.get("tokens", []),
+        )
+
         rows.append(
             {
                 "item_id": bundle_item["item_id"],
                 "item_number": visible_item.get("item_number") or bundle_item["item_number"],
-                "text": visible_item.get("text") or bundle_item["text"],
+                "text": row_text,
                 "group_id": visible_item.get("group_id"),
                 "text_container_id": visible_item.get("text_container_id"),
                 "text_order_index": visible_item.get("text_order_index"),
@@ -599,6 +712,8 @@ def build_player_items(
                 "paragraph_id": visible_item.get("paragraph_id"),
                 "segment_id": visible_item.get("segment_id"),
                 "note": visible_item.get("note"),
+                "tokens": renderable_tokens,
+                "text_segments": text_segments,
                 "start_label": _format_player_clock(bundle_item["start_ms"]),
                 "end_label": _format_player_clock(bundle_item["end_ms"]),
                 "download_href": url_for(
@@ -661,6 +776,8 @@ def build_player_compare_rows(
                     "paragraph_id": primary.get("paragraph_id"),
                     "segment_id": primary.get("segment_id"),
                     "note": None,
+                    "tokens": [],
+                    "text_segments": [{"kind": "text", "text": _t(ui_lang, "research.player.unavailable")}],
                     "start_label": "",
                     "end_label": "",
                     "download_href": None,

@@ -177,17 +177,56 @@ function bindInPlacePlayerNavigation(scope) {
 }
 
 function findActiveItem(items, currentMs) {
-  for (const item of items) {
+  for (let index = 0; index < items.length; index += 1) {
+    const item = items[index];
     if (currentMs >= item.startMs && currentMs <= item.endMs) {
-      return item.itemId;
+      return {
+        itemId: item.itemId,
+        itemIndex: Number.isInteger(item.itemIndex) ? item.itemIndex : index,
+      };
     }
   }
 
   if (!items.length || currentMs < items[0].startMs) {
-    return null;
+    return { itemId: null, itemIndex: -1 };
   }
 
-  return items[items.length - 1].itemId;
+  const lastItem = items[items.length - 1];
+  return {
+    itemId: lastItem.itemId,
+    itemIndex: Number.isInteger(lastItem.itemIndex) ? lastItem.itemIndex : items.length - 1,
+  };
+}
+
+function findActiveToken(tokens, currentMs) {
+  if (!tokens.length) {
+    return { tokenId: null, tokenIndex: -1 };
+  }
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (currentMs >= token.startMs && currentMs <= token.endMs) {
+      return {
+        tokenId: token.tokenId || null,
+        tokenIndex: Number.isInteger(token.tokenIndex) ? token.tokenIndex : index,
+      };
+    }
+    if (currentMs < token.startMs) {
+      const fallbackIndex = Math.max(0, index - 1);
+      const fallbackToken = tokens[fallbackIndex];
+      return {
+        tokenId: fallbackToken.tokenId || null,
+        tokenIndex: Number.isInteger(fallbackToken.tokenIndex) ? fallbackToken.tokenIndex : fallbackIndex,
+      };
+    }
+  }
+
+  const lastIndex = tokens.length - 1;
+  const lastToken = tokens[lastIndex];
+  return {
+    tokenId: lastToken.tokenId || null,
+    tokenIndex: Number.isInteger(lastToken.tokenIndex) ? lastToken.tokenIndex : lastIndex,
+  };
 }
 
 function init() {
@@ -234,6 +273,10 @@ function init() {
       speaker.key,
       {
         ...speaker,
+        activeItemId: null,
+        activeItemIndex: -1,
+        activeTokenId: null,
+        activeTokenIndex: -1,
         itemsById: new Map((speaker.items || []).map((item) => [item.itemId, item])),
       },
     ]),
@@ -249,8 +292,26 @@ function init() {
       itemMap.set(speakerKey, new Map());
     }
     const speakerItems = itemMap.get(speakerKey);
-    const existing = speakerItems.get(itemId) || [];
-    existing.push(element);
+    const existing = speakerItems.get(itemId) || {
+      elements: [],
+      tokenElementsById: new Map(),
+      tokenElementsByIndex: new Map(),
+    };
+    existing.elements.push(element);
+    for (const tokenElement of element.querySelectorAll('[data-player-token]')) {
+      const tokenId = tokenElement.dataset.playerTokenId || null;
+      const rawTokenIndex = Number(tokenElement.dataset.playerTokenIndex || '-1');
+      if (tokenId) {
+        const tokenElements = existing.tokenElementsById.get(tokenId) || [];
+        tokenElements.push(tokenElement);
+        existing.tokenElementsById.set(tokenId, tokenElements);
+      }
+      if (Number.isInteger(rawTokenIndex) && rawTokenIndex >= 0) {
+        const indexedTokenElements = existing.tokenElementsByIndex.get(rawTokenIndex) || [];
+        indexedTokenElements.push(tokenElement);
+        existing.tokenElementsByIndex.set(rawTokenIndex, indexedTokenElements);
+      }
+    }
     speakerItems.set(itemId, existing);
   }
 
@@ -258,6 +319,7 @@ function init() {
   let clipCleanup = null;
   let sequenceToken = 0;
   let currentRate = Number(state.defaultRate || 1);
+  let syncFrameId = 0;
   state.compareOpen = Boolean(state.compareOpen);
   state.canCompare = Boolean(state.canCompare);
   state.lastCompareMode = state.requestedMode === 'manual' ? 'manual' : 'sequence';
@@ -500,25 +562,142 @@ function init() {
     }
   }
 
-  function setItemActiveState(speakerKey, nextItemId) {
+  function setItemActiveState(speakerKey, previousItemId, nextItemId) {
     const speakerItems = itemMap.get(speakerKey);
     if (!speakerItems) {
       return;
     }
-    for (const [itemId, elements] of speakerItems.entries()) {
-      for (const element of elements) {
+
+    for (const itemId of [previousItemId, nextItemId]) {
+      if (!itemId || !speakerItems.has(itemId)) {
+        continue;
+      }
+      for (const element of speakerItems.get(itemId).elements) {
         element.classList.toggle('is-active', itemId === nextItemId);
       }
     }
   }
 
-  function syncActiveItems() {
-    for (const [speakerKey, speaker] of speakerState.entries()) {
-      const audio = audioMap.get(speakerKey);
-      const items = speaker.items || [];
-      const nextItemId = !audio ? null : findActiveItem(items, Math.round((audio.currentTime || 0) * 1000));
-      setItemActiveState(speakerKey, nextItemId);
+  function tokenElementsForState(speakerKey, itemId, tokenId, tokenIndex) {
+    if (!itemId) {
+      return [];
     }
+    const speakerItems = itemMap.get(speakerKey);
+    const itemState = speakerItems?.get(itemId);
+    if (!itemState) {
+      return [];
+    }
+    if (tokenId && itemState.tokenElementsById.has(tokenId)) {
+      return itemState.tokenElementsById.get(tokenId) || [];
+    }
+    if (Number.isInteger(tokenIndex) && tokenIndex >= 0 && itemState.tokenElementsByIndex.has(tokenIndex)) {
+      return itemState.tokenElementsByIndex.get(tokenIndex) || [];
+    }
+    return [];
+  }
+
+  function setTokenActiveState(
+    speakerKey,
+    previousItemId,
+    previousTokenId,
+    previousTokenIndex,
+    nextItemId,
+    nextTokenId,
+    nextTokenIndex,
+  ) {
+    for (const element of tokenElementsForState(speakerKey, previousItemId, previousTokenId, previousTokenIndex)) {
+      element.classList.remove('is-active');
+    }
+    for (const element of tokenElementsForState(speakerKey, nextItemId, nextTokenId, nextTokenIndex)) {
+      element.classList.add('is-active');
+    }
+  }
+
+  function syncSpeakerHighlightState(speakerKey) {
+    const speaker = speakerState.get(speakerKey);
+    const audio = audioMap.get(speakerKey);
+    if (!speaker || !audio) {
+      return;
+    }
+
+    const currentMs = Math.max(0, Math.round((audio.currentTime || 0) * 1000));
+    const previousItemId = speaker.activeItemId;
+    const previousItemIndex = speaker.activeItemIndex;
+    const previousTokenId = speaker.activeTokenId;
+    const previousTokenIndex = speaker.activeTokenIndex;
+    const activeItem = findActiveItem(speaker.items || [], currentMs);
+    let activeToken = { tokenId: null, tokenIndex: -1 };
+    if (activeItem.itemId) {
+      const currentItem = speaker.itemsById.get(activeItem.itemId);
+      if (currentItem && Array.isArray(currentItem.tokens) && currentItem.tokens.length) {
+        activeToken = findActiveToken(currentItem.tokens, currentMs);
+      }
+    }
+
+    if (previousItemId !== activeItem.itemId) {
+      setItemActiveState(speakerKey, previousItemId, activeItem.itemId);
+    }
+
+    if (
+      previousItemId !== activeItem.itemId
+      || previousItemIndex !== activeItem.itemIndex
+      || previousTokenId !== activeToken.tokenId
+      || previousTokenIndex !== activeToken.tokenIndex
+    ) {
+      setTokenActiveState(
+        speakerKey,
+        previousItemId,
+        previousTokenId,
+        previousTokenIndex,
+        activeItem.itemId,
+        activeToken.tokenId,
+        activeToken.tokenIndex,
+      );
+    }
+
+    speaker.activeItemId = activeItem.itemId;
+    speaker.activeItemIndex = activeItem.itemIndex;
+    speaker.activeTokenId = activeToken.tokenId;
+    speaker.activeTokenIndex = activeToken.tokenIndex;
+  }
+
+  function syncActiveItems() {
+    for (const speakerKey of speakerState.keys()) {
+      syncSpeakerHighlightState(speakerKey);
+    }
+  }
+
+  function anyAudioPlaying() {
+    for (const audio of audioMap.values()) {
+      if (!audio.paused && !audio.ended) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function stopSyncLoop() {
+    if (!syncFrameId) {
+      return;
+    }
+    window.cancelAnimationFrame(syncFrameId);
+    syncFrameId = 0;
+  }
+
+  function startSyncLoop() {
+    if (syncFrameId) {
+      return;
+    }
+
+    const tick = () => {
+      syncFrameId = 0;
+      syncActiveItems();
+      if (anyAudioPlaying()) {
+        syncFrameId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    syncFrameId = window.requestAnimationFrame(tick);
   }
 
   function revealFocusedItem() {
@@ -575,6 +754,11 @@ function init() {
         syncToggleLabel();
         syncProgress();
         syncActiveItems();
+        if (anyAudioPlaying()) {
+          startSyncLoop();
+        } else {
+          stopSyncLoop();
+        }
         resolve(completed);
       };
 
@@ -592,7 +776,9 @@ function init() {
       clipCleanup = cleanup;
       audio.addEventListener('timeupdate', onTimeUpdate);
       audio.addEventListener('ended', onEnded);
-      audio.play().catch(() => finish(false));
+      audio.play().then(() => {
+        startSyncLoop();
+      }).catch(() => finish(false));
     });
   }
 
@@ -631,6 +817,7 @@ function init() {
     pauseOtherAudios(activeSpeakerKey);
     try {
       await currentAudio.play();
+      startSyncLoop();
     } catch {
       syncToggleLabel();
     }
@@ -708,18 +895,29 @@ function init() {
       if (speakerKey === activeSpeakerKey) {
         syncProgress();
       }
-      syncActiveItems();
+      if (!syncFrameId) {
+        syncActiveItems();
+      }
     });
     audio.addEventListener('play', () => {
       pauseOtherAudios(speakerKey);
       setActiveSpeaker(speakerKey);
       syncToggleLabel();
+      startSyncLoop();
     });
-    audio.addEventListener('pause', syncToggleLabel);
+    audio.addEventListener('pause', () => {
+      syncToggleLabel();
+      if (!anyAudioPlaying()) {
+        stopSyncLoop();
+      }
+    });
     audio.addEventListener('ended', () => {
       syncToggleLabel();
       syncProgress();
       syncActiveItems();
+      if (!anyAudioPlaying()) {
+        stopSyncLoop();
+      }
     });
   }
 

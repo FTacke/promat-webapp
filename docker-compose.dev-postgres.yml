@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: promat_auth
       POSTGRES_DB: promat_auth
     ports:
-      - "54321:5432"
+      - "${PROMAT_DEV_DB_PORT:-54321}:5432"
     volumes:
       - ./data/db/postgres_dev:/var/lib/postgresql/data
     healthcheck:

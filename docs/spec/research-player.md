@@ -202,11 +202,16 @@ The player state must be able to represent at least these values:
 - In both `sentence_list` and `running_text`, visible sentence or segment numbering must remain quiet and secondary.
 - Both render modes stay within the same task key and the same shared audio and sync architecture.
 - The productive `text` sentence-list renderer uses the canonical task catalog plus session-specific `alignment/text.json` artifacts for stable numbering, texts, item IDs, and clip boundaries.
+- In productive `text` sentence-list rows, the visible display numbering appears only once in the dedicated left number badge; technical item IDs such as `d_02` and auxiliary grouping markers such as `D` are runtime or catalog helpers and must not be repeated as visible row metadata beneath the sentence text.
+- In productive `text` sentence-list rows, the timing label remains part of the row meta but is right-aligned inside the item field, analogous to the `wordlist` timing placement.
 - For connected-text sources, `running_text` is the default only when the source metadata explicitly permits it; otherwise the player must degrade to `sentence_list`.
 - Running-text sources currently fall back to `sentence_list` while direct comparison is active, so sentence matching and compare rows stay on the stable item list contract.
 - A valid `set_id` filters the visible sentence-list rows task-specifically, and an empty `text` excerpt renders an explicit empty state instead of falling back to the full session list.
 - A valid `focus_item` may highlight and reveal the initial visible `text` row, but it must not autoplay and it must degrade cleanly when the focused item is outside the current `text` excerpt.
-- The current productive `text` surface may use item-level clip actions where session artifacts provide reliable split clips, but it must not pretend to have finer token-sync precision than the available sentence-level data.
+- The current productive `text` surface may use item-level clip actions where session artifacts provide reliable split clips.
+- If session-specific `alignment/text.json` items also carry valid nested token timings, the same unified player may render additive token spans inside the existing text item markup and synchronize one active token inside the already active item while full-audio playback is running.
+- Token-level highlighting is optional, item-local, and data-driven. Missing, invalid, or out-of-bounds token timings degrade cleanly to the existing sentence-only rendering without changing the surrounding player layout, typography, numbering, compare contract, or task architecture.
+- Outer item or sentence highlighting remains the primary visible sync contract for `text`; token highlighting is an additive inner layer and must not replace the stable item-level active state.
 
 ### `interview`
 
