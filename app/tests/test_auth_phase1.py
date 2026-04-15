@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
-from html import unescape
 import os
 from pathlib import Path
 import re
 import sys
-from urllib.parse import unquote
 
 from flask import Flask
 import pytest
@@ -19,7 +17,7 @@ os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app import register_auth_context, register_context_processors
-from app.auth.models import AnalyticsDaily, AnalyticsLanguageAreaDaily, Base, ResetToken, User
+from app.auth.models import AccessRequest, AnalyticsDaily, AnalyticsLanguageAreaDaily, Base, ResetToken, User
 from app.auth import services as auth_services
 from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
@@ -123,12 +121,6 @@ def _login(client, *, email: str, password: str = "ValidPass1"):
     )
 
 
-def _extract_mailto(html: str) -> str:
-    match = re.search(r'href="([^"]*mailto:[^"]+)"', html)
-    assert match is not None
-    return unquote(unescape(match.group(1)))
-
-
 def _extract_element_by_id(html: str, tag: str, element_id: str) -> str:
     match = re.search(
         rf'<{tag}[^>]*id="{re.escape(element_id)}".*?</{tag}>',
@@ -149,9 +141,9 @@ def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None
     assert "Email address" in html
     assert "Pronunciation Matters" in html
     assert "pseudonymized data from learners" in html
-    assert "Request access by email" in html
+    assert "Open request form" in html
     assert "No access yet?" in html
-    assert "Access to the research corpora can be requested by email, is reviewed institutionally at short notice, and is then provided by email." in html
+    assert "Access to the research corpora is requested through a short form, reviewed institutionally, and answered by email." in html
     assert "promat-panel__section-header" not in html
     assert "app-shell--panel-hidden app-shell--auth" in html
     assert "pm-auth-surface" in html
@@ -160,45 +152,22 @@ def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None
     assert "md3-button" not in html
     assert "md3-outlined-textfield" not in html
     assert 'name="next" value="/en/research/spanish/comparison"' in html
+    assert 'href="/access-request?next=/en/research/spanish/comparison"' in html
 
 
-def test_login_page_mailto_contains_required_fields_and_exact_subject(auth_app: Flask) -> None:
+def test_login_page_links_to_request_form_in_german(auth_app: Flask) -> None:
     client = auth_app.test_client()
 
     response = client.get("/login?ui_lang=de")
 
     assert response.status_code == 200
-    mailto = _extract_mailto(response.get_data(as_text=True))
-    assert mailto.startswith('mailto:felix.tacke@uni-marburg.de?subject=Zugangsanfrage "Pronunciation Matters"&body=')
-    assert "Nachname, Vorname:" in mailto
-    assert "Institution:" in mailto
-    assert "Rolle/Funktion:" in mailto
-    assert "Institutionelle E-Mail-Adresse:" in mailto
-    assert "Zweck der Nutzung:" in mailto
-    assert "Die angegebene E-Mail-Adresse wird für die Einrichtung des Zugangs verwendet." in mailto
-    assert "datenschutzrechtlichen Vorgaben sowie die Vertraulichkeit der pseudonymisierten Forschungsdaten" in mailto
-    assert "Bitte verwenden Sie die angegebene E-Mail-Adresse für meinen Zugang." not in mailto
-    assert "Login-Identifier / Benutzername" not in mailto
-    assert "Viele Grüße" not in mailto
+    html = response.get_data(as_text=True)
+    assert "Zum Anfrageformular" in html
+    assert 'href="/access-request?ui_lang=de"' in html
+    assert "Zugang zu den Forschungskorpora wird über ein kurzes Formular angefragt" in html
 
 
-def test_login_page_mailto_contains_required_english_fields(auth_app: Flask) -> None:
-    client = auth_app.test_client()
-
-    response = client.get("/login?ui_lang=en")
-
-    assert response.status_code == 200
-    mailto = _extract_mailto(response.get_data(as_text=True))
-    assert "Last name, first name:" in mailto
-    assert "Institutional email address:" in mailto
-    assert "The email address provided above will be used to set up access." in mailto
-    assert "confidentiality of the pseudonymized research data" in mailto
-    assert "Please use the email address provided above for my access." not in mailto
-    assert "login identifier / username" not in mailto
-    assert "Best regards" not in mailto
-
-
-def test_access_request_page_renders_mailto_and_login_link_with_return_target(auth_app: Flask) -> None:
+def test_access_request_page_renders_form_and_login_link_with_return_target(auth_app: Flask) -> None:
     client = auth_app.test_client()
 
     response = client.get("/access-request?next=/de/research/spanish")
@@ -206,11 +175,97 @@ def test_access_request_page_renders_mailto_and_login_link_with_return_target(au
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "Zugangspfad für neue legitime Nutzer:innen aus Forschungs- und Bildungseinrichtungen." in html
-    assert "Wenn Sie bereits freigeschaltet sind, nutzen Sie stattdessen den Login." in html
-    assert 'href="/login?next=/de/research/spanish"' in html
-    assert "Zugang per E-Mail anfragen" in html
-    mailto = _extract_mailto(html)
-    assert "Nachname, Vorname:" in mailto
+    assert "Bereits freigeschaltet?" in html
+    assert 'action="/access-request"' in html
+    assert 'name="first_name"' in html
+    assert 'name="last_name"' in html
+    assert 'name="institution"' in html
+    assert 'name="role_or_function"' in html
+    assert 'name="email"' in html
+    assert 'name="purpose"' in html
+    assert 'name="consent_confirmed"' in html
+    assert html.count('href="/login?next=/de/research/spanish"') == 1
+    assert "Anfrage absenden" in html
+
+
+def test_access_request_submit_persists_request_and_shows_success(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.post(
+        "/access-request",
+        data={
+            "first_name": "Mara",
+            "last_name": "Fischer",
+            "institution": "Universität Marburg",
+            "role_or_function": "Wissenschaftliche Mitarbeiterin",
+            "email": "mara.fischer@uni-marburg.de",
+            "purpose": "Ich benötige Zugang für ein Seminar zur Ausspracheforschung und für die Auswertung ausgewählter Korpusdaten.",
+            "consent_confirmed": "1",
+            "ui_lang": "de",
+            "next": "/de/research/spanish",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["Location"] == "/access-request?next=/de/research/spanish"
+
+    follow_up = client.get(response.headers["Location"])
+    assert follow_up.status_code == 200
+    html = follow_up.get_data(as_text=True)
+    assert "Ihre Anfrage wurde erfasst. Wir melden uns nach der Prüfung per E-Mail." in html
+
+    with auth_app.app_context():
+        with get_session() as session:
+            requests = session.query(AccessRequest).all()
+        assert len(requests) == 1
+        assert requests[0].first_name == "Mara"
+        assert requests[0].last_name == "Fischer"
+        assert requests[0].institution == "Universität Marburg"
+        assert requests[0].role_or_function == "Wissenschaftliche Mitarbeiterin"
+        assert requests[0].email == "mara.fischer@uni-marburg.de"
+        assert requests[0].requested_path == "/de/research/spanish"
+        assert requests[0].consent_confirmed is True
+
+
+def test_access_request_submit_shows_field_errors(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.post(
+        "/access-request",
+        data={
+            "first_name": "",
+            "last_name": "",
+            "institution": "",
+            "role_or_function": "",
+            "email": "invalid",
+            "purpose": "",
+            "ui_lang": "de",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 400
+    html = response.get_data(as_text=True)
+    assert "Bitte prüfen Sie die markierten Felder und senden Sie die Anfrage erneut." in html
+    assert "Bitte geben Sie Ihren Vornamen ein." in html
+    assert "Bitte geben Sie eine gültige E-Mail-Adresse ein." in html
+    assert "Bitte bestätigen Sie die Datenschutz- und Vertraulichkeitsvorgaben." in html
+
+
+def test_public_auth_pages_redirect_authenticated_users(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    login_response = _login(client, email="alice@example.org")
+
+    assert login_response.status_code == 303
+    public_login = client.get("/login?next=/de/research/spanish", follow_redirects=False)
+    public_request = client.get("/access-request?next=/de/research/spanish", follow_redirects=False)
+
+    assert public_login.status_code == 303
+    assert public_login.headers["Location"] == "/de/research/spanish"
+    assert public_request.status_code == 303
+    assert public_request.headers["Location"] == "/de/research/spanish"
 
 
 def test_login_from_corpus_root_returns_to_same_corpus_root(auth_app: Flask) -> None:

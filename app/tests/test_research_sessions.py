@@ -1163,6 +1163,7 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
     assert f'href="/{ui_lang}/research/{language_slug}/comparison"' in html
     assert f'href="/{ui_lang}/research/{language_slug}/phenomena"' in html
     assert expected_title in html
+    assert f'promat-panel__language-title">{expected_title}<' in html
     assert expected_subtitle in html
     assert expected_body in html
     assert 'pm-research-language-root__list' not in html
@@ -1203,6 +1204,22 @@ def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(
     _assert_muted_locked_nav_item_order(drawer_html, "Aufnahmen")
     _assert_muted_locked_nav_item_order(drawer_html, "Vergleich")
     _assert_muted_locked_nav_item_order(drawer_html, "Phänomene")
+
+
+def test_research_language_root_hides_anonymous_actions_for_authenticated_users(url_app: Flask) -> None:
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    response = client.get("/de/research/spanish")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'href="/access-request?next=/de/research/spanish"' not in html
+    assert 'href="/login?next=/de/research/spanish"' not in html
+    assert "Zugang beantragen →" not in html
+    assert "Zum Login →" not in html
+    assert "pm-research-language-root__actions" not in html
+    assert 'promat-panel__language-title">Spanisch-Korpus<' in html
 
 
 def test_research_design_page_shows_muted_locked_sidebar_entries_for_signed_out_users(url_app: Flask) -> None:
@@ -1575,7 +1592,7 @@ def test_player_page_builds_real_wordlist_view_and_disables_unimplemented_tasks(
     assert page["template"] == "pages/research_player.html"
     assert page["player"]["mode"] == "wordlist"
     assert page["player"]["audio_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/audio.mp3")
-    assert page["player"]["items"][0]["download_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")
+    assert page["player"]["items"][0]["download_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3?download=1")
     assert [panel["key"] for panel in page["task_panels"]] == ["wordlist", "text", "interview"]
     assert page["task_panels"][0]["current"] is True
     assert page["task_panels"][1]["href"] is None
@@ -1845,6 +1862,42 @@ def test_player_route_keeps_sentence_only_text_markup_when_no_tokens_exist(runti
     html = response.get_data(as_text=True)
     assert 'pm-player-token' not in html
     assert 'data-player-token-id=' not in html
+
+
+def test_player_route_integrates_text_view_switch_into_content_header(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'pm-player-view-bar' not in html
+    assert '>Ansicht<' not in html
+    assert 'promat-panel__language-title">Spanisch-Korpus<' in html
+    assert 'class="pm-player-view-switch"' in html
+    assert '>Liste<' in html
+    assert '>Text<' in html
+    assert '>2 Items<' in html
+    assert '?download=1' in html
+    assert 'download aria-label=' in html
 
 
 def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path, url_app: Flask) -> None:

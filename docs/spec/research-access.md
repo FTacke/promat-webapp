@@ -41,13 +41,14 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 ### Corpus-scoped public boundary
 
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page.
-- The corpus root `/{ui_lang}/research/{corpus}` is a public reduced orientation page. The canonical research paths remain visible in the left sidebar only, while the main column stays limited to title, short subtitle, two short prose paragraphs, and the two actions `Zugang beantragen`/`Request access` and `Zum Login`/`Go to login`.
+- The corpus root `/{ui_lang}/research/{corpus}` is a public reduced orientation page. The canonical research paths remain visible in the left sidebar only, while the main column stays limited to title, short subtitle, and two short prose paragraphs; signed-out users additionally see the two actions `Zugang beantragen`/`Request access` and `Zum Login`/`Go to login`, while authenticated users do not.
 - The corpus-root main column does not rebuild the area navigation as a second list of `design`, `speakers`, `recordings`, `comparison`, or `phenomena` entries with separate body CTAs.
 - All other research pages and detail routes under one concrete corpus path are authenticated research-app surfaces.
 - Access clarification belongs at the route boundary: unauthenticated requests are redirected to login with a safe return target, and the protected workbench or media response must not already render in the background.
 - There are no corpus-specific access exceptions such as public comparison or public phenomena variants outside `design`.
 - On public research pages for unauthenticated users, protected research destinations remain visibly linked but render in a muted locked state without repeating login CTA copy at each entry.
 - When the public corpus root links to login, that login path preserves the exact corpus-root return target so successful authentication returns the user to the same corpus landing page.
+- The public access-request journey for these corpus roots uses the canonical `/access-request` form surface; it does not fall back to a `mailto` draft.
 
 ### Protected research surfaces
 

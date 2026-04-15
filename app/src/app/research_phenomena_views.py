@@ -19,7 +19,7 @@ from .research_sets import (
     list_selectable_owned_sets,
     load_owned_set,
 )
-from .routes.public_content import get_language, get_language_label, get_research_page_label, get_section_label
+from .routes.public_content import get_language, get_language_label, get_research_corpus_title, get_research_page_label, get_section_label
 
 
 PHENOMENA_TASKS: tuple[str, ...] = phenomena_task_keys()
@@ -128,6 +128,7 @@ def _editor_intro(ui_lang: str) -> str:
 def _base_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any]:
     language = get_language(language_slug)
     language_label = get_language_label(language, ui_lang) if language else language_slug
+    corpus_title = get_research_corpus_title(language, ui_lang) if language else language_slug
     return {
         "title": title,
         "page_kind": "workbench",
@@ -139,7 +140,7 @@ def _base_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any
             section_label=get_section_label("research", ui_lang),
             section_href=url_for("public.research_home", ui_lang=ui_lang),
             context_mode="language",
-            context_title=language_label,
+            context_title=corpus_title,
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
         ),
     }
@@ -148,6 +149,7 @@ def _base_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any
 def _editor_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any]:
     language = get_language(language_slug)
     language_label = get_language_label(language, ui_lang) if language else language_slug
+    corpus_title = get_research_corpus_title(language, ui_lang) if language else language_slug
     overview_href = url_for(
         "public.research_language_page",
         ui_lang=ui_lang,
@@ -165,7 +167,7 @@ def _editor_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, A
             section_label=get_section_label("research", ui_lang),
             section_href=url_for("public.research_home", ui_lang=ui_lang),
             context_mode="language",
-            context_title=language_label,
+            context_title=corpus_title,
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
             ancestors=[{"label": get_research_page_label("phenomena", ui_lang), "href": overview_href}],
         ),

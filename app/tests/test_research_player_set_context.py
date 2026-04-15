@@ -465,7 +465,7 @@ def test_player_renders_explicit_empty_state_when_task_excerpt_is_empty(player_s
 
     assert page is not None
     assert page["player"]["mode"] == "wordlist"
-    assert "keine sichtbaren Einträge" in page["player"]["empty_state"]["message"]
+    assert "keine sichtbaren Items" in page["player"]["empty_state"]["message"]
     assert page["player"]["set_notice"] is None
     assert [action["action"] for action in page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
     assert page["player"]["set_select"]["options"][0]["label"] == "Alle Items"
@@ -783,7 +783,7 @@ def test_text_player_renders_explicit_empty_state_when_text_excerpt_is_empty(pla
 
     assert page is not None
     assert page["player"]["mode"] == "text"
-    assert "keine sichtbaren Einträge" in page["player"]["empty_state"]["message"]
+    assert "keine sichtbaren Items" in page["player"]["empty_state"]["message"]
     assert page["player"]["set_select"]["options"][0]["label"] == "Alle Items"
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 from . import create_app
+from werkzeug.serving import make_server
 
 
 def _resolve_env() -> str:
@@ -20,14 +21,12 @@ app = create_app(_resolve_env())
 
 
 if __name__ == "__main__":
-    # Check FLASK_DEBUG env var explicitly to override
-    # If not set, default to False to avoid auto-reload issues
     explicit_debug = os.getenv("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
-    # Enable threaded mode to handle concurrent requests (multiple CSS/JS/image requests don't block each other)
-    app.run(
-        host="0.0.0.0",
-        port=8000,
-        debug=explicit_debug,
-        use_reloader=False,
-        threaded=True,
-    )
+    app.debug = explicit_debug
+    app.config["TEMPLATES_AUTO_RELOAD"] = explicit_debug
+
+    server = make_server("0.0.0.0", 8000, app, threaded=True)
+    try:
+        server.serve_forever()
+    finally:
+        server.server_close()

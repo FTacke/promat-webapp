@@ -150,7 +150,7 @@ The player state must be able to represent at least these values:
 - The same material bar places the `Set wählen` control on the right; its default visible value is `Alle Items`, and a selected set filters the visible task-specific sequence without redefining the task switch itself.
 - The visible player set select offers the same fachlich visible source families as the shared research-set model: curated presets, saved custom sets, and the already active draft as a contextual option when the player was opened with that exact `set_id`.
 - Unrelated drafts stay hidden, and visible labels in that selector use curated or saved set titles rather than raw technical IDs.
-- Source-driven view switching remains separate from task and set controls. If a source supports both list and connected-text rendering, the view switch appears as its own compact control block below the material bar and above playback.
+- Source-driven view switching remains separate from task and set controls. If a source supports both list and connected-text rendering, the view switch appears as a compact local control in the content-panel header on the right, opposite the content title and item count, and it must not introduce a second standalone control box between the material bar and playback.
 - Tasks that are not available for the current session may remain visible as disabled, non-interactive controls.
 - `wordlist` and `text` are productive task modes when the session has valid alignment and audio artifacts.
 - `interview` stays visible in the shared switch but continues to render as an honest unavailable state until its dedicated interview renderer exists.
@@ -176,6 +176,7 @@ The player state must be able to represent at least these values:
 - In single-session wordlist view, compare-only controls and the secondary comparison card collapse away so that the primary session remains the only visible speaker context.
 - Wordlist is rendered as a calm list with stable numbering on the left and the item label or text on the right.
 - Numbering is fachlich fixed and must come from production data, not from UI-generated ordinals.
+- The visible linguistic item content in productive wordlist rows uses the shared book-style content typography, while numbering, timings, counts, toggles, and other UI or meta layers stay on the regular UI typography.
 - Clicking a wordlist item may directly trigger playback; a separate play button per item is optional and not required.
 - A valid `focus_item` may highlight and reveal the initial visible wordlist entry, but it must not autoplay and it must degrade cleanly when the focused item is outside the current task-specific excerpt.
 - The target contract includes downloading single split MP3 files from the full player when those artifacts exist.
@@ -197,15 +198,19 @@ The player state must be able to represent at least these values:
 - Connected-text sources use `source_kind = 'text'`, `content_mode = 'connected_text'`, and `supports_text_view = true`; they may expose both `running_text` and `sentence_list` on the same item basis.
 - Visible task labeling for `text` still comes from the canonical task catalog and stays independent from the technical task key.
 - Even in `running_text`, a small visible sentence or segment numbering remains present.
+- In productive connected-text `running_text`, the text view is a calm reading mode rather than a second workbench: numbering stays visibly secondary, the active item highlight stays subtle, and per-item download actions remain visually quiet until hover, focus, or the active segment state reveals them.
 - In `sentence_list`, each row uses a stable left-side number or ID and the sentence text on the right.
 - Numbering comes from source data and must not be synthesized in the web UI.
 - In both `sentence_list` and `running_text`, visible sentence or segment numbering must remain quiet and secondary.
+- In both `sentence_list` and `running_text`, the visible linguistic item content uses the shared book-style content typography, while timings, badges, switches, counts, and other UI or meta layers remain in the regular UI typography.
 - Both render modes stay within the same task key and the same shared audio and sync architecture.
 - The productive `text` sentence-list renderer uses the canonical task catalog plus session-specific `alignment/text.json` artifacts for stable numbering, texts, item IDs, and clip boundaries.
 - In productive `text` sentence-list rows, the visible display numbering appears only once in the dedicated left number badge; technical item IDs such as `d_02` and auxiliary grouping markers such as `D` are runtime or catalog helpers and must not be repeated as visible row metadata beneath the sentence text.
 - In productive `text` sentence-list rows, the timing label remains part of the row meta but is right-aligned inside the item field, analogous to the `wordlist` timing placement.
+- In productive `text` sentence-list rows, the timing label and any per-item icon actions align to the first text line rather than centering against the full row block.
 - For connected-text sources, `running_text` is the default only when the source metadata explicitly permits it; otherwise the player must degrade to `sentence_list`.
 - Running-text sources currently fall back to `sentence_list` while direct comparison is active, so sentence matching and compare rows stay on the stable item list contract.
+- In productive connected-text `running_text`, hidden per-item download controls must not reserve permanent layout width; the reading flow stays continuous until hover, focus, or active-state reveal.
 - A valid `set_id` filters the visible sentence-list rows task-specifically, and an empty `text` excerpt renders an explicit empty state instead of falling back to the full session list.
 - A valid `focus_item` may highlight and reveal the initial visible `text` row, but it must not autoplay and it must degrade cleanly when the focused item is outside the current `text` excerpt.
 - The current productive `text` surface may use item-level clip actions where session artifacts provide reliable split clips.
@@ -329,6 +334,7 @@ Optional preset item fields may include:
 - The player must remain usable with full MP3 plus alignment JSON even when split MP3 coverage is incomplete.
 - Single-item split-MP3 download is part of the target contract when the artifact exists.
 - The current web implementation delivers full-task playback through the protected route `.../audio.mp3` and split downloads through `.../items/{item_id}.mp3`, while keeping internal runtime paths private.
+- Inline playback and download remain distinct intents on that item route family: default item URLs stay browser-playable, while explicit download actions use the same route with download intent so the browser receives an attachment response instead of inline navigation.
 
 ### Common top-level contract
 

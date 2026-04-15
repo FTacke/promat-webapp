@@ -131,21 +131,6 @@
         </section>
         {% endif %}
 
-        {% if promat_page.player.render_modes %}
-        <section class="pm-container pm-container--tinted pm-player-view-bar" aria-label="{{ promat_page.player.render_modes.label }}">
-          <p class="pm-player-field-label pm-player-view-bar__label">{{ promat_page.player.render_modes.label }}</p>
-          <div class="pm-player-view-switch">
-            {% for option in promat_page.player.render_modes.options %}
-            {% if option.current %}
-            <span class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice is-current" aria-current="page">{{ option.label }}</span>
-            {% else %}
-            <a class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice" href="{{ option.href }}">{{ option.label }}</a>
-            {% endif %}
-            {% endfor %}
-          </div>
-        </section>
-        {% endif %}
-
         {% if promat_page.player.empty_state %}
         <section class="pm-container pm-container--tinted pm-player-panel pm-player-panel--unavailable">
           <div class="pm-player-panel__copy">
@@ -259,11 +244,11 @@
               <div class="pm-player-list__cell pm-player-list__cell--primary" data-player-item data-speaker-key="primary" data-item-id="{{ row.primary.item_id }}" data-start-ms="{{ row.primary.start_ms }}" data-end-ms="{{ row.primary.end_ms }}">
                 <span class="pm-player-list__number">{{ row.primary.item_number }}</span>
                 <button type="button" class="pm-player-list__trigger" data-player-seek aria-label="{{ row.primary.text }}">
-                  {{ render_player_text(row.primary, 'pm-player-list__text') }}
+                  {{ render_player_text(row.primary, 'pm-player-list__text pm-item-content-text') }}
                   {{ render_player_meta(row.primary, promat_page.player.mode) }}
                 </button>
                 {% if row.primary.download_href %}
-                <a class="pm-player-icon-button" href="{{ row.primary.download_href }}" aria-label="{{ promat_page.player.download_label }}: {{ row.primary.text }}" title="{{ promat_page.player.download_label }}: {{ row.primary.text }}">
+                <a class="pm-player-icon-button" href="{{ row.primary.download_href }}" download aria-label="{{ promat_page.player.download_label }}: {{ row.primary.text }}" title="{{ promat_page.player.download_label }}: {{ row.primary.text }}">
                   <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
                 </a>
                 {% endif %}
@@ -272,7 +257,7 @@
               <div class="pm-player-list__cell pm-player-list__cell--primary pm-player-list__cell--missing">
                 <span class="pm-player-list__number">{{ row.primary.item_number }}</span>
                 <div class="pm-player-list__trigger pm-player-list__trigger--static">
-                  <span class="pm-player-list__text">{{ row.primary.text }}</span>
+                  <span class="pm-player-list__text pm-item-content-text">{{ row.primary.text }}</span>
                   <span class="pm-player-list__meta">{{ row.primary.missing_label }}</span>
                 </div>
               </div>
@@ -281,11 +266,11 @@
               {% if row.secondary.is_available %}
               <div class="pm-player-list__cell" data-player-item data-speaker-key="secondary" data-item-id="{{ row.secondary.item_id }}" data-start-ms="{{ row.secondary.start_ms }}" data-end-ms="{{ row.secondary.end_ms }}">
                 <button type="button" class="pm-player-list__trigger" data-player-seek aria-label="{{ row.secondary.text }}">
-                  {{ render_player_text(row.secondary, 'pm-player-list__text') }}
+                  {{ render_player_text(row.secondary, 'pm-player-list__text pm-item-content-text') }}
                   {{ render_player_meta(row.secondary, promat_page.player.mode) }}
                 </button>
                 {% if row.secondary.download_href %}
-                <a class="pm-player-icon-button" href="{{ row.secondary.download_href }}" aria-label="{{ promat_page.player.download_label }}: {{ row.secondary.text }}" title="{{ promat_page.player.download_label }}: {{ row.secondary.text }}">
+                <a class="pm-player-icon-button" href="{{ row.secondary.download_href }}" download aria-label="{{ promat_page.player.download_label }}: {{ row.secondary.text }}" title="{{ promat_page.player.download_label }}: {{ row.secondary.text }}">
                   <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
                 </a>
                 {% endif %}
@@ -309,6 +294,18 @@
               <h2 class="pm-player-panel__title">{{ promat_page.player.items_title }}</h2>
               <p class="pm-player-panel__hint">{{ t('research.player.items_count', count=promat_page.player['items_count']) }}</p>
             </div>
+
+            {% if promat_page.player.render_modes %}
+            <nav class="pm-player-view-switch" aria-label="{{ promat_page.player.render_modes.label }}">
+              {% for option in promat_page.player.render_modes.options %}
+              {% if option.current %}
+              <span class="pm-player-view-switch__option is-current" aria-current="page">{{ option.label }}</span>
+              {% else %}
+              <a class="pm-player-view-switch__option" href="{{ option.href }}">{{ option.label }}</a>
+              {% endif %}
+              {% endfor %}
+            </nav>
+            {% endif %}
           </div>
 
           {% if promat_page.player.render_mode == 'running_text' %}
@@ -321,17 +318,17 @@
                 {% if item.is_available %}
                 <span class="pm-player-text-flow__body pm-player-list__cell" data-player-item data-speaker-key="primary" data-item-id="{{ item.item_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
                   <button type="button" class="pm-player-text-flow__trigger" data-player-seek aria-label="{{ item.text }}">
-                    {{ render_player_text(item, 'pm-player-text-flow__text') }}
+                    {{ render_player_text(item, 'pm-player-text-flow__text pm-item-content-text') }}
                   </button>
                   {% if item.download_href %}
-                  <a class="pm-player-icon-button" href="{{ item.download_href }}" aria-label="{{ promat_page.player.download_label }}: {{ item.text }}" title="{{ promat_page.player.download_label }}: {{ item.text }}">
+                  <a class="pm-player-icon-button pm-player-text-flow__download" href="{{ item.download_href }}" download aria-label="{{ promat_page.player.download_label }}: {{ item.text }}" title="{{ promat_page.player.download_label }}: {{ item.text }}">
                     <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
                   </a>
                   {% endif %}
                 </span>
                 {% else %}
                 <span class="pm-player-text-flow__body pm-player-text-flow__body--missing">
-                  <span class="pm-player-text-flow__text">{{ item.text }}</span>
+                  <span class="pm-player-text-flow__text pm-item-content-text">{{ item.text }}</span>
                   <span class="pm-player-text-flow__meta">{{ item.missing_label }}</span>
                 </span>
                 {% endif %}
@@ -348,11 +345,11 @@
               {% if item.is_available %}
               <div class="pm-player-list__cell" data-player-item data-speaker-key="primary" data-item-id="{{ item.item_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
                 <button type="button" class="pm-player-list__trigger" data-player-seek aria-label="{{ item.text }}">
-                  {{ render_player_text(item, 'pm-player-list__text') }}
+                  {{ render_player_text(item, 'pm-player-list__text pm-item-content-text') }}
                   {{ render_player_meta(item, promat_page.player.mode) }}
                 </button>
                 {% if item.download_href %}
-                <a class="pm-player-icon-button" href="{{ item.download_href }}" aria-label="{{ promat_page.player.download_label }}: {{ item.text }}" title="{{ promat_page.player.download_label }}: {{ item.text }}">
+                <a class="pm-player-icon-button" href="{{ item.download_href }}" download aria-label="{{ promat_page.player.download_label }}: {{ item.text }}" title="{{ promat_page.player.download_label }}: {{ item.text }}">
                   <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
                 </a>
                 {% endif %}
@@ -360,7 +357,7 @@
               {% else %}
               <div class="pm-player-list__cell pm-player-list__cell--missing">
                 <div class="pm-player-list__trigger pm-player-list__trigger--static">
-                  <span class="pm-player-list__text">{{ item.text }}</span>
+                  <span class="pm-player-list__text pm-item-content-text">{{ item.text }}</span>
                   <span class="pm-player-list__meta">{{ item.missing_label }}</span>
                 </div>
               </div>

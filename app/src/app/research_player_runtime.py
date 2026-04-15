@@ -723,6 +723,7 @@ def build_player_items(
                     session_id=session.session_id,
                     task=task_key,
                     item_id=bundle_item["item_id"],
+                    download="1",
                 ) if bundle_item["split_audio_path"] else None,
                 "start_ms": bundle_item["start_ms"],
                 "end_ms": bundle_item["end_ms"],

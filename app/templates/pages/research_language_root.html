@@ -14,11 +14,13 @@
       {% endfor %}
     </div>
 
+    {% if promat_page.action_links %}
     <nav class="promat-page__actions pm-stack--inline pm-research-language-root__actions" aria-label="{{ promat_page.title }}">
       {% for action in promat_page.action_links %}
       <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action" href="{{ action.href }}">{{ action.label }}</a>
       {% endfor %}
     </nav>
+    {% endif %}
   </section>
 </article>
 {% endblock %}

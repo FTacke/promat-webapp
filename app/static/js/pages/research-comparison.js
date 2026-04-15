@@ -1306,7 +1306,7 @@ function init() {
                   <div class="pm-comparison-item__meta-row">
                     <span class="pm-comparison-item__number">${escapeHtml(item.itemNumber)}</span>
                   </div>
-                  <p class="pm-comparison-item__text">${escapeHtml(item.text)}</p>
+                  <p class="pm-comparison-item__text pm-item-content-text pm-item-content-text--compare">${escapeHtml(item.text)}</p>
                 </div>
                   ${rowEntries.length ? `<button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary pm-comparison-matrix__row-play" data-comparison-play-row="${escapeHtml(item.task)}:${escapeHtml(item.item_id)}" aria-label="${escapeHtml(labels.playRowLabel || "")}" title="${escapeHtml(labels.playRowLabel || "")}">${iconSvg("play")}</button>` : ""}
                 </div>

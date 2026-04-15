@@ -64,6 +64,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 
 ```text
 /login
+/access-request
 /auth/login
 /auth/account
 /auth/account/password
@@ -100,8 +101,9 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - UI language and technical routing language must not be mixed.
 - The public login surface stays on `/login`, while mutating auth actions stay under `/auth/*`.
 - PROMAT login is email-only. Public username login and self-registration are not part of the active product contract.
-- Access requests are handled through one configurable `mailto` target instead of a public registration form.
-- The configurable access-request `mailto` keeps the exact subject `Zugangsanfrage "Pronunciation Matters"` and prefills at least last name plus first name, institution, role or function, institutional email address, purpose of use, the notice that this email becomes the later login identifier, and the confirmation to respect data-protection requirements plus the confidentiality of pseudonymized research data.
+- Public access requests use the canonical `/access-request` page and store one request record in the auth/core database instead of sending users to a `mailto` draft.
+- The canonical public access-request form requires at least first name, last name, institution, role or function, institutional email address, purpose of use, and one explicit confirmation of the data-protection and confidentiality obligations for pseudonymized research data.
+- Public auth-entry pages `/login` and `/access-request` redirect already authenticated users to the safe requested target first, otherwise to the canonical protected default target for their role.
 - Accounts are created administratively and use one password-setup/reset token flow that is valid for 14 days unless an active environment setting shortens or extends it.
 - The productive protected-area role model contains only `user` and `admin`; `editor` is not part of the active PROMAT product contract.
 - Account access must be blocked before session issuance when the account is inactive, not yet valid, expired, deleted, or temporarily locked.
@@ -134,6 +136,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The local page shell uses a left sidebar for area navigation and a right main-content column.
 - The sidebar begins with a permanent area header: section icon, section title, and a subtle divider.
 - Language-context pages keep their language back-link and language title below that permanent area header, not instead of it.
+- On research language-context pages, that sidebar context title uses the same localized corpus title as the main page heading, for example `Spanisch-Korpus` / `Spanish corpus`, not only the bare language label.
 - Sidebars are area navigation only and must not repeat account actions such as `Mein Konto`, `Admin-Bereich`, or `Logout`.
 - Protected admin pages reuse the shared inner shell with one non-clickable `Admin-Bereich` sidebar header and the fixed linear navigation `Benutzer`, `Analytics`.
 - On public research pages for unauthenticated users, protected research targets stay visible in the sidebar but use muted locked navigation states rather than per-item login notices.
@@ -156,9 +159,11 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Finished or newly completed UI surfaces must ship with both `de` and `en` display strings in the same run; do not treat English as a later copy-only follow-up for already-finished visible UI.
 - Visible UI strings for finished surfaces must resolve through the shared translation layer and server-provided localized payloads; do not hardcode visible `de`/`en` branches or fallback copy in Python builders, Jinja templates, or page JavaScript.
 - Technical keys, route values, IDs, and client-state field names remain stable English machine values and must stay separate from translated display labels.
-- Standalone auth surfaces on `/login` and `/auth/password/*` use the dedicated auth shell without research sidebar, corpus navigation, or workbench framing.
+- Standalone auth surfaces on `/login`, `/access-request`, and `/auth/password/*` use the dedicated auth shell without research sidebar, corpus navigation, or workbench framing.
 - Visible auth-facing product naming uses `Pronunciation Matters`; `PROMAT` remains the internal or technical shorthand unless an active spec explicitly requires a visible exception.
-- The public auth surfaces on `/login` and `/auth/password/*` reuse the current PROMAT action, input, and message families instead of page-local MD3 or legacy CORAPAN-looking controls; the access request remains a quieter secondary section below the primary sign-in or reset flow.
+- The public auth surfaces on `/login`, `/access-request`, and `/auth/password/*` reuse the current PROMAT action, input, and message families instead of page-local MD3 or legacy CORAPAN-looking controls.
+- On `/login` and `/auth/password/*`, the access request remains a quieter secondary section below the primary sign-in or reset flow.
+- On `/access-request`, the primary work surface is the form itself, while the login hint remains a quieter secondary card below it.
 - The research section root `/{ui_lang}/research` stays a compact corpus-selection overview without an additional intro or subtitle block below the page heading.
 - On that research section root, each corpus card shows only the localized corpus title, then the primary metadata order `Projektleitung`/`Project lead`, `Materialkonzeption`/`Material design`, `Durchführung`/`Conducted by`, and then the secondary status order learner-recordings count or `Korpus im Aufbau`/`Corpus in progress` followed by the optional reference-recordings line only when at least two distinct native-speaker `standard_variety` values exist.
 - The research section-root corpus cards do not use repeated descriptive body copy such as generic learner-pronunciation summaries; the cards are metadata-first orientation surfaces, not mini content teasers.
@@ -167,10 +172,11 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Across the shared app card system, if a card exposes a visible action area, footer CTA, or equivalent action/footer block, that action block stays bottom-aligned at the end of the card rather than floating in content height. This is a binding system rule for all card families, not a page-local preference.
 - Across the shared app card system, any content block that sits directly above a divider-separated footer or follow-up action section keeps a minimum block-end inset via the shared divider spacing tokens, so status text, recordings labels, or comparable meta rows never visually stick to the next divider.
 - The public corpus landing page `/{ui_lang}/research/{corpus_language}` is a reduced orientation page. The left sidebar remains the only area navigation, and the main column must not repeat `Design`, `Sprecher:innen`, `Aufnahmen`, `Vergleich`, or `Phänomene` as a second list, card set, or CTA wall.
-- In the main column of that public corpus landing page, the visible structure is limited to the localized corpus title, one short subtitle, two short prose paragraphs, and one small action row with exactly two actions in this order: `Zugang beantragen`/`Request access`, then `Zum Login`/`Go to login`.
+- In the main column of that public corpus landing page, the visible structure is limited to the localized corpus title, one short subtitle, two short prose paragraphs, and for signed-out users one small action row with exactly two actions in this order: `Zugang beantragen`/`Request access`, then `Zum Login`/`Go to login`.
 - The first prose paragraph on that public corpus landing page explains the corpus as a research area with public design information plus protected work areas and points users to the left navigation instead of rebuilding the area navigation in the body.
 - The second prose paragraph explains the privacy and access frame in calm prose, explicitly names legitimate users as Angehörige von Forschungs- und Bildungseinrichtungen / members of research and educational institutions, and keeps the user journey order request-access first, login second.
 - The login action on that public corpus landing page preserves the exact corpus-root return target, so a user who starts on one concrete corpus landing page returns to that same landing page after successful authentication instead of being dropped into a generic auth default.
+- For authenticated users, that public corpus landing page suppresses the anonymous action row and keeps the reduced orientation copy only.
 - Visible UI must not expose raw technical values such as UUID-like set identifiers, internal translation keys, or internal handoff/debug vocabulary when a user-facing label or omission is the truthful product behavior.
 - When a recurring UI family already exists, it must be extended or reused before a page-local variant is introduced.
 - Repeated UI families that must be treated systemically include action hierarchy (`buttons`, inline actions, overflow actions), form controls (`inputs`, `selects`, `textareas`), badges and chips, cards and list rows, step containers and work blocks, dialogs and confirm flows, empty states, sticky headers or anchors, and muted, active, or selected states.

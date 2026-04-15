@@ -191,6 +191,10 @@ def get_language_label(language: dict[str, Any], ui_lang: str) -> str:
     return _localized(language["labels"], ui_lang)
 
 
+def get_research_corpus_title(language: dict[str, Any], ui_lang: str) -> str:
+    return _research_corpus_card_title(language, ui_lang)
+
+
 def get_project_page_label(page_slug: str, ui_lang: str) -> str:
     label_key = dict(PROJECT_PAGE_ORDER)[page_slug]
     return get_text(ui_lang, label_key)
@@ -517,7 +521,9 @@ def build_research_language_root_page(
             get_text(ui_lang, "research.root.body", corpus_title=title),
             get_text(ui_lang, "research.root.access_text"),
         ],
-        "action_links": [
+        "action_links": []
+        if is_authenticated
+        else [
             {
                 "label": get_text(ui_lang, "research.root.action.access_request"),
                 "href_key": "access_request",

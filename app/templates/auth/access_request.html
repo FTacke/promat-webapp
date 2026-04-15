@@ -10,18 +10,180 @@
 ] %}
 
 {% block auth_body %}
-<article class="pm-auth-secondary pm-auth-secondary--inline pm-access-request-page" aria-labelledby="access-request-page-title">
-  <div class="pm-auth-secondary__header">
-    <p class="pm-auth-secondary__eyebrow">{{ t('auth.access_request.heading') }}</p>
-    <h2 id="access-request-page-title" class="pm-auth-secondary__title">{{ t('auth.access_request.secondary_heading') }}</h2>
-  </div>
-  <div class="pm-auth-secondary__body">
-    <p class="pm-auth-secondary__text">{{ t('auth.access_request.text') }}</p>
-    <p class="pm-auth-secondary__text">{{ t('auth.access_request.page_detail') }}</p>
-    <div class="promat-page__actions pm-stack--inline pm-access-request-page__actions">
-      <a class="pm-research-inline-action pm-research-inline-action--secondary" href="{{ access_request_mailto }}">{{ t('auth.access_request.cta') }}</a>
-      <a class="pm-research-inline-action pm-research-inline-action--secondary" href="{{ login_href }}">{{ t('auth.access_request.login_link') }}</a>
-    </div>
+<article class="pm-auth-surface pm-access-request-page">
+  <div class="pm-auth-stack">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="pm-auth-message{% if category == 'error' %} is-error{% elif category == 'success' %} is-success{% endif %}" role="alert" aria-live="assertive">
+            <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">{% if category == 'success' %}check_circle{% elif category == 'info' %}info{% else %}error{% endif %}</span>
+            <div class="pm-auth-message__body">
+              <p class="pm-auth-message__eyebrow">{{ t('auth.common.notice') }}</p>
+              <p class="pm-auth-message__text">{{ message }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if access_request_errors %}
+      <div class="pm-auth-message is-error" role="alert" aria-live="assertive">
+        <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">error</span>
+        <div class="pm-auth-message__body">
+          <p class="pm-auth-message__eyebrow">{{ t('auth.common.notice') }}</p>
+          <p class="pm-auth-message__text">{{ t('auth.access_request.error.summary') }}</p>
+        </div>
+      </div>
+    {% endif %}
+
+    <form class="pm-auth-form pm-access-request-form" method="post" action="{{ url_for('public.access_request_page') }}" novalidate data-access-request-form>
+      <div class="pm-access-request-form__grid">
+        <label class="pm-auth-field" for="access-request-first-name">
+          <span class="pm-auth-field__label">{{ t('auth.access_request.first_name_label') }}</span>
+          <input
+            id="access-request-first-name"
+            name="first_name"
+            type="text"
+            class="pm-phenomena-field__input pm-auth-field__input"
+            value="{{ access_request_form.first_name }}"
+            maxlength="160"
+            autocomplete="given-name"
+            required
+            {% if access_request_errors.first_name %}aria-invalid="true" aria-describedby="access-request-first-name-error"{% endif %}>
+          {% if access_request_errors.first_name %}
+            <p id="access-request-first-name-error" class="pm-auth-field__error">{{ access_request_errors.first_name }}</p>
+          {% endif %}
+        </label>
+
+        <label class="pm-auth-field" for="access-request-last-name">
+          <span class="pm-auth-field__label">{{ t('auth.access_request.last_name_label') }}</span>
+          <input
+            id="access-request-last-name"
+            name="last_name"
+            type="text"
+            class="pm-phenomena-field__input pm-auth-field__input"
+            value="{{ access_request_form.last_name }}"
+            maxlength="160"
+            autocomplete="family-name"
+            required
+            {% if access_request_errors.last_name %}aria-invalid="true" aria-describedby="access-request-last-name-error"{% endif %}>
+          {% if access_request_errors.last_name %}
+            <p id="access-request-last-name-error" class="pm-auth-field__error">{{ access_request_errors.last_name }}</p>
+          {% endif %}
+        </label>
+      </div>
+
+      <label class="pm-auth-field" for="access-request-institution">
+        <span class="pm-auth-field__label">{{ t('auth.access_request.institution_label') }}</span>
+        <input
+          id="access-request-institution"
+          name="institution"
+          type="text"
+          class="pm-phenomena-field__input pm-auth-field__input"
+          value="{{ access_request_form.institution }}"
+          maxlength="255"
+          autocomplete="organization"
+          required
+          {% if access_request_errors.institution %}aria-invalid="true" aria-describedby="access-request-institution-error"{% endif %}>
+        {% if access_request_errors.institution %}
+          <p id="access-request-institution-error" class="pm-auth-field__error">{{ access_request_errors.institution }}</p>
+        {% endif %}
+      </label>
+
+      <label class="pm-auth-field" for="access-request-role">
+        <span class="pm-auth-field__label">{{ t('auth.access_request.role_label') }}</span>
+        <input
+          id="access-request-role"
+          name="role_or_function"
+          type="text"
+          class="pm-phenomena-field__input pm-auth-field__input"
+          value="{{ access_request_form.role_or_function }}"
+          maxlength="255"
+          autocomplete="organization-title"
+          required
+          {% if access_request_errors.role_or_function %}aria-invalid="true" aria-describedby="access-request-role-error"{% endif %}>
+        {% if access_request_errors.role_or_function %}
+          <p id="access-request-role-error" class="pm-auth-field__error">{{ access_request_errors.role_or_function }}</p>
+        {% endif %}
+      </label>
+
+      <label class="pm-auth-field" for="access-request-email">
+        <span class="pm-auth-field__label">{{ t('auth.access_request.email_label') }}</span>
+        <input
+          id="access-request-email"
+          name="email"
+          type="email"
+          class="pm-phenomena-field__input pm-auth-field__input"
+          value="{{ access_request_form.email }}"
+          maxlength="255"
+          autocomplete="email"
+          required
+          {% if access_request_errors.email %}aria-invalid="true" aria-describedby="access-request-email-hint access-request-email-error"{% else %}aria-describedby="access-request-email-hint"{% endif %}>
+        <p id="access-request-email-hint" class="pm-auth-field__hint">{{ t('auth.access_request.email_hint') }}</p>
+        {% if access_request_errors.email %}
+          <p id="access-request-email-error" class="pm-auth-field__error">{{ access_request_errors.email }}</p>
+        {% endif %}
+      </label>
+
+      <label class="pm-auth-field" for="access-request-purpose">
+        <span class="pm-auth-field__label">{{ t('auth.access_request.purpose_label') }}</span>
+        <textarea
+          id="access-request-purpose"
+          name="purpose"
+          class="pm-phenomena-field__input pm-auth-field__input pm-access-request-form__textarea"
+          rows="6"
+          maxlength="4000"
+          required
+          {% if access_request_errors.purpose %}aria-invalid="true" aria-describedby="access-request-purpose-hint access-request-purpose-error"{% else %}aria-describedby="access-request-purpose-hint"{% endif %}>{{ access_request_form.purpose }}</textarea>
+        <p id="access-request-purpose-hint" class="pm-auth-field__hint">{{ t('auth.access_request.purpose_hint') }}</p>
+        {% if access_request_errors.purpose %}
+          <p id="access-request-purpose-error" class="pm-auth-field__error">{{ access_request_errors.purpose }}</p>
+        {% endif %}
+      </label>
+
+      <label class="pm-auth-choice" for="access-request-confirmation">
+        <input
+          id="access-request-confirmation"
+          name="consent_confirmed"
+          type="checkbox"
+          value="1"
+          class="pm-auth-choice__input"
+          {% if access_request_form.consent_confirmed %}checked{% endif %}
+          {% if access_request_errors.consent_confirmed %}aria-invalid="true" aria-describedby="access-request-confirmation-error"{% endif %}>
+        <span class="pm-auth-choice__label">{{ t('auth.access_request.confirmation_label') }}</span>
+      </label>
+      {% if access_request_errors.consent_confirmed %}
+        <p id="access-request-confirmation-error" class="pm-auth-field__error">{{ access_request_errors.consent_confirmed }}</p>
+      {% endif %}
+
+      <input type="hidden" name="next" value="{{ next }}">
+      <input type="hidden" name="ui_lang" value="{{ auth_ui_lang }}">
+
+      <div class="pm-auth-actions pm-access-request-page__actions">
+        <button type="submit" class="pm-research-button pm-auth-submit" data-access-request-submit data-pending-label="{{ t('auth.access_request.submit_pending') }}">
+          <span class="material-symbols-rounded" aria-hidden="true">outgoing_mail</span>
+          <span data-access-request-submit-label>{{ t('auth.access_request.submit') }}</span>
+        </button>
+      </div>
+    </form>
   </div>
 </article>
+
+<aside class="pm-auth-secondary pm-auth-secondary--card pm-access-request-page__secondary" aria-labelledby="access-request-page-title">
+  <div class="pm-auth-secondary__header">
+    <p class="pm-auth-secondary__eyebrow">{{ t('auth.login.heading') }}</p>
+    <h2 id="access-request-page-title" class="pm-auth-secondary__title">{{ t('auth.access_request.existing_access_heading') }}</h2>
+  </div>
+  <div class="pm-auth-secondary__body pm-auth-secondary__body--quiet">
+    <p class="pm-auth-secondary__text">{{ t('auth.access_request.existing_access_text') }}</p>
+    <div class="pm-auth-secondary__actions">
+      <a class="pm-research-inline-action pm-research-inline-action--secondary pm-auth-secondary__action-link" href="{{ login_href }}">{{ t('auth.access_request.login_link') }}</a>
+    </div>
+  </div>
+</aside>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script type="module" src="{{ url_for('static', filename='js/pages/access-request.js') }}"></script>
 {% endblock %}

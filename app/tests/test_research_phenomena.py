@@ -220,6 +220,7 @@ def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenome
     assert page is not None
     assert page["template"] == "pages/research_phenomena_overview.html"
     assert page["heading"] == "1 Set wählen"
+    assert [item["label"] for item in page["content_header"]["breadcrumbs"]][:2] == ["Forschung", "Spanisch-Korpus"]
     assert page["content_header"]["intro"] == "Kuratierte Sets öffnen, bearbeiten oder ein neues Set mit ausgewählten Items aus Wortliste und Text anlegen."
     assert [entry["kind"] for entry in page["entries"]] == ["curated", "custom"]
     assert page["entries"][1]["title"] == "Mein Fokusset"
@@ -242,6 +243,7 @@ def test_build_phenomena_preset_editor_page_exposes_curated_initial_record(pheno
     assert page["template"] == "pages/research_phenomena_editor.html"
     assert page["title"] == "Starter"
     assert page["content_header"]["title"] == "Starter"
+    assert [item["label"] for item in page["content_header"]["breadcrumbs"]][:2] == ["Forschung", "Spanisch-Korpus"]
     assert page["content_header"]["intro"] == "Set bearbeiten"
     assert [item["label"] for item in page["content_header"]["breadcrumbs"]][-2:] == ["Phänomene", "Starter"]
     assert page["client_state"]["editorMode"] == "preset"
@@ -267,6 +269,7 @@ def test_build_phenomena_set_editor_page_loads_owned_set(phenomena_app: Flask) -
     assert page is not None
     assert page["title"] == "Mein Set"
     assert page["content_header"]["title"] == "Mein Set"
+    assert [item["label"] for item in page["content_header"]["breadcrumbs"]][:2] == ["Forschung", "Spanisch-Korpus"]
     assert page["client_state"]["editorMode"] == "set"
     assert page["client_state"]["initialRecord"]["set_id"] == draft.set_id
     assert page["client_state"]["initialRecord"]["note"] == "Merken"
@@ -287,12 +290,14 @@ def test_phenomena_pages_expose_english_labels_for_migrated_surfaces(phenomena_a
 
     assert overview_page is not None
     assert overview_page["heading"] == "1 Choose a set"
+    assert [item["label"] for item in overview_page["content_header"]["breadcrumbs"]][:2] == ["Research", "Spanish corpus"]
     assert overview_page["content_header"]["intro"] == "Open curated sets, edit them, or create a new set from selected word-list and sentence-list items."
     assert overview_page["search_placeholder"] == "Search sets"
     assert overview_page["client_state"]["labels"]["requestFailed"] == "Request failed."
     assert overview_page["client_state"]["labels"]["view"] == "View"
 
     assert editor_page is not None
+    assert [item["label"] for item in editor_page["content_header"]["breadcrumbs"]][:2] == ["Research", "Spanish corpus"]
     assert editor_page["content_header"]["intro"] == "Edit set"
     assert editor_page["client_state"]["labels"]["selectedItems"] == "Selected items"
     assert editor_page["client_state"]["labels"]["curatedHint"] == "Changes to this curated set are saved as a new custom set."
@@ -316,6 +321,7 @@ def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: F
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "Set wählen" in html
+    assert "Spanisch-Korpus" in html
     assert "Set suchen" in html
     assert "Neues Set" in html
     assert "Ansehen" in html
@@ -359,6 +365,7 @@ def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) ->
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "research-phenomena-editor.js" in html
+    assert "Spanisch-Korpus" in html
     assert "Ausgewählte Items" in html
     assert "Zum Speichern bitte anmelden" not in html
     assert "data-phenomena-state-badge" in html
@@ -388,4 +395,5 @@ def test_public_set_editor_route_renders_for_authenticated_owner(phenomena_app: 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "data-phenomena-editor-root" in html
+    assert "Spanisch-Korpus" in html
     assert "pm-phenomena-editor-state" in html

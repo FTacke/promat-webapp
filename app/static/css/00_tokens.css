@@ -119,6 +119,16 @@
   --pm-status-saved-text: var(--pm-research-native-accent);
   --pm-status-unsaved-surface: color-mix(in srgb, var(--book-adm-danger) 16%, var(--pm-surface-paper) 84%);
   --pm-status-unsaved-text: var(--book-adm-danger);
+  --pm-control-checkbox-bg: var(--pm-surface-paper);
+  --pm-control-checkbox-border: var(--pm-border-subtle);
+  --pm-control-checkbox-hover-bg: var(--pm-surface-hover);
+  --pm-control-checkbox-hover-border: var(--pm-border-default);
+  --pm-control-checkbox-checked-bg: var(--pm-surface-accent-soft);
+  --pm-control-checkbox-checked-border: var(--pm-text-accent);
+  --pm-control-checkbox-check: var(--pm-text-accent);
+  --pm-control-checkbox-focus-outline: var(--book-accent-2);
+  --pm-control-checkbox-error-bg: var(--pm-surface-paper);
+  --pm-control-checkbox-error-border: var(--book-danger, #b54747);
 
   --pm-type-brand-family: var(--book-font-ui);
   --pm-type-brand-size: clamp(1.2rem, 1.08rem + 0.32vw, 1.42rem);
@@ -223,6 +233,12 @@
   --pm-type-container-line: calc(var(--pm-type-card-body-size) * var(--pm-type-card-body-line));
   --pm-type-container-title-size: var(--pm-type-card-title-size);
   --pm-type-container-title-line: calc(var(--pm-type-card-title-size) * var(--pm-type-card-title-line));
+  --pm-item-content-font-family: var(--book-font-body, var(--book-font-display));
+  --pm-item-content-font-weight: 500;
+  --pm-item-content-font-size: 1.2em;
+  --pm-item-content-line-height: 1.38;
+  --pm-item-content-font-size-compare: 1.08em;
+  --pm-item-content-line-height-compare: 1.34;
   --pm-focus-ring: var(--book-focus);
   --pm-shadow-card-subtle: 0 1px 2px rgba(0, 0, 0, 0.04);
 
@@ -329,12 +345,12 @@
   --pm-badge-font-size: var(--pm-type-meta-size);
   --pm-card-accent-bar-thickness: 0.5rem;
   --pm-research-native-accent: #18677A;
-  --pm-research-level-a1: #C77BD9;
-  --pm-research-level-a2: #A85BCC;
-  --pm-research-level-b1: #7A46B8;
-  --pm-research-level-b2: #5A348F;
-  --pm-research-level-c1: #45276F;
-  --pm-research-level-c2: #311A4F;
+  --pm-research-level-a1: #8EA7AF;
+  --pm-research-level-a2: #748F99;
+  --pm-research-level-b1: #5D7988;
+  --pm-research-level-b2: #496476;
+  --pm-research-level-c1: #375164;
+  --pm-research-level-c2: #273E53;
   --pm-speaker-level-a1: var(--pm-research-level-a1);
   --pm-speaker-level-a2: var(--pm-research-level-a2);
   --pm-speaker-level-b1: var(--pm-research-level-b1);

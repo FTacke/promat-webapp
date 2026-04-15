@@ -68,16 +68,16 @@
   </div>
 </article>
 
-<aside class="pm-auth-secondary" aria-labelledby="auth-access-request-title">
+<aside class="pm-auth-secondary pm-auth-secondary--card" aria-labelledby="auth-access-request-title">
   <div class="pm-auth-secondary__header">
     <p class="pm-auth-secondary__eyebrow">{{ t('auth.access_request.heading') }}</p>
     <h2 id="auth-access-request-title" class="pm-auth-secondary__title">{{ t('auth.access_request.secondary_heading') }}</h2>
   </div>
-  <div class="pm-auth-secondary__body">
+  <div class="pm-auth-secondary__body pm-auth-secondary__body--quiet">
     <p class="pm-auth-secondary__text">{{ t('auth.access_request.text') }}</p>
     <div class="pm-auth-secondary__actions">
-      <a class="pm-research-inline-action pm-research-inline-action--secondary pm-auth-secondary__action-link" href="{{ access_request_mailto }}">
-        <span class="material-symbols-rounded" aria-hidden="true">mail</span>
+      <a class="pm-research-inline-action pm-research-inline-action--secondary pm-auth-secondary__action-link" href="{{ access_request_href }}">
+        <span class="material-symbols-rounded" aria-hidden="true">edit_note</span>
         {{ t('auth.access_request.cta') }}
       </a>
     </div>

@@ -83,6 +83,12 @@ def _t(ui_lang: str, key: str, **kwargs: object) -> str:
     return translate(ui_lang, key, **kwargs)
 
 
+def _build_access_request_href(ui_lang: str, next_url: str | None = None) -> str:
+    if next_url:
+        return url_for("public.access_request_page", next=next_url)
+    return url_for("public.access_request_page", ui_lang=ui_lang)
+
+
 def _render_login_page(
     *,
     status_code: int = 200,
@@ -96,7 +102,7 @@ def _render_login_page(
             next=next_url or "",
             login_email=email,
             auth_ui_lang=ui_lang,
-            access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
+            access_request_href=_build_access_request_href(ui_lang, next_url),
             page_name="login",
             shell_class="app-shell--panel-hidden",
             ui_lang=ui_lang,
@@ -119,7 +125,7 @@ def _render_password_forgot_page(
             submitted=submitted,
             auth_ui_lang=ui_lang,
             contact_email=auth_services.access_request_contact_email(),
-            access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
+            access_request_href=_build_access_request_href(ui_lang),
             ui_lang=ui_lang,
         ),
         status_code,
@@ -139,7 +145,7 @@ def _render_password_reset_page(
             token=token,
             token_status=token_status,
             auth_ui_lang=ui_lang,
-            access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
+            access_request_href=_build_access_request_href(ui_lang),
             ui_lang=ui_lang,
         ),
         status_code,

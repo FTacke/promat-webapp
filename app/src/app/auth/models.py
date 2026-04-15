@@ -164,3 +164,23 @@ class AnalyticsLanguageAreaDaily(Base):
     page_views: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class AccessRequest(Base):
+    __tablename__ = "access_requests"
+
+    id: Mapped[Optional[str]] = mapped_column(String(36), primary_key=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="submitted")
+    first_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    institution: Mapped[str] = mapped_column(String(255), nullable=False)
+    role_or_function: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    purpose: Mapped[str] = mapped_column(Text, nullable=False)
+    consent_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    ui_lang: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    requested_path: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    user_agent: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    ip_address: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

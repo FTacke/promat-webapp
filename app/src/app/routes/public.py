@@ -7,9 +7,10 @@ from typing import Any
 import re
 from urllib.parse import unquote, urlparse
 
-from flask import Blueprint, abort, g, jsonify, make_response, render_template, request, send_file, url_for
+from flask import Blueprint, abort, flash, g, jsonify, make_response, redirect, render_template, request, send_file, url_for
 from sqlalchemy import text
 
+from ..auth import Role
 from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
 from ..i18n import resolve_ui_language
@@ -49,6 +50,7 @@ from .public_content import (
     get_canonical_teaching_page_slug,
     get_language,
     get_language_label,
+    get_research_corpus_title,
     get_project_page_label,
     get_research_page_label,
     get_section_label,
@@ -61,8 +63,27 @@ from .public_content import (
 blueprint = Blueprint("public", __name__)
 
 
+_ACCESS_REQUEST_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_ACCESS_REQUEST_MAX_LENGTHS = {
+    "first_name": 160,
+    "last_name": 160,
+    "institution": 255,
+    "role_or_function": 255,
+    "email": 255,
+    "purpose": 4000,
+}
+
+
 def _redirect(location: str):
     return make_response("", 302, {"Location": location})
+
+
+def _no_store_response(response, *, status_code: int = 200):
+    response.status_code = status_code
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Vary"] = "Cookie"
+    return response
 
 
 def _request_next_value() -> str:
@@ -88,6 +109,105 @@ def _safe_next_value(raw: str | None) -> str | None:
 
 def _research_login_redirect():
     return _redirect(url_for("public.login", next=_request_next_value()))
+
+
+def _default_public_auth_target(ui_lang: str) -> str:
+    if getattr(g, "role", None) == Role.ADMIN:
+        return url_for("admin.users_page", ui_lang=ui_lang)
+    return url_for("auth.account_page", ui_lang=ui_lang)
+
+
+def _redirect_authenticated_public_auth(*, next_url: str, ui_lang: str):
+    return redirect(next_url or _default_public_auth_target(ui_lang), 303)
+
+
+def _build_access_request_href(ui_lang: str, next_url: str | None = None) -> str:
+    if next_url:
+        return url_for("public.access_request_page", next=next_url)
+    return url_for("public.access_request_page", ui_lang=ui_lang)
+
+
+def _build_login_href(ui_lang: str, next_url: str | None = None) -> str:
+    if next_url:
+        return url_for("public.login", next=next_url)
+    return url_for("public.login", ui_lang=ui_lang)
+
+
+def _empty_access_request_form() -> dict[str, Any]:
+    return {
+        "first_name": "",
+        "last_name": "",
+        "institution": "",
+        "role_or_function": "",
+        "email": "",
+        "purpose": "",
+        "consent_confirmed": False,
+    }
+
+
+def _coerce_access_request_form(form_data) -> dict[str, Any]:
+    values = _empty_access_request_form()
+    if not form_data:
+        return values
+    values.update(
+        {
+            "first_name": str(form_data.get("first_name") or "").strip(),
+            "last_name": str(form_data.get("last_name") or "").strip(),
+            "institution": str(form_data.get("institution") or "").strip(),
+            "role_or_function": str(form_data.get("role_or_function") or "").strip(),
+            "email": auth_services.normalize_email(str(form_data.get("email") or "")),
+            "purpose": str(form_data.get("purpose") or "").strip(),
+            "consent_confirmed": str(form_data.get("consent_confirmed") or "") in {"1", "true", "on", "yes"},
+        }
+    )
+    return values
+
+
+def _validate_access_request_form(ui_lang: str, values: dict[str, Any]) -> dict[str, str]:
+    errors: dict[str, str] = {}
+    required_keys = {
+        "first_name": "auth.access_request.error.first_name_required",
+        "last_name": "auth.access_request.error.last_name_required",
+        "institution": "auth.access_request.error.institution_required",
+        "role_or_function": "auth.access_request.error.role_required",
+        "email": "auth.access_request.error.email_required",
+        "purpose": "auth.access_request.error.purpose_required",
+    }
+    for field_name, key in required_keys.items():
+        if not values.get(field_name):
+            errors[field_name] = get_text(ui_lang, key)
+
+    email = str(values.get("email") or "")
+    if email and not _ACCESS_REQUEST_EMAIL_PATTERN.match(email):
+        errors["email"] = get_text(ui_lang, "auth.access_request.error.email_invalid")
+
+    for field_name, max_length in _ACCESS_REQUEST_MAX_LENGTHS.items():
+        field_value = str(values.get(field_name) or "")
+        if len(field_value) > max_length:
+            errors[field_name] = get_text(ui_lang, "auth.access_request.error.too_long")
+
+    if not values.get("consent_confirmed"):
+        errors["consent_confirmed"] = get_text(ui_lang, "auth.access_request.error.confirmation_required")
+
+    return errors
+
+
+def _render_access_request_page(*, next_url: str, form_values: dict[str, Any] | None = None, form_errors: dict[str, str] | None = None, status_code: int = 200):
+    ui_lang = _resolve_auth_ui_lang(next_url)
+    response = make_response(
+        render_template(
+            "auth/access_request.html",
+            next=next_url,
+            login_href=_build_login_href(ui_lang, next_url),
+            access_request_form=_coerce_access_request_form(form_values),
+            access_request_errors=form_errors or {},
+            auth_ui_lang=ui_lang,
+            page_name="access-request",
+            shell_class="app-shell--panel-hidden",
+            ui_lang=ui_lang,
+        )
+    )
+    return _no_store_response(response, status_code=status_code)
 
 
 def _resolve_auth_ui_lang(next_value: str | None = None) -> str:
@@ -541,44 +661,57 @@ def sample_page(ui_lang: str):
 def login_page():
     next_url = _safe_next_value(request.args.get("next")) or ""
     ui_lang = _resolve_auth_ui_lang(next_url)
+    if getattr(g, "user_id", None):
+        return _redirect_authenticated_public_auth(next_url=next_url, ui_lang=ui_lang)
     response = make_response(
         render_template(
             "auth/login.html",
             next=next_url,
             auth_ui_lang=ui_lang,
-            access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
+            access_request_href=_build_access_request_href(ui_lang, next_url),
             page_name="login",
             shell_class="app-shell--panel-hidden",
             ui_lang=ui_lang,
         )
     )
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Vary"] = "Cookie"
-    return response, 200
+    return _no_store_response(response)
 
 
-@blueprint.get("/access-request", endpoint="access_request_page")
+@blueprint.route("/access-request", methods=["GET", "POST"], endpoint="access_request_page")
 def access_request_page():
-    next_url = _safe_next_value(request.args.get("next")) or ""
+    raw_next = request.form.get("next") if request.method == "POST" else request.args.get("next")
+    next_url = _safe_next_value(raw_next) or ""
     ui_lang = _resolve_auth_ui_lang(next_url)
-    login_href = url_for("public.login", next=next_url) if next_url else url_for("public.login", ui_lang=ui_lang)
-    response = make_response(
-        render_template(
-            "auth/access_request.html",
-            next=next_url,
-            login_href=login_href,
-            auth_ui_lang=ui_lang,
-            access_request_mailto=auth_services.build_access_request_mailto(ui_lang),
-            page_name="access-request",
-            shell_class="app-shell--panel-hidden",
-            ui_lang=ui_lang,
+    if getattr(g, "user_id", None):
+        return _redirect_authenticated_public_auth(next_url=next_url, ui_lang=ui_lang)
+    if request.method == "GET":
+        return _render_access_request_page(next_url=next_url)
+
+    form_values = _coerce_access_request_form(request.form)
+    form_errors = _validate_access_request_form(ui_lang, form_values)
+    if form_errors:
+        return _render_access_request_page(
+            next_url=next_url,
+            form_values=form_values,
+            form_errors=form_errors,
+            status_code=400,
         )
+
+    auth_services.create_access_request(
+        first_name=form_values["first_name"],
+        last_name=form_values["last_name"],
+        institution=form_values["institution"],
+        role_or_function=form_values["role_or_function"],
+        email=form_values["email"],
+        purpose=form_values["purpose"],
+        consent_confirmed=bool(form_values["consent_confirmed"]),
+        ui_lang=ui_lang,
+        requested_path=next_url or None,
+        user_agent=request.user_agent.string if request.user_agent else None,
+        ip_address=request.headers.get("X-Forwarded-For", request.remote_addr),
     )
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Vary"] = "Cookie"
-    return response, 200
+    flash(get_text(ui_lang, "auth.access_request.success"), "success")
+    return redirect(_build_access_request_href(ui_lang, next_url), 303)
 
 
 @blueprint.get("/health")
@@ -675,13 +808,14 @@ def research_language_root(ui_lang: str, language_slug: str):
         abort(404)
 
     language_label = get_language_label(language, ui_lang)
+    corpus_title = get_research_corpus_title(language, ui_lang)
     panel = _panel_config(
         section_key="research",
         section_label=get_section_label("research", ui_lang),
         active_slug="language-root",
         language_label=language_label,
         context_mode="language",
-        context_title=language_label,
+        context_title=corpus_title,
         context_root_href=url_for(
             "public.research_language_root",
             ui_lang=ui_lang,
@@ -722,13 +856,14 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
         abort(404)
 
     language_label = get_language_label(language, ui_lang)
+    corpus_title = get_research_corpus_title(language, ui_lang)
     panel = _panel_config(
         section_key="research",
         section_label=get_section_label("research", ui_lang),
         active_slug=canonical_page_slug,
         language_label=language_label,
         context_mode="language",
-        context_title=language_label,
+        context_title=corpus_title,
         context_root_href=url_for(
             "public.research_language_root",
             ui_lang=ui_lang,
@@ -758,13 +893,14 @@ def research_phenomena_preset_editor(ui_lang: str, language_slug: str, preset_id
         abort(404)
 
     language_label = get_language_label(language, ui_lang)
+    corpus_title = get_research_corpus_title(language, ui_lang)
     panel = _panel_config(
         section_key="research",
         section_label=get_section_label("research", ui_lang),
         active_slug="phenomena",
         language_label=language_label,
         context_mode="language",
-        context_title=language_label,
+        context_title=corpus_title,
         context_root_href=url_for(
             "public.research_language_root",
             ui_lang=ui_lang,
@@ -799,13 +935,14 @@ def research_phenomena_set_editor(ui_lang: str, language_slug: str, set_id: str)
         abort(404)
 
     language_label = get_language_label(language, ui_lang)
+    corpus_title = get_research_corpus_title(language, ui_lang)
     panel = _panel_config(
         section_key="research",
         section_label=get_section_label("research", ui_lang),
         active_slug="phenomena",
         language_label=language_label,
         context_mode="language",
-        context_title=language_label,
+        context_title=corpus_title,
         context_root_href=url_for(
             "public.research_language_root",
             ui_lang=ui_lang,
@@ -840,13 +977,14 @@ def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
         abort(404)
 
     language_label = get_language_label(language, ui_lang)
+    corpus_title = get_research_corpus_title(language, ui_lang)
     panel = _panel_config(
         section_key="research",
         section_label=get_section_label("research", ui_lang),
         active_slug="speakers",
         language_label=language_label,
         context_mode="language",
-        context_title=language_label,
+        context_title=corpus_title,
         context_root_href=url_for(
             "public.research_language_root",
             ui_lang=ui_lang,
@@ -895,6 +1033,7 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
         abort(404)
 
     language_label = get_language_label(language, ui_lang)
+    corpus_title = get_research_corpus_title(language, ui_lang)
     active_slug = (
         "recordings"
         if source == "recordings"
@@ -912,7 +1051,7 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
         active_slug=active_slug,
         language_label=language_label,
         context_mode="language",
-        context_title=language_label,
+        context_title=corpus_title,
         context_root_href=url_for(
             "public.research_language_root",
             ui_lang=ui_lang,

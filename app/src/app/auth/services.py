@@ -28,7 +28,7 @@ from ..branding import BRANDING
 from ..i18n import translate
 from ..extensions.sqlalchemy_ext import get_session
 from . import Role, normalize_role_value
-from .models import User, RefreshToken, ResetToken
+from .models import AccessRequest, RefreshToken, ResetToken, User
 
 # NOTE: Old counter metrics removed - analytics now handled by /api/analytics/event
 # Auth events are no longer tracked (privacy-focused approach)
@@ -427,6 +427,49 @@ def build_access_request_mailto(ui_lang: str) -> str:
         institution=BRANDING["institution_name"],
     )
     return f"mailto:{access_request_contact_email()}?subject={quote(access_request_subject())}&body={quote(body)}"
+
+
+def create_access_request(
+    *,
+    first_name: str,
+    last_name: str,
+    institution: str,
+    role_or_function: str,
+    email: str,
+    purpose: str,
+    consent_confirmed: bool,
+    ui_lang: str | None = None,
+    requested_path: str | None = None,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
+) -> AccessRequest:
+    now = datetime.now(timezone.utc)
+    access_request = AccessRequest(
+        id=str(uuid.uuid4()),
+        status="submitted",
+        first_name=(first_name or "").strip(),
+        last_name=(last_name or "").strip(),
+        institution=(institution or "").strip(),
+        role_or_function=(role_or_function or "").strip(),
+        email=normalize_email(email),
+        purpose=(purpose or "").strip(),
+        consent_confirmed=bool(consent_confirmed),
+        ui_lang=(ui_lang or "").strip() or None,
+        requested_path=(requested_path or "").strip() or None,
+        user_agent=(user_agent or "").strip() or None,
+        ip_address=(ip_address or "").strip() or None,
+        created_at=now,
+        updated_at=now,
+    )
+    with get_session() as session:
+        session.add(access_request)
+    current_app.logger.info(
+        "Recorded access request %s for %s (%s)",
+        access_request.id,
+        access_request.email,
+        access_request.institution,
+    )
+    return access_request
 
 
 def find_user_by_email(email: str) -> Optional[User]:
