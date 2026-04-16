@@ -2,6 +2,187 @@
 // Top App Bar Controller - User Menu Handler
 // ============================================
 
+const SUPPORTED_UI_LANGS = new Set(["de", "en"]);
+const UI_LANG_PATH_PATTERN = /^\/(de|en)(?=\/|$)/;
+
+function resolveBaseOrigin(baseOrigin = null) {
+  if (baseOrigin) {
+    return baseOrigin;
+  }
+  if (typeof window !== "undefined" && window.location && window.location.origin) {
+    return window.location.origin;
+  }
+  return "http://localhost";
+}
+
+function resolveUiLang(targetUiLang) {
+  return SUPPORTED_UI_LANGS.has(targetUiLang) ? targetUiLang : "de";
+}
+
+function pathHasUiLangPrefix(pathname) {
+  return UI_LANG_PATH_PATTERN.test(pathname || "");
+}
+
+function swapUiLangPrefix(pathname, targetUiLang) {
+  if (!pathHasUiLangPrefix(pathname)) {
+    return pathname || "/";
+  }
+  return (pathname || "/").replace(UI_LANG_PATH_PATTERN, `/${resolveUiLang(targetUiLang)}`);
+}
+
+function currentUiLangFromLocation(currentHref = null, baseOrigin = null) {
+  const origin = resolveBaseOrigin(baseOrigin);
+  const currentUrl = new URL(currentHref || origin, origin);
+  const matchedPath = currentUrl.pathname.match(UI_LANG_PATH_PATTERN);
+  if (matchedPath) {
+    return resolveUiLang(matchedPath[1]);
+  }
+  const queryUiLang = currentUrl.searchParams.get("ui_lang") || "";
+  if (SUPPORTED_UI_LANGS.has(queryUiLang)) {
+    return queryUiLang;
+  }
+  if (typeof document !== "undefined") {
+    const htmlLang = document.documentElement.getAttribute("data-ui-lang") || document.documentElement.lang || "";
+    if (SUPPORTED_UI_LANGS.has(htmlLang)) {
+      return htmlLang;
+    }
+  }
+  return "de";
+}
+
+function rewriteLocalUiLangUrl(rawUrl, targetUiLang, baseOrigin = null) {
+  if (!rawUrl) {
+    return rawUrl;
+  }
+
+  const normalizedUiLang = resolveUiLang(targetUiLang);
+  const origin = resolveBaseOrigin(baseOrigin);
+
+  let parsed;
+  try {
+    parsed = new URL(rawUrl, origin);
+  } catch {
+    return rawUrl;
+  }
+
+  if (parsed.origin !== origin) {
+    return rawUrl;
+  }
+
+  const rewrittenPath = pathHasUiLangPrefix(parsed.pathname)
+    ? swapUiLangPrefix(parsed.pathname, normalizedUiLang)
+    : (parsed.pathname || "/");
+  const searchParams = new URLSearchParams(parsed.search);
+  searchParams.delete("ui_lang");
+  if (!pathHasUiLangPrefix(parsed.pathname)) {
+    searchParams.set("ui_lang", normalizedUiLang);
+  }
+  if (searchParams.has("next")) {
+    const nextValue = searchParams.get("next") || "";
+    searchParams.set("next", rewriteLocalUiLangUrl(nextValue, normalizedUiLang, origin) || nextValue);
+  }
+
+  const query = searchParams.toString();
+  return `${rewrittenPath}${query ? `?${query}` : ""}${parsed.hash || ""}`;
+}
+
+export function buildUiLangSwitchUrl(targetUiLang, currentHref = null, baseOrigin = null) {
+  const normalizedUiLang = resolveUiLang(targetUiLang);
+  const origin = resolveBaseOrigin(baseOrigin);
+  const fallbackHref = typeof window !== "undefined" && window.location ? window.location.href : origin;
+  const currentUrl = new URL(currentHref || fallbackHref, origin);
+  const searchParams = new URLSearchParams(currentUrl.search);
+
+  searchParams.delete("ui_lang");
+  if (searchParams.has("next")) {
+    const nextValue = searchParams.get("next") || "";
+    searchParams.set("next", rewriteLocalUiLangUrl(nextValue, normalizedUiLang, origin) || nextValue);
+  }
+
+  const localizedPath = pathHasUiLangPrefix(currentUrl.pathname)
+    ? swapUiLangPrefix(currentUrl.pathname, normalizedUiLang)
+    : (currentUrl.pathname || "/");
+  if (!pathHasUiLangPrefix(currentUrl.pathname)) {
+    searchParams.set("ui_lang", normalizedUiLang);
+  }
+
+  const query = searchParams.toString();
+  return `${localizedPath}${query ? `?${query}` : ""}${currentUrl.hash || ""}`;
+}
+
+function dispatchPromatLocationChange() {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.dispatchEvent(new CustomEvent("promat:locationchange", {
+    detail: { href: window.location.href },
+  }));
+}
+
+function installLocationChangeEmitter() {
+  if (typeof window === "undefined" || window.__promatLocationChangeEmitterInstalled) {
+    return;
+  }
+  window.__promatLocationChangeEmitterInstalled = true;
+
+  ["pushState", "replaceState"].forEach((methodName) => {
+    const original = window.history[methodName];
+    if (typeof original !== "function") {
+      return;
+    }
+    window.history[methodName] = function patchedHistoryMethod(...args) {
+      const result = original.apply(this, args);
+      dispatchPromatLocationChange();
+      return result;
+    };
+  });
+
+  window.addEventListener("popstate", dispatchPromatLocationChange);
+}
+
+function syncLanguageSwitchLinks() {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  const currentUiLang = currentUiLangFromLocation(typeof window !== "undefined" ? window.location.href : null);
+  document.querySelectorAll("[data-ui-lang-link]").forEach((link) => {
+    const targetUiLang = resolveUiLang(link.dataset.uiLangLink || "de");
+    link.setAttribute("href", buildUiLangSwitchUrl(targetUiLang));
+
+    const isCurrent = targetUiLang === currentUiLang;
+    link.classList.toggle("is-active", isCurrent);
+    if (isCurrent) {
+      link.setAttribute("aria-current", "page");
+    } else {
+      link.removeAttribute("aria-current");
+    }
+  });
+}
+
+function initLanguageSwitchSync() {
+  if (typeof document === "undefined" || window.__promatLanguageSwitchSyncInit) {
+    return;
+  }
+  window.__promatLanguageSwitchSyncInit = true;
+
+  installLocationChangeEmitter();
+
+  document.addEventListener("click", (event) => {
+    const languageLink = event.target.closest("[data-ui-lang-link]");
+    if (!languageLink) {
+      return;
+    }
+    languageLink.setAttribute("href", buildUiLangSwitchUrl(languageLink.dataset.uiLangLink || "de"));
+  });
+
+  document.addEventListener("turbo:load", syncLanguageSwitchLinks);
+  window.addEventListener("pageshow", syncLanguageSwitchLinks);
+  window.addEventListener("promat:locationchange", syncLanguageSwitchLinks);
+
+  syncLanguageSwitchLinks();
+}
+
 /**
  * Initialize User Menu Toggle
  *
@@ -130,6 +311,9 @@ export class TopAppBar {
   init() {
     // User menu functionality
     initUserMenu();
+
+    // Keep language-switch targets aligned with the live URL and workbench state.
+    initLanguageSwitchSync();
 
     // Login handler (MD3 Goldstandard: full-page login)
     this.initLoginHandler();

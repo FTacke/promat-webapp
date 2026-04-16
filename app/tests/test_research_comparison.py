@@ -458,6 +458,20 @@ def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Fla
     assert "data-comparison-stop" not in html
     assert "data-comparison-playback-status" not in html
     assert "data-comparison-volume-value" in html
+
+
+def test_comparison_topbar_language_switch_preserves_requested_set_and_task_query(comparison_app: Flask) -> None:
+    with comparison_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+
+    comparison_app.config["TEST_AUTH_USER"] = "alice"
+    comparison_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    client = comparison_app.test_client()
+    response = client.get(f"/de/research/spanish/comparison?set_id={draft.set_id}&task=text")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'href="/en/research/spanish/comparison?set_id={draft.set_id}&amp;task=text"' in html
     assert "data-comparison-rate-value" in html
     assert "data-comparison-status-actions" not in html
     assert "data-comparison-launcher" not in html

@@ -843,6 +843,42 @@ def test_research_overview_topbar_exposes_route_preserving_language_switch(url_a
     assert html.index("promat-topbar__language-switch") < html.index('id="themeToggle"') < html.index("pm-icon-mask--login")
 
 
+def test_player_topbar_language_switch_preserves_compare_and_render_query(url_app: Flask, runtime_env: Path) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    compare_session_id = "ES-N-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", compare_session_id, _native_payload("ES-N-0001", compare_session_id, "2026-03-11"))
+    _write_text_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_text_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(
+        f"/de/research/spanish/player/{primary_session_id}/text?source=recordings&compare_session={compare_session_id}&render_mode=sentence_list"
+    )
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert (
+        f'href="/en/research/spanish/player/{primary_session_id}/text?source=recordings&amp;compare_session={compare_session_id}&amp;render_mode=sentence_list"'
+        in html
+    )
+
+
 def test_research_sidebar_stays_area_only_when_authenticated(url_app: Flask) -> None:
     _set_test_auth(url_app)
     client = url_app.test_client()

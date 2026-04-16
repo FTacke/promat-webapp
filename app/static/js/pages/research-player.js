@@ -1,3 +1,5 @@
+import { resolveActiveTimedItem } from '../modules/research/player-highlight.js';
+
 function formatClock(totalSeconds) {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds));
   const hours = Math.floor(safeSeconds / 3600);
@@ -177,25 +179,7 @@ function bindInPlacePlayerNavigation(scope) {
 }
 
 function findActiveItem(items, currentMs) {
-  for (let index = 0; index < items.length; index += 1) {
-    const item = items[index];
-    if (currentMs >= item.startMs && currentMs <= item.endMs) {
-      return {
-        itemId: item.itemId,
-        itemIndex: Number.isInteger(item.itemIndex) ? item.itemIndex : index,
-      };
-    }
-  }
-
-  if (!items.length || currentMs < items[0].startMs) {
-    return { itemId: null, itemIndex: -1 };
-  }
-
-  const lastItem = items[items.length - 1];
-  return {
-    itemId: lastItem.itemId,
-    itemIndex: Number.isInteger(lastItem.itemIndex) ? lastItem.itemIndex : items.length - 1,
-  };
+  return resolveActiveTimedItem(items, currentMs);
 }
 
 function findActiveToken(tokens, currentMs) {

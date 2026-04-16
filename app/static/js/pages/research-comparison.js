@@ -1,5 +1,10 @@
 import { getCsrfToken } from "../api.js";
 import { fetchWithAuth } from "../modules/auth/refresh.js";
+import {
+  buildComparisonStateUrl,
+  parseComparisonUrlState,
+  shouldExposeComparisonSetId,
+} from "../modules/research/comparison-url-state.js";
 
 let requestFailedLabel = "";
 
@@ -110,6 +115,8 @@ function init() {
     return;
   }
 
+  const currentUrlState = parseComparisonUrlState(window.location.href);
+
   const labels = state.labels || {};
   requestFailedLabel = labels.requestFailed || requestFailedLabel;
   const saveErrorFallbackLabel = labels.saveErrorFallback || requestFailedLabel;
@@ -175,12 +182,22 @@ function init() {
   let isBootstrappingWorkspace = Boolean(state.isAuthenticated && !state.requestedSetId);
   const levelOptions = ["A1", "A2", "B1", "B2"];
   const filterState = {
-    search: "",
-    levels: new Set(),
-    l1: "",
-    gender: "",
-    exposure: "",
+    search: currentUrlState.filters.search || "",
+    levels: new Set(currentUrlState.filters.levels || []),
+    l1: currentUrlState.filters.l1 || "",
+    gender: currentUrlState.filters.gender || "",
+    exposure: currentUrlState.filters.exposure || "",
   };
+
+  function currentFilterStateSnapshot() {
+    return {
+      search: filterState.search,
+      levels: Array.from(filterState.levels),
+      l1: filterState.l1,
+      gender: filterState.gender,
+      exposure: filterState.exposure,
+    };
+  }
 
   function setMaterialPresets(nextPresets) {
     materialPresets = Array.isArray(nextPresets) ? nextPresets.slice() : [];
@@ -441,10 +458,13 @@ function init() {
   }
 
   function redirectToLogin(extraQuery = {}) {
-    const nextUrl = buildQueryUrl(state.comparisonPageHref, {
-      set_id: extraQuery.setId || (activeSet && activeSet.set_id) || state.requestedSetId || null,
-      task: extraQuery.task || (visibleViewTask !== "all" ? visibleViewTask : null),
-    });
+    const nextUrl = buildComparisonStateUrl(
+      state.comparisonPageHref,
+      currentComparisonUrlOptions({
+        setId: Object.prototype.hasOwnProperty.call(extraQuery, "setId") ? extraQuery.setId : undefined,
+        task: Object.prototype.hasOwnProperty.call(extraQuery, "task") ? extraQuery.task : undefined,
+      }),
+    );
     const loginUrl = new URL(state.loginHref, window.location.origin);
     loginUrl.searchParams.set("next", nextUrl);
     window.location.href = loginUrl.toString();
@@ -498,11 +518,31 @@ function init() {
     render();
   }
 
+  function currentComparisonUrlOptions(overrides = {}) {
+    const activeSetId = activeSet && activeSet.set_id ? activeSet.set_id : state.requestedSetId || null;
+    const nextSetId = shouldExposeComparisonSetId({
+      activeSetId,
+      requestedSetId: state.requestedSetId || null,
+      isImplicitDraft,
+      isDefaultCompleteSet: isDefaultCompleteSet(),
+      selectedSessionIds: selectedSessionIds(),
+    })
+      ? activeSetId
+      : null;
+
+    return {
+      setId: Object.prototype.hasOwnProperty.call(overrides, "setId") ? overrides.setId : nextSetId,
+      task: Object.prototype.hasOwnProperty.call(overrides, "task")
+        ? overrides.task
+        : (visibleViewTask && visibleViewTask !== "wordlist" && visibleViewTask !== "all" ? visibleViewTask : null),
+      filters: Object.prototype.hasOwnProperty.call(overrides, "filters")
+        ? overrides.filters
+        : currentFilterStateSnapshot(),
+    };
+  }
+
   function syncUrl() {
-    const nextUrl = buildQueryUrl(state.comparisonPageHref, {
-      set_id: activeSet && !isImplicitDraft ? activeSet.set_id : null,
-      task: visibleViewTask && visibleViewTask !== "wordlist" && visibleViewTask !== "all" ? visibleViewTask : null,
-    });
+    const nextUrl = buildComparisonStateUrl(state.comparisonPageHref, currentComparisonUrlOptions());
     window.history.replaceState({}, "", nextUrl);
   }
 
@@ -1431,6 +1471,7 @@ function init() {
       } else {
         filterState.levels.add(level);
       }
+      syncUrl();
       render();
       return;
     }
@@ -1450,6 +1491,7 @@ function init() {
       } else if (key.startsWith("level:")) {
         filterState.levels.delete(key.split(":")[1] || "");
       }
+      syncUrl();
       render();
       return;
     }
@@ -1458,6 +1500,7 @@ function init() {
     if (clearFiltersAction) {
       event.preventDefault();
       resetFilters();
+      syncUrl();
       render();
       return;
     }
@@ -1527,6 +1570,7 @@ function init() {
   if (filterSearchInput) {
     filterSearchInput.addEventListener("input", () => {
       filterState.search = filterSearchInput.value || "";
+      syncUrl();
       render();
     });
   }
@@ -1548,18 +1592,21 @@ function init() {
   if (l1FilterSelect) {
     l1FilterSelect.addEventListener("change", () => {
       filterState.l1 = l1FilterSelect.value || "";
+      syncUrl();
       render();
     });
   }
   if (genderFilterSelect) {
     genderFilterSelect.addEventListener("change", () => {
       filterState.gender = genderFilterSelect.value || "";
+      syncUrl();
       render();
     });
   }
   if (exposureFilterSelect) {
     exposureFilterSelect.addEventListener("change", () => {
       filterState.exposure = exposureFilterSelect.value || "";
+      syncUrl();
       render();
     });
   }
