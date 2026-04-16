@@ -848,12 +848,9 @@ function init() {
 
   function speakerMetaMarkup(session) {
     if (session.isNative) {
-      return [
-        `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--native">${escapeHtml(session.speakerTypeLabel || labels.nativeShort || "")}</span>`,
-        session.standardVarietyValue
-          ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--native-detail">${escapeHtml(session.standardVarietyValue)}</span>`
-          : "",
-      ].join("");
+      return session.standardVarietyValue
+        ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--native-detail">${escapeHtml(session.standardVarietyValue)}</span>`
+        : "";
     }
 
     return [

@@ -353,6 +353,7 @@ def test_build_comparison_page_exposes_session_catalog_and_filter_state(comparis
     assert learner_session["l1AdditionalValue"] == "IT, EN"
     assert native_session["speakerTypeLabel"] == "Native"
     assert native_session["standardVarietyValue"] == "Kastilisches Spanisch"
+    assert native_session["detailValue"] == "Spanien"
 
 
 def test_build_comparison_page_marks_requested_set_for_client_loading(comparison_app: Flask) -> None:

@@ -37,6 +37,7 @@ Die bereits umgesetzten Auth-, Player-, Comparison- und Research-Navigationsflae
 - geschuetzte Research-Kontexttitel fuer Player, Speaker-Profile und Phaenomene
 - Player- und Comparison-Item-Rendering fuer expliziten Download-Intent und gemeinsame Inhaltstypografie
 - gemeinsame Tokens und Komponenten-CSS fuer Checkboxen, Lernlevel-Farben und Textfluss
+- Learner-Speaker-Cards der `speakers`-Flaeche mit neutralem Container und expliziten Level-Badges statt levelcodierter Top-Bar
 - aktive Player-Spec fuer die neuen systemischen Regeln
 
 ## Wichtige Entscheidungen
@@ -45,6 +46,7 @@ Die bereits umgesetzten Auth-, Player-, Comparison- und Research-Navigationsflae
 - Single-item-Playback und Single-item-Download bleiben derselbe geschuetzte Routenstamm, aber mit getrenntem Intent: Inline-URLs fuer Wiedergabe, expliziter Download-Intent fuer Attachment-Downloads.
 - Running-Text bleibt ein ruhiger Lesemodus; versteckte Download-Aktionen duerfen den Textfluss deshalb nicht mehr durch reservierte Layoutbreite fragmentieren.
 - Die Research-Seitenleiste auf geschuetzten Sprachkontext-Seiten folgt konsequent dem vollen lokalisierten Korpustitel statt der nackten Sprachbezeichnung.
+- Learner-Speaker-Cards folgen nun derselben semantischen Grundentscheidung wie die Comparison-Speaker-Rows: neutrale Container, Level-Farbe nur auf dem eigentlichen Level-Badge; die Native-Teal-Logik bleibt davon getrennt als Sprechergruppen-Kennzeichnung bestehen.
 
 ## Abweichungen
 

@@ -18,8 +18,8 @@
           </p>
         </div>
         <div class="pm-profile-badge-row">
-          {% for badge in promat_page.profile_header.badges if badge and badge != '-' %}
-          <span class="pm-profile-badge">{{ badge }}</span>
+          {% for badge in promat_page.profile_header.badges if badge %}
+          <span class="pm-research-meta-badge{% for modifier in badge.modifiers %} pm-research-meta-badge--{{ modifier }}{% endfor %}">{{ badge.label }}</span>
           {% endfor %}
         </div>
       </div>

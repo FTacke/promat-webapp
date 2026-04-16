@@ -99,7 +99,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - The standard comparison material is `wordlist`; alternative material such as corpus-specific `text`/`Satzliste`, saved-set context, and the handoff to `phenomena` remain secondary.
 - The productive `comparison` UI is a vertical first-workflow of `Sprecher:innen auswählen`, `Items auswählen`, and one full-width comparison matrix as the dominant work surface.
 - Internal draft or set lifecycle state remains functional but must stay de-emphasized in the visible `comparison` UI; the workbench should primarily read as speaker selection, material choice, and matrix work rather than as exposed set architecture.
-- The visible speaker selector in `comparison` is speaker-first, row-dense, and structurally split into three simultaneous areas: `Lernende`, `Native Speaker`, and the active `Ausgewählt` composition; `person_id` is the primary line, while speaker group, level, and `L1` remain secondary metadata, and internal `session_id` stays functional without becoming the visible headline pattern.
+- The visible speaker selector in `comparison` is speaker-first, row-dense, and structurally split into three simultaneous areas: `Lernende`, `Native Speaker`, and the active `Ausgewählt` composition; `person_id` is the primary line, while level, localized native reference, and `L1` remain the secondary metadata, and internal `session_id` stays functional without becoming the visible headline pattern.
 - In that visible three-column comparison selector, learners and native speakers are separate source lists, while `Ausgewählt` reads as the active assembly area rather than as a third source catalog; the selected list keeps learners above native speakers and exposes a direct remove action instead of a pure status indicator.
 - The standard visible speaker filters in `comparison` are `Suche`, direct level chips `A1`, `A2`, `B1`, `B2`, and `L1 wählen`, with secondary controls such as `Geschlecht` and `Sprachaufenthalt` grouped under `Weitere Filter`; native-speaker access is handled primarily through the dedicated native source column rather than through a visible `Native` filter chip.
 - The visible material control in `comparison` stays compact and honest: `Wortliste` is the standard, `Satzliste` is the secondary alternative, and the same first block may expose one adjacent secondary `Set wählen` select with a quiet info hint that sets are created and adjusted in `phenomena`; that select may list curated example sets plus saved owner-bound custom sets from `phenomena`, but `comparison` does not expose a separate handoff button or a second right-side material island.
@@ -110,7 +110,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - The visible matrix controls reuse the same calm player control language for volume and speed, without a separate prominent `Stoppen` button, and the empty state should read as an informative note rather than as a blank dashed placeholder frame.
 - The three speaker columns in `comparison` stay one shared container family with the same header divider logic; `Ausgewählt` may read only as a subtle active variant of that same pattern.
 - The upper speaker selector cards are the visual reference component in `comparison`; matrix speaker headers reuse that same card family only as a denser, narrower adaptation and must not introduce a second independent header-card language.
-- Learner speaker cards and matrix headers omit a redundant visible learner label; learners show `person_id`, level, and `L1`, while native speakers show `person_id`, a `Native` badge, and the translated standard variety.
+- Learner speaker cards and matrix headers omit a redundant visible learner label; learners show `person_id`, level, and `L1`, while native speakers show `person_id` plus one translated native-reference badge. The visible native column context already names the role, so a second `Native` badge is not repeated inside each row.
 - The comparison matrix keeps a fully opaque sticky top header and sticky left item stub as stable comparison anchors; the left stub uses a fixed three-zone layout with item number, left-aligned item text, and row-play action, stays visually stable in a desktop corridor of roughly 280-320 px, and must support both short `wordlist` items and later `text`/`Satzliste` items with a calm maximum of two visible text lines.
 - Visible comparison playback state stays inside the matrix itself: there is no separate playback status line above the table, and the active matrix cell reads as a calm full-cell state with centered actions rather than as a small badge behind the controls.
 - Active item curation still belongs to `phenomena` and not to a second comparison-only item editor.
@@ -139,12 +139,15 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - `person_id` is the dominant primary line on the card.
 - The selected session is shown as a secondary line under `person_id`.
 - The footer label is `Aufzeichnungen`.
+- The visible footer order is profile action first, then the recordings label, then the compact task actions.
 - Cards expose compact direct task links for the currently selected or matched session.
 - Compact task-entry links in speaker cards and recordings rows reuse the shared compact inline-action family with an arrow affordance; they must read as actions and stay visually distinct from chips and badges.
-- The profile CTA remains visually secondary to the card identity and recording links.
+- The profile CTA remains visually secondary to the card identity and uses the shared localized `Profil`/`Profile` label with inline arrow affordance.
 - The UI does not show a separate `Treffer über ...` match note on the card.
 - Learner-level accents stay on the shared learner scale, while native-speaker cards and session containers use the dedicated native accent `#18677A`.
 - Speaker cards and profile-session containers use a shared `0.5rem` top accent bar.
+- In native-speaker overview cards, the `Standardvarietät` row renders the localized native-reference value as the shared `native-detail` badge instead of plain body text.
+- Native-speaker overview cards keep localized variety or origin metadata and must not show both `standard_variety` and `origin_country` when they collapse to the same user-facing label.
 
 ### Matching behavior
 
@@ -216,6 +219,7 @@ They do not show:
 Additional rule:
 
 - Each native-speaker comparison profile maps to exactly one session.
+- The profile header shows the speaker-group badge plus one localized native-reference badge, and the metadata section does not repeat `Standardvarietät` separately when it resolves to the same localized label as `Herkunftsland`.
 
 ## Task Semantics in Research UI
 

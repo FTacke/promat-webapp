@@ -17,7 +17,8 @@ Wenn dieser Default-Port auf dem lokalen Host nicht veroeffentlicht werden kann,
 2. Das Script startet bei der kanonischen lokalen `AUTH_DATABASE_URL` automatisch `promat_auth_db`, wartet auf Readiness und fuehrt die idempotente Auth-/Research-Set-Migrationskette aus.
 3. Wenn `127.0.0.1:54321` lokal nicht bindbar ist, waehlt das Script einen freien Fallback-Port, setzt `PROMAT_DEV_DB_PORT` und richtet `AUTH_DATABASE_URL` fuer diesen Start darauf aus.
 4. Im selben lokalen Dev-Fall setzt das Script den Standard-Admin `admin_dev` idempotent zurueck und setzt dessen Passwort auf `Admin0000!`.
-5. Danach startet die Flask-App ueber `python -m src.app.main`.
+5. Vor dem Webstart beendet das Script alle noch laufenden PROMAT-Dev-Prozesse aus demselben Workspace, damit auf Port `8000` kein stale Listener altes HTML weiter ausliefert.
+6. Danach startet die Flask-App ueber `python -m src.app.main` in Development-Reload-Modus auf `127.0.0.1:8000`, sodass Python-, Template- und sonstige Flask-Dev-Aenderungen im Browser ohne manuelle Prozesssuche sichtbar werden.
 
 ## Erstinitialisierung oder Admin-Reset
 
@@ -58,3 +59,11 @@ Wenn dieser Default-Port auf dem lokalen Host nicht veroeffentlicht werden kann,
   - `research_set_items`
   - `research_set_sessions`
 - `POST /api/research/sets` antwortet im lokal gebootstrappten Zustand nicht mehr mit `relation "research_sets" does not exist`.
+- `http://127.0.0.1:8000/health` antwortet aus genau einem aktiven PROMAT-Dev-Listener.
+- Wiederholtes Ausfuehren von `./scripts/dev-start.ps1` ersetzt den alten PROMAT-Listener auf `8000`, statt ihn parallel weiterlaufen zu lassen.
+
+## Wenn der Browser alte HTML-Staende zeigt
+
+1. `./scripts/dev-start.ps1` erneut im Workspace-Root ausfuehren.
+2. Das Script beendet jetzt stale PROMAT-Prozesse aus `c:\dev\promat` automatisch, bevor es den neuen Dev-Server startet.
+3. Wenn Port `8000` danach immer noch blockiert ist, meldet das Script den fremden Prozess explizit, statt still einen alten Zustand weiter zu verwenden.

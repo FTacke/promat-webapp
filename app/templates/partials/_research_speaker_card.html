@@ -13,12 +13,23 @@
       {% for row in card.meta_rows %}
       <div class="pm-speaker-card__meta-item">
         <p class="pm-speaker-card__meta-label">{{ row.label }}</p>
+        {% if row.badges %}
+        <div class="pm-speaker-card__meta-badges" aria-label="{{ row.label }}">
+          {% for badge in row.badges %}
+          <span class="pm-research-meta-badge{% for modifier in badge.modifiers %} pm-research-meta-badge--{{ modifier }}{% endfor %}">{{ badge.label }}</span>
+          {% endfor %}
+        </div>
+        {% else %}
         <p class="pm-speaker-card__meta-value">{{ row.value }}</p>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
   </a>
   <footer class="pm-speaker-card__footer">
+    <div class="pm-speaker-card__footer-section pm-speaker-card__footer-section--actions">
+      <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-speaker-card__profile-link" href="{{ card.profile_href }}">{{ card.profile_label }} →</a>
+    </div>
     <div class="pm-speaker-card__footer-section pm-speaker-card__footer-section--recordings pm-card__divider-buffer">
       <p class="pm-speaker-card__task-label">{{ card.recordings_label }}</p>
       <div class="pm-speaker-card__tasks" aria-label="{{ card.recording_links_aria_label }}">
@@ -26,9 +37,6 @@
         <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="{{ task_link.href }}">{{ task_link.label }}</a>
         {% endfor %}
       </div>
-    </div>
-    <div class="pm-speaker-card__footer-section pm-speaker-card__footer-section--actions">
-      <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-speaker-card__profile-link" href="{{ card.profile_href }}">{{ card.profile_label }}</a>
     </div>
   </footer>
 </article>

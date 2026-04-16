@@ -23,7 +23,7 @@ from app import register_context_processors
 from app.research_presets import clear_research_preset_caches
 from app.research_views import build_player_page, build_recordings_page, build_speaker_profile_page, build_speakers_page
 from app.routes.auth import blueprint as auth_blueprint
-from app.routes.public import blueprint as public_blueprint
+from app.routes.public import _sample_speaker_cards, blueprint as public_blueprint
 from app.research_sessions import (
     load_language_sessions,
     load_person_records,
@@ -1454,11 +1454,16 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'pm-research-inline-action--task' in html
     assert 'pm-speaker-task-link' not in html
     assert 'pm-speaker-card__match' not in html
-    assert 'pm-speaker-card--a1' in html
-    assert 'pm-speaker-card--a2' in html
-    assert 'pm-speaker-card--b1' in html
-    assert 'pm-speaker-card--b2' in html
+    assert 'pm-speaker-card--learner' in html
     assert 'pm-speaker-card--native' in html
+    assert 'pm-research-meta-badge--level pm-research-meta-badge--a1' in html
+    assert 'pm-research-meta-badge--level pm-research-meta-badge--a2' in html
+    assert 'pm-research-meta-badge--level pm-research-meta-badge--b1' in html
+    assert 'pm-research-meta-badge--level pm-research-meta-badge--b2' in html
+    assert 'pm-speaker-card--a1' not in html
+    assert 'pm-speaker-card--a2' not in html
+    assert 'pm-speaker-card--b1' not in html
+    assert 'pm-speaker-card--b2' not in html
     assert 'Aufzeichnung (Sprecher:in)' in html
     assert 'Chips, Badges und Action-Buttons' in html
     assert 'Task-Aktionen' in html
@@ -1466,6 +1471,60 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'pm-profile-session--native is-selected' in html
     assert 'Zugeordnete Sessions' in html
     assert 'Niveau / Varietät' not in html
+
+
+def test_sample_speaker_cards_keep_focused_learner_meta_selection() -> None:
+    learner_card = next(card for card in _sample_speaker_cards("de") if card["person_id"] == "ES-L-0101")
+    native_card = next(card for card in _sample_speaker_cards("de") if card["person_id"] == "ES-N-0001")
+
+    assert [row["label"] for row in learner_card["meta_rows"]] == ["Niveau", "L1", "Geschlecht", "Sprachaufenthalte"]
+    assert learner_card["meta_rows"][0]["badges"][0]["modifiers"] == ["level", "a1"]
+    assert native_card["profile_label"] == "Profil"
+    assert native_card["meta_rows"][0]["value"] == "Spanien"
+    assert native_card["meta_rows"][0]["badges"][0] == {"label": "Spanien", "modifiers": ["native-detail"]}
+    assert all(row["value"] != "ES_STD" for row in native_card["meta_rows"])
+
+
+def test_speakers_page_uses_neutral_learner_cards_with_level_badges(runtime_env: Path, url_app: Flask) -> None:
+    _write_session(
+        runtime_env,
+        "spanish",
+        "ES-L-0001-2026-S01",
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id="ES-L-0001-2026-S01",
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", "ES-N-0001-2026-S01", _native_payload("ES-N-0001", "ES-N-0001-2026-S01", "2026-03-11"))
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get("/de/research/spanish/speakers")
+    with url_app.test_request_context():
+        page = build_speakers_page("de", "spanish", {})
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'pm-speaker-card pm-speaker-card--learner' in html
+    assert 'pm-speaker-card pm-speaker-card--native' in html
+    assert 'pm-speaker-card--a2' not in html
+    assert 'pm-research-meta-badge pm-research-meta-badge--level pm-research-meta-badge--a2' in html
+    assert 'pm-research-meta-badge pm-research-meta-badge--native-detail">Spanien<' in html
+    assert 'Profil öffnen' not in html
+    assert 'Profil →' in html
+    learner_card = next(card for card in page["cards"] if card["person_id"] == "ES-L-0001")
+    native_card = next(card for card in page["cards"] if card["person_id"] == "ES-N-0001")
+    assert [row["label"] for row in learner_card["meta_rows"]] == ["Niveau", "L1", "Geschlecht", "Sprachaufenthalte"]
+    assert learner_card["meta_rows"][0]["badges"][0]["modifiers"] == ["level", "a2"]
+    assert learner_card["profile_label"] == "Profil"
+    assert [row["label"] for row in native_card["meta_rows"]] == ["Standardvarietät", "Herkunftsregion", "Geschlecht", "Aufnahmejahr"]
+    assert native_card["meta_rows"][0]["value"] == "Spanien"
+    assert native_card["meta_rows"][0]["badges"][0] == {"label": "Spanien", "modifiers": ["native-detail"]}
 
 
 def test_recordings_page_combines_session_and_person_in_leading_column(runtime_env: Path, url_app: Flask) -> None:
@@ -1539,6 +1598,10 @@ def test_profile_header_shows_session_count_and_native_interview_disabled(runtim
     assert page is not None
     assert page["profile_header"]["session_count_label"] == "Zugeordnete Sessions"
     assert page["profile_header"]["session_count_value"] == 1
+    assert [badge["label"] for badge in page["profile_header"]["badges"]] == ["Native Speaker", "Spanien"]
+    person_rows = {row["label"]: row["value"] for row in page["person_section"]["rows"]}
+    assert person_rows["Herkunftsland"] == "Spanien"
+    assert "Standardvarietät" not in person_rows
     tasks = page["sessions_section"]["cards"][0]["tasks"]
     assert [task["key"] for task in tasks] == ["wordlist", "text", "interview"]
     assert [task["is_disabled"] for task in tasks] == [False, False, True]
@@ -1667,11 +1730,19 @@ def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, u
     assert single_page is not None
     assert single_page["title"] == "Player"
     assert single_page["content_header"]["title"] == "Player"
+    assert single_page["summary_cards"][0]["accent_modifier"] == "neutral"
+    assert [row["label"] for row in single_page["summary_cards"][0]["rows"]] == ["Person-ID", "Aufnahmedatum"]
+    assert [badge["label"] for badge in single_page["summary_cards"][0]["badges"]] == ["Lernende", "B1", "L1 DE"]
+    assert single_page["summary_cards"][0]["badges"][1]["modifiers"] == ["level", "b1"]
     assert [action["action"] for action in single_page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
     assert single_page["summary_cards"][0]["card_actions"][1]["label"] == "Vergleich"
     assert single_page["player"]["set_select"]["options"][0]["label"] == "Alle Items"
 
     assert compare_page is not None
+    assert compare_page["summary_cards"][0]["accent_modifier"] == "neutral"
+    assert compare_page["summary_cards"][1]["accent_modifier"] == "neutral"
+    assert compare_page["summary_cards"][1]["role_badge"]["label"] == "Vergleich"
+    assert [badge["label"] for badge in compare_page["summary_cards"][1]["badges"]] == ["Spanien"]
     assert [action["action"] for action in compare_page["summary_cards"][0]["card_actions"]] == ["profile"]
     assert [action["action"] for action in compare_page["summary_cards"][1]["card_actions"]] == ["profile", "compare-remove"]
 
@@ -1702,6 +1773,42 @@ def test_player_route_uses_shared_material_choice_family(runtime_env: Path, url_
     html = response.get_data(as_text=True)
     assert "pm-material-choice" in html
     assert "data-player-set-select" in html
+
+
+def test_player_route_uses_neutral_meta_cards_and_shared_badges(runtime_env: Path, url_app: Flask) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    compare_session_id = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", compare_session_id, _native_payload("ES-N-0001", compare_session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}"
+    )
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count('pm-speaker-card--neutral pm-player-meta-card') == 2
+    assert 'pm-speaker-card--b1 pm-player-meta-card' not in html
+    assert 'pm-speaker-card--native pm-player-meta-card' not in html
+    assert 'pm-research-meta-badge pm-player-meta-card__role pm-research-meta-badge--role pm-research-meta-badge--detail' in html
+    assert 'pm-research-meta-badge pm-research-meta-badge--level pm-research-meta-badge--b1' in html
 
 
 def test_player_page_uses_running_text_for_explicit_connected_text_sources(runtime_env: Path, url_app: Flask) -> None:
@@ -1944,7 +2051,8 @@ def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path,
     assert page["summary_cards"][1]["card_actions"][1]["href"].endswith(
         f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"
     )
-    assert any(row["label"] == "Niveau" for row in page["summary_cards"][0]["rows"])
+    assert [row["label"] for row in page["summary_cards"][0]["rows"]] == ["Person-ID", "Aufnahmedatum"]
+    assert any(badge["label"] == "B1" for badge in page["summary_cards"][0]["badges"])
     assert all(row["label"] != "Explorator:in" for row in page["summary_cards"][0]["rows"])
     assert page["player"]["compare"]["sequence_toggle"]["label"] == "Beide abspielen"
     assert page["player"]["compare"]["sequence_toggle"]["enabled"] is True

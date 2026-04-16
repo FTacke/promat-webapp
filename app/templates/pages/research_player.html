@@ -55,13 +55,13 @@
                     </details>
                     <div class="pm-profile-badge-row pm-player-meta-card__badges">
                       {% for badge in summary.badges if badge %}
-                      <span class="pm-profile-badge">{{ badge }}</span>
+                      <span class="pm-research-meta-badge{% for modifier in badge.modifiers %} pm-research-meta-badge--{{ modifier }}{% endfor %}">{{ badge.label }}</span>
                       {% endfor %}
                     </div>
                   </div>
 
                   <div class="pm-player-meta-card__actions">
-                    <span class="pm-player-meta-card__role">{{ summary.role_label }}</span>
+                    <span class="pm-research-meta-badge pm-player-meta-card__role{% for modifier in summary.role_badge.modifiers %} pm-research-meta-badge--{{ modifier }}{% endfor %}">{{ summary.role_badge.label }}</span>
                   </div>
                 </div>
 

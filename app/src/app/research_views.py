@@ -136,6 +136,11 @@ STANDARD_VARIETY_LABELS = {
     "mexicano_estandar": {"de": "Mexikanisches Spanisch", "en": "Mexican Spanish"},
 }
 
+ORIGIN_COUNTRY_LABELS = {
+    "spain": {"de": "Spanien", "en": "Spain"},
+    "mexico": {"de": "Mexiko", "en": "Mexico"},
+}
+
 
 def _format_standard_variety_value(value: str | None, ui_lang: str) -> str:
     if not value:
@@ -149,6 +154,34 @@ def _format_standard_variety_value(value: str | None, ui_lang: str) -> str:
 
 def _format_standard_variety(session: SessionRecord, ui_lang: str) -> str:
     return _format_standard_variety_value(session.standard_variety, ui_lang)
+
+
+def _format_origin_country_value(value: str | None, ui_lang: str) -> str:
+    if not value:
+        return "-"
+    normalized = " ".join(value.strip().lower().replace("_", " ").replace("-", " ").split())
+    mapped = ORIGIN_COUNTRY_LABELS.get(normalized)
+    if mapped:
+        return mapped.get(ui_lang, mapped.get("en", _humanize_value(value)))
+    return _humanize_value(value)
+
+
+def _display_values_match(left: str | None, right: str | None) -> bool:
+    if not left or not right or left == "-" or right == "-":
+        return False
+    return " ".join(left.split()).casefold() == " ".join(right.split()).casefold()
+
+
+def _native_reference_value(standard_variety: str | None, origin_country: str | None, ui_lang: str) -> str:
+    variety_value = _format_standard_variety_value(standard_variety, ui_lang)
+    origin_country_value = _format_origin_country_value(origin_country, ui_lang)
+    if _display_values_match(variety_value, origin_country_value):
+        return variety_value
+    if variety_value != "-":
+        return variety_value
+    if origin_country_value != "-":
+        return origin_country_value
+    return "-"
 
 
 def _format_target_country_stay(stays_in_target_country: bool | None, ui_lang: str) -> str:
@@ -353,6 +386,61 @@ def _session_accent_modifier(session: SessionRecord) -> str:
     return session.level_code.lower()
 
 
+def _speaker_card_modifier(person: PersonRecord) -> str:
+    return "native" if person.is_native else "learner"
+
+
+def _meta_badge(label: str | None, *modifiers: str) -> dict[str, Any] | None:
+    if not label or label == "-":
+        return None
+    return {"label": label, "modifiers": [modifier for modifier in modifiers if modifier]}
+
+
+def _level_badges(level_codes: tuple[str, ...]) -> list[dict[str, Any]]:
+    badges: list[dict[str, Any]] = []
+    for level_code in level_codes:
+        badge = _meta_badge(level_code, "level", level_code.lower())
+        if badge is not None:
+            badges.append(badge)
+    return badges
+
+
+def _player_meta_card_modifier(_: SessionRecord) -> str:
+    return "neutral"
+
+
+def _player_summary_badges(session: SessionRecord, ui_lang: str) -> list[dict[str, Any]]:
+    badges: list[dict[str, Any]] = []
+    if session.is_native:
+        reference_badge = _meta_badge(
+            _native_reference_value(session.standard_variety, session.origin_country, ui_lang),
+            "native-detail",
+        )
+        if reference_badge is not None:
+            badges.append(reference_badge)
+        return badges
+
+    speaker_group_badge = _meta_badge(_label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang), "detail")
+    if speaker_group_badge is not None:
+        badges.append(speaker_group_badge)
+
+    if session.level_code:
+        level_badge = _meta_badge(_format_level(session, ui_lang), "level", session.level_code.lower())
+        if level_badge is not None:
+            badges.append(level_badge)
+    l1_badge = _meta_badge(f"L1 {session.l1}" if session.l1 else None, "detail")
+    if l1_badge is not None:
+        badges.append(l1_badge)
+    return badges
+
+
+def _player_role_badge(role_key: str, ui_lang: str) -> dict[str, Any]:
+    return {
+        "label": _t(ui_lang, "research.player.role.primary") if role_key == "primary" else _t(ui_lang, "research.player.role.compare"),
+        "modifiers": ["role", "detail"],
+    }
+
+
 def _format_recording_date(session: SessionRecord) -> str:
     return session.recording_date.isoformat() if session.recording_date else "-"
 
@@ -371,6 +459,10 @@ def _recording_year_span(person: PersonRecord) -> str:
 
 def _session_count_label(ui_lang: str) -> str:
     return "Zugeordnete Sessions" if ui_lang == "de" else "Associated sessions"
+
+
+def _profile_action_label(ui_lang: str) -> str:
+    return _t(ui_lang, "research.player.profile")
 
 
 def _build_task_item(session: SessionRecord, task_key: str, ui_lang: str, language_slug: str, source: str) -> dict[str, Any]:
@@ -445,7 +537,7 @@ def _recordings_filter_form(ui_lang: str, language_slug: str, filters: Mapping[s
                     "label": _standard_variety_label(ui_lang),
                     "value": filters["standard_variety"],
                     "options": [{"value": "", "label": "Alle" if ui_lang == "de" else "All"}] + [
-                        {"value": value, "label": value.upper()} for value in standard_varieties
+                        {"value": value, "label": _format_standard_variety_value(value, ui_lang)} for value in standard_varieties
                     ],
                 },
                 {
@@ -453,7 +545,7 @@ def _recordings_filter_form(ui_lang: str, language_slug: str, filters: Mapping[s
                     "label": _origin_country_label(ui_lang),
                     "value": filters["origin_country"],
                     "options": [{"value": "", "label": "Alle" if ui_lang == "de" else "All"}] + [
-                        {"value": value, "label": value} for value in origin_countries
+                        {"value": value, "label": _format_origin_country_value(value, ui_lang)} for value in origin_countries
                     ],
                 },
             ]
@@ -536,7 +628,7 @@ def _speakers_filter_form(ui_lang: str, language_slug: str, filters: Mapping[str
                     "label": _standard_variety_label(ui_lang),
                     "value": filters["standard_variety"],
                     "options": [{"value": "", "label": "Alle" if ui_lang == "de" else "All"}] + [
-                        {"value": value, "label": value.upper()} for value in standard_varieties
+                        {"value": value, "label": _format_standard_variety_value(value, ui_lang)} for value in standard_varieties
                     ],
                 },
                 {
@@ -544,7 +636,7 @@ def _speakers_filter_form(ui_lang: str, language_slug: str, filters: Mapping[str
                     "label": _origin_country_label(ui_lang),
                     "value": filters["origin_country"],
                     "options": [{"value": "", "label": "Alle" if ui_lang == "de" else "All"}] + [
-                        {"value": value, "label": value} for value in origin_countries
+                        {"value": value, "label": _format_origin_country_value(value, ui_lang)} for value in origin_countries
                     ],
                 },
             ]
@@ -632,7 +724,7 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
         if filters["standard_variety"]:
             active_filters.append(
                 _filter_chip(
-                    f"{_standard_variety_label(ui_lang)}: {filters['standard_variety'].upper()}",
+                    f"{_standard_variety_label(ui_lang)}: {_format_standard_variety_value(filters['standard_variety'], ui_lang)}",
                     "public.research_language_page",
                     query=filters,
                     drop_key="standard_variety",
@@ -644,7 +736,7 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
         if filters["origin_country"]:
             active_filters.append(
                 _filter_chip(
-                    f"{_origin_country_label(ui_lang)}: {filters['origin_country']}",
+                    f"{_origin_country_label(ui_lang)}: {_format_origin_country_value(filters['origin_country'], ui_lang)}",
                     "public.research_language_page",
                     query=filters,
                     drop_key="origin_country",
@@ -850,7 +942,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
         if filters["standard_variety"]:
             active_filters.append(
                 _filter_chip(
-                    f"{_standard_variety_label(ui_lang)}: {filters['standard_variety'].upper()}",
+                    f"{_standard_variety_label(ui_lang)}: {_format_standard_variety_value(filters['standard_variety'], ui_lang)}",
                     "public.research_language_page",
                     query=filters,
                     drop_key="standard_variety",
@@ -862,7 +954,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
         if filters["origin_country"]:
             active_filters.append(
                 _filter_chip(
-                    f"{_origin_country_label(ui_lang)}: {filters['origin_country']}",
+                    f"{_origin_country_label(ui_lang)}: {_format_origin_country_value(filters['origin_country'], ui_lang)}",
                     "public.research_language_page",
                     query=filters,
                     drop_key="origin_country",
@@ -954,20 +1046,36 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
     for person, matching_sessions in filtered_people:
         selected_session = resolve_selected_session(person, preferred_session_ids=[session.session_id for session in matching_sessions])
         if person.is_native:
-            meta_rows = [
-                {"label": _standard_variety_label(ui_lang), "value": person.standard_variety.upper() if person.standard_variety else "-"},
-                {"label": _origin_country_label(ui_lang), "value": person.origin_country or "-"},
-                {"label": _origin_region_label(ui_lang), "value": person.origin_region or "-"},
-                {"label": "Geschlecht" if ui_lang == "de" else "Gender", "value": _label(GENDER_LABELS, person.gender or "unknown", ui_lang)},
-                {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": _format_recording_year(selected_session)},
-            ]
+            variety_value = _format_standard_variety_value(person.standard_variety, ui_lang)
+            origin_country_value = _format_origin_country_value(person.origin_country, ui_lang)
+            meta_rows = []
+            if variety_value != "-":
+                meta_rows.append(
+                    {
+                        "label": _standard_variety_label(ui_lang),
+                        "value": variety_value,
+                        "badges": [_meta_badge(_native_reference_value(person.standard_variety, person.origin_country, ui_lang), "native-detail")],
+                    }
+                )
+            if origin_country_value != "-" and not _display_values_match(origin_country_value, variety_value):
+                meta_rows.append({"label": _origin_country_label(ui_lang), "value": origin_country_value})
+            meta_rows.extend(
+                [
+                    {"label": _origin_region_label(ui_lang), "value": person.origin_region or "-"},
+                    {"label": "Geschlecht" if ui_lang == "de" else "Gender", "value": _label(GENDER_LABELS, person.gender or "unknown", ui_lang)},
+                    {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": _format_recording_year(selected_session)},
+                ]
+            )
         else:
             meta_rows = [
-                {"label": "Sessions" if ui_lang == "de" else "Sessions", "value": str(person.session_count)},
-                {"label": _level_summary_label(person.level_codes, ui_lang), "value": _format_level_summary(person.level_codes)},
+                {
+                    "label": _level_summary_label(person.level_codes, ui_lang),
+                    "value": _format_level_summary(person.level_codes),
+                    "badges": _level_badges(person.level_codes),
+                },
                 {"label": "L1", "value": person.l1 or "-"},
+                {"label": "Geschlecht" if ui_lang == "de" else "Gender", "value": _label(GENDER_LABELS, person.gender or "unknown", ui_lang)},
                 {"label": _target_country_stay_label(ui_lang), "value": _summarize_target_country_stays(person, ui_lang)},
-                {"label": "Aufnahmejahre" if ui_lang == "de" else "Recording years", "value": _recording_year_span(person)},
             ]
         cards.append(
             {
@@ -983,7 +1091,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                     person_id=person.person_id,
                     query={"session": selected_session.session_id},
                 ),
-                "profile_label": "Profil öffnen" if ui_lang == "de" else "Open profile",
+                "profile_label": _profile_action_label(ui_lang),
                 "recordings_label": _recordings_section_label(ui_lang),
                 "recording_links_aria_label": _recording_links_aria_label(ui_lang),
                 "task_links": [
@@ -1001,7 +1109,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                     for task in iter_research_tasks()
                     if session_has_task(selected_session, task.key)
                 ],
-                "accent_modifier": _session_accent_modifier(selected_session),
+                "accent_modifier": _speaker_card_modifier(person),
             }
         )
 
@@ -1044,13 +1152,14 @@ def _person_section_rows(person: PersonRecord, ui_lang: str) -> list[dict[str, s
         {"label": "Geburtsjahr" if ui_lang == "de" else "Birth year", "value": str(person.birth_year) if person.birth_year else "-"},
     ]
     if person.is_native:
+        variety_value = _format_standard_variety_value(person.standard_variety, ui_lang)
+        origin_country_value = _format_origin_country_value(person.origin_country, ui_lang)
         rows.extend(
-            [
-                {"label": _origin_country_label(ui_lang), "value": person.origin_country or "-"},
-                {"label": _origin_region_label(ui_lang), "value": person.origin_region or "-"},
-                {"label": _standard_variety_label(ui_lang), "value": person.standard_variety.upper() if person.standard_variety else "-"},
-            ]
+            [{"label": _origin_country_label(ui_lang), "value": origin_country_value}]
         )
+        rows.append({"label": _origin_region_label(ui_lang), "value": person.origin_region or "-"})
+        if variety_value != "-" and not _display_values_match(variety_value, origin_country_value):
+            rows.append({"label": _standard_variety_label(ui_lang), "value": variety_value})
         return rows
 
     rows.extend(
@@ -1117,10 +1226,16 @@ def build_speaker_profile_page(
 
     if person.is_native:
         intro = "Reduziertes Vergleichsprofil mit genau einer Session und den zugehörigen Aufzeichnungen." if ui_lang == "de" else "Reduced comparison profile with exactly one session and its recordings."
-        header_badges = [_label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang), person.standard_variety.upper() if person.standard_variety else None]
+        header_badges = [
+            _meta_badge(_label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang), "native"),
+            _meta_badge(_native_reference_value(person.standard_variety, person.origin_country, ui_lang), "native-detail"),
+        ]
     else:
         intro = "Profil mit Personendaten und allen zugehörigen Sessions und Aufzeichnungen." if ui_lang == "de" else "Profile with person data and all associated sessions and recordings."
-        header_badges = [_label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang), _recording_year_span(person)]
+        header_badges = [
+            _meta_badge(_label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang), "detail"),
+            _meta_badge(_recording_year_span(person), "detail"),
+        ]
 
     return {
         "title": "Profil" if ui_lang == "de" else "Profile",
@@ -1148,7 +1263,7 @@ def build_speaker_profile_page(
             "speaker_type": _label(SPEAKER_TYPE_LABELS, person.speaker_type, ui_lang),
             "session_count_label": _session_count_label(ui_lang),
             "session_count_value": person.session_count,
-            "badges": [badge for badge in header_badges if badge and badge != "-"],
+            "badges": [badge for badge in header_badges if badge is not None],
         },
         "person_section": {"title": "Profildaten" if ui_lang == "de" else "Profile data", "rows": person_section_rows},
         "sessions_section": {
@@ -1537,9 +1652,9 @@ def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[s
             )
 
         context_label = _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "research.comparison.level_label")
-        context_value = _format_standard_variety_value(session.standard_variety, ui_lang) if session.is_native else _format_level(session, ui_lang)
+        context_value = _native_reference_value(session.standard_variety, session.origin_country, ui_lang) if session.is_native else _format_level(session, ui_lang)
         detail_label = _origin_country_label(ui_lang) if session.is_native else _t(ui_lang, "common.labels.l1_short")
-        detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
+        detail_value = _format_origin_country_value(session.origin_country, ui_lang) if session.is_native else (session.l1 or "-")
         level_value = "-" if session.is_native else (_format_level(session, ui_lang) or "-")
         l1_value = "-" if session.is_native else (session.l1 or "-")
         l1_additional_values = [] if session.is_native else list(session.l1_additional)
@@ -1571,7 +1686,7 @@ def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[s
                 "l1AdditionalValues": l1_additional_values,
                 "l1BadgeLabel": f"L1: {session.l1}" if session.l1 and not session.is_native else "",
                 "standardVarietyLabel": _standard_variety_label(ui_lang),
-                "standardVarietyValue": _format_standard_variety_value(session.standard_variety, ui_lang) if session.is_native else "",
+                "standardVarietyValue": _native_reference_value(session.standard_variety, session.origin_country, ui_lang) if session.is_native else "",
                 "recordingDate": _format_recording_date(session),
                 "genderKey": gender_key,
                 "genderLabel": _label(GENDER_LABELS, gender_key, ui_lang),
@@ -2113,15 +2228,12 @@ def _build_player_summary_card(
     role_key: str,
     session_options: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    context_label = _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "research.comparison.level_label")
-    context_value = _format_standard_variety(session, ui_lang) if session.is_native else _format_level(session, ui_lang)
-    detail_label = _origin_country_label(ui_lang) if session.is_native else _t(ui_lang, "common.labels.l1_short")
-    detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
     return {
         "speaker_key": role_key,
         "session_id": session.session_id,
-        "accent_modifier": _session_accent_modifier(session),
+        "accent_modifier": _player_meta_card_modifier(session),
         "role_label": _t(ui_lang, "research.player.role.primary") if role_key == "primary" else _t(ui_lang, "research.player.role.compare"),
+        "role_badge": _player_role_badge(role_key, ui_lang),
         "profile_href": _url_with_query(
             "public.research_speaker_profile",
             ui_lang=ui_lang,
@@ -2135,15 +2247,10 @@ def _build_player_summary_card(
             "current_label": session.session_id,
             "options": session_options,
         },
-        "badges": [
-            _label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang),
-            context_value if context_value != "-" else None,
-        ],
+        "badges": _player_summary_badges(session, ui_lang),
         "rows": [
             {"label": "Person-ID", "value": session.person_id},
             {"label": _recording_date_label(ui_lang), "value": _format_recording_date(session)},
-            {"label": context_label, "value": context_value},
-            {"label": detail_label, "value": detail_value},
         ],
         "is_placeholder": False,
         "is_visible": True,
@@ -2228,8 +2335,9 @@ def _build_player_compare_placeholder_card(ui_lang: str, session_options: list[d
     return {
         "speaker_key": "secondary",
         "session_id": "",
-        "accent_modifier": "native",
+        "accent_modifier": "neutral",
         "role_label": _t(ui_lang, "research.player.role.compare"),
+        "role_badge": _player_role_badge("secondary", ui_lang),
         "profile_href": None,
         "profile_label": _t(ui_lang, "research.player.profile"),
         "session_switch": {
@@ -2237,7 +2345,7 @@ def _build_player_compare_placeholder_card(ui_lang: str, session_options: list[d
             "current_label": _player_compare_picker_title(ui_lang),
             "options": session_options,
         },
-        "badges": [_player_compare_placeholder_badge(ui_lang)],
+        "badges": [_meta_badge(_player_compare_placeholder_badge(ui_lang), "detail")],
         "rows": _player_compare_placeholder_rows(ui_lang),
         "is_placeholder": True,
         "is_visible": False,
@@ -2718,8 +2826,8 @@ def build_player_page(
         effective_preset_id,
     )
 
-    context_value = _format_standard_variety(session, ui_lang) if session.is_native else _format_level(session, ui_lang)
-    detail_value = (session.origin_country or "-") if session.is_native else (session.l1 or "-")
+    context_value = _native_reference_value(session.standard_variety, session.origin_country, ui_lang) if session.is_native else _format_level(session, ui_lang)
+    detail_value = _format_origin_country_value(session.origin_country, ui_lang) if session.is_native else (session.l1 or "-")
     text_bundle = _load_task_bundle(session, "text") if session_has_task(session, "text") else None
     text_ready = text_bundle is not None
     wordlist_bundle = _load_task_bundle(session, "wordlist") if session_has_task(session, "wordlist") else None

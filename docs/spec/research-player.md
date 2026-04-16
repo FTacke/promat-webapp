@@ -127,13 +127,16 @@ The player state must be able to represent at least these values:
 
 ### Metadata-card rules
 
-- The metadata card reuses the existing visual semantics of speaker cards where appropriate, especially for speaker type and level or variety cues.
+- The metadata card reuses the existing visual semantics of speaker cards where appropriate, especially for speaker type and level or variety cues, but the productive player keeps the card container itself neutral.
 - The player must not introduce a second competing color or badge taxonomy.
-- Productive player metadata cards keep the shared research accent system: learner levels stay on the learner scale, native sessions use the dedicated accent `#18677A`, and the family uses the shared `0.5rem` top accent bar.
+- Productive player metadata cards do not use level-, role-, or native-coded top borders or other card-chrome accents; semantic color stays on explicit badges and pills inside the card.
+- Productive player metadata cards keep the same neutral-container plus badge-driven coding logic as the current `speakers` learner cards and the comparison speaker rows.
 - In the productive `wordlist` player, session selection belongs to the metadata-card identity layer, not to the playback toolbar: the visible `session_id` acts as the session switcher in the card header.
 - The player may expose one compact page-level back action outside the playback control bar, but it must remain one route-context action and not expand into a second competing player header system.
 - The top-right metadata-card action zone keeps only the compact role badge such as `Primär` or `Vergleich`; profile access belongs to the card footer and not to a second header action row.
+- Badge and pill content on player metadata cards, comparison speaker rows, and speaker-card meta badges stays on the regular UI font family rather than the book or reading font.
 - Each visible metadata card exposes its own profile action in the footer so that primary and comparison sessions can both open their corresponding speaker profile directly from the player surface.
+- Native-speaker metadata cards do not add a second speaker-group badge when the surrounding player card context already identifies the session role; instead they show one canonical localized native-reference badge derived from standard variety and origin country.
 - In single-session mode, the primary footer may expose one compact compare-entry action plus the profile action; once compare is active, the primary footer keeps only the profile action and the comparison footer owns the `Vergleich entfernen` action.
 - The productive player does not expose a separate `Vergleich ändern` button; changing the comparison session happens through the comparison card's session switcher.
 
@@ -185,7 +188,7 @@ The player state must be able to represent at least these values:
 - Shared playback speed is currently limited to `0.5`, `0.75`, `1.0`, `1.25`, and `1.5`.
 - The productive speed control uses a compact direct slider with the fixed steps `0.5`, `0.75`, `1.0`, `1.25`, and `1.5`, not a large dropdown or a wide chip row.
 - Player-header metadata for the productive wordlist surface stays compact and listening-relevant; fields such as `recorded_by` do not belong to the player card surface.
-- Productive player metadata cards are a player-specific derivation of the speaker-card family: they reuse the same accent or top-border logic, chip language, and facts-grid principle, while adapting width and internal geometry to the player workbench.
+- Productive player metadata cards are a player-specific derivation of the speaker-card family: they reuse the same badge language and compact facts-grid principle, while adapting width and internal geometry to the player workbench; unlike native overview speaker cards, they keep the card shell neutral and move level, speaker-group, variety, `L1`, and role semantics onto badges inside the card.
 - If one wordlist item corresponds to exactly one timing-bearing unit, the data contract does not require duplicating identical text or timing values on a second token layer.
 - In that case the player may derive the timing-bearing render unit internally from the item itself.
 
@@ -207,6 +210,7 @@ The player state must be able to represent at least these values:
 - The productive `text` sentence-list renderer uses the canonical task catalog plus session-specific `alignment/text.json` artifacts for stable numbering, texts, item IDs, and clip boundaries.
 - In productive `text` sentence-list rows, the visible display numbering appears only once in the dedicated left number badge; technical item IDs such as `d_02` and auxiliary grouping markers such as `D` are runtime or catalog helpers and must not be repeated as visible row metadata beneath the sentence text.
 - In productive `text` sentence-list rows, the timing label remains part of the row meta but is right-aligned inside the item field, analogous to the `wordlist` timing placement.
+- In productive `text` sentence-list rows, the left number badge, sentence container, timing label, and per-item download action use one optically balanced top-aligned row logic; the taller book-typography sentence text must not leave the badge or meta actions looking undersized, too high, or vertically detached.
 - In productive `text` sentence-list rows, the timing label and any per-item icon actions align to the first text line rather than centering against the full row block.
 - For connected-text sources, `running_text` is the default only when the source metadata explicitly permits it; otherwise the player must degrade to `sentence_list`.
 - Running-text sources currently fall back to `sentence_list` while direct comparison is active, so sentence matching and compare rows stay on the stable item list contract.

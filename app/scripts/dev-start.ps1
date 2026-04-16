@@ -32,11 +32,107 @@ if (-not $env:AUTH_ACCESS_REQUEST_EMAIL) {
 if (-not $env:FLASK_ENV) {
 	$env:FLASK_ENV = 'development'
 }
+if (($env:FLASK_ENV -eq 'development') -and (-not $env:FLASK_DEBUG)) {
+	$env:FLASK_DEBUG = '1'
+}
 if (-not $env:FLASK_SECRET_KEY) {
 	$env:FLASK_SECRET_KEY = 'dev-secret-change-me'
 }
 if (-not $env:JWT_SECRET_KEY) {
 	$env:JWT_SECRET_KEY = 'dev-jwt-secret-change-me'
+}
+
+function Get-PromatDevServerProcesses {
+	param(
+		[string]$WorkspaceRoot
+	)
+
+	$resolvedWorkspaceRoot = (Resolve-Path $WorkspaceRoot).Path
+	return @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+		$commandLine = $_.CommandLine
+		$processName = $_.Name
+		($processName -ieq 'python.exe' -or $processName -ieq 'pythonw.exe') -and
+		$commandLine -and
+		(
+			(
+				($commandLine -match [regex]::Escape($resolvedWorkspaceRoot)) -and
+				(
+					($commandLine -match 'src\.app\.main') -or
+					($commandLine -match 'run_local_server\.py') -or
+					($commandLine -match 'run_app_\d+\.py')
+				)
+			) -or
+			($commandLine -match '(^|\s)-m\s+src\.app\.main(?:\s|$)')
+		)
+	})
+}
+
+function Get-ListeningProcessIdsForPort {
+	param(
+		[int]$Port
+	)
+
+	return @(
+		Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue |
+			Select-Object -ExpandProperty OwningProcess -Unique
+	)
+}
+
+function Get-ProcessSummary {
+	param(
+		[int]$ProcessId
+	)
+
+	$process = Get-CimInstance Win32_Process -Filter "ProcessId = $ProcessId" -ErrorAction SilentlyContinue
+	if ($null -eq $process) {
+		return "PID $ProcessId"
+	}
+
+	if ($process.CommandLine) {
+		return "PID $ProcessId :: $($process.CommandLine)"
+	}
+
+	return "PID $ProcessId :: $($process.Name)"
+}
+
+function Stop-StalePromatDevServers {
+	param(
+		[string]$WorkspaceRoot,
+		[int]$Port = 8000
+	)
+
+	$promatProcesses = @(Get-PromatDevServerProcesses -WorkspaceRoot $WorkspaceRoot)
+	$promatProcessIds = @($promatProcesses | Select-Object -ExpandProperty ProcessId -Unique)
+	if ($promatProcessIds.Count -eq 0) {
+		return
+	}
+
+	$listenerProcessIds = @(Get-ListeningProcessIdsForPort -Port $Port)
+	$foreignListeners = @($listenerProcessIds | Where-Object { $promatProcessIds -notcontains $_ })
+	if ($foreignListeners.Count -gt 0) {
+		$details = ($foreignListeners | ForEach-Object { Get-ProcessSummary -ProcessId $_ }) -join "`n"
+		throw "Port ${Port} ist bereits durch einen fremden Prozess belegt:`n$details"
+	}
+
+	$stopCandidates = @($promatProcesses | Where-Object { $_.ProcessId -ne $PID })
+	if ($stopCandidates.Count -eq 0) {
+		return
+	}
+
+	$details = ($stopCandidates | ForEach-Object { Get-ProcessSummary -ProcessId $_.ProcessId }) -join "`n"
+	Write-Host "Beende bestehende PROMAT-Dev-Prozesse vor dem Neustart auf Port ${Port}:`n$details" -ForegroundColor Yellow
+	foreach ($process in $stopCandidates) {
+		Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+	}
+	foreach ($process in $stopCandidates) {
+		Wait-Process -Id $process.ProcessId -Timeout 10 -ErrorAction SilentlyContinue
+	}
+
+	$remainingListeners = @(Get-ListeningProcessIdsForPort -Port $Port)
+	if ($remainingListeners.Count -gt 0) {
+		$remainingDetails = ($remainingListeners | ForEach-Object { Get-ProcessSummary -ProcessId $_ }) -join "`n"
+		throw "Port ${Port} bleibt nach dem Bereinigen belegt:`n$remainingDetails"
+	}
 }
 
 $workspacePython = Join-Path $workspaceRoot '.venv\Scripts\python.exe'
@@ -75,6 +171,8 @@ if ($shouldSeedDefaultAdmin -and $StartAdminPassword) {
 		throw 'Standard-Dev-Admin konnte nicht angelegt oder aktualisiert werden.'
 	}
 }
+
+Stop-StalePromatDevServers -WorkspaceRoot $workspaceRoot -Port 8000
 
 Set-Location $appRoot
 & $pythonSource -m src.app.main

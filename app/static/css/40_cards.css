@@ -247,39 +247,23 @@
   --pm-speaker-accent: var(--book-accent);
   display: flex;
   flex-direction: column;
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-speaker-accent);
   gap: 0;
   width: 100%;
   height: 100%;
   max-width: var(--pm-research-speaker-card-max);
 }
 
-.pm-speaker-card--a1 {
-  --pm-speaker-accent: var(--pm-research-level-a1);
+.pm-speaker-card--learner {
+  --pm-speaker-accent: transparent;
 }
 
-.pm-speaker-card--a2 {
-  --pm-speaker-accent: var(--pm-research-level-a2);
-}
-
-.pm-speaker-card--b1 {
-  --pm-speaker-accent: var(--pm-research-level-b1);
-}
-
-.pm-speaker-card--b2 {
-  --pm-speaker-accent: var(--pm-research-level-b2);
-}
-
-.pm-speaker-card--c1 {
-  --pm-speaker-accent: var(--pm-research-level-c1);
-}
-
-.pm-speaker-card--c2 {
-  --pm-speaker-accent: var(--pm-research-level-c2);
+.pm-speaker-card--neutral {
+  --pm-speaker-accent: transparent;
 }
 
 .pm-speaker-card--native {
   --pm-speaker-accent: var(--pm-research-native-accent);
+  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-speaker-accent);
 }
 
 .pm-corpus-overview-card {
@@ -458,10 +442,16 @@
   gap: 0.45rem;
 }
 
-.pm-speaker-card__footer-section--actions {
+.pm-speaker-card__footer-section--recordings {
   margin-block-start: var(--pm-divider-space-before);
   padding-top: var(--pm-divider-space-after);
   border-top: 1px solid var(--pm-border-subtle);
+}
+
+.pm-speaker-card__footer-section--actions {
+  margin-block-start: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .pm-speaker-card__profile-link {
@@ -516,16 +506,7 @@
 }
 
 .pm-player-meta-card__role {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.85rem;
-  padding: 0 0.68rem;
-  border-radius: 999px;
-  border: 1px solid var(--pm-speaker-accent);
-  background: color-mix(in srgb, var(--pm-speaker-accent) 16%, var(--pm-surface-paper) 84%);
-  color: var(--pm-speaker-accent);
-  font-family: var(--book-font-ui);
-  font-size: var(--pm-type-meta-size);
+  justify-self: end;
 }
 
 .pm-player-meta-card__profile-link {
@@ -566,6 +547,10 @@
 
   .pm-player-meta-card__actions {
     justify-items: start;
+  }
+
+  .pm-player-meta-card__role {
+    justify-self: start;
   }
 }
 
