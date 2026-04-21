@@ -74,7 +74,7 @@ Regeln:
 - Das Ziel bleibt dabei immer der batch-lokale Working-Pfad `working/{person_id}/interview/alignment/interview.json`; es wird noch nichts nach `data/sessions/` geschrieben.
 - Wenn nur die Interview-Transformation nach einer Marker- oder Katalogkorrektur erneut laufen soll, ist der sichere Batch-Weg:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import/organize_batch_working_tree.py --batch-dir spanish_batch_20260421 --force-task interview`
-- Das resultierende Working-JSON hält sichtbare Referenztexte nicht als freie Editorannotation, sondern als strukturierte `material_ref`-Annotation mit `label`, `item_number`, `canonical_text`, `insert_after_token_id` und optional `trailing_punctuation`.
+- Das resultierende Working-JSON hält sichtbare Referenztexte nicht als freie Editorannotation, sondern als strukturierte `material_ref`-Annotation mit `label`, `item_number`, `canonical_text` und `insert_after_token_id`; nachgestellte Markerinterpunktion bleibt stattdessen tokennah in `tokens[].suffix`.
 
 ## Schritt 6: Produktionsimport planen oder ausführen
 

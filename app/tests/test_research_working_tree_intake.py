@@ -165,7 +165,8 @@ def test_build_interview_alignment_payload_maps_segments_and_annotations(tmp_pat
     assert segments[0]["start_ms"] == 1710
     assert segments[1]["speaker_code"] == "participant"
     assert segments[1]["tokens"][0]["text"] == "Ja,"
-    assert segments[1]["tokens"][1]["text"] == "89."
+    assert segments[1]["tokens"][1]["text"] == "89"
+    assert segments[1]["tokens"][1]["suffix"] == "."
     assert segments[1]["text"] == "Ja, 89."
     assert segments[1]["annotations"][0]["item_id"] == "wl_089"
     assert segments[1]["annotations"][0]["task"] == "wordlist"
@@ -173,7 +174,6 @@ def test_build_interview_alignment_payload_maps_segments_and_annotations(tmp_pat
     assert segments[1]["annotations"][0]["item_number"] == "89"
     assert segments[1]["annotations"][0]["canonical_text"] == "ahí – allí"
     assert segments[1]["annotations"][0]["insert_after_token_id"] == "seg_002_tok_002"
-    assert segments[1]["annotations"][0]["trailing_punctuation"] == "."
 
 
 def test_build_interview_alignment_payload_resolves_text_catalog_refs(tmp_path: Path) -> None:
@@ -202,6 +202,19 @@ def test_build_interview_alignment_payload_handles_spaced_marker_anchor(tmp_path
     assert segment["text"] == "Ja, Nummero"
     assert segment["annotations"][0]["item_id"] == "wl_087"
     assert segment["annotations"][0]["insert_after_token_id"] == "seg_002_tok_002"
+
+
+def test_build_interview_alignment_payload_keeps_marker_punctuation_as_token_suffix(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    _write_json(source_json, _minimal_interview_payload(reference_words=["QY3[qy_03]?", "D5[d_05],", "17 [d_05]."]))
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="ES-L-0001", session_id=None)
+
+    segment = payload["segments"][1]
+    assert [token["text"] for token in segment["tokens"][1:]] == ["QY3", "D5", "17"]
+    assert [token.get("suffix") for token in segment["tokens"][1:]] == ["?", ",", "."]
+    assert segment["text"] == "Ja, QY3? D5, 17."
+    assert all("trailing_punctuation" not in annotation for annotation in segment["annotations"])
 
 
 def test_build_interview_alignment_payload_rejects_unknown_material_ref_item_id(tmp_path: Path) -> None:

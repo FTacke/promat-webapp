@@ -191,14 +191,16 @@ def _normalize_bundle_tokens(
             continue
 
         raw_token_id = raw_token.get("token_id")
-        tokens.append(
-            {
-                "token_id": raw_token_id if isinstance(raw_token_id, str) and raw_token_id else f"{item_id}_token_{index}",
-                "text": token_text,
-                "start_ms": token_start_ms,
-                "end_ms": token_end_ms,
-            }
-        )
+        token_payload = {
+            "token_id": raw_token_id if isinstance(raw_token_id, str) and raw_token_id else f"{item_id}_token_{index}",
+            "text": token_text,
+            "start_ms": token_start_ms,
+            "end_ms": token_end_ms,
+        }
+        token_suffix = raw_token.get("suffix")
+        if isinstance(token_suffix, str) and token_suffix:
+            token_payload["suffix"] = token_suffix
+        tokens.append(token_payload)
 
     return tokens
 
@@ -235,7 +237,6 @@ def _normalize_interview_annotations(segment_id: str, raw_annotations: Any) -> l
                 "label": label.strip(),
                 "item_number": raw_annotation.get("item_number") if isinstance(raw_annotation.get("item_number"), str) else None,
                 "canonical_text": raw_annotation.get("canonical_text") if isinstance(raw_annotation.get("canonical_text"), str) else None,
-                "trailing_punctuation": raw_annotation.get("trailing_punctuation") if isinstance(raw_annotation.get("trailing_punctuation"), str) else "",
             }
         )
 
@@ -258,6 +259,7 @@ def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, A
         token_id = token.get("token_id")
         token_start_ms = token.get("start_ms")
         token_end_ms = token.get("end_ms")
+        token_suffix = token.get("suffix") if isinstance(token.get("suffix"), str) else ""
         if not isinstance(token_text, str) or not token_text:
             continue
         if not isinstance(token_id, str) or not token_id:
@@ -273,6 +275,11 @@ def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, A
             segments.append({"kind": "text", "text": text_value[cursor:match_start]})
 
         match_end = match_start + len(token_text)
+        suffix_end = match_end
+        matched_suffix = ""
+        if token_suffix and text_value.startswith(token_suffix, match_end):
+            suffix_end = match_end + len(token_suffix)
+            matched_suffix = token_suffix
         token_index = len(renderable_tokens)
         renderable_token = {
             "token_id": token_id or f"{item_id}_token_{token_index}",
@@ -281,16 +288,19 @@ def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, A
             "start_ms": token_start_ms,
             "end_ms": token_end_ms,
         }
+        if matched_suffix:
+            renderable_token["suffix"] = matched_suffix
         renderable_tokens.append(renderable_token)
-        segments.append(
-            {
-                "kind": "token",
-                "token_id": renderable_token["token_id"],
-                "token_index": token_index,
-                "text": renderable_token["text"],
-            }
-        )
-        cursor = match_end
+        token_segment = {
+            "kind": "token",
+            "token_id": renderable_token["token_id"],
+            "token_index": token_index,
+            "text": renderable_token["text"],
+        }
+        if matched_suffix:
+            token_segment["suffix"] = matched_suffix
+        segments.append(token_segment)
+        cursor = suffix_end
 
     if not renderable_tokens:
         return ([{"kind": "text", "text": text_value}], [])
@@ -330,22 +340,28 @@ def _build_interview_text_segments(
     merged_segments: list[dict[str, Any]] = []
     inserted_reference_ids: set[str] = set()
     for segment in text_segments:
-        merged_segments.append(segment)
         if segment.get("kind") != "token":
+            merged_segments.append(segment)
             continue
 
         token_id = segment.get("token_id")
         if not isinstance(token_id, str) or token_id not in anchored_references:
+            merged_segments.append(segment)
             continue
 
-        for reference in anchored_references[token_id]:
+        token_segment = dict(segment)
+        token_suffix = token_segment.pop("suffix", "") if isinstance(token_segment.get("suffix"), str) else ""
+        merged_segments.append(token_segment)
+
+        token_references = anchored_references[token_id]
+        for reference_index, reference in enumerate(token_references):
             merged_segments.append(
                 {
                     "kind": "material_ref",
                     "reference_id": reference["reference_id"],
                     "label": reference["label"],
-                    "trailing_punctuation": reference.get("trailing_punctuation") or "",
                     "prefix": " ",
+                    "suffix": token_suffix if reference_index == len(token_references) - 1 else "",
                 }
             )
             inserted_reference_ids.add(reference["reference_id"])
@@ -358,8 +374,8 @@ def _build_interview_text_segments(
                 "kind": "material_ref",
                 "reference_id": reference["reference_id"],
                 "label": reference["label"],
-                "trailing_punctuation": reference.get("trailing_punctuation") or "",
                 "prefix": " ",
+                "suffix": "",
             }
         )
 

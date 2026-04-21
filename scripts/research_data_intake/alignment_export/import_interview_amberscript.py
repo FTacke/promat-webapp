@@ -35,7 +35,6 @@ ANNOTATION_TASK_PREFIXES = (
     ("t_", "text"),
 )
 MATERIAL_REF_PATTERN = re.compile(r"\[(?P<item_id>(?:wl_|d_|qy_|qw_|t_)\d+)\]")
-TRAILING_PUNCTUATION_PATTERN = re.compile(r"(?P<punctuation>[.,!?;:]+)$")
 
 
 class InterviewImportError(ValueError):
@@ -153,14 +152,7 @@ def _resolve_annotation_catalog_entry(*, language_slug: str, item_id: str, sourc
     }
 
 
-def _material_ref_annotation(
-    *,
-    raw_text: str,
-    cleaned_text: str,
-    insert_after_token_id: str,
-    language_slug: str,
-    source_json_path: Path,
-) -> dict[str, object]:
+def _split_material_ref_token(*, raw_text: str, source_json_path: Path) -> tuple[str, str, str]:
     if raw_text.count("[") != 1 or raw_text.count("]") != 1:
         raise InterviewImportError(
             "error_invalid_material_ref_marker",
@@ -188,36 +180,35 @@ def _material_ref_annotation(
             f"Material reference marker must only carry trailing punctuation, got {raw_text!r}: {source_json_path}",
         )
 
-    item_id = match.group("item_id")
+    cleaned_text = prefix.rstrip()
+    if not cleaned_text:
+        raise InterviewImportError(
+            "error_invalid_material_ref_marker",
+            f"Material reference marker lost its spoken anchor in {raw_text!r}: {source_json_path}",
+        )
+
+    return cleaned_text, normalized_suffix, match.group("item_id")
+
+
+def _material_ref_annotation(
+    *,
+    item_id: str,
+    insert_after_token_id: str,
+    language_slug: str,
+    source_json_path: Path,
+) -> dict[str, object]:
     task_name, catalog_payload = _resolve_annotation_catalog_entry(
         language_slug=language_slug,
         item_id=item_id,
         source_json_path=source_json_path,
     )
-    annotation_payload: dict[str, object] = {
+    return {
         "kind": "material_ref",
         "item_id": item_id,
         "task": task_name,
         "insert_after_token_id": insert_after_token_id,
         **catalog_payload,
     }
-    trailing_punctuation_match = TRAILING_PUNCTUATION_PATTERN.search(cleaned_text)
-    if trailing_punctuation_match is not None:
-        annotation_payload["trailing_punctuation"] = trailing_punctuation_match.group("punctuation")
-    return annotation_payload
-
-
-def _clean_token_text(text: str, source_json_path: Path) -> str:
-    match = MATERIAL_REF_PATTERN.search(text)
-    if match is None:
-        return text
-    cleaned = f"{text[: match.start()].rstrip()}{text[match.end() :].strip()}".strip()
-    if not cleaned:
-        raise InterviewImportError(
-            "error_invalid_material_ref_marker",
-            f"Material reference marker lost its spoken anchor in {text!r}: {source_json_path}",
-        )
-    return cleaned
 
 
 def _append_token(
@@ -227,17 +218,26 @@ def _append_token(
     text: str,
     start_ms: int,
     end_ms: int,
+    suffix: str = "",
 ) -> str:
     token_id = f"{segment_id}_tok_{len(tokens) + 1:03d}"
-    tokens.append(
-        {
-            "token_id": token_id,
-            "text": text,
-            "start_ms": start_ms,
-            "end_ms": end_ms,
-        }
-    )
+    token_payload: dict[str, object] = {
+        "token_id": token_id,
+        "text": text,
+        "start_ms": start_ms,
+        "end_ms": end_ms,
+    }
+    if suffix:
+        token_payload["suffix"] = suffix
+    tokens.append(token_payload)
     return token_id
+
+
+def _token_text_for_segment_text(token: dict[str, object]) -> str:
+    suffix = token.get("suffix")
+    if isinstance(suffix, str) and suffix:
+        return f"{token['text']}{suffix}"
+    return str(token["text"])
 
 
 def build_interview_alignment_payload(
@@ -280,25 +280,34 @@ def build_interview_alignment_payload(
                     f"Segment {segment_index} word {word_index} has a non-positive duration in {source_json_path}"
                 )
 
-            cleaned_text = _clean_token_text(text, source_json_path)
-            previous_token_id = _append_token(
-                tokens,
-                segment_id=segment_id,
-                text=cleaned_text,
-                start_ms=start_ms,
-                end_ms=end_ms,
-            )
-            if cleaned_text != text:
+            material_ref_match = MATERIAL_REF_PATTERN.search(text)
+            if material_ref_match is not None:
+                cleaned_text, token_suffix, item_id = _split_material_ref_token(raw_text=text, source_json_path=source_json_path)
+                previous_token_id = _append_token(
+                    tokens,
+                    segment_id=segment_id,
+                    text=cleaned_text,
+                    start_ms=start_ms,
+                    end_ms=end_ms,
+                    suffix=token_suffix,
+                )
                 annotations.append(
                     _material_ref_annotation(
-                        raw_text=text,
-                        cleaned_text=cleaned_text,
+                        item_id=item_id,
                         insert_after_token_id=previous_token_id,
                         language_slug=language_slug,
                         source_json_path=source_json_path,
                     )
                 )
-            elif "[" in text or "]" in text:
+            else:
+                previous_token_id = _append_token(
+                    tokens,
+                    segment_id=segment_id,
+                    text=text,
+                    start_ms=start_ms,
+                    end_ms=end_ms,
+                )
+            if material_ref_match is None and ("[" in text or "]" in text):
                 raise InterviewImportError(
                     "error_invalid_material_ref_marker",
                     f"Invalid material reference marker {text!r}: {source_json_path}",
@@ -310,7 +319,7 @@ def build_interview_alignment_payload(
             "speaker_code": speaker_code,
             "start_ms": first_start_ms,
             "end_ms": last_end_ms,
-            "text": " ".join(token["text"] for token in tokens),
+            "text": " ".join(_token_text_for_segment_text(token) for token in tokens),
         }
         if tokens:
             segment_payload_json["tokens"] = tokens

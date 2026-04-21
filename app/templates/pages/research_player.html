@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% macro render_player_text(item, text_class) -%}
-<span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}">{{ segment.text }}</span>{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" data-reference-unavailable-label="{{ t('research.player.interview.reference_clip_unavailable') }}">{{ segment.reference.label }}</button>{% if segment.trailing_punctuation %}<span class="pm-player-inline-ref__punctuation">{{ segment.trailing_punctuation }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
+<span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}">{{ segment.text }}</span>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" aria-haspopup="dialog"><span class="pm-player-inline-ref__bracket" aria-hidden="true">[</span><span class="pm-player-inline-ref__label">{{ segment.reference.label }}</span><span class="pm-player-inline-ref__bracket" aria-hidden="true">]</span></button>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
 {%- endmacro %}
 
 {% macro render_player_meta(item, player_mode) -%}
@@ -314,45 +314,37 @@
             <li class="pm-player-transcript__row" data-player-focus-item="{{ item.segment_id }}">
               <div class="pm-player-transcript__meta">
                 <span class="pm-player-transcript__speaker pm-player-transcript__speaker--{{ item.speaker_code }}">{{ item.speaker_label }}</span>
-                <span class="pm-player-transcript__segment">{{ t('research.player.interview.segment_label', number=item.segment_number) }}</span>
                 <span class="pm-player-transcript__time">{{ item.start_label }}–{{ item.end_label }}</span>
               </div>
 
               <div class="pm-player-transcript__body" data-player-item data-speaker-key="primary" data-item-id="{{ item.segment_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
-                <button type="button" class="pm-player-transcript__trigger" data-player-seek aria-label="{{ item.speaker_label }}: {{ item.text }}">
+                <div class="pm-player-transcript__trigger" data-player-seek role="button" tabindex="0" aria-label="{{ item.speaker_label }}: {{ item.text }}">
                   {{ render_player_text(item, 'pm-player-transcript__text pm-item-content-text') }}
-                </button>
+                </div>
               </div>
             </li>
             {% endfor %}
           </ol>
 
-          <dialog class="md3-dialog pm-player-reference-dialog" data-player-reference-dialog role="dialog" aria-modal="true" aria-labelledby="pm-player-reference-title">
-            <div class="md3-dialog__container">
-              <div class="md3-dialog__surface">
-                <header class="md3-dialog__header pm-player-reference-dialog__header">
-                  <div class="pm-player-reference-dialog__eyebrow">
-                    <span class="pm-research-meta-badge pm-research-meta-badge--detail" data-player-reference-task></span>
-                    <span class="pm-player-reference-dialog__number" data-player-reference-item-number hidden></span>
-                  </div>
-                  <h2 id="pm-player-reference-title" class="md3-title-large md3-dialog__title" data-player-reference-title></h2>
-                </header>
-
-                <div class="md3-dialog__content md3-stack--dialog">
-                  <p class="pm-player-reference-dialog__text pm-item-content-text" data-player-reference-text></p>
-                  <p class="pm-player-reference-dialog__meta" data-player-reference-time hidden></p>
-
-                  <div class="pm-player-reference-dialog__audio-wrap">
-                    <audio class="pm-player-reference-dialog__audio" controls preload="none" data-player-reference-audio></audio>
-                    <p class="pm-player-reference-dialog__audio-note" data-player-reference-audio-note hidden></p>
-                  </div>
+          <dialog class="pm-player-reference-popover" data-player-reference-dialog role="dialog" aria-modal="true" aria-labelledby="pm-player-reference-title">
+            <div class="pm-player-reference-popover__surface">
+              <header class="pm-player-reference-popover__header">
+                <div class="pm-player-reference-popover__eyebrow">
+                  <span class="pm-research-meta-badge pm-research-meta-badge--detail" data-player-reference-task></span>
+                  <span class="pm-player-reference-popover__number" data-player-reference-item-number hidden></span>
                 </div>
+                <h2 id="pm-player-reference-title" class="pm-player-reference-popover__title pm-item-content-text" data-player-reference-title></h2>
+              </header>
 
-                <div class="md3-dialog__actions">
-                  <button type="button" class="md3-button md3-button--text" data-player-reference-close>{{ t('common.actions.cancel') }}</button>
-                  <a class="md3-button md3-button--filled" data-player-reference-open href="#">{{ t('research.player.interview.reference_open_context') }}</a>
-                </div>
+              <div class="pm-player-reference-popover__player" data-player-reference-player hidden>
+                <audio class="pm-player-reference-popover__audio" preload="none" data-player-reference-audio></audio>
+                <button type="button" class="pm-player-icon-button pm-player-reference-popover__toggle" data-player-reference-toggle aria-label="{{ promat_page.player.toggle_play_label }}" title="{{ promat_page.player.toggle_play_label }}">
+                  <span class="pm-icon-mask pm-icon-mask--play" data-player-reference-toggle-icon aria-hidden="true"></span>
+                </button>
+                <input type="range" min="0" max="1000" step="1" value="0" class="pm-player-progress pm-player-progress--seek pm-player-reference-popover__progress" data-player-reference-progress disabled aria-label="{{ t('research.player.playback_progress') }}">
               </div>
+
+              <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-reference-popover__action" data-player-reference-open href="#" target="_blank" rel="noopener noreferrer">{{ t('research.player.interview.reference_open_context') }} →</a>
             </div>
           </dialog>
           {% elif promat_page.player.render_mode == 'running_text' %}

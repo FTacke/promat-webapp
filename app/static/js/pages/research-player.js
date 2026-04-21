@@ -245,16 +245,16 @@ function init() {
   const secondaryCard = runtimeScope.querySelector('[data-player-speaker-card="secondary"]');
   const itemElements = Array.from(root.querySelectorAll('[data-player-item][data-speaker-key][data-item-id]'));
   const referenceDialog = root.querySelector('[data-player-reference-dialog]');
-  const referenceDialogSurface = referenceDialog?.querySelector('.md3-dialog__surface') || null;
+  const referenceDialogSurface = referenceDialog?.querySelector('.pm-player-reference-popover__surface') || null;
   const referenceDialogTitle = referenceDialog?.querySelector('[data-player-reference-title]') || null;
   const referenceDialogTask = referenceDialog?.querySelector('[data-player-reference-task]') || null;
   const referenceDialogItemNumber = referenceDialog?.querySelector('[data-player-reference-item-number]') || null;
-  const referenceDialogText = referenceDialog?.querySelector('[data-player-reference-text]') || null;
-  const referenceDialogTime = referenceDialog?.querySelector('[data-player-reference-time]') || null;
+  const referenceDialogPlayer = referenceDialog?.querySelector('[data-player-reference-player]') || null;
   const referenceDialogAudio = referenceDialog?.querySelector('[data-player-reference-audio]') || null;
-  const referenceDialogAudioNote = referenceDialog?.querySelector('[data-player-reference-audio-note]') || null;
+  const referenceDialogToggle = referenceDialog?.querySelector('[data-player-reference-toggle]') || null;
+  const referenceDialogToggleIcon = referenceDialog?.querySelector('[data-player-reference-toggle-icon]') || null;
+  const referenceDialogProgress = referenceDialog?.querySelector('[data-player-reference-progress]') || null;
   const referenceDialogOpen = referenceDialog?.querySelector('[data-player-reference-open]') || null;
-  const referenceDialogClose = referenceDialog?.querySelector('[data-player-reference-close]') || null;
   const referenceTriggers = Array.from(root.querySelectorAll('[data-player-reference-trigger]'));
 
   if (!toggle || !progress || !currentLabel || !durationLabel || !volume || !volumeLabel || !rateSlider) {
@@ -362,6 +362,40 @@ function init() {
     pauseReferenceAudio();
     referenceDialogAudio.removeAttribute('src');
     referenceDialogAudio.load();
+    if (referenceDialogProgress) {
+      referenceDialogProgress.value = '0';
+      referenceDialogProgress.disabled = true;
+    }
+    syncReferenceToggleLabel(false);
+  }
+
+  function syncReferenceToggleLabel(isPlaying) {
+    if (!referenceDialogToggle) {
+      return;
+    }
+    const nextLabel = isPlaying ? pauseLabel : playLabel;
+    referenceDialogToggle.setAttribute('aria-label', nextLabel);
+    referenceDialogToggle.setAttribute('title', nextLabel);
+    if (referenceDialogToggleIcon) {
+      referenceDialogToggleIcon.classList.toggle('pm-icon-mask--play', !isPlaying);
+      referenceDialogToggleIcon.classList.toggle('pm-icon-mask--pause', isPlaying);
+    }
+  }
+
+  function syncReferenceProgress() {
+    if (!referenceDialogAudio || !referenceDialogProgress) {
+      return;
+    }
+
+    const duration = Number.isFinite(referenceDialogAudio.duration) ? referenceDialogAudio.duration : 0;
+    const currentTime = Number.isFinite(referenceDialogAudio.currentTime) ? referenceDialogAudio.currentTime : 0;
+    if (duration > 0) {
+      referenceDialogProgress.disabled = false;
+      referenceDialogProgress.value = String(Math.min(1000, Math.max(0, Math.round((currentTime / duration) * 1000))));
+      return;
+    }
+    referenceDialogProgress.disabled = true;
+    referenceDialogProgress.value = '0';
   }
 
   function cancelSequence() {
@@ -430,6 +464,9 @@ function init() {
     }
 
     pauseReferenceAudio();
+    if (referenceTrigger) {
+      referenceTrigger.setAttribute('aria-expanded', 'false');
+    }
     if (typeof referenceDialog.close === 'function') {
       referenceDialog.close();
     } else {
@@ -442,45 +479,43 @@ function init() {
   }
 
   function openReferenceDialog(trigger) {
-    if (!referenceDialog || !referenceDialogTitle || !referenceDialogTask || !referenceDialogText || !referenceDialogOpen) {
+    if (!referenceDialog || !referenceDialogTitle || !referenceDialogTask || !referenceDialogOpen) {
       return;
+    }
+
+    if (referenceDialog?.hasAttribute('open') && referenceTrigger === trigger) {
+      closeReferenceDialog();
+      return;
+    }
+
+    if (referenceTrigger && referenceTrigger !== trigger) {
+      referenceTrigger.setAttribute('aria-expanded', 'false');
     }
 
     referenceTrigger = trigger;
     const label = trigger.dataset.referenceLabel || '';
-    const canonicalText = trigger.dataset.referenceCanonicalText || label;
     const taskLabel = trigger.dataset.referenceTaskLabel || '';
     const itemNumber = trigger.dataset.referenceItemNumber || '';
-    const timeLabel = trigger.dataset.referenceTimeLabel || '';
     const openHref = trigger.dataset.referenceOpenHref || '#';
     const clipHref = trigger.dataset.referenceClipHref || '';
-    const unavailableLabel = trigger.dataset.referenceUnavailableLabel || '';
 
     referenceDialogTitle.textContent = label;
     referenceDialogTask.textContent = taskLabel;
-    referenceDialogText.textContent = canonicalText;
     referenceDialogOpen.href = openHref;
 
     if (referenceDialogItemNumber) {
       referenceDialogItemNumber.textContent = itemNumber;
       referenceDialogItemNumber.hidden = !itemNumber;
     }
-    if (referenceDialogTime) {
-      referenceDialogTime.textContent = timeLabel;
-      referenceDialogTime.hidden = !timeLabel;
-    }
-    if (referenceDialogAudio && referenceDialogAudioNote) {
+    if (referenceDialogAudio && referenceDialogPlayer) {
+      resetReferenceAudio();
       if (clipHref) {
-        referenceDialogAudio.hidden = false;
+        referenceDialogPlayer.hidden = false;
         referenceDialogAudio.src = clipHref;
-        referenceDialogAudio.setAttribute('aria-label', trigger.dataset.referenceClipLabel || canonicalText);
-        referenceDialogAudioNote.hidden = true;
-        referenceDialogAudioNote.textContent = '';
+        referenceDialogAudio.setAttribute('aria-label', trigger.dataset.referenceClipLabel || label);
+        syncReferenceProgress();
       } else {
-        resetReferenceAudio();
-        referenceDialogAudio.hidden = true;
-        referenceDialogAudioNote.hidden = !unavailableLabel;
-        referenceDialogAudioNote.textContent = unavailableLabel;
+        referenceDialogPlayer.hidden = true;
       }
     }
 
@@ -489,11 +524,12 @@ function init() {
       audio.pause();
     }
 
-    if (typeof referenceDialog.showModal === 'function') {
+    if (!referenceDialog.hasAttribute('open') && typeof referenceDialog.showModal === 'function') {
       referenceDialog.showModal();
-    } else {
+    } else if (!referenceDialog.hasAttribute('open')) {
       referenceDialog.setAttribute('open', 'open');
     }
+    trigger.setAttribute('aria-expanded', 'true');
     positionReferenceDialog(trigger);
   }
 
@@ -981,6 +1017,16 @@ function init() {
       continue;
     }
 
+    if (button.tagName !== 'BUTTON') {
+      button.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') {
+          return;
+        }
+        event.preventDefault();
+        button.click();
+      });
+    }
+
     button.addEventListener('click', async () => {
       const speakerKey = element.dataset.speakerKey || 'primary';
       const itemId = element.dataset.itemId;
@@ -1051,16 +1097,57 @@ function init() {
   }
 
   if (referenceDialogAudio) {
+    referenceDialogAudio.addEventListener('loadedmetadata', syncReferenceProgress);
+    referenceDialogAudio.addEventListener('durationchange', syncReferenceProgress);
+    referenceDialogAudio.addEventListener('timeupdate', syncReferenceProgress);
     referenceDialogAudio.addEventListener('play', () => {
       cancelSequence();
       for (const audio of audioMap.values()) {
         audio.pause();
       }
+      syncReferenceToggleLabel(true);
+    });
+    referenceDialogAudio.addEventListener('pause', () => {
+      syncReferenceToggleLabel(false);
+    });
+    referenceDialogAudio.addEventListener('ended', () => {
+      syncReferenceToggleLabel(false);
+      syncReferenceProgress();
     });
   }
 
-  referenceDialogClose?.addEventListener('click', () => {
-    closeReferenceDialog();
+  referenceDialogToggle?.addEventListener('click', async () => {
+    if (!referenceDialogAudio || !referenceDialogAudio.getAttribute('src')) {
+      return;
+    }
+
+    if (!referenceDialogAudio.paused) {
+      referenceDialogAudio.pause();
+      return;
+    }
+
+    cancelSequence();
+    for (const audio of audioMap.values()) {
+      audio.pause();
+    }
+
+    try {
+      await referenceDialogAudio.play();
+    } catch {
+      syncReferenceToggleLabel(false);
+    }
+  });
+
+  referenceDialogProgress?.addEventListener('input', () => {
+    if (!referenceDialogAudio) {
+      return;
+    }
+    const duration = Number.isFinite(referenceDialogAudio.duration) ? referenceDialogAudio.duration : 0;
+    if (duration <= 0) {
+      return;
+    }
+    referenceDialogAudio.currentTime = (Number(referenceDialogProgress.value) / 1000) * duration;
+    syncReferenceProgress();
   });
 
   if (referenceDialogResizeHandler) {

@@ -233,6 +233,7 @@ The player state must be able to represent at least these values:
 - Interview must not be forced into the interaction model of isolated wordlist items or quiet sentence-list rows.
 - Focus handling for interview uses `focus_segment` where segment identifiers are the primary structure.
 - Material references embedded in interview segments open a small contextual reference overlay inside the shared player page, with an `Im Kontext öffnen` or `Open in context` link back into the relevant productive player task and an optional mini-player for the referenced split clip when such a clip exists.
+- When an interview token carries a material reference and token-local suffix punctuation, the renderer must show the spoken token core first, then the inline reference label, then that same token-local suffix without reconstructing punctuation from annotation fields.
 
 ## Direct Comparison in Player
 

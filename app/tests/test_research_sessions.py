@@ -351,27 +351,21 @@ def _write_interview_player_artifacts(runtime_root: Path, language_slug: str, se
                 "speaker_code": "participant",
                 "start_ms": 5200,
                 "end_ms": 9800,
-                "text": "Ganz gut, vor allem bei dem ersten Wort.",
+                "text": "Item Nummer 1.",
                 "tokens": [
-                    {"token_id": "seg_002_tok_001", "text": "Ganz", "start_ms": 5200, "end_ms": 5640},
-                    {"token_id": "seg_002_tok_002", "text": "gut,", "start_ms": 5640, "end_ms": 6100},
-                    {"token_id": "seg_002_tok_003", "text": "vor", "start_ms": 6100, "end_ms": 6420},
-                    {"token_id": "seg_002_tok_004", "text": "allem", "start_ms": 6420, "end_ms": 6900},
-                    {"token_id": "seg_002_tok_005", "text": "bei", "start_ms": 6900, "end_ms": 7200},
-                    {"token_id": "seg_002_tok_006", "text": "dem", "start_ms": 7200, "end_ms": 7460},
-                    {"token_id": "seg_002_tok_007", "text": "ersten", "start_ms": 7460, "end_ms": 7900},
-                    {"token_id": "seg_002_tok_008", "text": "Wort.", "start_ms": 7900, "end_ms": 9800},
+                    {"token_id": "seg_002_tok_001", "text": "Item", "start_ms": 5200, "end_ms": 6100},
+                    {"token_id": "seg_002_tok_002", "text": "Nummer", "start_ms": 6100, "end_ms": 7460},
+                    {"token_id": "seg_002_tok_003", "text": "1", "suffix": ".", "start_ms": 7460, "end_ms": 9800},
                 ],
                 "annotations": [
                     {
                         "kind": "material_ref",
                         "item_id": "wl_001",
                         "task": "wordlist",
-                        "insert_after_token_id": "seg_002_tok_004",
+                        "insert_after_token_id": "seg_002_tok_003",
                         "label": "mesa",
                         "item_number": "1",
                         "canonical_text": "mesa",
-                        "trailing_punctuation": ".",
                     }
                 ],
             },
@@ -1825,6 +1819,8 @@ def test_player_page_builds_productive_interview_view_inside_shared_player(runti
         for segment in page["player"]["primary"]["items"][1]["text_segments"]
         if segment["kind"] == "material_ref"
     )
+    assert material_ref["suffix"] == "."
+    assert "trailing_punctuation" not in material_ref
     assert material_ref["reference"]["task_label"] == "Wortliste"
     assert "focus_item=wl_001" in material_ref["reference"]["open_href"]
     assert material_ref["reference"]["clip_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")
@@ -1865,6 +1861,12 @@ def test_player_route_renders_interview_transcript_and_reference_dialog_in_both_
     assert "data-player-reference-dialog" in html_de
     assert "Explorator:in" in html_de
     assert "Im Kontext öffnen" in html_de
+    assert "pm-player-transcript__segment" not in html_de
+    assert "Segment 1" not in html_de
+    assert "data-player-reference-close" not in html_de
+    assert "pm-player-inline-ref__label" in html_de
+    assert '</button><span class="pm-player-inline-ref__punctuation">.</span>' in html_de
+    assert 'target="_blank"' in html_de
     assert "data-player-compare-add" not in html_de
     assert "data-player-set-select" not in html_de
 
@@ -1872,6 +1874,10 @@ def test_player_route_renders_interview_transcript_and_reference_dialog_in_both_
     assert "Interviewer" in html_en
     assert "Open in context" in html_en
     assert "data-player-reference-dialog" in html_en
+    assert "pm-player-transcript__segment" not in html_en
+    assert "Segment 1" not in html_en
+    assert "data-player-reference-close" not in html_en
+    assert '</button><span class="pm-player-inline-ref__punctuation">.</span>' in html_en
 
 
 def test_player_audio_route_serves_interview_full_audio(runtime_env: Path, url_app: Flask) -> None:

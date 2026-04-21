@@ -224,8 +224,23 @@ def _prepare_interview_batch(
                             "speaker_code": "interviewer",
                             "start_ms": 0,
                             "end_ms": 1000,
-                            "text": "Hallo.",
-                            "tokens": [{"token_id": "seg_001_tok_001", "text": "Hallo.", "start_ms": 0, "end_ms": 1000}],
+                            "text": "Item Nummer 25.",
+                            "tokens": [
+                                {"token_id": "seg_001_tok_001", "text": "Item", "start_ms": 0, "end_ms": 250},
+                                {"token_id": "seg_001_tok_002", "text": "Nummer", "start_ms": 250, "end_ms": 600},
+                                {"token_id": "seg_001_tok_003", "text": "25", "suffix": ".", "start_ms": 600, "end_ms": 1000},
+                            ],
+                            "annotations": [
+                                {
+                                    "kind": "material_ref",
+                                    "item_id": "wl_025",
+                                    "task": "wordlist",
+                                    "insert_after_token_id": "seg_001_tok_003",
+                                    "label": "oír",
+                                    "item_number": "25",
+                                    "canonical_text": "oír",
+                                }
+                            ],
                         }
                     ],
                 },
@@ -305,6 +320,8 @@ def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Pat
     assert (session_dir / "derived" / "interview.mp3").read_bytes() == b"runtime-interview-mp3"
     assert interview_alignment["session_id"] == "ES-L-0001-2026-S01"
     assert interview_alignment["audio"] == {"full_mp3": "derived/interview.mp3"}
+    assert interview_alignment["segments"][0]["tokens"][2]["suffix"] == "."
+    assert all("trailing_punctuation" not in annotation for annotation in interview_alignment["segments"][0]["annotations"])
 
     interview_task = next(task for task in metadata["tasks"] if task["task_type"] == "interview")
     assert interview_task == {

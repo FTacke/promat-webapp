@@ -491,7 +491,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   }
 
   .pm-player-transcript__row {
-    grid-template-columns: minmax(10rem, 11.5rem) minmax(0, 1fr);
+    grid-template-columns: minmax(8.3rem, 9.4rem) minmax(0, 1fr);
     column-gap: var(--pm-space-md);
     align-items: start;
   }
