@@ -10,6 +10,7 @@ os.environ.setdefault("FLASK_ENV", "development")
 os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(TEST_REPO_ROOT / "scripts" / "research_data_intake"))
 
 from intake_batch_common import ParsedBatchFile, build_batch_inventory  # noqa: E402
@@ -79,3 +80,28 @@ def test_build_task_entries_lists_raw_files_even_without_productive_task(tmp_pat
     assert file_map["raw/interview.wav"]["file_role"] == "audio_raw"
     assert file_map["raw/interview.wav"]["status"] == "archived"
     assert file_map["source/wordlist.wav"]["file_role"] == "audio_source"
+
+
+def test_build_task_entries_uses_json_alignment_for_interview(tmp_path: Path) -> None:
+    session_dir = tmp_path / "ES-L-0001-2026-S01"
+    (session_dir / "source").mkdir(parents=True, exist_ok=True)
+    (session_dir / "alignment").mkdir(parents=True, exist_ok=True)
+    (session_dir / "derived").mkdir(parents=True, exist_ok=True)
+    (session_dir / "source" / "interview.wav").write_bytes(b"processed-interview")
+    (session_dir / "alignment" / "interview.json").write_text("{}\n", encoding="utf-8")
+    (session_dir / "derived" / "interview.mp3").write_bytes(b"processed-interview-mp3")
+
+    tasks, files = _build_task_entries(session_dir)
+
+    assert tasks == [
+        {
+            "task_type": "interview",
+            "label": "Interview zur Aussprache",
+            "source_file": "source/interview.wav",
+            "alignment_file": "alignment/interview.json",
+            "derived_file": "derived/interview.mp3",
+        }
+    ]
+    file_map = {entry["path"]: entry for entry in files}
+    assert file_map["alignment/interview.json"]["file_role"] == "alignment_json"
+    assert file_map["derived/interview.mp3"]["file_role"] == "audio_mp3"

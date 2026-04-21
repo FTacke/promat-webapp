@@ -357,16 +357,19 @@ working/
 - Batch directories under `scripts/research_data_intake/import/` are generic intake areas and are not hard-wired to one corpus language.
 - A processable batch directory must keep `batch` in its directory name and must provide at least `processed/`.
 - `processed/` is the primary intake input for file-based organization of task WAVs and TextGrids.
+- `processed/` remains the primary intake input for batch-local working preparation; `raw/` is not a substitute for `source/` and is never silently reinterpreted as the operative working layer.
 - `raw/` is optional at batch level, but when it contains real untouched original WAV masters it is the archival source for the productive session-tree `raw/` layer.
 - Batch `raw/` must not be collapsed into `source/`; processed working WAVs remain a separate operative layer.
 - `intake_data/` is optional and may carry workbook or helper material, but it is not itself the derived working tree.
 - The active production importer reads workbook steering data from `intake_data/*.xlsx` together with the batch-local `working/` tree.
 - `working/` is a pre-production, person- and task-centered preparation area inside one concrete batch.
+- The batch-local working organizer updates that tree incrementally per `person_id` and per task instead of deleting the whole `working/` subtree for each run.
 - Batch-local `working/` outputs are preparatory only: they must not write into `data/`, must not create production session metadata, and any `alignment/text.json` created there remains a working-tree intermediate artifact rather than a transferred production session artifact.
 
 ### Working subtree
 
 ```text
+working/.intake_state.json
 working/{person_id}/wordlist/source/wordlist.wav
 working/{person_id}/wordlist/alignment/wordlist.TextGrid
 working/{person_id}/text/source/text.wav
@@ -376,25 +379,34 @@ working/{person_id}/text/mfa_corpus/
 working/{person_id}/text/mfa_output/
 working/{person_id}/text/mfa_manifest.json
 working/{person_id}/interview/source/interview.wav
-working/{person_id}/interview/alignment/interview.TextGrid
+working/{person_id}/interview/alignment/interview.json
 ```
 
 ### Working rules
 
 - The canonical task filenames inside `working/` are always task-based, for example `source/text.wav` and `alignment/text.TextGrid`, regardless of the intake filename that carried the file into the batch.
+- `working/.intake_state.json` is the batch-local technical state for incremental organization and records the recognized task inputs, size-plus-`mtime` snapshots, last task status, last evaluation time, and the managed working outputs per `person_id` and task.
 - Person and task assignment for batch-file organization must come from explicit filename logic only; the pipeline must not invent person IDs or task names heuristically.
+- For `wordlist` and `text`, the organizer treats the batch `processed/` WAV plus batch `processed/` TextGrid as the relevant working inputs; only when those inputs change may that task subtree under `working/{person_id}/{task}/` be replaced.
+- When a task changes, replacement stays task-local: the organizer may replace only `working/{person_id}/{task}/` and must not delete the whole person subtree or the whole batch `working/` directory.
 - In the current preparatory `text` path, the TextGrid is only the segment-boundary source.
 - The preparatory `text` MFA step may create only segmented WAVs, matching `.lab` transcripts, `mfa_output/` target directories, and a batch-local manifest for reverse mapping.
 - The batch-local `text` import step may derive `working/{person_id}/text/alignment/text.json` from the preparatory manifest plus MFA `mfa_output/` TextGrids, while still staying inside the batch-local working tree.
 - In this working-tree-only `text` JSON step, `audio.full_mp3` may already point to the canonical future relative artifact path `derived/text.mp3` even though the MP3 artifact is not produced yet in that same step.
 - In this working-tree-only `text` JSON step, `session_id` may remain `null` until later metadata integration resolves the final production session identity.
 - The preparatory `text` MFA step must obtain canonical item texts from an explicit external source such as a task catalog or mapping JSON and must not guess final texts from TextGrid labels.
+- For `interview`, the working organizer now treats Amberscript JSON as the productive batch-local raw source for the alignment payload: it prefers `*_interview_processed.wav` and `*_interview_processed.json`, falls back to `*_interview_raw.wav` and `*_interview_raw.json`, writes the selected audio to `working/{person_id}/interview/source/interview.wav`, and transforms the selected Amberscript JSON into `working/{person_id}/interview/alignment/interview.json`.
+- That interview source selection remains explicit and filename-driven. If multiple equally ranked candidates exist for the same required input, the organizer must report a hard conflict instead of guessing.
+- For `interview`, `person_id` values with speaker marker `-N-` and workbook rows with `speaker_type = native_speaker` are a neutral not-expected case: missing batch WAV or JSON must not be reported as missing or incomplete, and organizer or importer status must stay a non-deficit value such as `not_expected_for_native_speaker`.
+- The batch-local interview JSON is a productive working-tree preparation artifact for the central production importer.
 - The current intake language configuration for this working path is prepared generically for `es`, `de`, `fr`, and `en`, including the mapped MFA acoustic and dictionary models per language.
 - Final production transfer from intake batches into `data/sessions/` is executed only by the central importer `scripts/research_data_intake/import_batch_to_production.py`.
 - That importer may populate PostgreSQL research metadata tables `research_people`, `research_sessions`, and `research_session_exposures` from workbook sheets `Research_Person`, `Research_Session_Intake`, and `Exposure`.
 - The same importer projects canonical runtime `metadata.json` plus task artifacts into `data/sessions/{language}/{session_id}/`, archives real raw masters into `raw/`, and may sync only the productive task layers whose working inputs are actually available.
+- For `interview`, the central importer treats `working/{person_id}/interview/source/interview.wav` plus `working/{person_id}/interview/alignment/interview.json` as the productive task inputs, writes them into `source/interview.wav` and `alignment/interview.json`, resolves the final `session_id` inside the runtime alignment JSON, and derives `derived/interview.mp3` for the runtime session tree.
+- For native speakers, `interview` stays not expected in the central importer as well: missing working inputs or missing raw masters for that task are not deficits, and the importer must not project native-speaker interview artifacts or metadata entries into the runtime session tree.
 - For archive sync, raw master mapping must stay explicit and filename-driven by person and task; it must not be inferred heuristically from workbook prose or substituted from processed working files.
-- Interview remains a declared task key and structure slot, but no productive interview artifact import exists yet.
+- Interview remains a declared task key with productive runtime artifacts, but its player rendering path stays a separate concern from the central import and runtime-storage rules.
 
 ## Active Metadata Semantics
 

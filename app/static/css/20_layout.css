@@ -404,6 +404,10 @@ body.app-shell.page-landing .md3-content-wrapper {
 .pm-player-list,
 .pm-player-list__row,
 .pm-player-list__header,
+.pm-player-transcript,
+.pm-player-transcript__row,
+.pm-player-transcript__meta,
+.pm-player-transcript__body,
 .pm-player-timeline-row,
 .pm-player-transport-cluster,
 .pm-player-transport-main,
@@ -486,6 +490,12 @@ body.app-shell.page-landing .md3-content-wrapper {
     column-gap: var(--pm-space-sm);
   }
 
+  .pm-player-transcript__row {
+    grid-template-columns: minmax(10rem, 11.5rem) minmax(0, 1fr);
+    column-gap: var(--pm-space-md);
+    align-items: start;
+  }
+
   .pm-player-runtime__inner[data-player-compare-open="true"] .pm-player-summary-cards.is-compare-ready > [data-player-speaker-card] {
     grid-column: auto;
   }
@@ -517,7 +527,8 @@ body.app-shell.page-landing .md3-content-wrapper {
   .pm-player-control-bar__row--settings,
   .pm-player-list__row--single,
   .pm-player-list__header,
-  .pm-player-list__row--compare {
+  .pm-player-list__row--compare,
+  .pm-player-transcript__row {
     grid-template-columns: 1fr;
   }
 }

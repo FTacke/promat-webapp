@@ -44,7 +44,7 @@ This file is the binding source of truth for the active research capability mode
 
 - Technical task keys stay stable English machine values.
 - Visible corpus-specific labels do not create new task keys or second task families.
-- `interview` is an explicit limited special case inside the shared capability layer: it stays visible where documented, does not support compare, does not support set filtering, and does not get forced into the current productive player workflow before its dedicated renderer exists.
+- `interview` remains an explicit limited special case inside the shared capability layer: it is productive inside the unified player shell, does not support compare, does not support set filtering, and does not create a second player architecture, task-specific route family, or separate upper player zone.
 
 ### Canonical task labels
 
@@ -80,17 +80,18 @@ This file is the binding source of truth for the active research capability mode
 ### `interview`
 
 - visible in the shared player task switch
-- not yet productive in the current unified player
+- productive in the current unified player through the existing shared player shell
 - not compare-capable
 - not set-filter-capable
 - not part of the current `comparison` or `phenomena` workbench subsets
 - not available for native-speaker sessions
-- remains a separate-flow capability inside the shared capability contract
+- uses the productive runtime artifacts `alignment/interview.json` plus `derived/interview.mp3`
+- uses a segment-oriented renderer inside the shared player content area below the existing player-control zone
 
 ## Canonical Workbench Subsets
 
 - Player-visible tasks: `wordlist`, `text`, `interview`
-- Player-productive tasks: `wordlist`, `text`
+- Player-productive tasks: `wordlist`, `text`, `interview`
 - Player-compare tasks: `wordlist`, `text`
 - Set-filter-capable tasks: `wordlist`, `text`
 - `phenomena` task subset: `wordlist`, `text`

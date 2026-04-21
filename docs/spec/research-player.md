@@ -30,7 +30,7 @@ This file is the binding source of truth for the active architecture of the rese
 - Source resolution, set-context resolution, media loading, item normalization, and compare-state resolution are separate bounded responsibilities inside the player runtime layer.
 - View composition stays separate from runtime resolution: page builders may assemble metadata cards, controls, and route-aware links, but they must not become a second source of truth for source or item semantics.
 - Compare remains a bounded extension of the same runtime state and must not fork a second player loading pipeline.
-- Interview remains intentionally separate from the productive item-runtime path until its dedicated segment-oriented renderer is implemented.
+- Interview uses its dedicated segment-oriented renderer inside the same unified player shell and runtime seam; it does not create a second player product, a task-specific route family, or a second upper player zone.
 
 ## Source and Item Normalization
 
@@ -155,8 +155,8 @@ The player state must be able to represent at least these values:
 - Unrelated drafts stay hidden, and visible labels in that selector use curated or saved set titles rather than raw technical IDs.
 - Source-driven view switching remains separate from task and set controls. If a source supports both list and connected-text rendering, the view switch appears as a compact local control in the content-panel header on the right, opposite the content title and item count, and it must not introduce a second standalone control box between the material bar and playback.
 - Tasks that are not available for the current session may remain visible as disabled, non-interactive controls.
-- `wordlist` and `text` are productive task modes when the session has valid alignment and audio artifacts.
-- `interview` stays visible in the shared switch but continues to render as an honest unavailable state until its dedicated interview renderer exists.
+- `wordlist`, `text`, and `interview` are productive task modes when the session has valid alignment and audio artifacts for the respective task.
+- `interview` stays inside the same task switch and same upper player frame as the other productive tasks; only the content renderer below the control zone changes to the segment-oriented transcript surface.
 
 ## Task Modes
 
@@ -227,9 +227,12 @@ The player state must be able to represent at least these values:
 
 - Interview uses a dedicated interview-appropriate renderer.
 - Interview does not use comparison mode.
+- Interview does not introduce set-filter logic and does not expose the `Set wählen` control.
+- The interview renderer works from the productive imported runtime artifacts `alignment/interview.json` plus `derived/interview.mp3`.
 - The interview renderer must support speaker changes and segment-based navigation.
 - Interview must not be forced into the interaction model of isolated wordlist items or quiet sentence-list rows.
-- Focus handling for interview may use segment identifiers where item identifiers are not the primary structure.
+- Focus handling for interview uses `focus_segment` where segment identifiers are the primary structure.
+- Material references embedded in interview segments open a small contextual reference overlay inside the shared player page, with an `Im Kontext öffnen` or `Open in context` link back into the relevant productive player task and an optional mini-player for the referenced split clip when such a clip exists.
 
 ## Direct Comparison in Player
 

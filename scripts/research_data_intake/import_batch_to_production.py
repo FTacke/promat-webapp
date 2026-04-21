@@ -28,15 +28,16 @@ os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(REPO_ROOT / "public"))
 
 from app.config import DEFAULT_DEV_DATABASE_URL  # noqa: E402
-from app.research_capabilities import RESEARCH_TASK_KEYS, get_research_task_capability  # noqa: E402
+from app.research_capabilities import RESEARCH_TASK_KEYS, get_research_task_capability, is_task_available_for_speaker_type  # noqa: E402
 from app.research_metadata import ResearchPerson, ResearchSession, ResearchSessionExposure  # noqa: E402
 from app.runtime_paths import get_sessions_root  # noqa: E402
-from audio_conversion.ffmpeg_audio import ensure_media_tools  # noqa: E402
+from audio_conversion.ffmpeg_audio import create_full_task_mp3, ensure_media_tools  # noqa: E402
 from intake_batch_common import (  # noqa: E402
     build_batch_inventory,
     choose_unique_candidate,
     collect_batch_files,
     files_match,
+    is_native_speaker_person_id,
     resolve_batch_dir,
     working_alignment_path,
     working_source_path,
@@ -256,9 +257,29 @@ def _task_status_from_session_dir(session_dir: Path, task_key: str) -> bool:
     return source_path.exists() or alignment_path.exists() or alignment_json_path.exists() or derived_mp3_path.exists()
 
 
-def _documented_tasks_from_session_dir(session_dir: Path) -> tuple[str, ...]:
+def _task_not_expected_status(task_key: str, person_id: str, speaker_type: str | None) -> tuple[str, str] | None:
+    normalized_speaker_type = (speaker_type or "").strip()
+    if normalized_speaker_type:
+        if is_task_available_for_speaker_type(task_key, normalized_speaker_type):
+            return None
+        if task_key == "interview" and normalized_speaker_type == "native_speaker":
+            return ("not_expected_for_native_speaker", "interview is not expected for native_speaker")
+        return None
+    if task_key == "interview" and is_native_speaker_person_id(person_id):
+        return ("not_expected_for_native_speaker", "interview is not expected for native_speaker")
+    return None
+
+
+def _documented_tasks_from_session_dir(
+    session_dir: Path,
+    *,
+    person_id: str | None = None,
+    speaker_type: str | None = None,
+) -> tuple[str, ...]:
     documented: list[str] = []
     for task_key in RESEARCH_TASK_KEYS:
+        if person_id is not None and _task_not_expected_status(task_key, person_id, speaker_type) is not None:
+            continue
         if _task_status_from_session_dir(session_dir, task_key):
             documented.append(task_key)
     return tuple(documented)
@@ -268,6 +289,7 @@ def _plan_raw_syncs(
     *,
     batch_inventory: dict[str, dict[str, Any]],
     person_id: str,
+    speaker_type: str | None = None,
     target_session_dir: Path,
     warnings: list[str],
     conflicts: list[str],
@@ -275,9 +297,25 @@ def _plan_raw_syncs(
     raw_plans: list[RawSyncPlan] = []
     person_inventory = batch_inventory.get(person_id, {})
     for task_key in RESEARCH_TASK_KEYS:
+        not_expected = _task_not_expected_status(task_key, person_id, speaker_type)
+        target_path = _raw_target_path(target_session_dir, task_key)
+        if not_expected is not None:
+            status, reason = not_expected
+            raw_plans.append(
+                RawSyncPlan(
+                    task_key=task_key,
+                    action="skip",
+                    status=status,
+                    reason=reason,
+                    source_path=None,
+                    target_path=target_path,
+                    relative_source=None,
+                )
+            )
+            continue
+
         bucket = person_inventory.get(task_key)
         candidates = [] if bucket is None else bucket.raw_wav
-        target_path = _raw_target_path(target_session_dir, task_key)
         selected_entry, candidate_warning = choose_unique_candidate(
             candidates,
             source_label="batch/raw",
@@ -352,11 +390,31 @@ def _plan_raw_syncs(
     return tuple(raw_plans)
 
 
-def _detect_working_task(batch_dir: Path, person_id: str, task_key: str, sync_tasks: bool) -> TaskSyncPlan:
+def _detect_working_task(
+    batch_dir: Path,
+    person_id: str,
+    task_key: str,
+    sync_tasks: bool,
+    speaker_type: str | None,
+) -> TaskSyncPlan:
     task_root = working_task_root(batch_dir, person_id, task_key)
     source_wav = working_source_path(batch_dir, person_id, task_key)
     alignment_textgrid = working_alignment_path(batch_dir, person_id, task_key)
     working_alignment_json = task_root / "alignment" / f"{task_key}.json"
+
+    not_expected = _task_not_expected_status(task_key, person_id, speaker_type)
+    if not_expected is not None:
+        status, reason = not_expected
+        return TaskSyncPlan(
+            task_key=task_key,
+            action="skip",
+            status=status,
+            reason=reason,
+            working_root=task_root,
+            source_wav=None,
+            alignment_textgrid=None,
+            working_alignment_json=None,
+        )
 
     if not task_root.exists():
         return TaskSyncPlan(
@@ -417,27 +475,38 @@ def _detect_working_task(batch_dir: Path, person_id: str, task_key: str, sync_ta
         )
 
     interview_source = source_wav.exists()
-    interview_alignment = alignment_textgrid.exists() or working_alignment_json.exists()
-    if interview_source or interview_alignment:
+    interview_alignment_json = working_alignment_json.exists()
+    if not interview_source and not interview_alignment_json:
         return TaskSyncPlan(
             task_key=task_key,
             action="skip",
-            status="not_implemented",
-            reason="interview import pipeline is not implemented yet",
+            status="missing",
+            reason="no interview working inputs",
+            working_root=task_root,
+            source_wav=None,
+            alignment_textgrid=None,
+            working_alignment_json=None,
+        )
+    if not interview_source or not interview_alignment_json:
+        return TaskSyncPlan(
+            task_key=task_key,
+            action="skip",
+            status="incomplete",
+            reason="interview source/alignment JSON missing",
             working_root=task_root,
             source_wav=source_wav if interview_source else None,
-            alignment_textgrid=alignment_textgrid if alignment_textgrid.exists() else None,
-            working_alignment_json=working_alignment_json if working_alignment_json.exists() else None,
+            alignment_textgrid=None,
+            working_alignment_json=working_alignment_json if interview_alignment_json else None,
         )
     return TaskSyncPlan(
         task_key=task_key,
-        action="skip",
-        status="missing",
-        reason="no interview working inputs",
+        action="sync" if sync_tasks else "available",
+        status="ready",
+        reason=None,
         working_root=task_root,
-        source_wav=None,
+        source_wav=source_wav,
         alignment_textgrid=None,
-        working_alignment_json=None,
+        working_alignment_json=working_alignment_json,
     )
 
 
@@ -537,12 +606,19 @@ def _build_import_plans(
                 )
 
         task_plans = tuple(
-            _detect_working_task(batch_dir=batch_dir, person_id=workbook_session.person_id, task_key=task_key, sync_tasks=sync_tasks)
+            _detect_working_task(
+                batch_dir=batch_dir,
+                person_id=workbook_session.person_id,
+                task_key=task_key,
+                sync_tasks=sync_tasks,
+                speaker_type=person.speaker_type,
+            )
             for task_key in RESEARCH_TASK_KEYS
         )
         raw_plans = _plan_raw_syncs(
             batch_inventory=batch_inventory,
             person_id=workbook_session.person_id,
+            speaker_type=person.speaker_type,
             target_session_dir=target_session_dir,
             warnings=warnings,
             conflicts=conflicts,
@@ -714,10 +790,17 @@ def _copy_file(source: Path, target: Path) -> None:
     shutil.copy2(source, target)
 
 
-def _build_task_entries(session_dir: Path) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _build_task_entries(
+    session_dir: Path,
+    *,
+    person_id: str | None = None,
+    speaker_type: str | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     tasks: list[dict[str, Any]] = []
     files: list[dict[str, Any]] = []
     for task_key in RESEARCH_TASK_KEYS:
+        if person_id is not None and _task_not_expected_status(task_key, person_id, speaker_type) is not None:
+            continue
         raw_path = _raw_target_path(session_dir, task_key)
         if raw_path.exists():
             files.append(
@@ -742,8 +825,11 @@ def _build_task_entries(session_dir: Path) -> tuple[list[dict[str, Any]], list[d
             "task_type": task_key,
             "label": _task_label(task_key),
             "source_file": source_rel,
-            "alignment_file": alignment_rel,
         }
+        if alignment_path.exists():
+            task_entry["alignment_file"] = alignment_rel
+        elif alignment_json_path.exists():
+            task_entry["alignment_file"] = alignment_json_rel
         if derived_path.exists():
             task_entry["derived_file"] = derived_rel
         tasks.append(task_entry)
@@ -774,8 +860,16 @@ def _build_task_entries(session_dir: Path) -> tuple[list[dict[str, Any]], list[d
 
 
 def _build_metadata_payload(plan: SessionImportPlan, session_dir: Path) -> tuple[dict[str, Any], tuple[str, ...]]:
-    documented_tasks = _documented_tasks_from_session_dir(session_dir)
-    tasks, files = _build_task_entries(session_dir)
+    documented_tasks = _documented_tasks_from_session_dir(
+        session_dir,
+        person_id=plan.person.person_id,
+        speaker_type=plan.person.speaker_type,
+    )
+    tasks, files = _build_task_entries(
+        session_dir,
+        person_id=plan.person.person_id,
+        speaker_type=plan.person.speaker_type,
+    )
     payload: dict[str, Any] = {
         "person_id": plan.person.person_id,
         "session_id": plan.session.session_id,
@@ -811,7 +905,7 @@ def _build_metadata_payload(plan: SessionImportPlan, session_dir: Path) -> tuple
                 "country": exposure.country,
                 "duration_months": exposure.duration_months,
                 "type": exposure.exposure_type,
-                "notes": exposure.exposure_notes,
+                "exposure_notes": exposure.exposure_notes,
                 "needs_review": exposure.needs_review,
             }
             for exposure in plan.exposures
@@ -941,6 +1035,37 @@ def _sync_text_task(plan: SessionImportPlan, task_plan: TaskSyncPlan) -> dict[st
     )
 
 
+def _sync_interview_task(plan: SessionImportPlan, task_plan: TaskSyncPlan) -> dict[str, Any]:
+    assert task_plan.source_wav is not None
+    assert task_plan.working_alignment_json is not None
+    session_dir = plan.target_session_dir
+    source_target = session_dir / "source" / "interview.wav"
+    alignment_target = session_dir / "alignment" / "interview.json"
+    derived_target = session_dir / "derived" / "interview.mp3"
+
+    _copy_file(task_plan.source_wav, source_target)
+
+    payload = json.loads(task_plan.working_alignment_json.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ProductionImportError(
+            f"Working interview alignment JSON must contain an object: {task_plan.working_alignment_json}"
+        )
+    payload["session_id"] = plan.session.session_id
+    payload["person_id"] = plan.person.person_id
+    payload["task"] = "interview"
+    payload["audio"] = {"full_mp3": "derived/interview.mp3"}
+    alignment_target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    create_full_task_mp3(source_target, derived_target)
+
+    return {
+        "session_id": plan.session.session_id,
+        "person_id": plan.person.person_id,
+        "mode": "write",
+        "segment_count": len(payload.get("segments", [])) if isinstance(payload.get("segments"), list) else 0,
+    }
+
+
 def _sync_raw_files(raw_plans: tuple[RawSyncPlan, ...]) -> None:
     for raw_plan in raw_plans:
         if raw_plan.action != "sync":
@@ -948,6 +1073,22 @@ def _sync_raw_files(raw_plans: tuple[RawSyncPlan, ...]) -> None:
         if raw_plan.source_path is None:
             raise ProductionImportError(f"Raw sync planned without source path for {raw_plan.task_key}")
         _copy_file(raw_plan.source_path, raw_plan.target_path)
+
+
+def _remove_runtime_task_artifacts(session_dir: Path, task_key: str) -> None:
+    artifact_paths = [
+        _raw_target_path(session_dir, task_key),
+        session_dir / "source" / f"{task_key}.wav",
+        session_dir / "alignment" / f"{task_key}.TextGrid",
+        session_dir / "alignment" / f"{task_key}.json",
+        session_dir / "derived" / f"{task_key}.mp3",
+    ]
+    for artifact_path in artifact_paths:
+        if artifact_path.exists() or artifact_path.is_symlink():
+            artifact_path.unlink()
+    items_dir = session_dir / "items" / task_key
+    if items_dir.exists():
+        shutil.rmtree(items_dir)
 
 
 def _apply_plan(
@@ -967,6 +1108,12 @@ def _apply_plan(
                 _sync_wordlist_task(plan, task_plan, validate_wordlist_labels=validate_wordlist_labels)
             elif task_plan.task_key == "text":
                 _sync_text_task(plan, task_plan)
+            elif task_plan.task_key == "interview":
+                _sync_interview_task(plan, task_plan)
+
+        for task_key in RESEARCH_TASK_KEYS:
+            if _task_not_expected_status(task_key, plan.person.person_id, plan.person.speaker_type) is not None:
+                _remove_runtime_task_artifacts(plan.target_session_dir, task_key)
 
         metadata_payload, documented_tasks = _build_metadata_payload(plan, plan.target_session_dir)
         _write_metadata_json(plan.target_session_dir, metadata_payload)

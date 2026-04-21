@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% macro render_player_text(item, text_class) -%}
-<span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}">{{ segment.text }}</span>{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
+<span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}">{{ segment.text }}</span>{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" data-reference-unavailable-label="{{ t('research.player.interview.reference_clip_unavailable') }}">{{ segment.reference.label }}</button>{% if segment.trailing_punctuation %}<span class="pm-player-inline-ref__punctuation">{{ segment.trailing_punctuation }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
 {%- endmacro %}
 
 {% macro render_player_meta(item, player_mode) -%}
@@ -26,7 +26,7 @@
 
   <div class="pm-feature-band pm-player-layout">
     <section class="pm-player-runtime">
-      {% if promat_page.player.mode in ['wordlist', 'text'] %}
+      {% if promat_page.player.mode in ['wordlist', 'text', 'interview'] %}
       <div class="pm-player-runtime__inner{{ ' is-compare-ready' if promat_page.player.compare.is_ready else '' }}" data-player-compare-open="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}" data-player-compare-ready="{{ 'true' if promat_page.player.compare.is_ready else 'false' }}">
         <section class="pm-player-summary-band">
           <div class="pm-player-summary-cards{{ ' is-compare-ready' if promat_page.summary_cards|length > 1 else '' }}">
@@ -292,7 +292,7 @@
           <div class="pm-player-panel__header pm-player-panel__header--split">
             <div class="pm-player-panel__copy">
               <h2 class="pm-player-panel__title">{{ promat_page.player.items_title }}</h2>
-              <p class="pm-player-panel__hint">{{ t('research.player.items_count', count=promat_page.player['items_count']) }}</p>
+              <p class="pm-player-panel__hint">{{ t('research.player.segments_count', count=promat_page.player['items_count']) if promat_page.player.mode == 'interview' else t('research.player.items_count', count=promat_page.player['items_count']) }}</p>
             </div>
 
             {% if promat_page.player.render_modes %}
@@ -308,7 +308,54 @@
             {% endif %}
           </div>
 
-          {% if promat_page.player.render_mode == 'running_text' %}
+          {% if promat_page.player.mode == 'interview' %}
+          <ol class="pm-player-transcript" aria-label="{{ promat_page.player.items_title }}">
+            {% for item in promat_page.player.primary['items'] %}
+            <li class="pm-player-transcript__row" data-player-focus-item="{{ item.segment_id }}">
+              <div class="pm-player-transcript__meta">
+                <span class="pm-player-transcript__speaker pm-player-transcript__speaker--{{ item.speaker_code }}">{{ item.speaker_label }}</span>
+                <span class="pm-player-transcript__segment">{{ t('research.player.interview.segment_label', number=item.segment_number) }}</span>
+                <span class="pm-player-transcript__time">{{ item.start_label }}–{{ item.end_label }}</span>
+              </div>
+
+              <div class="pm-player-transcript__body" data-player-item data-speaker-key="primary" data-item-id="{{ item.segment_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
+                <button type="button" class="pm-player-transcript__trigger" data-player-seek aria-label="{{ item.speaker_label }}: {{ item.text }}">
+                  {{ render_player_text(item, 'pm-player-transcript__text pm-item-content-text') }}
+                </button>
+              </div>
+            </li>
+            {% endfor %}
+          </ol>
+
+          <dialog class="md3-dialog pm-player-reference-dialog" data-player-reference-dialog role="dialog" aria-modal="true" aria-labelledby="pm-player-reference-title">
+            <div class="md3-dialog__container">
+              <div class="md3-dialog__surface">
+                <header class="md3-dialog__header pm-player-reference-dialog__header">
+                  <div class="pm-player-reference-dialog__eyebrow">
+                    <span class="pm-research-meta-badge pm-research-meta-badge--detail" data-player-reference-task></span>
+                    <span class="pm-player-reference-dialog__number" data-player-reference-item-number hidden></span>
+                  </div>
+                  <h2 id="pm-player-reference-title" class="md3-title-large md3-dialog__title" data-player-reference-title></h2>
+                </header>
+
+                <div class="md3-dialog__content md3-stack--dialog">
+                  <p class="pm-player-reference-dialog__text pm-item-content-text" data-player-reference-text></p>
+                  <p class="pm-player-reference-dialog__meta" data-player-reference-time hidden></p>
+
+                  <div class="pm-player-reference-dialog__audio-wrap">
+                    <audio class="pm-player-reference-dialog__audio" controls preload="none" data-player-reference-audio></audio>
+                    <p class="pm-player-reference-dialog__audio-note" data-player-reference-audio-note hidden></p>
+                  </div>
+                </div>
+
+                <div class="md3-dialog__actions">
+                  <button type="button" class="md3-button md3-button--text" data-player-reference-close>{{ t('common.actions.cancel') }}</button>
+                  <a class="md3-button md3-button--filled" data-player-reference-open href="#">{{ t('research.player.interview.reference_open_context') }}</a>
+                </div>
+              </div>
+            </div>
+          </dialog>
+          {% elif promat_page.player.render_mode == 'running_text' %}
           <div class="pm-player-text-flow" aria-label="{{ promat_page.player.items_title }}">
             {% for block in promat_page.player.text_blocks %}
             <p class="pm-player-text-flow__paragraph" data-player-text-block="{{ block.block_id }}">
@@ -402,7 +449,7 @@
 {% if promat_page.player.client_state is defined %}
 <script id="pm-player-state" type="application/json">{{ promat_page.player.client_state | tojson }}</script>
 {% endif %}
-{% if promat_page.player.mode in ['wordlist', 'text'] or promat_page.player.set_select %}
+{% if promat_page.player.mode in ['wordlist', 'text', 'interview'] or promat_page.player.set_select %}
 <script type="module" src="{{ url_for('static', filename='js/pages/research-player.js') }}"></script>
 {% endif %}
 {% endblock %}

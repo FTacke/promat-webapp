@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import filecmp
+from functools import lru_cache
+import json
 from pathlib import Path
 import re
 import shutil
+from typing import Any
+
+from language_config import resolve_language_config
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -15,7 +20,7 @@ SUPPORTED_TRANSFER_MODES = ("copy", "move", "symlink")
 
 _BATCH_FILE_PATTERN = re.compile(
     r"^(?P<corpus>[A-Za-z]{2,})[-_](?P<speaker_marker>[A-Za-z])[-_](?P<person_number>\d{4})"
-    r"_(?P<task>wordlist|text|interview)_(?P<stage>raw|processed)\.(?P<extension>wav|textgrid)$",
+    r"_(?P<task>wordlist|text|interview)_(?P<stage>raw|processed)\.(?P<extension>wav|textgrid|json)$",
     re.IGNORECASE,
 )
 
@@ -34,6 +39,8 @@ class ParsedBatchFile:
     def canonical_name(self) -> str:
         if self.file_kind == "wav":
             return f"{self.task}.wav"
+        if self.file_kind == "json":
+            return f"{self.task}.json"
         return f"{self.task}.TextGrid"
 
 
@@ -43,6 +50,16 @@ class BatchTaskCandidates:
     raw_wav: list[ParsedBatchFile]
     processed_textgrid: list[ParsedBatchFile]
     raw_textgrid: list[ParsedBatchFile]
+    processed_json: list[ParsedBatchFile]
+    raw_json: list[ParsedBatchFile]
+
+
+@dataclass(frozen=True, slots=True)
+class CatalogItemLookup:
+    item_id: str
+    item_number: str
+    canonical_text: str
+    label: str
 
 
 def is_relative_to(path: Path, other: Path) -> bool:
@@ -133,7 +150,12 @@ def parse_batch_filename(path: Path, source_root: str, batch_dir: Path) -> Parse
         return None
 
     extension = str(match.group("extension") or "").lower()
-    file_kind = "wav" if extension == "wav" else "textgrid"
+    if extension == "wav":
+        file_kind = "wav"
+    elif extension == "json":
+        file_kind = "json"
+    else:
+        file_kind = "textgrid"
     relative_source = str(path.relative_to(batch_dir)).replace("\\", "/")
     return ParsedBatchFile(
         source_path=path,
@@ -164,7 +186,7 @@ def collect_batch_files(batch_dir: Path) -> tuple[list[ParsedBatchFile], list[st
             if parsed is None:
                 warnings.append(f"unparsed filename under {source_root}: {path.name}")
                 continue
-            if parsed.stage != source_root:
+            if parsed.file_kind != "json" and parsed.stage != source_root:
                 warnings.append(
                     f"stage mismatch for {path.name}: filename stage={parsed.stage} folder={source_root}; skipped"
                 )
@@ -174,7 +196,14 @@ def collect_batch_files(batch_dir: Path) -> tuple[list[ParsedBatchFile], list[st
 
 
 def empty_batch_task_candidates() -> BatchTaskCandidates:
-    return BatchTaskCandidates(processed_wav=[], raw_wav=[], processed_textgrid=[], raw_textgrid=[])
+    return BatchTaskCandidates(
+        processed_wav=[],
+        raw_wav=[],
+        processed_textgrid=[],
+        raw_textgrid=[],
+        processed_json=[],
+        raw_json=[],
+    )
 
 
 def build_batch_inventory(parsed_files: list[ParsedBatchFile]) -> dict[str, dict[str, BatchTaskCandidates]]:
@@ -218,6 +247,10 @@ def working_alignment_path(batch_dir: Path, person_id: str, task: str) -> Path:
     return working_task_root(batch_dir, person_id, task) / "alignment" / f"{task}.TextGrid"
 
 
+def working_alignment_json_path(batch_dir: Path, person_id: str, task: str) -> Path:
+    return working_task_root(batch_dir, person_id, task) / "alignment" / f"{task}.json"
+
+
 def working_text_mfa_corpus_dir(batch_dir: Path, person_id: str) -> Path:
     return working_task_root(batch_dir, person_id, "text") / "mfa_corpus"
 
@@ -228,6 +261,93 @@ def working_text_mfa_output_dir(batch_dir: Path, person_id: str) -> Path:
 
 def working_text_manifest_path(batch_dir: Path, person_id: str) -> Path:
     return working_task_root(batch_dir, person_id, "text") / "mfa_manifest.json"
+
+
+def working_intake_state_path(batch_dir: Path) -> Path:
+    return batch_dir / "working" / ".intake_state.json"
+
+
+def relative_posix_path(path: Path, root: Path) -> str:
+    return path.resolve().relative_to(root.resolve()).as_posix()
+
+
+def file_snapshot(path: Path, root: Path) -> dict[str, object]:
+    stat_result = path.stat()
+    return {
+        "path": relative_posix_path(path, root),
+        "size": stat_result.st_size,
+        "mtime_ns": stat_result.st_mtime_ns,
+        "hash": None,
+    }
+
+
+def read_json_file(path: Path) -> dict[str, object]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"JSON root must be an object: {path}")
+    return payload
+
+
+def person_id_language_slug(person_id: str) -> str:
+    parts = person_id.strip().split("-")
+    if not parts or not parts[0].strip():
+        raise ValueError(f"Invalid person_id without language prefix: {person_id!r}")
+    return resolve_language_config(parts[0].strip().lower()).corpus_slug
+
+
+def person_id_speaker_marker(person_id: str) -> str | None:
+    parts = person_id.strip().split("-")
+    if len(parts) < 2 or not parts[1].strip():
+        return None
+    return parts[1].strip().upper()
+
+
+def is_native_speaker_person_id(person_id: str) -> bool:
+    return person_id_speaker_marker(person_id) == "N"
+
+
+def task_catalog_path(language_slug: str, task_key: str) -> Path:
+    return REPO_ROOT / "data" / "config" / "research_player" / language_slug / "task_catalogs" / f"{task_key}.json"
+
+
+@lru_cache(maxsize=None)
+def load_task_catalog_item_index(language_slug: str, task_key: str) -> dict[str, CatalogItemLookup]:
+    catalog_path = task_catalog_path(language_slug, task_key)
+    payload = read_json_file(catalog_path)
+    items_payload = payload.get("items")
+    if not isinstance(items_payload, list) or not items_payload:
+        raise ValueError(f"Task catalog must contain a non-empty items list: {catalog_path}")
+
+    catalog_index: dict[str, CatalogItemLookup] = {}
+    for index, item_payload in enumerate(items_payload, start=1):
+        if not isinstance(item_payload, dict):
+            raise ValueError(f"Task catalog item {index} must be an object: {catalog_path}")
+        item_id = item_payload.get("item_id")
+        item_number = item_payload.get("item_number")
+        text_value = item_payload.get("text")
+        if not isinstance(item_id, str) or not item_id.strip():
+            raise ValueError(f"Task catalog item_id must be a non-empty string at index {index}: {catalog_path}")
+        if not isinstance(item_number, str) or not item_number.strip():
+            raise ValueError(f"Task catalog item_number must be a non-empty string at index {index}: {catalog_path}")
+        if not isinstance(text_value, str) or not text_value.strip():
+            raise ValueError(f"Task catalog text must be a non-empty string at index {index}: {catalog_path}")
+        label_value = item_payload.get("label")
+        if not isinstance(label_value, str) or not label_value.strip():
+            label_value = text_value
+        normalized_item_id = item_id.strip()
+        if normalized_item_id in catalog_index:
+            raise ValueError(f"Duplicate task catalog item_id {normalized_item_id!r}: {catalog_path}")
+        catalog_index[normalized_item_id] = CatalogItemLookup(
+            item_id=normalized_item_id,
+            item_number=item_number.strip(),
+            canonical_text=text_value.strip(),
+            label=label_value.strip(),
+        )
+    return catalog_index
+
+
+def resolve_catalog_item(language_slug: str, task_key: str, item_id: str) -> CatalogItemLookup | None:
+    return load_task_catalog_item_index(language_slug, task_key).get(item_id.strip())
 
 
 def ensure_directory(path: Path, dry_run: bool) -> None:

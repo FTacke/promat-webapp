@@ -1,0 +1,483 @@
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+from openpyxl import Workbook
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker
+
+
+TEST_REPO_ROOT = Path(__file__).resolve().parents[2]
+os.environ.setdefault("FLASK_ENV", "development")
+os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
+os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(TEST_REPO_ROOT / "scripts" / "research_data_intake"))
+
+import app.research_sessions as research_sessions  # noqa: E402
+from app.auth.models import Base  # noqa: E402
+from app.research_metadata import ResearchPerson, ResearchSession, ResearchSessionExposure  # noqa: E402
+import import_batch_to_production as production_importer  # noqa: E402
+from intake_workbook_reader import load_intake_workbook  # noqa: E402
+
+
+def _set_runtime_env(tmp_path: Path, monkeypatch) -> Path:
+    runtime_root = tmp_path / "runtime-root"
+    (runtime_root / "data" / "sessions").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(runtime_root))
+    monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
+    research_sessions.load_language_sessions.cache_clear()
+    research_sessions.load_person_records.cache_clear()
+    return runtime_root
+
+
+def _session_row(
+    *,
+    person_id: str,
+    session_ref: str,
+    workbook_session_id: str,
+    target_language: str,
+    recording_year: int | None,
+    recording_date: str,
+    recorded_by: str = "Ana Romero",
+    context: str = "baseline",
+    standard_variety: str | None = None,
+    level_self: str | None = None,
+    level_code: str | None = None,
+) -> list[object]:
+    return [
+        person_id,
+        session_ref,
+        workbook_session_id,
+        target_language,
+        standard_variety,
+        level_self,
+        level_code,
+        recording_year,
+        recording_date,
+        recorded_by,
+        context,
+        "no",
+        None,
+    ]
+
+
+def _write_workbook(
+    tmp_path: Path,
+    *,
+    person_id: str = "ES-L-0001",
+    speaker_type: str = "learner",
+    include_out_of_scope_invalid_row: bool = False,
+) -> Path:
+    workbook_path = tmp_path / "intake.xlsx"
+    workbook = Workbook()
+
+    person_sheet = workbook.active
+    person_sheet.title = "Research_Person"
+    person_sheet.append(
+        [
+            "person_id",
+            "speaker_type",
+            "l1",
+            "l1_additional",
+            "mother_l1",
+            "father_l1",
+            "additional_languages",
+            "gender",
+            "birth_year",
+            "current_region",
+            "childhood_region",
+            "origin_country",
+            "origin_region",
+            "needs_review",
+            "person_notes",
+        ]
+    )
+    person_sheet.append(
+        [
+            person_id,
+            speaker_type,
+            "DE" if speaker_type == "learner" else "ES",
+            "IT; EN",
+            "IT",
+            "DE",
+            "EN; FR",
+            "female",
+            2001,
+            "NRW",
+            "Bayern",
+            None,
+            None,
+            "no",
+            None,
+        ]
+    )
+
+    session_sheet = workbook.create_sheet("Research_Session_Intake")
+    session_sheet.append(
+        [
+            "person_id",
+            "session_ref",
+            "session_id",
+            "target_language",
+            "standard_variety",
+            "level_self",
+            "level_code",
+            "recording_year",
+            "recording_date",
+            "recorded_by",
+            "context",
+            "needs_review",
+            "session_notes",
+        ]
+    )
+    session_sheet.append(
+        _session_row(
+            person_id=person_id,
+            session_ref="S01",
+            workbook_session_id="SHOULD-BE-IGNORED",
+            target_language="ES",
+            standard_variety="ES_STD" if speaker_type == "native_speaker" else None,
+            level_self="B1-B2" if speaker_type == "learner" else None,
+            level_code="B1" if speaker_type == "learner" else None,
+            recording_year=2026,
+            recording_date="2026-03-14",
+        )
+    )
+    if include_out_of_scope_invalid_row:
+        session_sheet.append(
+            _session_row(
+                person_id="FR-L-0001",
+                session_ref="S01",
+                workbook_session_id="ALSO-IGNORED",
+                target_language="FR",
+                recording_year=None,
+                recording_date="2026-04-01",
+            )
+        )
+
+    exposure_sheet = workbook.create_sheet("Exposure")
+    exposure_sheet.append(
+        [
+            "person_id",
+            "session_ref",
+            "target_language",
+            "country",
+            "duration_months",
+            "type",
+            "exposure_notes",
+            "needs_review",
+        ]
+    )
+    if speaker_type == "learner":
+        exposure_sheet.append(
+            [
+                person_id,
+                "S01",
+                "ES",
+                "Spain",
+                6,
+                "erasmus",
+                "Semester in Madrid.",
+                "no",
+            ]
+        )
+
+    workbook.save(workbook_path)
+    workbook.close()
+    return workbook_path
+
+
+def _prepare_interview_batch(
+    tmp_path: Path,
+    *,
+    person_id: str = "ES-L-0001",
+    include_raw_master: bool,
+    include_working_interview: bool = True,
+) -> Path:
+    batch_dir = tmp_path / "spanish_batch_20260421"
+    (batch_dir / "intake_data").mkdir(parents=True, exist_ok=True)
+    filename_prefix = person_id.lower().replace("-", "_")
+
+    if include_working_interview:
+        (batch_dir / "working" / person_id / "interview" / "source").mkdir(parents=True, exist_ok=True)
+        (batch_dir / "working" / person_id / "interview" / "alignment").mkdir(parents=True, exist_ok=True)
+
+        interview_wav = batch_dir / "working" / person_id / "interview" / "source" / "interview.wav"
+        interview_wav.write_bytes(b"working-interview-wav")
+        interview_json = batch_dir / "working" / person_id / "interview" / "alignment" / "interview.json"
+        interview_json.write_text(
+            json.dumps(
+                {
+                    "session_id": None,
+                    "person_id": person_id,
+                    "task": "interview",
+                    "audio": {"full_mp3": "derived/interview.mp3"},
+                    "segments": [
+                        {
+                            "segment_id": "seg_001",
+                            "segment_number": "1",
+                            "speaker_code": "interviewer",
+                            "start_ms": 0,
+                            "end_ms": 1000,
+                            "text": "Hallo.",
+                            "tokens": [{"token_id": "seg_001_tok_001", "text": "Hallo.", "start_ms": 0, "end_ms": 1000}],
+                        }
+                    ],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    if include_raw_master:
+        raw_dir = batch_dir / "raw"
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        (raw_dir / f"{filename_prefix}_interview_raw.wav").write_bytes(b"batch-raw-interview")
+
+    return batch_dir
+
+
+def _session_factory(tmp_path: Path):
+    database_path = tmp_path / "research.sqlite3"
+    engine = create_engine(f"sqlite+pysqlite:///{database_path.as_posix()}", future=True)
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine, future=True)
+
+
+def test_load_intake_workbook_derives_session_id_and_ignores_out_of_scope_rows(tmp_path: Path) -> None:
+    workbook_path = _write_workbook(tmp_path, include_out_of_scope_invalid_row=True)
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    assert workbook_data.errors == ()
+    assert len(workbook_data.sessions) == 1
+    assert workbook_data.sessions[0].session_id == "ES-L-0001-2026-S01"
+    assert workbook_data.warnings == (
+        "Research_Session_Intake row 2 contains session_id='SHOULD-BE-IGNORED'; ignored because session_id is derived.",
+    )
+
+
+def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Path, monkeypatch) -> None:
+    runtime_root = _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _prepare_interview_batch(tmp_path, include_raw_master=True)
+    workbook_path = _write_workbook(tmp_path)
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    monkeypatch.setattr(
+        production_importer,
+        "create_full_task_mp3",
+        lambda source_wav, target_mp3: target_mp3.write_bytes(b"runtime-interview-mp3"),
+    )
+
+    with session_factory() as db_session:
+        plans, plan_warnings = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+        assert plan_warnings == []
+        assert len(plans) == 1
+        plan = plans[0]
+        by_task = {task_plan.task_key: task_plan for task_plan in plan.task_plans}
+        assert by_task["interview"].action == "sync"
+        assert by_task["interview"].status == "ready"
+
+        production_importer._apply_plan(db_session, plan, validate_wordlist_labels="off")
+
+    session_dir = runtime_root / "data" / "sessions" / "spanish" / "ES-L-0001-2026-S01"
+    metadata = json.loads((session_dir / "metadata.json").read_text(encoding="utf-8"))
+    interview_alignment = json.loads((session_dir / "alignment" / "interview.json").read_text(encoding="utf-8"))
+
+    assert (session_dir / "source" / "interview.wav").read_bytes() == b"working-interview-wav"
+    assert (session_dir / "raw" / "interview.wav").read_bytes() == b"batch-raw-interview"
+    assert (session_dir / "derived" / "interview.mp3").read_bytes() == b"runtime-interview-mp3"
+    assert interview_alignment["session_id"] == "ES-L-0001-2026-S01"
+    assert interview_alignment["audio"] == {"full_mp3": "derived/interview.mp3"}
+
+    interview_task = next(task for task in metadata["tasks"] if task["task_type"] == "interview")
+    assert interview_task == {
+        "task_type": "interview",
+        "label": "Interview zur Aussprache",
+        "source_file": "source/interview.wav",
+        "alignment_file": "alignment/interview.json",
+        "derived_file": "derived/interview.mp3",
+    }
+    exposure_entry = metadata["exposure_entries"][0]
+    assert exposure_entry["exposure_notes"] == "Semester in Madrid."
+
+    file_paths = {entry["path"] for entry in metadata["files"]}
+    assert "source/interview.wav" in file_paths
+    assert "alignment/interview.json" in file_paths
+    assert "derived/interview.mp3" in file_paths
+    assert "raw/interview.wav" in file_paths
+
+    research_sessions.load_language_sessions.cache_clear()
+    research_sessions.load_person_records.cache_clear()
+    runtime_session = research_sessions.get_session("spanish", "ES-L-0001-2026-S01")
+    assert runtime_session is not None
+    assert runtime_session.documented_task_types == ("interview",)
+    assert runtime_session.exposure_entries[0].exposure_notes == "Semester in Madrid."
+
+    with session_factory() as db_session:
+        person_rows = db_session.scalars(select(ResearchPerson)).all()
+        session_rows = db_session.scalars(select(ResearchSession)).all()
+        exposure_rows = db_session.scalars(select(ResearchSessionExposure)).all()
+
+    assert [row.person_id for row in person_rows] == ["ES-L-0001"]
+    assert [row.session_id for row in session_rows] == ["ES-L-0001-2026-S01"]
+    assert session_rows[0].documented_tasks == "interview"
+    assert len(exposure_rows) == 1
+    assert exposure_rows[0].exposure_notes == "Semester in Madrid."
+
+
+def test_production_import_does_not_treat_source_as_raw_fallback(tmp_path: Path, monkeypatch) -> None:
+    runtime_root = _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _prepare_interview_batch(tmp_path, include_raw_master=False)
+    workbook_path = _write_workbook(tmp_path)
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    monkeypatch.setattr(
+        production_importer,
+        "create_full_task_mp3",
+        lambda source_wav, target_mp3: target_mp3.write_bytes(b"runtime-interview-mp3"),
+    )
+
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+        production_importer._apply_plan(db_session, plans[0], validate_wordlist_labels="off")
+
+    session_dir = runtime_root / "data" / "sessions" / "spanish" / "ES-L-0001-2026-S01"
+    assert (session_dir / "source" / "interview.wav").exists()
+    assert not (session_dir / "raw" / "interview.wav").exists()
+
+
+def test_production_import_rerun_is_idempotent_for_interview_session(tmp_path: Path, monkeypatch) -> None:
+    _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _prepare_interview_batch(tmp_path, include_raw_master=True)
+    workbook_path = _write_workbook(tmp_path)
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    monkeypatch.setattr(
+        production_importer,
+        "create_full_task_mp3",
+        lambda source_wav, target_mp3: target_mp3.write_bytes(b"runtime-interview-mp3"),
+    )
+
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+        production_importer._apply_plan(db_session, plans[0], validate_wordlist_labels="off")
+
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+        assert plans[0].mode_action == "update"
+        production_importer._apply_plan(db_session, plans[0], validate_wordlist_labels="off")
+
+    session_dir = tmp_path / "runtime-root" / "data" / "sessions" / "spanish" / "ES-L-0001-2026-S01"
+    metadata = json.loads((session_dir / "metadata.json").read_text(encoding="utf-8"))
+    interview_tasks = [task for task in metadata["tasks"] if task["task_type"] == "interview"]
+    assert len(interview_tasks) == 1
+    file_paths = [entry["path"] for entry in metadata["files"]]
+    assert file_paths.count("source/interview.wav") == 1
+    assert file_paths.count("alignment/interview.json") == 1
+    assert file_paths.count("derived/interview.mp3") == 1
+    assert file_paths.count("raw/interview.wav") == 1
+
+    with session_factory() as db_session:
+        person_rows = db_session.scalars(select(ResearchPerson)).all()
+        session_rows = db_session.scalars(select(ResearchSession)).all()
+        exposure_rows = db_session.scalars(select(ResearchSessionExposure)).all()
+
+    assert len(person_rows) == 1
+    assert len(session_rows) == 1
+    assert len(exposure_rows) == 1
+
+
+def test_production_import_skips_native_speaker_interview_even_with_inputs(tmp_path: Path, monkeypatch) -> None:
+    runtime_root = _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _prepare_interview_batch(
+        tmp_path,
+        person_id="ES-N-0001",
+        include_raw_master=True,
+        include_working_interview=True,
+    )
+    workbook_path = _write_workbook(tmp_path, person_id="ES-N-0001", speaker_type="native_speaker")
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    with session_factory() as db_session:
+        plans, plan_warnings = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+        assert plan_warnings == []
+        assert len(plans) == 1
+        plan = plans[0]
+        by_task = {task_plan.task_key: task_plan for task_plan in plan.task_plans}
+        by_raw = {raw_plan.task_key: raw_plan for raw_plan in plan.raw_plans}
+        assert by_task["interview"].action == "skip"
+        assert by_task["interview"].status == "not_expected_for_native_speaker"
+        assert by_raw["interview"].action == "skip"
+        assert by_raw["interview"].status == "not_expected_for_native_speaker"
+
+        production_importer._apply_plan(db_session, plan, validate_wordlist_labels="off")
+
+    session_dir = runtime_root / "data" / "sessions" / "spanish" / "ES-N-0001-2026-S01"
+    metadata = json.loads((session_dir / "metadata.json").read_text(encoding="utf-8"))
+
+    assert metadata["speaker_type"] == "native_speaker"
+    assert metadata["tasks"] == []
+    file_paths = {entry["path"] for entry in metadata["files"]}
+    assert file_paths == {"metadata.json"}
+    assert not (session_dir / "source" / "interview.wav").exists()
+    assert not (session_dir / "alignment" / "interview.json").exists()
+    assert not (session_dir / "derived" / "interview.mp3").exists()
+    assert not (session_dir / "raw" / "interview.wav").exists()
+
+    with session_factory() as db_session:
+        session_rows = db_session.scalars(select(ResearchSession)).all()
+
+    assert [row.session_id for row in session_rows] == ["ES-N-0001-2026-S01"]
+    assert session_rows[0].documented_tasks is None

@@ -259,7 +259,7 @@ def test_surface_modes_become_productive_when_runtime_and_config_are_present(run
     [
         ("wordlist", True, True, True, True, True),
         ("text", True, True, True, True, True),
-        ("interview", False, False, False, False, False),
+        ("interview", True, False, False, False, False),
     ],
 )
 def test_research_task_capabilities_cover_core_workbench_rules(
@@ -282,7 +282,7 @@ def test_research_task_capabilities_cover_core_workbench_rules(
 
 def test_research_capability_layer_exposes_canonical_task_subsets() -> None:
     assert player_visible_task_keys() == ("wordlist", "text", "interview")
-    assert player_productive_task_keys() == ("wordlist", "text")
+    assert player_productive_task_keys() == ("wordlist", "text", "interview")
     assert player_compare_task_keys() == ("wordlist", "text")
     assert set_filter_task_keys() == ("wordlist", "text")
     assert phenomena_task_keys() == ("wordlist", "text")

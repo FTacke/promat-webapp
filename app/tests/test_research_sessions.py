@@ -321,6 +321,66 @@ def _write_text_player_artifacts(
     _write_session_file(runtime_root, language_slug, session_id, "items/text/qy_01.mp3", _minimal_mp3_bytes())
 
 
+def _write_interview_player_artifacts(runtime_root: Path, language_slug: str, session_id: str, person_id: str) -> None:
+    payload = {
+        "session_id": session_id,
+        "person_id": person_id,
+        "task": "interview",
+        "audio": {"full_mp3": "derived/interview.mp3"},
+        "segments": [
+            {
+                "segment_id": "seg_001",
+                "segment_number": "1",
+                "speaker_code": "interviewer",
+                "start_ms": 1000,
+                "end_ms": 4600,
+                "text": "Wie ging es dir mit dem Vorlesen?",
+                "tokens": [
+                    {"token_id": "seg_001_tok_001", "text": "Wie", "start_ms": 1000, "end_ms": 1360},
+                    {"token_id": "seg_001_tok_002", "text": "ging", "start_ms": 1360, "end_ms": 1760},
+                    {"token_id": "seg_001_tok_003", "text": "es", "start_ms": 1760, "end_ms": 1960},
+                    {"token_id": "seg_001_tok_004", "text": "dir", "start_ms": 1960, "end_ms": 2260},
+                    {"token_id": "seg_001_tok_005", "text": "mit", "start_ms": 2260, "end_ms": 2520},
+                    {"token_id": "seg_001_tok_006", "text": "dem", "start_ms": 2520, "end_ms": 2780},
+                    {"token_id": "seg_001_tok_007", "text": "Vorlesen?", "start_ms": 2780, "end_ms": 4600},
+                ],
+            },
+            {
+                "segment_id": "seg_002",
+                "segment_number": "2",
+                "speaker_code": "participant",
+                "start_ms": 5200,
+                "end_ms": 9800,
+                "text": "Ganz gut, vor allem bei dem ersten Wort.",
+                "tokens": [
+                    {"token_id": "seg_002_tok_001", "text": "Ganz", "start_ms": 5200, "end_ms": 5640},
+                    {"token_id": "seg_002_tok_002", "text": "gut,", "start_ms": 5640, "end_ms": 6100},
+                    {"token_id": "seg_002_tok_003", "text": "vor", "start_ms": 6100, "end_ms": 6420},
+                    {"token_id": "seg_002_tok_004", "text": "allem", "start_ms": 6420, "end_ms": 6900},
+                    {"token_id": "seg_002_tok_005", "text": "bei", "start_ms": 6900, "end_ms": 7200},
+                    {"token_id": "seg_002_tok_006", "text": "dem", "start_ms": 7200, "end_ms": 7460},
+                    {"token_id": "seg_002_tok_007", "text": "ersten", "start_ms": 7460, "end_ms": 7900},
+                    {"token_id": "seg_002_tok_008", "text": "Wort.", "start_ms": 7900, "end_ms": 9800},
+                ],
+                "annotations": [
+                    {
+                        "kind": "material_ref",
+                        "item_id": "wl_001",
+                        "task": "wordlist",
+                        "insert_after_token_id": "seg_002_tok_004",
+                        "label": "mesa",
+                        "item_number": "1",
+                        "canonical_text": "mesa",
+                        "trailing_punctuation": ".",
+                    }
+                ],
+            },
+        ],
+    }
+    _write_session_file(runtime_root, language_slug, session_id, "alignment/interview.json", json.dumps(payload, indent=2) + "\n")
+    _write_session_file(runtime_root, language_slug, session_id, "derived/interview.mp3", _minimal_mp3_bytes())
+
+
 def _write_connected_text_catalog(runtime_root: Path) -> None:
     base_dir = runtime_root / "data" / "config" / "research_player" / "spanish"
     (base_dir / "task_catalogs" / "text.json").write_text(
@@ -1729,6 +1789,115 @@ def test_player_page_exposes_english_labels_for_migrated_wordlist_surface(runtim
     assert page["task_panels"][1]["state_label"] == "No playable artifacts"
     assert page["origin_link"]["href"].endswith("/en/research/spanish/recordings?task=wordlist")
     assert page["summary_cards"][0]["profile_label"] == "Profile"
+
+
+def test_player_page_builds_productive_interview_view_inside_shared_player(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+    _write_interview_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    with url_app.test_request_context():
+        page = build_player_page("de", "spanish", session_id, "interview", "recordings", focus_segment="seg_002")
+
+    assert page is not None
+    assert page["player"]["mode"] == "interview"
+    assert page["player"]["primary_audio_mode"] == "full"
+    assert page["player"]["compare"]["has_candidates"] is False
+    assert page["player"]["set_select"] is None
+    assert page["player"]["client_state"]["focusedSegmentId"] == "seg_002"
+    assert [item["speaker_label"] for item in page["player"]["primary"]["items"]] == ["Explorator:in", "Sprecher:in"]
+    material_ref = next(
+        segment
+        for segment in page["player"]["primary"]["items"][1]["text_segments"]
+        if segment["kind"] == "material_ref"
+    )
+    assert material_ref["reference"]["task_label"] == "Wortliste"
+    assert "focus_item=wl_001" in material_ref["reference"]["open_href"]
+    assert material_ref["reference"]["clip_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")
+
+
+def test_player_route_renders_interview_transcript_and_reference_dialog_in_both_languages(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+    _write_interview_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    response_de = client.get(f"/de/research/spanish/player/{session_id}/interview?source=recordings&focus_segment=seg_002")
+    response_en = client.get(f"/en/research/spanish/player/{session_id}/interview?source=recordings&focus_segment=seg_002")
+
+    assert response_de.status_code == 200
+    assert response_en.status_code == 200
+
+    html_de = response_de.get_data(as_text=True)
+    html_en = response_en.get_data(as_text=True)
+
+    assert "pm-player-transcript" in html_de
+    assert "data-player-reference-dialog" in html_de
+    assert "Explorator:in" in html_de
+    assert "Im Kontext öffnen" in html_de
+    assert "data-player-compare-add" not in html_de
+    assert "data-player-set-select" not in html_de
+
+    assert "pm-player-transcript" in html_en
+    assert "Interviewer" in html_en
+    assert "Open in context" in html_en
+    assert "data-player-reference-dialog" in html_en
+
+
+def test_player_audio_route_serves_interview_full_audio(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("interview",),
+        ),
+    )
+    _write_interview_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{session_id}/interview/audio.mp3")
+
+    assert response.status_code == 200
+    assert response.mimetype == "audio/mpeg"
 
 
 def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, url_app: Flask) -> None:

@@ -32,6 +32,7 @@ function parseState() {
 }
 
 let playerNavigationController = null;
+let referenceDialogResizeHandler = null;
 
 function currentPlayerPage() {
   return document.querySelector('article.pm-research-page');
@@ -243,6 +244,18 @@ function init() {
   const speakerCards = Array.from(runtimeScope.querySelectorAll('[data-player-speaker-card]'));
   const secondaryCard = runtimeScope.querySelector('[data-player-speaker-card="secondary"]');
   const itemElements = Array.from(root.querySelectorAll('[data-player-item][data-speaker-key][data-item-id]'));
+  const referenceDialog = root.querySelector('[data-player-reference-dialog]');
+  const referenceDialogSurface = referenceDialog?.querySelector('.md3-dialog__surface') || null;
+  const referenceDialogTitle = referenceDialog?.querySelector('[data-player-reference-title]') || null;
+  const referenceDialogTask = referenceDialog?.querySelector('[data-player-reference-task]') || null;
+  const referenceDialogItemNumber = referenceDialog?.querySelector('[data-player-reference-item-number]') || null;
+  const referenceDialogText = referenceDialog?.querySelector('[data-player-reference-text]') || null;
+  const referenceDialogTime = referenceDialog?.querySelector('[data-player-reference-time]') || null;
+  const referenceDialogAudio = referenceDialog?.querySelector('[data-player-reference-audio]') || null;
+  const referenceDialogAudioNote = referenceDialog?.querySelector('[data-player-reference-audio-note]') || null;
+  const referenceDialogOpen = referenceDialog?.querySelector('[data-player-reference-open]') || null;
+  const referenceDialogClose = referenceDialog?.querySelector('[data-player-reference-close]') || null;
+  const referenceTriggers = Array.from(root.querySelectorAll('[data-player-reference-trigger]'));
 
   if (!toggle || !progress || !currentLabel || !durationLabel || !volume || !volumeLabel || !rateSlider) {
     return;
@@ -304,6 +317,7 @@ function init() {
   let sequenceToken = 0;
   let currentRate = Number(state.defaultRate || 1);
   let syncFrameId = 0;
+  let referenceTrigger = null;
   state.compareOpen = Boolean(state.compareOpen);
   state.canCompare = Boolean(state.canCompare);
   state.lastCompareMode = state.requestedMode === 'manual' ? 'manual' : 'sequence';
@@ -332,6 +346,22 @@ function init() {
       clipCleanup();
       clipCleanup = null;
     }
+  }
+
+  function pauseReferenceAudio() {
+    if (!referenceDialogAudio) {
+      return;
+    }
+    referenceDialogAudio.pause();
+  }
+
+  function resetReferenceAudio() {
+    if (!referenceDialogAudio) {
+      return;
+    }
+    pauseReferenceAudio();
+    referenceDialogAudio.removeAttribute('src');
+    referenceDialogAudio.load();
   }
 
   function cancelSequence() {
@@ -369,6 +399,102 @@ function init() {
     if (rateValue) {
       rateValue.textContent = formatRate(currentRate);
     }
+  }
+
+  function positionReferenceDialog(trigger) {
+    if (!referenceDialog || !referenceDialogSurface || !trigger) {
+      return;
+    }
+
+    if (window.innerWidth < 720) {
+      referenceDialog.style.removeProperty('--pm-player-reference-left');
+      referenceDialog.style.removeProperty('--pm-player-reference-top');
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const approxWidth = Math.min(448, window.innerWidth - 32);
+    const halfWidth = approxWidth / 2;
+    const left = Math.min(
+      window.innerWidth - halfWidth - 16,
+      Math.max(halfWidth + 16, rect.left + (rect.width / 2)),
+    );
+    const top = Math.min(window.innerHeight - 32, Math.max(96, rect.bottom + 14));
+    referenceDialog.style.setProperty('--pm-player-reference-left', `${left}px`);
+    referenceDialog.style.setProperty('--pm-player-reference-top', `${top}px`);
+  }
+
+  function closeReferenceDialog() {
+    if (!referenceDialog) {
+      return;
+    }
+
+    pauseReferenceAudio();
+    if (typeof referenceDialog.close === 'function') {
+      referenceDialog.close();
+    } else {
+      referenceDialog.removeAttribute('open');
+    }
+    if (referenceTrigger && typeof referenceTrigger.focus === 'function') {
+      referenceTrigger.focus();
+    }
+    referenceTrigger = null;
+  }
+
+  function openReferenceDialog(trigger) {
+    if (!referenceDialog || !referenceDialogTitle || !referenceDialogTask || !referenceDialogText || !referenceDialogOpen) {
+      return;
+    }
+
+    referenceTrigger = trigger;
+    const label = trigger.dataset.referenceLabel || '';
+    const canonicalText = trigger.dataset.referenceCanonicalText || label;
+    const taskLabel = trigger.dataset.referenceTaskLabel || '';
+    const itemNumber = trigger.dataset.referenceItemNumber || '';
+    const timeLabel = trigger.dataset.referenceTimeLabel || '';
+    const openHref = trigger.dataset.referenceOpenHref || '#';
+    const clipHref = trigger.dataset.referenceClipHref || '';
+    const unavailableLabel = trigger.dataset.referenceUnavailableLabel || '';
+
+    referenceDialogTitle.textContent = label;
+    referenceDialogTask.textContent = taskLabel;
+    referenceDialogText.textContent = canonicalText;
+    referenceDialogOpen.href = openHref;
+
+    if (referenceDialogItemNumber) {
+      referenceDialogItemNumber.textContent = itemNumber;
+      referenceDialogItemNumber.hidden = !itemNumber;
+    }
+    if (referenceDialogTime) {
+      referenceDialogTime.textContent = timeLabel;
+      referenceDialogTime.hidden = !timeLabel;
+    }
+    if (referenceDialogAudio && referenceDialogAudioNote) {
+      if (clipHref) {
+        referenceDialogAudio.hidden = false;
+        referenceDialogAudio.src = clipHref;
+        referenceDialogAudio.setAttribute('aria-label', trigger.dataset.referenceClipLabel || canonicalText);
+        referenceDialogAudioNote.hidden = true;
+        referenceDialogAudioNote.textContent = '';
+      } else {
+        resetReferenceAudio();
+        referenceDialogAudio.hidden = true;
+        referenceDialogAudioNote.hidden = !unavailableLabel;
+        referenceDialogAudioNote.textContent = unavailableLabel;
+      }
+    }
+
+    cancelSequence();
+    for (const audio of audioMap.values()) {
+      audio.pause();
+    }
+
+    if (typeof referenceDialog.showModal === 'function') {
+      referenceDialog.showModal();
+    } else {
+      referenceDialog.setAttribute('open', 'open');
+    }
+    positionReferenceDialog(trigger);
   }
 
   function syncToggleLabel() {
@@ -685,7 +811,7 @@ function init() {
   }
 
   function revealFocusedItem() {
-    const focusedItemId = state.focusedItemId;
+    const focusedItemId = state.focusedSegmentId || state.focusedItemId;
     if (!focusedItemId) {
       return;
     }
@@ -884,6 +1010,7 @@ function init() {
       }
     });
     audio.addEventListener('play', () => {
+      pauseReferenceAudio();
       pauseOtherAudios(speakerKey);
       setActiveSpeaker(speakerKey);
       syncToggleLabel();
@@ -904,6 +1031,47 @@ function init() {
       }
     });
   }
+
+  for (const trigger of referenceTriggers) {
+    trigger.addEventListener('click', () => {
+      openReferenceDialog(trigger);
+    });
+  }
+
+  if (referenceDialog) {
+    referenceDialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      closeReferenceDialog();
+    });
+    referenceDialog.addEventListener('click', (event) => {
+      if (event.target === referenceDialog) {
+        closeReferenceDialog();
+      }
+    });
+  }
+
+  if (referenceDialogAudio) {
+    referenceDialogAudio.addEventListener('play', () => {
+      cancelSequence();
+      for (const audio of audioMap.values()) {
+        audio.pause();
+      }
+    });
+  }
+
+  referenceDialogClose?.addEventListener('click', () => {
+    closeReferenceDialog();
+  });
+
+  if (referenceDialogResizeHandler) {
+    window.removeEventListener('resize', referenceDialogResizeHandler);
+  }
+  referenceDialogResizeHandler = () => {
+    if (referenceDialog?.hasAttribute('open') && referenceTrigger) {
+      positionReferenceDialog(referenceTrigger);
+    }
+  };
+  window.addEventListener('resize', referenceDialogResizeHandler);
 
   const handleViewportChange = () => {
     if (effectiveMode() === 'single' && activeSpeakerKey === 'secondary') {

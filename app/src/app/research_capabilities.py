@@ -138,14 +138,14 @@ RESEARCH_TASK_CAPABILITIES: tuple[ResearchTaskCapability, ...] = (
         description_de="Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.",
         description_en="Semi-guided conversation with spontaneous pronunciation.",
         visible_in_player=True,
-        productive_in_player=False,
+        productive_in_player=True,
         supports_player_compare=False,
         supports_set_filtering=False,
         visible_in_comparison=False,
         visible_in_phenomena=False,
         supports_running_text=False,
         available_for_native_speakers=False,
-        separate_flow=True,
+        separate_flow=False,
     ),
 )
 
@@ -320,6 +320,11 @@ def available_task_keys_for_session(documented_task_types: Iterable[str], speake
 def task_supports_set_filtering(task_key: str) -> bool:
     capability = get_research_task_capability(task_key)
     return capability is not None and capability.supports_set_filtering
+
+
+def task_is_productive_in_player(task_key: str) -> bool:
+    capability = get_research_task_capability(task_key)
+    return capability is not None and capability.productive_in_player
 
 
 def task_supports_player_compare(task_key: str) -> bool:

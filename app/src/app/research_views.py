@@ -16,7 +16,9 @@ from .research_capabilities import (
     comparison_view_task_keys,
     get_research_task_label,
     phenomena_task_keys,
+    player_productive_task_keys,
     set_filter_task_keys,
+    task_is_productive_in_player,
     task_supports_player_compare,
 )
 from .research_player_runtime import (
@@ -108,6 +110,7 @@ EXPOSURE_TYPE_LABELS = {
 }
 
 PHENOMENA_ITEM_TASKS: tuple[str, ...] = set_filter_task_keys()
+PLAYER_PRODUCTIVE_TASKS: tuple[str, ...] = player_productive_task_keys()
 COMPARISON_VIEW_TASKS: tuple[str, ...] = comparison_view_task_keys()
 
 
@@ -2144,6 +2147,12 @@ def _build_player_set_notice(
             "text": _player_set_unavailable_text(ui_lang),
         }
 
+    if task_key == "interview":
+        return {
+            "status": "unsupported-task",
+            "text": _player_set_interview_hint(ui_lang),
+        }
+
     if task_key in PHENOMENA_ITEM_TASKS and set_context.get("requested_focus_item") and not resolved_focus_item_id:
         return {
             "status": "focus-missed",
@@ -2173,6 +2182,7 @@ def _build_player_query(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    focus_segment: str | None = None,
     render_mode: str | None = None,
 ) -> dict[str, str] | None:
     query: dict[str, str] = {}
@@ -2188,9 +2198,23 @@ def _build_player_query(
         query["preset_id"] = preset_id
     if focus_item:
         query["focus_item"] = focus_item
+    if focus_segment:
+        query["focus_segment"] = focus_segment
     if render_mode in PLAYER_RENDER_MODES:
         query["render_mode"] = render_mode
     return query or None
+
+
+def _player_focus_kwargs(
+    task_key: str,
+    *,
+    focus_item: str | None = None,
+    focus_segment: str | None = None,
+) -> dict[str, str | None]:
+    return {
+        "focus_item": focus_item if task_key in PHENOMENA_ITEM_TASKS else None,
+        "focus_segment": focus_segment if task_key == "interview" else None,
+    }
 
 
 def _player_page_href(
@@ -2205,6 +2229,7 @@ def _player_page_href(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    focus_segment: str | None = None,
     render_mode: str | None = None,
 ) -> str:
     return _url_with_query(
@@ -2213,7 +2238,7 @@ def _player_page_href(
         language_slug=language_slug,
         session_id=session_id,
         task=task_key,
-        query=_build_player_query(source, compare_session_id, compare_mode, set_id, preset_id, focus_item, render_mode),
+        query=_build_player_query(source, compare_session_id, compare_mode, set_id, preset_id, focus_item, focus_segment, render_mode),
     )
 
 
@@ -2428,6 +2453,7 @@ def _build_player_switchers(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    focus_segment: str | None = None,
     render_mode: str | None = None,
 ) -> dict[str, Any]:
     compare_session_id = compare_session.session_id if compare_session else None
@@ -2444,7 +2470,7 @@ def _build_player_switchers(
                 compare_mode=compare_mode,
                 set_id=set_id,
                 preset_id=preset_id,
-                focus_item=focus_item,
+                **_player_focus_kwargs(task_key, focus_item=focus_item, focus_segment=focus_segment),
                 render_mode=render_mode if task_key == "text" else None,
             ),
             "current": candidate.session_id == primary_session.session_id,
@@ -2463,7 +2489,7 @@ def _build_player_switchers(
                 source,
                 set_id=set_id,
                 preset_id=preset_id,
-                focus_item=focus_item,
+                **_player_focus_kwargs(task_key, focus_item=focus_item, focus_segment=focus_segment),
                 render_mode=render_mode if task_key == "text" else None,
             ),
             "current": compare_session is None,
@@ -2485,7 +2511,7 @@ def _build_player_switchers(
                     compare_mode=compare_mode,
                     set_id=set_id,
                     preset_id=preset_id,
-                    focus_item=focus_item,
+                    **_player_focus_kwargs(task_key, focus_item=focus_item, focus_segment=focus_segment),
                     render_mode=render_mode if task_key == "text" else None,
                 ),
                 "current": compare_session is not None and candidate.session_id == compare_session.session_id,
@@ -2572,13 +2598,13 @@ def _build_player_task_panels(
     session: SessionRecord,
     requested_task_key: str,
     source: str | None,
-    wordlist_ready: bool,
-    text_ready: bool,
+    readiness_by_task: Mapping[str, bool],
     compare_session_id: str | None = None,
     compare_mode: str | None = None,
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    focus_segment: str | None = None,
     render_mode: str | None = None,
 ) -> list[dict[str, Any]]:
     panels: list[dict[str, Any]] = []
@@ -2590,8 +2616,8 @@ def _build_player_task_panels(
 
         if not is_available:
             state_label = _unavailable_label(ui_lang)
-        elif task.key in {"wordlist", "text"}:
-            task_ready = wordlist_ready if task.key == "wordlist" else text_ready
+        elif task_is_productive_in_player(task.key):
+            task_ready = bool(readiness_by_task.get(task.key))
             if task_ready:
                 href = None if is_current else _player_page_href(
                     ui_lang,
@@ -2599,11 +2625,11 @@ def _build_player_task_panels(
                     session.session_id,
                     task.key,
                     source,
-                    compare_session_id=compare_session_id,
-                    compare_mode=compare_mode,
+                    compare_session_id=compare_session_id if task_supports_player_compare(task.key) else None,
+                    compare_mode=compare_mode if task_supports_player_compare(task.key) else None,
                     set_id=set_id,
                     preset_id=preset_id,
-                    focus_item=focus_item,
+                    **_player_focus_kwargs(task.key, focus_item=focus_item, focus_segment=focus_segment),
                     render_mode=render_mode if task.key == "text" else None,
                 )
                 state_label = _player_current_label(ui_lang) if is_current else _player_available_label(ui_lang)
@@ -2781,6 +2807,7 @@ def build_player_page(
     set_id: str | None = None,
     preset_id: str | None = None,
     focus_item: str | None = None,
+    focus_segment: str | None = None,
     render_mode: str | None = None,
 ) -> dict[str, Any] | None:
     session = get_session(language_slug, session_id)
@@ -2793,12 +2820,14 @@ def build_player_page(
         language_slug,
         session,
         task_key,
+        source=source,
         owner_user_id=_current_owner_user_id(),
         compare_session_id=compare_session_id,
         compare_mode=compare_mode,
         set_id=set_id,
         preset_id=preset_id,
         focus_item=focus_item,
+        focus_segment=focus_segment,
         render_mode=render_mode,
         load_owned_set_fn=load_owned_set,
     )
@@ -2832,6 +2861,13 @@ def build_player_page(
     text_ready = text_bundle is not None
     wordlist_bundle = _load_task_bundle(session, "wordlist") if session_has_task(session, "wordlist") else None
     wordlist_ready = wordlist_bundle is not None
+    interview_bundle = runtime_state.task_bundle if task_key == "interview" else (_load_task_bundle(session, "interview") if session_has_task(session, "interview") else None)
+    interview_ready = interview_bundle is not None
+    readiness_by_task = {
+        "wordlist": wordlist_ready,
+        "text": text_ready,
+        "interview": interview_ready,
+    }
     task_bundle = runtime_state.task_bundle
     ready_sessions = runtime_state.ready_sessions
     compare_session = runtime_state.compare_session
@@ -2846,13 +2882,13 @@ def build_player_page(
         session,
         task_key,
         source,
-        wordlist_ready,
-        text_ready,
+        readiness_by_task,
         compare_session.session_id if compare_session else None,
         effective_compare_mode,
         set_id,
         preset_id,
         focus_item,
+        focus_segment,
         active_render_mode_query,
     )
     summary_cards: list[dict[str, Any]] = []
@@ -2860,7 +2896,7 @@ def build_player_page(
     player_view: dict[str, Any]
     filtered_task_empty = runtime_state.filtered_task_empty
 
-    if task_key in PHENOMENA_ITEM_TASKS and task_bundle is not None and player_source is not None:
+    if task_key in PLAYER_PRODUCTIVE_TASKS and task_bundle is not None and player_source is not None:
         player_switchers = _build_player_switchers(
             ui_lang,
             language_slug,
@@ -2873,6 +2909,7 @@ def build_player_page(
             effective_set_id,
             effective_preset_id,
             focus_item,
+            focus_segment,
             active_render_mode_query,
         ) if ready_sessions else None
         primary_session_options = player_switchers["primary"]["options"] if player_switchers else [
@@ -2886,7 +2923,7 @@ def build_player_page(
                     source,
                     set_id=effective_set_id,
                     preset_id=effective_preset_id,
-                    focus_item=focus_item,
+                    **_player_focus_kwargs(task_key, focus_item=focus_item, focus_segment=focus_segment),
                     render_mode=active_render_mode_query if task_key == "text" else None,
                 ),
                 "current": True,
@@ -2894,11 +2931,12 @@ def build_player_page(
         ]
         compare_session_options = player_switchers["compare"]["options"][1:] if player_switchers else []
         compare_is_ready = compare_session is not None and compare_bundle is not None
-        can_compare = bool(compare_session_options)
+        can_compare = task_supports_player_compare(task_key) and bool(compare_session_options)
         primary_items = runtime_state.primary_items
         secondary_items = runtime_state.secondary_items
         compare_rows = runtime_state.compare_rows if compare_is_ready else []
         visible_focus_item = runtime_state.visible_focus_item_id
+        visible_focus_segment = runtime_state.visible_focus_segment_id
         def _client_sync_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
             payload: list[dict[str, Any]] = []
             for item_index, item in enumerate(items):
@@ -2924,6 +2962,9 @@ def build_player_page(
                 )
             return payload
 
+        active_focus_item = visible_focus_item or focus_item
+        active_focus_segment = visible_focus_segment or focus_segment
+
         manual_compare_href = _player_page_href(
             ui_lang,
             language_slug,
@@ -2934,9 +2975,9 @@ def build_player_page(
             compare_mode="manual",
             set_id=effective_set_id,
             preset_id=effective_preset_id,
-            focus_item=visible_focus_item or focus_item,
+            focus_item=active_focus_item,
             render_mode=active_render_mode_query if task_key == "text" else None,
-        ) if compare_session else None
+        ) if compare_session and task_supports_player_compare(task_key) else None
         sequence_compare_href = _player_page_href(
             ui_lang,
             language_slug,
@@ -2946,9 +2987,9 @@ def build_player_page(
             compare_session_id=compare_session.session_id if compare_session else None,
             set_id=effective_set_id,
             preset_id=effective_preset_id,
-            focus_item=visible_focus_item or focus_item,
+            focus_item=active_focus_item,
             render_mode=active_render_mode_query if task_key == "text" else None,
-        ) if compare_session else None
+        ) if compare_session and task_supports_player_compare(task_key) else None
         primary_summary = _build_player_summary_card(session, ui_lang, language_slug, "primary", primary_session_options)
         primary_summary["card_actions"].append(
             {
@@ -2993,7 +3034,7 @@ def build_player_page(
                         source,
                         set_id=effective_set_id,
                         preset_id=effective_preset_id,
-                        focus_item=visible_focus_item or focus_item,
+                        focus_item=active_focus_item,
                         render_mode=active_render_mode_query if task_key == "text" else None,
                     ),
                 }
@@ -3019,7 +3060,7 @@ def build_player_page(
             compare_mode=effective_compare_mode if compare_session else None,
             set_id=effective_set_id,
             preset_id=effective_preset_id,
-            focus_item=visible_focus_item or focus_item,
+            focus_item=active_focus_item,
             player_source=player_source,
         )
         set_select = _build_player_set_select(
@@ -3128,7 +3169,7 @@ def build_player_page(
                     source,
                     set_id=effective_set_id,
                     preset_id=effective_preset_id,
-                    focus_item=visible_focus_item or focus_item,
+                    **_player_focus_kwargs(task_key, focus_item=active_focus_item, focus_segment=active_focus_segment),
                     render_mode=active_render_mode_query if task_key == "text" else None,
                 ),
                 "modeHrefs": {
@@ -3152,6 +3193,7 @@ def build_player_page(
                 ] if compare_session and compare_bundle else []),
                 "compareReady": compare_is_ready,
                 "focusedItemId": visible_focus_item,
+                "focusedSegmentId": visible_focus_segment,
                 "statusLabel": _player_controls_status_label(ui_lang),
                 "togglePlay": _player_play_label(ui_lang),
                 "togglePause": _player_pause_label(ui_lang),
@@ -3181,15 +3223,13 @@ def build_player_page(
                 source,
                 set_id=effective_set_id,
                 preset_id=effective_preset_id,
-                focus_item=focus_item,
+                **_player_focus_kwargs("wordlist", focus_item=focus_item, focus_segment=focus_segment),
             )
         player_message = _player_missing_message(task_key, ui_lang)
         player_hint = _player_missing_hint(task_key, ui_lang)
         if filtered_task_empty:
             player_message = _player_set_empty_message(_player_task_display_label(language_slug, task_key, ui_lang), ui_lang)
             player_hint = _player_set_empty_hint(ui_lang)
-        elif set_context is not None and set_context["status"] == "loaded" and task_key == "interview":
-            player_hint = _player_set_interview_hint(ui_lang)
         player_view = {
             "mode": "unavailable",
             "title": _t(ui_lang, "research.player.status_title"),

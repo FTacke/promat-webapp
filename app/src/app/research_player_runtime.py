@@ -15,6 +15,7 @@ from .research_capabilities import (
     PLAYER_RENDER_MODES,
     get_research_task_label,
     resolve_player_render_capability,
+    task_is_productive_in_player,
     task_supports_player_compare,
     task_supports_set_filtering,
 )
@@ -64,6 +65,7 @@ class ResolvedPlayerRuntimeState:
     secondary_items: list[dict[str, Any]]
     compare_rows: list[dict[str, Any]]
     visible_focus_item_id: str | None
+    visible_focus_segment_id: str | None
 
 
 def _t(ui_lang: str, key: str, **kwargs: object) -> str:
@@ -201,6 +203,45 @@ def _normalize_bundle_tokens(
     return tokens
 
 
+def _normalize_interview_annotations(segment_id: str, raw_annotations: Any) -> list[dict[str, Any]]:
+    if not isinstance(raw_annotations, list) or not raw_annotations:
+        return []
+
+    annotations: list[dict[str, Any]] = []
+    for index, raw_annotation in enumerate(raw_annotations):
+        if not isinstance(raw_annotation, dict):
+            continue
+        if raw_annotation.get("kind") != "material_ref":
+            continue
+
+        task_key = raw_annotation.get("task")
+        item_id = raw_annotation.get("item_id")
+        label = raw_annotation.get("label")
+        if not isinstance(task_key, str) or not task_supports_set_filtering(task_key):
+            continue
+        if not isinstance(item_id, str) or not item_id:
+            continue
+        if not isinstance(label, str) or not label.strip():
+            continue
+
+        insert_after_token_id = raw_annotation.get("insert_after_token_id")
+        annotations.append(
+            {
+                "reference_id": f"{segment_id}_ref_{index + 1:03d}",
+                "kind": "material_ref",
+                "task": task_key,
+                "item_id": item_id,
+                "insert_after_token_id": insert_after_token_id if isinstance(insert_after_token_id, str) and insert_after_token_id else None,
+                "label": label.strip(),
+                "item_number": raw_annotation.get("item_number") if isinstance(raw_annotation.get("item_number"), str) else None,
+                "canonical_text": raw_annotation.get("canonical_text") if isinstance(raw_annotation.get("canonical_text"), str) else None,
+                "trailing_punctuation": raw_annotation.get("trailing_punctuation") if isinstance(raw_annotation.get("trailing_punctuation"), str) else "",
+            }
+        )
+
+    return annotations
+
+
 def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     if not text_value:
         return ([], [])
@@ -260,8 +301,73 @@ def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, A
     return (segments, renderable_tokens)
 
 
+def _build_interview_text_segments(
+    segment_id: str,
+    text_value: str,
+    tokens: list[dict[str, Any]],
+    annotations: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    text_segments, renderable_tokens = _build_text_segments(segment_id, text_value, tokens)
+    if not annotations:
+        return text_segments, renderable_tokens, []
+
+    normalized_references: list[dict[str, Any]] = []
+    anchored_references: dict[str, list[dict[str, Any]]] = {}
+    trailing_references: list[dict[str, Any]] = []
+
+    for annotation in annotations:
+        reference = dict(annotation)
+        normalized_references.append(reference)
+        anchor_token_id = reference.get("insert_after_token_id")
+        if isinstance(anchor_token_id, str) and anchor_token_id:
+            anchored_references.setdefault(anchor_token_id, []).append(reference)
+            continue
+        trailing_references.append(reference)
+
+    if not text_segments:
+        text_segments = [{"kind": "text", "text": text_value}] if text_value else []
+
+    merged_segments: list[dict[str, Any]] = []
+    inserted_reference_ids: set[str] = set()
+    for segment in text_segments:
+        merged_segments.append(segment)
+        if segment.get("kind") != "token":
+            continue
+
+        token_id = segment.get("token_id")
+        if not isinstance(token_id, str) or token_id not in anchored_references:
+            continue
+
+        for reference in anchored_references[token_id]:
+            merged_segments.append(
+                {
+                    "kind": "material_ref",
+                    "reference_id": reference["reference_id"],
+                    "label": reference["label"],
+                    "trailing_punctuation": reference.get("trailing_punctuation") or "",
+                    "prefix": " ",
+                }
+            )
+            inserted_reference_ids.add(reference["reference_id"])
+
+    for reference in normalized_references:
+        if reference["reference_id"] in inserted_reference_ids:
+            continue
+        merged_segments.append(
+            {
+                "kind": "material_ref",
+                "reference_id": reference["reference_id"],
+                "label": reference["label"],
+                "trailing_punctuation": reference.get("trailing_punctuation") or "",
+                "prefix": " ",
+            }
+        )
+
+    return merged_segments, renderable_tokens, normalized_references
+
+
 def load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | None:
-    if not task_supports_set_filtering(task_key):
+    if not task_is_productive_in_player(task_key):
         return None
 
     payload = _load_alignment_payload(session, task_key)
@@ -280,6 +386,56 @@ def load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | 
     full_audio_path = _resolve_session_relative_path(session_root, full_mp3)
     if not is_playable_audio_artifact(full_audio_path):
         return None
+
+    if task_key == "interview":
+        raw_segments = payload.get("segments")
+        if not isinstance(raw_segments, list) or not raw_segments:
+            return None
+
+        segments: list[dict[str, Any]] = []
+        for raw_segment in raw_segments:
+            if not isinstance(raw_segment, dict):
+                return None
+
+            segment_id = raw_segment.get("segment_id")
+            segment_number = raw_segment.get("segment_number")
+            speaker_code = raw_segment.get("speaker_code")
+            text_value = raw_segment.get("text")
+            start_ms = _coerce_milliseconds(raw_segment.get("start_ms"))
+            end_ms = _coerce_milliseconds(raw_segment.get("end_ms"))
+            if not isinstance(segment_id, str) or not segment_id:
+                return None
+            if not isinstance(segment_number, str) or not segment_number:
+                return None
+            if not isinstance(speaker_code, str) or not speaker_code:
+                return None
+            if not isinstance(text_value, str):
+                return None
+            if start_ms is None or end_ms is None or end_ms < start_ms:
+                return None
+
+            segments.append(
+                {
+                    "item_id": segment_id,
+                    "item_number": segment_number,
+                    "segment_id": segment_id,
+                    "segment_number": segment_number,
+                    "speaker_code": speaker_code,
+                    "text": text_value,
+                    "start_ms": start_ms,
+                    "end_ms": end_ms,
+                    "tokens": _normalize_bundle_tokens(
+                        segment_id,
+                        raw_segment.get("tokens"),
+                        item_start_ms=start_ms,
+                        item_end_ms=end_ms,
+                    ),
+                    "annotations": _normalize_interview_annotations(segment_id, raw_segment.get("annotations")),
+                    "split_audio_path": None,
+                }
+            )
+
+        return {"full_audio_path": full_audio_path, "items": segments, "content_kind": "interview"}
 
     raw_items = payload.get("items")
     if not isinstance(raw_items, list) or not raw_items:
@@ -319,10 +475,13 @@ def load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | 
             }
         )
 
-    return {"full_audio_path": full_audio_path, "items": items}
+    return {"full_audio_path": full_audio_path, "items": items, "content_kind": "items"}
 
 
 def load_task_ready_sessions(language_slug: str, task_key: str) -> tuple[list[SessionRecord], dict[str, dict[str, Any]]]:
+    if not task_is_productive_in_player(task_key):
+        return [], {}
+
     ready_sessions: list[SessionRecord] = []
     bundles: dict[str, dict[str, Any]] = {}
     for candidate in sort_sessions_by_recency(load_language_sessions(language_slug)):
@@ -525,6 +684,9 @@ def build_player_set_notice(
     if status != "loaded":
         return {"status": status, "text": _t(ui_lang, "research.player.set_banner.unavailable_text")}
 
+    if task_key == "interview":
+        return {"status": "unsupported-task", "text": _t(ui_lang, "research.player.set_banner.interview_hint")}
+
     if task_supports_set_filtering(task_key) and set_context.get("requested_focus_item") and not resolved_focus_item_id:
         return {"status": "focus-missed", "text": _t(ui_lang, "research.player.set_banner.focus_missed")}
     return None
@@ -574,6 +736,21 @@ def build_normalized_player_source(
     set_context: dict[str, Any] | None,
 ) -> NormalizedPlayerSource:
     task_label = _player_task_display_label(language_slug, task_key, ui_lang)
+    if task_key == "interview":
+        return NormalizedPlayerSource(
+            task_key=task_key,
+            source_kind="interview",
+            items_title=task_label,
+            default_render_mode=None,
+            render_mode=None,
+            allowed_render_modes=(),
+            primary_audio_mode="full",
+            supports_item_audio=False,
+            supports_full_audio=bundle is not None and bundle.get("full_audio_path") is not None,
+            supports_text_view=False,
+            is_set_excerpt=False,
+        )
+
     if task_key == "wordlist":
         return NormalizedPlayerSource(
             task_key=task_key,
@@ -734,6 +911,116 @@ def build_player_items(
     return rows
 
 
+def _player_interview_speaker_label(ui_lang: str, speaker_code: str) -> str:
+    if speaker_code == "interviewer":
+        return _t(ui_lang, "research.player.interview.role.interviewer")
+    return _t(ui_lang, "research.player.interview.role.participant")
+
+
+def build_player_interview_segments(
+    ui_lang: str,
+    language_slug: str,
+    session: SessionRecord,
+    bundle: Mapping[str, Any],
+    *,
+    source: str | None = None,
+) -> list[dict[str, Any]]:
+    reference_bundles: dict[str, dict[str, Any] | None] = {}
+    rows: list[dict[str, Any]] = []
+
+    for bundle_item in bundle["items"]:
+        text_segments, renderable_tokens, references = _build_interview_text_segments(
+            bundle_item["segment_id"],
+            bundle_item["text"],
+            bundle_item.get("tokens", []),
+            bundle_item.get("annotations", []),
+        )
+
+        references_by_id: dict[str, dict[str, Any]] = {}
+        for reference in references:
+            task_key = reference["task"]
+            if task_key not in reference_bundles:
+                reference_bundles[task_key] = load_task_bundle(session, task_key) if session_has_task(session, task_key) else None
+            target_bundle = reference_bundles[task_key]
+            target_item = None
+            if target_bundle is not None:
+                target_item = next((item for item in target_bundle["items"] if item["item_id"] == reference["item_id"]), None)
+
+            clip_href = None
+            if target_item is not None and target_item.get("split_audio_path") is not None:
+                clip_href = url_for(
+                    "public.research_player_item_download",
+                    ui_lang=ui_lang,
+                    language_slug=language_slug,
+                    session_id=session.session_id,
+                    task=task_key,
+                    item_id=reference["item_id"],
+                )
+
+            open_href = url_for(
+                "public.research_player",
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                session_id=session.session_id,
+                task=task_key,
+                source=source,
+                focus_item=reference["item_id"],
+            )
+            references_by_id[reference["reference_id"]] = {
+                **reference,
+                "task_label": _player_task_display_label(language_slug, task_key, ui_lang),
+                "item_number": (target_item or {}).get("item_number") or reference.get("item_number") or reference["item_id"],
+                "canonical_text": (target_item or {}).get("text") or reference.get("canonical_text") or reference["label"],
+                "clip_href": clip_href,
+                "clip_label": (target_item or {}).get("text") or reference["label"],
+                "time_label": (
+                    f"{_format_player_clock(target_item['start_ms'])} - {_format_player_clock(target_item['end_ms'])}"
+                    if target_item is not None and isinstance(target_item.get("start_ms"), int) and isinstance(target_item.get("end_ms"), int)
+                    else None
+                ),
+                "open_href": open_href,
+            }
+
+        resolved_segments: list[dict[str, Any]] = []
+        for segment in text_segments:
+            if segment.get("kind") != "material_ref":
+                resolved_segments.append(segment)
+                continue
+            reference_id = segment.get("reference_id")
+            if not isinstance(reference_id, str) or reference_id not in references_by_id:
+                continue
+            resolved_segments.append(
+                {
+                    **segment,
+                    "reference": references_by_id[reference_id],
+                }
+            )
+
+        rows.append(
+            {
+                "item_id": bundle_item["segment_id"],
+                "item_number": bundle_item["segment_number"],
+                "segment_id": bundle_item["segment_id"],
+                "segment_number": bundle_item["segment_number"],
+                "speaker_code": bundle_item["speaker_code"],
+                "speaker_label": _player_interview_speaker_label(ui_lang, bundle_item["speaker_code"]),
+                "text": bundle_item["text"],
+                "text_segments": resolved_segments,
+                "tokens": renderable_tokens,
+                "start_label": _format_player_clock(bundle_item["start_ms"]),
+                "end_label": _format_player_clock(bundle_item["end_ms"]),
+                "download_href": None,
+                "start_ms": bundle_item["start_ms"],
+                "end_ms": bundle_item["end_ms"],
+                "is_available": True,
+                "missing_label": None,
+                "references": list(references_by_id.values()),
+            }
+        )
+
+    return rows
+
+
 def build_running_text_blocks(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     if not items:
         return []
@@ -798,12 +1085,14 @@ def resolve_player_runtime_state(
     session: SessionRecord,
     task_key: str,
     *,
+    source: str | None,
     owner_user_id: str | None,
     compare_session_id: str | None,
     compare_mode: str | None,
     set_id: str | None,
     preset_id: str | None,
     focus_item: str | None,
+    focus_segment: str | None,
     render_mode: str | None,
     load_owned_set_fn=load_owned_set,
 ) -> ResolvedPlayerRuntimeState:
@@ -820,8 +1109,8 @@ def resolve_player_runtime_state(
     effective_preset_id = set_context["effective_preset_id"] if set_context is not None else preset_id
     active_selector_preset_id = effective_preset_id if effective_set_id is None else None
 
-    task_bundle = load_task_bundle(session, task_key) if task_supports_set_filtering(task_key) else None
-    ready_sessions, ready_bundles = load_task_ready_sessions(language_slug, task_key) if task_supports_set_filtering(task_key) else ([], {})
+    task_bundle = load_task_bundle(session, task_key) if task_is_productive_in_player(task_key) else None
+    ready_sessions, ready_bundles = load_task_ready_sessions(language_slug, task_key) if task_is_productive_in_player(task_key) else ([], {})
 
     compare_session = None
     compare_bundle = None
@@ -843,7 +1132,7 @@ def resolve_player_runtime_state(
         compare_selected=compare_session is not None,
         requested_render_mode=render_mode,
         set_context=set_context if task_supports_set_filtering(task_key) else None,
-    ) if task_supports_set_filtering(task_key) else None
+    ) if task_is_productive_in_player(task_key) else None
     active_render_mode_query = normalized_render_mode_query(player_source) if player_source is not None else None
     filtered_task_items = set_context["task_items"] if set_context is not None and set_context["status"] == "loaded" else None
     filtered_task_empty = bool(
@@ -857,27 +1146,39 @@ def resolve_player_runtime_state(
     secondary_items: list[dict[str, Any]] = []
     compare_rows: list[dict[str, Any]] = []
     visible_focus_item_id = None
-    if task_supports_set_filtering(task_key) and task_bundle is not None and player_source is not None:
-        primary_items = build_player_items(
-            ui_lang,
-            language_slug,
-            session,
-            task_key,
-            task_bundle,
-            item_filter=filtered_task_items,
-        )
-        if compare_session is not None and compare_bundle is not None:
-            secondary_items = build_player_items(
+    visible_focus_segment_id = None
+    if task_bundle is not None and player_source is not None:
+        if task_key == "interview":
+            primary_items = build_player_interview_segments(
                 ui_lang,
                 language_slug,
-                compare_session,
+                session,
+                task_bundle,
+                source=source,
+            )
+            if isinstance(focus_segment, str) and focus_segment and any(item["segment_id"] == focus_segment for item in primary_items):
+                visible_focus_segment_id = focus_segment
+        elif task_supports_set_filtering(task_key):
+            primary_items = build_player_items(
+                ui_lang,
+                language_slug,
+                session,
                 task_key,
-                compare_bundle,
+                task_bundle,
                 item_filter=filtered_task_items,
             )
-            compare_rows = build_player_compare_rows(primary_items, secondary_items, ui_lang)
-        if isinstance(focus_item, str) and focus_item and any(item["item_id"] == focus_item for item in primary_items):
-            visible_focus_item_id = focus_item
+            if compare_session is not None and compare_bundle is not None:
+                secondary_items = build_player_items(
+                    ui_lang,
+                    language_slug,
+                    compare_session,
+                    task_key,
+                    compare_bundle,
+                    item_filter=filtered_task_items,
+                )
+                compare_rows = build_player_compare_rows(primary_items, secondary_items, ui_lang)
+            if isinstance(focus_item, str) and focus_item and any(item["item_id"] == focus_item for item in primary_items):
+                visible_focus_item_id = focus_item
 
     return ResolvedPlayerRuntimeState(
         set_context=set_context,
@@ -899,12 +1200,13 @@ def resolve_player_runtime_state(
         secondary_items=secondary_items,
         compare_rows=compare_rows,
         visible_focus_item_id=visible_focus_item_id,
+        visible_focus_segment_id=visible_focus_segment_id,
     )
 
 
 def resolve_player_audio_artifact(language_slug: str, session_id: str, task_key: str) -> Path | None:
     session = get_session(language_slug, session_id)
-    if session is None or not task_supports_set_filtering(task_key) or not session_has_task(session, task_key):
+    if session is None or not task_is_productive_in_player(task_key) or not session_has_task(session, task_key):
         return None
     bundle = load_task_bundle(session, task_key)
     if bundle is None:

@@ -3694,8 +3694,183 @@ body[data-page="login"] .pm-auth-secondary--card {
 
 .pm-player-panel--compare,
 .pm-player-panel--wordlist,
-.pm-player-panel--text {
+.pm-player-panel--text,
+.pm-player-panel--interview {
   gap: var(--pm-space-md);
+}
+
+.pm-player-transcript {
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-player-transcript__row {
+  padding: 0.88rem 0;
+  border-top: 1px solid var(--pm-border-subtle);
+}
+
+.pm-player-transcript__row:first-child {
+  border-top: 0;
+}
+
+.pm-player-transcript__row.is-focused {
+  background: color-mix(in srgb, var(--pm-surface-accent-soft) 34%, transparent);
+}
+
+.pm-player-transcript__meta {
+  gap: 0.32rem;
+  align-content: start;
+}
+
+.pm-player-transcript__speaker,
+.pm-player-reference-dialog__number {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  min-height: 1.9rem;
+  padding: 0 0.62rem;
+  border-radius: 999px;
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  font-weight: 600;
+}
+
+.pm-player-transcript__speaker--interviewer {
+  background: color-mix(in srgb, var(--pm-surface-accent-soft) 78%, var(--pm-surface-paper) 22%);
+  color: var(--pm-text-accent);
+}
+
+.pm-player-transcript__speaker--participant,
+.pm-player-reference-dialog__number {
+  background: color-mix(in srgb, var(--pm-surface-neutral) 82%, var(--pm-surface-paper) 18%);
+  color: var(--book-muted);
+}
+
+.pm-player-transcript__segment,
+.pm-player-transcript__time,
+.pm-player-reference-dialog__meta,
+.pm-player-reference-dialog__audio-note {
+  margin: 0;
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  line-height: 1.4;
+}
+
+.pm-player-transcript__body {
+  min-width: 0;
+}
+
+.pm-player-transcript__trigger {
+  appearance: none;
+  width: 100%;
+  min-height: 3.2rem;
+  padding: 0.76rem 0.9rem;
+  border: 1px solid transparent;
+  border-radius: var(--pm-radius-container);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--promat-transition-fast), border-color var(--promat-transition-fast), color var(--promat-transition-fast);
+}
+
+.pm-player-transcript__trigger:hover,
+.pm-player-transcript__trigger:focus-visible {
+  background: var(--pm-surface-hover);
+  border-color: var(--pm-border-subtle);
+}
+
+.pm-player-transcript__body[data-player-item].is-active .pm-player-transcript__trigger {
+  background: color-mix(in srgb, var(--pm-surface-accent-soft) 76%, var(--pm-surface-paper) 24%);
+  border-color: transparent;
+}
+
+.pm-player-transcript__text,
+.pm-player-reference-dialog__text {
+  white-space: normal;
+  line-height: 1.58;
+}
+
+.pm-player-inline-ref {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.6rem;
+  margin: 0 0.08rem;
+  padding: 0.02rem 0.48rem;
+  border: 1px solid var(--pm-border-subtle);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pm-surface-accent-soft) 58%, var(--pm-surface-paper) 42%);
+  color: var(--pm-text-accent);
+  font-family: var(--book-font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.15;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background var(--promat-transition-fast), border-color var(--promat-transition-fast), color var(--promat-transition-fast);
+}
+
+.pm-player-inline-ref:hover,
+.pm-player-inline-ref:focus-visible {
+  background: color-mix(in srgb, var(--pm-surface-accent-soft) 74%, var(--pm-surface-paper) 26%);
+  border-color: var(--pm-text-accent);
+}
+
+.pm-player-inline-ref__punctuation {
+  display: inline;
+}
+
+.pm-player-reference-dialog {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  max-width: none;
+}
+
+.pm-player-reference-dialog::backdrop {
+  background: rgba(35, 40, 47, 0.2);
+}
+
+.pm-player-reference-dialog .md3-dialog__container {
+  min-height: 100vh;
+}
+
+.pm-player-reference-dialog .md3-dialog__surface {
+  position: fixed;
+  top: var(--pm-player-reference-top, 6rem);
+  left: var(--pm-player-reference-left, 50%);
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: min(78vh, 32rem);
+  overflow: auto;
+  transform: translateX(-50%);
+  border-color: var(--pm-border-subtle);
+  box-shadow: 0 1.2rem 2.8rem color-mix(in srgb, var(--pm-ink) 18%, transparent);
+}
+
+.pm-player-reference-dialog__header,
+.pm-player-reference-dialog__eyebrow,
+.pm-player-reference-dialog__audio-wrap {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.pm-player-reference-dialog__eyebrow {
+  justify-items: start;
+}
+
+.pm-player-reference-dialog__text {
+  margin: 0;
+}
+
+.pm-player-reference-dialog__audio {
+  width: 100%;
+}
+
+.pm-player-reference-dialog__audio[hidden] {
+  display: none;
 }
 
 .pm-player-summary-band {
@@ -4076,6 +4251,16 @@ body[data-page="login"] .pm-auth-secondary--card {
 
   .pm-player-list__row {
     gap: 0.55rem;
+  }
+
+  .pm-player-reference-dialog .md3-dialog__surface {
+    top: auto;
+    bottom: 0;
+    left: 50%;
+    width: min(100vw, 42rem);
+    max-height: min(82vh, 36rem);
+    border-radius: 1.2rem 1.2rem 0 0;
+    transform: translateX(-50%);
   }
 }
 
