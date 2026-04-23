@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% macro render_player_text(item, text_class) -%}
-<span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}">{{ segment.text }}</span>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" aria-haspopup="dialog"><span class="pm-player-inline-ref__bracket" aria-hidden="true">[</span><span class="pm-player-inline-ref__label">{{ segment.reference.label }}</span><span class="pm-player-inline-ref__bracket" aria-hidden="true">]</span></button>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
+<span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}">{{ segment.text }}</span>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" aria-haspopup="dialog" aria-expanded="false"><span class="pm-player-inline-ref__bracket" aria-hidden="true">[</span><span class="pm-player-inline-ref__label">{{ segment.reference.label }}</span><span class="pm-player-inline-ref__bracket" aria-hidden="true">]</span></button>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
 {%- endmacro %}
 
 {% macro render_player_meta(item, player_mode) -%}
@@ -11,6 +11,29 @@
 {% else %}
 <span class="pm-player-list__meta">{{ item.start_label }}–{{ item.end_label }}</span>
 {% endif %}
+{%- endmacro %}
+
+{% macro render_running_text_item(item, download_label, title_variant=False) -%}
+<span class="pm-player-text-flow__sentence{{ ' pm-player-text-flow__sentence--title' if title_variant else '' }}" data-player-focus-item="{{ item.item_id }}">
+  <span class="pm-player-text-flow__number{{ ' pm-player-text-flow__number--title' if title_variant else '' }}">{{ item.item_number }}</span>
+  {% if item.is_available %}
+  <span class="pm-player-text-flow__body pm-player-list__cell{{ ' pm-player-text-flow__body--title' if title_variant else '' }}" data-player-item data-speaker-key="primary" data-item-id="{{ item.item_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
+    <button type="button" class="pm-player-text-flow__trigger{{ ' pm-player-text-flow__trigger--title' if title_variant else '' }}" data-player-seek aria-label="{{ item.text }}">
+      {{ render_player_text(item, 'pm-player-text-flow__text pm-item-content-text' ~ (' pm-player-text-flow__text--title' if title_variant else '')) }}
+    </button>
+    {% if item.download_href %}
+    <a class="pm-player-icon-button pm-player-text-flow__download" href="{{ item.download_href }}" download aria-label="{{ download_label }}: {{ item.text }}" title="{{ download_label }}: {{ item.text }}">
+      <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
+    </a>
+    {% endif %}
+  </span>
+  {% else %}
+  <span class="pm-player-text-flow__body pm-player-text-flow__body--missing{{ ' pm-player-text-flow__body--title' if title_variant else '' }}">
+    <span class="pm-player-text-flow__text pm-item-content-text{{ ' pm-player-text-flow__text--title' if title_variant else '' }}">{{ item.text }}</span>
+    <span class="pm-player-text-flow__meta">{{ item.missing_label }}</span>
+  </span>
+  {% endif %}
+</span>
 {%- endmacro %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
@@ -292,7 +315,9 @@
           <div class="pm-player-panel__header pm-player-panel__header--split">
             <div class="pm-player-panel__copy">
               <h2 class="pm-player-panel__title">{{ promat_page.player.items_title }}</h2>
-              <p class="pm-player-panel__hint">{{ t('research.player.segments_count', count=promat_page.player['items_count']) if promat_page.player.mode == 'interview' else t('research.player.items_count', count=promat_page.player['items_count']) }}</p>
+              {% if promat_page.player.mode != 'interview' %}
+              <p class="pm-player-panel__hint">{{ t('research.player.items_count', count=promat_page.player['items_count']) }}</p>
+              {% endif %}
             </div>
 
             {% if promat_page.player.render_modes %}
@@ -314,7 +339,9 @@
             <li class="pm-player-transcript__row" data-player-focus-item="{{ item.segment_id }}">
               <div class="pm-player-transcript__meta">
                 <span class="pm-player-transcript__speaker pm-player-transcript__speaker--{{ item.speaker_code }}">{{ item.speaker_label }}</span>
-                <span class="pm-player-transcript__time">{{ item.start_label }}–{{ item.end_label }}</span>
+                <span class="pm-player-transcript__time-wrap">
+                  <span class="pm-player-transcript__time">{{ item.start_label }}–{{ item.end_label }}</span>
+                </span>
               </div>
 
               <div class="pm-player-transcript__body" data-player-item data-speaker-key="primary" data-item-id="{{ item.segment_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
@@ -342,6 +369,9 @@
                   <span class="pm-icon-mask pm-icon-mask--play" data-player-reference-toggle-icon aria-hidden="true"></span>
                 </button>
                 <input type="range" min="0" max="1000" step="1" value="0" class="pm-player-progress pm-player-progress--seek pm-player-reference-popover__progress" data-player-reference-progress disabled aria-label="{{ t('research.player.playback_progress') }}">
+                <a class="pm-player-icon-button pm-player-reference-popover__download" data-player-reference-download href="#" download aria-label="{{ promat_page.player.download_label }}" title="{{ promat_page.player.download_label }}">
+                  <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
+                </a>
               </div>
 
               <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-reference-popover__action" data-player-reference-open href="#" target="_blank" rel="noopener noreferrer">{{ t('research.player.interview.reference_open_context') }} →</a>
@@ -350,30 +380,17 @@
           {% elif promat_page.player.render_mode == 'running_text' %}
           <div class="pm-player-text-flow" aria-label="{{ promat_page.player.items_title }}">
             {% for block in promat_page.player.text_blocks %}
+            {% if block.kind == 'spoken_title' %}
+            <p class="pm-player-text-flow__spoken-title" data-player-text-block="{{ block.block_id }}">
+              {{ render_running_text_item(block.item, promat_page.player.download_label, True) }}
+            </p>
+            {% else %}
             <p class="pm-player-text-flow__paragraph" data-player-text-block="{{ block.block_id }}">
               {% for item in block['items'] %}
-              <span class="pm-player-text-flow__sentence" data-player-focus-item="{{ item.item_id }}">
-                <span class="pm-player-text-flow__number">{{ item.item_number }}</span>
-                {% if item.is_available %}
-                <span class="pm-player-text-flow__body pm-player-list__cell" data-player-item data-speaker-key="primary" data-item-id="{{ item.item_id }}" data-start-ms="{{ item.start_ms }}" data-end-ms="{{ item.end_ms }}">
-                  <button type="button" class="pm-player-text-flow__trigger" data-player-seek aria-label="{{ item.text }}">
-                    {{ render_player_text(item, 'pm-player-text-flow__text pm-item-content-text') }}
-                  </button>
-                  {% if item.download_href %}
-                  <a class="pm-player-icon-button pm-player-text-flow__download" href="{{ item.download_href }}" download aria-label="{{ promat_page.player.download_label }}: {{ item.text }}" title="{{ promat_page.player.download_label }}: {{ item.text }}">
-                    <span class="pm-icon-mask pm-icon-mask--download" aria-hidden="true"></span>
-                  </a>
-                  {% endif %}
-                </span>
-                {% else %}
-                <span class="pm-player-text-flow__body pm-player-text-flow__body--missing">
-                  <span class="pm-player-text-flow__text pm-item-content-text">{{ item.text }}</span>
-                  <span class="pm-player-text-flow__meta">{{ item.missing_label }}</span>
-                </span>
-                {% endif %}
-              </span>
+              {{ render_running_text_item(item, promat_page.player.download_label) }}
               {% endfor %}
             </p>
+            {% endif %}
             {% endfor %}
           </div>
           {% else %}

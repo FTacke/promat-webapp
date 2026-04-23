@@ -47,6 +47,7 @@ class TaskCatalogItem:
     text_order_index: int | None = None
     paragraph_break_before: bool = False
     paragraph_id: str | None = None
+    spoken_title_item: bool = False
 
 
 @dataclass(frozen=True)
@@ -375,6 +376,7 @@ def load_task_catalog(language_slug: str, task_key: str) -> TaskCatalog:
         text_container_id = _optional_string(raw_item, "text_container_id", context=context)
         text_order_index = _optional_int(raw_item, "text_order_index", context=context)
         paragraph_break_before = _optional_bool(raw_item, "paragraph_break_before", context=context)
+        spoken_title_item = _optional_bool(raw_item, "spoken_title_item", context=context)
         items_by_id[item_id] = TaskCatalogItem(
             task=normalized_task,
             item_id=item_id,
@@ -385,6 +387,7 @@ def load_task_catalog(language_slug: str, task_key: str) -> TaskCatalog:
             text_order_index=text_order_index if text_order_index is not None else (index if player_source.source_kind == "text" else None),
             paragraph_break_before=bool(paragraph_break_before),
             paragraph_id=_optional_string(raw_item, "paragraph_id", context=context),
+            spoken_title_item=bool(spoken_title_item),
         )
 
     display_label = _optional_string(payload, "display_label", context=str(path))

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -339,6 +340,35 @@ def _build_interview_text_segments(
 
     merged_segments: list[dict[str, Any]] = []
     inserted_reference_ids: set[str] = set()
+    renderable_tokens_by_id = {
+        token["token_id"]: token
+        for token in renderable_tokens
+        if isinstance(token.get("token_id"), str)
+    }
+
+    def detach_reference_suffix(token_segment: dict[str, Any]) -> str:
+        token_suffix = token_segment.pop("suffix", "") if isinstance(token_segment.get("suffix"), str) else ""
+        token_id = token_segment.get("token_id")
+        renderable_token = renderable_tokens_by_id.get(token_id) if isinstance(token_id, str) else None
+        if token_suffix:
+            if renderable_token is not None and not isinstance(renderable_token.get("suffix"), str):
+                renderable_token["suffix"] = token_suffix
+            return token_suffix
+
+        token_text = token_segment.get("text")
+        if not isinstance(token_text, str) or not token_text:
+            return ""
+
+        legacy_match = re.fullmatch(r"(?P<core>.+?)(?P<suffix>[.,!?;:]+)", token_text)
+        if legacy_match is None:
+            return ""
+
+        token_segment["text"] = legacy_match.group("core")
+        if renderable_token is not None:
+            renderable_token["text"] = legacy_match.group("core")
+            renderable_token["suffix"] = legacy_match.group("suffix")
+        return legacy_match.group("suffix")
+
     for segment in text_segments:
         if segment.get("kind") != "token":
             merged_segments.append(segment)
@@ -350,7 +380,7 @@ def _build_interview_text_segments(
             continue
 
         token_segment = dict(segment)
-        token_suffix = token_segment.pop("suffix", "") if isinstance(token_segment.get("suffix"), str) else ""
+        token_suffix = detach_reference_suffix(token_segment)
         merged_segments.append(token_segment)
 
         token_references = anchored_references[token_id]
@@ -474,6 +504,7 @@ def load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | 
 
         split_mp3 = raw_item.get("split_mp3")
         split_audio_path = _resolve_session_relative_path(session_root, split_mp3) if isinstance(split_mp3, str) else None
+        spoken_title_item = raw_item.get("spoken_title_item") if isinstance(raw_item.get("spoken_title_item"), bool) else False
         items.append(
             {
                 "item_id": item_id,
@@ -487,6 +518,7 @@ def load_task_bundle(session: SessionRecord, task_key: str) -> dict[str, Any] | 
                     item_start_ms=start_ms,
                     item_end_ms=end_ms,
                 ),
+                "spoken_title_item": spoken_title_item,
                 "split_audio_path": split_audio_path if is_playable_audio_artifact(split_audio_path) else None,
             }
         )
@@ -596,6 +628,7 @@ def resolve_player_set_context(
                         "text_order_index": catalog_item.text_order_index,
                         "paragraph_break_before": catalog_item.paragraph_break_before,
                         "paragraph_id": catalog_item.paragraph_id,
+                        "spoken_title_item": catalog_item.spoken_title_item,
                         "segment_id": stored_item.segment_id,
                         "note": stored_item.note,
                     }
@@ -659,6 +692,7 @@ def resolve_player_set_context(
                     "text_order_index": catalog_item.text_order_index,
                     "paragraph_break_before": catalog_item.paragraph_break_before,
                     "paragraph_id": catalog_item.paragraph_id,
+                    "spoken_title_item": catalog_item.spoken_title_item,
                     "segment_id": reference.segment_id,
                     "note": reference.note,
                 }
@@ -851,6 +885,7 @@ def build_player_items(
                     "text_order_index": catalog_item.text_order_index if catalog_item is not None else None,
                     "paragraph_break_before": catalog_item.paragraph_break_before if catalog_item is not None else False,
                     "paragraph_id": catalog_item.paragraph_id if catalog_item is not None else None,
+                    "spoken_title_item": catalog_item.spoken_title_item if catalog_item is not None else bool(bundle_item.get("spoken_title_item")),
                     "segment_id": None,
                     "note": None,
                 }
@@ -871,6 +906,7 @@ def build_player_items(
                     "text_order_index": visible_item.get("text_order_index"),
                     "paragraph_break_before": bool(visible_item.get("paragraph_break_before")),
                     "paragraph_id": visible_item.get("paragraph_id"),
+                    "spoken_title_item": bool(visible_item.get("spoken_title_item")),
                     "segment_id": visible_item.get("segment_id"),
                     "note": visible_item.get("note"),
                     "tokens": [],
@@ -903,6 +939,7 @@ def build_player_items(
                 "text_order_index": visible_item.get("text_order_index"),
                 "paragraph_break_before": bool(visible_item.get("paragraph_break_before")),
                 "paragraph_id": visible_item.get("paragraph_id"),
+                "spoken_title_item": bool(visible_item.get("spoken_title_item") or bundle_item.get("spoken_title_item")),
                 "segment_id": visible_item.get("segment_id"),
                 "note": visible_item.get("note"),
                 "tokens": renderable_tokens,
@@ -1044,15 +1081,26 @@ def build_running_text_blocks(items: list[dict[str, Any]]) -> list[dict[str, Any
     blocks: list[dict[str, Any]] = []
     current_items: list[dict[str, Any]] = []
     block_index = 1
+
+    def flush_paragraph() -> None:
+        nonlocal current_items, block_index
+        if not current_items:
+            return
+        blocks.append({"block_id": f"paragraph-{block_index}", "kind": "paragraph", "items": current_items})
+        block_index += 1
+        current_items = []
+
     for item in items:
-        if current_items and item.get("paragraph_break_before"):
-            blocks.append({"block_id": f"paragraph-{block_index}", "items": current_items})
+        if item.get("spoken_title_item"):
+            flush_paragraph()
+            blocks.append({"block_id": f"title-{block_index}", "kind": "spoken_title", "item": item, "items": [item]})
             block_index += 1
-            current_items = []
+            continue
+        if current_items and item.get("paragraph_break_before"):
+            flush_paragraph()
         current_items.append(item)
 
-    if current_items:
-        blocks.append({"block_id": f"paragraph-{block_index}", "items": current_items})
+    flush_paragraph()
     return blocks
 
 
@@ -1078,6 +1126,7 @@ def build_player_compare_rows(
                     "text_order_index": primary.get("text_order_index"),
                     "paragraph_break_before": primary.get("paragraph_break_before"),
                     "paragraph_id": primary.get("paragraph_id"),
+                    "spoken_title_item": primary.get("spoken_title_item"),
                     "segment_id": primary.get("segment_id"),
                     "note": None,
                     "tokens": [],

@@ -21,6 +21,7 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 from app.config.data_conventions import build_person_id, build_session_id, parse_person_id, parse_session_id
 from app import register_context_processors
 from app.research_presets import clear_research_preset_caches
+from app.research_player_runtime import _build_interview_text_segments, _normalize_bundle_tokens, _normalize_interview_annotations
 from app.research_views import build_player_page, build_recordings_page, build_speaker_profile_page, build_speakers_page
 from app.routes.auth import blueprint as auth_blueprint
 from app.routes.public import _sample_speaker_cards, blueprint as public_blueprint
@@ -268,6 +269,7 @@ def _write_text_player_artifacts(
     person_id: str,
     *,
     include_tokens: bool = False,
+    include_spoken_title_item: bool = False,
 ) -> None:
     payload = {
         "session_id": session_id,
@@ -281,6 +283,7 @@ def _write_text_player_artifacts(
                 "text": "Hoy miro el reloj con calma antes de salir.",
                 "start_ms": 1200,
                 "end_ms": 2600,
+                **({"spoken_title_item": True} if include_spoken_title_item else {}),
                 **({
                     "tokens": [
                         {
@@ -375,6 +378,29 @@ def _write_interview_player_artifacts(runtime_root: Path, language_slug: str, se
     _write_session_file(runtime_root, language_slug, session_id, "derived/interview.mp3", _minimal_mp3_bytes())
 
 
+def _render_interview_text_segments(segments: list[dict[str, object]]) -> str:
+    parts: list[str] = []
+    for segment in segments:
+        kind = segment.get("kind")
+        if kind == "token":
+            parts.append(str(segment.get("text") or ""))
+            suffix = segment.get("suffix")
+            if isinstance(suffix, str) and suffix:
+                parts.append(suffix)
+            continue
+        if kind == "material_ref":
+            prefix = segment.get("prefix")
+            if isinstance(prefix, str) and prefix:
+                parts.append(prefix)
+            parts.append(f"[{segment.get('label') or ''}]")
+            suffix = segment.get("suffix")
+            if isinstance(suffix, str) and suffix:
+                parts.append(suffix)
+            continue
+        parts.append(str(segment.get("text") or ""))
+    return "".join(parts)
+
+
 def _write_connected_text_catalog(runtime_root: Path) -> None:
     base_dir = runtime_root / "data" / "config" / "research_player" / "spanish"
     (base_dir / "task_catalogs" / "text.json").write_text(
@@ -404,6 +430,7 @@ def _write_connected_text_catalog(runtime_root: Path) -> None:
                         "text_order_index": 1,
                         "paragraph_break_before": True,
                         "paragraph_id": "p1",
+                        "spoken_title_item": True,
                     },
                     {
                         "item_id": "qy_01",
@@ -1780,9 +1807,17 @@ def test_player_page_exposes_english_labels_for_migrated_wordlist_surface(runtim
     assert page["content_header"]["title"] == "Player"
     assert page["content_header"]["intro"] == "Audio workbench for one documented session and its available task types."
     assert page["player"]["audio_href"].endswith(f"/en/research/spanish/player/{session_id}/wordlist/audio.mp3")
+    assert page["player"]["controls_title"] == "Playback"
     assert page["task_panels"][1]["state_label"] == "No playable artifacts"
     assert page["origin_link"]["href"].endswith("/en/research/spanish/recordings?task=wordlist")
     assert page["summary_cards"][0]["profile_label"] == "Profile"
+    assert [row["label"] for row in page["summary_cards"][0]["rows"]] == [
+        "Person-ID",
+        "Recording date",
+        "Gender",
+        "Stays in target-language country",
+        "Recorded by",
+    ]
 
 
 def test_player_page_builds_productive_interview_view_inside_shared_player(runtime_env: Path, url_app: Flask) -> None:
@@ -1810,6 +1845,7 @@ def test_player_page_builds_productive_interview_view_inside_shared_player(runti
     assert page is not None
     assert page["player"]["mode"] == "interview"
     assert page["player"]["primary_audio_mode"] == "full"
+    assert page["player"]["controls_title"] == "Wiedergabe"
     assert page["player"]["compare"]["has_candidates"] is False
     assert page["player"]["set_select"] is None
     assert page["player"]["client_state"]["focusedSegmentId"] == "seg_002"
@@ -1824,6 +1860,79 @@ def test_player_page_builds_productive_interview_view_inside_shared_player(runti
     assert material_ref["reference"]["task_label"] == "Wortliste"
     assert "focus_item=wl_001" in material_ref["reference"]["open_href"]
     assert material_ref["reference"]["clip_href"].endswith(f"/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3")
+
+
+def test_build_interview_text_segments_keeps_material_ref_before_suffix_for_suffix_and_legacy_token_models() -> None:
+    cases = [
+        {
+            "segment_id": "seg_025",
+            "text": "Item Nummer 25.",
+            "tokens": [
+                {"token_id": "seg_025_tok_001", "text": "Item", "start_ms": 0, "end_ms": 200},
+                {"token_id": "seg_025_tok_002", "text": "Nummer", "start_ms": 200, "end_ms": 500},
+                {"token_id": "seg_025_tok_003", "text": "25", "suffix": ".", "start_ms": 500, "end_ms": 900},
+            ],
+            "annotations": [
+                {
+                    "kind": "material_ref",
+                    "item_id": "wl_025",
+                    "task": "wordlist",
+                    "insert_after_token_id": "seg_025_tok_003",
+                    "label": "oír",
+                    "item_number": "25",
+                    "canonical_text": "oír",
+                }
+            ],
+            "expected": "Item Nummer 25 [oír].",
+        },
+        {
+            "segment_id": "seg_080",
+            "text": "Item Nummer 80.",
+            "tokens": [
+                {"token_id": "seg_080_tok_001", "text": "Item", "start_ms": 0, "end_ms": 200},
+                {"token_id": "seg_080_tok_002", "text": "Nummer", "start_ms": 200, "end_ms": 500},
+                {"token_id": "seg_080_tok_003", "text": "80.", "start_ms": 500, "end_ms": 900},
+            ],
+            "annotations": [
+                {
+                    "kind": "material_ref",
+                    "item_id": "wl_080",
+                    "task": "wordlist",
+                    "insert_after_token_id": "seg_080_tok_003",
+                    "label": "Europa",
+                    "item_number": "80",
+                    "canonical_text": "Europa",
+                }
+            ],
+            "expected": "Item Nummer 80 [Europa].",
+        },
+    ]
+
+    for case in cases:
+        tokens = _normalize_bundle_tokens(
+            case["segment_id"],
+            case["tokens"],
+            item_start_ms=0,
+            item_end_ms=1000,
+        )
+        annotations = _normalize_interview_annotations(case["segment_id"], case["annotations"])
+        text_segments, renderable_tokens, _ = _build_interview_text_segments(
+            case["segment_id"],
+            case["text"],
+            tokens,
+            annotations,
+        )
+
+        material_ref = next(segment for segment in text_segments if segment["kind"] == "material_ref")
+        anchored_token = next(segment for segment in text_segments if segment["kind"] == "token" and segment["token_id"].endswith("003"))
+        renderable_token = next(token for token in renderable_tokens if token["token_id"].endswith("003"))
+
+        assert _render_interview_text_segments(text_segments) == case["expected"]
+        assert anchored_token["text"] in {"25", "80"}
+        assert "suffix" not in anchored_token
+        assert material_ref["suffix"] == "."
+        assert renderable_token["text"] in {"25", "80"}
+        assert renderable_token["suffix"] == "."
 
 
 def test_player_route_renders_interview_transcript_and_reference_dialog_in_both_languages(runtime_env: Path, url_app: Flask) -> None:
@@ -1859,24 +1968,46 @@ def test_player_route_renders_interview_transcript_and_reference_dialog_in_both_
 
     assert "pm-player-transcript" in html_de
     assert "data-player-reference-dialog" in html_de
+    assert '<h2 class="pm-player-panel__title">Wiedergabe</h2>' in html_de
+    assert html_de.count('<h2 class="pm-player-panel__title">Interview</h2>') == 1
     assert "Explorator:in" in html_de
     assert "Im Kontext öffnen" in html_de
     assert "pm-player-transcript__segment" not in html_de
     assert "Segment 1" not in html_de
+    assert '>2 Segmente<' not in html_de
     assert "data-player-reference-close" not in html_de
+    assert "data-player-reference-download" in html_de
     assert "pm-player-inline-ref__label" in html_de
+    assert 'class="pm-player-transcript__meta">' in html_de
+    assert 'class="pm-player-transcript__speaker pm-player-transcript__speaker--interviewer">Explorator:in</span>' in html_de
+    assert 'class="pm-player-transcript__time-wrap"' in html_de
+    assert '>0:01' in html_de
+    assert '0:04</span>' in html_de
+    assert html_de.index('pm-player-transcript__speaker pm-player-transcript__speaker--interviewer') < html_de.index('pm-player-transcript__time-wrap')
+    assert '<div class="pm-player-reference-popover__eyebrow">' in html_de
+    assert 'data-player-reference-task' in html_de
+    assert 'data-player-reference-item-number' in html_de
     assert '</button><span class="pm-player-inline-ref__punctuation">.</span>' in html_de
     assert 'target="_blank"' in html_de
     assert "data-player-compare-add" not in html_de
     assert "data-player-set-select" not in html_de
 
     assert "pm-player-transcript" in html_en
+    assert '<h2 class="pm-player-panel__title">Playback</h2>' in html_en
+    assert html_en.count('<h2 class="pm-player-panel__title">Interview</h2>') == 1
     assert "Interviewer" in html_en
     assert "Open in context" in html_en
     assert "data-player-reference-dialog" in html_en
+    assert 'class="pm-player-transcript__speaker pm-player-transcript__speaker--interviewer">Interviewer</span>' in html_en
+    assert 'class="pm-player-transcript__time-wrap"' in html_en
+    assert '>0:01' in html_en
+    assert '0:04</span>' in html_en
+    assert html_en.index('pm-player-transcript__speaker pm-player-transcript__speaker--interviewer') < html_en.index('pm-player-transcript__time-wrap')
     assert "pm-player-transcript__segment" not in html_en
     assert "Segment 1" not in html_en
+    assert '>2 segments<' not in html_en
     assert "data-player-reference-close" not in html_en
+    assert "data-player-reference-download" in html_en
     assert '</button><span class="pm-player-inline-ref__punctuation">.</span>' in html_en
 
 
@@ -1942,7 +2073,14 @@ def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, u
     assert single_page["title"] == "Player"
     assert single_page["content_header"]["title"] == "Player"
     assert single_page["summary_cards"][0]["accent_modifier"] == "neutral"
-    assert [row["label"] for row in single_page["summary_cards"][0]["rows"]] == ["Person-ID", "Aufnahmedatum"]
+    assert single_page["player"]["controls_title"] == "Wiedergabe"
+    assert [row["label"] for row in single_page["summary_cards"][0]["rows"]] == [
+        "Person-ID",
+        "Aufnahmedatum",
+        "Geschlecht",
+        "Sprachaufenthalte",
+        "Explorator:in",
+    ]
     assert [badge["label"] for badge in single_page["summary_cards"][0]["badges"]] == ["Lernende", "B1", "L1 DE"]
     assert single_page["summary_cards"][0]["badges"][1]["modifiers"] == ["level", "b1"]
     assert [action["action"] for action in single_page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
@@ -1953,7 +2091,19 @@ def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, u
     assert compare_page["summary_cards"][0]["accent_modifier"] == "neutral"
     assert compare_page["summary_cards"][1]["accent_modifier"] == "neutral"
     assert compare_page["summary_cards"][1]["role_badge"]["label"] == "Vergleich"
-    assert [badge["label"] for badge in compare_page["summary_cards"][1]["badges"]] == ["Spanien"]
+    assert [badge["label"] for badge in compare_page["summary_cards"][1]["badges"]] == ["Native Speaker", "Spanien"]
+    assert [row["label"] for row in compare_page["summary_cards"][1]["rows"]] == [
+        "Standardvarietät",
+        "Herkunftsregion",
+        "Geschlecht",
+        "Aufnahmejahr",
+    ]
+    assert [row["value"] for row in compare_page["summary_cards"][1]["rows"]] == [
+        "Spanien",
+        "Castile and Leon",
+        "männlich",
+        "2026",
+    ]
     assert [action["action"] for action in compare_page["summary_cards"][0]["card_actions"]] == ["profile"]
     assert [action["action"] for action in compare_page["summary_cards"][1]["card_actions"]] == ["profile", "compare-remove"]
 
@@ -2018,6 +2168,8 @@ def test_player_route_uses_neutral_meta_cards_and_shared_badges(runtime_env: Pat
     assert html.count('pm-speaker-card--neutral pm-player-meta-card') == 2
     assert 'pm-speaker-card--b1 pm-player-meta-card' not in html
     assert 'pm-speaker-card--native pm-player-meta-card' not in html
+    assert 'pm-research-meta-badge pm-research-meta-badge--detail">Native Speaker<' in html
+    assert 'pm-research-meta-badge pm-research-meta-badge--native-detail">Spanien<' in html
     assert 'pm-research-meta-badge pm-player-meta-card__role pm-research-meta-badge--role pm-research-meta-badge--detail' in html
     assert 'pm-research-meta-badge pm-research-meta-badge--level pm-research-meta-badge--b1' in html
 
@@ -2052,6 +2204,8 @@ def test_player_page_uses_running_text_for_explicit_connected_text_sources(runti
     assert page["player"]["render_modes"] is not None
     assert [option["key"] for option in page["player"]["render_modes"]["options"]] == ["sentence_list", "running_text"]
     assert len(page["player"]["text_blocks"]) == 2
+    assert [block["kind"] for block in page["player"]["text_blocks"]] == ["spoken_title", "paragraph"]
+    assert page["player"]["text_blocks"][0]["item"]["item_id"] == "d_01"
     assert page["player"]["render_modes"]["options"][0]["href"].endswith(
         f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
     )
@@ -2149,8 +2303,47 @@ def test_player_route_renders_text_token_spans_when_alignment_tokens_exist(runti
     assert 'data-player-token-id="d_01_tok_invalid"' not in html
     assert 'pm-player-token' in html
     assert 'class="pm-player-list__meta-inline">d_01<' not in html
-    assert 'class="pm-player-list__meta-inline">D<' not in html
-    assert 'class="pm-player-list__meta-time">' in html
+
+
+def test_player_route_renders_spoken_title_item_as_separate_running_text_block(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_connected_text_catalog(runtime_env)
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist", "text"),
+        ),
+    )
+    _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001", include_spoken_title_item=True)
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    running_text_response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings")
+    sentence_list_response = client.get(
+        f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
+    )
+
+    assert running_text_response.status_code == 200
+    assert sentence_list_response.status_code == 200
+
+    running_text_html = running_text_response.get_data(as_text=True)
+    sentence_list_html = sentence_list_response.get_data(as_text=True)
+
+    assert 'pm-player-text-flow__spoken-title' in running_text_html
+    assert 'pm-player-text-flow__text--title' in running_text_html
+    assert 'Hoy miro el reloj con calma antes de salir.' in running_text_html
+    assert 'pm-player-text-flow__spoken-title' not in sentence_list_html
+    assert 'class="pm-player-list__meta-inline">D<' not in sentence_list_html
+    assert 'class="pm-player-list__meta-time">' in sentence_list_html
 
 
 def test_player_route_keeps_sentence_only_text_markup_when_no_tokens_exist(runtime_env: Path, url_app: Flask) -> None:
@@ -2262,9 +2455,14 @@ def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path,
     assert page["summary_cards"][1]["card_actions"][1]["href"].endswith(
         f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"
     )
-    assert [row["label"] for row in page["summary_cards"][0]["rows"]] == ["Person-ID", "Aufnahmedatum"]
+    assert [row["label"] for row in page["summary_cards"][0]["rows"]] == [
+        "Person-ID",
+        "Aufnahmedatum",
+        "Geschlecht",
+        "Sprachaufenthalte",
+        "Explorator:in",
+    ]
     assert any(badge["label"] == "B1" for badge in page["summary_cards"][0]["badges"])
-    assert all(row["label"] != "Explorator:in" for row in page["summary_cards"][0]["rows"])
     assert page["player"]["compare"]["sequence_toggle"]["label"] == "Beide abspielen"
     assert page["player"]["compare"]["sequence_toggle"]["enabled"] is True
     assert any(option["current"] for option in page["player"]["compare"]["switchers"]["compare"]["options"])
@@ -2332,7 +2530,7 @@ def test_player_route_renders_wordlist_runtime_and_profile_back_link(runtime_env
     assert '>Zurück<' in html
     assert '>Profil<' in html
     assert 'Zurück zum Profil' not in html
-    assert 'Explorator:in' not in html
+    assert 'Explorator:in' in html
     assert 'pm-player-panel--control-bar' in html
     assert 'pm-player-list pm-player-list--single' in html
 

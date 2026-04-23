@@ -211,6 +211,10 @@ def _recorded_by_label(ui_lang: str) -> str:
     return _t(ui_lang, "common.labels.recorded_by")
 
 
+def _gender_label(ui_lang: str) -> str:
+    return "Geschlecht" if ui_lang == "de" else "Gender"
+
+
 def _mother_l1_label(ui_lang: str) -> str:
     return _t(ui_lang, "common.labels.mother_l1")
 
@@ -414,6 +418,10 @@ def _player_meta_card_modifier(_: SessionRecord) -> str:
 
 def _player_summary_badges(session: SessionRecord, ui_lang: str) -> list[dict[str, Any]]:
     badges: list[dict[str, Any]] = []
+    speaker_group_badge = _meta_badge(_label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang), "detail")
+    if speaker_group_badge is not None:
+        badges.append(speaker_group_badge)
+
     if session.is_native:
         reference_badge = _meta_badge(
             _native_reference_value(session.standard_variety, session.origin_country, ui_lang),
@@ -422,10 +430,6 @@ def _player_summary_badges(session: SessionRecord, ui_lang: str) -> list[dict[st
         if reference_badge is not None:
             badges.append(reference_badge)
         return badges
-
-    speaker_group_badge = _meta_badge(_label(SPEAKER_TYPE_LABELS, session.speaker_type, ui_lang), "detail")
-    if speaker_group_badge is not None:
-        badges.append(speaker_group_badge)
 
     if session.level_code:
         level_badge = _meta_badge(_format_level(session, ui_lang), "level", session.level_code.lower())
@@ -2273,15 +2277,49 @@ def _build_player_summary_card(
             "options": session_options,
         },
         "badges": _player_summary_badges(session, ui_lang),
-        "rows": [
-            {"label": "Person-ID", "value": session.person_id},
-            {"label": _recording_date_label(ui_lang), "value": _format_recording_date(session)},
-        ],
+        "rows": _build_player_summary_rows(session, ui_lang),
         "is_placeholder": False,
         "is_visible": True,
         "card_actions": [],
         "activate_label": _player_speaker_activate_label(ui_lang),
     }
+
+
+def _build_player_summary_rows(session: SessionRecord, ui_lang: str) -> list[dict[str, str]]:
+    if session.is_native:
+        variety_value = _format_standard_variety_value(session.standard_variety, ui_lang)
+        origin_country_value = _format_origin_country_value(session.origin_country, ui_lang)
+        rows = []
+        if variety_value != "-":
+            rows.append({"label": _standard_variety_label(ui_lang), "value": variety_value})
+        if origin_country_value != "-" and not _display_values_match(origin_country_value, variety_value):
+            rows.append({"label": _origin_country_label(ui_lang), "value": origin_country_value})
+        rows.extend(
+            [
+                {"label": _origin_region_label(ui_lang), "value": session.origin_region or "-"},
+                {"label": _gender_label(ui_lang), "value": _label(GENDER_LABELS, session.gender or "unknown", ui_lang)},
+                {"label": "Aufnahmejahr" if ui_lang == "de" else "Recording year", "value": _format_recording_year(session)},
+            ]
+        )
+        return rows
+
+    exposure_row = _build_exposure_row(session, ui_lang)
+    exposure_value = exposure_row.get("value")
+    if not exposure_value:
+        entries = exposure_row.get("entries") or []
+        exposure_value = "; ".join(
+            entry.get("text", "")
+            for entry in entries
+            if isinstance(entry, Mapping) and entry.get("text")
+        ) or "-"
+
+    return [
+        {"label": "Person-ID", "value": session.person_id},
+        {"label": _recording_date_label(ui_lang), "value": _format_recording_date(session)},
+        {"label": _gender_label(ui_lang), "value": _label(GENDER_LABELS, session.gender or "unknown", ui_lang)},
+        {"label": _target_country_stay_label(ui_lang), "value": exposure_value},
+        {"label": _recorded_by_label(ui_lang), "value": session.recorded_by or "-"},
+    ]
 
 
 def _build_text_player_items(
@@ -3092,7 +3130,7 @@ def build_player_page(
                 session_id=session.session_id,
                 task=task_key,
             ),
-            "controls_title": _t(ui_lang, "research.player.controls_title") if task_key == "wordlist" else player_source.items_title,
+            "controls_title": _t(ui_lang, "research.player.controls_title"),
             "controls_status_label": _player_controls_status_label(ui_lang),
             "controls_status_value": session.session_id,
             "controls_hint": controls_hint,

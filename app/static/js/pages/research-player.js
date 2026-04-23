@@ -34,6 +34,20 @@ function parseState() {
 let playerNavigationController = null;
 let referenceDialogResizeHandler = null;
 
+function buildDownloadHref(href) {
+  if (!href) {
+    return '';
+  }
+
+  try {
+    const url = new URL(href, window.location.href);
+    url.searchParams.set('download', '1');
+    return url.toString();
+  } catch {
+    return href;
+  }
+}
+
 function currentPlayerPage() {
   return document.querySelector('article.pm-research-page');
 }
@@ -254,6 +268,7 @@ function init() {
   const referenceDialogToggle = referenceDialog?.querySelector('[data-player-reference-toggle]') || null;
   const referenceDialogToggleIcon = referenceDialog?.querySelector('[data-player-reference-toggle-icon]') || null;
   const referenceDialogProgress = referenceDialog?.querySelector('[data-player-reference-progress]') || null;
+  const referenceDialogDownload = referenceDialog?.querySelector('[data-player-reference-download]') || null;
   const referenceDialogOpen = referenceDialog?.querySelector('[data-player-reference-open]') || null;
   const referenceTriggers = Array.from(root.querySelectorAll('[data-player-reference-trigger]'));
 
@@ -318,6 +333,7 @@ function init() {
   let currentRate = Number(state.defaultRate || 1);
   let syncFrameId = 0;
   let referenceTrigger = null;
+  const referenceDownloadLabel = referenceDialogDownload?.getAttribute('aria-label') || '';
   state.compareOpen = Boolean(state.compareOpen);
   state.canCompare = Boolean(state.canCompare);
   state.lastCompareMode = state.requestedMode === 'manual' ? 'manual' : 'sequence';
@@ -435,27 +451,51 @@ function init() {
     }
   }
 
+  function clearReferenceDialogPosition() {
+    if (!referenceDialog) {
+      return;
+    }
+    referenceDialog.style.removeProperty('--pm-player-reference-left');
+    referenceDialog.style.removeProperty('--pm-player-reference-top');
+    referenceDialog.style.removeProperty('--pm-player-reference-shift-x');
+  }
+
   function positionReferenceDialog(trigger) {
     if (!referenceDialog || !referenceDialogSurface || !trigger) {
       return;
     }
 
     if (window.innerWidth < 720) {
-      referenceDialog.style.removeProperty('--pm-player-reference-left');
-      referenceDialog.style.removeProperty('--pm-player-reference-top');
+      clearReferenceDialogPosition();
       return;
     }
 
+    const viewportPadding = 16;
+    const offset = 12;
     const rect = trigger.getBoundingClientRect();
-    const approxWidth = Math.min(448, window.innerWidth - 32);
-    const halfWidth = approxWidth / 2;
-    const left = Math.min(
-      window.innerWidth - halfWidth - 16,
-      Math.max(halfWidth + 16, rect.left + (rect.width / 2)),
-    );
-    const top = Math.min(window.innerHeight - 32, Math.max(96, rect.bottom + 14));
+    const surfaceRect = referenceDialogSurface.getBoundingClientRect();
+    const surfaceWidth = Math.min(surfaceRect.width || referenceDialogSurface.offsetWidth || 0, window.innerWidth - (viewportPadding * 2));
+    const surfaceHeight = surfaceRect.height || referenceDialogSurface.offsetHeight || 0;
+    const centeredLeft = rect.left + (rect.width / 2) - (surfaceWidth / 2);
+    const maxLeft = Math.max(viewportPadding, window.innerWidth - surfaceWidth - viewportPadding);
+    const left = Math.min(maxLeft, Math.max(viewportPadding, centeredLeft));
+    const belowTop = rect.bottom + offset;
+    const aboveTop = rect.top - surfaceHeight - offset;
+    const maxTop = Math.max(viewportPadding, window.innerHeight - surfaceHeight - viewportPadding);
+    const spaceBelow = window.innerHeight - rect.bottom - offset - viewportPadding;
+    const spaceAbove = rect.top - offset - viewportPadding;
+
+    let top = belowTop;
+    if (belowTop > maxTop && aboveTop >= viewportPadding) {
+      top = aboveTop;
+    } else if (belowTop > maxTop && aboveTop < viewportPadding) {
+      top = spaceBelow >= spaceAbove ? maxTop : viewportPadding;
+    }
+
+    top = Math.min(maxTop, Math.max(viewportPadding, top));
     referenceDialog.style.setProperty('--pm-player-reference-left', `${left}px`);
     referenceDialog.style.setProperty('--pm-player-reference-top', `${top}px`);
+    referenceDialog.style.setProperty('--pm-player-reference-shift-x', '0px');
   }
 
   function closeReferenceDialog() {
@@ -472,6 +512,7 @@ function init() {
     } else {
       referenceDialog.removeAttribute('open');
     }
+    clearReferenceDialogPosition();
     if (referenceTrigger && typeof referenceTrigger.focus === 'function') {
       referenceTrigger.focus();
     }
@@ -498,6 +539,7 @@ function init() {
     const itemNumber = trigger.dataset.referenceItemNumber || '';
     const openHref = trigger.dataset.referenceOpenHref || '#';
     const clipHref = trigger.dataset.referenceClipHref || '';
+    const clipLabel = trigger.dataset.referenceClipLabel || label;
 
     referenceDialogTitle.textContent = label;
     referenceDialogTask.textContent = taskLabel;
@@ -512,10 +554,21 @@ function init() {
       if (clipHref) {
         referenceDialogPlayer.hidden = false;
         referenceDialogAudio.src = clipHref;
-        referenceDialogAudio.setAttribute('aria-label', trigger.dataset.referenceClipLabel || label);
+        referenceDialogAudio.setAttribute('aria-label', clipLabel);
+        if (referenceDialogDownload) {
+          const downloadHref = buildDownloadHref(clipHref);
+          referenceDialogDownload.href = downloadHref;
+          referenceDialogDownload.setAttribute('aria-label', `${referenceDownloadLabel}: ${clipLabel}`);
+          referenceDialogDownload.setAttribute('title', `${referenceDownloadLabel}: ${clipLabel}`);
+        }
         syncReferenceProgress();
       } else {
         referenceDialogPlayer.hidden = true;
+        if (referenceDialogDownload) {
+          referenceDialogDownload.removeAttribute('href');
+          referenceDialogDownload.setAttribute('aria-label', referenceDownloadLabel);
+          referenceDialogDownload.setAttribute('title', referenceDownloadLabel);
+        }
       }
     }
 
@@ -531,6 +584,11 @@ function init() {
     }
     trigger.setAttribute('aria-expanded', 'true');
     positionReferenceDialog(trigger);
+    window.requestAnimationFrame(() => {
+      if (referenceTrigger === trigger) {
+        positionReferenceDialog(trigger);
+      }
+    });
   }
 
   function syncToggleLabel() {
@@ -1079,7 +1137,18 @@ function init() {
   }
 
   for (const trigger of referenceTriggers) {
-    trigger.addEventListener('click', () => {
+    const stopReferencePropagation = (event) => {
+      event.stopPropagation();
+    };
+
+    trigger.addEventListener('pointerdown', stopReferencePropagation);
+    trigger.addEventListener('mousedown', stopReferencePropagation);
+    trigger.addEventListener('touchstart', stopReferencePropagation);
+    trigger.addEventListener('keydown', stopReferencePropagation);
+    trigger.addEventListener('keyup', stopReferencePropagation);
+    trigger.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       openReferenceDialog(trigger);
     });
   }
@@ -1116,7 +1185,8 @@ function init() {
     });
   }
 
-  referenceDialogToggle?.addEventListener('click', async () => {
+  referenceDialogToggle?.addEventListener('click', async (event) => {
+    event.stopPropagation();
     if (!referenceDialogAudio || !referenceDialogAudio.getAttribute('src')) {
       return;
     }
@@ -1138,7 +1208,8 @@ function init() {
     }
   });
 
-  referenceDialogProgress?.addEventListener('input', () => {
+  referenceDialogProgress?.addEventListener('input', (event) => {
+    event.stopPropagation();
     if (!referenceDialogAudio) {
       return;
     }
@@ -1150,8 +1221,13 @@ function init() {
     syncReferenceProgress();
   });
 
+  referenceDialogDownload?.addEventListener('click', (event) => {
+    event.stopPropagation();
+  });
+
   if (referenceDialogResizeHandler) {
     window.removeEventListener('resize', referenceDialogResizeHandler);
+    window.removeEventListener('scroll', referenceDialogResizeHandler, true);
   }
   referenceDialogResizeHandler = () => {
     if (referenceDialog?.hasAttribute('open') && referenceTrigger) {
@@ -1159,6 +1235,7 @@ function init() {
     }
   };
   window.addEventListener('resize', referenceDialogResizeHandler);
+  window.addEventListener('scroll', referenceDialogResizeHandler, true);
 
   const handleViewportChange = () => {
     if (effectiveMode() === 'single' && activeSpeakerKey === 'secondary') {

@@ -40,7 +40,7 @@ This file is the binding source of truth for the active architecture of the rese
 - `player_source` must define at least `source_kind`, `content_mode`, `default_view`, `allowed_views`, `primary_audio_mode`, `supports_item_audio`, `supports_full_audio`, `supports_text_view`, and `paragraph_model`.
 - The active source kinds are `wordlist`, `sentence_list`, `text`, and `set`.
 - `set` is a runtime source kind produced by owner-bound set context. It is not a separate route task key.
-- Every rendered item is normalized to one shared item structure carrying stable `item_id`, source-backed numbering, visible text, and optional text metadata such as `text_container_id`, `text_order_index`, `paragraph_break_before`, or `paragraph_id`.
+- Every rendered item is normalized to one shared item structure carrying stable `item_id`, source-backed numbering, visible text, and optional text metadata such as `text_container_id`, `text_order_index`, `paragraph_break_before`, `paragraph_id`, or `spoken_title_item`.
 - Sets filter the visible sequence but do not redefine item IDs or rebuild a second item system.
 
 ## Route and Entry Contract
@@ -115,6 +115,9 @@ The player state must be able to represent at least these values:
 
 - `session_id`
 - `person_id`
+- `gender`
+- `target_country_stays`
+- `recorded_by`
 - speaker group
 - recording date
 - profile link
@@ -136,7 +139,7 @@ The player state must be able to represent at least these values:
 - The top-right metadata-card action zone keeps only the compact role badge such as `Primär` or `Vergleich`; profile access belongs to the card footer and not to a second header action row.
 - Badge and pill content on player metadata cards, comparison speaker rows, and speaker-card meta badges stays on the regular UI font family rather than the book or reading font.
 - Each visible metadata card exposes its own profile action in the footer so that primary and comparison sessions can both open their corresponding speaker profile directly from the player surface.
-- Native-speaker metadata cards do not add a second speaker-group badge when the surrounding player card context already identifies the session role; instead they show one canonical localized native-reference badge derived from standard variety and origin country.
+- Native-speaker metadata cards keep the same speaker-group badge rhythm as learner cards and additionally show one canonical localized native-reference badge derived from standard variety and origin country.
 - In single-session mode, the primary footer may expose one compact compare-entry action plus the profile action; once compare is active, the primary footer keeps only the profile action and the comparison footer owns the `Vergleich entfernen` action.
 - The productive player does not expose a separate `Vergleich ändern` button; changing the comparison session happens through the comparison card's session switcher.
 
@@ -187,7 +190,7 @@ The player state must be able to represent at least these values:
 - Shared transport actions such as play or download use icon-only controls with accessible labels rather than verbose button text.
 - Shared playback speed is currently limited to `0.5`, `0.75`, `1.0`, `1.25`, and `1.5`.
 - The productive speed control uses a compact direct slider with the fixed steps `0.5`, `0.75`, `1.0`, `1.25`, and `1.5`, not a large dropdown or a wide chip row.
-- Player-header metadata for the productive wordlist surface stays compact and listening-relevant; fields such as `recorded_by` do not belong to the player card surface.
+- In the shared productive metadata-card family for `wordlist`, `text`, and `interview`, learner sessions keep the compact fact set `person_id`, recording date, `gender`, `target_country_stays`, and `recorded_by`, while native-speaker sessions switch to the native comparison fact set from the speaker-card family: translated `standard_variety`, optional distinct origin country, origin region, `gender`, and recording year.
 - Productive player metadata cards are a player-specific derivation of the speaker-card family: they reuse the same badge language and compact facts-grid principle, while adapting width and internal geometry to the player workbench; unlike native overview speaker cards, they keep the card shell neutral and move level, speaker-group, variety, `L1`, and role semantics onto badges inside the card.
 - If one wordlist item corresponds to exactly one timing-bearing unit, the data contract does not require duplicating identical text or timing values on a second token layer.
 - In that case the player may derive the timing-bearing render unit internally from the item itself.
@@ -202,6 +205,7 @@ The player state must be able to represent at least these values:
 - Visible task labeling for `text` still comes from the canonical task catalog and stays independent from the technical task key.
 - Even in `running_text`, a small visible sentence or segment numbering remains present.
 - In productive connected-text `running_text`, the text view is a calm reading mode rather than a second workbench: numbering stays visibly secondary, the active item highlight stays subtle, and per-item download actions remain visually quiet until hover, focus, or the active segment state reveals them.
+- Connected-text catalogs may mark a spoken title line directly on the relevant item via `spoken_title_item = true`; in `running_text` that item renders as its own title-like line or paragraph, while the same item remains an ordinary first row in `sentence_list`.
 - In `sentence_list`, each row uses a stable left-side number or ID and the sentence text on the right.
 - Numbering comes from source data and must not be synthesized in the web UI.
 - In both `sentence_list` and `running_text`, visible sentence or segment numbering must remain quiet and secondary.
@@ -232,7 +236,13 @@ The player state must be able to represent at least these values:
 - The interview renderer must support speaker changes and segment-based navigation.
 - Interview must not be forced into the interaction model of isolated wordlist items or quiet sentence-list rows.
 - Focus handling for interview uses `focus_segment` where segment identifiers are the primary structure.
-- Material references embedded in interview segments open a small contextual reference overlay inside the shared player page, with an `Im Kontext öffnen` or `Open in context` link back into the relevant productive player task and an optional mini-player for the referenced split clip when such a clip exists.
+- The upper playback container in productive interview remains the same shared `Wiedergabe` or `Playback` control zone used by the other productive player tasks; interview does not introduce a second task-titled upper playback box.
+- The interview transcript surface keeps the lower material title visible but does not repeat a second content-summary line with the task label plus segment count above the transcript list.
+- In the interview transcript, the left meta column keeps only the localized role badge and the turn timing, but as a compact vertical stack: badge first, timing below.
+- The timing line in interview aligns visually to the badge text inset rather than the outer pill edge, so the left metadata column reads as one aligned stack instead of one flat line.
+- Interview transcript rows stay compact and content-led: no extra segment ordinals, no technical identifiers, no unnecessary stretch height, and no oversized text measure beyond the existing shared dense-row family.
+- Material references embedded in interview segments open a small contextual reference overlay inside the shared player page, with a compact task badge and quiet item-number pill in the upper eyebrow row, an optional mini-player with direct split-download utility, and an `Im Kontext öffnen` or `Open in context` link back into the relevant productive player task.
+- Reference-trigger interaction inside interview transcript rows must not bubble into the surrounding turn-playback action; opening the overlay stays separate from jumping or starting the turn audio.
 - When an interview token carries a material reference and token-local suffix punctuation, the renderer must show the spoken token core first, then the inline reference label, then that same token-local suffix without reconstructing punctuation from annotation fields.
 
 ## Direct Comparison in Player
@@ -277,6 +287,7 @@ The player state must be able to represent at least these values:
 - A task catalog also carries the active player-source contract under `player_source`.
 - A task catalog may additionally carry corpus-specific `display_label` and top-level `groups` metadata when grouped task structure is part of the canonical content model.
 - Connected-text catalogs may additionally carry item-level `text_container_id`, `text_order_index`, `paragraph_break_before`, and `paragraph_id` fields for running-text rendering.
+- Connected-text catalogs may additionally carry item-level `spoken_title_item` when the first or another spoken item must render as a dedicated title line in `running_text` without changing the canonical item sequence.
 - If connected-text source material begins with a separate title line that is not part of the spoken item sequence, that title remains source metadata and must not be auto-promoted to the first catalog item.
 - Session-specific `alignment/{task}.json` files are derived from the task catalog plus session-specific alignment and audio data.
 - Production pipelines must not reconstruct canonical task texts from TextGrid labels, PDF extraction, or loose TXT sources when a canonical task catalog already exists.
