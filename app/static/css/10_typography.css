@@ -382,6 +382,27 @@ textarea {
   margin: 0;
 }
 
+.pm-interaction-preview__row-label,
+.pm-interaction-preview__mock-eyebrow,
+.pm-interaction-preview__meta-label {
+  margin: 0;
+  font-family: var(--pm-type-meta-family);
+  font-size: var(--pm-type-meta-size);
+  line-height: var(--pm-type-meta-line);
+  letter-spacing: var(--pm-type-meta-tracking);
+  font-weight: 600;
+  color: color-mix(in srgb, var(--book-fg) 76%, var(--book-muted));
+}
+
+.pm-interaction-preview__meta-value,
+.pm-interaction-preview__mock-note {
+  margin: 0;
+  font-family: var(--pm-type-panel-family);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--book-fg) 88%, var(--book-muted));
+}
+
 .pm-entry-showcase__label {
   font-family: var(--pm-type-meta-family);
   font-size: 0.82rem;

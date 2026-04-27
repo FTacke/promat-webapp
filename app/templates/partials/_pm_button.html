@@ -1,0 +1,38 @@
+{% macro render_pm_button(button, extra_classes='') -%}
+  {% set variant = button.variant | default('secondary') %}
+  {% set size = button.size | default('medium') %}
+  {% set classes = ['pm-button', 'pm-button--' ~ variant, 'pm-button--' ~ size] %}
+  {% if button.full_width %}
+    {% set _ = classes.append('pm-button--full-width') %}
+  {% endif %}
+  {% if extra_classes %}
+    {% set _ = classes.append(extra_classes) %}
+  {% endif %}
+  {% if button.href and not button.disabled %}
+  <a class="{{ classes | join(' ') }}" href="{{ button.href }}">
+    {%- if button.leading_icon -%}
+    <span class="material-symbols-rounded pm-button__icon pm-button__icon--leading" aria-hidden="true">{{ button.leading_icon }}</span>
+    {%- endif -%}
+    <span class="pm-button__label">{{ button.label }}</span>
+    {%- if button.trailing_icon -%}
+    <span class="material-symbols-rounded pm-button__icon pm-button__icon--trailing" aria-hidden="true">{{ button.trailing_icon }}</span>
+    {%- endif -%}
+    {%- if button.trailing_arrow -%}
+    <span class="pm-button__arrow" aria-hidden="true">→</span>
+    {%- endif -%}
+  </a>
+  {% else %}
+  <button class="{{ classes | join(' ') }}" type="{{ button.type | default('button') }}"{% if button.disabled %} disabled{% endif %}>
+    {%- if button.leading_icon -%}
+    <span class="material-symbols-rounded pm-button__icon pm-button__icon--leading" aria-hidden="true">{{ button.leading_icon }}</span>
+    {%- endif -%}
+    <span class="pm-button__label">{{ button.label }}</span>
+    {%- if button.trailing_icon -%}
+    <span class="material-symbols-rounded pm-button__icon pm-button__icon--trailing" aria-hidden="true">{{ button.trailing_icon }}</span>
+    {%- endif -%}
+    {%- if button.trailing_arrow -%}
+    <span class="pm-button__arrow" aria-hidden="true">→</span>
+    {%- endif -%}
+  </button>
+  {% endif %}
+{%- endmacro %}

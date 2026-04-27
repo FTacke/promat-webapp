@@ -666,6 +666,74 @@ body.app-shell.page-landing .md3-content-wrapper {
   gap: var(--promat-space-3);
 }
 
+.pm-interaction-preview__grid,
+.pm-interaction-preview__contexts,
+.pm-interaction-preview__mock-grid {
+  display: grid;
+  gap: var(--pm-space-grid);
+  max-width: min(100%, 82rem);
+  margin-inline: auto;
+}
+
+.pm-interaction-preview__section,
+.pm-interaction-preview__panel,
+.pm-interaction-preview__rows,
+.pm-interaction-preview__row,
+.pm-interaction-preview__meta-pair,
+.pm-interaction-preview__mock-meta,
+.pm-interaction-preview__mock-body {
+  display: grid;
+}
+
+.pm-interaction-preview {
+  gap: var(--pm-interaction-preview-section-gap);
+}
+
+.pm-interaction-preview__section,
+.pm-interaction-preview__panel {
+  gap: var(--pm-space-container);
+  align-content: start;
+}
+
+.pm-interaction-preview__rows {
+  gap: var(--pm-space-container);
+}
+
+.pm-interaction-preview__row,
+.pm-interaction-preview__mock-meta {
+  gap: var(--pm-space-sm);
+}
+
+.pm-interaction-preview__mock-grid {
+  align-items: stretch;
+}
+
+.pm-interaction-preview__mock-card {
+  width: min(100%, 100%);
+  max-width: none;
+  align-self: stretch;
+}
+
+.pm-interaction-preview__mock-body {
+  gap: 0.72rem;
+}
+
+.pm-interaction-preview__mock-meta {
+  grid-template-columns: repeat(2, minmax(0, auto));
+  column-gap: 1rem;
+  row-gap: 0.42rem;
+  align-items: baseline;
+}
+
+.pm-interaction-preview__meta-pair {
+  display: contents;
+}
+
+.pm-interaction-preview__mock-footer {
+  margin-top: auto;
+  padding-top: var(--pm-interaction-preview-cta-card-margin-top);
+}
+
 .pm-card-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -778,6 +846,13 @@ body.app-shell.page-landing .md3-content-wrapper {
 @media (min-width: 760px) {
   .landing-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pm-interaction-preview__grid,
+  .pm-interaction-preview__contexts,
+  .pm-interaction-preview__mock-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
   }
 
   .pm-card-grid--entry-two,

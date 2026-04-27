@@ -1590,6 +1590,46 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'Niveau / Varietät' not in html
 
 
+def test_sample_page_exposes_semantic_interaction_preview_without_global_migration(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Interaktionssystem Vorschau' in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--small' in html
+    assert 'pm-nav-pill pm-nav-pill--small' in html
+    assert 'pm-cta-link pm-cta-link--primary' in html
+    assert 'pm-cta-link pm-cta-link--accent' in html
+    assert 'pm-filter-chip is-active' in html
+    assert 'pm-button pm-button--' not in html
+    assert re.search(r'pm-action-button pm-action-button--secondary pm-action-button--medium" type="button">\s*<span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>\s*<span class="pm-action-button__label">Vergleich</span>', html, re.S) is not None
+    assert re.search(r'pm-nav-pill pm-nav-pill--small" href="#sample-research-profile-title">\s*<span class="pm-nav-pill__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert re.search(r'pm-cta-link pm-cta-link--accent" href="#sample-entry-cards-title">\s*<span class="pm-cta-link__label">Zum Unterricht</span>', html, re.S) is not None
+    assert 'pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action' in html
+
+
+def test_sample_page_localizes_interaction_preview_in_english(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/en/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Interaction System Preview' in html
+    assert 'Action Buttons' in html
+    assert 'Navigation Pills' in html
+    assert 'CTA Links' in html
+    assert 'Request access' in html
+    assert 'Open request form' in html
+    assert 'Learn more' in html
+    assert 'Apply filters' in html
+    assert 'Compare' in html
+    assert 'Create user' in html
+
+
 def test_sample_speaker_cards_keep_focused_learner_meta_selection() -> None:
     learner_card = next(card for card in _sample_speaker_cards("de") if card["person_id"] == "ES-L-0101")
     native_card = next(card for card in _sample_speaker_cards("de") if card["person_id"] == "ES-N-0001")

@@ -151,6 +151,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 
 - `sample` is a showcase for current, already accepted layout elements of the webapp.
 - `sample` never defines the target UI for product pages; it mirrors the current implementation on real pages.
+- `sample` may host clearly marked temporary preview zones for upcoming shared component families, but those previews remain QA-only until a later spec change authorizes productive migration.
 - If an active layout element is changed on a real page and `sample` contains that element, `sample` must be updated in the same run.
 
 ## Active UI System
@@ -181,6 +182,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Visible UI must not expose raw technical values such as UUID-like set identifiers, internal translation keys, or internal handoff/debug vocabulary when a user-facing label or omission is the truthful product behavior.
 - When a recurring UI family already exists, it must be extended or reused before a page-local variant is introduced.
 - Repeated UI families that must be treated systemically include action hierarchy (`buttons`, inline actions, overflow actions), form controls (`inputs`, `selects`, `textareas`), badges and chips, cards and list rows, step containers and work blocks, dialogs and confirm flows, empty states, sticky headers or anchors, and muted, active, or selected states.
+- The preview-only shared interaction family on `sample` separates action buttons, navigation pills, and CTA links; until a later migration phase explicitly updates productive pages, existing button, inline-action, and chip families remain active and must not be globally restyled by that preview implementation.
 - Badge, chip, and pill content across the active research UI stays on the regular UI font family rather than the reading or book typography, even when the surrounding item or content text uses the reading font.
 - Research workbench UI uses current productive pages as reference surfaces: `comparison` for step containers, selection blocks, badge or meta rhythm, and clear vertical work sequences; `player` for dense material rows, compact work heads, sticky anchors, and muted versus active row states; `speakers`, `recordings`, and the person profile for speaker cards, compact task actions, and row or table action layout.
 - Learner speaker cards in the `speakers` card family keep neutral card containers with no decorative top bar; CEFR or level color belongs on the explicit level badge in the level meta row, not on the card chrome. In the learner overview card, the compact visible fact set is level badge, `L1`, gender, and target-country stays; `Sessions` and recording-year summary do not belong to that overview card anymore. Native-speaker cards may keep their separate teal category accent because they encode speaker-group semantics rather than CEFR level.

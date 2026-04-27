@@ -470,6 +470,323 @@ def _render_legal_page(page_key: str) -> str:
     return _render_promat_page(page=page, panel=panel, page_name="legal", ui_lang=ui_lang)
 
 
+def _sample_action_button(
+    label: str,
+    *,
+    variant: str = "secondary",
+    size: str = "medium",
+    href: str | None = None,
+    leading_icon: str | None = None,
+    trailing_icon: str | None = None,
+    trailing_arrow: bool = False,
+    disabled: bool = False,
+    full_width: bool = False,
+) -> dict[str, Any]:
+    return {
+        "component": "action_button",
+        "label": label,
+        "variant": variant,
+        "size": size,
+        "href": href,
+        "leading_icon": leading_icon,
+        "trailing_icon": trailing_icon,
+        "trailing_arrow": trailing_arrow,
+        "disabled": disabled,
+        "full_width": full_width,
+    }
+
+
+def _sample_nav_pill(label: str, *, size: str = "medium", href: str | None = None, disabled: bool = False) -> dict[str, Any]:
+    return {
+        "component": "nav_pill",
+        "label": label,
+        "size": size,
+        "href": href,
+        "disabled": disabled,
+    }
+
+
+def _sample_cta_link(label: str, *, tone: str = "primary", href: str | None = None, disabled: bool = False) -> dict[str, Any]:
+    return {
+        "component": "cta_link",
+        "label": label,
+        "tone": tone,
+        "href": href,
+        "disabled": disabled,
+    }
+
+
+def _sample_chip(label: str, *, active: bool = False) -> dict[str, Any]:
+    return {
+        "component": "chip",
+        "label": label,
+        "active": active,
+    }
+
+
+def _sample_interaction_preview(ui_lang: str) -> dict[str, Any]:
+    login_href = url_for("public.login", ui_lang=ui_lang)
+    access_request_href = url_for("public.access_request_page", ui_lang=ui_lang)
+    profile_href = "#sample-research-profile-title"
+    task_href = "#sample-research-task-panels-title"
+    corpus_href = url_for("public.research_language_root", ui_lang=ui_lang, language_slug="spanish")
+    materials_href = url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug="spanish")
+
+    return {
+        "title": get_text(ui_lang, "sample.interaction_preview.title"),
+        "intro": get_text(ui_lang, "sample.interaction_preview.intro"),
+        "groups": [
+            {
+                "id": "sample-interaction-preview-actions",
+                "title": get_text(ui_lang, "sample.interaction_preview.groups.actions.title"),
+                "note": get_text(ui_lang, "sample.interaction_preview.groups.actions.note"),
+                "rows": [
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.large"),
+                        "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                        "items": [
+                            _sample_action_button(get_text(ui_lang, "auth.login.submit"), variant="primary", size="large", leading_icon="login"),
+                        ],
+                    },
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.medium"),
+                        "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                        "items": [
+                            _sample_action_button(get_text(ui_lang, "auth.login.submit"), variant="primary", size="medium", leading_icon="login"),
+                            _sample_action_button(get_text(ui_lang, "auth.login.forgot_password"), variant="secondary", size="medium"),
+                            _sample_action_button(get_text(ui_lang, "sample.button_preview.label.apply_filters"), variant="primary", size="medium"),
+                            _sample_action_button(get_text(ui_lang, "sample.button_preview.label.reset_filters"), variant="secondary", size="medium"),
+                            _sample_action_button(get_text(ui_lang, "auth.admin_users.refresh"), variant="secondary", size="medium", leading_icon="refresh"),
+                            _sample_action_button(get_text(ui_lang, "auth.admin_users.create_button"), variant="primary", size="medium", leading_icon="add"),
+                            _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.compare"), variant="secondary", size="medium", leading_icon="add"),
+                            _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.modify"), variant="secondary", size="medium"),
+                        ],
+                    },
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.small"),
+                        "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                        "items": [
+                            _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.compare"), variant="secondary", size="small", leading_icon="add"),
+                            _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.modify"), variant="secondary", size="small"),
+                            _sample_action_button(get_text(ui_lang, "auth.login.forgot_password"), variant="tertiary", size="small"),
+                        ],
+                    },
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.disabled"),
+                        "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                        "items": [
+                            _sample_action_button(get_text(ui_lang, "auth.login.submit"), variant="primary", size="medium", leading_icon="login", disabled=True),
+                            _sample_action_button(get_text(ui_lang, "auth.admin_users.refresh"), variant="secondary", size="medium", leading_icon="refresh", disabled=True),
+                            _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.modify"), variant="tertiary", size="small", disabled=True),
+                        ],
+                    },
+                ],
+            },
+            {
+                "id": "sample-interaction-preview-navigation",
+                "title": get_text(ui_lang, "sample.interaction_preview.groups.navigation.title"),
+                "note": get_text(ui_lang, "sample.interaction_preview.groups.navigation.note"),
+                "rows": [
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.medium"),
+                        "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                        "items": [
+                            _sample_nav_pill(get_text(ui_lang, "sample.button_preview.label.go_to_login"), size="medium", href=login_href),
+                            _sample_nav_pill(get_text(ui_lang, "sample.interaction_preview.label.to_request_form"), size="medium", href=access_request_href),
+                            _sample_nav_pill(get_text(ui_lang, "sample.interaction_preview.label.learn_more"), size="medium", href="#sample-entry-cards-title"),
+                        ],
+                    },
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.small"),
+                        "class_name": "pm-interaction-row pm-interaction-row--card",
+                        "items": [
+                            _sample_nav_pill(get_text(ui_lang, "sample.interaction_preview.label.open_corpus"), size="small", href=corpus_href),
+                            _sample_nav_pill(get_text(ui_lang, "sample.button_preview.label.profile"), size="small", href=profile_href),
+                            _sample_nav_pill(get_text(ui_lang, "sample.button_preview.label.wordlist"), size="small", href=task_href),
+                            _sample_nav_pill(get_text(ui_lang, "sample.button_preview.label.text"), size="small", href=task_href),
+                            _sample_nav_pill("Interview", size="small", href=task_href),
+                        ],
+                    },
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.disabled"),
+                        "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                        "items": [
+                            _sample_nav_pill(get_text(ui_lang, "sample.button_preview.label.go_to_login"), size="medium", disabled=True),
+                            _sample_nav_pill(get_text(ui_lang, "sample.interaction_preview.label.open_corpus"), size="small", disabled=True),
+                        ],
+                    },
+                ],
+            },
+            {
+                "id": "sample-interaction-preview-cta",
+                "title": get_text(ui_lang, "sample.interaction_preview.groups.cta.title"),
+                "note": get_text(ui_lang, "sample.interaction_preview.groups.cta.note"),
+                "rows": [
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.standard"),
+                        "class_name": "pm-cta-link-row",
+                        "items": [
+                            _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.to_research"), tone="primary", href="#sample-entry-cards-title"),
+                            _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.open_corpus"), tone="primary", href=corpus_href),
+                            _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.open_materials"), tone="primary", href=materials_href),
+                        ],
+                    },
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.accent"),
+                        "class_name": "pm-cta-link-row",
+                        "items": [
+                            _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.to_teaching"), tone="accent", href="#sample-entry-cards-title"),
+                        ],
+                    },
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.disabled"),
+                        "class_name": "pm-cta-link-row",
+                        "items": [
+                            _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.open_corpus"), tone="primary", disabled=True),
+                        ],
+                    },
+                ],
+            },
+            {
+                "id": "sample-interaction-preview-chips",
+                "title": get_text(ui_lang, "sample.interaction_preview.groups.chips.title"),
+                "note": get_text(ui_lang, "sample.interaction_preview.groups.chips.note"),
+                "rows": [
+                    {
+                        "label": get_text(ui_lang, "sample.interaction_preview.row.selection"),
+                        "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                        "items": [
+                            _sample_chip(get_text(ui_lang, "sample.interaction_preview.label.all"), active=True),
+                            _sample_chip(get_text(ui_lang, "sample.interaction_preview.label.learners")),
+                            _sample_chip(get_text(ui_lang, "sample.interaction_preview.label.native_speakers")),
+                            _sample_chip("B2"),
+                            _sample_chip("L1 DE"),
+                        ],
+                    },
+                ],
+            },
+        ],
+        "contexts": {
+            "title": get_text(ui_lang, "sample.interaction_preview.contexts.title"),
+            "note": get_text(ui_lang, "sample.interaction_preview.contexts.note"),
+            "rows": [
+                {
+                    "label": get_text(ui_lang, "sample.interaction_preview.row.form"),
+                    "class_name": "pm-interaction-row--form",
+                    "items": [
+                        _sample_action_button(get_text(ui_lang, "auth.login.submit"), variant="primary", size="medium", leading_icon="login"),
+                        _sample_action_button(get_text(ui_lang, "auth.login.forgot_password"), variant="secondary", size="medium"),
+                    ],
+                },
+                {
+                    "label": get_text(ui_lang, "sample.interaction_preview.row.hero"),
+                    "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                    "items": [
+                        _sample_nav_pill(get_text(ui_lang, "sample.interaction_preview.label.learn_more"), size="medium", href="#sample-entry-cards-title"),
+                    ],
+                },
+                {
+                    "label": get_text(ui_lang, "sample.interaction_preview.row.main_cards"),
+                    "class_name": "pm-cta-link-row",
+                    "items": [
+                        _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.to_research"), tone="primary", href="#sample-entry-cards-title"),
+                        _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.to_teaching"), tone="accent", href="#sample-entry-cards-title"),
+                    ],
+                },
+                {
+                    "label": get_text(ui_lang, "sample.interaction_preview.row.section_cards"),
+                    "class_name": "pm-cta-link-row",
+                    "items": [
+                        _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.open_corpus"), tone="primary", href=corpus_href),
+                        _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.open_materials"), tone="primary", href=materials_href),
+                    ],
+                },
+                {
+                    "label": get_text(ui_lang, "sample.interaction_preview.row.app_card"),
+                    "class_name": "pm-interaction-row--card",
+                    "items": [
+                        _sample_nav_pill(get_text(ui_lang, "sample.button_preview.label.profile"), size="small", href=profile_href),
+                        _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.compare"), variant="secondary", size="small", leading_icon="add"),
+                    ],
+                },
+                {
+                    "label": get_text(ui_lang, "sample.interaction_preview.row.toolbar"),
+                    "class_name": "pm-interaction-row--toolbar",
+                    "items": [
+                        _sample_action_button(get_text(ui_lang, "auth.admin_users.refresh"), variant="secondary", size="medium", leading_icon="refresh"),
+                        _sample_action_button(get_text(ui_lang, "auth.admin_users.create_button"), variant="primary", size="medium", leading_icon="add"),
+                    ],
+                },
+                {
+                    "label": get_text(ui_lang, "sample.interaction_preview.row.compare"),
+                    "class_name": "pm-interaction-row pm-interaction-row--wrap",
+                    "items": [
+                        _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.compare"), variant="secondary", size="medium", leading_icon="add"),
+                    ],
+                },
+            ],
+        },
+        "mock_cards": [
+            {
+                "eyebrow": get_text(ui_lang, "sample.interaction_preview.mock.main.eyebrow"),
+                "title": get_text(ui_lang, "sample.interaction_preview.mock.main.research_title"),
+                "text": get_text(ui_lang, "sample.interaction_preview.mock.main.research_text"),
+                "footer_class_name": "pm-cta-link-row pm-interaction-preview__mock-footer",
+                "items": [
+                    _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.to_research"), tone="primary", href="#sample-entry-cards-title"),
+                ],
+            },
+            {
+                "eyebrow": get_text(ui_lang, "sample.interaction_preview.mock.main.eyebrow"),
+                "title": get_text(ui_lang, "sample.interaction_preview.mock.main.teaching_title"),
+                "text": get_text(ui_lang, "sample.interaction_preview.mock.main.teaching_text"),
+                "footer_class_name": "pm-cta-link-row pm-interaction-preview__mock-footer",
+                "items": [
+                    _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.to_teaching"), tone="accent", href="#sample-entry-cards-title"),
+                ],
+            },
+            {
+                "eyebrow": get_text(ui_lang, "sample.interaction_preview.mock.research.eyebrow"),
+                "title": get_text(ui_lang, "sample.interaction_preview.mock.research.title"),
+                "text": get_text(ui_lang, "sample.interaction_preview.mock.research.text"),
+                "meta_rows": [
+                    {"label": get_text(ui_lang, "research.overview.card.project_lead"), "value": "Prof. Dr. Felix Tacke"},
+                    {"label": get_text(ui_lang, "research.overview.card.material_conception"), "value": "Felix Tacke, Ana Goás Pérez"},
+                    {"label": get_text(ui_lang, "research.overview.card.conducted_by"), "value": "Marlon Merte"},
+                    {"label": get_text(ui_lang, "research.overview.card.learner_recordings.other", count=12), "value": ""},
+                ],
+                "footer_class_name": "pm-cta-link-row pm-interaction-preview__mock-footer",
+                "items": [
+                    _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.open_corpus"), tone="primary", href=corpus_href),
+                ],
+            },
+            {
+                "eyebrow": get_text(ui_lang, "sample.interaction_preview.mock.teaching.eyebrow"),
+                "title": get_text(ui_lang, "sample.interaction_preview.mock.teaching.title"),
+                "text": get_text(ui_lang, "sample.interaction_preview.mock.teaching.text"),
+                "footer_class_name": "pm-cta-link-row pm-interaction-preview__mock-footer",
+                "items": [
+                    _sample_cta_link(get_text(ui_lang, "sample.interaction_preview.label.open_materials"), tone="primary", href=materials_href),
+                ],
+            },
+            {
+                "eyebrow": get_text(ui_lang, "sample.interaction_preview.mock.app.eyebrow"),
+                "title": get_text(ui_lang, "sample.interaction_preview.mock.app.title"),
+                "text": get_text(ui_lang, "sample.interaction_preview.mock.app.text"),
+                "chips": [
+                    _sample_chip("B2", active=True),
+                    _sample_chip("L1 DE"),
+                ],
+                "footer_class_name": "pm-interaction-row--card pm-interaction-preview__mock-footer",
+                "items": [
+                    _sample_nav_pill(get_text(ui_lang, "sample.button_preview.label.profile"), size="small", href=profile_href),
+                    _sample_action_button(get_text(ui_lang, "sample.interaction_preview.label.compare"), variant="secondary", size="small", leading_icon="add"),
+                ],
+            },
+        ],
+    }
+
+
 def _sample_speaker_cards(ui_lang: str) -> list[dict[str, Any]]:
     profile_label = "Profil" if ui_lang == "de" else "Profile"
     recordings_label = "Aufzeichnungen" if ui_lang == "de" else "Recordings"
@@ -648,6 +965,7 @@ def sample_page(ui_lang: str):
             "den realen Seiten und dient nicht als eigenständiges Vorbild."
         ),
         "is_section_root": True,
+        "interaction_preview": _sample_interaction_preview(ui_lang),
         "sample_landing_cards": _linkify(landing_page.get("landing_cards", []), ui_lang),
         "sample_research_cards": _linkify(research_select_page.get("corpus_cards", []), ui_lang),
         "sample_teaching_cards": _linkify(teaching_select_page.get("corpus_cards", []), ui_lang),

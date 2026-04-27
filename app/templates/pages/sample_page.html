@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
+{% from 'partials/_pm_interactions.html' import render_interaction_item %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -8,6 +9,94 @@
 <article class="promat-page promat-page--sample pm-content pm-sample" aria-labelledby="promat-page-title">
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
+
+  <section class="pm-sample-section pm-interaction-preview" aria-labelledby="sample-interaction-preview-title">
+    <div class="pm-sample-section__header pm-reading">
+      <h2 id="sample-interaction-preview-title" class="pm-sample-section__title">{{ promat_page.interaction_preview.title }}</h2>
+      <p class="pm-sample-section__intro">{{ promat_page.interaction_preview.intro }}</p>
+    </div>
+
+    <div class="pm-interaction-preview__grid">
+      {% for block in promat_page.interaction_preview.groups %}
+      <section class="pm-interaction-preview__panel pm-container pm-container--tinted" aria-labelledby="{{ block.id }}">
+        <div class="pm-entry-showcase__heading">
+          <p id="{{ block.id }}" class="pm-entry-showcase__label pm-entry-showcase__label--primary">{{ block.title }}</p>
+          <p class="pm-entry-showcase__note">{{ block.note }}</p>
+        </div>
+
+        <div class="pm-interaction-preview__rows">
+          {% for row in block.rows %}
+          <div class="pm-interaction-preview__row">
+            <p class="pm-interaction-preview__row-label">{{ row.label }}</p>
+            <div class="{{ row.class_name }}">
+              {% for item in row['items'] %}
+              {{ render_interaction_item(item) }}
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+
+    <section class="pm-interaction-preview__section" aria-labelledby="sample-interaction-preview-contexts-title">
+      <div class="pm-entry-showcase__heading">
+        <p id="sample-interaction-preview-contexts-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">{{ promat_page.interaction_preview.contexts.title }}</p>
+        <p class="pm-entry-showcase__note">{{ promat_page.interaction_preview.contexts.note }}</p>
+      </div>
+
+      <div class="pm-interaction-preview__contexts">
+        {% for row in promat_page.interaction_preview.contexts.rows %}
+        <section class="pm-container pm-container--tinted pm-interaction-preview__panel" aria-labelledby="sample-interaction-context-{{ loop.index }}">
+          <p id="sample-interaction-context-{{ loop.index }}" class="pm-interaction-preview__row-label">{{ row.label }}</p>
+          <div class="{{ row.class_name }}">
+            {% for item in row['items'] %}
+            {{ render_interaction_item(item) }}
+            {% endfor %}
+          </div>
+        </section>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="pm-interaction-preview__section" aria-labelledby="sample-interaction-preview-mocks-title">
+      <div class="pm-entry-showcase__heading">
+        <p id="sample-interaction-preview-mocks-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">{{ t('sample.interaction_preview.mocks.title') }}</p>
+        <p class="pm-entry-showcase__note">{{ t('sample.interaction_preview.mocks.note') }}</p>
+      </div>
+
+      <div class="pm-interaction-preview__mock-grid">
+        {% for card in promat_page.interaction_preview['mock_cards'] %}
+        <article class="pm-card pm-interaction-preview__mock-card">
+          <div class="pm-interaction-preview__mock-body">
+            <p class="pm-interaction-preview__mock-eyebrow">{{ card['eyebrow'] }}</p>
+            <h3 class="pm-card__title">{{ card['title'] }}</h3>
+            <p class="pm-card__text">{{ card['text'] }}</p>
+
+            {% if card['meta_rows'] is defined %}
+            <div class="pm-interaction-preview__mock-meta">{% for row in card['meta_rows'] %}<div class="pm-interaction-preview__meta-pair"><p class="pm-interaction-preview__meta-label">{{ row.label }}</p><p class="pm-interaction-preview__meta-value">{{ row.value or '—' }}</p></div>{% endfor %}</div>
+            {% endif %}
+
+            {% if card['chips'] is defined %}
+            <div class="pm-interaction-row pm-interaction-row--wrap">
+              {% for item in card['chips'] %}
+              {{ render_interaction_item(item) }}
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="{{ card['footer_class_name'] }}">
+            {% for item in card['items'] %}
+            {{ render_interaction_item(item) }}
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+  </section>
 
   <section class="pm-sample-section" aria-labelledby="sample-entry-cards-title">
     <div class="pm-sample-section__header pm-reading">
