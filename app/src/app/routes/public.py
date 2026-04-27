@@ -33,10 +33,11 @@ from ..research_views import (
 from .public_content import (
     DEFAULT_UI_LANGUAGE,
     LEGAL_PAGES,
+    LEGACY_PROJECT_PAGE_REDIRECTS,
     PROJECT_PAGE_ORDER,
-    PROJECT_PAGES,
     RESEARCH_PAGE_ORDER,
     TEACHING_PAGE_ORDER,
+    build_project_page,
     build_research_language_root_page,
     build_research_page,
     build_research_select_page,
@@ -1074,7 +1075,9 @@ def health_check():
 def project_home(ui_lang: str):
     ui_lang = _require_ui_lang(ui_lang)
     first_page_slug = PROJECT_PAGE_ORDER[0][0]
-    page = dict(PROJECT_PAGES[first_page_slug])
+    page = build_project_page(ui_lang, first_page_slug)
+    if page is None:
+        abort(404)
     page["is_section_root"] = True
     panel = _panel_config(
         section_key="project",
@@ -1089,11 +1092,15 @@ def project_home(ui_lang: str):
 @blueprint.get("/<ui_lang>/project/<page_slug>")
 def project_page(ui_lang: str, page_slug: str):
     ui_lang = _require_ui_lang(ui_lang)
+    redirect_target = LEGACY_PROJECT_PAGE_REDIRECTS.get(page_slug)
+    if redirect_target is not None:
+        return redirect(url_for("public.project_page", ui_lang=ui_lang, page_slug=redirect_target), 308)
+
     canonical_page_slug = get_canonical_project_page_slug(page_slug)
     if canonical_page_slug is None:
         abort(404)
 
-    page = PROJECT_PAGES.get(canonical_page_slug)
+    page = build_project_page(ui_lang, canonical_page_slug)
     if page is None:
         abort(404)
     panel = _panel_config(

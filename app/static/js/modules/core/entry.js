@@ -9,6 +9,7 @@ import { initPageRouter } from "./router.js";
 import { initPreloadGuard, initPageTitleAndScroll } from "./ui.js";
 import { initConfig } from "./config.js";
 import { initFlashSnackbar } from "./snackbar.js";
+import { initExternalHttpLinks } from "./external-links.js";
 
 // Import legacy main.js to preserve existing functionality (Navigation, Token Refresh, etc.)
 import "../../main.js";
@@ -30,6 +31,9 @@ initPageTitleAndScroll();
 
 // Initialize Flash Snackbar (shows success messages from login etc.)
 initFlashSnackbar();
+
+// Ensure external links open in a separate tab/window across the app.
+initExternalHttpLinks();
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Auth Handler (401 listener and param check)

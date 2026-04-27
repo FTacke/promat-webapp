@@ -54,13 +54,17 @@
   <div class="promat-page__sections">
     {% for section in promat_page.sections | default([]) %}
     <section class="promat-content-section">
-      {% if section.heading or section.paragraphs or section.bullets %}
+      {% set has_block_body = section.paragraphs or section.paragraphs_html or section.bullets or section.bullets_html or section.table or section.media_embed %}
+      {% if has_block_body %}
       <div class="promat-content-block pm-panel pm-reading">
         {% if section.heading %}
         <h2 class="promat-content-block__title pm-panel__title">{{ section.heading }}</h2>
         {% endif %}
         {% for paragraph in section.paragraphs | default([]) %}
         <p class="promat-content-block__text">{{ paragraph }}</p>
+        {% endfor %}
+        {% for paragraph in section.paragraphs_html | default([]) %}
+        <p class="promat-content-block__text">{{ paragraph | safe }}</p>
         {% endfor %}
         {% if section.bullets %}
         <ul class="promat-content-block__list">
@@ -69,15 +73,104 @@
           {% endfor %}
         </ul>
         {% endif %}
+        {% if section.bullets_html %}
+        <ul class="promat-content-block__list">
+          {% for bullet in section.bullets_html %}
+          <li>{{ bullet | safe }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if section.table %}
+        <div class="pm-research-table-wrap promat-content-block__table-wrap">
+          <table class="pm-research-table promat-content-block__table">
+            <thead>
+              <tr>
+                {% for column in section.table.columns %}
+                <th scope="col">{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in section.table.rows %}
+              <tr>
+                {% for cell in row %}
+                <td>{{ cell }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+        {% if section.media_embed %}
+        <figure class="pm-embed-block">
+          <div class="pm-embed-block__frame-wrap">
+            {% if section.media_embed.provider == 'youtube' %}
+            <iframe
+              class="pm-embed-block__frame"
+              src="{{ section.media_embed.embed_url or ('https://www.youtube.com/embed/' ~ section.media_embed.youtube_id) }}"
+              title="{{ section.media_embed.title }}"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            ></iframe>
+            {% endif %}
+          </div>
+          {% if section.media_embed.caption_html %}
+          <figcaption class="pm-embed-block__caption">{{ section.media_embed.caption_html | safe }}</figcaption>
+          {% endif %}
+        </figure>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if section.meta_cards and section.heading %}
+      <div class="promat-content-section__heading pm-reading">
+        <h2 class="promat-content-block__title pm-panel__title">{{ section.heading }}</h2>
       </div>
       {% endif %}
       {% if section.meta_cards %}
+      {% set meta_grid_classes = ['pm-grid', 'pm-grid--meta'] %}
+      {% if section.meta_cards_layout %}
+      {% set _ = meta_grid_classes.append('pm-grid--' ~ section.meta_cards_layout) %}
+      {% endif %}
       <div class="pm-feature-band">
-        <div class="pm-grid pm-grid--meta">
+        <div class="{{ meta_grid_classes | join(' ') }}">
           {% for card in section.meta_cards %}
-          <article class="pm-card pm-card--material">
-            <h3 class="pm-card__title">{{ card.title }}</h3>
-            <p class="pm-card__text">{{ card.text }}</p>
+          <article class="pm-card pm-card--material pm-meta-card{{ ' ' ~ card.modifier if card.modifier else '' }}">
+            <div class="pm-card__body pm-meta-card__body">
+              {% if card.title or card.text or card.body_html %}
+              <div class="pm-meta-card__header">
+                {% if card.title %}
+                <h3 class="pm-card__title pm-meta-card__title">{{ card.title }}</h3>
+                {% endif %}
+                {% if card.text %}
+                <p class="pm-card__text pm-meta-card__text">{{ card.text }}</p>
+                {% endif %}
+                {% for paragraph in card.body_html | default([]) %}
+                <p class="pm-card__text pm-meta-card__text">{{ paragraph | safe }}</p>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% if card.metadata_rows %}
+              <div class="pm-meta-card__section{{ ' pm-meta-card__section--divided' if card.title or card.text or card.body_html else '' }}">
+                {% for row in card.metadata_rows %}
+                <div class="pm-speaker-card__meta-item pm-meta-card__meta-item">
+                  <p class="pm-speaker-card__meta-label">{{ row.label }}</p>
+                  <p class="pm-speaker-card__meta-value pm-meta-card__meta-value">{{ row.value }}</p>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+              {% if card.list_items %}
+              <div class="pm-meta-card__section{{ ' pm-meta-card__section--divided' if card.title or card.text or card.body_html or card.metadata_rows else '' }}">
+                <ul class="promat-content-block__list pm-meta-card__list">
+                  {% for item in card.list_items %}
+                  <li>{{ item }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+            </div>
           </article>
           {% endfor %}
         </div>

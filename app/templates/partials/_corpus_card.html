@@ -1,3 +1,5 @@
+{% from 'partials/_pm_interactions.html' import render_cta_link, render_cta_link_visual %}
+
 {% macro render_corpus_card(card, heading_tag='h2') -%}
 {% if card.metadata_rows %}
 <article class="pm-card pm-card--interactive pm-card--corpus {{ card.modifier }} pm-corpus-overview-card">
@@ -27,7 +29,7 @@
 
     <footer class="pm-speaker-card__footer pm-corpus-overview-card__footer">
       <div class="pm-speaker-card__footer-section pm-corpus-overview-card__footer-section">
-        <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-corpus-overview-card__action" href="{{ card.href }}">{{ card.action_label }}</a>
+        {{ render_cta_link({ 'label': card.action_label, 'href': card.href, 'tone': 'primary' }, 'pm-corpus-overview-card__action') }}
       </div>
     </footer>
   </div>
@@ -42,7 +44,7 @@
     {% if card.text %}
     <p class="pm-card__text">{{ card.text }}</p>
     {% endif %}
-    <div class="pm-card__action">{{ card.action_label }}</div>
+    <div class="pm-card__action">{{ render_cta_link_visual({ 'label': card.action_label, 'tone': 'primary' }) }}</div>
   </div>
 </a>
 {% endif %}

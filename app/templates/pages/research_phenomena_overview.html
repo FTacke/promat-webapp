@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_pm_interactions.html' import render_action_button, render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -21,7 +22,9 @@
             <input class="pm-phenomena-field__input pm-comparison-filter-input" type="search" placeholder="{{ promat_page.search_placeholder }}" data-phenomena-search>
           </label>
 
-          <button type="button" class="pm-research-button" data-phenomena-new-set>{{ promat_page.new_set_label }}</button>
+          <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-new-set>
+            <span class="pm-action-button__label">{{ promat_page.new_set_label }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -40,10 +43,12 @@
 
           <div class="pm-phenomena-overview-card__actions">
             {% if entry.kind == 'curated' %}
-            <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="{{ entry.open_href }}">{{ t('common.actions.view') }}</a>
-            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-modify-preset="{{ entry.preset_id }}">{{ t('common.actions.modify') }}</button>
+            {{ render_navigation_pill({ 'label': t('common.actions.view'), 'href': entry.open_href, 'size': 'small' }) }}
+            <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-modify-preset="{{ entry.preset_id }}">
+              <span class="pm-action-button__label">{{ t('common.actions.modify') }}</span>
+            </button>
             {% else %}
-            <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" href="{{ entry.open_href }}">{{ t('common.actions.edit') }}</a>
+            {{ render_navigation_pill({ 'label': t('common.actions.edit'), 'href': entry.open_href, 'size': 'small' }) }}
             <details class="pm-comparison-more-filters pm-phenomena-overflow" data-phenomena-overflow>
               <summary class="pm-comparison-more-filters__summary pm-phenomena-overflow__toggle" aria-label="{{ t('common.actions.more') }}">⋯</summary>
               <div class="pm-comparison-more-filters__body pm-phenomena-overflow__menu">

@@ -1,4 +1,5 @@
 {% extends "_md3_skeletons/auth_login_skeleton.html" %}
+{% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(t('auth.access_request.heading')) }}{% endblock %}
 
@@ -160,9 +161,9 @@
       <input type="hidden" name="ui_lang" value="{{ auth_ui_lang }}">
 
       <div class="pm-auth-actions pm-access-request-page__actions">
-        <button type="submit" class="pm-research-button pm-auth-submit" data-access-request-submit data-pending-label="{{ t('auth.access_request.submit_pending') }}">
-          <span class="material-symbols-rounded" aria-hidden="true">outgoing_mail</span>
-          <span data-access-request-submit-label>{{ t('auth.access_request.submit') }}</span>
+        <button type="submit" class="pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit" data-access-request-submit data-pending-label="{{ t('auth.access_request.submit_pending') }}">
+          <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">outgoing_mail</span>
+          <span class="pm-action-button__label" data-access-request-submit-label>{{ t('auth.access_request.submit') }}</span>
         </button>
       </div>
     </form>
@@ -177,7 +178,7 @@
   <div class="pm-auth-secondary__body pm-auth-secondary__body--quiet">
     <p class="pm-auth-secondary__text">{{ t('auth.access_request.existing_access_text') }}</p>
     <div class="pm-auth-secondary__actions">
-      <a class="pm-research-inline-action pm-research-inline-action--secondary pm-auth-secondary__action-link" href="{{ login_href }}">{{ t('auth.access_request.login_link') }}</a>
+      {{ render_navigation_pill({ 'label': t('auth.access_request.login_link'), 'href': login_href, 'size': 'medium' }, 'pm-auth-secondary__action-link') }}
     </div>
   </div>
 </aside>

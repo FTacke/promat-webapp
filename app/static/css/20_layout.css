@@ -182,6 +182,11 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-top: var(--pm-reading-list-item-gap);
 }
 
+.promat-content-block__table-wrap,
+.pm-embed-block {
+  margin-top: var(--pm-reading-paragraph-gap);
+}
+
 .pm-reading :where(p, ul, ol) {
   margin: 0;
 }
@@ -204,6 +209,10 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .pm-reading :where(h3) + :where(p, ul, ol) {
   margin-top: var(--pm-reading-heading-gap-after-h3);
+}
+
+.pm-reading :where(.pm-research-table-wrap, figure) + :where(p, ul, ol, h2, .promat-content-block__title) {
+  margin-top: var(--pm-reading-paragraph-gap);
 }
 
 .pm-grid,
@@ -235,6 +244,26 @@ body.app-shell.page-landing .md3-content-wrapper {
 .pm-grid--meta,
 .promat-card-grid--meta {
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.pm-grid--team-lead,
+.pm-grid--team-corpus {
+  grid-template-columns: 1fr;
+  gap: clamp(0.85rem, 1.8vw, 1.05rem);
+}
+
+.pm-feature-band > .pm-grid--team-lead,
+.pm-feature-band > .pm-grid--team-corpus {
+  width: min(100%, 50rem);
+  max-width: 50rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 760px) {
+  .pm-grid--team-lead,
+  .pm-grid--team-corpus {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .pm-research-page {

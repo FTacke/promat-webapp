@@ -1,3 +1,5 @@
+{% from 'partials/_pm_interactions.html' import render_action_button %}
+
 {% macro render_filter_form(form_config, mobile=false) -%}
   {% if mobile %}
   <details class="pm-research-filters-accordion">
@@ -33,8 +35,8 @@
         {% endfor %}
       </div>
       <div class="pm-research-filter-actions">
-        <button type="submit" class="pm-research-button">{{ form_config.submit_label }}</button>
-        <a class="pm-research-button pm-research-button--subtle" href="{{ form_config.reset_href }}">{{ form_config.reset_label }}</a>
+        {{ render_action_button({ 'label': form_config.submit_label, 'variant': 'primary', 'size': 'medium', 'type': 'submit' }) }}
+        {{ render_action_button({ 'label': form_config.reset_label, 'variant': 'secondary', 'size': 'medium', 'href': form_config.reset_href }) }}
       </div>
     </form>
   </section>

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -11,9 +12,9 @@
     <div class="pm-player-stub-intro pm-container pm-container--tinted">
       <p class="pm-player-stub-intro__text">{{ 'Die Route ist vorbereitet, damit recordings, speakers und die Profilseite bereits sauber auf die spätere Player-Implementierung verlinken können.' if ui_lang == 'de' else 'This route is prepared so recordings, speakers, and the profile page can already link cleanly into the future player implementation.' }}</p>
       <div class="pm-player-stub-intro__actions">
-        <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.origin_link.href }}">{{ promat_page.origin_link.label }}</a>
+        {{ render_navigation_pill({ 'label': promat_page.origin_link.label, 'href': promat_page.origin_link.href, 'size': 'medium', 'direction': 'back' }) }}
         {% if promat_page.profile_link %}
-        <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.profile_link.href }}">{{ promat_page.profile_link.label }}</a>
+        {{ render_navigation_pill({ 'label': promat_page.profile_link.label, 'href': promat_page.profile_link.href, 'size': 'medium' }) }}
         {% endif %}
       </div>
     </div>
@@ -51,8 +52,8 @@
     <div class="pm-player-stub-links pm-container pm-container--tinted">
       <h2 class="pm-profile-section__title">{{ 'Vorbereitete Navigation' if ui_lang == 'de' else 'Prepared navigation' }}</h2>
       <div class="pm-player-stub-links__list">
-        <a class="pm-research-inline-action" href="{{ promat_page.recordings_href }}">{{ 'Zu Aufnahmen' if ui_lang == 'de' else 'To recordings' }}</a>
-        <a class="pm-research-inline-action" href="{{ promat_page.speakers_href }}">{{ 'Zu Sprecher:innen' if ui_lang == 'de' else 'To speakers' }}</a>
+        {{ render_navigation_pill({ 'label': 'Zu Aufnahmen' if ui_lang == 'de' else 'To recordings', 'href': promat_page.recordings_href, 'size': 'medium' }) }}
+        {{ render_navigation_pill({ 'label': 'Zu Sprecher:innen' if ui_lang == 'de' else 'To speakers', 'href': promat_page.speakers_href, 'size': 'medium' }) }}
       </div>
     </div>
   </section>

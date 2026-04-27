@@ -7,6 +7,11 @@ from typing import Any
 from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
 from ..research_capabilities import get_research_page_capability, get_research_page_order
 from ..research_sessions import load_language_sessions
+from .public_page_content_data import (
+    LEGACY_PROJECT_PAGE_REDIRECTS,
+    PROJECT_PAGES_CONTENT,
+    SPANISH_DESIGN_PAGE_CONTENT,
+)
 
 
 LANGUAGES: tuple[dict[str, Any], ...] = (
@@ -111,7 +116,7 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
 
 PROJECT_PAGE_ORDER: tuple[tuple[str, str], ...] = (
     ("about", "project.about"),
-    ("research-design", "project.research-design"),
+    ("structure", "project.structure"),
     ("data-methods", "project.data-methods"),
     ("team", "project.team"),
 )
@@ -127,6 +132,16 @@ TEACHING_PAGE_ORDER: tuple[tuple[str, str], ...] = (
 def _localized(value: Any, ui_lang: str) -> Any:
     if isinstance(value, dict):
         return value.get(ui_lang) or value.get(DEFAULT_UI_LANGUAGE) or next(iter(value.values()))
+    return value
+
+
+def _deep_localize(value: Any, ui_lang: str) -> Any:
+    if isinstance(value, dict):
+        if value and set(value.keys()).issubset(set(SUPPORTED_UI_LANGUAGES)):
+            return _localized(value, ui_lang)
+        return {key: _deep_localize(item, ui_lang) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_deep_localize(item, ui_lang) for item in value]
     return value
 
 
@@ -338,7 +353,7 @@ def build_start_page(ui_lang: str) -> dict[str, Any]:
                 "title": "Aussprache erforschen",
                 "text": "Korpora mit authentischen Sprachdaten und klar getrennten Forschungszugängen.",
                 "href_key": "research_root",
-                "link_label": "Zur Forschung →",
+                "link_label": "Zur Forschung",
                 "image_asset": "img/cards/forschung_01.png",
                 "image_alt": "Forschungssituation mit Besprechung und Audioanalyse auf einem Laptop",
             },
@@ -347,7 +362,7 @@ def build_start_page(ui_lang: str) -> dict[str, Any]:
                 "title": "Aussprache unterrichten",
                 "text": "Anschauliche Materialien mit frei zugänglichen Medien und vorbereiteten Unterrichtspfaden.",
                 "href_key": "teaching_root",
-                "link_label": "Zum Unterricht →",
+                "link_label": "Zum Unterricht",
                 "image_asset": "img/cards/unterricht_01.png",
                 "image_alt": "Unterrichtssituation im Klassenraum als Motiv für Materialien und Hörbeispiele",
             },
@@ -362,7 +377,7 @@ def build_corpus_cards_research(ui_lang: str) -> list[dict[str, Any]]:
         cards.append(
             {
                 "title": _research_corpus_card_title(language, ui_lang),
-                "modifier": f"pm-card--corpus-research pm-card--lang-{language['lang_code']}",
+                "modifier": f"pm-card--corpus-research pm-card--lang-{language['lang_code']} pm-corpus-overview-card--shared-accent",
                 "metadata_rows": _research_corpus_card_metadata_rows(language, ui_lang),
                 "action_label": get_text(ui_lang, "nav.open_corpus"),
                 "href_key": f"research:{language['slug']}",
@@ -413,92 +428,17 @@ def build_teaching_select_page(ui_lang: str) -> dict[str, Any]:
     }
 
 
-PROJECT_PAGES: dict[str, dict[str, Any]] = {
-    "about": {
-        "title": "Worum es geht",
-        "eyebrow": "Projekt",
-        "intro": "Pronunciation Matters verbindet Projektkommunikation, Forschung und Unterricht über eine gemeinsame, zukunftsfeste Plattformstruktur.",
-        "page_kind": "reading",
-        "sections": [
-            {
-                "heading": "Ausgangspunkt",
-                "paragraphs": [
-                    "PROMAT trennt bewusst zwischen UI-Sprache, technischer Routing-Struktur, Datenarchitektur und Dateisystem. Dadurch kann die Plattform später ohne Grundumbau um Englisch, Auth-Absicherung und weitere Korpora erweitert werden.",
-                    "Der aktuelle Umbau bereitet diese Struktur vor, ohne bereits eine finale Restricted- oder Player-Architektur produktiv zu setzen.",
-                ],
-            },
-            {
-                "heading": "Strukturelle Leitlinien",
-                "bullets": [
-                    "Technische Slugs, Feldnamen und Controlled Vocabularies bleiben konsequent englisch.",
-                    "Sichtbare UI-Beschriftungen bleiben zunächst deutsch und sind von den technischen Slugs entkoppelt.",
-                    "Öffentliche Medien liegen strukturell unter /public, geschützte Forschungsdaten unter /data, Klardaten außerhalb der Webapp unter /secure.",
-                ],
-            },
-        ],
-    },
-    "research-design": {
-        "title": "Forschungsdesign",
-        "eyebrow": "Projekt",
-        "intro": "Das Projekt wird entlang stabiler Seitentypen, Sprachbereiche und klarer Datenzonen organisiert.",
-        "page_kind": "reading",
-        "sections": [
-            {
-                "heading": "Routing und Seitenlogik",
-                "paragraphs": [
-                    "Die Plattform nutzt ein ui-lang-prefixed Routing-Schema und trennt zwischen Projekt-, Forschungs-, Unterrichts- und Sample-Bereich. Innerhalb der Forschung folgen alle Sprachbereiche denselben englischen Seitenschlüsseln: design, speakers, recordings, comparison und phenomena.",
-                    "Unterricht bleibt bewusst schlanker und führt pro Sprache zunächst nur über eine Landingpage zu phenomena und materials.",
-                ],
-            },
-            {
-                "heading": "Vorbereitete Erweiterbarkeit",
-                "bullets": [
-                    "Weitere UI-Sprachen können über dieselben Slugs ergänzt werden.",
-                    "Weitere Korpussprachen können ohne Routenumbau aktiviert werden.",
-                    "Restricted-Logik kann später auf vorbereitete research-Seiten aufsetzen, statt gegen provisorische Altstrukturen zu arbeiten.",
-                ],
-            },
-        ],
-    },
-    "data-methods": {
-        "title": "Daten & Methodik",
-        "eyebrow": "Projekt",
-        "intro": "Der Umbau trennt technische Datenzonen und benennt Metadaten, Tasks und Dateitypen konsistent auf Englisch.",
-        "page_kind": "reading",
-        "sections": [
-            {
-                "heading": "Datenzonen",
-                "bullets": [
-                    "/secure bleibt außerhalb der Webapp und wird nicht angebunden.",
-                    "/data ist der vorbereitete Bereich für geschützte Forschungsdaten und Sessions.",
-                    "/public ist der vorbereitete Bereich für frei zugängliche Unterrichts- und Sample-Medien.",
-                ],
-            },
-            {
-                "heading": "Metadatenkonventionen",
-                "paragraphs": [
-                    "Begriffe wie speaker_type, target_language, context, file_role und task_type werden nur noch in der englischen technischen Form verwendet. Sichtbare deutsche Labels sind davon getrennt organisiert.",
-                ],
-            },
-        ],
-    },
-    "team": {
-        "title": "Team",
-        "eyebrow": "Projekt",
-        "intro": "Die Teamseite markiert Arbeitsfelder und Verantwortungsbereiche, nicht bereits eine finale Personenmodellierung.",
-        "page_kind": "reading",
-        "sections": [
-            {
-                "heading": "Arbeitsfelder",
-                "bullets": [
-                    "Sprachspezifische Korpuskuratierung",
-                    "Datenmodellierung, Session-Struktur und Exportpfade",
-                    "UI- und Routing-Systematik für Forschung und Unterricht",
-                ],
-            },
-        ],
-    },
-}
+PROJECT_PAGES: dict[str, dict[str, Any]] = PROJECT_PAGES_CONTENT
+
+
+def build_project_page(ui_lang: str, page_slug: str) -> dict[str, Any] | None:
+    page = PROJECT_PAGES.get(page_slug)
+    if page is None:
+        return None
+
+    localized_page = _deep_localize(page, ui_lang)
+    localized_page.setdefault("eyebrow", get_section_label("project", ui_lang))
+    return localized_page
 
 
 def build_research_language_root_page(
@@ -574,69 +514,10 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
             ],
         }
 
+    if page_slug == "design":
+        return _deep_localize(SPANISH_DESIGN_PAGE_CONTENT, ui_lang)
+
     pages: dict[str, dict[str, Any]] = {
-        "design": {
-            "title": "Design",
-            "eyebrow": "Forschung · Spanisch",
-            "intro": "Das spanische Forschungsdesign verbindet kontrollierte Elizitation, Vergleichbarkeit und lernendengerechte Materialgestaltung für die Untersuchung von Lernendenaussprache.",
-            "page_kind": "reading",
-            "access": "public",
-            "sections": [
-                {
-                    "heading": "Ausgangspunkt",
-                    "paragraphs": [
-                        "Die spanischen Aufgaben dieses Korpus wurden entwickelt, um ein Forschungsdesign für Lernendenaussprache bereitzustellen, das systematisch, vergleichbar und zugleich für Lernende gut bearbeitbar ist.",
-                        "Ausgangspunkt war die Beobachtung, dass bestehende Modelle zwar wichtige Vorarbeiten bieten, für die gezielte Untersuchung der spanischen Aussprache von Lernenden aber nur teilweise direkt übernommen werden können. Das betrifft vor allem Wortschatzschwierigkeit, inhaltliche Ablenkungen durch Lesetexte und die Frage, welche lautlichen Phänomene für Lernendenaussprache tatsächlich mehrfach und kontrolliert erhoben werden müssen. Leitend sind daher nicht Nativitätsnähe oder bloße Tradition, sondern Intelligibilität, kontrollierte Elizitation und eine für Lernende sinnvolle Materialgestaltung.",
-                    ],
-                },
-                {
-                    "heading": "Vorarbeiten und empirische Ausgangslage",
-                    "paragraphs": [
-                        "Ein wichtiger Zwischenschritt war das frühere Projekt MAR.ELE – Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg. In diesem kleineren Vorprojekt wurden 22 Aufnahmen mit Studierenden der Universität Marburg erstellt. MAR.ELE diente dazu, spanische Lernendenaussprache als Korpusmaterial zugänglich und empirisch auswertbar zu machen. In der praktischen Arbeit mit diesem Korpus wurden jedoch auch die Grenzen eines stark übernommenen Designs sichtbar. Gerade diese Erfahrungen waren entscheidend für die weitergehende Überarbeitung im vorliegenden Projekt.",
-                        "Für MAR.ELE wurde die Wortliste des Projekts I(F)EC vollständig übernommen, um die Anschlussfähigkeit an ein etabliertes korpusphonologisches Design des Spanischen zu sichern. Das war methodisch sinnvoll, zeigte in der Arbeit mit Lernenden aber auch deutliche Probleme: Einige Items erwiesen sich als unnötige lexikalische Stolperstellen, andere Phänomene, die für Lernendenaussprache besonders aufschlussreich sind, waren nicht optimal verteilt oder nicht stark genug vertreten. Die jetzige Konzeption reagiert daher nicht aus bloßer Präferenz auf frühere Modelle, sondern auf konkrete Erfahrungen aus ihrer Anwendung.",
-                    ],
-                },
-                {
-                    "heading": "Anschluss an bestehende Forschungsdesigns",
-                    "paragraphs": [
-                        "Bei der Erstellung der Materialien wurde zunächst geprüft, inwiefern und wie weit sich an Forschungsdesigns empirisch arbeitender Phonologieprojekte anknüpfen lässt. Besonders wichtig war hier I(F)EC, dessen Grundprotokoll eine Wortliste, einen Lesetext, einen Discourse-Completion-Task und ein Interview umfasst. Die I(F)EC-Wortliste ist bewusst breit angelegt und zielt auf eine umfassende Erfassung regionaler Variation, phonologischer Prozesse, Wortakzentuierung und orthographischer Einflüsse. Dieses Modell war für die Entwicklung der spanischen Materialien ein zentraler Referenzpunkt, wurde aber nicht unverändert übernommen.",
-                        "Die Orientierung an I(F)EC war damit wichtig, aber nicht bindend. Ziel war nicht, ein bestehendes Materialpaket zu reproduzieren, sondern ein Design zu entwickeln, das die Aussprache von Lernenden möglichst kontrolliert erhebt, ohne sie durch unnötig schwierigen Wortschatz oder unpassende Inhalte zusätzlich zu belasten. Daraus ergab sich die Grundentscheidung, bestehende Vorbilder nur dort zu übernehmen, wo sie für die vorliegende Fragestellung tatsächlich tragfähig sind.",
-                    ],
-                },
-                {
-                    "heading": "Wortliste",
-                    "paragraphs": [
-                        "Die spanische Wortliste orientiert sich zunächst grob an I(F)EC, wurde dann aber konsequent auf ein lernendenorientiertes Forschungsdesign hin überarbeitet. Maßgeblich waren dabei mehrere Prinzipien: lexikalische Vertrautheit vor bloßer Tradition, mehrfache Belege pro relevantem Phänomen, keine sichtbare Gruppierung nach Phänomenbereichen im Hauptteil und ein eigener Schlussblock mit Minimal- oder Pseudominimalpaaren. Damit soll die Liste einerseits systematische Analyse ermöglichen, andererseits aber für Lernende lesbar und bearbeitbar bleiben.",
-                        "Die Überarbeitung reagiert auch auf ein praktisches Problem früherer Designs: Die direkte Übernahme bestehender Listen erhöht zwar oft die Vergleichbarkeit, kann aber für Lernende unnötige Stolperstellen erzeugen. Für das vorliegende Projekt wurde deshalb eine Liste zusammengestellt, die zentrale segmentale und prosodisch relevante Zielstellen mehrfach abbildet, ohne sich unnötig an lexikalisch randständige oder didaktisch wenig geeignete Items zu binden. Auf diese Weise soll nicht nur Variation dokumentiert, sondern Lernendenaussprache unter möglichst stabilen Bedingungen erhoben werden.",
-                    ],
-                },
-                {
-                    "heading": "Vom Lesetext zur Satzliste",
-                    "paragraphs": [
-                        "Auch bei der zweiten kontrollierten Leseaufgabe wurde geprüft, welche bestehenden Lösungen übernehmbar sind. In anderen Projekten wurden dafür traditionelle Lesetexte verwendet, etwa der vielfach eingesetzte Text El viento del norte y el sol. Solche Texte sind forschungsgeschichtlich etabliert, für Lernende aber nur begrenzt geeignet: Ihr Inhalt ist oft künstlich oder ungewöhnlich, der Wortschatz nicht durchgehend einfach, und die lautlichen Zielstellen lassen sich nur begrenzt kontrollieren. Dadurch steigt die Gefahr, dass nicht die Aussprache selbst, sondern vor allem Verstehens- und Leseschwierigkeiten das Ergebnis beeinflussen.",
-                        "Bereits im Vorprojekt MAR.ELE wurde statt eines neutralen Standardtexts ein modifizierter und erweiterter Ausschnitt aus Der kleine Prinz verwendet. Dieser Text war seinerseits in bearbeiteter Form von Andrea Pešková übernommen worden, deren Forschung insbesondere im Bereich der Intonation des Spanischen wichtige Anknüpfungspunkte bietet. Gerade die Arbeit mit einem literarischen Text machte jedoch sichtbar, dass literarische Prägung, stilistische Dichte und eingeschränkte Kontrollierbarkeit der Lautkontexte für Lernende neue Probleme erzeugen. Das war ein wesentlicher Grund, im vorliegenden Projekt bewusst auf eine eigene Satzliste umzusteigen.",
-                        "Die Satzliste des vorliegenden Projekts ist daher kein Ersatztext im traditionellen Sinn, sondern ein kontrolliertes Elizitationsinstrument. Sie rekombiniert die Items der Wortliste in einfachen, gut lesbaren Sätzen, ohne neue aussprachebezogene Zielphänomene einzuführen. Ziel ist es, die in der Wortliste erhobenen Muster in Lautkontexten und unter satzprosodischen Bedingungen erneut zu prüfen. Die Satzliste ist damit funktional eng an die Wortliste gebunden, aber kognitiv deutlich kontrollierbarer als ein übernommener Fließtext.",
-                    ],
-                },
-                {
-                    "heading": "Interview",
-                    "paragraphs": [
-                        "Das Interview ist schließlich eine projektweite Erweiterung des Designs. Es ergänzt die kontrollierten Leseaufgaben um eine reflexive Komponente: Lernende werden nicht nur aufgenommen, sondern auch zu ihrer eigenen Aussprache, zu wahrgenommenen Schwierigkeiten und zu auffälligen Phänomenen befragt, die im Verlauf der Erhebung beobachtet wurden. Damit fließt neben der Außenbeobachtung auch die Perspektive der Lernenden selbst in das Korpus ein. Für die Untersuchung von Lernendenaussprache ist das besonders wichtig, weil so nicht nur Realisierungen dokumentiert, sondern auch metasprachliche Einschätzungen und subjektive Problemwahrnehmungen sichtbar werden.",
-                    ],
-                },
-                {
-                    "heading": "Literatur",
-                    "bullets": [
-                        "I(F)EC: (Inter-)Fonología del Español Contemporáneo.",
-                        "MAR.ELE: Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg.",
-                        "Bárkányi, Zsuzsanna / Galindo Merino, M. Mar / Pérez-Bernabeu, Aarón (Hg.) (2024): La integración de la pronunciación en el aula de ELE / Integrating pronunciation in the Spanish language classroom. Amsterdam / Philadelphia: John Benjamins.",
-                        "Pešková, Andrea: Archivo de los acentos en el ELE. Online: https://andrea-peskova.com/archivo-de-los-acentos-l2/",
-                        "Pustka, Elissa / Gabriel, Christoph / Meisenburg, Trudel / Burkard, Monja / Dziallas, Kristina (2018): (Inter-)Fonología del Español Contemporáneo (I)FEC: Metodología de un programa de investigación para la fonología de corpus. Loquens 5(1), e046. DOI: https://doi.org/10.3989/loquens.2018.046",
-                        "Tacke, Felix (2023–2024): MAR.ELE – Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg. Marburg: Philipps-Universität Marburg. Online: https://marele.hispanistica.com",
-                    ],
-                },
-            ],
-        },
         "speakers": {
             "title": "Sprecher:innen",
             "eyebrow": "Forschung · Spanisch",

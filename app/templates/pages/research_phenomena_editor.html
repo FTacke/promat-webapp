@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_pm_interactions.html' import render_action_button %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -29,8 +30,12 @@
         </div>
 
         <div class="pm-phenomena-editor__header-actions">
-          <button type="button" class="pm-research-inline-action pm-research-inline-action--secondary" data-phenomena-discard-action>{{ t('research.phenomena.editor.discard') }}</button>
-          <button type="button" class="pm-research-button" data-phenomena-save-action>{{ t('common.actions.save') }}</button>
+          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-discard-action>
+            <span class="pm-action-button__label">{{ t('research.phenomena.editor.discard') }}</span>
+          </button>
+          <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-save-action>
+            <span class="pm-action-button__label">{{ t('common.actions.save') }}</span>
+          </button>
         </div>
       </div>
 
@@ -49,8 +54,8 @@
             <h2 class="pm-player-panel__title pm-phenomena-source-column__title">{{ promat_page.client_state.labels.wordlist }}</h2>
           </div>
           <div class="pm-phenomena-source-column__actions">
-            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-select-all="wordlist">{{ t('common.actions.select_all') }}</button>
-            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-clear-all="wordlist">{{ t('common.actions.clear_all') }}</button>
+            <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-select-all="wordlist"><span class="pm-action-button__label">{{ t('common.actions.select_all') }}</span></button>
+            <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-clear-all="wordlist"><span class="pm-action-button__label">{{ t('common.actions.clear_all') }}</span></button>
           </div>
         </div>
         <label class="pm-phenomena-field pm-phenomena-field--search pm-phenomena-source-column__search">
@@ -66,8 +71,8 @@
             <h2 class="pm-player-panel__title pm-phenomena-source-column__title">{{ promat_page.client_state.labels.text }}</h2>
           </div>
           <div class="pm-phenomena-source-column__actions">
-            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-select-all="text">{{ t('common.actions.select_all') }}</button>
-            <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary" data-phenomena-clear-all="text">{{ t('common.actions.clear_all') }}</button>
+            <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-select-all="text"><span class="pm-action-button__label">{{ t('common.actions.select_all') }}</span></button>
+            <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-clear-all="text"><span class="pm-action-button__label">{{ t('common.actions.clear_all') }}</span></button>
           </div>
         </div>
         <label class="pm-phenomena-field pm-phenomena-field--search pm-phenomena-source-column__search">

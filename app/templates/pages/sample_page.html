@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
-{% from 'partials/_pm_interactions.html' import render_interaction_item %}
+{% from 'partials/_pm_interactions.html' import render_cta_link_visual, render_interaction_item, render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -113,7 +113,7 @@
         <div class="pm-card__body">
           <h2 class="pm-card__title">{{ card.title }}</h2>
           <p class="pm-card__text">{{ card.text }}</p>
-          <span class="pm-card__action">{{ card.link_label }}</span>
+          <span class="pm-card__action">{{ render_cta_link_visual({ 'label': card.link_label, 'tone': 'accent' if card.entry_kind == 'teaching' else 'primary' }) }}</span>
         </div>
       </a>
       {% endfor %}
@@ -150,7 +150,7 @@
             <div class="pm-card__body">
               <h3 class="pm-card__title">{{ card.title }}</h3>
               <p class="pm-card__text">{{ card.text }}</p>
-              <div class="pm-card__action">{{ card.action_label }}</div>
+              <div class="pm-card__action">{{ render_cta_link_visual({ 'label': card.action_label, 'tone': 'primary' }) }}</div>
             </div>
           </a>
           {% endfor %}
@@ -172,7 +172,7 @@
           </div>
           <nav class="promat-page__actions pm-stack--inline pm-research-language-root__actions" aria-label="Research-Einstiegsaktionen">
             {% for action in promat_page.sample_research_root_page.action_links %}
-            <a class="pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action" href="{{ action.href }}">{{ action.label }}</a>
+            {{ render_navigation_pill({ 'label': action.label, 'href': action.href, 'size': 'medium', 'variant': 'primary' if loop.last else 'secondary' }, 'pm-research-language-root__action') }}
             {% endfor %}
           </nav>
         </section>
@@ -274,9 +274,9 @@
           <div class="pm-container pm-container--tinted">
             <p class="pm-speaker-card__task-label">Task-Aktionen</p>
             <div class="pm-speaker-card__tasks" aria-label="Task-Aktionsbuttons Dummy">
-              <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="#sample-research-task-panels-title">Wortliste</a>
-              <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="#sample-research-task-panels-title">Text</a>
-              <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="#sample-research-task-panels-title">Interview</a>
+              {{ render_navigation_pill({ 'label': 'Wortliste', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
+              {{ render_navigation_pill({ 'label': 'Text', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
+              {{ render_navigation_pill({ 'label': 'Interview', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
             </div>
           </div>
         </div>
@@ -351,7 +351,7 @@
                 <td class="pm-research-table__cell--l1" data-label="L1">DE</td>
                 <td class="pm-research-table__cell--gender" data-label="Geschlecht">weiblich</td>
                 <td class="pm-research-table__cell--stay" data-label="Sprachaufenthalte">Ja</td>
-                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion"><a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="#sample-research-task-panels-title">Wortliste</a></td>
+                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion">{{ render_navigation_pill({ 'label': 'Wortliste', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}</td>
               </tr>
               <tr>
                 <td class="pm-research-table__cell--recording" data-label="Aufzeichnung (Sprecher:in)">
@@ -365,7 +365,7 @@
                 <td class="pm-research-table__cell--l1" data-label="L1"></td>
                 <td class="pm-research-table__cell--gender" data-label="Geschlecht">männlich</td>
                 <td class="pm-research-table__cell--stay" data-label="Sprachaufenthalte">-</td>
-                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion"><a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="#sample-research-task-panels-title">Text</a></td>
+                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion">{{ render_navigation_pill({ 'label': 'Text', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}</td>
               </tr>
             </tbody>
           </table>
@@ -649,7 +649,7 @@
           </section>
 
           <nav class="pm-profile-navigation pm-container" aria-label="Navigation Dummy">
-            <a class="pm-research-inline-action" href="#sample-research-speaker-cards-title">Zurück zu Sprecher:innen</a>
+            {{ render_navigation_pill({ 'label': 'Zurück zu Sprecher:innen', 'href': '#sample-research-speaker-cards-title', 'size': 'medium', 'direction': 'back' }) }}
           </nav>
         </div>
       </section>
@@ -731,7 +731,7 @@
           <div class="pm-card__body">
             <h3 class="pm-card__title">Projekt</h3>
             <p class="pm-card__text">Bildgestützte Entry-Variante für kuratierte Zugangsseiten ohne Hero-Geste und ohne Sonderlayout.</p>
-            <div class="pm-card__action">Öffnen &rarr;</div>
+            <div class="pm-card__action">{{ render_cta_link_visual({ 'label': 'Öffnen', 'tone': 'primary' }) }}</div>
           </div>
         </a>
 
@@ -760,7 +760,7 @@
             </div>
             <footer class="pm-speaker-card__footer pm-corpus-overview-card__footer">
               <div class="pm-speaker-card__footer-section pm-corpus-overview-card__footer-section">
-                <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-corpus-overview-card__action" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='spanish', page_slug='design') }}">Korpus öffnen &rarr;</a>
+                <a class="pm-cta-link pm-cta-link--primary pm-corpus-overview-card__action" href="{{ url_for('public.research_language_page', ui_lang=ui_lang | default('de'), language_slug='spanish', page_slug='design') }}"><span class="pm-cta-link__label">Korpus öffnen</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a>
               </div>
             </footer>
           </div>

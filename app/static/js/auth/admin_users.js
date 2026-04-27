@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.innerHTML = `
       <p class="pm-admin-toast__eyebrow">${escapeHtml(t('notice', 'Notice'))}</p>
       <p class="pm-admin-toast__text">${escapeHtml(message)}</p>
-      <button type="button" class="pm-research-inline-action pm-research-inline-action--secondary pm-research-inline-action--compact pm-admin-toast__action">${escapeHtml(t('close', 'Close'))}</button>
+      <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-toast__action"><span class="pm-action-button__label">${escapeHtml(t('close', 'Close'))}</span></button>
     `;
     getToastHost().appendChild(toast);
     const action = toast.querySelector('.pm-admin-toast__action');
@@ -229,9 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
       <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(createdBy)}</span></td>
       <td>
         <div class="pm-admin-table__actions">
-          <button class="pm-research-inline-action pm-research-inline-action--secondary pm-research-inline-action--compact pm-admin-table__action edit-user-btn" type="button" data-id="${escapeHtml(user.id)}" title="${escapeHtml(t('editTitle', 'Edit user'))}" aria-label="${escapeHtml(t('editTitle', 'Edit user'))}">
-            <span class="material-symbols-rounded" aria-hidden="true">edit</span>
-            <span>${escapeHtml(t('editTitle', 'Edit user'))}</span>
+          <button class="pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn" type="button" data-id="${escapeHtml(user.id)}" title="${escapeHtml(t('editTitle', 'Edit user'))}" aria-label="${escapeHtml(t('editTitle', 'Edit user'))}">
+            <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">edit</span>
+            <span class="pm-action-button__label">${escapeHtml(t('editTitle', 'Edit user'))}</span>
           </button>
         </div>
       </td>

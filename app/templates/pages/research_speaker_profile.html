@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -107,7 +108,7 @@
     </section>
 
     <nav class="pm-profile-navigation pm-container" aria-label="{{ 'Navigation' if ui_lang == 'de' else 'Navigation' }}">
-      <a class="pm-research-inline-action" href="{{ promat_page.speakers_href }}">{{ 'Zurück zu Sprecher:innen' if ui_lang == 'de' else 'Back to speakers' }}</a>
+      {{ render_navigation_pill({ 'label': 'Zurück zu Sprecher:innen' if ui_lang == 'de' else 'Back to speakers', 'href': promat_page.speakers_href, 'size': 'medium', 'direction': 'back' }) }}
     </nav>
   </div>
 </article>

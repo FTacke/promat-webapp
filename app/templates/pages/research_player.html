@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
 {% macro render_player_text(item, text_class) -%}
 <span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}">{{ segment.text }}</span>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" aria-haspopup="dialog" aria-expanded="false"><span class="pm-player-inline-ref__bracket" aria-hidden="true">[</span><span class="pm-player-inline-ref__label">{{ segment.reference.label }}</span><span class="pm-player-inline-ref__bracket" aria-hidden="true">]</span></button>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
@@ -44,7 +45,7 @@
   {% include 'partials/_content_header.html' %}
 
   <div class="pm-reading pm-player-page-actions">
-    <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.origin_link.href }}">{{ t('common.actions.back') }}</a>
+    {{ render_navigation_pill({ 'label': t('common.actions.back'), 'href': promat_page.origin_link.href, 'size': 'medium', 'direction': 'back' }) }}
   </div>
 
   <div class="pm-feature-band pm-player-layout">
@@ -100,10 +101,26 @@
                 {% if summary.card_actions %}
                 <div class="pm-player-meta-card__footer">
                   {% for action in summary.card_actions %}
-                  {% if action.href %}
-                  <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-meta-card__action pm-player-meta-card__action--{{ action.action }}" href="{{ action.href }}" data-player-{{ action.action }}>{{ action.label }}{% if action.action == 'profile' %} →{% endif %}</a>
+                  {% if action.action == 'profile' %}
+                  {{ render_navigation_pill({ 'label': action.label, 'href': action.href, 'size': 'small' }, 'pm-player-meta-card__action pm-player-meta-card__action--profile pm-player-meta-card__profile-link') }}
+                  {% elif action.href %}
+                  <a class="pm-action-button pm-action-button--secondary pm-action-button--small pm-player-meta-card__action pm-player-meta-card__action--{{ action.action }}" href="{{ action.href }}" data-player-{{ action.action }}>
+                    {% if action.action == 'compare-add' %}
+                    <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>
+                    {% elif action.action == 'compare-remove' %}
+                    <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">remove</span>
+                    {% endif %}
+                    <span class="pm-action-button__label">{{ action.label }}</span>
+                  </a>
                   {% else %}
-                  <button type="button" class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-meta-card__action pm-player-meta-card__action--{{ action.action }}" data-player-{{ action.action }}>{{ action.label }}</button>
+                  <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small pm-player-meta-card__action pm-player-meta-card__action--{{ action.action }}" data-player-{{ action.action }}>
+                    {% if action.action == 'compare-add' %}
+                    <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>
+                    {% elif action.action == 'compare-remove' %}
+                    <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">remove</span>
+                    {% endif %}
+                    <span class="pm-action-button__label">{{ action.label }}</span>
+                  </button>
                   {% endif %}
                   {% endfor %}
                 </div>
@@ -119,11 +136,11 @@
             <div class="pm-comparison-material-controls pm-player-material-strip__tasks" aria-label="{{ t('research.player.task_switch') }}">
               {% for panel in promat_page.task_panels %}
               {% if panel.current %}
-              <span class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice is-current" aria-current="page">{{ panel.label }}</span>
+              <span class="pm-material-choice is-current" aria-current="page">{{ panel.label }}</span>
               {% elif panel.href %}
-              <a class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice" href="{{ panel.href }}">{{ panel.label }}</a>
+              <a class="pm-material-choice" href="{{ panel.href }}">{{ panel.label }}</a>
               {% else %}
-              <span class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice is-disabled" aria-disabled="true">{{ panel.label }}</span>
+              <span class="pm-material-choice is-disabled" aria-disabled="true">{{ panel.label }}</span>
               {% endif %}
               {% endfor %}
             </div>
@@ -185,7 +202,7 @@
               <div class="pm-player-transport-cluster">
                 <button
                   type="button"
-                  class="pm-research-button pm-player-toolbar__toggle pm-player-icon-button"
+                  class="pm-player-control-button pm-player-toolbar__toggle pm-player-icon-button"
                   data-player-toggle
                   data-play-label="{{ promat_page.player.toggle_play_label }}"
                   data-pause-label="{{ promat_page.player.toggle_pause_label }}"
@@ -374,7 +391,7 @@
                 </a>
               </div>
 
-              <a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-player-reference-popover__action" data-player-reference-open href="#" target="_blank" rel="noopener noreferrer">{{ t('research.player.interview.reference_open_context') }} →</a>
+              <a class="pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small pm-player-reference-popover__action" data-player-reference-open href="#" target="_blank" rel="noopener noreferrer"><span class="pm-nav-pill__label">{{ t('research.player.interview.reference_open_context') }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a>
             </div>
           </dialog>
           {% elif promat_page.player.render_mode == 'running_text' %}
@@ -444,7 +461,7 @@
 
         <div class="pm-player-summary__actions">
           {% if promat_page.player.fallback_link %}
-          <a class="pm-research-button" href="{{ promat_page.player.fallback_link.href }}">{{ promat_page.player.fallback_link.label }}</a>
+          <a class="pm-action-button pm-action-button--primary pm-action-button--medium" href="{{ promat_page.player.fallback_link.href }}"><span class="pm-action-button__label">{{ promat_page.player.fallback_link.label }}</span></a>
           {% endif %}
         </div>
       </section>

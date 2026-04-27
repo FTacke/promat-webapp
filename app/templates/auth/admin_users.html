@@ -14,13 +14,13 @@
           <input id="admin-search" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.search_label') }}" placeholder="{{ t('auth.admin_users.search_placeholder') }}">
         </label>
         <div class="pm-admin-toolbar__actions">
-          <button id="refresh" type="button" class="pm-research-inline-action pm-research-inline-action--secondary">
-            <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
-            <span>{{ t('auth.admin_users.refresh') }}</span>
+          <button id="refresh" type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+            <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">refresh</span>
+            <span class="pm-action-button__label">{{ t('auth.admin_users.refresh') }}</span>
           </button>
-          <button id="create" type="button" class="pm-research-button">
-            <span class="material-symbols-rounded" aria-hidden="true">add</span>
-            <span>{{ t('auth.admin_users.create_button') }}</span>
+          <button id="create" type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium">
+            <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>
+            <span class="pm-action-button__label">{{ t('auth.admin_users.create_button') }}</span>
           </button>
         </div>
       </div>
@@ -123,8 +123,8 @@
     </div>
 
     <div class="pm-admin-dialog__actions">
-      <button type="button" class="pm-research-inline-action pm-research-inline-action--secondary" id="cancel-create">{{ t('common.actions.cancel') }}</button>
-      <button type="submit" class="pm-research-button" form="create-user-form">{{ t('auth.admin_users.create_submit') }}</button>
+      <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="cancel-create"><span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span></button>
+      <button type="submit" class="pm-action-button pm-action-button--primary pm-action-button--medium" form="create-user-form"><span class="pm-action-button__label">{{ t('auth.admin_users.create_submit') }}</span></button>
     </div>
   </div>
 </dialog>
@@ -145,7 +145,7 @@
               <p class="pm-admin-copy-block__label">{{ t('auth.admin_users.invite_link_label') }}</p>
               <p id="invite-meta" class="pm-admin-copy-block__meta"></p>
             </div>
-            <button id="copy-invite" type="button" class="pm-research-inline-action pm-research-inline-action--secondary">{{ t('auth.admin_users.copy_link') }}</button>
+            <button id="copy-invite" type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small"><span class="pm-action-button__label">{{ t('auth.admin_users.copy_link') }}</span></button>
           </div>
           <div class="pm-admin-code-block" aria-label="{{ t('auth.admin_users.invite_link_label') }}">
             <p id="invite-link" class="pm-admin-code-block__value" aria-live="polite" aria-atomic="true"></p>
@@ -170,8 +170,8 @@
     </div>
 
     <div class="pm-admin-dialog__actions">
-      <button type="button" class="pm-research-inline-action pm-research-inline-action--secondary" id="copy-invite-mail">{{ t('auth.admin_users.copy_mail') }}</button>
-      <button type="button" class="pm-research-button" id="close-invite">{{ t('auth.admin_users.close_invite') }}</button>
+      <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="copy-invite-mail"><span class="pm-action-button__label">{{ t('auth.admin_users.copy_mail') }}</span></button>
+      <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="close-invite"><span class="pm-action-button__label">{{ t('auth.admin_users.close_invite') }}</span></button>
     </div>
   </div>
 </dialog>
@@ -250,9 +250,9 @@
             <p class="pm-admin-dialog__section-text">{{ t('auth.admin_users.password_help') }}</p>
           </div>
           <div>
-            <button type="button" id="edit-reset-password" class="pm-research-inline-action pm-research-inline-action--secondary">
-              <span class="material-symbols-rounded" aria-hidden="true">mail</span>
-              <span>{{ t('auth.admin_users.reset_password') }}</span>
+            <button type="button" id="edit-reset-password" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+              <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">mail</span>
+              <span class="pm-action-button__label">{{ t('auth.admin_users.reset_password') }}</span>
             </button>
           </div>
         </section>
@@ -262,8 +262,8 @@
     </div>
 
     <div class="pm-admin-dialog__actions">
-      <button type="button" class="pm-research-inline-action pm-research-inline-action--secondary" id="cancel-edit">{{ t('common.actions.cancel') }}</button>
-      <button type="button" class="pm-research-button" id="save-edit">{{ t('common.actions.save') }}</button>
+      <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="cancel-edit"><span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span></button>
+      <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" id="save-edit"><span class="pm-action-button__label">{{ t('common.actions.save') }}</span></button>
     </div>
   </div>
 </dialog>

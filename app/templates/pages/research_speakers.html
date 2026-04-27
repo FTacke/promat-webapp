@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% from 'partials/_research_filters.html' import render_filter_form %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
+{% from 'partials/_pm_interactions.html' import render_action_button %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -48,7 +49,7 @@
     {% else %}
     <div class="pm-research-empty pm-container pm-container--tinted">
       <p class="pm-research-empty__text">{{ promat_page.empty_state.message }}</p>
-      <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.empty_state.reset_href }}">{{ promat_page.empty_state.reset_label }}</a>
+      {{ render_action_button({ 'label': promat_page.empty_state.reset_label, 'variant': 'secondary', 'size': 'medium', 'href': promat_page.empty_state.reset_href }) }}
     </div>
     {% endif %}
   </section>

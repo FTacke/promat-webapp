@@ -147,8 +147,8 @@
   --pm-type-panel-line: 1.35;
   --pm-type-panel-tracking: 0;
   --pm-type-panel-weight: 500;
-  --pm-type-panel-section-size: 0.88rem;
-  --pm-type-panel-section-line: var(--pm-type-meta-line);
+  --pm-type-panel-section-size: 0.95rem;
+  --pm-type-panel-section-line: var(--pm-type-panel-line);
   --pm-type-panel-section-tracking: 0.01em;
   --pm-type-panel-section-weight: 600;
   --pm-type-panel-language-size: 1.05rem;
@@ -359,8 +359,8 @@
   --pm-action-button-tertiary-active-bg: color-mix(in srgb, var(--pm-surface-paper) 70%, var(--pm-surface-hover) 30%);
   --pm-action-button-tertiary-active-border: transparent;
 
-  --pm-nav-pill-height-medium: 2.12rem;
-  --pm-nav-pill-height-small: 1.86rem;
+  --pm-nav-pill-height-medium: 2rem;
+  --pm-nav-pill-height-small: 1.78rem;
   --pm-nav-pill-padding-inline-medium: 0.86rem;
   --pm-nav-pill-padding-inline-small: 0.66rem;
   --pm-nav-pill-font-size-medium: 0.85rem;
@@ -418,12 +418,12 @@
   --pm-breadcrumb-link-hover: var(--promat-wordmark-accent);
   --pm-panel-stack-gap: var(--pm-space-lg);
   --pm-panel-stack-gap-compact: var(--pm-space-sm);
-  --pm-panel-context-gap: var(--promat-space-2);
+  --pm-panel-context-gap: 0.5rem;
   --pm-panel-context-gap-compact: var(--promat-space-1);
-  --pm-panel-context-padding-bottom: var(--pm-space-sm);
+  --pm-panel-context-padding-bottom: 0.72rem;
   --pm-panel-context-padding-bottom-compact: var(--promat-space-2);
-  --pm-panel-context-title-gap: var(--promat-space-2);
-  --pm-panel-context-title-min-height: 1.55rem;
+  --pm-panel-context-title-gap: 0.44rem;
+  --pm-panel-context-title-min-height: 1.62rem;
   --pm-panel-context-rule-color: var(--pm-border-subtle);
   --pm-content-header-breadcrumb-gap: var(--promat-space-2);
   --pm-content-header-breadcrumb-item-gap: var(--promat-space-2);
@@ -493,7 +493,7 @@
   --pm-research-table-action-width: 10rem;
   --pm-research-task-panel-min: 15rem;
   --pm-filter-grid-min: 14rem;
-  --pm-chip-min-height: 1.9rem;
+  --pm-chip-min-height: 1.82rem;
   --pm-chip-padding-inline: 0.7rem;
   --pm-chip-font-size: 0.82rem;
   --pm-chip-gap: 0.45rem;

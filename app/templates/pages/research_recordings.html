@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'partials/_research_filters.html' import render_filter_form %}
+{% from 'partials/_pm_interactions.html' import render_action_button, render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -87,7 +88,7 @@
             <td class="pm-research-table__cell--l1" data-label="{{ promat_page.columns.detail }}">{{ row.detail_value }}</td>
             <td class="pm-research-table__cell--gender" data-label="{{ promat_page.columns.gender }}">{{ row.gender }}</td>
             <td class="pm-research-table__cell--stay" data-label="{{ promat_page.columns.stay }}">{{ row.target_country_stay }}</td>
-            <td class="pm-research-table__cell--action pm-research-table__action" data-label="{{ promat_page.columns.action }}"><a class="pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--task" href="{{ row.player_href }}">{{ row.action_label }}</a></td>
+            <td class="pm-research-table__cell--action pm-research-table__action" data-label="{{ promat_page.columns.action }}">{{ render_navigation_pill({ 'label': row.action_label, 'href': row.player_href, 'size': 'small' }) }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -96,7 +97,7 @@
     {% else %}
     <div class="pm-research-empty pm-container pm-container--tinted">
       <p class="pm-research-empty__text">{{ promat_page.empty_state.message }}</p>
-      <a class="pm-research-button pm-research-button--subtle" href="{{ promat_page.empty_state.reset_href }}">{{ promat_page.empty_state.reset_label }}</a>
+      {{ render_action_button({ 'label': promat_page.empty_state.reset_label, 'variant': 'secondary', 'size': 'medium', 'href': promat_page.empty_state.reset_href }) }}
     </div>
     {% endif %}
   </section>

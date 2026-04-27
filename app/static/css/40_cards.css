@@ -183,7 +183,11 @@
 }
 
 .pm-card__action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   padding-top: 1.5rem;
+  text-align: left;
 }
 
 .pm-card--corpus,
@@ -314,10 +318,12 @@
 .pm-corpus-overview-card__footer-section {
   display: grid;
   gap: 0.45rem;
+  justify-items: start;
 }
 
 .pm-corpus-overview-card__action {
   margin-top: 0;
+  justify-self: start;
 }
 
 .pm-corpus-overview-card.pm-card--lang-es,
@@ -325,6 +331,73 @@
 .pm-corpus-overview-card.pm-card--lang-en,
 .pm-corpus-overview-card.pm-card--lang-de {
   border-top-color: var(--pm-card-accent-color);
+}
+
+.pm-corpus-overview-card.pm-corpus-overview-card--shared-accent {
+  border-top-color: var(--promat-primary);
+}
+
+.pm-meta-card__body {
+  display: grid;
+  align-content: start;
+  min-height: 100%;
+  gap: 1.15rem;
+}
+
+.pm-meta-card__header,
+.pm-meta-card__section {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.pm-meta-card__section--divided {
+  margin-block-start: var(--pm-divider-space-before);
+  padding-top: var(--pm-divider-space-after);
+  border-top: 1px solid var(--pm-border-subtle);
+}
+
+.pm-meta-card__meta-item {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.pm-meta-card__title,
+.pm-meta-card__text,
+.pm-meta-card__list {
+  margin: 0;
+}
+
+.pm-meta-card__meta-value {
+  line-height: 1.48;
+  overflow-wrap: anywhere;
+}
+
+.pm-meta-card__list {
+  display: grid;
+  gap: 0.4rem;
+  padding-inline-start: 1.1rem;
+}
+
+.pm-meta-card--lead .pm-meta-card__body {
+  gap: 1.08rem;
+}
+
+.pm-meta-card--lead .pm-meta-card__title {
+  font-size: clamp(1.16rem, 1.08rem + 0.26vw, 1.34rem);
+}
+
+.pm-meta-card--lead .pm-meta-card__header {
+  gap: 0.36rem;
+}
+
+.pm-meta-card--lead .pm-meta-card__text {
+  color: var(--book-fg);
+  font-family: var(--book-font-ui);
+  font-size: clamp(1rem, 0.96rem + 0.12vw, 1.08rem);
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .pm-speaker-card__body {
@@ -440,6 +513,7 @@
 .pm-speaker-card__footer-section {
   display: grid;
   gap: 0.45rem;
+  justify-items: start;
 }
 
 .pm-speaker-card__footer-section--recordings {
@@ -456,6 +530,7 @@
 
 .pm-speaker-card__profile-link {
   margin-top: 0;
+  justify-self: start;
 }
 
 .pm-player-meta-card {

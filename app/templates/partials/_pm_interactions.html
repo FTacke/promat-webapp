@@ -30,19 +30,34 @@
 
 {% macro render_navigation_pill(item, extra_classes='') -%}
   {% set size = item.size | default('medium') %}
-  {% set classes = ['pm-nav-pill', 'pm-nav-pill--' ~ size] %}
+  {% set variant = item.variant | default('secondary') %}
+  {% set classes = ['pm-nav-pill', 'pm-nav-pill--' ~ variant, 'pm-nav-pill--' ~ size] %}
+  {% set direction = item.direction | default('forward') %}
+  {% if direction == 'back' %}
+    {% set _ = classes.append('pm-nav-pill--back') %}
+  {% endif %}
   {% if extra_classes %}
     {% set _ = classes.append(extra_classes) %}
   {% endif %}
   {% if item.href and not item.disabled %}
   <a class="{{ classes | join(' ') }}" href="{{ item.href }}">
+    {% if direction == 'back' %}
+    <span class="pm-interaction__arrow pm-interaction__arrow--leading" aria-hidden="true">←</span>
+    {% endif %}
     <span class="pm-nav-pill__label">{{ item.label }}</span>
+    {% if direction != 'back' %}
     <span class="pm-interaction__arrow" aria-hidden="true">→</span>
+    {% endif %}
   </a>
   {% else %}
   <span class="{{ classes | join(' ') }}" aria-disabled="true">
+    {% if direction == 'back' %}
+    <span class="pm-interaction__arrow pm-interaction__arrow--leading" aria-hidden="true">←</span>
+    {% endif %}
     <span class="pm-nav-pill__label">{{ item.label }}</span>
+    {% if direction != 'back' %}
     <span class="pm-interaction__arrow" aria-hidden="true">→</span>
+    {% endif %}
   </span>
   {% endif %}
 {%- endmacro %}
@@ -80,4 +95,16 @@
   {% elif item.component == 'chip' %}
     {{ render_filter_chip_preview(item) }}
   {% endif %}
+{%- endmacro %}
+
+{% macro render_cta_link_visual(item, extra_classes='') -%}
+  {% set tone = item.tone | default('primary') %}
+  {% set classes = ['pm-cta-link', 'pm-cta-link--' ~ tone] %}
+  {% if extra_classes %}
+    {% set _ = classes.append(extra_classes) %}
+  {% endif %}
+  <span class="{{ classes | join(' ') }}">
+    <span class="pm-cta-link__label">{{ item.label }}</span>
+    <span class="pm-interaction__arrow" aria-hidden="true">→</span>
+  </span>
 {%- endmacro %}

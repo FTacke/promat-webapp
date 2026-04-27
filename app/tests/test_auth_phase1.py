@@ -16,7 +16,7 @@ os.environ.setdefault("FLASK_ENV", "development")
 os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
-from app import register_auth_context, register_context_processors
+from app import register_auth_context, register_context_processors, register_security_headers
 from app.auth.models import AccessRequest, AnalyticsDaily, AnalyticsLanguageAreaDaily, Base, ResetToken, User
 from app.auth import services as auth_services
 from app.extensions import register_extensions
@@ -148,6 +148,10 @@ def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None
     assert "app-shell--panel-hidden app-shell--auth" in html
     assert "pm-auth-surface" in html
     assert "pm-auth-secondary" in html
+    assert 'pm-action-button pm-action-button--tertiary pm-action-button--medium pm-auth-action-link' in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium' in html
+    assert 'pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">login<' in html
     assert "md3-card" not in html
     assert "md3-button" not in html
     assert "md3-outlined-textfield" not in html
@@ -165,6 +169,9 @@ def test_login_page_links_to_request_form_in_german(auth_app: Flask) -> None:
     assert "Zum Anfrageformular" in html
     assert 'href="/access-request?ui_lang=de"' in html
     assert "Zugang zu den Forschungskorpora wird über ein kurzes Formular angefragt" in html
+    assert 'pm-action-button pm-action-button--tertiary pm-action-button--medium pm-auth-action-link' in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-auth-secondary__action-link' in html
 
 
 def test_access_request_page_renders_form_and_login_link_with_return_target(auth_app: Flask) -> None:
@@ -186,6 +193,8 @@ def test_access_request_page_renders_form_and_login_link_with_return_target(auth
     assert 'name="consent_confirmed"' in html
     assert html.count('href="/login?next=/de/research/spanish"') == 1
     assert "Anfrage absenden" in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-auth-secondary__action-link' in html
 
 
 def test_access_request_submit_persists_request_and_shows_success(auth_app: Flask) -> None:
@@ -362,6 +371,9 @@ def test_password_forgot_page_uses_user_facing_copy_in_english(auth_app: Flask) 
     assert "No access yet?" in html
     assert "pm-auth-surface" in html
     assert "pm-auth-secondary" in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
+    assert html.count('pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium') >= 2
+    assert 'pm-nav-pill--back' in html
     assert "md3-card" not in html
     assert "md3-button" not in html
     assert "md3-outlined-textfield" not in html
@@ -381,6 +393,8 @@ def test_password_reset_page_uses_user_facing_invalid_link_copy(auth_app: Flask)
     assert "pm-auth-surface" in html
     assert "pm-auth-state" in html
     assert "pm-auth-secondary" in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-auth-secondary__action-link' in html
     assert "md3-card" not in html
     assert "md3-button" not in html
     assert "md3-outlined-textfield" not in html
@@ -471,6 +485,9 @@ def test_admin_user_page_renders_in_english_after_admin_login(auth_app: Flask) -
     assert "pm-admin-toolbar" in html
     assert "pm-admin-dialog" in html
     assert "pm-research-table pm-admin-table" in html
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
+    assert 'class="pm-filter-chip"' in html
     assert "Editor" not in html
     assert "window.PROMAT_ADMIN_USERS_I18N" not in html
     assert "js/auth/admin_users.js?v=" in html
@@ -518,6 +535,9 @@ def test_account_page_renders_real_account_surface_for_user(auth_app: Flask) -> 
     assert "app-shell--panel-hidden" in html
     assert 'href="/auth/account?ui_lang=de"' in html
     assert 'href="/auth/account?ui_lang=en"' in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium' in html
+    assert 'pm-account-security-action' in html
     assert "Internal area" not in html
 
 
@@ -558,13 +578,41 @@ def test_admin_users_page_uses_sidebar_only_for_admin_area_navigation(auth_app: 
     assert "Analytics" in drawer_html
     assert "My account" not in drawer_html
     assert "Logout" not in drawer_html
-    assert "pm-icon-mask--section" not in drawer_html
+    assert 'pm-panel__section-icon pm-icon-mask pm-icon-mask--section' in drawer_html
     assert 'href="/admin/users/page?ui_lang=de"' in html
     assert 'href="/admin/users/page?ui_lang=en"' in html
     assert "My account" in user_menu_html
     assert "Admin area" in user_menu_html
     assert "Logout" in user_menu_html
     assert user_menu_html.index("My account") < user_menu_html.index("Admin area") < user_menu_html.index("Logout")
+
+
+def test_security_headers_allow_project_youtube_embed() -> None:
+    app = Flask(__name__)
+
+    @app.get("/probe")
+    def probe() -> str:
+        return "ok"
+
+    register_security_headers(app)
+
+    with app.test_client() as client:
+        response = client.get("/probe")
+
+    assert response.status_code == 200
+    assert "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;" in response.headers["Content-Security-Policy"]
+
+
+def test_admin_users_static_js_uses_semantic_action_button_classes(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get('/static/js/auth/admin_users.js')
+
+    assert response.status_code == 200
+    js = response.get_data(as_text=True)
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-toast__action' in js
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn' in js
+    assert 'pm-action-button__label' in js
 
 
 def test_last_admin_cannot_be_deactivated_or_demoted(auth_app: Flask) -> None:

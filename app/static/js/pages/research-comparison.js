@@ -946,7 +946,7 @@ function init() {
     statusActions.innerHTML = "";
     for (const action of actions) {
       const element = document.createElement(action.href ? "a" : "button");
-      element.className = action.className || "pm-research-button pm-research-button--subtle";
+      element.className = action.className || "pm-action-button pm-action-button--secondary pm-action-button--medium";
       element.textContent = action.label;
       if (action.href) {
         element.href = action.href;
@@ -1082,7 +1082,7 @@ function init() {
         return `
         <button
           type="button"
-          class="pm-research-inline-action pm-research-inline-action--compact pm-material-choice${isCurrent ? " is-current" : ""}${isDisabled ? " is-disabled" : ""}"
+          class="pm-material-choice${isCurrent ? " is-current" : ""}${isDisabled ? " is-disabled" : ""}"
           data-comparison-view-filter="${escapeHtml(entry)}"
           ${isCurrent || isDisabled ? "disabled" : ""}
           aria-pressed="${isCurrent ? "true" : "false"}"

@@ -14,7 +14,7 @@ def build_admin_panel(ui_lang: str, *, active_slug: str, translate):
         "context_mode": "none",
         "context_title": None,
         "active_slug": active_slug,
-        "show_section_icon": False,
+        "show_section_icon": True,
         "items": [
             {
                 "label": translate(ui_lang, "shell.admin.users"),

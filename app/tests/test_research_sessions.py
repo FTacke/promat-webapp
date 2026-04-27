@@ -1087,7 +1087,8 @@ def test_research_overview_renders_structured_corpus_metadata_and_dynamic_counts
     assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in spanish_card
     assert 'pm-speaker-card__footer pm-corpus-overview-card__footer' in spanish_card
     assert 'pm-speaker-card__footer-section pm-corpus-overview-card__footer-section' in spanish_card
-    assert 'pm-research-inline-action pm-research-inline-action--compact pm-research-inline-action--secondary pm-corpus-overview-card__action' in spanish_card
+    assert 'pm-corpus-overview-card--shared-accent' in spanish_card
+    assert 'pm-cta-link pm-cta-link--primary pm-corpus-overview-card__action' in spanish_card
     assert 'Aufnahmen von 1 Lernenden' in spanish_card
     assert 'Referenzaufnahmen zu 2 Standardvarietäten' in spanish_card
     assert spanish_card.index('Aufnahmen von 1 Lernenden') < spanish_card.index('Referenzaufnahmen zu 2 Standardvarietäten')
@@ -1172,6 +1173,7 @@ def test_research_overview_localizes_structured_corpus_cards_in_english(runtime_
     assert 'Conducted by' in spanish_card
     assert 'pm-corpus-overview-card__section--primary' in spanish_card
     assert 'pm-corpus-overview-card__section--secondary' in spanish_card
+    assert 'pm-corpus-overview-card--shared-accent' in spanish_card
     assert 'Recordings from 1 learner' in spanish_card
     assert 'Reference recordings for 2 standard varieties' in spanish_card
     assert spanish_card.index('Project lead') < spanish_card.index('Material design') < spanish_card.index('Conducted by')
@@ -1291,15 +1293,15 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
         assert "Als legitime Nutzer:innen gelten Angehörige von Forschungs- und Bildungseinrichtungen." in html
         assert f'href="/access-request?next={quote(path, safe="/?")}"' in html
         assert f'href="/login?next={quote(path, safe="/?")}"' in html
-        assert "Zugang beantragen →" in html
-        assert "Zum Login →" in html
+        assert re.search(r'pm-nav-pill__label">Zugang beantragen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+        assert re.search(r'pm-nav-pill__label">Zum Login</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
     else:
         assert "To protect personal and research-related data, not every area is publicly accessible." in html
         assert "Legitimate users are members of research and educational institutions." in html
         assert f'href="/access-request?next={quote(path, safe="/?")}"' in html
         assert f'href="/login?next={quote(path, safe="/?")}"' in html
-        assert "Request access →" in html
-        assert "Go to login →" in html
+        assert re.search(r'pm-nav-pill__label">Request access</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+        assert re.search(r'pm-nav-pill__label">Go to login</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
 
 
 def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(url_app: Flask) -> None:
@@ -1420,17 +1422,307 @@ def test_sample_page_uses_shared_inner_shell_renderer(url_app: Flask) -> None:
     assert 'class="pm-breadcrumb' not in html
 
 
-def test_project_detail_page_uses_mobile_only_breadcrumb_for_depth_two(url_app: Flask) -> None:
+@pytest.mark.parametrize(
+    ("ui_lang", "expected_target", "expected_title"),
+    [
+        ("de", "/de/project/structure", "Projektaufbau"),
+        ("en", "/en/project/structure", "Project structure"),
+    ],
+)
+def test_legacy_project_research_design_redirects_to_structure_and_keeps_depth_two_breadcrumb(
+    url_app: Flask,
+    ui_lang: str,
+    expected_target: str,
+    expected_title: str,
+) -> None:
     client = url_app.test_client()
 
-    response = client.get("/de/project/research-design")
+    response = client.get(f"/{ui_lang}/project/research-design")
+
+    assert response.status_code == 308
+    assert response.headers["Location"].endswith(expected_target)
+
+    response = client.get(f"/{ui_lang}/project/research-design", follow_redirects=True)
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert 'class="pm-breadcrumb pm-breadcrumb--mobile-only"' in html
     assert 'data-depth="2"' in html
-    assert 'href="/de/project"' in html
-    assert 'aria-current="page">Forschungsdesign</span>' in html
+    assert f'href="/{ui_lang}/project"' in html
+    assert f'aria-current="page">{expected_title}</span>' in html
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "page_slug", "expected_title", "legacy_label"),
+    [
+        ("de", "about", "Worum es geht", "Forschungsdesign"),
+        ("de", "structure", "Projektaufbau", "Forschungsdesign"),
+        ("de", "data-methods", "Daten & Methodik", "Forschungsdesign"),
+        ("de", "team", "Team & Mitwirkende", "Forschungsdesign"),
+        ("en", "about", "What this project is about", "Research Design"),
+        ("en", "structure", "Project structure", "Research Design"),
+        ("en", "data-methods", "Data & methods", "Research Design"),
+        ("en", "team", "Team & contributors", "Research Design"),
+    ],
+)
+def test_project_pages_render_new_navigation_without_intro_blocks(
+    url_app: Flask,
+    ui_lang: str,
+    page_slug: str,
+    expected_title: str,
+    legacy_label: str,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/project/{page_slug}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    expected_title_html = expected_title.replace("&", "&amp;")
+    assert f'aria-current="page">{expected_title_html}</span>' in html
+    assert 'class="promat-page__intro pm-content-header__intro"' not in html
+    assert f'href="/{ui_lang}/project/about"' in html
+    assert f'href="/{ui_lang}/project/structure"' in html
+    assert f'href="/{ui_lang}/project/data-methods"' in html
+    assert f'href="/{ui_lang}/project/team"' in html
+    assert f'href="/{"en" if ui_lang == "de" else "de"}/project/{page_slug}"' in html
+    assert f'href="/{ui_lang}/project/research-design"' not in html
+    assert f'>{legacy_label}<' not in html
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "expected_title", "legacy_label"),
+    [
+        ("de", "Worum es geht", "Forschungsdesign"),
+        ("en", "What this project is about", "Research Design"),
+    ],
+)
+def test_project_root_uses_about_page_and_hides_legacy_project_navigation(
+    url_app: Flask,
+    ui_lang: str,
+    expected_title: str,
+    legacy_label: str,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/project")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'<h1 id="promat-page-title" class="promat-page__title pm-content-header__title">{expected_title}</h1>' in html
+    assert f'href="/{ui_lang}/project/research-design"' not in html
+    assert f'>{legacy_label}<' not in html
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "expected_title", "expected_caption_html"),
+    [
+        (
+            "de",
+            "Worum es geht",
+            "Lehre@Philipp 2025: <em>Pronunciation Matters</em> – Fremdsprachen digital erforschen und lehren",
+        ),
+        (
+            "en",
+            "What this project is about",
+            "Lehre@Philipp 2025: <em>Pronunciation Matters</em> – Researching and teaching foreign languages digitally",
+        ),
+    ],
+)
+def test_project_about_page_embeds_video_and_hides_intro(
+    url_app: Flask,
+    ui_lang: str,
+    expected_title: str,
+    expected_caption_html: str,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/project/about")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'aria-current="page">{expected_title}</span>' in html
+    assert 'class="promat-page__intro pm-content-header__intro"' not in html
+    assert 'src="https://www.youtube.com/embed/ucvpPAONGoY"' in html
+    assert 'class="pm-embed-block__caption"' in html
+    assert expected_caption_html in html
+    assert 'href="https://hispanistica.com/projects/marele/"' in html
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "expected_phrase", "expected_about_label", "expected_structure_label", "expected_data_label", "expected_team_label"),
+    [
+        (
+            "de",
+            "Die spanischen Aufgaben dieses Korpus wurden entwickelt",
+            "Worum es geht",
+            "Projektaufbau",
+            "Daten & Methodik",
+            "Team & Mitwirkende",
+        ),
+        (
+            "en",
+            "The Spanish tasks in this corpus were developed",
+            "What this project is about",
+            "Project structure",
+            "Data & methods",
+            "Team & contributors",
+        ),
+    ],
+)
+def test_spanish_design_page_is_localized_links_to_project_pages_and_has_no_intro(
+    url_app: Flask,
+    ui_lang: str,
+    expected_phrase: str,
+    expected_about_label: str,
+    expected_structure_label: str,
+    expected_data_label: str,
+    expected_team_label: str,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    expected_data_label_html = expected_data_label.replace("&", "&amp;")
+    expected_team_label_html = expected_team_label.replace("&", "&amp;")
+    assert expected_phrase in html
+    assert 'class="promat-page__intro pm-content-header__intro"' not in html
+    assert f'>{expected_about_label}<' in html
+    assert f'>{expected_structure_label}<' in html
+    assert f'>{expected_data_label_html}<' in html
+    assert f'>{expected_team_label_html}<' in html
+    assert f'href="/{ui_lang}/project/about"' in html
+    assert f'href="/{ui_lang}/project/structure"' in html
+    assert f'href="/{ui_lang}/project/data-methods"' in html
+    assert f'href="/{ui_lang}/project/team"' in html
+    assert 'href="https://hispanistica.com/projects/marele/"' in html
+    assert f'href="/{"en" if ui_lang == "de" else "de"}/research/spanish/design"' in html
+
+
+@pytest.mark.parametrize(
+    (
+        "ui_lang",
+        "expected_title",
+        "expected_role_label",
+        "expected_focus_label",
+        "expected_corpus_label",
+        "unexpected_legacy_section",
+    ),
+    [
+        (
+            "de",
+            "Team & Mitwirkende",
+            "Funktion",
+            "Schwerpunkte",
+            "Korpusverantwortung",
+            "Studierende als Beteiligte",
+        ),
+        (
+            "en",
+            "Team & contributors",
+            "Role",
+            "Focus areas",
+            "Corpus responsibility",
+            "Students as participants in the project",
+        ),
+    ],
+)
+def test_team_page_uses_structured_credits_cards_without_legacy_text(
+    url_app: Flask,
+    ui_lang: str,
+    expected_title: str,
+    expected_role_label: str,
+    expected_focus_label: str,
+    expected_corpus_label: str,
+    unexpected_legacy_section: str,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/project/team")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    expected_title_html = expected_title.replace("&", "&amp;")
+    assert f'aria-current="page">{expected_title_html}</span>' in html
+    assert 'class="promat-page__intro pm-content-header__intro"' not in html
+    assert '<table' not in html
+    assert 'pm-grid--team-lead' in html
+    assert 'pm-grid--team-corpus' in html
+    assert html.count('pm-card pm-card--material pm-meta-card') == 6
+    assert html.count('pm-meta-card--lead') == 2
+    assert 'pm-meta-card--info' not in html
+    if ui_lang == 'de':
+        assert 'Gesamtprojektleitung' in html
+        assert 'Ausführende Koordination' in html
+        assert html.index('Gesamtprojektleitung') < html.index('Prof. Dr. Felix Tacke')
+        assert html.index('Ausführende Koordination') < html.index('Marlon Merte')
+    else:
+        assert 'Project lead' in html
+        assert 'Executive coordination' in html
+        assert html.index('Project lead') < html.index('Prof. Dr. Felix Tacke')
+        assert html.index('Executive coordination') < html.index('Marlon Merte')
+    assert html.index('Prof. Dr. Felix Tacke') < html.index('Marlon Merte')
+    if ui_lang == 'de':
+        assert html.index('Spanisch-Korpus') < html.index('Französisch-Korpus') < html.index('Deutsch-Korpus') < html.index('Englisch-Korpus')
+    else:
+        assert html.index('Spanish corpus') < html.index('French corpus') < html.index('German corpus') < html.index('English corpus')
+    assert unexpected_legacy_section not in html
+    assert 'support for recording processes' not in html
+    assert 'übergreifende Konzeption' not in html
+    assert '<em>Pronunciation Matters</em>' in html
+    assert 'Prof. Dr. Felix Tacke' in html
+    assert 'Marlon Merte' in html
+    assert 'Prof. Dr. Janina Reinhardt' in html
+    assert 'Prof. Dr. Kathrin Siebold' in html
+    assert 'Prof. Dr. Rolf Kreyer' in html
+    assert 'Theresa Fischer, M.A.' in html
+    assert 'Dr. Edmund Voges' in html
+    assert 'Ariane Wenz' in html
+    assert 'Dr. Pedro Alonso' in html
+    assert 'Ana Goás Pérez' in html
+    assert 'Marcela Gualotuña' in html
+    assert 'Aoife Holmes-Rein, M.A.' in html
+    assert 'Sprachenzentrum' in html or 'Language Center' in html
+    assert 'Dank' in html or 'Acknowledgements' in html
+    assert expected_role_label in html
+    assert expected_focus_label in html
+    assert expected_corpus_label in html
+
+
+def test_team_page_uses_shared_two_column_team_grid_rules(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get('/static/css/20_layout.css')
+
+    assert response.status_code == 200
+    css = response.get_data(as_text=True)
+    assert '.pm-grid--team-lead,' in css
+    assert '.pm-grid--team-corpus {' in css
+    assert '.pm-feature-band > .pm-grid--team-lead,' in css
+    assert '.pm-feature-band > .pm-grid--team-corpus {' in css
+    assert 'gap: clamp(0.85rem, 1.8vw, 1.05rem);' in css
+    assert 'width: min(100%, 50rem);' in css
+    assert 'max-width: 50rem;' in css
+    assert 'margin-inline: auto;' in css
+    assert '@media (min-width: 760px) {' in css
+    assert 'repeat(2, minmax(0, 1fr));' in css
+    assert 'repeat(4, minmax(0, 1fr));' not in css
+
+
+def test_shared_cta_links_use_container_underline_rule(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/static/css/30_components.css")
+
+    assert response.status_code == 200
+    css = response.get_data(as_text=True)
+    hover_block = re.search(r"\.pm-cta-link:hover\s*\{(?P<body>.*?)\}", css, re.S)
+    assert '.pm-cta-link::after' in css
+    assert 'inset-inline: 0;' in css
+    assert hover_block is not None
+    assert 'text-decoration' not in hover_block.group('body')
 
 
 def test_research_detail_page_uses_full_breadcrumb_from_depth_three(url_app: Flask) -> None:
@@ -1532,12 +1824,12 @@ def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'Zur Forschung →' in html
-    assert 'Zum Unterricht →' in html
+    assert re.search(r'pm-cta-link__label">Zur Forschung</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert re.search(r'pm-cta-link__label">Zum Unterricht</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
     assert 'Spanisch-Korpus' in html
     assert 'Französisch-Korpus' in html
-    assert 'Korpus öffnen →' in html
-    assert 'Materialien öffnen →' in html
+    assert re.search(r'pm-cta-link__label">Korpus öffnen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert re.search(r'pm-cta-link__label">Materialien öffnen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
     assert 'Projektleitung' in html
     assert 'Durchführung' in html
     assert 'Materialkonzeption' in html
@@ -1545,6 +1837,7 @@ def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -
     assert 'Korpus im Aufbau' in html
     assert 'pm-corpus-overview-card__section--primary' in html
     assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in html
+    assert 'pm-corpus-overview-card--shared-accent' in html
     assert 'pm-corpus-overview-card__action' in html
     assert 'pm-corpus-overview-card__footer' in html
     assert 'Learner-Sessions' not in html
@@ -1552,8 +1845,8 @@ def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -
     assert 'pm-research-language-root__item' not in html
     assert 'pm-research-language-root__list' not in html
     assert 'Forschungsbereich zur französischen Lernendenaussprache.' in html
-    assert 'Zugang beantragen →' in html
-    assert 'Zum Login →' in html
+    assert re.search(r'pm-nav-pill__label">Zugang beantragen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert re.search(r'pm-nav-pill__label">Zum Login</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
 
 
 def test_sample_page_uses_current_research_component_patterns(url_app: Flask) -> None:
@@ -1568,7 +1861,7 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in html
     assert 'pm-speaker-card__footer-section--recordings' in html
     assert 'pm-speaker-card__footer-section--actions' in html
-    assert 'pm-research-inline-action--task' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
     assert 'pm-speaker-task-link' not in html
     assert 'pm-speaker-card__match' not in html
     assert 'pm-speaker-card--learner' in html
@@ -1600,15 +1893,16 @@ def test_sample_page_exposes_semantic_interaction_preview_without_global_migrati
     assert 'Interaktionssystem Vorschau' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
     assert 'pm-action-button pm-action-button--secondary pm-action-button--small' in html
-    assert 'pm-nav-pill pm-nav-pill--small' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
     assert 'pm-cta-link pm-cta-link--primary' in html
     assert 'pm-cta-link pm-cta-link--accent' in html
     assert 'pm-filter-chip is-active' in html
     assert 'pm-button pm-button--' not in html
     assert re.search(r'pm-action-button pm-action-button--secondary pm-action-button--medium" type="button">\s*<span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>\s*<span class="pm-action-button__label">Vergleich</span>', html, re.S) is not None
-    assert re.search(r'pm-nav-pill pm-nav-pill--small" href="#sample-research-profile-title">\s*<span class="pm-nav-pill__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert re.search(r'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small" href="#sample-research-profile-title">\s*<span class="pm-nav-pill__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
     assert re.search(r'pm-cta-link pm-cta-link--accent" href="#sample-entry-cards-title">\s*<span class="pm-cta-link__label">Zum Unterricht</span>', html, re.S) is not None
-    assert 'pm-research-inline-action pm-research-inline-action--secondary pm-research-language-root__action' in html
+    assert 'pm-nav-pill pm-nav-pill--primary pm-nav-pill--medium pm-research-language-root__action' in html
+    assert re.search(r'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-nav-pill--back" href="#sample-research-speaker-cards-title">\s*<span class="pm-interaction__arrow pm-interaction__arrow--leading" aria-hidden="true">←</span>\s*<span class="pm-nav-pill__label">Zurück zu Sprecher:innen</span>', html, re.S) is not None
 
 
 def test_sample_page_localizes_interaction_preview_in_english(url_app: Flask) -> None:
@@ -1673,7 +1967,7 @@ def test_speakers_page_uses_neutral_learner_cards_with_level_badges(runtime_env:
     assert 'pm-research-meta-badge pm-research-meta-badge--level pm-research-meta-badge--a2' in html
     assert 'pm-research-meta-badge pm-research-meta-badge--native-detail">Spanien<' in html
     assert 'Profil öffnen' not in html
-    assert 'Profil →' in html
+    assert re.search(r'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small pm-speaker-card__profile-link" href="/de/research/spanish/speakers/ES-L-0001\?session=ES-L-0001-2026-S01">\s*<span class="pm-nav-pill__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
     learner_card = next(card for card in page["cards"] if card["person_id"] == "ES-L-0001")
     native_card = next(card for card in page["cards"] if card["person_id"] == "ES-N-0001")
     assert [row["label"] for row in learner_card["meta_rows"]] == ["Niveau", "L1", "Geschlecht", "Sprachaufenthalte"]
@@ -1741,7 +2035,7 @@ def test_recordings_route_uses_shared_task_action_buttons(runtime_env: Path, url
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'pm-research-inline-action--task' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
     assert 'pm-speaker-task-link' not in html
 
 
@@ -2570,9 +2864,24 @@ def test_player_route_renders_wordlist_runtime_and_profile_back_link(runtime_env
     assert '>Zurück<' in html
     assert '>Profil<' in html
     assert 'Zurück zum Profil' not in html
-    assert 'Explorator:in' in html
+    assert 'Aufnahmejahr' in html
+    assert 'Explorator:in' not in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium' in html
+    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small pm-player-meta-card__action pm-player-meta-card__action--profile pm-player-meta-card__profile-link' in html
+    assert 'pm-player-control-button pm-player-toolbar__toggle pm-player-icon-button' in html
     assert 'pm-player-panel--control-bar' in html
     assert 'pm-player-list pm-player-list--single' in html
+
+
+def test_research_comparison_static_js_uses_non_legacy_control_classes(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get('/static/js/pages/research-comparison.js')
+
+    assert response.status_code == 200
+    js = response.get_data(as_text=True)
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in js
+    assert 'class="pm-material-choice${isCurrent ? " is-current" : ""}${isDisabled ? " is-disabled" : ""}"' in js
 
 
 def test_player_route_keeps_compare_optional_until_explicit_activation(runtime_env: Path, url_app: Flask) -> None:
@@ -2605,7 +2914,7 @@ def test_player_route_keeps_compare_optional_until_explicit_activation(runtime_e
     assert 'data-player-compare-open="false"' in html
     assert 'data-player-session-menu="primary"' in html
     assert 'data-player-session-menu="secondary"' in html
-    assert '>Vergleich<' in html
+    assert re.search(r'data-player-compare-add>\s*<span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>\s*<span class="pm-action-button__label">Vergleich</span>', html, re.S) is not None
     assert 'Vergleichssession wählen' in html
     assert 'data-player-speaker-card="secondary" hidden' in html
     assert 'data-player-nav-select' not in html
@@ -2657,8 +2966,10 @@ def test_player_route_renders_compare_controls_and_secondary_audio(runtime_env: 
     assert html.index('data-player-compare-panel') < html.index('data-player-sequence-toggle')
     assert f'/de/research/spanish/player/{compare_session_id}/wordlist/audio.mp3' in html
     assert 'Beide abspielen' in html
-    assert html.count('Profil →') == 2
+    assert html.count('pm-player-meta-card__action--profile') == 2
+    assert html.count('<span class="pm-nav-pill__label">Profil</span>') == 2
     assert 'Vergleich entfernen' in html
+    assert re.search(r'pm-player-meta-card__action pm-player-meta-card__action--compare-remove" href="[^"]+" data-player-compare-remove>\s*<span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">remove</span>\s*<span class="pm-action-button__label">Vergleich entfernen</span>', html, re.S) is not None
     assert f'href="/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"' in html
     assert 'Vergleich erscheint nur auf Desktop-Breiten' not in html
     assert 'data-player-activate-speaker' not in html
