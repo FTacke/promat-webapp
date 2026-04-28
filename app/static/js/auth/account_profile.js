@@ -1,5 +1,30 @@
 import { showError, showSuccess, clearAlert } from '/static/js/md3/alert-utils.js';
 
+function loadConfig(templateId) {
+  const template = document.getElementById(templateId);
+  if (!template) return {};
+  try {
+    return JSON.parse(template.textContent || '{}');
+  } catch (error) {
+    console.error(`Failed to parse ${templateId}`, error);
+    return {};
+  }
+}
+
+function formatMessage(template, replacements = {}) {
+  return Object.entries(replacements).reduce(
+    (message, [key, value]) => message.replaceAll(`{${key}}`, String(value)),
+    template,
+  );
+}
+
+const accountProfileConfig = loadConfig('account-profile-config');
+const accountProfileI18n = accountProfileConfig.i18n || {};
+
+function t(key, fallback) {
+  return accountProfileI18n[key] || fallback;
+}
+
 // Helper function to get CSRF token from cookie
 function getCsrfToken() {
   const match = document.cookie.match(/csrf_access_token=([^;]+)/);
@@ -121,7 +146,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       // Nothing to update
       if (Object.keys(body).length === 0) {
-        showError(status, 'Bitte mindestens ein Feld ausfüllen.');
+        showError(status, t('emptyUpdateError', 'Bitte mindestens ein Feld ausfüllen.'));
         return;
       }
 
@@ -142,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Handle authentication errors first
         if (r.status === 401) {
-          showError(status, 'Sitzung abgelaufen. Bitte neu anmelden.');
+          showError(status, t('sessionExpired', 'Sitzung abgelaufen. Bitte neu anmelden.'));
           // Optionally redirect to login
           setTimeout(() => {
             window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
@@ -155,28 +180,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!j) {
           // Non-JSON response (likely HTML error page)
           console.error('Profile update returned non-JSON response:', r.status);
-          showError(status, `Serverfehler (${r.status}). Bitte später erneut versuchen.`);
+          showError(
+            status,
+            formatMessage(
+              t('serverError', 'Serverfehler ({status}). Bitte später erneut versuchen.'),
+              { status: r.status },
+            ),
+          );
           return;
         }
         
         if (r.status === 200 && j.ok) {
-          showSuccess(status, 'Profil erfolgreich gespeichert.');
+          showSuccess(status, t('saveSuccess', 'Profil erfolgreich gespeichert.'));
           // Refresh display and clear inputs
           await loadProfileData();
           if (usernameInput) usernameInput.value = '';
           if (emailInput) emailInput.value = '';
         } else {
           if (r.status === 409 && j.error === 'username_exists') {
-            showError(status, 'Benutzername bereits vergeben.');
+            showError(status, t('usernameExists', 'Benutzername bereits vergeben.'));
           } else if (r.status === 409 && j.error === 'email_exists') {
-            showError(status, 'E-Mail-Adresse bereits vergeben.');
+            showError(status, t('emailExists', 'E-Mail-Adresse bereits vergeben.'));
           } else {
-            showError(status, j.message || 'Fehler beim Speichern.');
+            showError(status, j.message || t('saveError', 'Fehler beim Speichern.'));
           }
         }
       } catch (e) {
         console.error('Profile update error:', e);
-        showError(status, 'Ein Netzwerkfehler ist aufgetreten.');
+        showError(status, t('networkError', 'Ein Netzwerkfehler ist aufgetreten.'));
       }
     });
   }
@@ -229,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         errEl.textContent = '';
 
         if (!pw) {
-          errEl.textContent = 'Bitte Passwort eingeben.';
+          errEl.textContent = t('deletePasswordRequired', 'Bitte Passwort eingeben.');
           return;
         }
 
@@ -257,15 +288,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
 
           if (r.status === 401) {
-            errEl.textContent = 'Ungültiges Passwort.';
+            errEl.textContent = t('deleteInvalidPassword', 'Ungültiges Passwort.');
             return;
           }
 
           const j = await r.json().catch(() => ({}));
-          errEl.textContent = j.error || 'Fehler beim Löschen des Kontos.';
+          errEl.textContent = j.error || t('deleteError', 'Fehler beim Löschen des Kontos.');
         } catch (e) {
           console.error(e);
-          errEl.textContent = 'Ein Fehler ist aufgetreten.';
+          errEl.textContent = t('networkError', 'Ein Netzwerkfehler ist aufgetreten.');
         }
       });
     }

@@ -2039,6 +2039,89 @@ def test_recordings_route_uses_shared_task_action_buttons(runtime_env: Path, url
     assert 'pm-speaker-task-link' not in html
 
 
+def test_research_workbench_builders_expose_english_shared_labels(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    native_session = "ES-N-0001-2026-S01"
+
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
+
+    with url_app.test_request_context():
+        recordings_page = build_recordings_page("en", "spanish", {"task": "wordlist"})
+        speakers_page = build_speakers_page("en", "spanish", {})
+        profile_page = build_speaker_profile_page("en", "spanish", "ES-L-0001", learner_session)
+
+    assert recordings_page["content_header"]["intro"] == "Session- and task-based access to the Spanish corpus with a clear person-to-session-to-recording relation."
+    assert recordings_page["task_panels"][0]["count_label"] == "recordings"
+    assert recordings_page["status"]["filter_label"] == "Active filters"
+    assert recordings_page["columns"]["recording"] == "Recording (speaker)"
+    assert recordings_page["columns"]["speaker_type"] == "Speaker type"
+    assert speakers_page["content_header"]["intro"] == "Person-based access to the Spanish corpus. A person appears exactly once and matches as soon as at least one of their sessions satisfies all active filters."
+    assert speakers_page["status"]["result_label"] == "people"
+    assert speakers_page["cards"][0]["selected_session_label"] == "Selected session"
+    assert speakers_page["cards"][0]["recordings_label"] == "Recordings"
+    assert profile_page is not None
+    assert profile_page["title"] == "Profile"
+    assert profile_page["person_section"]["title"] == "Profile data"
+    assert profile_page["sessions_section"]["title"] == "Session and recordings"
+
+
+def test_research_workbench_routes_render_english_shared_aria_and_actions(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    recordings_response = client.get("/en/research/spanish/recordings?task=wordlist&gender=female")
+    assert recordings_response.status_code == 200
+    recordings_html = recordings_response.get_data(as_text=True)
+    assert 'aria-label="Task types"' in recordings_html
+    assert 'aria-label="Results"' in recordings_html
+    assert 'aria-label="Active filters"' in recordings_html
+
+    speakers_response = client.get("/en/research/spanish/speakers?gender=female")
+    assert speakers_response.status_code == 200
+    speakers_html = speakers_response.get_data(as_text=True)
+    assert 'aria-label="Quick filters"' in speakers_html
+    assert 'aria-label="Speaker groups"' in speakers_html
+    assert 'aria-label="Speakers"' in speakers_html
+    assert 'aria-label="Active filters"' in speakers_html
+
+    profile_response = client.get(f"/en/research/spanish/speakers/ES-L-0001?session={learner_session}")
+    assert profile_response.status_code == 200
+    profile_html = profile_response.get_data(as_text=True)
+    assert '>Note<' in profile_html
+    assert 'aria-label="Navigation"' in profile_html
+    assert re.search(r'pm-nav-pill__label">Back to speakers</span>', profile_html) is not None
+
+
 def test_profile_header_shows_session_count_and_native_interview_disabled(runtime_env: Path, url_app: Flask) -> None:
     native_session = "ES-N-0001-2026-S01"
     _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))

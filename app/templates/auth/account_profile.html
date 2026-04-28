@@ -1,26 +1,26 @@
 {% extends "_md3_skeletons/auth_profile_skeleton.html" %}
 
-{% block page_title %}{{ format_page_title('Profil') }}{% endblock %}
+{% block page_title %}{{ format_page_title(t('auth.account_profile.page_title')) }}{% endblock %}
 
 {% set auth_icon = 'account_circle' %}
-{% set auth_eyebrow = 'Konto' %}
-{% set auth_heading = 'Dein Profil' %}
-{% set auth_intro = 'Persönliche Daten und Einstellungen.' %}
+{% set auth_eyebrow = t('auth.account_profile.eyebrow') %}
+{% set auth_heading = t('auth.account_profile.heading') %}
+{% set auth_intro = t('auth.account_profile.intro') %}
 
 {% block auth_body %}
 <article class="md3-card md3-card--outlined md3-auth-card">
       <header class="md3-card__header">
-        <h2 class="md3-title-large">Grunddaten</h2>
+        <h2 class="md3-title-large">{{ t('auth.account_profile.current_details_title') }}</h2>
       </header>
       <div class="md3-card__content">
         <!-- Current profile info (loaded via JS) -->
         <div id="profile-info" class="md3-profile-info">
           <div class="md3-profile-info__row">
-            <span class="md3-label-medium md3-text-variant">Benutzername</span>
+            <span class="md3-label-medium md3-text-variant">{{ t('auth.account_profile.current_username_label') }}</span>
             <span id="current-username" class="md3-body-large">–</span>
           </div>
           <div class="md3-profile-info__row">
-            <span class="md3-label-medium md3-text-variant">E-Mail</span>
+            <span class="md3-label-medium md3-text-variant">{{ t('auth.account_profile.current_email_label') }}</span>
             <span id="current-email" class="md3-body-large">–</span>
           </div>
         </div>
@@ -28,11 +28,11 @@
         <hr class="md3-divider">
 
         <form id="profile-form" class="md3-auth-form" novalidate>
-          <p class="md3-body-small md3-text-variant">Änderungen speichern.</p>
+          <p class="md3-body-small md3-text-variant">{{ t('auth.account_profile.save_hint') }}</p>
           
           <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input id="username" name="username" class="md3-outlined-textfield__input" aria-label="Neuer Benutzername" placeholder=" ">
-            <label class="md3-outlined-textfield__label" for="username">Neuer Benutzername</label>
+            <input id="username" name="username" class="md3-outlined-textfield__input" aria-label="{{ t('auth.account_profile.username_input_label') }}" placeholder=" ">
+            <label class="md3-outlined-textfield__label" for="username">{{ t('auth.account_profile.username_input_label') }}</label>
               <span class="md3-outlined-textfield__outline">
                 <span class="md3-outlined-textfield__outline-start"></span>
                 <span class="md3-outlined-textfield__outline-notch"></span>
@@ -41,8 +41,8 @@
           </div>
 
           <div class="md3-outlined-textfield md3-outlined-textfield--block">
-            <input id="email" name="email" type="email" class="md3-outlined-textfield__input" aria-label="Neue E-Mail" placeholder=" ">
-            <label class="md3-outlined-textfield__label" for="email">Neue E-Mail</label>
+            <input id="email" name="email" type="email" class="md3-outlined-textfield__input" aria-label="{{ t('auth.account_profile.email_input_label') }}" placeholder=" ">
+            <label class="md3-outlined-textfield__label" for="email">{{ t('auth.account_profile.email_input_label') }}</label>
               <span class="md3-outlined-textfield__outline">
                 <span class="md3-outlined-textfield__outline-start"></span>
                 <span class="md3-outlined-textfield__outline-notch"></span>
@@ -55,7 +55,7 @@
           <div class="md3-actions">
             <button id="save" class="md3-button md3-button--filled" type="button">
               <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">save</span>
-              Speichern
+              {{ t('common.actions.save') }}
             </button>
           </div>
         </form>
@@ -66,14 +66,14 @@
 
     <article class="md3-card md3-card--outlined md3-auth-card">
       <header class="md3-card__header">
-        <h2 class="md3-title-large">Zugang</h2>
+        <h2 class="md3-title-large">{{ t('auth.account.security_title') }}</h2>
       </header>
       <div class="md3-card__content">
-        <p class="md3-body-medium">Hier kannst du dein Passwort ändern.</p>
+        <p class="md3-body-medium">{{ t('auth.account.password_intro') }}</p>
         <div class="md3-actions">
-          <a href="{{ url_for('auth.account_password_page') }}" class="md3-button md3-button--filled" role="button">
+          <a href="{{ url_for('auth.account_password_page', ui_lang=auth_ui_lang) }}" class="md3-button md3-button--filled" role="button">
             <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">lock_reset</span>
-            Passwort ändern
+            {{ t('auth.account.password_action') }}
           </a>
         </div>
       </div>
@@ -81,14 +81,14 @@
 
     <article class="md3-card md3-card--outlined md3-card--danger md3-auth-card">
       <header class="md3-card__header">
-        <h2 class="md3-title-large">Gefahrenzone</h2>
+        <h2 class="md3-title-large">{{ t('auth.account_profile.delete_zone_title') }}</h2>
       </header>
       <div class="md3-card__content">
-        <p class="md3-body-medium">Hier kannst du dein Konto löschen. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        <p class="md3-body-medium">{{ t('auth.account_profile.delete_zone_intro') }}</p>
         <div class="md3-actions">
           <button id="delete-account-btn" class="md3-button md3-button--filled md3-button--danger" type="button">
             <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">delete_forever</span>
-            Konto löschen
+            {{ t('auth.account_delete.delete_action') }}
           </button>
         </div>
       </div>
@@ -100,16 +100,16 @@
   <div class="md3-dialog__container">
     <div class="md3-dialog__surface">
       <header class="md3-dialog__header">
-        <h2 id="delete-dialog-title" class="md3-title-large md3-dialog__title">Konto löschen?</h2>
+        <h2 id="delete-dialog-title" class="md3-title-large md3-dialog__title">{{ t('auth.account_delete.dialog_title') }}</h2>
       </header>
 
       <div class="md3-dialog__content md3-stack--dialog">
-        <p class="md3-body-medium">Bist du sicher, dass du dein Konto löschen möchtest? Alle deine Daten werden unwiderruflich gelöscht. Zum Fortfahren bitte dein Passwort eingeben.</p>
+        <p class="md3-body-medium">{{ t('auth.account_delete.dialog_warning') }}</p>
 
         <div class="md3-outlined-textfield md3-outlined-textfield--block">
-          <input id="delete-password" name="password" type="password" class="md3-outlined-textfield__input" required aria-label="Passwort zur Löschung" aria-describedby="delete-error" />
-          <label class="md3-outlined-textfield__label" for="delete-password">Dein Passwort</label>
-          <button type="button" class="md3-outlined-textfield__icon--trailing" data-toggle="delete-password" aria-label="Passwort anzeigen/verstecken">
+          <input id="delete-password" name="password" type="password" class="md3-outlined-textfield__input" required aria-label="{{ t('auth.account_delete.password_aria_label') }}" aria-describedby="delete-error" />
+          <label class="md3-outlined-textfield__label" for="delete-password">{{ t('auth.account_delete.password_delete_label') }}</label>
+          <button type="button" class="md3-outlined-textfield__icon--trailing" data-toggle="delete-password" aria-label="{{ t('auth.account_delete.password_toggle_label') }}">
             <span class="material-symbols-rounded md3-button__icon" aria-hidden="true">visibility</span>
           </button>
           <span class="md3-outlined-textfield__outline">
@@ -124,12 +124,27 @@
       </div>
 
       <div class="md3-dialog__actions">
-        <button class="md3-button md3-button--text" id="cancel-delete">Abbrechen</button>
-        <button class="md3-button md3-button--filled md3-button--danger" id="confirm-delete" type="button">Löschen</button>
+        <button class="md3-button md3-button--text" id="cancel-delete">{{ t('auth.account_delete.cancel_action') }}</button>
+        <button class="md3-button md3-button--filled md3-button--danger" id="confirm-delete" type="button">{{ t('auth.account_delete.confirm_action') }}</button>
       </div>
     </div>
   </div>
 </dialog>
 
+<template id="account-profile-config">{{ {
+  'i18n': {
+    'saveSuccess': t('auth.account_profile.save_success'),
+    'emptyUpdateError': t('auth.account_profile.error.empty_update'),
+    'sessionExpired': t('auth.account_profile.error.session_expired'),
+    'serverError': t('auth.account_profile.error.server', status='{status}'),
+    'usernameExists': t('auth.account_profile.error.username_exists'),
+    'emailExists': t('auth.account_profile.error.email_exists'),
+    'saveError': t('auth.account_profile.error.save'),
+    'networkError': t('auth.account_profile.error.network'),
+    'deletePasswordRequired': t('auth.account_delete.error.password_required'),
+    'deleteInvalidPassword': t('auth.account_delete.error.invalid_password'),
+    'deleteError': t('auth.account_delete.error.delete')
+  }
+} | tojson }}</template>
 <script type="module" src="{{ url_for('static', filename='js/auth/account_profile.js') }}"></script>
 {% endblock %}

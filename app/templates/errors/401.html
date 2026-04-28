@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block page_title %}{{ format_page_title('401 - Nicht autorisiert') }}{% endblock %}
+{% block page_title %}{{ format_page_title(t('errors.401.page_title')) }}{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/errors.css') }}">
@@ -14,21 +14,21 @@
     </div>
     
     <h1 class="md3-error-code md3-display-large">401</h1>
-    <h2 class="md3-error-title md3-headline-medium">Nicht autorisiert</h2>
+    <h2 class="md3-error-title md3-headline-medium">{{ t('errors.401.title') }}</h2>
     
     <p class="md3-error-message md3-body-large">
-      Diese Ressource ist nur nach Anmeldung verfügbar.
+      {{ t('errors.401.message') }}
     </p>
     
     <div class="md3-error-actions">
       <a href="{{ url_for('public.login', next=request.url) }}"
         class="md3-button md3-button--filled">
         <span class="material-symbols-rounded">login</span>
-        <span>Login</span>
+        <span>{{ t('auth.login.heading') }}</span>
       </a>
       <a href="{{ url_for('public.landing_page') }}" class="md3-button--outlined">
         <span class="material-symbols-rounded">home</span>
-        <span>Zur Startseite</span>
+        <span>{{ t('common.actions.home') }}</span>
       </a>
     </div>
   </div>

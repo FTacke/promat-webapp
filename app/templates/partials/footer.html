@@ -13,9 +13,9 @@
     <div class="promat-footer__row promat-footer__row--secondary">
       <p class="promat-footer__meta">© {{ footer_meta_year }} {{ institution_name }} · <a href="{{ footer_partner_url }}" class="promat-footer__link" target="_blank" rel="noopener noreferrer">{{ footer_partner_label }}</a> · {{ footer_copyright_holder }}</p>
 
-      <nav class="promat-footer__nav" aria-label="Rechtliches">
-        <a href="{{ url_for('public.impressum_page') }}" class="promat-footer__link">Impressum</a>
-        <a href="{{ url_for('public.privacy_page') }}" class="promat-footer__link">Datenschutz</a>
+      <nav class="promat-footer__nav" aria-label="{{ t('section.legal') }}">
+        <a href="{{ url_for('public.impressum_page') }}" class="promat-footer__link">{{ t('footer.imprint') }}</a>
+        <a href="{{ url_for('public.privacy_page') }}" class="promat-footer__link">{{ t('footer.privacy') }}</a>
       </nav>
     </div>
 

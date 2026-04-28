@@ -10,8 +10,8 @@
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
 
-  <section class="pm-feature-band pm-research-quick-filter-band" aria-label="{{ 'Schnellfilter' if ui_lang == 'de' else 'Quick filters' }}">
-    <nav class="pm-segmented-control" aria-label="{{ 'Speaker groups' if ui_lang == 'en' else 'Sprechergruppen' }}">
+  <section class="pm-feature-band pm-research-quick-filter-band" aria-label="{{ t('research.speakers.quick_filters_aria') }}">
+    <nav class="pm-segmented-control" aria-label="{{ t('research.speakers.speaker_groups_aria') }}">
       {% for option in promat_page.quick_filters %}
       <a class="pm-segmented-control__option{{ ' is-current' if option.current else '' }}" href="{{ option.href }}"{% if option.current %} aria-current="page"{% endif %}>{{ option.label }}</a>
       {% endfor %}
@@ -26,10 +26,10 @@
     {{ render_filter_form(promat_page.filter_form, false) }}
   </div>
 
-  <section class="pm-feature-band pm-research-results-stack" aria-label="{{ 'Sprecher:innen' if ui_lang == 'de' else 'Speakers' }}">
+  <section class="pm-feature-band pm-research-results-stack" aria-label="{{ t('research.speakers.results_aria') }}">
     <div class="pm-research-status-stack">
       {% if promat_page.active_filters %}
-      <div class="pm-research-chip-row" aria-label="{{ 'Aktive Filter' if ui_lang == 'de' else 'Active filters' }}">
+      <div class="pm-research-chip-row" aria-label="{{ t('common.labels.active_filters') }}">
         {% for chip in promat_page.active_filters %}
         <a class="pm-filter-chip" href="{{ chip.href }}">{{ chip.label }}</a>
         {% endfor %}

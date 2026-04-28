@@ -9,7 +9,7 @@
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
 
-  <section class="pm-feature-band pm-research-task-band" aria-label="{{ 'Aufgabentypen' if ui_lang == 'de' else 'Task types' }}">
+  <section class="pm-feature-band pm-research-task-band" aria-label="{{ t('research.recordings.task_types_aria') }}">
     <div class="pm-task-panel-grid">
       {% for panel in promat_page.task_panels %}
       {% if panel.href %}
@@ -37,10 +37,10 @@
     {{ render_filter_form(promat_page.filter_form, false) }}
   </div>
 
-  <section class="pm-feature-band pm-research-results-stack" aria-label="{{ 'Ergebnisse' if ui_lang == 'de' else 'Results' }}">
+  <section class="pm-feature-band pm-research-results-stack" aria-label="{{ t('research.recordings.results_aria') }}">
     <div class="pm-research-status-stack">
       {% if promat_page.active_filters %}
-      <div class="pm-research-chip-row" aria-label="{{ 'Aktive Filter' if ui_lang == 'de' else 'Active filters' }}">
+      <div class="pm-research-chip-row" aria-label="{{ t('common.labels.active_filters') }}">
         {% for chip in promat_page.active_filters %}
         <a class="pm-filter-chip" href="{{ chip.href }}">{{ chip.label }}</a>
         {% endfor %}

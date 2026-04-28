@@ -164,12 +164,6 @@ def _verify_auth_db_connection(app: Flask) -> None:
 def create_app(env_name: str | None = None) -> Flask:
     """Create and configure the Flask application instance."""
 
-    dep_errors = _verify_critical_dependencies()
-    if dep_errors:
-        logger = logging.getLogger(__name__)
-        for err in dep_errors:
-            logger.warning(f"Dependency warning: {err}")
-
     project_root = Path(__file__).resolve().parents[2]
     template_dir = project_root / "templates"
     static_dir = project_root / "static"
@@ -181,6 +175,12 @@ def create_app(env_name: str | None = None) -> Flask:
         static_folder=str(static_dir),
     )
     load_config(app, env_name)
+    setup_logging(app)
+
+    dep_errors = _verify_critical_dependencies()
+    if dep_errors:
+        for err in dep_errors:
+            app.logger.warning("Dependency warning: %s", err)
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
@@ -222,7 +222,6 @@ def create_app(env_name: str | None = None) -> Flask:
     register_security_headers(app)
     register_maintenance_commands(app)
     register_error_handlers(app)
-    setup_logging(app)
 
     return app
 
@@ -399,130 +398,80 @@ def register_security_headers(app: Flask) -> None:
         return response
 
 
+def _request_prefers_json_errors() -> bool:
+    return (
+        request.path.startswith("/api/")
+        or request.accept_mimetypes.best == "application/json"
+        or request.is_json
+    )
+
+
+def _json_error_response(message: str, status_code: int, *, error: str | None = None):
+    payload = {"error": error or message, "message": message}
+    return jsonify(payload), status_code
+
+
 def register_error_handlers(app: Flask) -> None:
     """Register custom error handlers for common HTTP errors."""
 
     @app.errorhandler(400)
     def bad_request(error):
-        app.logger.warning(f"Bad request: {error}")
-        if request.path.startswith("/api/"):
-            return jsonify({"error": "Bad request", "message": str(error)}), 400
+        app.logger.warning("Bad request: %s", error)
+        if _request_prefers_json_errors():
+            return _json_error_response(str(error), 400, error="Bad request")
         return render_template("errors/400.html", error=error), 400
 
     @app.errorhandler(401)
     def unauthorized(error):
-        if request.path.startswith("/api/"):
-            return jsonify({"error": "Unauthorized"}), 401
+        app.logger.warning("Unauthorized request: %s", request.path)
+        if _request_prefers_json_errors():
+            return _json_error_response("Unauthorized", 401)
         return render_template("errors/401.html", error=error), 401
 
     @app.errorhandler(403)
     def forbidden(error):
-        if request.path.startswith("/api/"):
-            return jsonify({"error": "Forbidden"}), 403
+        app.logger.warning("Forbidden request: %s", request.path)
+        if _request_prefers_json_errors():
+            return _json_error_response("Forbidden", 403)
         return render_template("errors/403.html", error=error), 403
 
     @app.errorhandler(404)
     def not_found(error):
-        if request.path.startswith("/api/"):
-            return jsonify({"error": "Not found"}), 404
+        if _request_prefers_json_errors():
+            return _json_error_response("Not found", 404)
         return render_template("errors/404.html", error=error), 404
 
     @app.errorhandler(500)
     def internal_server_error(error):
         app.logger.exception("Unhandled application error: %s", error)
-        if request.path.startswith("/api/"):
-            return jsonify({"error": "Internal server error"}), 500
+        if _request_prefers_json_errors():
+            return _json_error_response("Internal server error", 500)
         return render_template("errors/500.html", error=error), 500
 
 
 def setup_logging(app: Flask) -> None:
     """Configure file logging for non-debug environments."""
-    if app.debug or app.testing:
+    if app.debug or app.testing or app.extensions.get("promat_logging_configured"):
         return
 
     logs_dir = get_logs_dir()
     logs_dir.mkdir(parents=True, exist_ok=True)
-    handler = RotatingFileHandler(logs_dir / "promat-web.log", maxBytes=1_000_000, backupCount=5)
+    log_path = logs_dir / "promat-web.log"
+    for existing_handler in app.logger.handlers:
+        if isinstance(existing_handler, RotatingFileHandler) and Path(
+            getattr(existing_handler, "baseFilename", "")
+        ) == log_path.resolve():
+            app.extensions["promat_logging_configured"] = True
+            return
+
+    handler = RotatingFileHandler(log_path, maxBytes=1_000_000, backupCount=5)
+    handler.set_name("promat.file")
     handler.setFormatter(
         logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
     )
     handler.setLevel(logging.INFO)
     app.logger.addHandler(handler)
     app.logger.setLevel(logging.INFO)
-
-    @app.errorhandler(401)
-    def unauthorized(error):
-        """Handle 401 Unauthorized errors - redirect to login for HTML requests."""
-        app.logger.warning(
-            f"Unauthorized access attempt: {request.path} from {request.remote_addr}"
-        )
-
-        # API requests get JSON response
-        if request.path.startswith("/api/") or request.path.startswith("/atlas/"):
-            return jsonify({"error": "Unauthorized", "message": str(error)}), 401
-
-        # AJAX/fetch requests get JSON response (check Accept header)
-        if request.accept_mimetypes.best == "application/json":
-            return jsonify({"error": "Unauthorized", "message": str(error)}), 401
-
-        # HTML requests: save return URL and redirect to login
-        from .routes.auth import save_return_url
-
-        save_return_url()
-
-        # Redirect to referrer (or home) with login dialog query parameter
-        # Using query param instead of hash to avoid automatic scroll-to-anchor
-        referrer = request.referrer or url_for("public.landing_page")
-        flash("Por favor, inicie sesión para acceder a este contenido.", "info")
-
-        # Add ?showlogin=1 to URL (preserves scroll position)
-        separator = "&" if "?" in referrer else "?"
-        return redirect(f"{referrer}{separator}showlogin=1")
-
-    @app.errorhandler(403)
-    def forbidden(error):
-        """Handle 403 Forbidden errors."""
-        app.logger.warning(
-            f"Forbidden access attempt: {request.path} from {request.remote_addr}"
-        )
-        if request.path.startswith("/api/") or request.path.startswith("/atlas/"):
-            return jsonify({"error": "Forbidden", "message": str(error)}), 403
-        return render_template("errors/403.html", error=error), 403
-
-    @app.errorhandler(404)
-    def not_found(error):
-        """Handle 404 Not Found errors."""
-        if request.path.startswith("/api/") or request.path.startswith("/atlas/"):
-            return jsonify({"error": "Not found", "message": str(error)}), 404
-        return render_template("errors/404.html", error=error), 404
-
-    @app.errorhandler(500)
-    def internal_error(error):
-        """Handle 500 Internal Server errors."""
-        app.logger.error(f"Server Error: {error}", exc_info=True)
-        if request.path.startswith("/api/") or request.path.startswith("/atlas/"):
-            return jsonify({"error": "Internal server error"}), 500
-        return render_template("errors/500.html"), 500
-
-
-def setup_logging(app: Flask) -> None:
-    """Configure application logging."""
-    if not app.debug:
-        # Create logs directory
-        log_dir = get_logs_dir()
-        log_dir.mkdir(exist_ok=True)
-
-        # Setup rotating file handler
-        file_handler = RotatingFileHandler(
-            log_dir / "corapan.log",
-            maxBytes=10_000_000,  # 10MB
-            backupCount=5,
-        )
-        file_handler.setFormatter(
-            logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
-        )
-        file_handler.setLevel(logging.INFO)
-
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.INFO)
-        app.logger.info("CO.RA.PAN application startup")
+    app.logger.propagate = False
+    app.extensions["promat_logging_configured"] = True
+    app.logger.info("PROMAT application startup")

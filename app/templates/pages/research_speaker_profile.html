@@ -78,7 +78,7 @@
 
           {% if session.notes %}
           <section class="pm-profile-card__section pm-profile-notes">
-            <h4 class="pm-profile-section__title">{{ 'Notiz' if ui_lang == 'de' else 'Note' }}</h4>
+            <h4 class="pm-profile-section__title">{{ t('common.note') }}</h4>
             <p>{{ session.notes }}</p>
           </section>
           {% endif %}
@@ -107,8 +107,8 @@
       </div>
     </section>
 
-    <nav class="pm-profile-navigation pm-container" aria-label="{{ 'Navigation' if ui_lang == 'de' else 'Navigation' }}">
-      {{ render_navigation_pill({ 'label': 'Zurück zu Sprecher:innen' if ui_lang == 'de' else 'Back to speakers', 'href': promat_page.speakers_href, 'size': 'medium', 'direction': 'back' }) }}
+    <nav class="pm-profile-navigation pm-container" aria-label="{{ t('research.profile.navigation_aria') }}">
+      {{ render_navigation_pill({ 'label': t('research.player.back_speakers'), 'href': promat_page.speakers_href, 'size': 'medium', 'direction': 'back' }) }}
     </nav>
   </div>
 </article>

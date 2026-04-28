@@ -1,5 +1,23 @@
 import { showError, showSuccess, clearAlert } from '/static/js/md3/alert-utils.js';
 
+function loadConfig(templateId) {
+  const template = document.getElementById(templateId);
+  if (!template) return {};
+  try {
+    return JSON.parse(template.textContent || '{}');
+  } catch (error) {
+    console.error(`Failed to parse ${templateId}`, error);
+    return {};
+  }
+}
+
+const accountDeleteConfig = loadConfig('account-delete-config');
+const accountDeleteI18n = accountDeleteConfig.i18n || {};
+
+function t(key, fallback) {
+  return accountDeleteI18n[key] || fallback;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('del');
   if (!form) return;
@@ -14,14 +32,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const j = await r.json();
       
       if (r.status === 202) {
-        showSuccess(status, 'Löschanfrage akzeptiert. Du wirst weitergeleitet...');
+        showSuccess(status, t('accepted', 'Löschanfrage akzeptiert. Du wirst weitergeleitet...'));
         window.location = '/';
       } else {
-        showError(status, j.message || 'Fehler beim Löschen des Kontos.');
+        showError(status, j.message || t('deleteError', 'Fehler beim Löschen des Kontos.'));
       }
     } catch (error) {
       console.error('[Account Delete] Error:', error);
-      showError(status, 'Error de conexión. Por favor, inténtelo de nuevo.');
+      showError(status, t('networkError', 'Ein Netzwerkfehler ist aufgetreten.'));
     }
   });
 });

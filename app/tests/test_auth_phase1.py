@@ -6,8 +6,9 @@ from pathlib import Path
 import re
 import sys
 
-from flask import Flask
+from flask import Flask, abort, jsonify, render_template
 import pytest
+from flask_jwt_extended import jwt_required
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -16,7 +17,7 @@ os.environ.setdefault("FLASK_ENV", "development")
 os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
-from app import register_auth_context, register_context_processors, register_security_headers
+from app import register_auth_context, register_context_processors, register_error_handlers, register_security_headers
 from app.auth.models import AccessRequest, AnalyticsDaily, AnalyticsLanguageAreaDaily, Base, ResetToken, User
 from app.auth import services as auth_services
 from app.extensions import register_extensions
@@ -93,6 +94,37 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
     register_extensions(app)
     init_engine(app)
     register_auth_context(app)
+    register_error_handlers(app)
+
+    @app.get("/auth-test/protected-html")
+    @jwt_required()
+    def auth_test_protected_html() -> str:
+        return "ok"
+
+    @app.get("/api/auth-test/protected-json")
+    @jwt_required()
+    def auth_test_protected_json():
+        return jsonify({"ok": True})
+
+    @app.get("/auth-test/unauthorized")
+    def auth_test_unauthorized_html() -> str:
+        abort(401)
+
+    @app.get("/api/auth-test/unauthorized")
+    def auth_test_unauthorized_json() -> str:
+        abort(401)
+
+    @app.get("/auth-test/forbidden")
+    def auth_test_forbidden_html() -> str:
+        abort(403)
+
+    @app.get("/api/auth-test/forbidden")
+    def auth_test_forbidden_json() -> str:
+        abort(403)
+
+    @app.get("/auth-test/server-error")
+    def auth_test_server_error_html() -> str:
+        abort(500)
 
     with app.app_context():
         Base.metadata.create_all(bind=get_engine())
@@ -129,6 +161,16 @@ def _extract_element_by_id(html: str, tag: str, element_id: str) -> str:
     )
     assert match is not None
     return match.group(0)
+
+
+def _render_auth_template(app: Flask, template_name: str, *, ui_lang: str) -> str:
+    with app.test_request_context(f"/auth-test/template?ui_lang={ui_lang}"):
+        return render_template(
+            template_name,
+            auth_ui_lang=ui_lang,
+            current_ui_lang=ui_lang,
+            ui_lang=ui_lang,
+        )
 
 
 def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None:
@@ -172,6 +214,31 @@ def test_login_page_links_to_request_form_in_german(auth_app: Flask) -> None:
     assert 'pm-action-button pm-action-button--tertiary pm-action-button--medium pm-auth-action-link' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
     assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-auth-secondary__action-link' in html
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_nav_label", "expected_imprint_label", "expected_privacy_label"),
+    [
+        ("/login?ui_lang=de", "Rechtliches", "Impressum", "Datenschutz"),
+        ("/login?next=/en/research/spanish/comparison", "Legal", "Imprint", "Privacy"),
+    ],
+)
+def test_shared_footer_localizes_legal_links(
+    auth_app: Flask,
+    path: str,
+    expected_nav_label: str,
+    expected_imprint_label: str,
+    expected_privacy_label: str,
+) -> None:
+    client = auth_app.test_client()
+
+    response = client.get(path)
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'aria-label="{expected_nav_label}"' in html
+    assert f'>{expected_imprint_label}<' in html
+    assert f'>{expected_privacy_label}<' in html
 
 
 def test_access_request_page_renders_form_and_login_link_with_return_target(auth_app: Flask) -> None:
@@ -322,6 +389,123 @@ def test_login_accepts_email_only_and_rejects_username(auth_app: Flask) -> None:
     assert "access_token_cookie=" in success.headers.get("Set-Cookie", "")
     assert failure.status_code == 401
     assert "Sign-in failed" in failure.get_data(as_text=True)
+
+
+def test_logout_clears_auth_cookie_and_session_state(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    login_response = _login(client, email="alice@example.org")
+
+    assert login_response.status_code == 303
+    session_response = client.get("/auth/session")
+    assert session_response.status_code == 200
+    assert session_response.get_json()["authenticated"] is True
+
+    logout_response = client.get("/auth/logout", follow_redirects=False)
+
+    assert logout_response.status_code == 303
+    assert logout_response.headers["Location"] == "/"
+    cleared_cookie = logout_response.headers.getlist("Set-Cookie")
+    assert any("access_token_cookie=;" in value for value in cleared_cookie)
+
+    session_after_logout = client.get("/auth/session")
+    assert session_after_logout.status_code == 200
+    assert session_after_logout.get_json()["authenticated"] is False
+
+
+def test_protected_html_route_without_auth_redirects_to_login(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/auth-test/protected-html", follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["Location"] == "/login"
+
+
+def test_protected_api_route_without_auth_returns_json_401(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/api/auth-test/protected-json")
+
+    assert response.status_code == 401
+    assert response.is_json is True
+    payload = response.get_json()
+    assert payload["error"] == "unauthorized"
+    assert "cookie" in payload["message"].lower()
+
+
+def test_generic_html_401_renders_error_page(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/auth-test/unauthorized")
+
+    assert response.status_code == 401
+    assert "Nicht autorisiert" in response.get_data(as_text=True)
+
+
+def test_generic_api_401_returns_json_error(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/api/auth-test/unauthorized")
+
+    assert response.status_code == 401
+    assert response.is_json is True
+    assert response.get_json() == {
+        "error": "Unauthorized",
+        "message": "Unauthorized",
+    }
+
+
+def test_generic_html_403_renders_error_page(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/auth-test/forbidden")
+
+    assert response.status_code == 403
+    assert "Zugriff verweigert" in response.get_data(as_text=True)
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_status", "expected_title", "expected_message", "expected_primary_label", "expected_secondary_label"),
+    [
+        ("/auth-test/unauthorized?ui_lang=en", 401, "Unauthorized", "This resource is available only after sign-in.", "Login", "Back to home"),
+        ("/auth-test/forbidden?ui_lang=en", 403, "Access denied", "You do not have permission to access this page.", "Back to home", "Back"),
+        ("/en/missing-page", 404, "Page not found", "The requested page does not exist or has been moved.", "Back to home", "Back"),
+        ("/auth-test/server-error?ui_lang=en", 500, "Internal server error", "An unexpected error occurred.", "Back to home", "Reload page"),
+    ],
+)
+def test_error_pages_render_english_shared_copy(
+    auth_app: Flask,
+    path: str,
+    expected_status: int,
+    expected_title: str,
+    expected_message: str,
+    expected_primary_label: str,
+    expected_secondary_label: str,
+) -> None:
+    client = auth_app.test_client()
+
+    response = client.get(path)
+
+    assert response.status_code == expected_status
+    html = response.get_data(as_text=True)
+    assert expected_title in html
+    assert expected_message in html
+    assert f'>{expected_primary_label}<' in html
+    assert f'>{expected_secondary_label}<' in html
+
+
+def test_generic_api_403_returns_json_error(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/api/auth-test/forbidden")
+
+    assert response.status_code == 403
+    assert response.is_json is True
+    assert response.get_json() == {
+        "error": "Forbidden",
+        "message": "Forbidden",
+    }
 
 
 def test_login_blocks_expired_account_with_localized_message(auth_app: Flask) -> None:
@@ -558,6 +742,36 @@ def test_account_page_user_menu_stays_compact_for_regular_users(auth_app: Flask)
     assert "Logout" in user_menu_html
     assert "Admin area" not in user_menu_html
     assert user_menu_html.index("My account") < user_menu_html.index("Logout")
+
+
+def test_legacy_account_profile_template_localizes_visible_copy_and_js_messages(auth_app: Flask) -> None:
+    html = _render_auth_template(auth_app, "auth/account_profile.html", ui_lang="en")
+
+    assert "Your profile" in html
+    assert "Current details" in html
+    assert "New username" in html
+    assert "Access and security" in html
+    assert "Danger zone" in html
+    assert "Delete account?" in html
+    assert "Profile saved successfully." in html
+    assert "Session expired. Please sign in again." in html
+    assert "Dein Profil" not in html
+    assert "Gefahrenzone" not in html
+    assert "Passwort ändern" not in html
+
+
+def test_legacy_account_delete_template_localizes_visible_copy_and_js_messages(auth_app: Flask) -> None:
+    html = _render_auth_template(auth_app, "auth/account_delete.html", ui_lang="en")
+
+    assert "Delete account" in html
+    assert "Confirmation required" in html
+    assert "This is an irreversible action" in html
+    assert "Deleting the account is irreversible. Please enter your password to confirm." in html
+    assert "Deletion request accepted. Redirecting..." in html
+    assert "A network error occurred." in html
+    assert "Bestätigung erforderlich" not in html
+    assert "Dies ist eine irreversible Aktion" not in html
+    assert ">Abbrechen<" not in html
 
 
 def test_admin_users_page_uses_sidebar_only_for_admin_area_navigation(auth_app: Flask) -> None:

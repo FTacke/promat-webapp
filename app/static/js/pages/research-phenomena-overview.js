@@ -1,5 +1,5 @@
 import { getCsrfToken } from "../api.js";
-import { fetchWithAuth } from "../modules/auth/refresh.js";
+import { fetchWithAuth } from "../modules/auth/fetch.js";
 import { showSnackbar } from "../modules/core/snackbar.js";
 
 let requestFailedLabel = "";
