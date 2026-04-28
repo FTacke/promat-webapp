@@ -27,11 +27,21 @@ Welches Problem oder welche Drift soll verhindert werden?
 - Dev/Prod-Parität
 - Routing, Datenpfade oder öffentliche/geschützte Trennung
 - Person-/Session-Modell, Research-Zugangslogik oder Native-Speaker-Sonderfall
+- Auth-/Session-Folgen, i18n-Folgen und Shell-/Designsystem-Folgen
 
 ## No-Go-Check
 
 - Führt der Vorschlag alte Slugs, alte Pfade oder neue Schattenstruktur ein?
 - Bricht der Vorschlag das kanonische ID-Modell `person_id = {CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}` / `session_id = {person_id}-{YYYY}-S{NN}`?
+
+## Sicherheits- und Datenhinweis
+
+- Keine echten personenbezogenen Daten, Audio-Dateien, Secrets oder produktiven Runtime-Artefakte in das Issue kopieren
+- Für konkrete Schwachstellen keine öffentlichen Detailangaben posten, sondern `SECURITY.md` befolgen
+
+## Verifikation und Abnahme
+
+- Welche Tests, Guard-Checks, Browser- oder Screenshot-Nachweise wären für die Umsetzung erforderlich?
 
 ## Offene Fragen
 

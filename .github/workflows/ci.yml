@@ -13,9 +13,18 @@ permissions:
 jobs:
   basic-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: app
+    env:
+      APP_ENV: testing
+      FLASK_ENV: testing
+      FLASK_SECRET_KEY: test-secret
+      JWT_SECRET_KEY: test-secret
+      AUTH_DATABASE_URL: sqlite:////tmp/promat/test-ci.sqlite3
+      PROMAT_RUNTIME_ROOT: /tmp/promat
+      PROMAT_PUBLIC_ROOT: /tmp/promat/public
 
     steps:
       - uses: actions/checkout@v6
@@ -38,27 +47,24 @@ jobs:
         run: |
           mkdir -p /tmp/promat/data/config
           mkdir -p /tmp/promat/data/db/postgres_dev
+          mkdir -p /tmp/promat/data/sessions
           mkdir -p /tmp/promat/public
           mkdir -p /tmp/promat/logs
 
       - name: Ruff check
-        env:
-          FLASK_ENV: testing
-          FLASK_SECRET_KEY: test-secret
-          JWT_SECRET_KEY: test-secret
-          AUTH_DATABASE_URL: postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth
-          PROMAT_RUNTIME_ROOT: /tmp/promat
-          PROMAT_PUBLIC_ROOT: /tmp/promat/public
         run: |
           ruff check src/app
 
       - name: Python compile check
-        env:
-          FLASK_ENV: testing
-          FLASK_SECRET_KEY: test-secret
-          JWT_SECRET_KEY: test-secret
-          AUTH_DATABASE_URL: postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth
-          PROMAT_RUNTIME_ROOT: /tmp/promat
-          PROMAT_PUBLIC_ROOT: /tmp/promat/public
         run: |
           python -m compileall src/app
+
+      - name: Governance regression checks
+        run: |
+          python ../scripts/ci_governance_checks.py
+
+      - name: Pytest regression suite
+        run: |
+          python -m pytest tests/test_auth_phase1.py -q
+          python -m pytest tests/test_research_sessions.py -q
+          python -m pytest tests/test_research_phenomena.py -q

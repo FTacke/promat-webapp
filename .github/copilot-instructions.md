@@ -18,6 +18,7 @@ Before changing architecture, routing, data paths, governance files, or repo str
 
 - `docs/spec/` is the only active source of truth.
 - Update the relevant spec file before or together with any implementation change that affects active rules.
+- Do not migrate the recovered productive shell from the accepted `promat-*` shell state to `pm-shell-*`, `pm-topbar*`, or `pm-footer*` without explicit scope plus browser- and screenshot-proven parity on real routes.
 - Treat shared app-shell and sidebar-navigation hierarchy as active platform rules; update `docs/spec/platform-data-files.md` when they change, and do not treat old run logs as the current UI contract.
 - Treat `sample` as a mirror of current real layout elements, not as an experimental design source; when a represented layout element changes on a real page, update `app/templates/pages/sample_page.html` in the same run.
 - Before introducing new UI patterns, inspect the relevant productive pages, shared partials, and shared CSS families first.

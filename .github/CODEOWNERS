@@ -1,0 +1,19 @@
+# PROMAT code ownership scaffold
+# Replace the TODO owner markers below with concrete GitHub handles or team slugs
+# before enabling required CODEOWNERS review enforcement.
+#
+# Suggested ownership map:
+# * @org/promat-maintainers
+# app/src/app/auth* @org/promat-security
+# app/src/app/__init__.py @org/promat-architecture
+# app/src/app/i18n.py @org/promat-i18n
+# app/src/app/research_views.py @org/promat-research
+# app/src/app/research_capabilities.py @org/promat-research
+# app/templates/ @org/promat-ui
+# app/static/css/ @org/promat-ui
+# app/static/js/ @org/promat-ui
+# .github/ @org/promat-governance
+# docs/spec/ @org/promat-architecture
+# docs/agent-runs/ @org/promat-maintainers
+#
+# This file is intentionally comment-only until the real owners are known.

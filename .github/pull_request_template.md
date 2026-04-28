@@ -2,6 +2,13 @@
 
 Kurze Beschreibung des Changes und des gelösten Problems.
 
+## Kurzcheck vor Review
+
+- [ ] Tests für den betroffenen Scope wurden lokal ausgeführt
+- [ ] keine Secrets committed
+- [ ] keine geschützten Forschungsdaten, Audio-Dateien, Runtime-Artefakte oder personenbezogenen Daten committed
+- [ ] `docs/agent-runs/` wurde aktualisiert
+
 ## Betroffene Bereiche
 
 - App / Docs / Scripts / Runtime / Governance
@@ -35,6 +42,10 @@ Kurze Beschreibung des Changes und des gelösten Problems.
 ## UI- und Konsistenzcheck
 
 - [ ] produktive Referenzseiten geprüft, falls UI betroffen ist
+- [ ] Auth-/Session-Auswirkungen geprüft oder explizit als nicht betroffen bewertet
+- [ ] i18n-Auswirkungen geprüft oder explizit als nicht betroffen bewertet
+- [ ] Designsystem-/Shell-Auswirkungen geprüft oder explizit als nicht betroffen bewertet
+- [ ] Shell nicht migriert, außer dies ist explizit Scope des Changes
 - [ ] bestehende UI-Familien wiederverwendet oder erweitert statt neu erfunden
 - [ ] `sample` aktualisiert, falls ein repräsentiertes aktives UI-Element geändert wurde
 - [ ] Browser-Durchlauf und Screenshots ergänzt, falls die Änderung visuell substanziell ist
