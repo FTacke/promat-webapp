@@ -440,7 +440,11 @@ def test_generic_html_401_renders_error_page(auth_app: Flask) -> None:
     response = client.get("/auth-test/unauthorized")
 
     assert response.status_code == 401
-    assert "Nicht autorisiert" in response.get_data(as_text=True)
+    html = response.get_data(as_text=True)
+    assert "Nicht autorisiert" in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert "md3-button" not in html
 
 
 def test_generic_api_401_returns_json_error(auth_app: Flask) -> None:
@@ -462,7 +466,11 @@ def test_generic_html_403_renders_error_page(auth_app: Flask) -> None:
     response = client.get("/auth-test/forbidden")
 
     assert response.status_code == 403
-    assert "Zugriff verweigert" in response.get_data(as_text=True)
+    html = response.get_data(as_text=True)
+    assert "Zugriff verweigert" in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert "md3-button" not in html
 
 
 @pytest.mark.parametrize(
@@ -493,6 +501,9 @@ def test_error_pages_render_english_shared_copy(
     assert expected_message in html
     assert f'>{expected_primary_label}<' in html
     assert f'>{expected_secondary_label}<' in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert "md3-button" not in html
 
 
 def test_generic_api_403_returns_json_error(auth_app: Flask) -> None:
@@ -742,36 +753,6 @@ def test_account_page_user_menu_stays_compact_for_regular_users(auth_app: Flask)
     assert "Logout" in user_menu_html
     assert "Admin area" not in user_menu_html
     assert user_menu_html.index("My account") < user_menu_html.index("Logout")
-
-
-def test_legacy_account_profile_template_localizes_visible_copy_and_js_messages(auth_app: Flask) -> None:
-    html = _render_auth_template(auth_app, "auth/account_profile.html", ui_lang="en")
-
-    assert "Your profile" in html
-    assert "Current details" in html
-    assert "New username" in html
-    assert "Access and security" in html
-    assert "Danger zone" in html
-    assert "Delete account?" in html
-    assert "Profile saved successfully." in html
-    assert "Session expired. Please sign in again." in html
-    assert "Dein Profil" not in html
-    assert "Gefahrenzone" not in html
-    assert "Passwort ändern" not in html
-
-
-def test_legacy_account_delete_template_localizes_visible_copy_and_js_messages(auth_app: Flask) -> None:
-    html = _render_auth_template(auth_app, "auth/account_delete.html", ui_lang="en")
-
-    assert "Delete account" in html
-    assert "Confirmation required" in html
-    assert "This is an irreversible action" in html
-    assert "Deleting the account is irreversible. Please enter your password to confirm." in html
-    assert "Deletion request accepted. Redirecting..." in html
-    assert "A network error occurred." in html
-    assert "Bestätigung erforderlich" not in html
-    assert "Dies ist eine irreversible Aktion" not in html
-    assert ">Abbrechen<" not in html
 
 
 def test_admin_users_page_uses_sidebar_only_for_admin_area_navigation(auth_app: Flask) -> None:

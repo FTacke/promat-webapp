@@ -1597,8 +1597,27 @@ def test_spanish_design_page_is_localized_links_to_project_pages_and_has_no_intr
     assert f'href="/{ui_lang}/project/structure"' in html
     assert f'href="/{ui_lang}/project/data-methods"' in html
     assert f'href="/{ui_lang}/project/team"' in html
+
+
+def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get('/de/research/spanish/design')
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<h2 class="promat-content-block__title pm-panel__title">Literatur</h2>' in html
+    assert '<ul class="promat-content-block__list pm-literature">' in html
+
+    css_response = client.get('/static/css/20_layout.css')
+
+    assert css_response.status_code == 200
+    css = css_response.get_data(as_text=True)
+    assert '.pm-literature,' in css
+    assert '.pm-literature li {' in css
+    assert 'text-indent: calc(-1 * var(--pm-literature-indent));' in css
+    assert '.pm-literature-abbreviations li {' in css
     assert 'href="https://hispanistica.com/projects/marele/"' in html
-    assert f'href="/{"en" if ui_lang == "de" else "de"}/research/spanish/design"' in html
 
 
 @pytest.mark.parametrize(
@@ -1702,13 +1721,30 @@ def test_team_page_uses_shared_two_column_team_grid_rules(url_app: Flask) -> Non
     assert '.pm-grid--team-corpus {' in css
     assert '.pm-feature-band > .pm-grid--team-lead,' in css
     assert '.pm-feature-band > .pm-grid--team-corpus {' in css
-    assert 'gap: clamp(0.85rem, 1.8vw, 1.05rem);' in css
-    assert 'width: min(100%, 50rem);' in css
-    assert 'max-width: 50rem;' in css
+    assert 'gap: clamp(0.78rem, 1.55vw, 0.98rem);' in css
+    assert 'width: min(100%, 46rem);' in css
+    assert 'max-width: 46rem;' in css
     assert 'margin-inline: auto;' in css
     assert '@media (min-width: 760px) {' in css
     assert 'repeat(2, minmax(0, 1fr));' in css
     assert 'repeat(4, minmax(0, 1fr));' not in css
+
+
+def test_shared_card_hover_rules_keep_titles_neutral_and_stable(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get('/static/css/40_cards.css')
+
+    assert response.status_code == 200
+    css = response.get_data(as_text=True)
+    assert 'a.pm-card:hover,' in css
+    assert 'a.pm-card:active,' in css
+    assert '.pm-card--interactive:hover {' in css
+    assert 'box-shadow: var(--pm-card-hover-shadow);' in css
+    assert 'color: var(--book-fg);' in css
+    assert 'a.pm-card:hover .pm-card__title,' in css
+    assert 'a.pm-card:active .pm-card__title,' in css
+    assert 'color: inherit;' in css
 
 
 def test_shared_cta_links_use_container_underline_rule(url_app: Flask) -> None:
@@ -2551,6 +2587,14 @@ def test_player_route_uses_shared_material_choice_family(runtime_env: Path, url_
     html = response.get_data(as_text=True)
     assert "pm-material-choice" in html
     assert "data-player-set-select" in html
+
+    css_response = client.get('/static/css/30_components.css')
+
+    assert css_response.status_code == 200
+    css = css_response.get_data(as_text=True)
+    assert '.pm-material-choice {' in css
+    assert 'border: 1px solid var(--pm-border-subtle);' in css
+    assert '.pm-player-material-strip .pm-material-choice {' not in css
 
 
 def test_player_route_uses_neutral_meta_cards_and_shared_badges(runtime_env: Path, url_app: Flask) -> None:

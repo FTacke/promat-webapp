@@ -67,14 +67,14 @@
         <p class="promat-content-block__text">{{ paragraph | safe }}</p>
         {% endfor %}
         {% if section.bullets %}
-        <ul class="promat-content-block__list">
+        <ul class="promat-content-block__list{{ ' ' ~ section.list_class if section.list_class else '' }}">
           {% for bullet in section.bullets %}
           <li>{{ bullet }}</li>
           {% endfor %}
         </ul>
         {% endif %}
         {% if section.bullets_html %}
-        <ul class="promat-content-block__list">
+        <ul class="promat-content-block__list{{ ' ' ~ section.list_class if section.list_class else '' }}">
           {% for bullet in section.bullets_html %}
           <li>{{ bullet | safe }}</li>
           {% endfor %}

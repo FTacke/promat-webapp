@@ -316,7 +316,8 @@
     gap: var(--space-2);
   }
   
-  .md3-dialog__actions .md3-button {
+  .md3-dialog__actions .md3-button,
+  .md3-dialog__actions .pm-action-button {
     width: 100%;
     justify-content: center;
   }

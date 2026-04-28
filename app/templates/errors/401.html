@@ -22,13 +22,13 @@
     
     <div class="md3-error-actions">
       <a href="{{ url_for('public.login', next=request.url) }}"
-        class="md3-button md3-button--filled">
-        <span class="material-symbols-rounded">login</span>
-        <span>{{ t('auth.login.heading') }}</span>
+        class="pm-action-button pm-action-button--primary pm-action-button--medium">
+        <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">login</span>
+        <span class="pm-action-button__label">{{ t('auth.login.heading') }}</span>
       </a>
-      <a href="{{ url_for('public.landing_page') }}" class="md3-button--outlined">
-        <span class="material-symbols-rounded">home</span>
-        <span>{{ t('common.actions.home') }}</span>
+      <a href="{{ url_for('public.landing_page') }}" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+        <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">home</span>
+        <span class="pm-action-button__label">{{ t('common.actions.home') }}</span>
       </a>
     </div>
   </div>

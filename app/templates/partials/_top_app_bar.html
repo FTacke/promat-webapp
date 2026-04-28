@@ -88,7 +88,7 @@
             <div class="promat-user-menu__dropdown" id="user-menu-dropdown" role="menu" aria-label="{{ t('shell.topbar.account_menu') }}" data-user-menu hidden>
               <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.account_area') }}</a>
               {% if role_value == 'admin' %}
-              <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.admin') }}</a>
+              <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem"><span class="pm-icon-mask pm-icon-mask--settings" aria-hidden="true"></span>{{ t('shell.panel.admin') }}</a>
               {% endif %}
               <a href="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
                  data-logout="fetch"

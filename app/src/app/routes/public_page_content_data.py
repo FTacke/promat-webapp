@@ -733,6 +733,7 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                 "de": "Literatur",
                 "en": "References",
             },
+            "list_class": "pm-literature",
             "bullets_html": {
                 "de": [
                     "(I)FEC: (Inter-)Fonología del Español Contemporáneo.",

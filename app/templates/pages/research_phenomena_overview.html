@@ -90,8 +90,12 @@
           <p class="pm-workspace-dialog-message" data-phenomena-rename-error hidden></p>
         </div>
         <div class="md3-dialog__actions">
-          <button type="button" class="md3-button md3-button--text" data-phenomena-rename-cancel>{{ t('common.actions.cancel') }}</button>
-          <button type="submit" class="md3-button md3-button--filled" form="pm-phenomena-rename-form">{{ t('common.actions.save') }}</button>
+          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-rename-cancel>
+            <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
+          </button>
+          <button type="submit" class="pm-action-button pm-action-button--primary pm-action-button--medium" form="pm-phenomena-rename-form">
+            <span class="pm-action-button__label">{{ t('common.actions.save') }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -107,8 +111,12 @@
           <p class="md3-body-medium" data-phenomena-delete-message></p>
         </div>
         <div class="md3-dialog__actions">
-          <button type="button" class="md3-button md3-button--text" data-phenomena-delete-cancel>{{ t('common.actions.cancel') }}</button>
-          <button type="button" class="md3-button md3-button--filled" data-phenomena-delete-confirm>{{ t('common.actions.delete') }}</button>
+          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-delete-cancel>
+            <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
+          </button>
+          <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-delete-confirm>
+            <span class="pm-action-button__label">{{ t('common.actions.delete') }}</span>
+          </button>
         </div>
       </div>
     </div>

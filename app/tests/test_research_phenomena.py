@@ -327,6 +327,11 @@ def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: F
     assert "Ansehen" in html
     assert "Öffnen" not in html
     assert "pm-phenomena-overview-card__preview" not in html
+    assert 'class="md3-dialog"' in html
+    assert 'class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-rename-cancel' in html
+    assert 'class="pm-action-button pm-action-button--primary pm-action-button--medium" form="pm-phenomena-rename-form"' in html
+    assert 'class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-delete-confirm' in html
+    assert "md3-button" not in html
     assert "research-phenomena-overview.js" in html
     assert "Material-Presets" not in html
 
@@ -370,6 +375,10 @@ def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) ->
     assert "Zum Speichern bitte anmelden" not in html
     assert "data-phenomena-state-badge" in html
     assert "data-phenomena-editor-root" in html
+    assert 'class="md3-dialog"' in html
+    assert 'class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-editor-confirm-cancel' in html
+    assert 'class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-editor-confirm-submit' in html
+    assert "md3-button" not in html
 
 
 def test_public_set_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:

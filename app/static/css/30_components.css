@@ -307,6 +307,10 @@ textarea:focus-visible {
   --pm-icon-mask-source: var(--pm-icon-edit);
 }
 
+.pm-icon-mask--settings {
+  --pm-icon-mask-source: var(--pm-icon-settings);
+}
+
 .promat-topbar__action--theme,
 .promat-topbar__action--account[aria-expanded="true"] {
   border-color: var(--book-border-strong);
@@ -373,6 +377,9 @@ textarea:focus-visible {
 }
 
 .promat-user-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   padding: 0.7rem 0.85rem;
   border-radius: var(--pm-radius-container);
 }
@@ -1358,6 +1365,7 @@ body[data-page="login"] .pm-auth-secondary--card {
   justify-content: center;
   min-height: 2.35rem;
   padding: 0 0.9rem;
+  border: 1px solid var(--pm-border-subtle);
   border-color: var(--pm-border-subtle);
   border-radius: 999px;
   background: color-mix(in srgb, var(--pm-surface-paper) 72%, var(--pm-surface-accent-soft) 28%);
@@ -4466,12 +4474,6 @@ body[data-page="login"] .pm-auth-secondary--card {
 
 .pm-player-material-strip .pm-comparison-material-controls {
   gap: 0.4rem;
-}
-
-.pm-player-material-strip .pm-material-choice {
-  min-height: 2.2rem;
-  padding: 0 0.78rem;
-  font-size: 0.77rem;
 }
 
 .pm-player-material-strip__set-inline {
