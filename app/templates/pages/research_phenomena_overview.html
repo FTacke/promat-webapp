@@ -101,23 +101,25 @@
     </div>
   </dialog>
 
-  <dialog class="md3-dialog" data-phenomena-delete-dialog role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-delete-title">
-    <div class="md3-dialog__container">
-      <div class="md3-dialog__surface">
-        <header class="md3-dialog__header">
-          <h2 id="pm-phenomena-delete-title" class="md3-title-large md3-dialog__title">{{ t('research.phenomena.overview.delete_title') }}</h2>
-        </header>
-        <div class="md3-dialog__content md3-stack--dialog">
-          <p class="md3-body-medium" data-phenomena-delete-message></p>
+  <dialog class="pm-dialog pm-dialog--danger pm-surface-density--compact" data-phenomena-delete-dialog role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-delete-title" aria-describedby="pm-phenomena-delete-body">
+    <div class="pm-dialog__surface">
+      <header class="pm-dialog__header">
+        <h2 id="pm-phenomena-delete-title" class="pm-dialog__title">{{ t('research.phenomena.overview.delete_title') }}</h2>
+      </header>
+      <div id="pm-phenomena-delete-body" class="pm-dialog__body">
+        <p class="pm-dialog__text">{{ t('research.phenomena.dialog.delete_body') }}</p>
+        <div class="pm-object-summary">
+          <p class="pm-object-summary__label">{{ t('research.phenomena.dialog.selected_set') }}</p>
+          <p class="pm-object-summary__value" data-phenomena-delete-object></p>
         </div>
-        <div class="md3-dialog__actions">
-          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-delete-cancel>
-            <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
-          </button>
-          <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-delete-confirm>
-            <span class="pm-action-button__label">{{ t('common.actions.delete') }}</span>
-          </button>
-        </div>
+      </div>
+      <div class="pm-dialog__actions pm-action-row">
+        <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-delete-cancel>
+          <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
+        </button>
+        <button type="button" class="pm-action-button pm-action-button--danger pm-action-button--medium" data-phenomena-delete-confirm>
+          <span class="pm-action-button__label">{{ t('common.actions.delete') }}</span>
+        </button>
       </div>
     </div>
   </dialog>

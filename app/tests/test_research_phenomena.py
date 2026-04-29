@@ -327,11 +327,21 @@ def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: F
     assert "Ansehen" in html
     assert "Öffnen" not in html
     assert "pm-phenomena-overview-card__preview" not in html
-    assert 'class="md3-dialog"' in html
-    assert 'class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-rename-cancel' in html
-    assert 'class="pm-action-button pm-action-button--primary pm-action-button--medium" form="pm-phenomena-rename-form"' in html
-    assert 'class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-delete-confirm' in html
+    rename_start = html.rfind("<dialog", 0, html.index('data-phenomena-rename-dialog'))
+    delete_start = html.rfind("<dialog", 0, html.index('data-phenomena-delete-dialog'))
+    rename_slice = html[rename_start:delete_start]
+    delete_slice = html[delete_start:]
+    assert 'class="md3-dialog"' in rename_slice
+    assert 'md3-form' in rename_slice
+    assert 'md3-outlined-textfield' in rename_slice
+    assert 'class="pm-dialog pm-dialog--danger pm-surface-density--compact" data-phenomena-delete-dialog' in delete_slice
+    assert 'pm-object-summary' in delete_slice
+    assert 'data-phenomena-delete-object' in delete_slice
+    assert 'pm-dialog__actions pm-action-row' in delete_slice
+    assert 'class="pm-action-button pm-action-button--danger pm-action-button--medium" data-phenomena-delete-confirm' in delete_slice
+    assert 'md3-dialog' not in delete_slice
     assert "md3-button" not in html
+    assert "pm-research-" + "button" not in delete_slice
     assert "research-phenomena-overview.js" in html
     assert "Material-Presets" not in html
 
@@ -375,9 +385,16 @@ def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) ->
     assert "Zum Speichern bitte anmelden" not in html
     assert "data-phenomena-state-badge" in html
     assert "data-phenomena-editor-root" in html
-    assert 'class="md3-dialog"' in html
+    confirm_start = html.rfind("<dialog", 0, html.index('data-phenomena-editor-confirm'))
+    confirm_slice = html[confirm_start:]
+    assert 'class="pm-dialog pm-surface-density--compact" data-phenomena-editor-confirm' in confirm_slice
+    assert 'class="pm-dialog__title" data-phenomena-editor-confirm-title' in confirm_slice
+    assert 'class="pm-dialog__text" data-phenomena-editor-confirm-message' in confirm_slice
+    assert 'pm-dialog__actions pm-action-row' in confirm_slice
     assert 'class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-editor-confirm-cancel' in html
     assert 'class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-editor-confirm-submit' in html
+    assert 'class="pm-action-button__label" data-phenomena-editor-confirm-submit-label' in confirm_slice
+    assert 'md3-dialog' not in confirm_slice
     assert "md3-button" not in html
 
 
@@ -406,3 +423,8 @@ def test_public_set_editor_route_renders_for_authenticated_owner(phenomena_app: 
     assert "data-phenomena-editor-root" in html
     assert "Spanisch-Korpus" in html
     assert "pm-phenomena-editor-state" in html
+    confirm_start = html.rfind("<dialog", 0, html.index('data-phenomena-editor-confirm'))
+    confirm_slice = html[confirm_start:]
+    assert 'class="pm-dialog pm-surface-density--compact" data-phenomena-editor-confirm' in confirm_slice
+    assert 'pm-dialog__actions pm-action-row' in confirm_slice
+    assert 'md3-dialog' not in confirm_slice

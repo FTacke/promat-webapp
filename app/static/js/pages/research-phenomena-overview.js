@@ -77,13 +77,45 @@ function init() {
   const renameError = document.querySelector("[data-phenomena-rename-error]");
   const renameCancel = document.querySelector("[data-phenomena-rename-cancel]");
   const deleteDialog = document.querySelector("[data-phenomena-delete-dialog]");
-  const deleteMessage = document.querySelector("[data-phenomena-delete-message]");
+  const deleteObject = document.querySelector("[data-phenomena-delete-object]");
   const deleteCancel = document.querySelector("[data-phenomena-delete-cancel]");
   const deleteConfirm = document.querySelector("[data-phenomena-delete-confirm]");
 
   let renameTargetId = null;
   let deleteTargetId = null;
   let pending = false;
+
+  function showDialog(dialog) {
+    if (dialog && typeof dialog.showModal === "function" && !dialog.open) {
+      dialog.showModal();
+    }
+  }
+
+  function closeDialog(dialog) {
+    if (dialog && typeof dialog.close === "function" && dialog.open) {
+      dialog.close();
+    }
+  }
+
+  function resetRenameDialog() {
+    renameTargetId = null;
+    if (renameError) {
+      renameError.hidden = true;
+      renameError.textContent = "";
+    }
+  }
+
+  function resetDeleteDialog() {
+    deleteTargetId = null;
+    if (deleteObject) {
+      deleteObject.textContent = "";
+    }
+  }
+
+  function closePhenomenaDialogs() {
+    closeDialog(renameDialog);
+    closeDialog(deleteDialog);
+  }
 
   function entryCards() {
     return Array.from(root.querySelectorAll("[data-phenomena-entry]"));
@@ -164,15 +196,15 @@ function init() {
       renameError.hidden = true;
       renameError.textContent = "";
     }
-    renameDialog?.showModal();
+    showDialog(renameDialog);
   }
 
   function openDeleteDialog(setId, label) {
     deleteTargetId = setId;
-    if (deleteMessage) {
-      deleteMessage.textContent = state.labels.deleteMessage.replace("{label}", label || "");
+    if (deleteObject) {
+      deleteObject.textContent = label || state.labels.untitled;
     }
-    deleteDialog?.showModal();
+    showDialog(deleteDialog);
   }
 
   newListButton?.addEventListener("click", () => {
@@ -209,8 +241,11 @@ function init() {
     }
   });
 
-  renameCancel?.addEventListener("click", () => renameDialog?.close());
-  deleteCancel?.addEventListener("click", () => deleteDialog?.close());
+  renameCancel?.addEventListener("click", () => closeDialog(renameDialog));
+  deleteCancel?.addEventListener("click", () => closeDialog(deleteDialog));
+
+  renameDialog?.addEventListener("close", resetRenameDialog);
+  deleteDialog?.addEventListener("close", resetDeleteDialog);
 
   renameForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -229,7 +264,7 @@ function init() {
       });
       const label = response?.set?.label || (renameInput?.value || "").trim();
       updateCardLabel(renameTargetId, label);
-      renameDialog?.close();
+      closeDialog(renameDialog);
       applyFilter();
       showSnackbar(state.labels.renameSuccess, "success");
     } catch (error) {
@@ -253,16 +288,34 @@ function init() {
       });
       const card = root.querySelector(`[data-kind="custom"] [data-phenomena-delete-set="${CSS.escape(deleteTargetId)}"]`)?.closest("[data-phenomena-entry]");
       card?.remove();
-      deleteDialog?.close();
+      closeDialog(deleteDialog);
       applyFilter();
       showSnackbar(state.labels.deleteSuccess, "success");
     } catch (error) {
       showSnackbar(error.message || state.labels.delete, "error");
     } finally {
       pending = false;
-      deleteTargetId = null;
     }
   });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      return;
+    }
+    const link = target.closest("a[href]");
+    if (!link || link.closest("dialog")) {
+      return;
+    }
+    const rawHref = link.getAttribute("href") || "";
+    if (!rawHref || rawHref.startsWith("#") || rawHref.startsWith("javascript:") || rawHref.startsWith("mailto:") || rawHref.startsWith("tel:")) {
+      return;
+    }
+    closePhenomenaDialogs();
+  }, true);
+
+  window.addEventListener("pagehide", closePhenomenaDialogs);
+  window.addEventListener("beforeunload", closePhenomenaDialogs);
 
   applyFilter();
 }

@@ -92,21 +92,21 @@
     </section>
   </section>
 
-  <dialog class="md3-dialog" data-phenomena-editor-confirm role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-editor-confirm-title">
-    <div class="md3-dialog__container">
-      <div class="md3-dialog__surface">
-        <header class="md3-dialog__header">
-          <h2 id="pm-phenomena-editor-confirm-title" class="md3-title-large md3-dialog__title" data-phenomena-editor-confirm-title></h2>
-        </header>
-        <div class="md3-dialog__content md3-stack--dialog">
-          <p class="md3-body-medium" data-phenomena-editor-confirm-message></p>
-        </div>
-        <div class="md3-dialog__actions">
-          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-editor-confirm-cancel>
-            <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
-          </button>
-          <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-editor-confirm-submit></button>
-        </div>
+  <dialog class="pm-dialog pm-surface-density--compact" data-phenomena-editor-confirm role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-editor-confirm-title" aria-describedby="pm-phenomena-editor-confirm-body">
+    <div class="pm-dialog__surface">
+      <header class="pm-dialog__header">
+        <h2 id="pm-phenomena-editor-confirm-title" class="pm-dialog__title" data-phenomena-editor-confirm-title></h2>
+      </header>
+      <div id="pm-phenomena-editor-confirm-body" class="pm-dialog__body">
+        <p class="pm-dialog__text" data-phenomena-editor-confirm-message></p>
+      </div>
+      <div class="pm-dialog__actions pm-action-row">
+        <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-editor-confirm-cancel>
+          <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
+        </button>
+        <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-editor-confirm-submit>
+          <span class="pm-action-button__label" data-phenomena-editor-confirm-submit-label></span>
+        </button>
       </div>
     </div>
   </dialog>

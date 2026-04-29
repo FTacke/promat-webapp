@@ -1919,6 +1919,66 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'Niveau / Varietät' not in html
 
 
+def test_sample_page_exposes_pm_pattern_lab_before_interaction_preview(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-sample-pattern-lab' in html
+    assert 'PM Komponentenmuster' in html
+    assert 'pm-dialog pm-surface-density--compact pm-dialog--compact pm-pattern-lab__dialog-demo' in html
+    assert 'pm-dialog pm-surface-density--compact pm-dialog--compact pm-dialog--danger pm-pattern-lab__dialog-demo' in html
+    assert 'pm-dialog pm-surface-density--spacious pm-pattern-lab__dialog-demo pm-pattern-lab__dialog-demo--wide' in html
+    assert 'pm-action-row pm-action-row--end' in html
+    assert 'pm-object-summary pm-object-summary--danger' in html
+    assert 'pm-form' in html
+    assert 'pm-form-field--error' in html
+    assert 'pm-form-control--error' in html
+    assert 'pm-error-surface' in html
+    assert 'pm-error-surface pm-surface-density--standard' in html
+    assert 'pm-error-surface__code' in html
+    assert 'pm-media-surface' in html
+    assert 'pm-workbench-card' in html
+    pattern_start = html.index('data-sample-pattern-lab')
+    preview_start = html.index('pm-interaction-preview')
+    assert pattern_start < preview_start
+    pattern_end = preview_start
+    pattern_slice = html[pattern_start:pattern_end]
+    assert 'md3-dialog' not in pattern_slice
+    assert 'md3-error' not in pattern_slice
+    assert 'md3-button' not in pattern_slice
+    assert 'sample-pattern-form-name' in pattern_slice
+    assert 'sample-pattern-field-visibility' in pattern_slice
+    assert 'material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading' not in pattern_slice
+
+
+def test_sample_page_pattern_lab_uses_density_layout_and_quiet_error_actions(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/en/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    pattern_start = html.index('data-sample-pattern-lab')
+    preview_start = html.index('pm-interaction-preview')
+    pattern_slice = html[pattern_start:preview_start]
+    assert 'pm-surface-density--compact' in pattern_slice
+    assert 'pm-surface-density--standard' in pattern_slice
+    assert 'pm-surface-density--spacious' in pattern_slice
+    assert 'pm-pattern-lab__dialog-demo pm-pattern-lab__dialog-demo--wide' in pattern_slice
+    assert 'pm-error-surface__actions pm-action-row' in pattern_slice
+    assert 'Save</span>' in pattern_slice
+    assert 'Save changes' not in pattern_slice
+    error_start = pattern_slice.index('pm-error-surface pm-surface-density--standard')
+    surface_start = pattern_slice.index('pm-entry-showcase__variant', error_start)
+    error_slice = pattern_slice[error_start:surface_start]
+    assert 'material-symbols-rounded' not in error_slice
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in error_slice
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in error_slice
+
+
 def test_sample_page_exposes_semantic_interaction_preview_without_global_migration(url_app: Flask) -> None:
     client = url_app.test_client()
 
@@ -1958,6 +2018,24 @@ def test_sample_page_localizes_interaction_preview_in_english(url_app: Flask) ->
     assert 'Apply filters' in html
     assert 'Compare' in html
     assert 'Create user' in html
+
+
+def test_sample_page_localizes_pm_pattern_lab_in_english(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/en/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'PM component patterns' in html
+    assert 'Dialogs and form dialog' in html
+    assert 'Dialog title' in html
+    assert 'Delete custom set?' in html
+    assert 'Edit set' in html
+    assert 'Page not found' in html
+    assert 'PM field set / form controls' in html
+    assert 'Short example excerpt for a compact media surface' in html
+    assert 'PM workbench card' in html
 
 
 def test_sample_speaker_cards_keep_focused_learner_meta_selection() -> None:

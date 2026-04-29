@@ -829,6 +829,36 @@ body.app-shell.page-landing .md3-content-wrapper {
   align-content: start;
 }
 
+.pm-pattern-lab,
+.pm-pattern-lab__dialog-grid,
+.pm-pattern-lab__controls-grid,
+.pm-pattern-lab__surface-grid,
+.pm-pattern-lab__surface-block,
+.pm-pattern-lab__dialog-demo--wide {
+  display: grid;
+}
+
+.pm-pattern-lab {
+  gap: var(--pm-space-xl);
+}
+
+.pm-pattern-lab__dialog-grid,
+.pm-pattern-lab__controls-grid,
+.pm-pattern-lab__surface-grid {
+  gap: var(--pm-space-grid);
+  max-width: min(100%, 82rem);
+  margin-inline: auto;
+  align-items: start;
+}
+
+.pm-pattern-lab__surface-block {
+  gap: var(--pm-space-container);
+}
+
+.pm-pattern-lab__dialog-demo--wide {
+  align-items: start;
+}
+
 .pm-card-grid--entry-three,
 .pm-card-grid--entry-two,
 .pm-card-grid--entry-compare {
@@ -914,6 +944,16 @@ body.app-shell.page-landing .md3-content-wrapper {
     align-items: start;
   }
 
+  .pm-pattern-lab__dialog-grid,
+  .pm-pattern-lab__controls-grid,
+  .pm-pattern-lab__surface-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pm-pattern-lab__dialog-demo--wide {
+    grid-column: 1 / -1;
+  }
+
   .pm-panel-grid,
   .pm-card-grid--compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -925,12 +965,14 @@ body.app-shell.page-landing .md3-content-wrapper {
     display: block;
   }
 
+  .pm-pattern-lab__dialog-grid {
+    align-items: start;
+  }
+
   .pm-card-grid--entry-three {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-}
 
-@media (min-width: 980px) {
   .pm-sample-composition {
     grid-template-columns: minmax(0, 1.15fr) minmax(20rem, 0.85fr);
     align-items: start;

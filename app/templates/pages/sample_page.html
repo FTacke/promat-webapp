@@ -10,6 +10,208 @@
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
 
+  <section class="pm-sample-section pm-pattern-lab" aria-labelledby="sample-pattern-lab-title" data-sample-pattern-lab>
+    <div class="pm-sample-section__header pm-reading">
+      <h2 id="sample-pattern-lab-title" class="pm-sample-section__title">{{ t('sample.pattern_lab.title') }}</h2>
+      <p class="pm-sample-section__intro">{{ t('sample.pattern_lab.intro') }}</p>
+    </div>
+
+    <div class="pm-entry-showcase">
+      <section class="pm-entry-showcase__variant" aria-labelledby="sample-pattern-lab-dialogs-title">
+        <div class="pm-entry-showcase__heading">
+          <p id="sample-pattern-lab-dialogs-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">{{ t('sample.pattern_lab.group.dialogs.title') }}</p>
+          <p class="pm-entry-showcase__note">{{ t('sample.pattern_lab.group.dialogs.note') }}</p>
+        </div>
+
+        <div class="pm-pattern-lab__dialog-grid">
+          <section class="pm-dialog pm-surface-density--compact pm-dialog--compact pm-pattern-lab__dialog-demo" aria-labelledby="sample-pattern-standard-title" aria-describedby="sample-pattern-standard-body">
+            <div class="pm-dialog__surface">
+              <header class="pm-dialog__header">
+                <p class="pm-dialog__eyebrow">{{ t('sample.pattern_lab.standard_dialog.eyebrow') }}</p>
+                <h3 id="sample-pattern-standard-title" class="pm-dialog__title">{{ t('sample.pattern_lab.standard_dialog.title') }}</h3>
+              </header>
+              <div id="sample-pattern-standard-body" class="pm-dialog__body">
+                <p class="pm-dialog__text">{{ t('sample.pattern_lab.standard_dialog.body') }}</p>
+              </div>
+              <div class="pm-dialog__actions pm-action-row">
+                <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+                  <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.cancel') }}</span>
+                </button>
+                <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium">
+                  <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.confirm') }}</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="pm-dialog pm-surface-density--compact pm-dialog--compact pm-dialog--danger pm-pattern-lab__dialog-demo" aria-labelledby="sample-pattern-danger-title" aria-describedby="sample-pattern-danger-body">
+            <div class="pm-dialog__surface">
+              <header class="pm-dialog__header">
+                <p class="pm-dialog__eyebrow pm-dialog__eyebrow--danger">{{ t('sample.pattern_lab.danger_dialog.eyebrow') }}</p>
+                <h3 id="sample-pattern-danger-title" class="pm-dialog__title">{{ t('sample.pattern_lab.danger_dialog.title') }}</h3>
+              </header>
+              <div id="sample-pattern-danger-body" class="pm-dialog__body">
+                <p class="pm-dialog__text">{{ t('sample.pattern_lab.danger_dialog.body') }}</p>
+                <div class="pm-object-summary pm-object-summary--danger">
+                  <p class="pm-object-summary__label">{{ t('sample.pattern_lab.danger_dialog.object_label') }}</p>
+                  <p class="pm-object-summary__value">{{ t('sample.pattern_lab.danger_dialog.object_name') }}</p>
+                </div>
+              </div>
+              <div class="pm-dialog__actions pm-action-row">
+                <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+                  <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.cancel') }}</span>
+                </button>
+                <button type="button" class="pm-action-button pm-action-button--danger pm-action-button--medium">
+                  <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.delete') }}</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section class="pm-dialog pm-surface-density--spacious pm-pattern-lab__dialog-demo pm-pattern-lab__dialog-demo--wide" aria-labelledby="sample-pattern-form-title" aria-describedby="sample-pattern-form-body">
+            <div class="pm-dialog__surface">
+              <header class="pm-dialog__header">
+                <p class="pm-dialog__eyebrow">{{ t('sample.pattern_lab.form_dialog.eyebrow') }}</p>
+                <h3 id="sample-pattern-form-title" class="pm-dialog__title">{{ t('sample.pattern_lab.form_dialog.title') }}</h3>
+              </header>
+              <div id="sample-pattern-form-body" class="pm-dialog__body pm-dialog__body--form">
+                <p class="pm-dialog__text">{{ t('sample.pattern_lab.form_dialog.body') }}</p>
+                <form class="pm-form" aria-label="{{ t('sample.pattern_lab.form_dialog.title') }}">
+                  <div class="pm-form-field">
+                    <label class="pm-form-label" for="sample-pattern-form-name">{{ t('sample.pattern_lab.fields.name') }}</label>
+                    <input id="sample-pattern-form-name" class="pm-form-control" type="text" value="{{ t('sample.pattern_lab.form_dialog.name_value') }}">
+                  </div>
+                  <div class="pm-form-field">
+                    <label class="pm-form-label" for="sample-pattern-form-note">{{ t('sample.pattern_lab.fields.note') }}</label>
+                    <textarea id="sample-pattern-form-note" class="pm-form-control pm-form-textarea" rows="2">{{ t('sample.pattern_lab.form_dialog.note_value') }}</textarea>
+                    <p class="pm-form-help">{{ t('sample.pattern_lab.form_dialog.help') }}</p>
+                  </div>
+                </form>
+              </div>
+              <div class="pm-dialog__actions pm-action-row pm-action-row--end">
+                <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+                  <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.cancel') }}</span>
+                </button>
+                <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium">
+                  <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.save') }}</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="pm-entry-showcase__variant" aria-labelledby="sample-pattern-lab-controls-title">
+        <div class="pm-entry-showcase__heading">
+          <p id="sample-pattern-lab-controls-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">{{ t('sample.pattern_lab.group.controls.title') }}</p>
+          <p class="pm-entry-showcase__note">{{ t('sample.pattern_lab.group.controls.note') }}</p>
+        </div>
+
+        <div class="pm-pattern-lab__controls-grid">
+          <section class="pm-container pm-container--tinted pm-pattern-lab__surface-block pm-surface-density--spacious" aria-labelledby="sample-pattern-field-set-title">
+            <h3 id="sample-pattern-field-set-title" class="pm-pattern-lab__surface-title">{{ t('sample.pattern_lab.field_set.title') }}</h3>
+            <form class="pm-form" aria-label="{{ t('sample.pattern_lab.field_set.title') }}">
+              <div class="pm-form-field">
+                <label class="pm-form-label" for="sample-pattern-field-name">{{ t('sample.pattern_lab.fields.name') }}</label>
+                <input id="sample-pattern-field-name" class="pm-form-control" type="text" value="{{ t('sample.pattern_lab.field_set.name_value') }}">
+                <p class="pm-form-help">{{ t('sample.pattern_lab.field_set.name_help') }}</p>
+              </div>
+              <div class="pm-form-field">
+                <label class="pm-form-label" for="sample-pattern-field-note">{{ t('sample.pattern_lab.fields.note') }}</label>
+                <textarea id="sample-pattern-field-note" class="pm-form-control pm-form-textarea" rows="3">{{ t('sample.pattern_lab.field_set.note_value') }}</textarea>
+              </div>
+              <div class="pm-form-field pm-form-field--error">
+                <label class="pm-form-label" for="sample-pattern-field-visibility">{{ t('sample.pattern_lab.fields.visibility') }}</label>
+                <select id="sample-pattern-field-visibility" class="pm-form-control pm-form-control--error">
+                  <option selected>{{ t('sample.pattern_lab.field_set.visibility_default') }}</option>
+                  <option>{{ t('sample.pattern_lab.field_set.visibility_private') }}</option>
+                </select>
+                <p class="pm-form-error">{{ t('sample.pattern_lab.field_set.error') }}</p>
+              </div>
+              <div class="pm-form-field pm-form-field--disabled">
+                <label class="pm-form-label" for="sample-pattern-field-disabled">{{ t('sample.pattern_lab.fields.disabled') }}</label>
+                <input id="sample-pattern-field-disabled" class="pm-form-control" type="text" value="{{ t('sample.pattern_lab.field_set.disabled_value') }}" disabled>
+              </div>
+            </form>
+          </section>
+
+          <section class="pm-error-surface pm-surface-density--standard" aria-labelledby="sample-pattern-error-title">
+            <div class="pm-error-surface__body">
+              <span class="pm-error-surface__code">404</span>
+              <h3 id="sample-pattern-error-title" class="pm-error-surface__title">{{ t('sample.pattern_lab.error_surface.title') }}</h3>
+              <p class="pm-error-surface__text">{{ t('sample.pattern_lab.error_surface.body') }}</p>
+            </div>
+            <div class="pm-error-surface__actions pm-action-row">
+              <a href="#sample-entry-cards-title" class="pm-action-button pm-action-button--primary pm-action-button--medium">
+                <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.go_home') }}</span>
+              </a>
+              <a href="#sample-pattern-lab-title" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+                <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.back') }}</span>
+              </a>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="pm-entry-showcase__variant" aria-labelledby="sample-pattern-lab-surfaces-title">
+        <div class="pm-entry-showcase__heading">
+          <p id="sample-pattern-lab-surfaces-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">{{ t('sample.pattern_lab.group.surfaces.title') }}</p>
+          <p class="pm-entry-showcase__note">{{ t('sample.pattern_lab.group.surfaces.note') }}</p>
+        </div>
+
+        <div class="pm-pattern-lab__surface-grid">
+          <section class="pm-media-surface pm-surface-density--compact" aria-labelledby="sample-pattern-media-title">
+            <header class="pm-media-surface__header">
+              <div class="pm-profile-badge-row pm-media-surface__badges">
+                <span class="pm-research-meta-badge pm-research-meta-badge--detail">{{ t('sample.pattern_lab.media_surface.badge') }}</span>
+                <span class="pm-research-meta-badge pm-research-meta-badge--native-detail">ES-I-021</span>
+              </div>
+              <h3 id="sample-pattern-media-title" class="pm-media-surface__title">{{ t('sample.pattern_lab.media_surface.title') }}</h3>
+              <p class="pm-media-surface__meta">{{ t('sample.pattern_lab.media_surface.meta') }}</p>
+            </header>
+            <div class="pm-media-surface__controls">
+              <button type="button" class="pm-player-icon-button pm-media-surface__control" aria-label="{{ t('sample.pattern_lab.media_surface.play_label') }}">
+                <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+              </button>
+              <div class="pm-media-surface__progress" aria-hidden="true"></div>
+              <button type="button" class="pm-player-icon-button pm-media-surface__control" aria-label="{{ t('sample.pattern_lab.media_surface.download_label') }}">
+                <span class="material-symbols-rounded" aria-hidden="true">download</span>
+              </button>
+            </div>
+            <div class="pm-media-surface__footer pm-action-row">
+              <a href="#sample-pattern-lab-title" class="pm-action-button pm-action-button--secondary pm-action-button--small">
+                <span class="pm-action-button__label">{{ t('sample.pattern_lab.media_surface.action') }}</span>
+              </a>
+            </div>
+          </section>
+
+          <article class="pm-card pm-workbench-card pm-surface-density--standard" aria-labelledby="sample-pattern-workbench-title">
+            <div class="pm-card__body pm-workbench-card__body">
+              <div class="pm-workbench-card__header">
+                <div>
+                  <p class="pm-workbench-card__eyebrow">{{ t('sample.pattern_lab.workbench_card.eyebrow') }}</p>
+                  <h3 id="sample-pattern-workbench-title" class="pm-card__title">{{ t('sample.pattern_lab.workbench_card.title') }}</h3>
+                </div>
+                <span class="pm-research-meta-badge pm-research-meta-badge--detail pm-workbench-card__badge">{{ t('sample.pattern_lab.workbench_card.badge') }}</span>
+              </div>
+              <p class="pm-card__text">{{ t('sample.pattern_lab.workbench_card.body') }}</p>
+              <p class="pm-workbench-card__count">{{ t('sample.pattern_lab.workbench_card.count') }}</p>
+            </div>
+            <div class="pm-workbench-card__actions pm-card__divider-buffer pm-action-row">
+              {{ render_navigation_pill({ 'label': t('sample.pattern_lab.actions.view'), 'href': '#sample-pattern-workbench-title', 'size': 'small' }) }}
+              <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small">
+                <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.edit') }}</span>
+              </button>
+              <button type="button" class="pm-action-button pm-action-button--danger pm-action-button--small">
+                <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.delete') }}</span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </section>
+
   <section class="pm-sample-section pm-interaction-preview" aria-labelledby="sample-interaction-preview-title">
     <div class="pm-sample-section__header pm-reading">
       <h2 id="sample-interaction-preview-title" class="pm-sample-section__title">{{ promat_page.interaction_preview.title }}</h2>

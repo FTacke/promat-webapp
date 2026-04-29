@@ -91,6 +91,7 @@ function init() {
   const confirmMessage = document.querySelector("[data-phenomena-editor-confirm-message]");
   const confirmCancel = document.querySelector("[data-phenomena-editor-confirm-cancel]");
   const confirmSubmit = document.querySelector("[data-phenomena-editor-confirm-submit]");
+  const confirmSubmitLabel = document.querySelector("[data-phenomena-editor-confirm-submit-label]");
 
   const searchInputs = {
     wordlist: root.querySelector('[data-phenomena-source-search="wordlist"]'),
@@ -112,6 +113,38 @@ function init() {
   let pending = false;
   let confirmAction = null;
   let suppressBeforeUnload = false;
+
+  function showDialog(dialog) {
+    if (dialog && typeof dialog.showModal === "function" && !dialog.open) {
+      dialog.showModal();
+    }
+  }
+
+  function closeDialog(dialog) {
+    if (dialog && typeof dialog.close === "function" && dialog.open) {
+      dialog.close();
+    }
+  }
+
+  function resetConfirmDialog() {
+    confirmAction = null;
+    confirmDialog?.classList.remove("pm-dialog--danger");
+    confirmSubmit?.classList.remove("pm-action-button--danger");
+    confirmSubmit?.classList.add("pm-action-button--primary");
+    if (confirmTitle) {
+      confirmTitle.textContent = "";
+    }
+    if (confirmMessage) {
+      confirmMessage.textContent = "";
+    }
+    if (confirmSubmitLabel) {
+      confirmSubmitLabel.textContent = "";
+    }
+  }
+
+  function closePhenomenaDialogs() {
+    closeDialog(confirmDialog);
+  }
 
   function catalogs(taskKey) {
     return state.catalogsByTask[taskKey] || [];
@@ -485,8 +518,9 @@ function init() {
     renderAll();
   }
 
-  function openConfirm(title, message, confirmLabel, action) {
+  function openConfirm(title, message, confirmLabel, action, variant = "standard") {
     confirmAction = action;
+    confirmDialog?.classList.toggle("pm-dialog--danger", variant === "danger");
     if (confirmTitle) {
       confirmTitle.textContent = title;
     }
@@ -494,9 +528,13 @@ function init() {
       confirmMessage.textContent = message;
     }
     if (confirmSubmit) {
-      confirmSubmit.textContent = confirmLabel;
+      confirmSubmit.classList.toggle("pm-action-button--danger", variant === "danger");
+      confirmSubmit.classList.toggle("pm-action-button--primary", variant !== "danger");
     }
-    confirmDialog?.showModal();
+    if (confirmSubmitLabel) {
+      confirmSubmitLabel.textContent = confirmLabel;
+    }
+    showDialog(confirmDialog);
   }
 
   function navigateToOverview() {
@@ -521,7 +559,7 @@ function init() {
       }
       openConfirm(state.labels.discardTitle, state.labels.discardMessage, state.labels.confirmDiscard, () => {
         navigateToOverview();
-      });
+      }, "standard");
       return;
     }
 
@@ -534,7 +572,7 @@ function init() {
     openConfirm(title, message, confirmLabel, async () => {
       await requestJson(buildUrl(state.deleteSetUrlTemplate, record.set_id), { method: "DELETE" });
       navigateToOverview();
-    });
+    }, isSavedCustom ? "danger" : "standard");
   }
 
   titleInput.value = record.label || "";
@@ -690,24 +728,24 @@ function init() {
   });
 
   confirmCancel?.addEventListener("click", () => {
-    confirmAction = null;
-    confirmDialog?.close();
+    closeDialog(confirmDialog);
   });
+
+  confirmDialog?.addEventListener("close", resetConfirmDialog);
 
   confirmSubmit?.addEventListener("click", async () => {
     if (!confirmAction || pending) {
-      confirmDialog?.close();
+      closeDialog(confirmDialog);
       return;
     }
     pending = true;
     try {
       await confirmAction();
-      confirmDialog?.close();
+      closeDialog(confirmDialog);
     } catch (error) {
       showSnackbar(error.message || state.labels.delete, "error");
     } finally {
       pending = false;
-      confirmAction = null;
     }
   });
 
@@ -753,7 +791,10 @@ function init() {
     });
   }, true);
 
+  window.addEventListener("pagehide", closePhenomenaDialogs);
+
   window.addEventListener("beforeunload", (event) => {
+    closePhenomenaDialogs();
     if (suppressBeforeUnload || !isDirty()) {
       return;
     }
