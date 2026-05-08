@@ -14,7 +14,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .branding import BRANDING, format_page_title
 from .analytics import register_analytics
-from .i18n import resolve_ui_language, translate
+from .i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, normalize_supported_ui_language, resolve_request_ui_language, resolve_ui_language, translate
 from .extensions import register_extensions
 from .routes import register_blueprints
 from .runtime_paths import get_logs_dir
@@ -23,25 +23,18 @@ from .config import load_config
 
 def _resolve_request_ui_language() -> str:
     """Resolve UI language for routes that do not carry a ui_lang path segment."""
-    raw_value = (request.view_args or {}).get("ui_lang") or request.values.get("ui_lang")
-    if not raw_value:
-        for candidate in (
+    return resolve_request_ui_language(
+        path_ui_lang=(request.view_args or {}).get("ui_lang"),
+        explicit_ui_lang=request.values.get("lang") or request.values.get("ui_lang"),
+        stored_ui_lang=request.cookies.get(PREFERRED_UI_LANGUAGE_COOKIE_NAME),
+        next_candidates=(
             request.values.get("next"),
             request.args.get("next"),
             request.referrer,
             request.path,
-        ):
-            if not candidate:
-                continue
-            parsed = urlparse(unquote(candidate))
-            path = parsed.path or str(candidate)
-            if not path.startswith("/"):
-                continue
-            first_segment = path.lstrip("/").split("/", 1)[0]
-            if first_segment:
-                raw_value = first_segment
-                break
-    return resolve_ui_language(raw_value)
+        ),
+        accept_language=request.headers.get("Accept-Language"),
+    )
 
 
 def _path_has_ui_lang_prefix(path: str) -> bool:
@@ -69,7 +62,11 @@ def _rewrite_local_ui_lang_url(raw_url: str | None, target_ui_lang: str) -> str 
     if not path.startswith("/"):
         return raw_url
 
-    query_items = [(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "ui_lang"]
+    query_items = [
+        (key, value)
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key not in {"ui_lang", "lang"}
+    ]
     rewritten_items: list[tuple[str, str]] = []
     for key, value in query_items:
         if key == "next":
@@ -78,8 +75,6 @@ def _rewrite_local_ui_lang_url(raw_url: str | None, target_ui_lang: str) -> str 
             rewritten_items.append((key, value))
 
     rewritten_path = _swap_ui_lang_prefix(path, target_ui_lang) if _path_has_ui_lang_prefix(path) else path
-    if not _path_has_ui_lang_prefix(path):
-        rewritten_items.append(("ui_lang", target_ui_lang))
 
     return urlunsplit(("", "", rewritten_path, urlencode(rewritten_items, doseq=True), parsed.fragment))
 
@@ -87,7 +82,11 @@ def _rewrite_local_ui_lang_url(raw_url: str | None, target_ui_lang: str) -> str 
 def _build_ui_lang_switch_url(target_ui_lang: str) -> str:
     target_ui_lang = resolve_ui_language(target_ui_lang)
     path = request.path or "/"
-    query_items = [(key, value) for key, value in request.args.items(multi=True) if key != "ui_lang"]
+    query_items = [
+        (key, value)
+        for key, value in request.args.items(multi=True)
+        if key not in {"ui_lang", "lang"}
+    ]
     rewritten_items: list[tuple[str, str]] = []
     for key, value in query_items:
         if key == "next":
@@ -96,8 +95,7 @@ def _build_ui_lang_switch_url(target_ui_lang: str) -> str:
             rewritten_items.append((key, value))
 
     localized_path = _swap_ui_lang_prefix(path, target_ui_lang) if _path_has_ui_lang_prefix(path) else path
-    if not _path_has_ui_lang_prefix(path):
-        rewritten_items.append(("ui_lang", target_ui_lang))
+    rewritten_items.append(("lang", target_ui_lang))
 
     query = urlencode(rewritten_items, doseq=True)
     return f"{localized_path}?{query}" if query else localized_path
@@ -284,6 +282,21 @@ def register_context_processors(app: Flask) -> None:
             "t": lambda key, **kwargs: translate(current_ui_lang, key, **kwargs),
             **BRANDING,
         }
+
+    @app.after_request
+    def persist_explicit_ui_language(response):
+        selected_ui_lang = normalize_supported_ui_language(request.values.get("lang") or request.values.get("ui_lang"))
+        if selected_ui_lang is not None:
+            response.set_cookie(
+                PREFERRED_UI_LANGUAGE_COOKIE_NAME,
+                selected_ui_lang,
+                max_age=60 * 60 * 24 * 365,
+                httponly=True,
+                secure=bool(app.config.get("SESSION_COOKIE_SECURE", False)),
+                samesite=app.config.get("SESSION_COOKIE_SAMESITE", "Lax"),
+                path="/",
+            )
+        return response
 
     app.extensions["promat_context_processors_registered"] = True
 

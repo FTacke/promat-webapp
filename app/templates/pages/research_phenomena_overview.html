@@ -69,34 +69,27 @@
     </div>
   </section>
 
-  <dialog class="md3-dialog" data-phenomena-rename-dialog role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-rename-title">
-    <div class="md3-dialog__container">
-      <div class="md3-dialog__surface">
-        <header class="md3-dialog__header">
-          <h2 id="pm-phenomena-rename-title" class="md3-title-large md3-dialog__title">{{ t('research.phenomena.overview.rename_title') }}</h2>
-        </header>
-        <div class="md3-dialog__content md3-stack--dialog">
-          <form id="pm-phenomena-rename-form" class="md3-form" data-phenomena-rename-form>
-            <div class="md3-outlined-textfield md3-outlined-textfield--block">
-              <input type="text" id="pm-phenomena-rename-input" class="md3-outlined-textfield__input" data-phenomena-rename-input required>
-              <label class="md3-outlined-textfield__label" for="pm-phenomena-rename-input">{{ t('common.title') }}</label>
-              <div class="md3-outlined-textfield__outline">
-                <div class="md3-outlined-textfield__outline-start"></div>
-                <div class="md3-outlined-textfield__outline-notch"></div>
-                <div class="md3-outlined-textfield__outline-end"></div>
-              </div>
-            </div>
-          </form>
-          <p class="pm-workspace-dialog-message" data-phenomena-rename-error hidden></p>
-        </div>
-        <div class="md3-dialog__actions">
-          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-rename-cancel>
-            <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
-          </button>
-          <button type="submit" class="pm-action-button pm-action-button--primary pm-action-button--medium" form="pm-phenomena-rename-form">
-            <span class="pm-action-button__label">{{ t('common.actions.save') }}</span>
-          </button>
-        </div>
+  <dialog class="pm-dialog pm-surface-density--spacious" data-phenomena-rename-dialog role="dialog" aria-modal="true" aria-labelledby="pm-phenomena-rename-title" aria-describedby="pm-phenomena-rename-body">
+    <div class="pm-dialog__surface">
+      <header class="pm-dialog__header">
+        <h2 id="pm-phenomena-rename-title" class="pm-dialog__title">{{ t('research.phenomena.overview.rename_title') }}</h2>
+      </header>
+      <div id="pm-phenomena-rename-body" class="pm-dialog__body pm-dialog__body--form">
+        <form id="pm-phenomena-rename-form" class="pm-form" data-phenomena-rename-form>
+          <div class="pm-form-field">
+            <label class="pm-form-label" for="pm-phenomena-rename-input">{{ t('common.title') }}</label>
+            <input type="text" id="pm-phenomena-rename-input" class="pm-form-control" data-phenomena-rename-input required>
+          </div>
+        </form>
+        <p class="pm-form-error" data-phenomena-rename-error hidden></p>
+      </div>
+      <div class="pm-dialog__actions pm-action-row pm-action-row--end">
+        <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-rename-cancel>
+          <span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span>
+        </button>
+        <button type="submit" class="pm-action-button pm-action-button--primary pm-action-button--medium" form="pm-phenomena-rename-form">
+          <span class="pm-action-button__label">{{ t('common.actions.save') }}</span>
+        </button>
       </div>
     </div>
   </dialog>

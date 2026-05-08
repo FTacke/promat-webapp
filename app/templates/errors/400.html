@@ -1,35 +1,25 @@
 {% extends "base.html" %}
 
-{% block page_title %}{{ format_page_title('400 - Ungültige Anfrage') }}{% endblock %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/errors.css') }}">
-{% endblock %}
+{% block page_title %}{{ format_page_title(t('errors.400.page_title')) }}{% endblock %}
 
 {% block content %}
-<div class="md3-error-page">
-  <div class="md3-error-container">
-    <div class="md3-error-icon">
-      <span class="material-symbols-rounded">warning</span>
-    </div>
-    
-    <h1 class="md3-error-code md3-display-large">400</h1>
-    <h2 class="md3-error-title md3-headline-medium">Ungültige Anfrage</h2>
-    
-    <p class="md3-error-message md3-body-large">
-      Die Anfrage konnte nicht verarbeitet werden.
-    </p>
-    
-    <div class="md3-error-actions">
-      <a href="{{ url_for('public.landing_page') }}" class="pm-action-button pm-action-button--primary pm-action-button--medium">
-        <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">home</span>
-        <span class="pm-action-button__label">Zur Startseite</span>
-      </a>
-      <a href="javascript:history.back()" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
-        <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">arrow_back</span>
-        <span class="pm-action-button__label">Erneut versuchen</span>
-      </a>
+<section class="pm-feature-band" aria-labelledby="pm-error-title">
+  <div class="pm-container">
+    <div class="pm-error-surface pm-surface-density--standard">
+      <div class="pm-error-surface__body">
+        <span class="pm-error-surface__code">400</span>
+        <h1 id="pm-error-title" class="pm-error-surface__title">{{ t('errors.400.title') }}</h1>
+        <p class="pm-error-surface__text">{{ t('errors.400.message') }}</p>
+      </div>
+      <div class="pm-error-surface__actions pm-action-row">
+        <a href="{{ url_for('public.landing_page') }}" class="pm-action-button pm-action-button--primary pm-action-button--medium">
+          <span class="pm-action-button__label">{{ t('common.actions.home') }}</span>
+        </a>
+        <a href="javascript:history.back()" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+          <span class="pm-action-button__label">{{ t('common.actions.back') }}</span>
+        </a>
+      </div>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}

@@ -331,9 +331,17 @@ def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: F
     delete_start = html.rfind("<dialog", 0, html.index('data-phenomena-delete-dialog'))
     rename_slice = html[rename_start:delete_start]
     delete_slice = html[delete_start:]
-    assert 'class="md3-dialog"' in rename_slice
-    assert 'md3-form' in rename_slice
-    assert 'md3-outlined-textfield' in rename_slice
+    assert 'class="pm-dialog pm-surface-density--spacious" data-phenomena-rename-dialog' in rename_slice
+    assert 'class="pm-dialog__title"' in rename_slice
+    assert 'class="pm-form"' in rename_slice
+    assert 'class="pm-form-field"' in rename_slice
+    assert 'class="pm-form-label" for="pm-phenomena-rename-input"' in rename_slice
+    assert 'class="pm-form-control" data-phenomena-rename-input' in rename_slice
+    assert 'class="pm-form-error" data-phenomena-rename-error' in rename_slice
+    assert 'pm-dialog__actions pm-action-row pm-action-row--end' in rename_slice
+    assert 'md3-dialog' not in rename_slice
+    assert 'md3-form' not in rename_slice
+    assert 'md3-outlined-textfield' not in rename_slice
     assert 'class="pm-dialog pm-dialog--danger pm-surface-density--compact" data-phenomena-delete-dialog' in delete_slice
     assert 'pm-object-summary' in delete_slice
     assert 'data-phenomena-delete-object' in delete_slice

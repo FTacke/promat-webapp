@@ -13,7 +13,7 @@ from sqlalchemy import text
 from ..auth import Role
 from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
-from ..i18n import resolve_ui_language
+from ..i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, resolve_request_ui_language, resolve_ui_language
 from ..research_capabilities import get_research_page_surface_mode
 from ..research_access import requires_research_auth
 from ..research_phenomena_views import (
@@ -212,19 +212,12 @@ def _render_access_request_page(*, next_url: str, form_values: dict[str, Any] | 
 
 
 def _resolve_auth_ui_lang(next_value: str | None = None) -> str:
-    raw_value = request.args.get("ui_lang") or request.values.get("ui_lang")
-    if not raw_value:
-        for candidate in (next_value, request.referrer, request.path):
-            if not candidate:
-                continue
-            parsed = urlparse(unquote(candidate))
-            path = parsed.path or str(candidate)
-            if not path.startswith("/"):
-                continue
-            raw_value = path.lstrip("/").split("/", 1)[0]
-            if raw_value:
-                break
-    return resolve_ui_language(raw_value)
+    return resolve_request_ui_language(
+        explicit_ui_lang=request.values.get("lang") or request.values.get("ui_lang"),
+        stored_ui_lang=request.cookies.get(PREFERRED_UI_LANGUAGE_COOKIE_NAME),
+        next_candidates=(next_value, request.referrer, request.path),
+        accept_language=request.headers.get("Accept-Language"),
+    )
 
 
 def _require_research_route_access(*, page_slug: str | None = None, detail_route: str | None = None):
@@ -934,7 +927,13 @@ def _sample_speaker_cards(ui_lang: str) -> list[dict[str, Any]]:
 
 @blueprint.get("/")
 def landing_page():
-    return _redirect(url_for("public.localized_landing_page", ui_lang=DEFAULT_UI_LANGUAGE))
+    ui_lang = resolve_request_ui_language(
+        explicit_ui_lang=request.values.get("lang") or request.values.get("ui_lang"),
+        stored_ui_lang=request.cookies.get(PREFERRED_UI_LANGUAGE_COOKIE_NAME),
+        next_candidates=(request.referrer, request.path),
+        accept_language=request.headers.get("Accept-Language"),
+    )
+    return _redirect(url_for("public.localized_landing_page", ui_lang=ui_lang))
 
 
 @blueprint.get("/<ui_lang>")

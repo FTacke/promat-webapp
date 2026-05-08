@@ -57,6 +57,12 @@ body.app-shell.page-landing .md3-content-wrapper {
   align-content: start;
 }
 
+.landing-page__utility {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
 .landing-hero {
   display: grid;
   justify-items: center;

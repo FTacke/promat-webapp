@@ -37,7 +37,7 @@ function currentUiLangFromLocation(currentHref = null, baseOrigin = null) {
   if (matchedPath) {
     return resolveUiLang(matchedPath[1]);
   }
-  const queryUiLang = currentUrl.searchParams.get("ui_lang") || "";
+  const queryUiLang = currentUrl.searchParams.get("lang") || currentUrl.searchParams.get("ui_lang") || "";
   if (SUPPORTED_UI_LANGS.has(queryUiLang)) {
     return queryUiLang;
   }
@@ -74,9 +74,7 @@ function rewriteLocalUiLangUrl(rawUrl, targetUiLang, baseOrigin = null) {
     : (parsed.pathname || "/");
   const searchParams = new URLSearchParams(parsed.search);
   searchParams.delete("ui_lang");
-  if (!pathHasUiLangPrefix(parsed.pathname)) {
-    searchParams.set("ui_lang", normalizedUiLang);
-  }
+  searchParams.delete("lang");
   if (searchParams.has("next")) {
     const nextValue = searchParams.get("next") || "";
     searchParams.set("next", rewriteLocalUiLangUrl(nextValue, normalizedUiLang, origin) || nextValue);
@@ -94,6 +92,7 @@ export function buildUiLangSwitchUrl(targetUiLang, currentHref = null, baseOrigi
   const searchParams = new URLSearchParams(currentUrl.search);
 
   searchParams.delete("ui_lang");
+  searchParams.delete("lang");
   if (searchParams.has("next")) {
     const nextValue = searchParams.get("next") || "";
     searchParams.set("next", rewriteLocalUiLangUrl(nextValue, normalizedUiLang, origin) || nextValue);
@@ -102,9 +101,7 @@ export function buildUiLangSwitchUrl(targetUiLang, currentHref = null, baseOrigi
   const localizedPath = pathHasUiLangPrefix(currentUrl.pathname)
     ? swapUiLangPrefix(currentUrl.pathname, normalizedUiLang)
     : (currentUrl.pathname || "/");
-  if (!pathHasUiLangPrefix(currentUrl.pathname)) {
-    searchParams.set("ui_lang", normalizedUiLang);
-  }
+  searchParams.set("lang", normalizedUiLang);
 
   const query = searchParams.toString();
   return `${localizedPath}${query ? `?${query}` : ""}${currentUrl.hash || ""}`;

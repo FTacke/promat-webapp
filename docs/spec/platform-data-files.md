@@ -100,6 +100,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Technical slugs and route segments stay English.
 - UI language and technical routing language must not be mixed.
 - The public login surface stays on `/login`, while mutating auth actions stay under `/auth/*`.
+- For routes without a `/{ui_lang}` path prefix such as `/`, `/login`, and `/access-request`, UI language resolution follows one shared priority order: explicit `lang` or `ui_lang` URL value first, then a stored user preference, then local route-context hints such as `next` or same-app referrer language, then `Accept-Language` with `de*` mapping to `de` and all other values falling back to `en`.
 - PROMAT login is email-only. Public username login and self-registration are not part of the active product contract.
 - Public access requests use the canonical `/access-request` page and store one request record in the auth/core database instead of sending users to a `mailto` draft.
 - The canonical public access-request form requires at least first name, last name, institution, role or function, institutional email address, purpose of use, and one explicit confirmation of the data-protection and confidentiality obligations for pseudonymized research data.
@@ -128,6 +129,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 
 - All public non-landing inner pages use the same shared app shell.
 - The landing page is the only public layout exception.
+- The landing page still reuses the shared compact `DE | EN` language-switch component, but it renders that control in a small landing utility container instead of showing the full global topbar.
 - The shared inner shell keeps the global topbar as the stable upper level and the local page shell below it.
 - If the authenticated account menu exists in the global topbar, it stays closed by default, opens only on explicit trigger activation, closes again on outside click, `Escape`, trigger re-click, and navigation, and must not persist a sticky-open state across reloads or page transitions.
 - In the authenticated topbar user menu, `Mein Konto`/`My account` is always present, `Admin-Bereich`/`Admin area` appears only for admins and leads directly to `/admin/users/page`, and `Logout` stays the final item.

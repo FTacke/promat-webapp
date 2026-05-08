@@ -918,8 +918,8 @@ def test_research_overview_topbar_exposes_route_preserving_language_switch(url_a
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "promat-topbar__language-switch" in html
-    assert 'href="/de/research"' in html
-    assert 'href="/en/research"' in html
+    assert 'href="/de/research?lang=de"' in html
+    assert 'href="/en/research?lang=en"' in html
     assert "pm-icon-mask--language" not in html
     assert html.index("promat-topbar__language-switch") < html.index('id="themeToggle"') < html.index("pm-icon-mask--login")
 
@@ -955,7 +955,7 @@ def test_player_topbar_language_switch_preserves_compare_and_render_query(url_ap
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert (
-        f'href="/en/research/spanish/player/{primary_session_id}/text?source=recordings&amp;compare_session={compare_session_id}&amp;render_mode=sentence_list"'
+        f'href="/en/research/spanish/player/{primary_session_id}/text?source=recordings&amp;compare_session={compare_session_id}&amp;render_mode=sentence_list&amp;lang=en"'
         in html
     )
 
@@ -1485,7 +1485,7 @@ def test_project_pages_render_new_navigation_without_intro_blocks(
     assert f'href="/{ui_lang}/project/structure"' in html
     assert f'href="/{ui_lang}/project/data-methods"' in html
     assert f'href="/{ui_lang}/project/team"' in html
-    assert f'href="/{"en" if ui_lang == "de" else "de"}/project/{page_slug}"' in html
+    assert f'href="/{"en" if ui_lang == "de" else "de"}/project/{page_slug}?lang={"en" if ui_lang == "de" else "de"}"' in html
     assert f'href="/{ui_lang}/project/research-design"' not in html
     assert f'>{legacy_label}<' not in html
 

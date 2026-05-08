@@ -1,0 +1,15 @@
+<div class="promat-topbar__language-switch" role="group" aria-label="{{ t('shell.topbar.language_switch') }}">
+  <a href="{{ ui_lang_switch_urls.de }}"
+     data-ui-lang-link="de"
+     class="promat-topbar__language-link {{ 'is-active' if current_ui_lang == 'de' else '' }}"
+     {% if current_ui_lang == 'de' %}aria-current="page"{% endif %}
+     title="{{ t('shell.topbar.language_current', language=t('shell.topbar.language_de')) if current_ui_lang == 'de' else t('shell.topbar.language_switch_to', language=t('shell.topbar.language_de')) }}"
+     lang="de">DE</a>
+  <span class="promat-topbar__language-separator" aria-hidden="true">|</span>
+  <a href="{{ ui_lang_switch_urls.en }}"
+     data-ui-lang-link="en"
+     class="promat-topbar__language-link {{ 'is-active' if current_ui_lang == 'en' else '' }}"
+     {% if current_ui_lang == 'en' %}aria-current="page"{% endif %}
+     title="{{ t('shell.topbar.language_current', language=t('shell.topbar.language_en')) if current_ui_lang == 'en' else t('shell.topbar.language_switch_to', language=t('shell.topbar.language_en')) }}"
+     lang="en">EN</a>
+</div>

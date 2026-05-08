@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from urllib.parse import unquote, urlparse
 
 
 DEFAULT_UI_LANGUAGE = "de"
 SUPPORTED_UI_LANGUAGES: tuple[str, ...] = ("de", "en")
+PREFERRED_UI_LANGUAGE_COOKIE_NAME = "pm_ui_lang"
+AUTO_UI_LANGUAGE_FALLBACK = "en"
 
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
@@ -169,6 +172,16 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav.open_corpus": "Korpus öffnen",
         "nav.open_materials": "Materialien öffnen",
         "nav.open_page": "Seite öffnen",
+        "landing.intro": "Fremdsprachen digital erforschen und lehren.",
+        "landing.cards.aria_label": "Zentrale Einstiege",
+        "landing.research.title": "Aussprache erforschen",
+        "landing.research.text": "Empirische Sprachdaten zur Aussprache von Lernenden und Analysetools für Forschung und Hochschullehre.",
+        "landing.research.link": "Zur Forschung",
+        "landing.research.image_alt": "Forschungssituation mit Besprechung und Audioanalyse auf einem Laptop",
+        "landing.teaching.title": "Aussprache unterrichten",
+        "landing.teaching.text": "Praxisnahe Materialien zur Übung und Reflexion von Aussprache im Fremdsprachenunterricht.",
+        "landing.teaching.link": "Zum Unterricht",
+        "landing.teaching.image_alt": "Unterrichtssituation im Klassenraum als Motiv für Materialien und Hörbeispiele",
         "project.about": "Worum es geht",
         "project.structure": "Projektaufbau",
         "project.research-design": "Forschungsdesign",
@@ -576,6 +589,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "errors.401.page_title": "401 - Nicht autorisiert",
         "errors.401.title": "Nicht autorisiert",
         "errors.401.message": "Diese Ressource ist nur nach Anmeldung verfügbar.",
+        "errors.400.page_title": "400 - Ungültige Anfrage",
+        "errors.400.title": "Ungültige Anfrage",
+        "errors.400.message": "Die Anfrage konnte nicht verarbeitet werden.",
         "errors.403.page_title": "403 - Zugriff verweigert",
         "errors.403.title": "Zugriff verweigert",
         "errors.403.message": "Sie haben keine Berechtigung für diese Seite.",
@@ -1013,6 +1029,16 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "nav.open_corpus": "Open corpus",
         "nav.open_materials": "Open materials",
         "nav.open_page": "Open page",
+        "landing.intro": "Exploring and teaching foreign languages digitally.",
+        "landing.cards.aria_label": "Core entry points",
+        "landing.research.title": "Research pronunciation",
+        "landing.research.text": "Empirical speech data on learner pronunciation and analysis tools for research and university teaching.",
+        "landing.research.link": "Go to research",
+        "landing.research.image_alt": "Research setting with a discussion and audio analysis on a laptop",
+        "landing.teaching.title": "Teach pronunciation",
+        "landing.teaching.text": "Teaching materials for practising and reflecting on pronunciation in foreign language education.",
+        "landing.teaching.link": "Go to teaching",
+        "landing.teaching.image_alt": "Classroom scene representing teaching materials and listening examples",
         "project.about": "What this project is about",
         "project.structure": "Project structure",
         "project.research-design": "Research Design",
@@ -1420,6 +1446,9 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "errors.401.page_title": "401 - Unauthorized",
         "errors.401.title": "Unauthorized",
         "errors.401.message": "This resource is available only after sign-in.",
+        "errors.400.page_title": "400 - Bad request",
+        "errors.400.title": "Bad request",
+        "errors.400.message": "The request could not be processed.",
         "errors.403.page_title": "403 - Access denied",
         "errors.403.title": "Access denied",
         "errors.403.message": "You do not have permission to access this page.",
@@ -1705,6 +1734,57 @@ def resolve_ui_language(ui_lang: str | None) -> str:
     if isinstance(ui_lang, str) and ui_lang in SUPPORTED_UI_LANGUAGES:
         return ui_lang
     return DEFAULT_UI_LANGUAGE
+
+
+def normalize_supported_ui_language(ui_lang: str | None) -> str | None:
+    if not isinstance(ui_lang, str):
+        return None
+    candidate = ui_lang.strip().lower()
+    if candidate in SUPPORTED_UI_LANGUAGES:
+        return candidate
+    return None
+
+
+def extract_ui_language_from_local_path(candidate: str | None) -> str | None:
+    if not candidate:
+        return None
+    parsed = urlparse(unquote(candidate))
+    path = parsed.path or str(candidate)
+    if not path.startswith("/"):
+        return None
+    first_segment = path.lstrip("/").split("/", 1)[0]
+    return normalize_supported_ui_language(first_segment)
+
+
+def infer_ui_language_from_accept_language(accept_language: str | None) -> str:
+    primary_language = ((accept_language or "").split(",", 1)[0]).strip().lower()
+    if primary_language.startswith("de"):
+        return "de"
+    return AUTO_UI_LANGUAGE_FALLBACK
+
+
+def resolve_request_ui_language(
+    *,
+    path_ui_lang: str | None = None,
+    explicit_ui_lang: str | None = None,
+    stored_ui_lang: str | None = None,
+    next_candidates: tuple[str | None, ...] = (),
+    accept_language: str | None = None,
+) -> str:
+    for candidate in (
+        normalize_supported_ui_language(path_ui_lang),
+        normalize_supported_ui_language(explicit_ui_lang),
+        normalize_supported_ui_language(stored_ui_lang),
+    ):
+        if candidate is not None:
+            return candidate
+
+    for candidate in next_candidates:
+        resolved = extract_ui_language_from_local_path(candidate)
+        if resolved is not None:
+            return resolved
+
+    return infer_ui_language_from_accept_language(accept_language)
 
 
 def translate(ui_lang: str | None, key: str, **kwargs: object) -> str:

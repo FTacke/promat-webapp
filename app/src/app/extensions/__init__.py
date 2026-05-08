@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from urllib.parse import unquote, urlparse
-
 from flask import Flask, jsonify, request
 from flask_caching import Cache
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from ..i18n import resolve_ui_language, translate
+from ..i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, resolve_request_ui_language, translate
 
 jwt = JWTManager()
 limiter = Limiter(
@@ -23,24 +21,18 @@ cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300}
 
 
 def _resolve_auth_ui_language() -> str:
-    raw_value = (request.view_args or {}).get("ui_lang") or request.values.get("ui_lang")
-    if not raw_value:
-        for candidate in (
+    return resolve_request_ui_language(
+        path_ui_lang=(request.view_args or {}).get("ui_lang"),
+        explicit_ui_lang=request.values.get("lang") or request.values.get("ui_lang"),
+        stored_ui_lang=request.cookies.get(PREFERRED_UI_LANGUAGE_COOKIE_NAME),
+        next_candidates=(
             request.values.get("next"),
             request.args.get("next"),
             request.referrer,
             request.path,
-        ):
-            if not candidate:
-                continue
-            parsed = urlparse(unquote(candidate))
-            path = parsed.path or str(candidate)
-            if not path.startswith("/"):
-                continue
-            raw_value = path.lstrip("/").split("/", 1)[0]
-            if raw_value:
-                break
-    return resolve_ui_language(raw_value)
+        ),
+        accept_language=request.headers.get("Accept-Language"),
+    )
 
 
 def register_extensions(app: Flask) -> None:

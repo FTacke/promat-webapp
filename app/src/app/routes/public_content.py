@@ -341,30 +341,27 @@ def build_start_page(ui_lang: str) -> dict[str, Any]:
     return {
         "title": "Pronunciation Matters",
         "layout": "landing",
-        "intro": (
-            "Lernendenaussprache erforschen, Unterricht gestalten – in Englisch, Französisch, "
-            "Spanisch und Deutsch."
-        ),
+        "intro": get_text(ui_lang, "landing.intro"),
         "page_kind": "landing",
         "more_link": {"label": get_text(ui_lang, "nav.more"), "href_key": "project_root"},
         "landing_cards": [
             {
                 "entry_kind": "research",
-                "title": "Aussprache erforschen",
-                "text": "Korpora mit authentischen Sprachdaten und klar getrennten Forschungszugängen.",
+                "title": get_text(ui_lang, "landing.research.title"),
+                "text": get_text(ui_lang, "landing.research.text"),
                 "href_key": "research_root",
-                "link_label": "Zur Forschung",
-                "image_asset": "img/cards/forschung_01.png",
-                "image_alt": "Forschungssituation mit Besprechung und Audioanalyse auf einem Laptop",
+                "link_label": get_text(ui_lang, "landing.research.link"),
+                "image_asset": "img/cards/research_title_image.jpg",
+                "image_alt": get_text(ui_lang, "landing.research.image_alt"),
             },
             {
                 "entry_kind": "teaching",
-                "title": "Aussprache unterrichten",
-                "text": "Anschauliche Materialien mit frei zugänglichen Medien und vorbereiteten Unterrichtspfaden.",
+                "title": get_text(ui_lang, "landing.teaching.title"),
+                "text": get_text(ui_lang, "landing.teaching.text"),
                 "href_key": "teaching_root",
-                "link_label": "Zum Unterricht",
+                "link_label": get_text(ui_lang, "landing.teaching.link"),
                 "image_asset": "img/cards/unterricht_01.png",
-                "image_alt": "Unterrichtssituation im Klassenraum als Motiv für Materialien und Hörbeispiele",
+                "image_alt": get_text(ui_lang, "landing.teaching.image_alt"),
             },
         ],
         "sections": [],

@@ -110,6 +110,10 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
     def auth_test_unauthorized_html() -> str:
         abort(401)
 
+    @app.get("/auth-test/bad-request")
+    def auth_test_bad_request_html() -> str:
+        abort(400)
+
     @app.get("/api/auth-test/unauthorized")
     def auth_test_unauthorized_json() -> str:
         abort(401)
@@ -214,6 +218,78 @@ def test_login_page_links_to_request_form_in_german(auth_app: Flask) -> None:
     assert 'pm-action-button pm-action-button--tertiary pm-action-button--medium pm-auth-action-link' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
     assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-auth-secondary__action-link' in html
+
+
+@pytest.mark.parametrize(
+    ("accept_language", "expected_target"),
+    [
+        ("de-DE,de;q=0.9,en;q=0.8", "/de"),
+        ("en-US,en;q=0.9,de;q=0.8", "/en"),
+        ("fr-FR,fr;q=0.9,de;q=0.8", "/en"),
+    ],
+)
+def test_root_landing_redirect_uses_accept_language_when_no_override(
+    auth_app: Flask,
+    accept_language: str,
+    expected_target: str,
+) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/", headers={"Accept-Language": accept_language})
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == expected_target
+
+
+def test_explicit_lang_query_overrides_stored_preference_on_root(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    first_response = client.get("/login?lang=en")
+    assert first_response.status_code == 200
+    assert "pm_ui_lang=en" in "\n".join(first_response.headers.getlist("Set-Cookie"))
+
+    response = client.get("/?lang=de", headers={"Accept-Language": "en-US,en;q=0.9"})
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/de"
+    assert "pm_ui_lang=de" in "\n".join(response.headers.getlist("Set-Cookie"))
+
+
+def test_stored_ui_language_overrides_accept_language_on_unprefixed_auth_route(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    first_response = client.get("/login?lang=de")
+    assert first_response.status_code == 200
+    assert "pm_ui_lang=de" in "\n".join(first_response.headers.getlist("Set-Cookie"))
+
+    response = client.get("/login", headers={"Accept-Language": "en-US,en;q=0.9"})
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Zum Anfrageformular" in html
+    assert "Zugang zu den Forschungskorpora wird über ein kurzes Formular angefragt" in html
+
+
+def test_landing_page_renders_english_copy_and_shared_language_switch(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Exploring and teaching foreign languages digitally." in html
+    assert "Research pronunciation" in html
+    assert "Empirical speech data and analysis tools for research and university teaching." in html
+    assert "Go to research" in html
+    assert "Research setting with a discussion and audio analysis on a laptop" in html
+    assert "Teach pronunciation" in html
+    assert "Practice-oriented materials for teaching, practising, and reflecting on pronunciation." in html
+    assert "Go to teaching" in html
+    assert "Classroom scene representing teaching materials and listening examples" in html
+    assert 'class="promat-topbar__language-switch"' in html
+    assert 'href="/de?lang=de"' in html
+    assert 'href="/en?lang=en"' in html
+    assert '<header id="top-app-bar">' not in html
 
 
 @pytest.mark.parametrize(
@@ -437,13 +513,37 @@ def test_protected_api_route_without_auth_returns_json_401(auth_app: Flask) -> N
 def test_generic_html_401_renders_error_page(auth_app: Flask) -> None:
     client = auth_app.test_client()
 
-    response = client.get("/auth-test/unauthorized")
+    response = client.get("/auth-test/unauthorized?lang=de")
 
     assert response.status_code == 401
     html = response.get_data(as_text=True)
     assert "Nicht autorisiert" in html
+    assert 'pm-error-surface pm-surface-density--standard' in html
+    assert 'pm-error-surface__code">401<' in html
+    assert 'pm-error-surface__actions pm-action-row' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
     assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert "md3-error-page" not in html
+    assert "md3-error-container" not in html
+    assert "md3-button" not in html
+
+
+def test_generic_html_400_renders_error_page(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/auth-test/bad-request?lang=de")
+
+    assert response.status_code == 400
+    html = response.get_data(as_text=True)
+    assert "Ungültige Anfrage" in html
+    assert "Die Anfrage konnte nicht verarbeitet werden." in html
+    assert 'pm-error-surface pm-surface-density--standard' in html
+    assert 'pm-error-surface__code">400<' in html
+    assert 'pm-error-surface__actions pm-action-row' in html
+    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
+    assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert "md3-error-page" not in html
+    assert "md3-error-container" not in html
     assert "md3-button" not in html
 
 
@@ -463,19 +563,25 @@ def test_generic_api_401_returns_json_error(auth_app: Flask) -> None:
 def test_generic_html_403_renders_error_page(auth_app: Flask) -> None:
     client = auth_app.test_client()
 
-    response = client.get("/auth-test/forbidden")
+    response = client.get("/auth-test/forbidden?lang=de")
 
     assert response.status_code == 403
     html = response.get_data(as_text=True)
     assert "Zugriff verweigert" in html
+    assert 'pm-error-surface pm-surface-density--standard' in html
+    assert 'pm-error-surface__code">403<' in html
+    assert 'pm-error-surface__actions pm-action-row' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
     assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert "md3-error-page" not in html
+    assert "md3-error-container" not in html
     assert "md3-button" not in html
 
 
 @pytest.mark.parametrize(
     ("path", "expected_status", "expected_title", "expected_message", "expected_primary_label", "expected_secondary_label"),
     [
+        ("/auth-test/bad-request?ui_lang=en", 400, "Bad request", "The request could not be processed.", "Back to home", "Back"),
         ("/auth-test/unauthorized?ui_lang=en", 401, "Unauthorized", "This resource is available only after sign-in.", "Login", "Back to home"),
         ("/auth-test/forbidden?ui_lang=en", 403, "Access denied", "You do not have permission to access this page.", "Back to home", "Back"),
         ("/en/missing-page", 404, "Page not found", "The requested page does not exist or has been moved.", "Back to home", "Back"),
@@ -501,8 +607,12 @@ def test_error_pages_render_english_shared_copy(
     assert expected_message in html
     assert f'>{expected_primary_label}<' in html
     assert f'>{expected_secondary_label}<' in html
+    assert 'pm-error-surface pm-surface-density--standard' in html
+    assert 'pm-error-surface__actions pm-action-row' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
     assert 'pm-action-button pm-action-button--secondary pm-action-button--medium' in html
+    assert "md3-error-page" not in html
+    assert "md3-error-container" not in html
     assert "md3-button" not in html
 
 
@@ -728,7 +838,7 @@ def test_account_page_renders_real_account_surface_for_user(auth_app: Flask) -> 
     assert "Save account details" in html
     assert "Change password" in html
     assert "app-shell--panel-hidden" in html
-    assert 'href="/auth/account?ui_lang=de"' in html
+    assert 'href="/auth/account?lang=de"' in html
     assert 'href="/auth/account?ui_lang=en"' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
     assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium' in html
@@ -774,7 +884,7 @@ def test_admin_users_page_uses_sidebar_only_for_admin_area_navigation(auth_app: 
     assert "My account" not in drawer_html
     assert "Logout" not in drawer_html
     assert 'pm-panel__section-icon pm-icon-mask pm-icon-mask--section' in drawer_html
-    assert 'href="/admin/users/page?ui_lang=de"' in html
+    assert 'href="/admin/users/page?lang=de"' in html
     assert 'href="/admin/users/page?ui_lang=en"' in html
     assert "My account" in user_menu_html
     assert "Admin area" in user_menu_html

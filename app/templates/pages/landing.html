@@ -7,6 +7,10 @@
 <article class="landing-page pm-content pm-content--landing" aria-labelledby="landing-wordmark">
   {% set wordmark_parts = app_display_name.rsplit(' ', 1) %}
 
+  <div class="landing-page__utility" aria-label="{{ t('shell.topbar.language_switch') }}">
+    {% include 'partials/_ui_lang_switch.html' %}
+  </div>
+
   <section class="landing-hero">
     <h1 id="landing-wordmark" class="landing-wordmark">
       {% if wordmark_parts | length > 1 %}
@@ -24,7 +28,7 @@
     {% endif %}
   </section>
 
-  <section class="landing-grid" aria-label="Zentrale Einstiege">
+  <section class="landing-grid" aria-label="{{ t('landing.cards.aria_label') }}">
     {% for card in promat_page.landing_cards | default([]) %}
     <a class="landing-card pm-card pm-card--entry pm-card--entry-{{ card.entry_kind }} pm-card--with-image" href="{{ card.href }}">
       <div class="pm-card__image">
