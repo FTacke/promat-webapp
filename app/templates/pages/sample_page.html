@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% from 'partials/_admonition.html' import render_admonition %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
 {% from 'partials/_pm_interactions.html' import render_cta_link, render_cta_link_visual, render_interaction_item, render_navigation_pill %}
@@ -9,6 +10,19 @@
 <article class="promat-page promat-page--sample pm-content pm-sample" aria-labelledby="promat-page-title">
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
+
+  <section class="pm-sample-section" aria-labelledby="sample-admonitions-title">
+    <div class="pm-sample-section__header pm-reading">
+      <h2 id="sample-admonitions-title" class="pm-sample-section__title">{{ t('sample.admonitions.title') }}</h2>
+      <p class="pm-sample-section__intro">{{ t('sample.admonitions.intro') }}</p>
+    </div>
+
+    <div class="pm-admonition-stack">
+      {% for item in promat_page.sample_admonitions %}
+      {{ render_admonition(item) }}
+      {% endfor %}
+    </div>
+  </section>
 
   <section class="pm-sample-section pm-pattern-lab" aria-labelledby="sample-pattern-lab-title" data-sample-pattern-lab>
     <div class="pm-sample-section__header pm-reading">
@@ -860,55 +874,6 @@
     </div>
   </section>
 
-  <section class="pm-sample-section" aria-labelledby="sample-admonitions-title">
-    <div class="pm-sample-section__header pm-reading">
-      <h2 id="sample-admonitions-title" class="pm-sample-section__title">Admonitions</h2>
-      <p class="pm-sample-section__intro">Diese Beispiele bleiben stilistisch unverändert und zeigen die didaktische, nicht navigative Rolle der Admonitions innerhalb derselben Gesamtlogik.</p>
-    </div>
-
-    <div class="pm-admonition-stack pm-reading">
-      <aside class="pm-admonition pm-admonition--hoermal admonition hoermal">
-        <p class="admonition-title">hoermal</p>
-        <p>Ein Hörbeispiel lenkt auf die Differenz zwischen moderierter Standardsprache und spontaner Interaktion.</p>
-      </aside>
-
-      <aside class="pm-admonition pm-admonition--regel admonition regel">
-        <p class="admonition-title">regel</p>
-        <p>Vergleichsaussagen bleiben nur belastbar, wenn Transkription, Kontext und Auswahlkriterium sichtbar bleiben.</p>
-      </aside>
-
-      <aside class="pm-admonition pm-admonition--tip admonition tip">
-        <p class="admonition-title">tip</p>
-        <p>Für die Lehre lohnt es sich, dieselbe Passage zuerst ohne und dann mit Transkript hören zu lassen.</p>
-      </aside>
-
-      <aside class="pm-admonition pm-admonition--praxis admonition praxis">
-        <p class="admonition-title">praxis</p>
-        <p>Im Unterricht kann eine kurze Nachsprechphase an eine Variationserklärung angeschlossen werden, ohne die Analyse zu überfrachten.</p>
-      </aside>
-
-      <aside class="pm-admonition pm-admonition--context admonition context">
-        <p class="admonition-title">context</p>
-        <p>Die gleiche phonetische Erscheinung kann in Forschung und Lehre unterschiedliche Zugriffstiefen verlangen, bleibt aber an dieselbe Datengrundlage gebunden.</p>
-      </aside>
-
-      <aside class="pm-admonition pm-admonition--cite admonition cite">
-        <p class="admonition-title">cite</p>
-        <p>Tacke, Felix et al. Pronunciation Matters. Marburg, 2026. Zitierfähiger Verweis für Projektseiten und Materialien.</p>
-      </aside>
-
-      <aside class="pm-admonition pm-admonition--summary admonition summary">
-        <p class="admonition-title">summary</p>
-        <p>Zusammenfassende Container schließen einen Abschnitt ruhig ab und tragen keine Navigationsfunktion.</p>
-      </aside>
-
-      <aside class="pm-admonition pm-admonition--weiterlesen admonition weiterlesen">
-        <p class="admonition-title">weiterlesen</p>
-        <p>Weiterführende Literatur und Materialhinweise stehen am Ende eines Abschnitts und bleiben bewusst als Endmatter markiert.</p>
-      </aside>
-    </div>
-  </section>
-
   <section class="pm-sample-section" aria-labelledby="sample-composition-title">
     <div class="pm-sample-section__header pm-reading">
       <h2 id="sample-composition-title" class="pm-sample-section__title">Kombinierter Beispielbereich</h2>
@@ -921,10 +886,7 @@
         <p class="pm-panel__text">PROMAT führt ruhige Textflächen, sprachspezifische Einstiege und didaktische Materialien in einem gemeinsamen Oberflächenmodell zusammen. Die Karten orientieren, die Panels ordnen, die Admonitions kommentieren.</p>
         <p class="pm-panel__text">Im kombinierten Beispiel bleibt diese Aufgabentrennung sichtbar: Karten zeigen Zugänge, Text erklärt den Kontext, Admonitions ergänzen semantische Hinweise.</p>
 
-        <aside class="pm-admonition pm-admonition--context admonition context">
-          <p class="admonition-title">context</p>
-          <p>Die Kombination funktioniert nur dann ruhig, wenn die Komponenten ihre jeweilige Rolle formal nicht überschreiten.</p>
-        </aside>
+        {{ render_admonition(promat_page.sample_composition_admonition) }}
       </div>
 
       <div class="pm-card-grid pm-card-grid--compact" aria-label="Gemischte Beispielkarten">

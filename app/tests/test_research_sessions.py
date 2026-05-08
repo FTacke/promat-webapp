@@ -1929,6 +1929,39 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'Niveau / Varietät' not in html
 
 
+def test_sample_page_places_admonitions_before_pattern_lab_with_visible_titles(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    admonition_start = html.index('id="sample-admonitions-title"')
+    pattern_start = html.index('data-sample-pattern-lab')
+    assert admonition_start < pattern_start
+    admonition_slice = html[admonition_start:pattern_start]
+    assert 'Hörbeispiel' in admonition_slice
+    assert 'Regel' in admonition_slice
+    assert 'Tipp' in admonition_slice
+    assert 'Praxis' in admonition_slice
+    assert 'Kontext' in admonition_slice
+    assert 'Zitieren' in admonition_slice
+    assert 'Zusammenfassung' in admonition_slice
+    assert 'Weiterlesen' in admonition_slice
+    assert '>hoermal<' not in admonition_slice
+    assert '>regel<' not in admonition_slice
+    assert '>tip<' not in admonition_slice
+    assert '>praxis<' not in admonition_slice
+    assert '>context<' not in admonition_slice
+    assert '>cite<' not in admonition_slice
+    assert '>summary<' not in admonition_slice
+    assert '>weiterlesen<' not in admonition_slice
+    assert 'data-admonition-toggle' in admonition_slice
+    assert 'aria-expanded="true"' in admonition_slice
+    assert 'aria-expanded="false"' in admonition_slice
+    assert 'sample-admonition-weiterlesen-panel' in admonition_slice
+
+
 def test_sample_page_exposes_pm_pattern_lab_before_interaction_preview(url_app: Flask) -> None:
     client = url_app.test_client()
 
@@ -2046,6 +2079,24 @@ def test_sample_page_localizes_pm_pattern_lab_in_english(url_app: Flask) -> None
     assert 'PM field set / form controls' in html
     assert 'Short example excerpt for a compact media surface' in html
     assert 'PM workbench card' in html
+
+
+def test_sample_page_localizes_admonitions_in_english(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/en/sample")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Listening example' in html
+    assert 'Rule' in html
+    assert 'Tip' in html
+    assert 'Practice' in html
+    assert 'Context' in html
+    assert 'Citing' in html
+    assert 'Summary' in html
+    assert 'Further reading' in html
+    assert 'Example media: audio excerpt' in html
 
 
 def test_sample_speaker_cards_keep_focused_learner_meta_selection() -> None:

@@ -909,7 +909,10 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .pm-admonition-stack {
   display: grid;
-  gap: var(--pm-space-sm);
+  gap: var(--pm-admonition-stack-gap);
+  width: min(100%, var(--pm-admonition-stack-max-width));
+  max-width: var(--pm-admonition-stack-max-width);
+  margin-inline: auto;
 }
 
 .pm-admonition-stack > .pm-admonition {

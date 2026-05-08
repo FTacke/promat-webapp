@@ -40,8 +40,7 @@ textarea {
 .promat-content-block__title,
 .pm-panel__title,
 .pm-card__title,
-.pm-admonition > .admonition-title,
-.pm-admonition > summary {
+.pm-admonition__title {
   font-family: var(--pm-type-reading-family);
   text-wrap: balance;
 }
@@ -64,8 +63,9 @@ textarea {
 .pm-container,
 .pm-card,
 .pm-admonition,
-.pm-admonition > .admonition-title,
-.pm-admonition > summary,
+.pm-admonition__title,
+.pm-admonition__text,
+.pm-admonition__footer,
 .promat-card,
 .promat-card__text,
 .promat-card__title,
@@ -277,13 +277,25 @@ textarea {
 }
 
 .pm-card__title,
-.promat-card__title {
+.promat-card__title,
+.pm-admonition__title {
   margin: 0;
   font-family: var(--pm-type-card-family);
   font-size: var(--pm-type-card-title-size);
-  font-weight: var(--pm-type-card-title-weight);
+  font-weight: 650;
   line-height: var(--pm-type-card-title-line);
   letter-spacing: var(--pm-type-card-title-tracking);
+}
+
+.pm-card__text,
+.promat-card__text,
+.pm-admonition__text,
+.pm-admonition__footer {
+  font-family: var(--pm-type-reading-family);
+  font-size: var(--pm-type-reading-size);
+  font-weight: var(--pm-type-reading-weight);
+  line-height: var(--pm-type-reading-line);
+  letter-spacing: var(--pm-type-reading-tracking);
 }
 
 .pm-card__text,
@@ -293,6 +305,11 @@ textarea {
   font-weight: var(--pm-type-card-body-weight);
   line-height: var(--pm-type-card-body-line);
   letter-spacing: var(--pm-type-card-body-tracking);
+}
+
+.pm-admonition__footer {
+  font-size: var(--promat-text-sm);
+  line-height: 1.6;
 }
 
 .promat-footer__title {

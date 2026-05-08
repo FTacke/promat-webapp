@@ -517,6 +517,72 @@ def _sample_chip(label: str, *, active: bool = False) -> dict[str, Any]:
     }
 
 
+_SAMPLE_ADMONITION_VARIANTS: dict[str, dict[str, str]] = {
+    "hoermal": {"title_key": "sample.admonitions.item.hoermal.title", "icon": "volume_up"},
+    "regel": {"title_key": "sample.admonitions.item.regel.title", "icon": "fact_check"},
+    "tip": {"title_key": "sample.admonitions.item.tip.title", "icon": "lightbulb"},
+    "praxis": {"title_key": "sample.admonitions.item.praxis.title", "icon": "assignment"},
+    "context": {"title_key": "sample.admonitions.item.context.title", "icon": "info"},
+    "cite": {"title_key": "sample.admonitions.item.cite.title", "icon": "format_quote"},
+    "summary": {"title_key": "sample.admonitions.item.summary.title", "icon": "checklist_rtl"},
+    "weiterlesen": {"title_key": "sample.admonitions.item.weiterlesen.title", "icon": "menu_book"},
+}
+
+
+def _sample_admonition(
+    ui_lang: str,
+    variant: str,
+    *body_keys: str,
+    item_id: str | None = None,
+    title_key: str | None = None,
+    icon: str | None = None,
+    collapsible: bool = False,
+    default_open: bool = False,
+    footer_key: str | None = None,
+    tag: str = "aside",
+) -> dict[str, Any]:
+    variant_config = _SAMPLE_ADMONITION_VARIANTS[variant]
+    return {
+        "id": item_id or f"sample-admonition-{variant}",
+        "tag": tag,
+        "variant": variant,
+        "title": get_text(ui_lang, title_key) if title_key else None,
+        "default_title": get_text(ui_lang, variant_config["title_key"]),
+        "icon": icon,
+        "default_icon": variant_config["icon"],
+        "collapsible": collapsible,
+        "default_open": default_open,
+        "body_paragraphs": [get_text(ui_lang, key) for key in body_keys],
+        "footer": get_text(ui_lang, footer_key) if footer_key else None,
+    }
+
+
+def _sample_admonitions(ui_lang: str) -> list[dict[str, Any]]:
+    return [
+        _sample_admonition(
+            ui_lang,
+            "hoermal",
+            "sample.admonitions.item.hoermal.body",
+            footer_key="sample.admonitions.item.hoermal.footer",
+            collapsible=True,
+            default_open=True,
+        ),
+        _sample_admonition(ui_lang, "regel", "sample.admonitions.item.regel.body"),
+        _sample_admonition(ui_lang, "tip", "sample.admonitions.item.tip.body"),
+        _sample_admonition(ui_lang, "praxis", "sample.admonitions.item.praxis.body"),
+        _sample_admonition(ui_lang, "context", "sample.admonitions.item.context.body"),
+        _sample_admonition(ui_lang, "cite", "sample.admonitions.item.cite.body"),
+        _sample_admonition(ui_lang, "summary", "sample.admonitions.item.summary.body"),
+        _sample_admonition(
+            ui_lang,
+            "weiterlesen",
+            "sample.admonitions.item.weiterlesen.body",
+            collapsible=True,
+            default_open=False,
+        ),
+    ]
+
+
 def _sample_interaction_preview(ui_lang: str) -> dict[str, Any]:
     login_href = url_for("public.login", ui_lang=ui_lang)
     access_request_href = url_for("public.access_request_page", ui_lang=ui_lang)
@@ -964,6 +1030,7 @@ def sample_page(ui_lang: str):
             "den realen Seiten und dient nicht als eigenständiges Vorbild."
         ),
         "is_section_root": True,
+        "sample_admonitions": _sample_admonitions(ui_lang),
         "interaction_preview": _sample_interaction_preview(ui_lang),
         "sample_landing_cards": _linkify(landing_page.get("landing_cards", []), ui_lang),
         "sample_research_cards": _linkify(research_select_page.get("corpus_cards", []), ui_lang),
@@ -976,6 +1043,12 @@ def sample_page(ui_lang: str):
         },
         "sample_teaching_feature_cards": _linkify(teaching_feature_page.get("feature_cards", []), ui_lang),
         "sample_speaker_cards": _sample_speaker_cards(ui_lang),
+        "sample_composition_admonition": _sample_admonition(
+            ui_lang,
+            "context",
+            "sample.admonitions.composition.context.body",
+            item_id="sample-composition-context",
+        ),
     }
     panel = _panel_config(
         section_key="sample",
