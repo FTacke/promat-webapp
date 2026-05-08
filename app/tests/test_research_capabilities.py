@@ -224,13 +224,13 @@ def test_research_capability_layer_defines_canonical_page_order_access_and_surfa
     assert get_research_page_order() == (
         ("design", "research.design"),
         ("speakers", "research.speakers"),
-        ("recordings", "research.recordings"),
         ("comparison", "research.comparison"),
         ("phenomena", "research.phenomena"),
     )
     assert is_public_research_page("design") is True
     assert requires_research_auth(page_slug="comparison") is True
     assert requires_research_auth(detail_route="player") is True
+    assert get_research_page_surface_mode("english", "recordings") is None
     assert get_research_page_surface_mode("french", "comparison") == "placeholder"
 
 
@@ -248,7 +248,6 @@ def test_surface_modes_become_productive_when_runtime_and_config_are_present(run
 
     assert get_research_page_surface_mode("english", "design") == "content"
     assert get_research_page_surface_mode("english", "speakers") == "productive"
-    assert get_research_page_surface_mode("english", "recordings") == "productive"
     assert get_research_page_surface_mode("english", "comparison") == "productive"
     assert get_research_page_surface_mode("english", "phenomena") == "productive"
     assert get_research_page_surface_mode("german", "speakers") == "placeholder"

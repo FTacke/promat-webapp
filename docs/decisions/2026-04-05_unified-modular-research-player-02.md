@@ -1,12 +1,12 @@
 # ADR: Unified Modular Research Player
 
-Status: accepted
+Status: accepted, context updated on 2026-05-08
 
 Datum: 2026-04-05
 
 ## Kontext
 
-Die Research-IA von PROMAT kennt bereits `speakers`, `recordings`, `comparison` und `phenomena`, und eine kanonische Player-Detailroute ist strukturell vorbereitet. Ohne eine verbindliche Zielarchitektur würde der spätere Ausbau leicht in getrennte Wortlisten-, Text- oder Interview-Player zerfallen. Gleichzeitig braucht PROMAT eine saubere Erweiterbarkeit für Vergleich, Presets und korpusspezifische Renderarten, ohne dieselbe Audio-, Sync- und State-Logik mehrfach zu pflegen.
+Die Research-IA von PROMAT kennt `speakers`, `comparison` und `phenomena`, und eine kanonische Player-Detailroute ist strukturell vorbereitet. Historisch gab es zusätzlich eine eigenständige `recordings`-Seite; nach ihrer Entfernung am 2026-05-08 bleibt sie nur noch als Legacy-Source-Kontext in einzelnen Kompatibilitätspfaden relevant. Ohne eine verbindliche Zielarchitektur würde der spätere Ausbau leicht in getrennte Wortlisten-, Text- oder Interview-Player zerfallen. Gleichzeitig braucht PROMAT eine saubere Erweiterbarkeit für Vergleich, Presets und korpusspezifische Renderarten, ohne dieselbe Audio-, Sync- und State-Logik mehrfach zu pflegen.
 
 ## Entscheidung
 

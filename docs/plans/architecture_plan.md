@@ -10,6 +10,12 @@ architecture_plan.md
 
 Dieses Dokument ist ein Planungs- und Referenzdokument für die nächste Konsolidierungsphase der PROMAT-Webapp. Es bündelt die aus Audit, aktiver Spec und den letzten produktiven Runs abgeleiteten Architekturentscheidungen und legt eine verbindliche Umsetzungsreihenfolge für die nächsten größeren Eingriffe fest.
 
+Statushinweis 2026-05-08:
+
+- Dieses Dokument ist nur Planungsinput und keine aktive Spezifikation.
+- Die aktive Research-Page-Order ist inzwischen `design`, `speakers`, `comparison`, `phenomena`.
+- Die frühere eigenständige `recordings`-Research-Seite wurde entfernt; session- und tasknahe Einstiege laufen produktiv über `speakers` und Profilseiten auf die kanonischen Player-Routen.
+
 Stand 2026-04-13:
 
 - Phase 1 der Access-Konsolidierung ist produktiv umgesetzt und normativ in `docs/spec/platform-data-files.md` und `docs/spec/research-access.md` verankert.
@@ -17,6 +23,7 @@ Stand 2026-04-13:
 - Phase 3 der Unified-Player-Entschlackung ist produktiv umgesetzt; die interne Runtime-Auflösung für Source, Set, Media, Items und bounded Compare lebt jetzt in `app/src/app/research_player_runtime.py`, während Route-Vertrag und produktive Nutzerlogik stabil bleiben.
 - Phase 4 der Set-Modell-Entschlackung ist produktiv umgesetzt; der kanonische Set-Kern und der owner-gebundene Workbench-State sind jetzt serverseitig getrennt, ohne die produktiven Flows in `phenomena`, `comparison` und `player` aufzubrechen.
 - Phase 5 der Schattenpfad-Bereinigung ist produktiv umgesetzt; verbliebene Top-Level-Kompatibilitätsprojektionen der Set-API wurden entfernt, sodass workbench-spezifischer Zustand im produktiven JSON-Vertrag nur noch unter `workbench_state` geführt wird.
+- Die spätere Entferung der eigenständigen `recordings`-Seite ist in diesem älteren Stand noch nicht eingearbeitet; dafür gelten die aktiven Specs von 2026-05-08.
 - Dieses Planungsdokument bleibt für die restliche Reihenfolge relevant, ist aber nicht selbst die aktive Spezifikation.
 
 Es beschreibt nicht nur den Zielzustand des Research-Players, sondern auch die nötige Vorarbeit in Access-Logik, Capability-Modell, Set-Semantik und Routing. Der Player darf nicht isoliert optimiert werden, weil seine aktuelle Komplexität direkt aus mehreren noch nicht sauber genug getrennten Systemschichten entsteht.
@@ -53,7 +60,6 @@ Für **alle** Korpora gilt künftig dieselbe Regel:
 Das betrifft insbesondere:
 
 - `speakers`
-- `recordings`
 - `comparison`
 - `phenomena`
 - `player`

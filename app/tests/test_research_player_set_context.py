@@ -387,12 +387,14 @@ def test_player_runtime_resolves_connected_text_set_excerpt_to_list_only_state(p
             "spanish",
             session,
             "text",
+            source="speakers",
             owner_user_id="user-1",
             compare_session_id=None,
             compare_mode=None,
             set_id=set_id,
             preset_id=None,
             focus_item="d_02",
+            focus_segment=None,
             render_mode="running_text",
         )
 
@@ -420,12 +422,14 @@ def test_player_runtime_marks_invalid_compare_session_without_breaking_primary_s
             "spanish",
             session,
             "text",
+            source="speakers",
             owner_user_id="user-1",
             compare_session_id="missing-session",
             compare_mode="manual",
             set_id=None,
             preset_id=None,
             focus_item=None,
+            focus_segment=None,
             render_mode=None,
         )
 
@@ -741,7 +745,7 @@ def test_text_set_select_preserves_render_mode_query_for_saved_sets(player_set_a
             "spanish",
             "ES-L-0001-2026-S01",
             "text",
-            "recordings",
+            "speakers",
             render_mode="sentence_list",
         )
 
@@ -751,7 +755,7 @@ def test_text_set_select_preserves_render_mode_query_for_saved_sets(player_set_a
         option for option in page["player"]["set_select"]["options"] if option["label"] == "Gespeichertes Set"
     )
     assert saved_option["href"].endswith(
-        f"/de/research/spanish/player/ES-L-0001-2026-S01/text?source=recordings&set_id={saved_set_id}&render_mode=sentence_list"
+        f"/de/research/spanish/player/ES-L-0001-2026-S01/text?source=speakers&set_id={saved_set_id}&render_mode=sentence_list"
     )
 
 

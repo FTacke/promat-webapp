@@ -21,7 +21,7 @@ Diesen Ablauf für visuelle oder interaktive UI-Änderungen in `app/templates/`,
 
 - `comparison`: Step-Container, Auswahlblöcke, Badge- und Meta-Rhythmus, klare vertikale Arbeitssequenzen, ruhige sekundäre Aktionen
 - `player`: dichte Materiallisten, kompakte Work-Heads, Sticky-Anker, Muted-vs-Active-Zustände, kompakte Icon-Aktionen und Controls
-- `speakers`, `recordings`, Profil: Speaker-Cards, kompakte Task-Aktionen, Zeilen- und Tabellenaktionen, reduzierte Metadatenhierarchie
+- `speakers`, Profil: Speaker-Cards, kompakte Task-Aktionen, Zeilen- und Tabellenaktionen, reduzierte Metadatenhierarchie
 - `sample`: nur als Spiegel bereits aktiver Elemente mitziehen, niemals als upstream Designquelle benutzen
 
 ## Schritte

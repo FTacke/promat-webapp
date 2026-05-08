@@ -24,7 +24,6 @@ from ..research_phenomena_views import (
 from ..research_views import (
     build_comparison_page,
     build_player_page,
-    build_recordings_page,
     build_speaker_profile_page,
     build_speakers_page,
     resolve_player_audio_artifact,
@@ -1186,9 +1185,7 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
 
     language = get_language(canonical_language_slug)
     surface_mode = get_research_page_surface_mode(canonical_language_slug, canonical_page_slug)
-    if surface_mode == "productive" and canonical_page_slug == "recordings":
-        page = build_recordings_page(ui_lang, canonical_language_slug, request.args)
-    elif surface_mode == "productive" and canonical_page_slug == "speakers":
+    if surface_mode == "productive" and canonical_page_slug == "speakers":
         page = build_speakers_page(ui_lang, canonical_language_slug, request.args)
     elif surface_mode == "productive" and canonical_page_slug == "comparison":
         page = build_comparison_page(ui_lang, canonical_language_slug, request.args)
@@ -1381,10 +1378,8 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
     language_label = get_language_label(language, ui_lang)
     corpus_title = get_research_corpus_title(language, ui_lang)
     active_slug = (
-        "recordings"
-        if source == "recordings"
-        else "speakers"
-        if source in {"speakers", "profile"}
+        "speakers"
+        if source in {"recordings", "speakers", "profile"}
         else "comparison"
         if source == "comparison"
         else "phenomena"

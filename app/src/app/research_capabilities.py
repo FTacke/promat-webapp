@@ -8,7 +8,7 @@ from typing import Iterable, Literal
 
 
 RESEARCH_TASK_KEYS: tuple[str, ...] = ("wordlist", "text", "interview")
-RESEARCH_PAGE_SLUGS: tuple[str, ...] = ("design", "speakers", "recordings", "comparison", "phenomena")
+RESEARCH_PAGE_SLUGS: tuple[str, ...] = ("design", "speakers", "comparison", "phenomena")
 RESEARCH_DETAIL_ROUTE_KEYS: tuple[str, ...] = (
     "phenomena-preset-editor",
     "phenomena-set-editor",
@@ -152,7 +152,6 @@ RESEARCH_TASK_CAPABILITIES: tuple[ResearchTaskCapability, ...] = (
 RESEARCH_PAGE_CAPABILITIES: tuple[ResearchPageCapability, ...] = (
     ResearchPageCapability(slug="design", label_key="research.design", access="public", page_kind="reading"),
     ResearchPageCapability(slug="speakers", label_key="research.speakers", access="protected", page_kind="workbench"),
-    ResearchPageCapability(slug="recordings", label_key="research.recordings", access="protected", page_kind="workbench"),
     ResearchPageCapability(slug="comparison", label_key="research.comparison", access="protected", page_kind="workbench"),
     ResearchPageCapability(slug="phenomena", label_key="research.phenomena", access="protected", page_kind="workbench"),
 )
@@ -163,7 +162,6 @@ RESEARCH_PAGE_CAPABILITY_MAP = {capability.slug: capability for capability in RE
 DEFAULT_RESEARCH_PAGE_SURFACE_MODES: dict[str, ResearchPageSurfaceMode] = {
     "design": "content",
     "speakers": "placeholder",
-    "recordings": "placeholder",
     "comparison": "placeholder",
     "phenomena": "placeholder",
 }
@@ -234,7 +232,7 @@ def get_research_page_surface_mode(language_slug: str, page_slug: str) -> Resear
     normalized_language = (language_slug or "").strip().lower()
     surface_mode = DEFAULT_RESEARCH_PAGE_SURFACE_MODES[capability.slug]
 
-    if capability.slug in {"speakers", "recordings"} and _corpus_has_session_runtime(normalized_language):
+    if capability.slug == "speakers" and _corpus_has_session_runtime(normalized_language):
         return "productive"
     if capability.slug == "comparison" and _corpus_has_compare_runtime(normalized_language):
         return "productive"

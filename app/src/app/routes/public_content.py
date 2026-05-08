@@ -304,7 +304,6 @@ def _research_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, 
     labels = {
         "design": "Methodische Anlage und Auswahlprinzipien des Korpus.",
         "speakers": "Zugang über Personen mit reduzierten Metadaten, Filtern und späteren Player-Aktionen.",
-        "recordings": "Zugang über Aufgabentypen wie isolierte Aussprache, zusammenhängende Aussprache und Interview.",
         "comparison": "Kontrastive Oberfläche für Items über mehrere Sprecher:innen hinweg.",
         "phenomena": "Linguistisch motivierter Zugang über Kategorien und Aussprachephänomene.",
     }
@@ -518,7 +517,7 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
         "speakers": {
             "title": "Sprecher:innen",
             "eyebrow": "Forschung · Spanisch",
-            "intro": "Zugang zu Aufnahmen über Personen mit reduzierten Metadaten und vorbereiteten Filtern.",
+            "intro": "Personbasierter Zugang über Sprecher:innen mit reduzierten Metadaten, vorbereiteten Filtern und sessionbezogenen Player-Einstiegen.",
             "page_kind": "workbench",
             "access": "protected",
             "sections": [
@@ -542,33 +541,6 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                     "heading": "Struktureller Stand",
                     "paragraphs": [
                         "Die Seite markiert den später geschützten Forschungszugang, setzt aber bewusst noch keine halbgare Auth- oder Player-Logik produktiv um.",
-                    ],
-                },
-            ],
-        },
-        "recordings": {
-            "title": "Aufnahmen",
-            "eyebrow": "Forschung · Spanisch",
-            "intro": "Zugang zu Daten über Aufgabentypen statt über Personen.",
-            "page_kind": "workbench",
-            "access": "protected",
-            "sections": [
-                {
-                    "heading": "Wortliste",
-                    "paragraphs": [
-                        "Einzelwörter und kurze isolierte Einheiten für segmentale und prosodische Vergleiche, technisch unter wordlist vorbereitet.",
-                    ],
-                },
-                {
-                    "heading": "Text",
-                    "paragraphs": [
-                        "Zusammenhängende Aussprache in gelesenen oder eng geführten Satz- und Textpassagen mit dem technischen Task-Key text.",
-                    ],
-                },
-                {
-                    "heading": "Interview zur Aussprache",
-                    "paragraphs": [
-                        "Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.",
                     ],
                 },
             ],

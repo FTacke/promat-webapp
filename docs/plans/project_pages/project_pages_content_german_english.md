@@ -4,6 +4,8 @@ Dieses Dokument enthält die deutschen und englischen Inhalte für die allgemein
 
 This document contains the German and English content for the general project pages of *Pronunciation Matters*. The texts are intended for the public web app. Language-specific research details remain in the respective corpus areas under Research.
 
+Statushinweis 2026-05-08: Dieses Dokument ist Planungsinput, keine aktive Spezifikation. Wenn es Research-IA beschreibt, gilt der aktuelle Sollstand aus `docs/spec/research-access.md` und `docs/spec/research-capabilities.md`: aktive Seitenfolge `design`, `speakers`, `comparison`, `phenomena`; kein eigenständiges `recordings`-Workbench mehr.
+
 ---
 
 # Kurzübersicht: Seitenaufbau, Routen und Templates
@@ -112,7 +114,7 @@ Die öffentliche WebApp gliedert sich in drei inhaltliche Hauptbereiche: Projekt
 
 Der Projektbereich erklärt die Grundidee, die Entstehung, die Plattformstruktur, die Methodik und die Zusammenarbeit. Er richtet sich an alle Nutzer:innen, die verstehen möchten, was *Pronunciation Matters* ist und wie das Projekt arbeitet.
 
-Der Forschungsbereich führt zu den einzelnen Sprachkorpora. Dort werden die jeweiligen Korpusdesigns erläutert. Die geschützten Bereiche enthalten die eigentlichen Sprachdaten und Forschungstools: Über die Seite Sprecher:innen lassen sich die teilnehmenden Informant:innen erschließen, über Aufnahmen einzelne Sessions und Aufgabenformate, über Vergleichsansichten kontrastive Analysen und über phänomenbezogene Item-Sets gezielte Ausschnitte des Materials. Diese Bereiche sind nicht frei zugänglich, weil sie mit pseudonymisierten Sprachdaten und aufnahmebezogenen Metadaten arbeiten.
+Der Forschungsbereich führt zu den einzelnen Sprachkorpora. Dort werden die jeweiligen Korpusdesigns erläutert. Die geschützten Bereiche enthalten die eigentlichen Sprachdaten und Forschungstools: Über die Seite Sprecher:innen lassen sich die teilnehmenden Informant:innen und ihre sessionnahen Player-Einstiege erschließen, über Vergleichsansichten kontrastive Analysen und über phänomenbezogene Item-Sets gezielte Ausschnitte des Materials. Diese Bereiche sind nicht frei zugänglich, weil sie mit pseudonymisierten Sprachdaten und aufnahmebezogenen Metadaten arbeiten.
 
 Der Unterrichtsbereich bereitet ausgewählte Inhalte für die Aussprachevermittlung auf. Er ist schlanker angelegt als der Forschungsbereich, weil hier nicht die vollständige Forschungsumgebung im Vordergrund steht, sondern thematisch fokussierte Zugänge zu besonders relevanten Aspekten der Aussprache. Solche Themenseiten können kontrastive Vergleiche nutzen, typische Schwierigkeiten sichtbar machen und Material bereitstellen, das Lehrkräfte pragmatisch in bestehende Unterrichtsstunden integrieren können. Dabei geht das Projekt nicht von der Illusion aus, dass Aussprache im schulischen Fremdsprachenunterricht regelmäßig eigene Unterrichtsreihen erhält. Ziel sind vielmehr anschauliche, fachlich fundierte Erweiterungen dort, wo Lehrpläne, Unterrichtssituationen oder konkrete Lernprobleme Raum dafür eröffnen.
 
@@ -128,7 +130,7 @@ Sprachaufnahmen sind personenbezogene bzw. pseudonymisierte Forschungsdaten. Auc
 
 Die Plattform trennt Forschung und Unterricht bewusst. Diese Trennung verhindert, dass Unterrichtsmaterialien wie eine reduzierte Forschungsdatenbank wirken oder dass Forschungsoberflächen didaktische Funktionen übernehmen müssen, für die sie nicht gedacht sind.
 
-Im Forschungsbereich können Nutzer:innen mit detaillierten Daten arbeiten. Sie können Aufnahmen gezielt vergleichen, einzelne Aufgabenformate aufrufen, Materialausschnitte auswählen und phänomenbezogene Sets erstellen oder modifizieren. Der Forschungsbereich ist damit ein Arbeitsraum für Analyse und Hochschullehre.
+Im Forschungsbereich können Nutzer:innen mit detaillierten Daten arbeiten. Sie können sessionnahe Player-Ansichten gezielt aufrufen, Materialausschnitte auswählen, kontrastive Vergleiche anlegen und phänomenbezogene Sets erstellen oder modifizieren. Der Forschungsbereich ist damit ein Arbeitsraum für Analyse und Hochschullehre.
 
 Im Unterrichtsbereich werden ausgewählte Inhalte didaktisch gefasst. Dort geht es um verständliche Erklärungen, Aufgaben, Hörbeispiele und Materialien, die für schulische oder hochschuldidaktische Kontexte geeignet sind. Diese Materialien können aus der Arbeit mit den Forschungsdaten hervorgehen, werden aber nicht einfach direkt aus dem geschützten Datenraum ausgespielt.
 
@@ -136,7 +138,7 @@ Im Unterrichtsbereich werden ausgewählte Inhalte didaktisch gefasst. Dort geht 
 
 *Pronunciation Matters* ist auch ein Digital-Humanities-Projekt. Die technische Infrastruktur ist nicht nachträgliche Verpackung, sondern Teil der wissenschaftlichen und didaktischen Arbeitsweise. Datenmodellierung, strukturierte Metadaten, Annotationen, Audioverarbeitung, WebApp-Design und geschützte Zugriffsräume ermöglichen erst, dass die erhobenen Sprachdaten praktisch nutzbar werden.
 
-Die Plattform soll Forschung und Hochschullehre komfortabel unterstützen. Wer mit den Daten arbeitet, soll nicht zuerst Ordnerstrukturen, Dateinamen oder Rohformate verstehen müssen. Die WebApp bietet stattdessen geordnete Zugänge über Sprachen, Personen, Aufnahmen, Aufgabenformate, Vergleichsansichten und Aussprachephänomene. Dadurch wird die technische Komplexität nicht unsichtbar gemacht, aber so organisiert, dass sie wissenschaftliches Arbeiten erleichtert.
+Die Plattform soll Forschung und Hochschullehre komfortabel unterstützen. Wer mit den Daten arbeitet, soll nicht zuerst Ordnerstrukturen, Dateinamen oder Rohformate verstehen müssen. Die WebApp bietet stattdessen geordnete Zugänge über Sprachen, Personen, sessionnahe Player-Ansichten, Vergleichsansichten und Aussprachephänomene. Dadurch wird die technische Komplexität nicht unsichtbar gemacht, aber so organisiert, dass sie wissenschaftliches Arbeiten erleichtert.
 
 Eine ergänzende technische Projektseite zu *Pronunciation Matters* wird im Kontext von Hispanistica @ Marburg geführt: `https://hispanistica.com/projects/promat/`. Die öffentliche WebApp selbst stellt dagegen primär die Projektidee, die Forschungs- und Unterrichtslogik sowie die nutzbaren Inhalte in den Vordergrund.
 
@@ -377,7 +379,7 @@ The public web app is divided into three main content areas: Project, Research, 
 
 The Project area explains the basic idea, the development of the project, the platform structure, the methodology, and the collaboration behind it. It is intended for all users who want to understand what *Pronunciation Matters* is and how the project works.
 
-The Research area leads to the individual language corpora. The respective corpus designs are explained there. The protected areas contain the actual speech data and research tools: the Speakers page provides access to the participating informants, Recordings gives access to individual sessions and task formats, comparison views support contrastive analyses, and phenomenon-based item sets allow users to work with targeted excerpts of the material. These areas are not openly accessible because they work with pseudonymised speech data and recording-related metadata.
+The Research area leads to the individual language corpora. The respective corpus designs are explained there. The protected areas contain the actual speech data and research tools: the Speakers page provides access to the participating informants and their session-scoped player entries, comparison views support contrastive analyses, and phenomenon-based item sets allow users to work with targeted excerpts of the material. These areas are not openly accessible because they work with pseudonymised speech data and recording-related metadata.
 
 The Teaching area presents selected content for pronunciation teaching. It is deliberately leaner than the Research area because the focus here is not the full research environment, but thematically focused access to especially relevant aspects of pronunciation. Such topic pages can use contrastive comparisons, make typical difficulties visible, and provide material that teachers can integrate pragmatically into existing lessons. The project does not assume that pronunciation will regularly be given entire teaching units in school-based foreign language instruction. Rather, the aim is to provide clear and academically sound extensions for moments where curricula, teaching situations, or concrete learning problems allow room for them.
 
@@ -393,7 +395,7 @@ Publicly accessible content includes project information, general methodology pa
 
 The platform deliberately separates research and teaching. This prevents teaching materials from appearing as a reduced research database and prevents research surfaces from having to take on didactic functions for which they were not designed.
 
-In the Research area, users can work with detailed data. They can compare recordings, access individual task formats, select excerpts of material, and create or modify phenomenon-based sets. The Research area is therefore a workspace for analysis and university teaching.
+In the Research area, users can work with detailed data. They can open session-scoped player views, select excerpts of material, build contrastive comparisons, and create or modify phenomenon-based sets. The Research area is therefore a workspace for analysis and university teaching.
 
 In the Teaching area, selected content is presented didactically. The focus is on clear explanations, tasks, listening examples, and materials suitable for school or university teaching contexts. These materials can emerge from work with the research data, but they are not simply delivered directly from the protected data space.
 
@@ -401,7 +403,7 @@ In the Teaching area, selected content is presented didactically. The focus is o
 
 *Pronunciation Matters* is also a digital humanities project. The technical infrastructure is not a layer added after the fact; it is part of the scholarly and didactic method. Data modelling, structured metadata, annotations, audio processing, web app design, and protected access spaces are what make the collected speech data practically usable in the first place.
 
-The platform is intended to support research and university teaching comfortably. Users working with the data should not first have to understand folder structures, filenames, or raw formats. Instead, the web app offers structured access through languages, persons, recordings, task formats, comparison views, and pronunciation phenomena. Technical complexity is not made invisible, but organised in a way that facilitates scholarly work.
+The platform is intended to support research and university teaching comfortably. Users working with the data should not first have to understand folder structures, filenames, or raw formats. Instead, the web app offers structured access through languages, persons, session-scoped player views, comparison views, and pronunciation phenomena. Technical complexity is not made invisible, but organised in a way that facilitates scholarly work.
 
 A supplementary technical project page on *Pronunciation Matters* is maintained in the context of Hispanistica @ Marburg: `https://hispanistica.com/projects/promat/`. The public web app itself, however, foregrounds the project idea, the research and teaching logic, and the usable content.
 

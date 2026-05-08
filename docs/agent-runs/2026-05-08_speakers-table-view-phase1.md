@@ -1,6 +1,8 @@
 # 2026-05-08 speakers-table-view-phase1
 
-- Added a cards/table view toggle to the protected `speakers` research page without changing routing, navigation, or the existing `recordings` page.
+- Historical note: this phase-1 log predates the same-day phase-2 removal of the standalone `recordings` page. The current active IA is `design`, `speakers`, `comparison`, `phenomena`; session- and task-near access runs through `speakers` plus the canonical player routes.
+
+- Added a cards/table view toggle to the protected `speakers` research page before the same-day phase-2 removal of the standalone `recordings` page.
 - Normalized `build_speakers_page(...)` onto one shared person-based result structure used by both the existing cards and the new table rows.
 - Preserved selected-session profile links and canonical player task links from the same selected or matching session per person.
 - Added bilingual labels and focused regressions for default cards view, `view=table`, invalid view fallback, query preservation, and English table labels.

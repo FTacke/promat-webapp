@@ -1,0 +1,10 @@
+# 2026-05-08 recordings-page-removal-phase2
+
+- Removed the standalone corpus-scoped research page `recordings` from the active capability model, route handling, visible navigation, and binding specs without changing the expanded person-based `speakers` workbench.
+- Kept `/de|en/research/{corpus}/recordings` on the normal not-found path instead of adding redirects, query carry-over, or route aliases.
+- Deleted the direct `recordings` builder/template path, updated shared visible copy and placeholder text, and kept only the compatibility-only player source alias that resolves back to `speakers?view=table`.
+- Finished the stale `test_research_sessions.py` migration by removing direct `build_recordings_page(...)` assumptions and switching player-origin expectations to the speakers-table fallback.
+- Updated `docs/spec/research-capabilities.md`, `docs/spec/research-access.md`, `docs/spec/platform-data-files.md`, and `docs/spec/research-player.md` so the active research IA now consists of `design`, `speakers`, `comparison`, and `phenomena` plus detail routes.
+- Browser-validated the live dev server after a forced restart on `http://127.0.0.1:8000`: `speakers` sidebars in `de` and `en` no longer show `recordings`; `/de/research/spanish/recordings` and `/en/research/spanish/recordings` render the normal 404 surface; `speakers` cards/table still expose canonical profile and player links; profile and player routes still render correctly after login.
+- Focused validation: `pytest app/tests/test_research_sessions.py -q` passed (`180 passed`), `pytest app/tests/test_research_capabilities.py -q` passed (`13 passed`).
+- Residual observation from the live browser: the generic English 404 shell currently points some top-level navigation links at `/de`; this appears to be pre-existing normal 404 behavior and was not changed in this run.

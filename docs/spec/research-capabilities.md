@@ -21,16 +21,15 @@ This file is the binding source of truth for the active research capability mode
 
 - `design`
 - `speakers`
-- `recordings`
 - `comparison`
 - `phenomena`
 
 ### Page metadata rules
 
 - `design` is the only public corpus-scoped research page and uses page kind `reading`.
-- `speakers`, `recordings`, `comparison`, and `phenomena` use page kind `workbench` and are protected research-app surfaces.
+- `speakers`, `comparison`, and `phenomena` use page kind `workbench` and are protected research-app surfaces.
 - Detail routes such as `player`, `speaker profile`, `phenomena` preset editor, `phenomena` set editor, and protected player-media delivery are always authenticated research-detail surfaces.
-- Page order for corpus-scoped research navigation is fixed as `design`, `speakers`, `recordings`, `comparison`, `phenomena`.
+- Page order for corpus-scoped research navigation is fixed as `design`, `speakers`, `comparison`, `phenomena`.
 
 ## Canonical Research Tasks
 
@@ -112,7 +111,7 @@ This file is the binding source of truth for the active research capability mode
 - All active corpora share the same page slugs and the same access model.
 - Surface-mode differences describe whether a protected page currently renders productive content or a protected placeholder; they must not weaken auth behavior.
 - `design` is content-bearing for all corpora.
-- `speakers` and `recordings` are productive for a corpus when canonical runtime sessions exist under `data/sessions/{corpus}/`.
+- `speakers` is productive for a corpus when canonical runtime sessions exist under `data/sessions/{corpus}/`.
 - `comparison` is productive for a corpus when the canonical runtime contains at least one compare-capable task with ready player bundles, meaning documented task metadata plus valid derived audio and alignment JSON resolve through the shared player runtime.
 - `phenomena` is productive for a corpus when the canonical task catalogs and `phenomena_presets.json` load successfully through the shared research-player config layer.
 - A corpus without those runtime/config prerequisites remains on protected placeholders for the affected workbench pages.

@@ -22,7 +22,7 @@ from app.config.data_conventions import build_person_id, build_session_id, parse
 from app import register_context_processors
 from app.research_presets import clear_research_preset_caches
 from app.research_player_runtime import _build_interview_text_segments, _normalize_bundle_tokens, _normalize_interview_annotations
-from app.research_views import build_player_page, build_recordings_page, build_speaker_profile_page, build_speakers_page
+from app.research_views import build_player_page, build_speaker_profile_page, build_speakers_page
 from app.routes.auth import blueprint as auth_blueprint
 from app.routes.public import _sample_speaker_cards, blueprint as public_blueprint
 from app.research_sessions import (
@@ -949,13 +949,13 @@ def test_player_topbar_language_switch_preserves_compare_and_render_query(url_ap
     _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(
-        f"/de/research/spanish/player/{primary_session_id}/text?source=recordings&compare_session={compare_session_id}&render_mode=sentence_list"
+        f"/de/research/spanish/player/{primary_session_id}/text?source=speakers&compare_session={compare_session_id}&render_mode=sentence_list"
     )
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert (
-        f'href="/en/research/spanish/player/{primary_session_id}/text?source=recordings&amp;compare_session={compare_session_id}&amp;render_mode=sentence_list&amp;lang=en"'
+        f'href="/en/research/spanish/player/{primary_session_id}/text?source=speakers&amp;compare_session={compare_session_id}&amp;render_mode=sentence_list&amp;lang=en"'
         in html
     )
 
@@ -1209,56 +1209,56 @@ def test_project_page_uses_inner_shell_with_section_sidebar_header(url_app: Flas
             "spanish",
             "Spanisch-Korpus",
             "Forschungsbereich zur spanischen Lernendenaussprache.",
-            "Das Spanisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+            "Das Spanisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecher:innen, Vergleich und Phänomene erreichbar.",
         ),
         (
             "de",
             "french",
             "Französisch-Korpus",
             "Forschungsbereich zur französischen Lernendenaussprache.",
-            "Das Französisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+            "Das Französisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecher:innen, Vergleich und Phänomene erreichbar.",
         ),
         (
             "de",
             "german",
             "Deutsch-Korpus",
             "Forschungsbereich zur deutschen Lernendenaussprache.",
-            "Das Deutsch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+            "Das Deutsch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecher:innen, Vergleich und Phänomene erreichbar.",
         ),
         (
             "de",
             "english",
             "Englisch-Korpus",
             "Forschungsbereich zur englischen Lernendenaussprache.",
-            "Das Englisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecherprofile, Aufnahmen, Vergleich und Phänomene erreichbar.",
+            "Das Englisch-Korpus bündelt öffentliche Informationen zum Forschungsdesign sowie geschützte Arbeitsbereiche mit pseudonymisierten Forschungsdaten. Über die Navigation links sind Aufbau, Materialien und – je nach Zugriffsrecht – Sprecher:innen, Vergleich und Phänomene erreichbar.",
         ),
         (
             "en",
             "spanish",
             "Spanish corpus",
             "Research area for Spanish learner pronunciation.",
-            "The Spanish corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+            "The Spanish corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speakers, comparison, and phenomena.",
         ),
         (
             "en",
             "french",
             "French corpus",
             "Research area for French learner pronunciation.",
-            "The French corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+            "The French corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speakers, comparison, and phenomena.",
         ),
         (
             "en",
             "german",
             "German corpus",
             "Research area for German learner pronunciation.",
-            "The German corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+            "The German corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speakers, comparison, and phenomena.",
         ),
         (
             "en",
             "english",
             "English corpus",
             "Research area for English learner pronunciation.",
-            "The English corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speaker profiles, recordings, comparison, and phenomena.",
+            "The English corpus brings together public information on the research design as well as protected work areas with pseudonymized research data. The navigation on the left leads to corpus structure, materials and, depending on access rights, speakers, comparison, and phenomena.",
         ),
     ],
 )
@@ -1278,7 +1278,7 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
     html = response.get_data(as_text=True)
     assert f'href="/{ui_lang}/research/{language_slug}/design"' in html
     assert f'href="/{ui_lang}/research/{language_slug}/speakers"' in html
-    assert f'href="/{ui_lang}/research/{language_slug}/recordings"' in html
+    assert f'href="/{ui_lang}/research/{language_slug}/recordings"' not in html
     assert f'href="/{ui_lang}/research/{language_slug}/comparison"' in html
     assert f'href="/{ui_lang}/research/{language_slug}/phenomena"' in html
     assert expected_title in html
@@ -1320,9 +1320,9 @@ def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(
     assert f'href="/access-request?next={quote("/de/research/spanish", safe="/?")}"' in html
     assert f'href="/login?next={quote("/de/research/spanish", safe="/?")}"' in html
     _assert_muted_locked_nav_item_order(drawer_html, "Sprecher:innen")
-    _assert_muted_locked_nav_item_order(drawer_html, "Aufnahmen")
     _assert_muted_locked_nav_item_order(drawer_html, "Vergleich")
     _assert_muted_locked_nav_item_order(drawer_html, "Phänomene")
+    assert '/de/research/spanish/recordings' not in drawer_html
 
 
 def test_research_language_root_hides_anonymous_actions_for_authenticated_users(url_app: Flask) -> None:
@@ -1789,7 +1789,7 @@ def test_research_design_page_stays_public(url_app: Flask, ui_lang: str, languag
 
 @pytest.mark.parametrize("ui_lang", ["de", "en"])
 @pytest.mark.parametrize("language_slug", ["spanish", "french", "german", "english"])
-@pytest.mark.parametrize("page_slug", ["speakers", "recordings", "comparison", "phenomena"])
+@pytest.mark.parametrize("page_slug", ["speakers", "comparison", "phenomena"])
 def test_research_workbench_pages_require_auth_with_preserved_target(
     url_app: Flask,
     ui_lang: str,
@@ -1837,7 +1837,7 @@ def test_research_detail_routes_require_auth_before_lookup(
 
 @pytest.mark.parametrize(
     ("ui_lang", "language_slug", "page_slug"),
-    [("de", "spanish", "recordings"), ("en", "english", "comparison")],
+    [("de", "spanish", "speakers"), ("en", "english", "comparison")],
 )
 def test_authenticated_research_workbench_pages_render_after_access_gate(
     url_app: Flask,
@@ -1851,6 +1851,15 @@ def test_authenticated_research_workbench_pages_render_after_access_gate(
     response = client.get(f"/{ui_lang}/research/{language_slug}/{page_slug}")
 
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+def test_removed_recordings_route_falls_through_to_not_found(url_app: Flask, ui_lang: str) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/spanish/recordings")
+
+    assert response.status_code == 404
 
 
 def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -> None:
@@ -1910,7 +1919,8 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'pm-speaker-card--a2' not in html
     assert 'pm-speaker-card--b1' not in html
     assert 'pm-speaker-card--b2' not in html
-    assert 'Aufzeichnung (Sprecher:in)' in html
+    assert 'Sprecher:in' in html
+    assert 'Status und Tabelle in Sprecher:innen' in html
     assert 'Chips, Badges und Action-Buttons' in html
     assert 'Task-Aktionen' in html
     assert 'pm-profile-session--a2 is-selected' in html
@@ -2254,67 +2264,6 @@ def test_speakers_table_route_localizes_labels_in_english(runtime_env: Path, url
     assert 'pm-research-speaker-cell__session' not in html
 
 
-def test_recordings_page_combines_session_and_person_in_leading_column(runtime_env: Path, url_app: Flask) -> None:
-    learner_session = "ES-L-0001-2026-S01"
-    native_session = "ES-N-0001-2026-S01"
-
-    _write_session(
-        runtime_env,
-        "spanish",
-        learner_session,
-        _learner_payload(
-            person_id="ES-L-0001",
-            session_id=learner_session,
-            recording_year=2026,
-            recording_date="2026-03-10",
-            level_code="A2",
-            context="baseline",
-            task_types=("wordlist", "text", "interview"),
-        ),
-    )
-    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
-
-    with url_app.test_request_context():
-        page = build_recordings_page("de", "spanish", {"task": "wordlist"})
-
-    assert page["columns"]["recording"] == "Aufzeichnung (Sprecher:in)"
-    assert page["columns"]["context"] == "Niveau"
-    assert page["columns"]["detail"] == "L1"
-    first_row = page["results"][0]
-    assert "session_secondary" not in first_row
-    assert first_row["person_href"].endswith(f"/de/research/spanish/speakers/{first_row['person_id']}?session={first_row['session_id']}")
-
-
-def test_recordings_route_uses_shared_task_action_buttons(runtime_env: Path, url_app: Flask) -> None:
-    learner_session = "ES-L-0001-2026-S01"
-    native_session = "ES-N-0001-2026-S01"
-
-    _write_session(
-        runtime_env,
-        "spanish",
-        learner_session,
-        _learner_payload(
-            person_id="ES-L-0001",
-            session_id=learner_session,
-            recording_year=2026,
-            recording_date="2026-03-10",
-            level_code="A2",
-            context="baseline",
-            task_types=("wordlist", "text", "interview"),
-        ),
-    )
-    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
-
-    _set_test_auth(url_app)
-    client = url_app.test_client()
-    response = client.get("/de/research/spanish/recordings?task=wordlist")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
-    assert 'pm-speaker-task-link' not in html
-
-
 def test_research_workbench_builders_expose_english_shared_labels(runtime_env: Path, url_app: Flask) -> None:
     learner_session = "ES-L-0001-2026-S01"
     native_session = "ES-N-0001-2026-S01"
@@ -2336,15 +2285,9 @@ def test_research_workbench_builders_expose_english_shared_labels(runtime_env: P
     _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
 
     with url_app.test_request_context():
-        recordings_page = build_recordings_page("en", "spanish", {"task": "wordlist"})
         speakers_page = build_speakers_page("en", "spanish", {})
         profile_page = build_speaker_profile_page("en", "spanish", "ES-L-0001", learner_session)
 
-    assert recordings_page["content_header"]["intro"] == "Session- and task-based access to the Spanish corpus with a clear person-to-session-to-recording relation."
-    assert recordings_page["task_panels"][0]["count_label"] == "recordings"
-    assert recordings_page["status"]["filter_label"] == "Active filters"
-    assert recordings_page["columns"]["recording"] == "Recording (speaker)"
-    assert recordings_page["columns"]["speaker_type"] == "Speaker type"
     assert speakers_page["content_header"]["intro"] == "Person-based access to the Spanish corpus. A person appears exactly once and matches as soon as at least one of their sessions satisfies all active filters."
     assert speakers_page["status"]["result_label"] == "people"
     assert speakers_page["cards"][0]["selected_session_label"] == "Selected session"
@@ -2374,13 +2317,6 @@ def test_research_workbench_routes_render_english_shared_aria_and_actions(runtim
 
     _set_test_auth(url_app)
     client = url_app.test_client()
-
-    recordings_response = client.get("/en/research/spanish/recordings?task=wordlist&gender=female")
-    assert recordings_response.status_code == 200
-    recordings_html = recordings_response.get_data(as_text=True)
-    assert 'aria-label="Task types"' in recordings_html
-    assert 'aria-label="Results"' in recordings_html
-    assert 'aria-label="Active filters"' in recordings_html
 
     speakers_response = client.get("/en/research/spanish/speakers?gender=female")
     assert speakers_response.status_code == 200
@@ -2425,22 +2361,7 @@ def test_profile_header_shows_session_count_and_native_interview_disabled(runtim
     ]
 
 
-def test_recordings_page_keeps_disabled_interview_panel_and_blank_native_columns(runtime_env: Path, url_app: Flask) -> None:
-    native_session = "ES-N-0001-2026-S01"
-    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
-
-    with url_app.test_request_context():
-        page = build_recordings_page("de", "spanish", {"task": "wordlist", "speaker_type": "native_speaker"})
-
-    assert [panel["key"] for panel in page["task_panels"]] == ["wordlist", "text", "interview"]
-    assert [panel["is_disabled"] for panel in page["task_panels"]] == [False, False, True]
-    assert page["task_panels"][-1]["href"] is None
-    native_row = page["results"][0]
-    assert native_row["context_value"] == ""
-    assert native_row["detail_value"] == ""
-
-
-def test_player_page_builds_real_wordlist_view_and_disables_unimplemented_tasks(runtime_env: Path, url_app: Flask) -> None:
+def test_player_page_maps_legacy_recordings_source_back_to_speakers_table(runtime_env: Path, url_app: Flask) -> None:
     session_id = "ES-L-0001-2026-S01"
     _write_session(
         runtime_env,
@@ -2470,7 +2391,7 @@ def test_player_page_builds_real_wordlist_view_and_disables_unimplemented_tasks(
     assert page["task_panels"][0]["current"] is True
     assert page["task_panels"][1]["href"] is None
     assert page["task_panels"][1]["state_label"] == "Keine verarbeitbaren Player-Artefakte"
-    assert page["origin_link"]["href"].endswith("/de/research/spanish/recordings?task=wordlist")
+    assert page["origin_link"]["href"].endswith("/de/research/spanish/speakers?view=table")
     assert page["summary_cards"][0]["session_id"] == session_id
 
 
@@ -2493,7 +2414,7 @@ def test_player_page_exposes_english_labels_for_migrated_wordlist_surface(runtim
     _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
 
     with url_app.test_request_context():
-        page = build_player_page("en", "spanish", session_id, "wordlist", "recordings")
+        page = build_player_page("en", "spanish", session_id, "wordlist", "speakers")
 
     assert page is not None
     assert page["title"] == "Player"
@@ -2502,7 +2423,6 @@ def test_player_page_exposes_english_labels_for_migrated_wordlist_surface(runtim
     assert page["player"]["audio_href"].endswith(f"/en/research/spanish/player/{session_id}/wordlist/audio.mp3")
     assert page["player"]["controls_title"] == "Playback"
     assert page["task_panels"][1]["state_label"] == "No playable artifacts"
-    assert page["origin_link"]["href"].endswith("/en/research/spanish/recordings?task=wordlist")
     assert page["summary_cards"][0]["profile_label"] == "Profile"
     assert [row["label"] for row in page["summary_cards"][0]["rows"]] == [
         "Person-ID",
@@ -2533,7 +2453,7 @@ def test_player_page_builds_productive_interview_view_inside_shared_player(runti
     _write_interview_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
 
     with url_app.test_request_context():
-        page = build_player_page("de", "spanish", session_id, "interview", "recordings", focus_segment="seg_002")
+        page = build_player_page("de", "spanish", session_id, "interview", "speakers", focus_segment="seg_002")
 
     assert page is not None
     assert page["player"]["mode"] == "interview"
@@ -2650,8 +2570,8 @@ def test_player_route_renders_interview_transcript_and_reference_dialog_in_both_
     _set_test_auth(url_app)
     client = url_app.test_client()
 
-    response_de = client.get(f"/de/research/spanish/player/{session_id}/interview?source=recordings&focus_segment=seg_002")
-    response_en = client.get(f"/en/research/spanish/player/{session_id}/interview?source=recordings&focus_segment=seg_002")
+    response_de = client.get(f"/de/research/spanish/player/{session_id}/interview?source=speakers&focus_segment=seg_002")
+    response_en = client.get(f"/en/research/spanish/player/{session_id}/interview?source=speakers&focus_segment=seg_002")
 
     assert response_de.status_code == 200
     assert response_en.status_code == 200
@@ -2752,13 +2672,13 @@ def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, u
     _write_wordlist_player_artifacts(runtime_env, "spanish", compare_session_id, "ES-N-0001")
 
     with url_app.test_request_context():
-        single_page = build_player_page("de", "spanish", primary_session_id, "wordlist", "recordings")
+        single_page = build_player_page("de", "spanish", primary_session_id, "wordlist", "speakers")
         compare_page = build_player_page(
             "de",
             "spanish",
             primary_session_id,
             "wordlist",
-            "recordings",
+            "speakers",
             compare_session_id=compare_session_id,
         )
 
@@ -2821,7 +2741,7 @@ def test_player_route_uses_shared_material_choice_family(runtime_env: Path, url_
 
     _set_test_auth(url_app)
     client = url_app.test_client()
-    response = client.get(f"/de/research/spanish/player/{session_id}/wordlist?source=recordings")
+    response = client.get(f"/de/research/spanish/player/{session_id}/wordlist?source=speakers")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
@@ -2861,7 +2781,7 @@ def test_player_route_uses_neutral_meta_cards_and_shared_badges(runtime_env: Pat
     _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(
-        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}"
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers&compare_session={compare_session_id}"
     )
 
     assert response.status_code == 200
@@ -2895,7 +2815,7 @@ def test_player_page_uses_running_text_for_explicit_connected_text_sources(runti
     _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
 
     with url_app.test_request_context():
-        page = build_player_page("de", "spanish", session_id, "text", "recordings")
+        page = build_player_page("de", "spanish", session_id, "text", "speakers")
 
     assert page is not None
     assert page["player"]["mode"] == "text"
@@ -2908,7 +2828,7 @@ def test_player_page_uses_running_text_for_explicit_connected_text_sources(runti
     assert [block["kind"] for block in page["player"]["text_blocks"]] == ["spoken_title", "paragraph"]
     assert page["player"]["text_blocks"][0]["item"]["item_id"] == "d_01"
     assert page["player"]["render_modes"]["options"][0]["href"].endswith(
-        f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
+        f"/de/research/spanish/player/{session_id}/text?source=speakers&render_mode=sentence_list"
     )
 
 
@@ -2932,13 +2852,13 @@ def test_player_page_accepts_explicit_sentence_list_override_for_connected_text_
     _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
 
     with url_app.test_request_context():
-        page = build_player_page("de", "spanish", session_id, "text", "recordings", render_mode="sentence_list")
+        page = build_player_page("de", "spanish", session_id, "text", "speakers", render_mode="sentence_list")
 
     assert page is not None
     assert page["player"]["render_mode"] == "sentence_list"
     assert page["player"]["text_blocks"] == []
     assert page["player"]["client_state"]["singleViewHref"].endswith(
-        f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
+        f"/de/research/spanish/player/{session_id}/text?source=speakers&render_mode=sentence_list"
     )
 
 
@@ -2962,7 +2882,7 @@ def test_player_page_preserves_renderable_text_tokens_in_existing_client_state(r
     _write_text_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001", include_tokens=True)
 
     with url_app.test_request_context():
-        page = build_player_page("de", "spanish", session_id, "text", "recordings")
+        page = build_player_page("de", "spanish", session_id, "text", "speakers")
 
     assert page is not None
     first_item = page["player"]["items"][0]
@@ -2995,7 +2915,7 @@ def test_player_route_renders_text_token_spans_when_alignment_tokens_exist(runti
 
     _set_test_auth(url_app)
     client = url_app.test_client()
-    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list")
+    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=speakers&render_mode=sentence_list")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
@@ -3028,9 +2948,9 @@ def test_player_route_renders_spoken_title_item_as_separate_running_text_block(r
     _set_test_auth(url_app)
     client = url_app.test_client()
 
-    running_text_response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings")
+    running_text_response = client.get(f"/de/research/spanish/player/{session_id}/text?source=speakers")
     sentence_list_response = client.get(
-        f"/de/research/spanish/player/{session_id}/text?source=recordings&render_mode=sentence_list"
+        f"/de/research/spanish/player/{session_id}/text?source=speakers&render_mode=sentence_list"
     )
 
     assert running_text_response.status_code == 200
@@ -3068,7 +2988,7 @@ def test_player_route_keeps_sentence_only_text_markup_when_no_tokens_exist(runti
 
     _set_test_auth(url_app)
     client = url_app.test_client()
-    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings")
+    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=speakers")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
@@ -3097,7 +3017,7 @@ def test_player_route_integrates_text_view_switch_into_content_header(runtime_en
 
     _set_test_auth(url_app)
     client = url_app.test_client()
-    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=recordings")
+    response = client.get(f"/de/research/spanish/player/{session_id}/text?source=speakers")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
@@ -3139,7 +3059,7 @@ def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path,
             "spanish",
             primary_session_id,
             "wordlist",
-            "recordings",
+            "speakers",
             compare_session_id=compare_session_id,
         )
 
@@ -3154,7 +3074,7 @@ def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path,
     assert [action["action"] for action in page["summary_cards"][1]["card_actions"]] == ["profile", "compare-remove"]
     assert page["summary_cards"][1]["card_actions"][1]["label"] == "Vergleich entfernen"
     assert page["summary_cards"][1]["card_actions"][1]["href"].endswith(
-        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers"
     )
     assert [row["label"] for row in page["summary_cards"][0]["rows"]] == [
         "Person-ID",
@@ -3169,10 +3089,10 @@ def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path,
     assert any(option["current"] for option in page["player"]["compare"]["switchers"]["compare"]["options"])
     assert page["player"]["client_state"]["compareOpen"] is True
     assert page["player"]["client_state"]["modeHrefs"]["manual"].endswith(
-        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}&compare_mode=manual"
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers&compare_session={compare_session_id}&compare_mode=manual"
     )
     assert page["player"]["client_state"]["modeHrefs"]["sequence"].endswith(
-        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}"
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers&compare_session={compare_session_id}"
     )
     assert page["player"]["client_state"]["rateOptions"] == [0.5, 0.75, 1.0, 1.25, 1.5]
 
@@ -3204,7 +3124,7 @@ def test_player_page_supports_manual_compare_override(runtime_env: Path, url_app
             "spanish",
             primary_session_id,
             "wordlist",
-            "recordings",
+            "speakers",
             compare_session_id=compare_session_id,
             compare_mode="manual",
         )
@@ -3274,7 +3194,7 @@ def test_player_route_keeps_compare_optional_until_explicit_activation(runtime_e
 
     _set_test_auth(url_app)
     client = url_app.test_client()
-    response = client.get(f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings")
+    response = client.get(f"/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
@@ -3316,7 +3236,7 @@ def test_player_route_renders_compare_controls_and_secondary_audio(runtime_env: 
     _set_test_auth(url_app)
     client = url_app.test_client()
     response = client.get(
-        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings&compare_session={compare_session_id}"
+        f"/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers&compare_session={compare_session_id}"
     )
 
     assert response.status_code == 200
@@ -3337,7 +3257,7 @@ def test_player_route_renders_compare_controls_and_secondary_audio(runtime_env: 
     assert html.count('<span class="pm-nav-pill__label">Profil</span>') == 2
     assert 'Vergleich entfernen' in html
     assert re.search(r'pm-player-meta-card__action pm-player-meta-card__action--compare-remove" href="[^"]+" data-player-compare-remove>\s*<span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">remove</span>\s*<span class="pm-action-button__label">Vergleich entfernen</span>', html, re.S) is not None
-    assert f'href="/de/research/spanish/player/{primary_session_id}/wordlist?source=recordings"' in html
+    assert f'href="/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers"' in html
     assert 'Vergleich erscheint nur auf Desktop-Breiten' not in html
     assert 'data-player-activate-speaker' not in html
     assert 'pm-player-panel--control-bar' in html

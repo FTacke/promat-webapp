@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
-{% from 'partials/_pm_interactions.html' import render_cta_link_visual, render_interaction_item, render_navigation_pill %}
+{% from 'partials/_pm_interactions.html' import render_cta_link, render_cta_link_visual, render_interaction_item, render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -430,7 +430,7 @@
   <section class="pm-sample-section" aria-labelledby="sample-research-patterns-title">
     <div class="pm-sample-section__header pm-reading">
       <h2 id="sample-research-patterns-title" class="pm-sample-section__title">Research-Workbench-Muster</h2>
-      <p class="pm-sample-section__intro">Die gezeigten Dummys folgen jetzt der aktuellen Research-UI: personzentrierte Speaker-Cards ohne Match-Note, sessionbasierte Recordings-Tabelle und Profil-Container mit Session-Zählung im Kopfbereich.</p>
+      <p class="pm-sample-section__intro">Die gezeigten Dummys folgen jetzt der aktuellen Research-UI: personzentrierte Speaker-Cards, die dichte Sprecher:innen-Tabelle und Profil-Container mit Session-Zählung im Kopfbereich.</p>
     </div>
 
     <div class="pm-sample-research-showcase">
@@ -450,7 +450,7 @@
       <section class="pm-sample-research-showcase__row" aria-labelledby="sample-research-chip-badge-title">
         <div class="pm-entry-showcase__heading pm-reading">
           <p id="sample-research-chip-badge-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Chips, Badges und Action-Buttons</p>
-          <p class="pm-entry-showcase__note">Chips markieren aktive Filterzustände, Badges markieren Status und Kategorien, und kleine Task-Aktionen nutzen denselben kompakten Action-Button-Typ in Speaker-Cards und Recordings statt wie zusätzliche Badges zu wirken.</p>
+          <p class="pm-entry-showcase__note">Chips markieren aktive Filterzustände, Badges markieren Status und Kategorien, und kleine Task-Aktionen nutzen dieselbe kompakte Navigationssprache in Speaker-Cards, Tabellenzellen und Profil-Containern statt wie zusätzliche Badges zu wirken.</p>
         </div>
 
         <div class="pm-sample-research-chip-badge-grid">
@@ -486,88 +486,90 @@
 
       <section class="pm-sample-research-showcase__row" aria-labelledby="sample-research-task-panels-title">
         <div class="pm-entry-showcase__heading pm-reading">
-          <p id="sample-research-task-panels-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Task-Panels, Status und Tabelle in Recordings</p>
-          <p class="pm-entry-showcase__note">Die Tabelle folgt der aktuellen produktiven Struktur: erste Spalte kombiniert Session-ID und Person-Link, die restlichen Spalten bleiben reduzierte Vergleichsachsen.</p>
-        </div>
-
-        <div class="pm-task-panel-grid" aria-label="Research Task Panels Dummys">
-          <a class="pm-task-panel is-current" href="#sample-research-task-panels-title" aria-current="page">
-            <span class="pm-task-panel__label">Wortliste</span>
-            <span class="pm-task-panel__description">Isolierte Aussprache über das Vorlesen einer Wortliste.</span>
-            <span class="pm-task-panel__count">18 Aufnahmen</span>
-          </a>
-          <a class="pm-task-panel" href="#sample-research-task-panels-title">
-            <span class="pm-task-panel__label">Text</span>
-            <span class="pm-task-panel__description">Zusammenhängende Aussprache über das Vorlesen eines Textes oder einer Satzliste.</span>
-            <span class="pm-task-panel__count">18 Aufnahmen</span>
-          </a>
-          <a class="pm-task-panel" href="#sample-research-task-panels-title">
-            <span class="pm-task-panel__label">Interview</span>
-            <span class="pm-task-panel__description">Interview mit den Sprecher:innen zur Reflexion der Aussprache bzw. Aufzeichnung.</span>
-            <span class="pm-task-panel__count">18 Aufnahmen</span>
-          </a>
+          <p id="sample-research-task-panels-title" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Status und Tabelle in Sprecher:innen</p>
+          <p class="pm-entry-showcase__note">Die Tabelle folgt der aktuellen produktiven Sprecher:innen-Struktur: erste Spalte bleibt personzentriert mit leisem Profil-Link, die restlichen Spalten verdichten nur die relevanten Vergleichsachsen und Task-Aktionen.</p>
         </div>
 
         <div class="pm-research-status-stack pm-container">
-          <div class="pm-research-chip-row" aria-label="Filter-Chip-Zone Dummy">
-            <a class="pm-filter-chip" href="#sample-research-task-panels-title">Level: B1</a>
-            <a class="pm-filter-chip" href="#sample-research-task-panels-title">L1: DE</a>
+          <div class="pm-research-results-header">
+            <div class="pm-research-status">
+              <p class="pm-research-status__summary">18 Sprecher:innen · 2 aktive Filter</p>
+            </div>
+            <div class="pm-speakers-view-switch-wrap">
+              <span class="pm-speakers-view-switch__label">Ansicht:</span>
+              <nav class="pm-player-view-switch pm-speakers-view-switch" aria-label="Ansicht:">
+                <a class="pm-player-view-switch__option" href="#sample-research-speaker-cards-title">Karten</a>
+                <span class="pm-player-view-switch__option is-current" aria-current="page">Tabelle</span>
+              </nav>
+            </div>
           </div>
-          <div class="pm-research-status">
-            <p class="pm-research-status__summary">18 Aufnahmen · 2 aktive Filter</p>
+          <div class="pm-research-chip-row" aria-label="Filter-Chip-Zone Dummy">
+            <a class="pm-filter-chip" href="#sample-research-task-panels-title">Niveau: B1</a>
+            <a class="pm-filter-chip" href="#sample-research-task-panels-title">L1: DE</a>
           </div>
         </div>
 
         <div class="pm-research-table-wrap pm-container">
-          <table class="pm-research-table">
+          <table class="pm-research-table pm-research-table--speakers">
             <colgroup>
-              <col class="pm-research-table__col--recording">
-              <col class="pm-research-table__col--speaker-type">
+              <col class="pm-research-table__col--speaker">
+              <col class="pm-research-table__col--speaker-group">
               <col class="pm-research-table__col--level">
-              <col class="pm-research-table__col--l1">
+              <col class="pm-research-table__col--detail">
               <col class="pm-research-table__col--gender">
-              <col class="pm-research-table__col--stay">
-              <col class="pm-research-table__col--action">
+              <col class="pm-research-table__col--stays">
+              <col class="pm-research-table__col--actions">
             </colgroup>
             <thead>
               <tr>
-                <th scope="col" class="pm-research-table__head--recording">Aufzeichnung (Sprecher:in)</th>
-                <th scope="col" class="pm-research-table__head--speaker-type">Sprechergruppe</th>
+                <th scope="col" class="pm-research-table__head--speaker">Sprecher:in</th>
+                <th scope="col" class="pm-research-table__head--speaker-group">Sprechergruppe</th>
                 <th scope="col" class="pm-research-table__head--level">Niveau</th>
-                <th scope="col" class="pm-research-table__head--l1">L1</th>
+                <th scope="col" class="pm-research-table__head--detail">L1 / Varietät</th>
                 <th scope="col" class="pm-research-table__head--gender">Geschlecht</th>
-                <th scope="col" class="pm-research-table__head--stay">Sprachaufenthalte</th>
-                <th scope="col" class="pm-research-table__head--action pm-research-table__action-col">Aktion</th>
+                <th scope="col" class="pm-research-table__head--stays">Aufenthalt</th>
+                <th scope="col" class="pm-research-table__head--actions pm-research-table__action-col">Aufzeichnungen</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="pm-research-table__cell--recording" data-label="Aufzeichnung (Sprecher:in)">
-                  <div class="pm-research-recording-cell">
-                    <span class="pm-research-recording-cell__session-id">ES-L-0001-2027-S02</span>
-                    <a class="pm-research-recording-cell__person-link" href="#sample-research-profile-title">ES-L-0001</a>
+                <td class="pm-research-table__cell--speaker" data-label="Sprecher:in">
+                  <div class="pm-research-speaker-cell">
+                    <span class="pm-research-speaker-cell__person">ES-L-0001</span>
+                    {{ render_cta_link({ 'label': 'Profil', 'href': '#sample-research-profile-title', 'tone': 'muted' }, 'pm-research-speaker-cell__profile pm-research-speaker-profile-link') }}
                   </div>
                 </td>
-                <td class="pm-research-table__cell--speaker-type" data-label="Sprechergruppe">Lernende</td>
+                <td class="pm-research-table__cell--speaker-group" data-label="Sprechergruppe">Lernende</td>
                 <td class="pm-research-table__cell--level" data-label="Niveau">A2</td>
-                <td class="pm-research-table__cell--l1" data-label="L1">DE</td>
+                <td class="pm-research-table__cell--detail" data-label="L1 / Varietät">DE</td>
                 <td class="pm-research-table__cell--gender" data-label="Geschlecht">weiblich</td>
-                <td class="pm-research-table__cell--stay" data-label="Sprachaufenthalte">Ja</td>
-                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion">{{ render_navigation_pill({ 'label': 'Wortliste', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}</td>
+                <td class="pm-research-table__cell--stays" data-label="Aufenthalt">Ja</td>
+                <td class="pm-research-table__cell--actions pm-research-table__action" data-label="Aufzeichnungen">
+                  <div class="pm-research-table__actions">
+                    {{ render_navigation_pill({ 'label': 'Wortliste', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
+                    {{ render_navigation_pill({ 'label': 'Text', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
+                    {{ render_navigation_pill({ 'label': 'Interview', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
+                  </div>
+                </td>
               </tr>
               <tr>
-                <td class="pm-research-table__cell--recording" data-label="Aufzeichnung (Sprecher:in)">
-                  <div class="pm-research-recording-cell">
-                    <span class="pm-research-recording-cell__session-id">ES-N-0001-2026-S01</span>
-                    <a class="pm-research-recording-cell__person-link" href="#sample-research-profile-title">ES-N-0001</a>
+                <td class="pm-research-table__cell--speaker" data-label="Sprecher:in">
+                  <div class="pm-research-speaker-cell">
+                    <span class="pm-research-speaker-cell__person">ES-N-0001</span>
+                    {{ render_cta_link({ 'label': 'Profil', 'href': '#sample-research-profile-title', 'tone': 'muted' }, 'pm-research-speaker-cell__profile pm-research-speaker-profile-link') }}
                   </div>
                 </td>
-                <td class="pm-research-table__cell--speaker-type" data-label="Sprechergruppe">Native Speaker</td>
-                <td class="pm-research-table__cell--level" data-label="Niveau"></td>
-                <td class="pm-research-table__cell--l1" data-label="L1"></td>
+                <td class="pm-research-table__cell--speaker-group" data-label="Sprechergruppe">Native Speaker</td>
+                <td class="pm-research-table__cell--level" data-label="Niveau">–</td>
+                <td class="pm-research-table__cell--detail" data-label="L1 / Varietät">Spanien</td>
                 <td class="pm-research-table__cell--gender" data-label="Geschlecht">männlich</td>
-                <td class="pm-research-table__cell--stay" data-label="Sprachaufenthalte">-</td>
-                <td class="pm-research-table__cell--action pm-research-table__action" data-label="Aktion">{{ render_navigation_pill({ 'label': 'Text', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}</td>
+                <td class="pm-research-table__cell--stays" data-label="Aufenthalt">–</td>
+                <td class="pm-research-table__cell--actions pm-research-table__action" data-label="Aufzeichnungen">
+                  <div class="pm-research-table__actions">
+                    {{ render_navigation_pill({ 'label': 'Wortliste', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
+                    {{ render_navigation_pill({ 'label': 'Text', 'href': '#sample-research-task-panels-title', 'size': 'small' }) }}
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>

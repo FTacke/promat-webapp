@@ -12,13 +12,13 @@ import { resolveActiveTimedItem } from '../../static/js/modules/research/player-
 test('buildUiLangSwitchUrl preserves workbench query state on localized routes', () => {
   const nextUrl = buildUiLangSwitchUrl(
     'en',
-    'http://promat.test/de/research/spanish/player/ES-L-0001-2026-S01/text?source=recordings&compare_session=ES-N-0001-2026-S01&render_mode=sentence_list',
+    'http://promat.test/de/research/spanish/player/ES-L-0001-2026-S01/text?source=speakers&compare_session=ES-N-0001-2026-S01&render_mode=sentence_list',
     'http://promat.test',
   );
 
   assert.equal(
     nextUrl,
-    '/en/research/spanish/player/ES-L-0001-2026-S01/text?source=recordings&compare_session=ES-N-0001-2026-S01&render_mode=sentence_list',
+    '/en/research/spanish/player/ES-L-0001-2026-S01/text?source=speakers&compare_session=ES-N-0001-2026-S01&render_mode=sentence_list&lang=en',
   );
 });
 
@@ -31,7 +31,7 @@ test('buildUiLangSwitchUrl rewrites nested local next targets for the target loc
 
   assert.equal(
     nextUrl,
-    '/login?next=%2Fen%2Fresearch%2Fspanish%2Fcomparison%3Fset_id%3Ddraft-42%26task%3Dtext&ui_lang=en',
+    '/login?next=%2Fen%2Fresearch%2Fspanish%2Fcomparison%3Fset_id%3Ddraft-42%26task%3Dtext&lang=en',
   );
 });
 

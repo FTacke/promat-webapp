@@ -8,7 +8,7 @@ This file is the binding source of truth for the active architecture of the rese
 
 - This spec defines the active unified research-player architecture.
 - `docs/spec/platform-data-files.md` remains binding for routing, runtime boundaries, and filesystem semantics.
-- `docs/spec/research-access.md` remains binding for research IA and access logic around speakers, recordings, profiles, comparison, and phenomena.
+- `docs/spec/research-access.md` remains binding for research IA and access logic around speakers, profiles, comparison, and phenomena.
 - `docs/spec/research-capabilities.md` remains binding for task subsets, compare capability, set-filter capability, render-mode vocabulary, and corpus-specific surface readiness.
 - `docs/model_mds/speech_text_sync.md` is a technical reference only and is not normative for PROMAT.
 
@@ -49,11 +49,11 @@ This file is the binding source of truth for the active architecture of the rese
 - `task` uses only the canonical research task keys `wordlist`, `text`, and `interview`.
 - The route path identifies the primary session and the initial task.
 - The player is a research detail route, not a second section root and not an additional sidebar page.
-- The same route family must be callable from `speakers`, `recordings`, `profile`, and later from `comparison` and `phenomena`.
+- The same route family must be callable from `speakers`, `profile`, and later from `comparison` and `phenomena`.
 
 ### Optional query context
 
-- `source`: identifies the entry source and may use `speakers`, `recordings`, `profile`, `comparison`, or `phenomena`.
+- `source`: identifies the entry source and may use `speakers`, `profile`, `comparison`, or `phenomena`; the legacy value `recordings` may still be accepted for compatibility and resolves to the speakers-table return context.
 - `preset_id`: identifies an optional phenomena preset context.
 - `set_id`: identifies an optional user-owned draft or saved set context.
 - `compare_session`: identifies an optional secondary comparison session.

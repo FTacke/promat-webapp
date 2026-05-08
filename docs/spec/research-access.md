@@ -10,7 +10,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 
 - The active research runtime reads sessions directly from `data/sessions/{language}/{session_id}/metadata.json`.
 - There is no second active research metadata source.
-- `speakers` and `recordings` operate on the same datei-based session metadata.
+- `speakers`, the speaker profile, and `player` operate on the same datei-based session metadata.
 
 ## Page Model
 
@@ -22,14 +22,13 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - Those corpus cards remain part of the shared card system of the app: speaker cards are the primary visual reference, the visible card structure stays title, primary block, secondary block, and footer CTA, and the secondary status block keeps the same minimum inset above and below the surrounding divider rhythm instead of visually touching the footer divider.
 - `design` documents corpus design.
 - `speakers` is the person-based access path.
-- `recordings` is the session- and task-based access path.
 - `comparison` and `phenomena` remain conceptually part of the research IA.
 - `player` is the session-centered research-detail workbench for concrete playback and bounded direct compare.
 
 ### Research detail workbench
 
 - `player` is not a second section root and not a sidebar page of its own.
-- `speakers`, `recordings`, and the person profile are direct player entry points in the current IA.
+- `speakers` and the person profile are direct player entry points in the current IA.
 - `comparison` is a first-class item-centered research workbench page and not just a player mode.
 - `phenomena` is a split list-curation surface with one calm overview page plus dedicated editor detail routes, and it is not the primary listening surface.
 - `comparison` may still launch the canonical player route with additional context, but neither `comparison` nor `phenomena` collapse into separate player implementations or new player route families.
@@ -42,7 +41,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page.
 - The corpus root `/{ui_lang}/research/{corpus}` is a public reduced orientation page. The canonical research paths remain visible in the left sidebar only, while the main column stays limited to title, short subtitle, and two short prose paragraphs; signed-out users additionally see the two actions `Zugang beantragen`/`Request access` and `Zum Login`/`Go to login`, while authenticated users do not.
-- The corpus-root main column does not rebuild the area navigation as a second list of `design`, `speakers`, `recordings`, `comparison`, or `phenomena` entries with separate body CTAs.
+- The corpus-root main column does not rebuild the area navigation as a second list of `design`, `speakers`, `comparison`, or `phenomena` entries with separate body CTAs.
 - All other research pages and detail routes under one concrete corpus path are authenticated research-app surfaces.
 - Access clarification belongs at the route boundary: unauthenticated requests are redirected to login with a safe return target, and the protected workbench or media response must not already render in the background.
 - There are no corpus-specific access exceptions such as public comparison or public phenomena variants outside `design`.
@@ -52,7 +51,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 
 ### Protected research surfaces
 
-- Protected research page routes include `speakers`, `recordings`, `comparison`, and `phenomena`.
+- Protected research page routes include `speakers`, `comparison`, and `phenomena`.
 - Protected research detail routes include the speaker profile, the canonical player route, the phenomena preset editor route, the phenomena owner-set editor route, and the protected player-media delivery routes.
 - The same protected boundary also applies to later research work surfaces added under the corpus path unless an active spec explicitly defines a public exception.
 
@@ -61,9 +60,9 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - `speakers` aggregates by `person_id`.
 - There is exactly one profile page per `person_id`.
 - A person card remains visible if at least one of that person's sessions matches all active filters.
-- `speakers` remains person-based even when the visible result surface changes; it must not reintroduce a session-first or recordings-style workbench logic.
+- `speakers` remains person-based even when the visible result surface changes; it must not reintroduce a session-first workbench logic.
 - The default `speakers` result view is cards; `?view=table` switches the same filtered person result set into a table view, and invalid `view` values degrade to cards.
-- Cards and table rows render from the same already filtered person-based result structure with one selected or matching session per person; `speakers` must not perform a second recordings query or a separate session-counting result pass for the table.
+- Cards and table rows render from the same already filtered person-based result structure with one selected or matching session per person; `speakers` must not perform a second session-first query or a separate session-counting result pass for the table.
 - Locale changes inside `speakers` keep stable technical state such as the current `view`, `session` focus, and active filter keys; localized labels are never the source of truth for restoring the current result state.
 - Cards link into the person profile and into recordings of the selected or matching session.
 - On `speakers` cards, the quiet profile link sits directly below the person/session identity block; recordings remain grouped below in the separate task-pill section.
@@ -80,12 +79,6 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - Learner rows show the selected session level under `Niveau`, the learner `L1` under `L1 / Varietät`, and the localized stays summary under `Sprachaufenthalte`/`Stays`.
 - Native-speaker rows leave `Niveau` and `Sprachaufenthalte` empty as `–` and show the canonical localized native reference under `L1 / Varietät`.
 
-### `recordings`
-
-- `recordings` remains session- and task-based.
-- Each row refers to one concrete session and one task.
-- A recordings row may link back to the person profile with an optional session focus.
-
 ### Session focus
 
 - The person page may focus one selected session via query parameter.
@@ -98,7 +91,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 
 - `player` always has one primary `session_id` and one initial task key.
 - The canonical player route is `/{ui_lang}/research/{language}/player/{session_id}/{task}`.
-- Player entry may carry source context from `speakers`, `recordings`, `profile`, and `comparison`; all of them resolve to the same route family.
+- Player entry may carry source context from `speakers`, `profile`, `comparison`, and `phenomena`; the legacy source value `recordings` may still be accepted for compatibility but resolves to the same speakers-table return context.
 - The player keeps one shared session context while switching between all tasks that are documented as available for that session.
 - Tasks that are unavailable for the session may remain visible as disabled, non-interactive controls, consistent with the broader research UI.
 - The player may add one optional secondary `compare_session` for bounded direct compare without creating a second player route family.
@@ -159,7 +152,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - The footer label is `Aufzeichnungen`.
 - The visible footer order is profile action first, then the recordings label, then the compact task actions.
 - Cards expose compact direct task links for the currently selected or matched session.
-- Compact task-entry links in speaker cards and recordings rows reuse the shared compact inline-action family with an arrow affordance; they must read as actions and stay visually distinct from chips and badges.
+- Compact task-entry links in speaker cards and speakers-table rows reuse the shared compact inline-action family with an arrow affordance; they must read as actions and stay visually distinct from chips and badges.
 - The profile CTA remains visually secondary to the card identity and uses the shared localized `Profil`/`Profile` label with inline arrow affordance.
 - The UI does not show a separate `Treffer über ...` match note on the card.
 - Learner-level accents stay on the shared learner scale, while native-speaker cards and session containers use the dedicated native accent `#18677A`.
@@ -277,16 +270,6 @@ Rules:
 - Native-speaker sessions do not offer `interview`.
 - Tasks that are unavailable in the current UI context may still remain visible as disabled, non-interactive panels or links.
 - The same availability semantics apply inside the unified player task switch.
-
-## Recordings Table Semantics
-
-- The leading recordings-table column is `Aufzeichnung (Sprecher:in)` in the German UI.
-- That leading column shows `session_id` as the primary line and linked `person_id` as the quieter secondary line.
-- The recordings table does not use a separate standalone `person_id` column.
-- The UI does not repeat the recording year as a second line below `session_id`.
-- The learner-facing metadata columns are labeled `Niveau` and `L1`.
-- Native-speaker rows leave `Niveau` and `L1` empty instead of reusing variety or origin values in those columns.
-- The recordings action column uses the same compact task-action button family as speaker-card recording links instead of a second badge-like control style.
 
 ## Active UI-Metadata Contract
 
