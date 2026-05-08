@@ -470,7 +470,7 @@ a.pm-card:focus-visible .pm-card__title,
   display: grid;
   flex: 1 1 auto;
   align-content: start;
-  gap: 1rem;
+  gap: 0.72rem;
   color: inherit;
   text-decoration: none;
 }
@@ -481,7 +481,7 @@ a.pm-card:focus-visible .pm-card__title,
 
 .pm-speaker-card__footer {
   display: grid;
-  gap: var(--pm-divider-space-before);
+  gap: 0.45rem;
   margin-top: auto;
   margin-block-start: var(--pm-divider-space-before);
   padding-top: var(--pm-divider-space-after);
@@ -580,18 +580,6 @@ a.pm-card:focus-visible .pm-card__title,
   display: grid;
   gap: 0.45rem;
   justify-items: start;
-}
-
-.pm-speaker-card__footer-section--recordings {
-  margin-block-start: var(--pm-divider-space-before);
-  padding-top: var(--pm-divider-space-after);
-  border-top: 1px solid var(--pm-border-subtle);
-}
-
-.pm-speaker-card__footer-section--actions {
-  margin-block-start: 0;
-  padding-top: 0;
-  border-top: 0;
 }
 
 .pm-speaker-card__profile-link {

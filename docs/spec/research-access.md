@@ -61,7 +61,24 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - `speakers` aggregates by `person_id`.
 - There is exactly one profile page per `person_id`.
 - A person card remains visible if at least one of that person's sessions matches all active filters.
+- `speakers` remains person-based even when the visible result surface changes; it must not reintroduce a session-first or recordings-style workbench logic.
+- The default `speakers` result view is cards; `?view=table` switches the same filtered person result set into a table view, and invalid `view` values degrade to cards.
+- Cards and table rows render from the same already filtered person-based result structure with one selected or matching session per person; `speakers` must not perform a second recordings query or a separate session-counting result pass for the table.
+- Locale changes inside `speakers` keep stable technical state such as the current `view`, `session` focus, and active filter keys; localized labels are never the source of truth for restoring the current result state.
 - Cards link into the person profile and into recordings of the selected or matching session.
+- On `speakers` cards, the quiet profile link sits directly below the person/session identity block; recordings remain grouped below in the separate task-pill section.
+- The `speakers` table has one row per `person_id`, not one row per session and not one row per task.
+- In the table, the leading column stays person-first: `person_id` is the primary line and the shared profile link sits directly below it; the selected or matching `session_id` remains internal for canonical routing and is not shown as visible table copy.
+- The table recordings column exposes only the available player-task actions for that same selected session on the canonical route `/{ui_lang}/research/{language}/player/{session_id}/{task}`.
+- Native-speaker table rows do not show a visible `Interview` action when the selected session does not provide that task.
+- On small viewports, the `speakers` table must collapse into a stacked row-card presentation rather than forcing a broken wide table.
+
+### `speakers` table semantics
+
+- The German `speakers` table columns are `Sprecher:in`, `Sprechergruppe`, `Niveau`, `L1 / Varietät`, `Geschlecht`, `Aufenthalt`, and `Aufzeichnungen`.
+- The English `speakers` table columns are `Speaker`, `Speaker group`, `Level`, `L1 / Variety`, `Gender`, `Stays`, and `Recordings`.
+- Learner rows show the selected session level under `Niveau`, the learner `L1` under `L1 / Varietät`, and the localized stays summary under `Sprachaufenthalte`/`Stays`.
+- Native-speaker rows leave `Niveau` and `Sprachaufenthalte` empty as `–` and show the canonical localized native reference under `L1 / Varietät`.
 
 ### `recordings`
 

@@ -535,6 +535,22 @@ textarea:focus-visible {
   color: var(--book-muted);
 }
 
+.pm-speakers-view-switch-wrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem 0.55rem;
+}
+
+.pm-speakers-view-switch__label {
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .pm-filter-chip,
 .pm-profile-task-link {
   padding: 0 0.9rem;
@@ -3495,10 +3511,48 @@ body[data-page="login"] .pm-auth-secondary--card {
   color: var(--pm-text-accent);
 }
 
+.pm-research-speaker-cell {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.pm-research-speaker-cell__person {
+  color: var(--book-fg);
+  font-family: var(--book-font-ui);
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.pm-research-speaker-profile-link {
+  color: var(--book-muted);
+  font-size: var(--pm-type-meta-size);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.pm-research-speaker-profile-link:hover,
+.pm-research-speaker-profile-link:focus-visible {
+  color: var(--pm-text-accent);
+}
+
+.pm-research-speaker-cell__profile {
+  justify-self: start;
+}
+
 .pm-research-table__action-col,
 .pm-research-table__action {
   width: var(--pm-research-table-action-width);
   text-align: right;
+}
+
+.pm-research-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.42rem;
 }
 
 .pm-player-summary__actions {
@@ -5363,6 +5417,75 @@ dialog.pm-dialog .pm-dialog__surface {
   width: 11%;
 }
 
+.pm-research-table--speakers {
+  min-width: 52rem;
+  table-layout: auto;
+}
+
+.pm-research-table__col--speaker,
+.pm-research-table__head--speaker,
+.pm-research-table__cell--speaker {
+  width: 12.5rem;
+}
+
+.pm-research-table__col--speaker-group,
+.pm-research-table__head--speaker-group,
+.pm-research-table__cell--speaker-group {
+  width: 8.5rem;
+}
+
+.pm-research-table--speakers .pm-research-table__col--level,
+.pm-research-table--speakers .pm-research-table__head--level,
+.pm-research-table--speakers .pm-research-table__cell--level {
+  width: 4.5rem;
+}
+
+.pm-research-table__col--detail,
+.pm-research-table__head--detail,
+.pm-research-table__cell--detail {
+  width: 7rem;
+}
+
+.pm-research-table--speakers .pm-research-table__col--gender,
+.pm-research-table--speakers .pm-research-table__head--gender,
+.pm-research-table--speakers .pm-research-table__cell--gender {
+  width: 6rem;
+}
+
+.pm-research-table__col--stays,
+.pm-research-table__head--stays,
+.pm-research-table__cell--stays {
+  width: 6.5rem;
+}
+
+.pm-research-table__col--actions,
+.pm-research-table__head--actions,
+.pm-research-table__cell--actions {
+  width: auto;
+}
+
+.pm-research-table--speakers .pm-research-table__action-col,
+.pm-research-table--speakers .pm-research-table__action {
+  width: auto;
+  text-align: left;
+}
+
+.pm-research-table--speakers .pm-research-table__head--level,
+.pm-research-table--speakers .pm-research-table__cell--level,
+.pm-research-table--speakers .pm-research-table__head--detail,
+.pm-research-table--speakers .pm-research-table__cell--detail,
+.pm-research-table--speakers .pm-research-table__head--gender,
+.pm-research-table--speakers .pm-research-table__cell--gender,
+.pm-research-table--speakers .pm-research-table__head--stays,
+.pm-research-table--speakers .pm-research-table__cell--stays {
+  white-space: nowrap;
+}
+
+.pm-research-table--speakers .pm-research-table__head--actions,
+.pm-research-table--speakers .pm-research-table__cell--actions {
+  min-width: 13rem;
+}
+
 .pm-profile-metadata__grid,
 .pm-player-stub-summary__grid {
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
@@ -5619,6 +5742,14 @@ dialog.pm-dialog .pm-dialog__surface {
 }
 
 @media (max-width: 719px) {
+  .pm-research-results-header {
+    align-items: start;
+  }
+
+  .pm-speakers-view-switch-wrap {
+    justify-content: flex-start;
+  }
+
   .pm-profile-task-list {
     grid-template-columns: 1fr;
   }
@@ -5637,6 +5768,8 @@ dialog.pm-dialog .pm-dialog__surface {
 
   .pm-research-table tr + tr {
     margin-top: var(--pm-space-sm);
+    padding-top: var(--pm-space-sm);
+    border-top: 1px solid var(--pm-border-subtle);
   }
 
   .pm-research-table td {

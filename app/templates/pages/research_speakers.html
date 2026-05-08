@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'partials/_research_filters.html' import render_filter_form %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
-{% from 'partials/_pm_interactions.html' import render_action_button %}
+{% from 'partials/_pm_interactions.html' import render_action_button, render_cta_link, render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -35,17 +35,82 @@
         {% endfor %}
       </div>
       {% endif %}
-      <div class="pm-research-status">
-        <p class="pm-research-status__summary">{{ promat_page.status.result_count }} {{ promat_page.status.result_label }} · {{ promat_page.status.active_filter_count }} {{ promat_page.status.filter_label }}</p>
+      <div class="pm-research-results-header">
+        <div class="pm-research-status">
+          <p class="pm-research-status__summary">{{ promat_page.status.result_count }} {{ promat_page.status.result_label }} · {{ promat_page.status.active_filter_count }} {{ promat_page.status.filter_label }}</p>
+        </div>
+        <div class="pm-speakers-view-switch-wrap">
+          <span class="pm-speakers-view-switch__label">{{ promat_page.view_toggle.label }}</span>
+          <nav class="pm-player-view-switch pm-speakers-view-switch" aria-label="{{ promat_page.view_toggle.label }}">
+            {% for option in promat_page.view_toggle.options %}
+            {% if option.current %}
+            <span class="pm-player-view-switch__option is-current" aria-current="page">{{ option.label }}</span>
+            {% else %}
+            <a class="pm-player-view-switch__option" href="{{ option.href }}">{{ option.label }}</a>
+            {% endif %}
+            {% endfor %}
+          </nav>
+        </div>
       </div>
     </div>
 
-    {% if promat_page.cards %}
+    {% if promat_page.results %}
+    {% if promat_page.view == 'table' %}
+    <div class="pm-research-table-wrap pm-container">
+      <table class="pm-research-table pm-research-table--speakers">
+        <colgroup>
+          <col class="pm-research-table__col--speaker">
+          <col class="pm-research-table__col--speaker-group">
+          <col class="pm-research-table__col--level">
+          <col class="pm-research-table__col--detail">
+          <col class="pm-research-table__col--gender">
+          <col class="pm-research-table__col--stays">
+          <col class="pm-research-table__col--actions">
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col" class="pm-research-table__head--speaker">{{ promat_page.columns.speaker }}</th>
+            <th scope="col" class="pm-research-table__head--speaker-group">{{ promat_page.columns.speaker_group }}</th>
+            <th scope="col" class="pm-research-table__head--level">{{ promat_page.columns.level }}</th>
+            <th scope="col" class="pm-research-table__head--detail">{{ promat_page.columns.detail }}</th>
+            <th scope="col" class="pm-research-table__head--gender">{{ promat_page.columns.gender }}</th>
+            <th scope="col" class="pm-research-table__head--stays">{{ promat_page.columns.stays }}</th>
+            <th scope="col" class="pm-research-table__head--actions pm-research-table__action-col">{{ promat_page.columns.actions }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in promat_page.results %}
+          <tr>
+            <td class="pm-research-table__cell--speaker" data-label="{{ promat_page.columns.speaker }}">
+              <div class="pm-research-speaker-cell">
+                <span class="pm-research-speaker-cell__person">{{ row.person_id }}</span>
+                {{ render_cta_link({ 'label': row.profile_label, 'href': row.profile_href, 'tone': 'muted' }, 'pm-research-speaker-cell__profile pm-research-speaker-profile-link') }}
+              </div>
+            </td>
+            <td class="pm-research-table__cell--speaker-group" data-label="{{ promat_page.columns.speaker_group }}">{{ row.speaker_group_label }}</td>
+            <td class="pm-research-table__cell--level" data-label="{{ promat_page.columns.level }}">{{ row.table_level }}</td>
+            <td class="pm-research-table__cell--detail" data-label="{{ promat_page.columns.detail }}">{{ row.table_detail }}</td>
+            <td class="pm-research-table__cell--gender" data-label="{{ promat_page.columns.gender }}">{{ row.table_gender }}</td>
+            <td class="pm-research-table__cell--stays" data-label="{{ promat_page.columns.stays }}">{{ row.table_stays }}</td>
+            <td class="pm-research-table__cell--actions pm-research-table__action" data-label="{{ promat_page.columns.actions }}">
+              <div class="pm-research-table__actions">
+                {% for action in row.table_actions %}
+                {{ render_navigation_pill({ 'label': action.label, 'href': action.href, 'size': 'small' }) }}
+                {% endfor %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
     <div class="pm-speaker-grid">
-      {% for card in promat_page.cards %}
+      {% for card in promat_page.results %}
       {{ render_speaker_card(card) }}
       {% endfor %}
     </div>
+    {% endif %}
     {% else %}
     <div class="pm-research-empty pm-container pm-container--tinted">
       <p class="pm-research-empty__text">{{ promat_page.empty_state.message }}</p>

@@ -379,6 +379,13 @@ def _normalize_speakers_filters(query_args: Mapping[str, str]) -> dict[str, str]
     }
 
 
+def _normalize_speakers_view(query_args: Mapping[str, str]) -> str:
+    view = _normalize_text(query_args.get("view")) or "cards"
+    if view not in {"cards", "table"}:
+        return "cards"
+    return view
+
+
 def _recordings_section_label(ui_lang: str) -> str:
     return _t(ui_lang, "common.labels.recordings_section")
 
@@ -499,6 +506,134 @@ def _session_count_label(ui_lang: str) -> str:
 
 def _profile_action_label(ui_lang: str) -> str:
     return _t(ui_lang, "research.player.profile")
+
+
+def _speakers_view_toggle(ui_lang: str, language_slug: str, filters: Mapping[str, str], current_view: str) -> dict[str, Any]:
+    options = []
+    for view_key, label_key in (("cards", "research.speakers.view.cards"), ("table", "research.speakers.view.table")):
+        query = dict(filters)
+        if query.get("speaker_group") == "all":
+            query.pop("speaker_group", None)
+        query["view"] = view_key
+        options.append(
+            {
+                "label": _t(ui_lang, label_key),
+                "href": _url_with_query(
+                    "public.research_language_page",
+                    ui_lang=ui_lang,
+                    language_slug=language_slug,
+                    page_slug="speakers",
+                    query=query,
+                ),
+                "current": current_view == view_key,
+            }
+        )
+    return {
+        "label": _t(ui_lang, "research.speakers.view.label"),
+        "options": options,
+    }
+
+
+def _speaker_result_meta_rows(person: PersonRecord, selected_session: SessionRecord, ui_lang: str) -> list[dict[str, Any]]:
+    if person.is_native:
+        variety_value = _format_standard_variety_value(person.standard_variety, ui_lang)
+        origin_country_value = _format_origin_country_value(person.origin_country, ui_lang)
+        meta_rows: list[dict[str, Any]] = []
+        if variety_value != "-":
+            meta_rows.append(
+                {
+                    "label": _standard_variety_label(ui_lang),
+                    "value": variety_value,
+                    "badges": [_meta_badge(_native_reference_value(person.standard_variety, person.origin_country, ui_lang), "native-detail")],
+                }
+            )
+        if origin_country_value != "-" and not _display_values_match(origin_country_value, variety_value):
+            meta_rows.append({"label": _origin_country_label(ui_lang), "value": origin_country_value})
+        meta_rows.extend(
+            [
+                {"label": _origin_region_label(ui_lang), "value": person.origin_region or "-"},
+                {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang)},
+                {"label": _t(ui_lang, "common.labels.recording_year"), "value": _format_recording_year(selected_session)},
+            ]
+        )
+        return meta_rows
+
+    return [
+        {
+            "label": _level_summary_label(person.level_codes, ui_lang),
+            "value": _format_level_summary(person.level_codes),
+            "badges": _level_badges(person.level_codes),
+        },
+        {"label": "L1", "value": person.l1 or "-"},
+        {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang)},
+        {"label": _target_country_stay_label(ui_lang), "value": _summarize_target_country_stays(person, ui_lang)},
+    ]
+
+
+def _speaker_result_row(person: PersonRecord, selected_session: SessionRecord, ui_lang: str, language_slug: str) -> dict[str, Any]:
+    profile_href = _url_with_query(
+        "public.research_speaker_profile",
+        ui_lang=ui_lang,
+        language_slug=language_slug,
+        person_id=person.person_id,
+        query={"session": selected_session.session_id},
+    )
+    task_links = [
+        {
+            "key": task.key,
+            "label": task.short_label(ui_lang),
+            "href": _url_with_query(
+                "public.research_player",
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                session_id=selected_session.session_id,
+                task=task.key,
+                query={"source": "speakers"},
+            ),
+        }
+        for task in iter_research_tasks()
+        if session_has_task(selected_session, task.key)
+    ]
+
+    table_detail_value = (
+        _native_reference_value(person.standard_variety, person.origin_country, ui_lang)
+        if person.is_native
+        else (person.l1 or "-")
+    )
+
+    return {
+        "person_id": person.person_id,
+        "session_id": selected_session.session_id,
+        "speaker_type": person.speaker_type,
+        "speaker_group_label": _label(SPEAKER_TYPE_LABEL_KEYS, person.speaker_type, ui_lang),
+        "eyebrow": _label(SPEAKER_TYPE_LABEL_KEYS, person.speaker_type, ui_lang),
+        "selected_session_label": _t(ui_lang, "common.labels.selected_session"),
+        "selected_session_id": selected_session.session_id,
+        "meta_rows": _speaker_result_meta_rows(person, selected_session, ui_lang),
+        "profile_href": profile_href,
+        "profile_label": _profile_action_label(ui_lang),
+        "recordings_label": _recordings_section_label(ui_lang),
+        "recording_links_aria_label": _recording_links_aria_label(ui_lang),
+        "task_links": task_links,
+        "accent_modifier": _speaker_card_modifier(person),
+        "table_level": _format_level(selected_session, ui_lang) if not person.is_native else "–",
+        "table_detail": table_detail_value if table_detail_value != "-" else "–",
+        "table_gender": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang),
+        "table_stays": _summarize_target_country_stays(person, ui_lang) if not person.is_native else "–",
+        "table_actions": task_links,
+    }
+
+
+def _build_speaker_results(
+    ui_lang: str,
+    language_slug: str,
+    filtered_people: list[tuple[PersonRecord, list[SessionRecord]]],
+) -> list[dict[str, Any]]:
+    results = []
+    for person, matching_sessions in filtered_people:
+        selected_session = resolve_selected_session(person, preferred_session_ids=[session.session_id for session in matching_sessions])
+        results.append(_speaker_result_row(person, selected_session, ui_lang, language_slug))
+    return results
 
 
 def _build_task_item(session: SessionRecord, task_key: str, ui_lang: str, language_slug: str, source: str) -> dict[str, Any]:
@@ -722,7 +857,10 @@ def _speakers_filter_form(ui_lang: str, language_slug: str, filters: Mapping[str
 
     return {
         "action": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),
-        "hidden_fields": [{"name": "speaker_group", "value": filters["speaker_group"]}],
+        "hidden_fields": [
+            {"name": "speaker_group", "value": filters["speaker_group"]},
+            {"name": "view", "value": filters.get("view", "cards")},
+        ],
         "fields": fields,
         "submit_label": _apply_filters_label(ui_lang),
         "reset_label": _reset_filters_label(ui_lang),
@@ -731,7 +869,10 @@ def _speakers_filter_form(ui_lang: str, language_slug: str, filters: Mapping[str
             ui_lang=ui_lang,
             language_slug=language_slug,
             page_slug="speakers",
-            query={"speaker_group": filters["speaker_group"]} if filters["speaker_group"] != "all" else {},
+            query={
+                **({"speaker_group": filters["speaker_group"]} if filters["speaker_group"] != "all" else {}),
+                **({"view": filters.get("view", "cards")} if filters.get("view", "cards") != "cards" else {}),
+            },
         ),
         "title": _t(ui_lang, "common.labels.more_filters"),
         "summary": _show_filters_label(ui_lang),
@@ -954,6 +1095,8 @@ def build_recordings_page(ui_lang: str, language_slug: str, query_args: Mapping[
 
 def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[str, str]) -> dict[str, Any]:
     filters = _normalize_speakers_filters(query_args)
+    current_view = _normalize_speakers_view(query_args)
+    filters_with_view = {**filters, "view": current_view}
     persons = list(load_person_records(language_slug))
     matched_people = [(person, matching_sessions_for_person(person, filters)) for person in persons]
     filtered_people = [(person, matching_sessions) for person, matching_sessions in matched_people if matching_sessions]
@@ -965,7 +1108,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
             _filter_chip(
                 f"{_t(ui_lang, 'common.labels.group')}: {group_label}",
                 "public.research_language_page",
-                query=filters,
+                query=filters_with_view,
                 drop_key="speaker_group",
                 ui_lang=ui_lang,
                 language_slug=language_slug,
@@ -978,7 +1121,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                 _filter_chip(
                     f"{_standard_variety_label(ui_lang)}: {_format_standard_variety_value(filters['standard_variety'], ui_lang)}",
                     "public.research_language_page",
-                    query=filters,
+                    query=filters_with_view,
                     drop_key="standard_variety",
                     ui_lang=ui_lang,
                     language_slug=language_slug,
@@ -990,7 +1133,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                 _filter_chip(
                     f"{_origin_country_label(ui_lang)}: {_format_origin_country_value(filters['origin_country'], ui_lang)}",
                     "public.research_language_page",
-                    query=filters,
+                    query=filters_with_view,
                     drop_key="origin_country",
                     ui_lang=ui_lang,
                     language_slug=language_slug,
@@ -1003,7 +1146,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                 _filter_chip(
                     f"{_t(ui_lang, 'common.labels.level')}: {filters['level']}",
                     "public.research_language_page",
-                    query=filters,
+                    query=filters_with_view,
                     drop_key="level",
                     ui_lang=ui_lang,
                     language_slug=language_slug,
@@ -1015,7 +1158,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                 _filter_chip(
                     f"L1: {filters['l1']}",
                     "public.research_language_page",
-                    query=filters,
+                    query=filters_with_view,
                     drop_key="l1",
                     ui_lang=ui_lang,
                     language_slug=language_slug,
@@ -1028,7 +1171,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
                 _filter_chip(
                     f"{_target_country_stay_label(ui_lang)}: {stay_label}",
                     "public.research_language_page",
-                    query=filters,
+                    query=filters_with_view,
                     drop_key="target_country_stay",
                     ui_lang=ui_lang,
                     language_slug=language_slug,
@@ -1040,7 +1183,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
             _filter_chip(
                 f"{_gender_label(ui_lang)}: {_label(GENDER_LABEL_KEYS, filters['gender'], ui_lang)}",
                 "public.research_language_page",
-                query=filters,
+                query=filters_with_view,
                 drop_key="gender",
                 ui_lang=ui_lang,
                 language_slug=language_slug,
@@ -1050,7 +1193,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
 
     quick_filters = []
     for group_key, label_key in SPEAKER_GROUP_KEYS:
-        query = {**filters, "speaker_group": "" if group_key == "all" else group_key}
+        query = {**filters_with_view, "speaker_group": "" if group_key == "all" else group_key}
         if group_key == "native_speaker":
             query.pop("level", None)
             query.pop("l1", None)
@@ -1074,76 +1217,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
             }
         )
 
-    cards = []
-    for person, matching_sessions in filtered_people:
-        selected_session = resolve_selected_session(person, preferred_session_ids=[session.session_id for session in matching_sessions])
-        if person.is_native:
-            variety_value = _format_standard_variety_value(person.standard_variety, ui_lang)
-            origin_country_value = _format_origin_country_value(person.origin_country, ui_lang)
-            meta_rows = []
-            if variety_value != "-":
-                meta_rows.append(
-                    {
-                        "label": _standard_variety_label(ui_lang),
-                        "value": variety_value,
-                        "badges": [_meta_badge(_native_reference_value(person.standard_variety, person.origin_country, ui_lang), "native-detail")],
-                    }
-                )
-            if origin_country_value != "-" and not _display_values_match(origin_country_value, variety_value):
-                meta_rows.append({"label": _origin_country_label(ui_lang), "value": origin_country_value})
-            meta_rows.extend(
-                [
-                    {"label": _origin_region_label(ui_lang), "value": person.origin_region or "-"},
-                    {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang)},
-                    {"label": _t(ui_lang, "common.labels.recording_year"), "value": _format_recording_year(selected_session)},
-                ]
-            )
-        else:
-            meta_rows = [
-                {
-                    "label": _level_summary_label(person.level_codes, ui_lang),
-                    "value": _format_level_summary(person.level_codes),
-                    "badges": _level_badges(person.level_codes),
-                },
-                {"label": "L1", "value": person.l1 or "-"},
-                {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang)},
-                {"label": _target_country_stay_label(ui_lang), "value": _summarize_target_country_stays(person, ui_lang)},
-            ]
-        cards.append(
-            {
-                "person_id": person.person_id,
-                "eyebrow": _label(SPEAKER_TYPE_LABEL_KEYS, person.speaker_type, ui_lang),
-                "selected_session_label": _t(ui_lang, "common.labels.selected_session"),
-                "selected_session_id": selected_session.session_id,
-                "meta_rows": meta_rows,
-                "profile_href": _url_with_query(
-                    "public.research_speaker_profile",
-                    ui_lang=ui_lang,
-                    language_slug=language_slug,
-                    person_id=person.person_id,
-                    query={"session": selected_session.session_id},
-                ),
-                "profile_label": _profile_action_label(ui_lang),
-                "recordings_label": _recordings_section_label(ui_lang),
-                "recording_links_aria_label": _recording_links_aria_label(ui_lang),
-                "task_links": [
-                    {
-                        "label": task.short_label(ui_lang),
-                        "href": _url_with_query(
-                            "public.research_player",
-                            ui_lang=ui_lang,
-                            language_slug=language_slug,
-                            session_id=selected_session.session_id,
-                            task=task.key,
-                            query={"source": "speakers"},
-                        ),
-                    }
-                    for task in iter_research_tasks()
-                    if session_has_task(selected_session, task.key)
-                ],
-                "accent_modifier": _speaker_card_modifier(person),
-            }
-        )
+    results = _build_speaker_results(ui_lang, language_slug, filtered_people)
 
     return {
         "title": get_research_page_label("speakers", ui_lang),
@@ -1161,7 +1235,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
         ),
         "quick_filters": quick_filters,
-        "filter_form": _speakers_filter_form(ui_lang, language_slug, filters, persons),
+        "filter_form": _speakers_filter_form(ui_lang, language_slug, filters_with_view, persons),
         "status": {
             "result_count": len(filtered_people),
             "active_filter_count": len(active_filters),
@@ -1169,10 +1243,22 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
             "filter_label": _t(ui_lang, "common.labels.active_filters"),
         },
         "active_filters": active_filters,
-        "cards": cards,
+        "view": current_view,
+        "view_toggle": _speakers_view_toggle(ui_lang, language_slug, filters, current_view),
+        "columns": {
+            "speaker": _t(ui_lang, "research.speakers.table.speaker"),
+            "speaker_group": _t(ui_lang, "research.speakers.table.speaker_group"),
+            "level": _t(ui_lang, "research.speakers.table.level"),
+            "detail": _t(ui_lang, "research.speakers.table.l1_variety"),
+            "gender": _t(ui_lang, "research.speakers.table.gender"),
+            "stays": _t(ui_lang, "research.speakers.table.stays"),
+            "actions": _t(ui_lang, "research.speakers.table.recordings"),
+        },
+        "results": results,
+        "cards": results,
         "empty_state": {
             "message": _t(ui_lang, "research.speakers.empty_message"),
-            "reset_href": _speakers_filter_form(ui_lang, language_slug, filters, persons)["reset_href"],
+            "reset_href": _speakers_filter_form(ui_lang, language_slug, filters_with_view, persons)["reset_href"],
             "reset_label": _reset_filters_label(ui_lang),
         },
     }

@@ -1892,12 +1892,12 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'pm-speaker-card__body pm-card__divider-buffer' in html
-    assert 'pm-speaker-card__footer-section--recordings pm-card__divider-buffer' in html
+    assert 'pm-speaker-card__body' in html
     assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in html
     assert 'pm-speaker-card__footer-section--recordings' in html
-    assert 'pm-speaker-card__footer-section--actions' in html
+    assert 'pm-speaker-card__footer-section--recordings pm-card__divider-buffer' not in html
     assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
+    assert 'pm-cta-link__label">Profil</span>' in html
     assert 'pm-speaker-task-link' not in html
     assert 'pm-speaker-card__match' not in html
     assert 'pm-speaker-card--learner' in html
@@ -2081,7 +2081,9 @@ def test_speakers_page_uses_neutral_learner_cards_with_level_badges(runtime_env:
     assert 'pm-research-meta-badge pm-research-meta-badge--level pm-research-meta-badge--a2' in html
     assert 'pm-research-meta-badge pm-research-meta-badge--native-detail">Spanien<' in html
     assert 'Profil öffnen' not in html
-    assert re.search(r'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small pm-speaker-card__profile-link" href="/de/research/spanish/speakers/ES-L-0001\?session=ES-L-0001-2026-S01">\s*<span class="pm-nav-pill__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert 'pm-speaker-card__footer-section--actions' not in html
+    assert re.search(r'pm-cta-link pm-cta-link--muted pm-speaker-card__profile-link pm-research-speaker-profile-link" href="/de/research/spanish/speakers/ES-L-0001\?session=ES-L-0001-2026-S01">\s*<span class="pm-cta-link__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert html.index('pm-speaker-card__session-id') < html.index('pm-speaker-card__profile-link') < html.index('pm-speaker-card__meta')
     learner_card = next(card for card in page["cards"] if card["person_id"] == "ES-L-0001")
     native_card = next(card for card in page["cards"] if card["person_id"] == "ES-N-0001")
     assert [row["label"] for row in learner_card["meta_rows"]] == ["Niveau", "L1", "Geschlecht", "Sprachaufenthalte"]
@@ -2090,6 +2092,166 @@ def test_speakers_page_uses_neutral_learner_cards_with_level_badges(runtime_env:
     assert [row["label"] for row in native_card["meta_rows"]] == ["Standardvarietät", "Herkunftsregion", "Geschlecht", "Aufnahmejahr"]
     assert native_card["meta_rows"][0]["value"] == "Spanien"
     assert native_card["meta_rows"][0]["badges"][0] == {"label": "Spanien", "modifiers": ["native-detail"]}
+
+
+def test_speakers_page_supports_shared_cards_and_table_views(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    native_session = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+    _write_session(runtime_env, "spanish", native_session, _native_payload("ES-N-0001", native_session, "2026-03-11"))
+
+    with url_app.test_request_context():
+        cards_page = build_speakers_page("de", "spanish", {})
+        table_page = build_speakers_page("de", "spanish", {"view": "table"})
+        fallback_page = build_speakers_page("de", "spanish", {"view": "grid"})
+
+    assert cards_page["view"] == "cards"
+    assert table_page["view"] == "table"
+    assert fallback_page["view"] == "cards"
+    assert cards_page["cards"] is cards_page["results"]
+    assert len(cards_page["results"]) == len(table_page["results"]) == 2
+
+    learner_row = next(row for row in table_page["results"] if row["person_id"] == "ES-L-0001")
+    native_row = next(row for row in table_page["results"] if row["person_id"] == "ES-N-0001")
+
+    assert learner_row["session_id"] == learner_session
+    assert learner_row["table_level"] == "A2"
+    assert learner_row["table_detail"] == "DE"
+    assert learner_row["table_stays"] == "Ja"
+    assert learner_row["profile_label"] == "Profil"
+    assert learner_row["profile_href"].endswith(f"/de/research/spanish/speakers/ES-L-0001?session={learner_session}")
+    assert [action["label"] for action in learner_row["table_actions"]] == ["Wortliste", "Text", "Interview"]
+    assert [action["label"] for action in native_row["table_actions"]] == ["Wortliste", "Text"]
+    assert learner_row["table_actions"][0]["href"].endswith(f"/de/research/spanish/player/{learner_session}/wordlist?source=speakers")
+    assert learner_row["table_actions"][1]["href"].endswith(f"/de/research/spanish/player/{learner_session}/text?source=speakers")
+    assert learner_row["table_actions"][2]["href"].endswith(f"/de/research/spanish/player/{learner_session}/interview?source=speakers")
+    assert native_row["table_level"] == "–"
+    assert native_row["table_stays"] == "–"
+    assert native_row["table_detail"] == "Spanien"
+
+
+def test_speakers_card_route_localizes_quiet_profile_link_in_english(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get("/en/research/spanish/speakers")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'pm-cta-link__label">Profile</span>' in html
+    assert 'pm-speaker-card__footer-section--actions' not in html
+    assert 'pm-nav-pill__label">Wordlist</span>' in html
+    assert html.index('pm-speaker-card__session-id') < html.index('pm-speaker-card__profile-link') < html.index('pm-speaker-card__meta')
+
+
+def test_speakers_route_renders_table_view_and_preserves_query_state(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get("/de/research/spanish/speakers?gender=female&view=table")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '>Ansicht:<' in html
+    assert '>Karten<' in html
+    assert '>Tabelle<' in html
+    assert '>Sprecher:in<' in html
+    assert '>L1 / Varietät<' in html
+    assert '>Aufenthalt<' in html
+    assert '>Aufzeichnungen<' in html
+    assert 'href="/de/research/spanish/speakers?gender=female&amp;view=cards"' in html
+    assert 'href="/en/research/spanish/speakers?gender=female&amp;view=table&amp;lang=en"' in html
+    assert 'pm-research-speaker-cell__profile' in html
+    assert 'pm-cta-link__label">Profil</span>' in html
+    assert 'pm-nav-pill__label">Profil</span>' not in html
+    assert 'href="/de/research/spanish/speakers/ES-L-0001?session=ES-L-0001-2026-S01"' in html
+    assert 'pm-research-speaker-cell__session' not in html
+    assert 'pm-nav-pill__label">Wortliste</span>' in html
+    assert 'href="/de/research/spanish/player/ES-L-0001-2026-S01/wordlist?source=speakers"' in html
+    assert 'href="/de/research/spanish/player/ES-L-0001-2026-S01/text?source=speakers"' in html
+    assert 'href="/de/research/spanish/player/ES-L-0001-2026-S01/interview?source=speakers"' in html
+
+
+def test_speakers_table_route_localizes_labels_in_english(runtime_env: Path, url_app: Flask) -> None:
+    learner_session = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        learner_session,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=learner_session,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist", "text", "interview"),
+        ),
+    )
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get("/en/research/spanish/speakers?view=table")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '>View:<' in html
+    assert '>Cards<' in html
+    assert '>Table<' in html
+    assert '>Speaker<' in html
+    assert '>Speaker group<' in html
+    assert '>Stays<' in html
+    assert '>L1 / Variety<' in html
+    assert '>Recordings<' in html
+    assert 'pm-cta-link__label">Profile</span>' in html
+    assert 'pm-nav-pill__label">Profile</span>' not in html
+    assert 'pm-nav-pill__label">Wordlist</span>' in html
+    assert 'pm-nav-pill__label">Text</span>' in html
+    assert 'pm-nav-pill__label">Interview</span>' in html
+    assert 'pm-research-speaker-cell__session' not in html
 
 
 def test_recordings_page_combines_session_and_person_in_leading_column(runtime_env: Path, url_app: Flask) -> None:

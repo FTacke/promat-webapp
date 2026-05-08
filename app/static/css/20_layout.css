@@ -381,6 +381,14 @@ body.app-shell.page-landing .md3-content-wrapper {
   justify-content: start;
 }
 
+.pm-research-results-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pm-space-sm);
+}
+
 .pm-phenomena-preset-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
 }
