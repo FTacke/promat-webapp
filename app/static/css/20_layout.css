@@ -588,11 +588,16 @@ body.app-shell.page-landing .md3-content-wrapper {
 
   .pm-player-control-bar__row--transport,
   .pm-player-control-bar__row--settings,
-  .pm-player-list__row--single,
   .pm-player-list__header,
   .pm-player-list__row--compare,
   .pm-player-transcript__row {
     grid-template-columns: 1fr;
+  }
+
+  .pm-player-list__row--single {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--pm-space-sm);
   }
 }
 
@@ -799,8 +804,8 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .pm-card-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--pm-space-grid);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--pm-card-grid-min-column)), 1fr));
+  gap: var(--pm-grid-gap, var(--pm-space-grid));
   max-width: min(100%, 82rem);
   margin-inline: auto;
   align-items: stretch;
@@ -809,6 +814,14 @@ body.app-shell.page-landing .md3-content-wrapper {
 .pm-feature-band .pm-card-grid {
   grid-template-columns: repeat(2, 1fr);
   max-width: min(100%, 46rem);
+}
+
+@media (max-width: 767px) {
+  .pm-card-grid,
+  .pm-feature-band .pm-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 100%;
+  }
 }
 
 .pm-card-grid--entry {

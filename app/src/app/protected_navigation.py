@@ -8,11 +8,15 @@ from .content_navigation import build_content_header
 
 
 def build_admin_panel(ui_lang: str, *, active_slug: str, translate):
+    section_label = translate(ui_lang, "shell.admin.section")
     return {
         "section_key": "admin",
-        "section_label": translate(ui_lang, "shell.admin.section"),
+        "section_label": section_label,
         "context_mode": "none",
         "context_title": None,
+        "active_primary_label": section_label,
+        "mobile_context_title": section_label,
+        "show_mobile_context_title": False,
         "active_slug": active_slug,
         "show_section_icon": True,
         "items": [

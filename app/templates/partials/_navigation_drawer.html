@@ -1,3 +1,30 @@
+{% set user_name = g.user %}
+{% set user_role = g.role %}
+{% set is_authenticated = user_name is not none %}
+{% set role_value = user_role.value if user_role else '' %}
+{% set current_ui_lang = ui_lang | default('de') %}
+{% set drawer_login_next = request.args.get('next') or (request.full_path[:-1] if request.full_path and request.full_path.endswith('?') else request.full_path) or request.path %}
+{% set drawer_top_nav_items = [
+  { 'label': t('section.project'), 'href': url_for('public.project_home', ui_lang=current_ui_lang), 'key': 'project' },
+  { 'label': t('section.research'), 'href': url_for('public.research_home', ui_lang=current_ui_lang), 'key': 'research' },
+  { 'label': t('section.teaching'), 'href': url_for('public.teaching_home', ui_lang=current_ui_lang), 'key': 'teaching' },
+] %}
+
+{% macro panel_local_nav(panel, extra_classes='') -%}
+  <nav class="promat-panel__nav {{ extra_classes }}" aria-label="{{ t('shell.panel.navigation') }}">
+    {% for item in panel['items'] %}
+    <a href="{{ item.href }}"
+       class="promat-panel__link pm-nav__item {{ 'is-active pm-nav__item--active' if panel['active_slug'] == item.page_slug else '' }}{{ ' pm-nav__item--muted' if item.get('is_muted') else '' }}"
+       aria-current="{{ 'page' if panel['active_slug'] == item.page_slug else 'false' }}">
+      <span class="promat-panel__item-label">{{ item.label }}</span>
+      {% if item.get('show_lock') %}
+      <span class="pm-icon-mask pm-icon-mask--lock promat-panel__item-lock" aria-hidden="true"></span>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </nav>
+{%- endmacro %}
+
 {% macro panel_content(panel) -%}
   <div class="promat-panel__inner pm-panel__inner{{ ' promat-panel__inner--language' if panel['context_mode'] == 'language' else '' }}{{ ' promat-panel__inner--section' if panel['context_mode'] == 'section' else '' }}{{ ' promat-panel__inner--contextless' if panel['context_mode'] == 'none' else '' }}" data-section="{{ panel['section_key'] }}" data-context-mode="{{ panel['context_mode'] }}">
     <div class="promat-panel__context {{ 'promat-panel__context--language' if panel['context_mode'] == 'language' else '' }}" data-section="{{ panel['section_key'] }}">
@@ -17,26 +44,81 @@
       {% endif %}
     </div>
 
-    <nav class="promat-panel__nav" aria-label="{{ t('shell.panel.navigation') }}">
-      {% for item in panel['items'] %}
-      <a href="{{ item.href }}"
-         class="promat-panel__link pm-nav__item {{ 'is-active pm-nav__item--active' if panel['active_slug'] == item.page_slug else '' }}{{ ' pm-nav__item--muted' if item.get('is_muted') else '' }}"
-         aria-current="{{ 'page' if panel['active_slug'] == item.page_slug else 'false' }}">
-        <span class="promat-panel__item-label">{{ item.label }}</span>
-        {% if item.get('show_lock') %}
-        <span class="pm-icon-mask pm-icon-mask--lock promat-panel__item-lock" aria-hidden="true"></span>
-        {% endif %}
-      </a>
-      {% endfor %}
-    </nav>
+    {{ panel_local_nav(panel) }}
   </div>
 {%- endmacro %}
 
 <dialog id="navigation-drawer-modal" class="promat-panel-dialog" aria-label="{{ t('shell.panel.drawer') }}">
   <div class="promat-panel promat-panel--modal">
-    {% if promat_panel is defined %}
-      {{ panel_content(promat_panel) }}
-    {% endif %}
+    <div class="promat-panel__mobile-shell" data-element="mobile-drawer-shell">
+      <div class="promat-panel__mobile-main">
+        <div class="promat-panel__mobile-head">
+          <a href="{{ url_for('public.localized_landing_page', ui_lang=current_ui_lang) }}" class="promat-panel__brand-link" aria-label="{{ t('shell.topbar.home') }}">
+            <span class="promat-panel__brand-wordmark promat-site-title__text"><span class="promat-panel__brand-prefix promat-site-title__prefix">Pronunciation</span><span class="promat-site-title__line promat-site-title__line--accent">Matters</span></span>
+          </a>
+
+          <nav class="promat-panel__primary-tabs" aria-label="{{ t('shell.topbar.main_areas') }}">
+            {% for item in drawer_top_nav_items %}
+            <a href="{{ item.href }}"
+               {% if loop.first %}data-drawer-initial-focus{% endif %}
+               class="promat-panel__primary-tab{{ ' is-active' if page_name == item.key else '' }}"
+               aria-current="{{ 'page' if page_name == item.key else 'false' }}">
+              <span class="promat-panel__primary-tab-label">{{ item.label }}</span>
+            </a>
+            {% endfor %}
+          </nav>
+        </div>
+
+        {% if promat_panel is defined and promat_panel['items'] %}
+        <section class="promat-panel__mobile-section promat-panel__mobile-section--context" aria-label="{{ t('shell.panel.navigation') }}">
+          {% if promat_panel.get('show_mobile_context_title') and promat_panel.get('mobile_context_title') %}
+          <p class="promat-panel__mobile-context-title">{{ promat_panel['mobile_context_title'] }}</p>
+          {% endif %}
+          {{ panel_local_nav(promat_panel, 'promat-panel__nav--mobile-context') }}
+        </section>
+        {% endif %}
+      </div>
+
+      <div class="promat-panel__mobile-utilities">
+        <div class="promat-panel__block-divider" aria-hidden="true"></div>
+        <div class="promat-panel__utility-group" aria-label="{{ t('shell.panel.account_section') }}">
+          <p class="promat-panel__section-label promat-panel__section-label--utility">{{ t('shell.panel.account_section') }}</p>
+          <div class="promat-panel__utility-list promat-panel__utility-list--account">
+            {% if is_authenticated %}
+            <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-panel__utility-link">{{ t('shell.panel.account_area') }}</a>
+            {% if role_value == 'admin' %}
+            <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-panel__utility-link">{{ t('shell.panel.admin') }}</a>
+            {% endif %}
+            <a href="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
+               data-logout="fetch"
+               data-logout-method="POST"
+               data-logout-url="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
+               class="promat-panel__utility-link">{{ t('shell.panel.logout') }}</a>
+            {% else %}
+            <a href="{{ url_for('public.login', next=drawer_login_next, ui_lang=current_ui_lang) }}" class="promat-panel__utility-link">{{ t('shell.topbar.login') }}</a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="promat-panel__utility-group" aria-label="{{ t('shell.panel.appearance_section') }}">
+          <p class="promat-panel__section-label promat-panel__section-label--utility">{{ t('shell.panel.appearance_section') }}</p>
+          <div class="promat-panel__utility-list promat-panel__utility-list--theme">
+            <button type="button"
+                    class="promat-panel__theme-toggle"
+                    aria-label="{{ t('shell.theme.toggle_current', mode=t('shell.theme.mode_light')) }}"
+                    aria-pressed="false"
+                    title="{{ t('shell.theme.title_current', mode=t('shell.theme.mode_light')) }}"
+                    data-theme-toggle
+                    data-theme-light-label="{{ t('shell.theme.mode_light') }}"
+                    data-theme-dark-label="{{ t('shell.theme.mode_dark') }}"
+                    data-theme-toggle-template="{{ t('shell.theme.toggle_current', mode='{mode}') }}"
+                    data-theme-title-template="{{ t('shell.theme.title_current', mode='{mode}') }}">
+              <span class="pm-icon-mask pm-icon-mask--theme promat-topbar__action-icon" data-theme-toggle-icon data-mode="light" aria-hidden="true"></span>
+              <span class="promat-panel__theme-toggle-label">{{ t('shell.panel.appearance_toggle') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </dialog>
 

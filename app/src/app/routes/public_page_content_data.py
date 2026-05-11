@@ -650,13 +650,11 @@ PROJECT_PAGES_CONTENT: dict[str, dict[str, object]] = {
                     "de": [
                         "Dr. Pedro Alonso",
                         "Ana Goás Pérez",
-                        "Marcela Gualotuña",
                         "Aoife Holmes-Rein, M.A.",
                     ],
                     "en": [
                         "Dr. Pedro Alonso",
                         "Ana Goás Pérez",
-                        "Marcela Gualotuña",
                         "Aoife Holmes-Rein, M.A.",
                     ],
                 },

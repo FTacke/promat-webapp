@@ -81,6 +81,24 @@
   {% endif %}
 {%- endmacro %}
 
+{% macro render_inline_text_link(item, extra_classes='') -%}
+  {% set classes = ['pm-inline-text-link'] %}
+  {% if extra_classes %}
+    {% set _ = classes.append(extra_classes) %}
+  {% endif %}
+  {% if item.href and not item.disabled %}
+  <a class="{{ classes | join(' ') }}" href="{{ item.href }}">
+    <span class="pm-inline-text-link__label">{{ item.label }}</span>
+    <span class="pm-interaction__arrow" aria-hidden="true">→</span>
+  </a>
+  {% else %}
+  <span class="{{ classes | join(' ') }}" aria-disabled="true">
+    <span class="pm-inline-text-link__label">{{ item.label }}</span>
+    <span class="pm-interaction__arrow" aria-hidden="true">→</span>
+  </span>
+  {% endif %}
+{%- endmacro %}
+
 {% macro render_filter_chip_preview(item) -%}
   <span class="pm-filter-chip{{ ' is-active' if item.active else '' }}">{{ item.label }}</span>
 {%- endmacro %}

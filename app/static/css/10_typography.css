@@ -39,8 +39,7 @@ textarea {
 
 .promat-content-block__title,
 .pm-panel__title,
-.pm-card__title,
-.pm-admonition__title {
+.pm-card__title {
   font-family: var(--pm-type-reading-family);
   text-wrap: balance;
 }
@@ -62,10 +61,6 @@ textarea {
 
 .pm-container,
 .pm-card,
-.pm-admonition,
-.pm-admonition__title,
-.pm-admonition__text,
-.pm-admonition__footer,
 .promat-card,
 .promat-card__text,
 .promat-card__title,
@@ -99,6 +94,10 @@ textarea {
 }
 
 .promat-site-title__line {
+  font: inherit;
+}
+
+.promat-site-title__prefix {
   font: inherit;
 }
 
@@ -277,8 +276,7 @@ textarea {
 }
 
 .pm-card__title,
-.promat-card__title,
-.pm-admonition__title {
+.promat-card__title {
   margin: 0;
   font-family: var(--pm-type-card-family);
   font-size: var(--pm-type-card-title-size);
@@ -288,9 +286,7 @@ textarea {
 }
 
 .pm-card__text,
-.promat-card__text,
-.pm-admonition__text,
-.pm-admonition__footer {
+.promat-card__text {
   font-family: var(--pm-type-reading-family);
   font-size: var(--pm-type-reading-size);
   font-weight: var(--pm-type-reading-weight);
@@ -307,9 +303,27 @@ textarea {
   letter-spacing: var(--pm-type-card-body-tracking);
 }
 
+.pm-admonition__title {
+  margin: 0;
+  font-family: var(--pm-admonition-title-font);
+  font-size: var(--pm-admonition-title-size);
+  font-weight: var(--pm-admonition-title-weight);
+  line-height: var(--pm-admonition-title-line-height);
+  letter-spacing: 0;
+}
+
+.pm-admonition__text,
 .pm-admonition__footer {
-  font-size: var(--promat-text-sm);
-  line-height: 1.6;
+  font-family: var(--pm-admonition-body-font);
+  font-size: var(--pm-admonition-body-size);
+  font-weight: var(--pm-type-reading-weight);
+  line-height: var(--pm-admonition-body-line-height);
+  letter-spacing: var(--pm-type-reading-tracking);
+}
+
+.pm-admonition__footer {
+  font-size: var(--pm-admonition-footer-size);
+  line-height: var(--pm-admonition-footer-line-height);
 }
 
 .promat-footer__title {

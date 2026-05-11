@@ -25,11 +25,8 @@
           <span class="pm-icon-mask pm-icon-mask--menu" aria-hidden="true"></span>
         </button>
 
-  <a href="{{ url_for('public.localized_landing_page', ui_lang=current_ui_lang) }}" class="promat-site-title" aria-label="{{ t('shell.topbar.home') }}">
-          <span id="siteTitle" class="promat-site-title__text" data-site-title>
-            <span class="promat-site-title__line">Pronunciation</span>
-            <span class="promat-site-title__line promat-site-title__line--accent">Matters</span>
-          </span>
+    <a href="{{ url_for('public.localized_landing_page', ui_lang=current_ui_lang) }}" class="promat-site-title" aria-label="{{ t('shell.topbar.home') }}">
+      <span id="siteTitle" class="promat-site-title__text" data-site-title><span class="promat-site-title__prefix">Pronunciation</span><span class="promat-site-title__line promat-site-title__line--accent">Matters</span></span>
         </a>
       </div>
 
@@ -44,55 +41,57 @@
       <div class="promat-topbar__meta">
         <div class="promat-topbar__actions">
           {% include 'partials/_ui_lang_switch.html' %}
-
-          <button id="themeToggle"
-                  type="button"
-                  class="promat-topbar__action promat-topbar__action--utility promat-topbar__action--theme"
-              aria-label="{{ t('shell.theme.toggle_current', mode=t('shell.theme.mode_light')) }}"
-                  aria-pressed="false"
-              title="{{ t('shell.theme.title_current', mode=t('shell.theme.mode_light')) }}"
-              data-theme-light-label="{{ t('shell.theme.mode_light') }}"
-              data-theme-dark-label="{{ t('shell.theme.mode_dark') }}"
-              data-theme-toggle-template="{{ t('shell.theme.toggle_current', mode='{mode}') }}"
-              data-theme-title-template="{{ t('shell.theme.title_current', mode='{mode}') }}">
-            <span class="pm-icon-mask pm-icon-mask--theme promat-topbar__action-icon" data-theme-toggle-icon data-mode="light" aria-hidden="true"></span>
-          </button>
-
-          {% if is_authenticated %}
-          <div class="promat-user-menu" data-user-menu-root>
-            <button class="promat-topbar__action promat-topbar__action--utility promat-topbar__action--account"
+          <div class="promat-topbar__secondary-utilities" aria-label="{{ t('shell.topbar.utility_controls') }}">
+            <button id="themeToggle"
                     type="button"
-                    aria-label="{{ t('shell.topbar.account_menu_open') }}"
-                    aria-haspopup="menu"
-                    aria-expanded="false"
-                    aria-controls="user-menu-dropdown"
-                    data-account-menu-trigger
-                    data-user-menu-toggle>
-                    <span class="pm-icon-mask pm-icon-mask--account promat-topbar__action-icon" aria-hidden="true"></span>
-              <span class="sr-only">{{ t('shell.topbar.account') }}</span>
+                    class="promat-topbar__action promat-topbar__action--utility promat-topbar__action--theme"
+                aria-label="{{ t('shell.theme.toggle_current', mode=t('shell.theme.mode_light')) }}"
+                    aria-pressed="false"
+                title="{{ t('shell.theme.title_current', mode=t('shell.theme.mode_light')) }}"
+                data-theme-toggle
+                data-theme-light-label="{{ t('shell.theme.mode_light') }}"
+                data-theme-dark-label="{{ t('shell.theme.mode_dark') }}"
+                data-theme-toggle-template="{{ t('shell.theme.toggle_current', mode='{mode}') }}"
+                data-theme-title-template="{{ t('shell.theme.title_current', mode='{mode}') }}">
+              <span class="pm-icon-mask pm-icon-mask--theme promat-topbar__action-icon" data-theme-toggle-icon data-mode="light" aria-hidden="true"></span>
             </button>
-            <div class="promat-user-menu__dropdown" id="user-menu-dropdown" role="menu" aria-label="{{ t('shell.topbar.account_menu') }}" data-user-menu hidden>
-              <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.account_area') }}</a>
-              {% if role_value == 'admin' %}
-              <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem"><span class="pm-icon-mask pm-icon-mask--settings" aria-hidden="true"></span>{{ t('shell.panel.admin') }}</a>
-              {% endif %}
-              <a href="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
-                 data-logout="fetch"
-                 data-logout-method="POST"
-                 data-logout-url="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
-                 class="promat-user-menu__item promat-user-menu__item--logout"
-                 role="menuitem">{{ t('shell.panel.logout') }}</a>
+
+            {% if is_authenticated %}
+            <div class="promat-user-menu" data-user-menu-root>
+              <button class="promat-topbar__action promat-topbar__action--utility promat-topbar__action--account"
+                      type="button"
+                      aria-label="{{ t('shell.topbar.account_menu_open') }}"
+                      aria-haspopup="menu"
+                      aria-expanded="false"
+                      aria-controls="user-menu-dropdown"
+                      data-account-menu-trigger
+                      data-user-menu-toggle>
+                      <span class="pm-icon-mask pm-icon-mask--account promat-topbar__action-icon" aria-hidden="true"></span>
+                <span class="sr-only">{{ t('shell.topbar.account') }}</span>
+              </button>
+              <div class="promat-user-menu__dropdown" id="user-menu-dropdown" role="menu" aria-label="{{ t('shell.topbar.account_menu') }}" data-user-menu hidden>
+                <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.account_area') }}</a>
+                {% if role_value == 'admin' %}
+                <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem"><span class="pm-icon-mask pm-icon-mask--settings" aria-hidden="true"></span>{{ t('shell.panel.admin') }}</a>
+                {% endif %}
+                <a href="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
+                   data-logout="fetch"
+                   data-logout-method="POST"
+                   data-logout-url="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
+                   class="promat-user-menu__item promat-user-menu__item--logout"
+                   role="menuitem">{{ t('shell.panel.logout') }}</a>
+              </div>
             </div>
+            {% else %}
+             <a href="{{ url_for('public.login', next=topbar_login_next, ui_lang=current_ui_lang) }}"
+               class="promat-topbar__action promat-topbar__action--utility"
+               aria-label="{{ t('shell.topbar.login') }}"
+               title="{{ t('shell.topbar.login') }}">
+              <span class="pm-icon-mask pm-icon-mask--login promat-topbar__action-icon" aria-hidden="true"></span>
+              <span class="sr-only">{{ t('shell.topbar.login') }}</span>
+            </a>
+            {% endif %}
           </div>
-          {% else %}
-           <a href="{{ url_for('public.login', next=topbar_login_next, ui_lang=current_ui_lang) }}"
-             class="promat-topbar__action promat-topbar__action--utility"
-             aria-label="{{ t('shell.topbar.login') }}"
-             title="{{ t('shell.topbar.login') }}">
-            <span class="pm-icon-mask pm-icon-mask--login promat-topbar__action-icon" aria-hidden="true"></span>
-            <span class="sr-only">{{ t('shell.topbar.login') }}</span>
-          </a>
-          {% endif %}
         </div>
       </div>
     </div>

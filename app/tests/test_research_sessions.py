@@ -924,6 +924,61 @@ def test_research_overview_topbar_exposes_route_preserving_language_switch(url_a
     assert html.index("promat-topbar__language-switch") < html.index('id="themeToggle"') < html.index("pm-icon-mask--login")
 
 
+def test_research_design_modal_drawer_uses_primary_tabs_and_grouped_utilities(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    drawer_html = _extract_element_by_id(html, "dialog", "navigation-drawer-modal")
+
+    assert "Hauptnavigation" not in drawer_html
+    assert "Aktueller Bereich" not in drawer_html
+    assert "promat-panel__nav--mobile-primary" not in drawer_html
+    assert 'class="promat-panel__primary-tabs"' in drawer_html
+    assert re.search(r'promat-panel__brand-prefix[^>]*>Pronunciation</span><span class="promat-site-title__line promat-site-title__line--accent">Matters</span>', drawer_html, re.S) is not None
+    assert re.search(r'promat-panel__brand-wordmark.*?promat-panel__primary-tabs.*?promat-panel__mobile-context-title">Spanisch-Korpus<', drawer_html, re.S) is not None
+    assert 'Forschung · Spanisch-Korpus' not in drawer_html
+    assert re.search(r'class="promat-panel__primary-tab is-active"[^>]*aria-current="page"[^>]*>\s*<span class="promat-panel__primary-tab-label">Forschung</span>', drawer_html, re.S) is not None
+    assert drawer_html.count("promat-panel__primary-tab-label") == 3
+    assert re.search(r'promat-panel__section-label promat-panel__section-label--utility">Konto<', drawer_html) is not None
+    assert re.search(r'promat-panel__section-label promat-panel__section-label--utility">Darstellung<', drawer_html) is not None
+    assert 'class="promat-panel__theme-toggle"' in drawer_html
+    assert 'class="promat-panel__theme-toggle-label">Hell / Dunkel<' in drawer_html
+
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_context", "show_context_title"),
+    [
+        ("/de/project/about", "Projekt", False),
+        ("/de/research", "Forschung", False),
+        ("/de/research/spanish/design", "Spanisch-Korpus", True),
+        ("/de/teaching", "Unterricht", False),
+    ],
+)
+def test_modal_drawer_context_title_only_renders_for_specific_local_context(
+    url_app: Flask,
+    path: str,
+    expected_context: str,
+    show_context_title: bool,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(path)
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    drawer_html = _extract_element_by_id(html, "dialog", "navigation-drawer-modal")
+
+    if show_context_title:
+        assert f'class="promat-panel__mobile-context-title">{expected_context}<' in drawer_html
+    else:
+        assert expected_context not in re.findall(r'promat-panel__mobile-context-title">([^<]+)<', drawer_html)
+        assert 'class="promat-panel__mobile-context-title"' not in drawer_html
+
+
 def test_player_topbar_language_switch_preserves_compare_and_render_query(url_app: Flask, runtime_env: Path) -> None:
     primary_session_id = "ES-L-0001-2026-S01"
     compare_session_id = "ES-N-0001-2026-S01"
@@ -1754,9 +1809,12 @@ def test_shared_cta_links_use_container_underline_rule(url_app: Flask) -> None:
 
     assert response.status_code == 200
     css = response.get_data(as_text=True)
-    hover_block = re.search(r"\.pm-cta-link:hover\s*\{(?P<body>.*?)\}", css, re.S)
-    assert '.pm-cta-link::after' in css
-    assert 'inset-inline: 0;' in css
+    hover_block = re.search(
+        r"a\.pm-cta-link:hover,\s*a\.pm-cta-link:focus-visible,\s*a\.pm-cta-link:active,(?P<selectors>.*?)\{(?P<body>.*?)\}",
+        css,
+        re.S,
+    )
+    assert '.pm-cta-link::after' not in css
     assert hover_block is not None
     assert 'text-decoration' not in hover_block.group('body')
 
@@ -1906,7 +1964,7 @@ def test_sample_page_uses_current_research_component_patterns(url_app: Flask) ->
     assert 'pm-speaker-card__footer-section--recordings' in html
     assert 'pm-speaker-card__footer-section--recordings pm-card__divider-buffer' not in html
     assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
-    assert 'pm-cta-link__label">Profil</span>' in html
+    assert 'pm-inline-text-link__label">Profil</span>' in html
     assert 'pm-speaker-task-link' not in html
     assert 'pm-speaker-card__match' not in html
     assert 'pm-speaker-card--learner' in html
@@ -2143,7 +2201,7 @@ def test_speakers_page_uses_neutral_learner_cards_with_level_badges(runtime_env:
     assert 'pm-research-meta-badge pm-research-meta-badge--native-detail">Spanien<' in html
     assert 'Profil öffnen' not in html
     assert 'pm-speaker-card__footer-section--actions' not in html
-    assert re.search(r'pm-cta-link pm-cta-link--muted pm-speaker-card__profile-link pm-research-speaker-profile-link" href="/de/research/spanish/speakers/ES-L-0001\?session=ES-L-0001-2026-S01">\s*<span class="pm-cta-link__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
+    assert re.search(r'pm-inline-text-link pm-speaker-card__profile-link pm-research-speaker-profile-link" href="/de/research/spanish/speakers/ES-L-0001\?session=ES-L-0001-2026-S01">\s*<span class="pm-inline-text-link__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
     assert html.index('pm-speaker-card__session-id') < html.index('pm-speaker-card__profile-link') < html.index('pm-speaker-card__meta')
     learner_card = next(card for card in page["cards"] if card["person_id"] == "ES-L-0001")
     native_card = next(card for card in page["cards"] if card["person_id"] == "ES-N-0001")
@@ -2227,7 +2285,7 @@ def test_speakers_card_route_localizes_quiet_profile_link_in_english(runtime_env
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'pm-cta-link__label">Profile</span>' in html
+    assert 'pm-inline-text-link__label">Profile</span>' in html
     assert 'pm-speaker-card__footer-section--actions' not in html
     assert 'pm-nav-pill__label">Wordlist</span>' in html
     assert html.index('pm-speaker-card__session-id') < html.index('pm-speaker-card__profile-link') < html.index('pm-speaker-card__meta')
@@ -2266,7 +2324,7 @@ def test_speakers_route_renders_table_view_and_preserves_query_state(runtime_env
     assert 'href="/de/research/spanish/speakers?gender=female&amp;view=cards"' in html
     assert 'href="/en/research/spanish/speakers?gender=female&amp;view=table&amp;lang=en"' in html
     assert 'pm-research-speaker-cell__profile' in html
-    assert 'pm-cta-link__label">Profil</span>' in html
+    assert 'pm-inline-text-link__label">Profil</span>' in html
     assert 'pm-nav-pill__label">Profil</span>' not in html
     assert 'href="/de/research/spanish/speakers/ES-L-0001?session=ES-L-0001-2026-S01"' in html
     assert 'pm-research-speaker-cell__session' not in html
@@ -2307,7 +2365,7 @@ def test_speakers_table_route_localizes_labels_in_english(runtime_env: Path, url
     assert '>Stays<' in html
     assert '>L1 / Variety<' in html
     assert '>Recordings<' in html
-    assert 'pm-cta-link__label">Profile</span>' in html
+    assert 'pm-inline-text-link__label">Profile</span>' in html
     assert 'pm-nav-pill__label">Profile</span>' not in html
     assert 'pm-nav-pill__label">Wordlist</span>' in html
     assert 'pm-nav-pill__label">Text</span>' in html

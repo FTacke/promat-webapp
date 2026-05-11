@@ -24,8 +24,14 @@ export class NavigationDrawer {
 
     this.modalDrawer = document.getElementById("navigation-drawer-modal");
     this.standardDrawer = document.getElementById("navigation-drawer-standard");
+    this.modalPanel = this.modalDrawer?.querySelector(".promat-panel--modal");
     this.openButton = document.querySelector('[data-action="open-drawer"]');
     this.mediaQuery = window.matchMedia("(max-width: 839px)");
+    this.motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.isClosing = false;
+    this.closeTimer = null;
+    this.previousHtmlOverflow = "";
+    this.previousBodyOverflow = "";
 
     if (!this.modalDrawer || !this.standardDrawer) {
       console.error("Navigation drawers not found");
@@ -62,8 +68,7 @@ export class NavigationDrawer {
     // ESC wird von <dialog> automatisch gehandhabt via 'cancel' event
     // Aber wir können es auch explizit handlen für bessere Kontrolle
     this.modalDrawer.addEventListener("cancel", (e) => {
-      // Optional: preventDefault() wenn man custom Logik will
-      // e.preventDefault();
+      e.preventDefault();
       this.close();
     });
 
@@ -200,9 +205,19 @@ export class NavigationDrawer {
     // Only open modal drawer on Compact/Medium
     if (!this.mediaQuery.matches) return;
 
+    if (this.isClosing) {
+      this.finishClose();
+    }
+
     // Native Dialog API: showModal() für Modalität + Fokus-Management
     if (!this.modalDrawer.open) {
+      this.lastFocusedElement = document.activeElement;
       this.modalDrawer.showModal();
+      this.modalDrawer.classList.remove("is-closing");
+
+      requestAnimationFrame(() => {
+        this.modalDrawer.classList.add("is-open");
+      });
 
       // Set main content inert (blocks all interactions)
       const mainContent = document.querySelector("main");
@@ -210,8 +225,12 @@ export class NavigationDrawer {
         mainContent.inert = true;
       }
 
+      this.setScrollLocked(true);
+
       // Optional: Ersten Fokus setzen
-      const firstFocusable = this.modalDrawer.querySelector(focusableSelectors);
+      const firstFocusable =
+        this.modalDrawer.querySelector("[data-drawer-initial-focus]") ||
+        this.modalDrawer.querySelector(focusableSelectors);
       if (firstFocusable) {
         // preventScroll: true verhindert Jump bei Fokus
         setTimeout(() => firstFocusable.focus({ preventScroll: true }), 100);
@@ -225,29 +244,64 @@ export class NavigationDrawer {
   }
 
   close() {
-    // Native Dialog API: close() - aber mit Animation
-    if (this.modalDrawer.open) {
-      // Remove [open] attribute um Exit-Animation zu triggern
-      // Aber Dialog bleibt technisch "open" bis Animation fertig
-      this.modalDrawer.classList.add("closing");
+    if (!this.modalDrawer.open || this.isClosing) return;
 
-      // Remove inert from main content
-      const mainContent = document.querySelector("main");
-      if (mainContent) {
-        mainContent.inert = false;
-      }
+    this.isClosing = true;
+    this.modalDrawer.classList.remove("is-open");
+    this.modalDrawer.classList.add("is-closing");
 
-      // Nach Animation: tatsächlich schließen
-      setTimeout(() => {
-        this.modalDrawer.close();
-        this.modalDrawer.classList.remove("closing");
-      }, 250); // Match CSS transition duration
+    const mainContent = document.querySelector("main");
+    if (mainContent) {
+      mainContent.inert = false;
+    }
+
+    const duration = this.motionQuery.matches
+      ? 0
+      : Math.max(
+          this.getTransitionDuration(this.modalPanel || this.modalDrawer),
+          this.getTransitionDuration(this.modalDrawer),
+        );
+
+    window.clearTimeout(this.closeTimer);
+    if (duration === 0) {
+      this.finishClose();
+    } else {
+      this.closeTimer = window.setTimeout(() => this.finishClose(), duration + 40);
     }
 
     // Update ARIA auf Open-Button
     if (this.openButton) {
       this.openButton.setAttribute("aria-expanded", "false");
     }
+  }
+
+  finishClose() {
+    if (!this.modalDrawer.open) {
+      this.isClosing = false;
+      return;
+    }
+
+    this.modalDrawer.close();
+    this.modalDrawer.classList.remove("is-open", "is-closing");
+    this.isClosing = false;
+    this.setScrollLocked(false);
+
+    if (this.openButton) {
+      this.openButton.focus({ preventScroll: true });
+    }
+  }
+
+  setScrollLocked(locked) {
+    if (locked) {
+      this.previousHtmlOverflow = document.documentElement.style.overflow;
+      this.previousBodyOverflow = document.body.style.overflow;
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      return;
+    }
+
+    document.documentElement.style.overflow = this.previousHtmlOverflow;
+    document.body.style.overflow = this.previousBodyOverflow;
   }
 }
 

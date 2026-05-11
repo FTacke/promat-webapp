@@ -11,7 +11,7 @@
     </div>
 
     <div class="promat-footer__row promat-footer__row--secondary">
-      <p class="promat-footer__meta">© {{ footer_meta_year }} {{ institution_name }} · <a href="{{ footer_partner_url }}" class="promat-footer__link" target="_blank" rel="noopener noreferrer">{{ footer_partner_label }}</a> · {{ footer_copyright_holder }}</p>
+      <p class="promat-footer__meta"><span class="promat-footer__meta-primary">© {{ footer_meta_year }} {{ institution_name }}</span><span class="promat-footer__meta-secondary"> · <a href="{{ footer_partner_url }}" class="promat-footer__link" target="_blank" rel="noopener noreferrer">{{ footer_partner_label }}</a> · {{ footer_copyright_holder }}</span></p>
 
       <nav class="promat-footer__nav" aria-label="{{ t('section.legal') }}">
         <a href="{{ url_for('public.impressum_page') }}" class="promat-footer__link">{{ t('footer.imprint') }}</a>

@@ -283,7 +283,6 @@ Dank gilt insbesondere:
 
 - Dr. Pedro Alonso
 - Ana Goás Pérez
-- Marcela Gualotuña
 - Aoife Holmes-Rein, M.A.
 
 ## Abschnitt 5: Studierende als Beteiligte
@@ -548,7 +547,6 @@ Special thanks go in particular to:
 
 - Dr. Pedro Alonso
 - Ana Goás Pérez
-- Marcela Gualotuña
 - Aoife Holmes-Rein, M.A.
 
 ## Section 5: Students as participants in the project

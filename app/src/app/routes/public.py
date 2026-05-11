@@ -388,12 +388,23 @@ def _panel_config(
     context_back_label: str | None = None,
     items: list[dict[str, str]],
 ) -> dict[str, Any]:
+    resolved_context_title = context_title or language_label or section_label
+    mobile_context_title = resolved_context_title if context_mode == "language" and resolved_context_title else section_label
+    active_primary_label = section_label
+    show_mobile_context_title = bool(
+        mobile_context_title
+        and active_primary_label
+        and mobile_context_title.strip() != active_primary_label.strip()
+    )
     return {
         "section_key": section_key,
         "section_label": section_label,
         "language_label": language_label,
         "context_mode": context_mode,
-        "context_title": context_title or language_label or section_label,
+        "context_title": resolved_context_title,
+        "active_primary_label": active_primary_label,
+        "mobile_context_title": mobile_context_title,
+        "show_mobile_context_title": show_mobile_context_title,
         "context_root_href": context_root_href,
         "context_back_href": context_back_href,
         "context_back_label": context_back_label,
@@ -518,14 +529,14 @@ def _sample_chip(label: str, *, active: bool = False) -> dict[str, Any]:
 
 
 _SAMPLE_ADMONITION_VARIANTS: dict[str, dict[str, str]] = {
-    "hoermal": {"title_key": "sample.admonitions.item.hoermal.title", "icon": "volume_up"},
-    "regel": {"title_key": "sample.admonitions.item.regel.title", "icon": "fact_check"},
-    "tip": {"title_key": "sample.admonitions.item.tip.title", "icon": "lightbulb"},
-    "praxis": {"title_key": "sample.admonitions.item.praxis.title", "icon": "assignment"},
-    "context": {"title_key": "sample.admonitions.item.context.title", "icon": "info"},
-    "cite": {"title_key": "sample.admonitions.item.cite.title", "icon": "format_quote"},
-    "summary": {"title_key": "sample.admonitions.item.summary.title", "icon": "checklist_rtl"},
-    "weiterlesen": {"title_key": "sample.admonitions.item.weiterlesen.title", "icon": "menu_book"},
+    "hoermal": {"title_key": "sample.admonitions.item.hoermal.title"},
+    "regel": {"title_key": "sample.admonitions.item.regel.title"},
+    "tip": {"title_key": "sample.admonitions.item.tip.title"},
+    "praxis": {"title_key": "sample.admonitions.item.praxis.title"},
+    "context": {"title_key": "sample.admonitions.item.context.title"},
+    "cite": {"title_key": "sample.admonitions.item.cite.title"},
+    "summary": {"title_key": "sample.admonitions.item.summary.title"},
+    "weiterlesen": {"title_key": "sample.admonitions.item.weiterlesen.title"},
 }
 
 
@@ -535,7 +546,6 @@ def _sample_admonition(
     *body_keys: str,
     item_id: str | None = None,
     title_key: str | None = None,
-    icon: str | None = None,
     collapsible: bool = False,
     default_open: bool = False,
     footer_key: str | None = None,
@@ -548,8 +558,6 @@ def _sample_admonition(
         "variant": variant,
         "title": get_text(ui_lang, title_key) if title_key else None,
         "default_title": get_text(ui_lang, variant_config["title_key"]),
-        "icon": icon,
-        "default_icon": variant_config["icon"],
         "collapsible": collapsible,
         "default_open": default_open,
         "body_paragraphs": [get_text(ui_lang, key) for key in body_keys],

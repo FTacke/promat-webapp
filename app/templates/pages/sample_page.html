@@ -2,7 +2,7 @@
 {% from 'partials/_admonition.html' import render_admonition %}
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
-{% from 'partials/_pm_interactions.html' import render_cta_link, render_cta_link_visual, render_interaction_item, render_navigation_pill %}
+{% from 'partials/_pm_interactions.html' import render_cta_link, render_cta_link_visual, render_inline_text_link, render_interaction_item, render_navigation_pill %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -550,7 +550,7 @@
                 <td class="pm-research-table__cell--speaker" data-label="Sprecher:in">
                   <div class="pm-research-speaker-cell">
                     <span class="pm-research-speaker-cell__person">ES-L-0001</span>
-                    {{ render_cta_link({ 'label': 'Profil', 'href': '#sample-research-profile-title', 'tone': 'muted' }, 'pm-research-speaker-cell__profile pm-research-speaker-profile-link') }}
+                    {{ render_inline_text_link({ 'label': 'Profil', 'href': '#sample-research-profile-title' }, 'pm-research-speaker-cell__profile pm-research-speaker-profile-link') }}
                   </div>
                 </td>
                 <td class="pm-research-table__cell--speaker-group" data-label="Sprechergruppe">Lernende</td>
@@ -570,7 +570,7 @@
                 <td class="pm-research-table__cell--speaker" data-label="Sprecher:in">
                   <div class="pm-research-speaker-cell">
                     <span class="pm-research-speaker-cell__person">ES-N-0001</span>
-                    {{ render_cta_link({ 'label': 'Profil', 'href': '#sample-research-profile-title', 'tone': 'muted' }, 'pm-research-speaker-cell__profile pm-research-speaker-profile-link') }}
+                    {{ render_inline_text_link({ 'label': 'Profil', 'href': '#sample-research-profile-title' }, 'pm-research-speaker-cell__profile pm-research-speaker-profile-link') }}
                   </div>
                 </td>
                 <td class="pm-research-table__cell--speaker-group" data-label="Sprechergruppe">Native Speaker</td>

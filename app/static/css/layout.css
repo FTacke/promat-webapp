@@ -20,7 +20,7 @@ body.app-shell {
   grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--app-background);
   color: var(--promat-fg);
-  overflow-x: clip;
+  overflow-x: visible;
 }
 
 #top-app-bar {
@@ -49,6 +49,7 @@ main.site-main,
   max-width: var(--pm-layout-shell-max-width-current);
   margin-inline: auto;
   padding: var(--pm-shell-block-start-current) var(--promat-shell-inline-padding) var(--pm-space-xl);
+  min-width: 0;
 }
 
 body.app-shell--inner {
@@ -125,6 +126,7 @@ h6:focus[tabindex="-1"] {
   .md3-content-wrapper {
     width: min(100%, calc(var(--pm-layout-content-width-current) + (2 * var(--promat-shell-inline-padding))));
     max-width: calc(var(--pm-layout-content-width-current) + (2 * var(--promat-shell-inline-padding)));
+    padding-inline: var(--promat-shell-inline-padding);
   }
 
   body.app-shell.login-open,

@@ -6,10 +6,9 @@
  */
 
 (() => {
-  const btn = document.getElementById("themeToggle");
-  const icon = document.querySelector("[data-theme-toggle-icon]");
+  const buttons = Array.from(document.querySelectorAll("[data-theme-toggle]"));
 
-  if (!btn || !icon) {
+  if (!buttons.length) {
     return;
   }
 
@@ -28,16 +27,22 @@
 
     const isDark = effective === "dark";
 
-    const lightLabel = btn.dataset.themeLightLabel || "Light mode";
-    const darkLabel = btn.dataset.themeDarkLabel || "Dark mode";
-    const toggleTemplate = btn.dataset.themeToggleTemplate || "Toggle appearance, currently {mode}";
-    const titleTemplate = btn.dataset.themeTitleTemplate || "Appearance: {mode}";
-    const fullLabel = isDark ? darkLabel : lightLabel;
+    buttons.forEach((btn) => {
+      const icon = btn.querySelector("[data-theme-toggle-icon]");
+      const lightLabel = btn.dataset.themeLightLabel || "Light mode";
+      const darkLabel = btn.dataset.themeDarkLabel || "Dark mode";
+      const toggleTemplate = btn.dataset.themeToggleTemplate || "Toggle appearance, currently {mode}";
+      const titleTemplate = btn.dataset.themeTitleTemplate || "Appearance: {mode}";
+      const currentLabel = isDark ? darkLabel : lightLabel;
 
-    btn.setAttribute("aria-pressed", String(isDark));
-    btn.setAttribute("aria-label", toggleTemplate.replace("{mode}", fullLabel));
-    btn.title = titleTemplate.replace("{mode}", fullLabel);
-    icon.setAttribute("data-mode", isDark ? "dark" : "light");
+      btn.setAttribute("aria-pressed", String(isDark));
+      btn.setAttribute("aria-label", toggleTemplate.replace("{mode}", currentLabel));
+      btn.title = titleTemplate.replace("{mode}", currentLabel);
+
+      if (icon) {
+        icon.setAttribute("data-mode", isDark ? "dark" : "light");
+      }
+    });
   }
 
   /**
@@ -76,7 +81,9 @@
   }
 
   // Button Click Handler
-  btn.addEventListener("click", toggle);
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", toggle);
+  });
 
   // Lausche auf System-Theme-Änderungen (nur wenn 'auto' aktiv)
   const mm = window.matchMedia("(prefers-color-scheme: dark)");
