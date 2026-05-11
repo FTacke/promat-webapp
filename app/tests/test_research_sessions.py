@@ -950,12 +950,12 @@ def test_research_design_modal_drawer_uses_primary_tabs_and_grouped_utilities(ur
 
 
 @pytest.mark.parametrize(
-    ("path", "expected_context", "show_context_title"),
+    ("path", "expected_context", "show_context_title", "has_drawer"),
     [
-        ("/de/project/about", "Projekt", False),
-        ("/de/research", "Forschung", False),
-        ("/de/research/spanish/design", "Spanisch-Korpus", True),
-        ("/de/teaching", "Unterricht", False),
+        ("/de/project/about", "Projekt", False, True),
+        ("/de/research", "Forschung", False, True),
+        ("/de/research/spanish/design", "Spanisch-Korpus", True, True),
+        ("/de/teaching", "Unterricht", False, False),
     ],
 )
 def test_modal_drawer_context_title_only_renders_for_specific_local_context(
@@ -963,6 +963,7 @@ def test_modal_drawer_context_title_only_renders_for_specific_local_context(
     path: str,
     expected_context: str,
     show_context_title: bool,
+    has_drawer: bool,
 ) -> None:
     client = url_app.test_client()
 
@@ -970,6 +971,10 @@ def test_modal_drawer_context_title_only_renders_for_specific_local_context(
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
+    if not has_drawer:
+        assert 'id="navigation-drawer-modal"' not in html
+        return
+
     drawer_html = _extract_element_by_id(html, "dialog", "navigation-drawer-modal")
 
     if show_context_title:
@@ -1425,11 +1430,12 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> Non
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'Sprache wählen' in html
+    assert 'Verfügbare Unterrichtssprachen' in html
+    assert 'href="/de/teaching/spanish"' in html
     assert 'Korpus wählen' not in html
 
 
-def test_teaching_language_root_uses_inner_shell_with_language_sidebar_context(url_app: Flask) -> None:
+def test_teaching_language_root_uses_teaching_layout_without_drawer(url_app: Flask) -> None:
     client = url_app.test_client()
 
     response = client.get("/de/teaching/spanish")
@@ -1438,23 +1444,81 @@ def test_teaching_language_root_uses_inner_shell_with_language_sidebar_context(u
     html = response.get_data(as_text=True)
     assert html.count('class="promat-topbar__nav"') == 1
     assert 'promat-topbar__row--secondary' not in html
-    assert 'class="app-shell app-shell--inner"' in html
+    assert 'app-shell--inner' in html
+    assert 'app-shell--panel-hidden' in html
     assert 'data-page="teaching"' in html
-    assert 'data-context-mode="language"' in html
-    assert 'promat-panel__context' in html
-    assert 'promat-panel__inner--language' in html
-    assert 'promat-panel__language-header' in html
-    assert 'promat-panel__section-header' in html
-    assert 'pm-icon-mask--section' in html
-    assert 'pm-icon-mask--back' in html
-    assert '>Unterricht<' in html
-    assert 'href="/de/teaching"' in html
-    assert 'aria-label="Zur Sprachwahl"' in html
-    assert 'promat-panel__context-line--accent' not in html
+    assert 'promat-panel__context' not in html
+    assert 'data-action="open-drawer"' not in html
     assert 'Spanisch' in html
-    assert 'class="pm-breadcrumb pm-breadcrumb--mobile-only"' in html
-    assert 'data-depth="2"' in html
-    assert 'aria-current="page">Spanisch</span>' in html
+    assert 'Welche Aussprache zählt?' in html
+    assert 'Finales r' in html
+    assert 'Editionen' in html
+    assert 'href="/en/teaching/spanish"' in html
+
+
+def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/en/teaching/spanish")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Final r' in html
+    assert 'Which pronunciation counts?' not in html
+    assert 'Weiches Spanisch, hartes Deutsch' not in html
+
+
+def test_teaching_missing_topic_redirects_cleanly_to_hub(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/teaching/spanish/does-not-exist")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/de/teaching/spanish")
+
+
+def test_teaching_public_asset_route_serves_released_media(url_app: Flask, runtime_env: Path) -> None:
+    asset_dir = runtime_env / "public" / "teaching" / "spanish" / "downloads"
+    asset_dir.mkdir(parents=True, exist_ok=True)
+    expected = b"final r handout\n"
+    (asset_dir / "final-r-handout.txt").write_bytes(expected)
+
+    client = url_app.test_client()
+    response = client.get("/teaching/spanish/downloads/final-r-handout.txt")
+
+    assert response.status_code == 200
+    assert response.data == expected
+
+
+def test_teaching_public_asset_route_blocks_parent_traversal(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/teaching/../secure/secret.txt")
+
+    assert response.status_code == 404
+
+
+def test_teaching_topic_missing_target_edition_redirects_to_hub(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/en/teaching/spanish/r")
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/en/teaching/spanish")
+
+
+def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    response = client.get("/de/teaching/spanish/final-r")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Finales r' in html
+    assert 'Zurück zum Sprach-Hub' in html
+    assert 'Arbeitsblatt herunterladen' in html
+    assert 'href="/en/teaching/spanish/final-r"' in html
+    assert 'href="/teaching/spanish/downloads/asset-smoke.txt"' in html
 
 
 def test_sample_page_uses_shared_inner_shell_renderer(url_app: Flask) -> None:

@@ -1,0 +1,5 @@
+teaching_lang: spanish
+default_ui_lang: de
+available_ui_langs:
+  - de
+  - en

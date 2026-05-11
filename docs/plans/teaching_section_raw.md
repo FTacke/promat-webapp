@@ -6,6 +6,8 @@ tags: promat, Pronunciation Matters, Implementierung, Teaching
 
 ## Status und Zweck
 
+Status: Der erste öffentliche Teaching-Rohbau wurde umgesetzt. Die aktive Soll-Beschreibung liegt jetzt in `docs/spec/platform-data-files.md`; dieses Dokument bleibt als historische Planungsgrundlage erhalten.
+
 Dieses Dokument beschreibt den geplanten Rohbau des öffentlichen Teaching-Bereichs der PROMAT-Webapp.
 
 Der Teaching-Bereich ist ein eigenständiger öffentlicher Inhaltsbereich neben dem geschützten Research-Bereich. Er dient der Bereitstellung von didaktisch aufbereiteten Materialien zur Aussprachevermittlung in verschiedenen Unterrichtssprachen, insbesondere Spanisch, Englisch, Französisch und Deutsch.

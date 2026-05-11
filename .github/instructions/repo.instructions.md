@@ -20,6 +20,8 @@
 - Before declaring a UI fix complete, re-check the live screenshot or browser artifact against the exact requested arrangement and explicitly verify that stale runtime HTML is not masking the new code.
 - For research-access work, keep one corpus-generic rule: under `/{ui_lang}/research/{corpus}` only `design` may stay public, all other research pages and detail routes are authenticated app surfaces, and access clarification belongs before the workbench rather than as a CTA inside it.
 - For research capability work, keep one canonical capability contract in `docs/spec/research-capabilities.md` and its implementation mirror in `app/src/app/research_capabilities.py`; task subsets, compare rules, render modes, and corpus surface readiness must not drift into parallel literals elsewhere.
+- Treat Teaching as a separate fully public editorial surface: it does not reuse research auth, protected player routes, owner-bound set state, or `data/` delivery.
+- Teaching content belongs under `content/teaching/...`, released Teaching media belongs under `public/teaching/...`, and any public Teaching asset delivery must resolve from the public-root boundary rather than protected runtime paths.
 - ADRs document why a durable choice was made; runbooks document repeatable procedures; run logs are never normative.
 - `app/` is the only application source root.
 - Keep `data/`, `public/`, and `secure/` strictly separated.

@@ -17,6 +17,8 @@ For active PROMAT rules, consult these files first:
 
 - `app/` is the only application source root.
 - `data/`, `public/`, and `secure/` keep their strict runtime boundaries.
+- Teaching is a fully public editorial surface separate from Research; do not route it through research auth, protected player delivery, owner-bound set state, or `data/` paths.
+- Teaching content stays under `content/teaching/...`, and released Teaching media stays under `public/teaching/...` with public delivery only from the public-root boundary.
 - Technical keys, slugs, routes, field names, and controlled vocabularies stay English.
 - User-visible German text stays separable from technical keys and uses real umlauts and `ß`.
 - Do not reintroduce old German technical slugs, legacy runtime paths, or old public routes.

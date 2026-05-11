@@ -952,6 +952,26 @@ body.app-shell.page-landing .md3-content-wrapper {
   max-width: 100%;
 }
 
+.pm-teaching-block-stack {
+  display: grid;
+  gap: var(--pm-space-grid);
+}
+
+.pm-teaching-audio-grid {
+  align-items: stretch;
+}
+
+.pm-teaching-locale-switch__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.pm-teaching-credits__groups {
+  display: grid;
+  gap: var(--pm-space-grid);
+}
+
 @media (min-width: 760px) {
   .landing-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -986,6 +1006,10 @@ body.app-shell.page-landing .md3-content-wrapper {
 
   .pm-panel-grid,
   .pm-card-grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pm-teaching-credits__groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

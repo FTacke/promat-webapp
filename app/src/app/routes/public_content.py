@@ -7,6 +7,7 @@ from typing import Any
 from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
 from ..research_capabilities import get_research_page_capability, get_research_page_order
 from ..research_sessions import load_language_sessions
+from ..teaching_content import build_teaching_hub_page, build_teaching_topic_page, list_teaching_languages, resolve_teaching_edition_ui_lang
 from .public_page_content_data import (
     LEGACY_PROJECT_PAGE_REDIRECTS,
     PROJECT_PAGES_CONTENT,
@@ -384,7 +385,12 @@ def build_corpus_cards_research(ui_lang: str) -> list[dict[str, Any]]:
 
 def build_corpus_cards_teaching(ui_lang: str) -> list[dict[str, str]]:
     cards: list[dict[str, str]] = []
+    teaching_languages = set(list_teaching_languages())
     for language in LANGUAGES:
+        if language["slug"] not in teaching_languages:
+            continue
+        if resolve_teaching_edition_ui_lang(language["slug"], ui_lang) is None:
+            continue
         cards.append(
             {
                 "title": get_language_label(language, ui_lang),
@@ -413,11 +419,10 @@ def build_teaching_select_page(ui_lang: str) -> dict[str, Any]:
     return {
         "title": get_section_label("teaching", ui_lang),
         "eyebrow": get_section_label("teaching", ui_lang),
-        "intro": (
-            "Unterrichtsbereiche mit klarer Trennung zwischen öffentlichem Materialraum und "
-            "geschütztem Forschungsdatenraum."
-        ),
+        "intro": get_text(ui_lang, "teaching.overview.intro"),
         "page_kind": "material",
+        "layout": "teaching",
+        "template": "pages/teaching_page.html",
         "corpus_cards": build_corpus_cards_teaching(ui_lang),
         "sections": [],
         "is_section_root": True,
@@ -582,108 +587,11 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
 
 
 def build_teaching_language_root_page(ui_lang: str, language_slug: str) -> dict[str, Any] | None:
-    language = get_language(language_slug)
-    if language is None:
-        return None
-
-    title = get_language_label(language, ui_lang)
-    intro = (
-        "Der Unterrichtsbereich führt pro Sprache bewusst nur über eine kompakte Landingpage zu Phänomenen und Materialien."
-    )
-    if language_slug != "spanish":
-        intro = f"Der Unterrichtsbereich für {title} ist strukturell vorbereitet und folgt bereits dem reduzierten PROMAT-Minimalset."
-
-    return {
-        "title": title,
-        "eyebrow": get_section_label("teaching", ui_lang),
-        "intro": intro,
-        "page_kind": "material",
-        "feature_cards": _teaching_feature_cards(language_slug, ui_lang),
-        "sections": [
-            {
-                "heading": "Aktueller Zuschnitt",
-                "paragraphs": [
-                    "Der Unterrichtsbereich bleibt absichtlich kleiner als der Forschungsbereich. So kann die spätere öffentliche Medienlogik sauber auf /public aufsetzen.",
-                ],
-            },
-        ],
-        "is_language_root": True,
-    }
+    return build_teaching_hub_page(ui_lang, language_slug)
 
 
 def build_teaching_page(ui_lang: str, language_slug: str, page_slug: str) -> dict[str, Any] | None:
-    language = get_language(language_slug)
-    if language is None:
-        return None
-
-    title = get_language_label(language, ui_lang)
-    page_title = get_teaching_page_label(page_slug, ui_lang)
-
-    if language_slug != "spanish":
-        return {
-            "title": page_title,
-            "eyebrow": f"{get_section_label('teaching', ui_lang)} · {title}",
-            "intro": f"Die Seite {page_title} für {title} ist als konsistenter Platzhalter vorbereitet.",
-            "page_kind": "material",
-            "sections": [
-                {
-                    "heading": "Vorbereiteter Stand",
-                    "paragraphs": [
-                        "Route, interne Keys und Navigationslogik sind bereits im finalen Schema angelegt.",
-                        "Öffentliche Medien, didaktische Inhalte und spätere englische UI-Texte werden in nachfolgenden Ausbauschritten ergänzt.",
-                    ],
-                },
-            ],
-        }
-
-    pages: dict[str, dict[str, Any]] = {
-        "phenomena": {
-            "title": "Phänomene",
-            "eyebrow": "Unterricht · Spanisch",
-            "intro": "Reduzierte, inhaltlich vorbereitete Seite für didaktisch relevante Aussprachephänomene im Spanischunterricht.",
-            "page_kind": "material",
-            "sections": [
-                {
-                    "heading": "Didaktischer Fokus",
-                    "meta_cards": [
-                        {"title": "Wahrnehmung", "text": "Phänomene, die Lernende sicher hören und unterscheiden sollen."},
-                        {"title": "Produktion", "text": "Artikulations- und Prosodiemuster für angeleitete Übungsformate."},
-                        {"title": "Variation", "text": "Stellen, an denen mehrere gültige Aussprachestandards sichtbar gemacht werden."},
-                    ],
-                },
-                {
-                    "heading": "Struktureller Stand",
-                    "paragraphs": [
-                        "Die Seite bereitet Inhalte, Labels und spätere öffentliche Medienanbindung vor, ohne bereits komplexe Audio- oder Rechte-Logik einzubauen.",
-                    ],
-                },
-            ],
-        },
-        "materials": {
-            "title": "Materialien",
-            "eyebrow": "Unterricht · Spanisch",
-            "intro": "Reduzierte, inhaltlich vorbereitete Seite für Materialien und spätere Exporte nach /public.",
-            "page_kind": "material",
-            "sections": [
-                {
-                    "heading": "Vorbereitete Formate",
-                    "meta_cards": [
-                        {"title": "Impulskarten", "text": "Kurze Hör- oder Leseimpulse mit klarer Beobachtungsaufgabe."},
-                        {"title": "Arbeitsblätter", "text": "Sequenzen für Einzelarbeit, Partnerarbeit oder gelenktes Nachsprechen."},
-                        {"title": "Transfer", "text": "Aufgaben, die Forschungserkenntnisse in Unterrichtssituationen übersetzen."},
-                    ],
-                },
-                {
-                    "heading": "Öffentlicher Medienraum",
-                    "paragraphs": [
-                        "Freigegebene Unterrichtsmedien werden strukturell unter /public vorbereitet und nicht direkt aus /data ausgeliefert.",
-                    ],
-                },
-            ],
-        },
-    }
-
-    return pages.get(page_slug)
+    return build_teaching_topic_page(ui_lang, language_slug, page_slug)
 
 
 LEGAL_PAGES: dict[str, dict[str, Any]] = {

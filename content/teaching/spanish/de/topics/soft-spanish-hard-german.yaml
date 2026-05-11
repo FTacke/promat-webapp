@@ -1,0 +1,24 @@
+title: Weiches Spanisch, hartes Deutsch
+description: Kontrastive Hinweise für Unterrichtssituationen, in denen deutsche Artikulationsgewohnheiten spanische Zielmuster überformen.
+blocks:
+  - type: hero
+    eyebrow: Kontrast
+    title: Weiches Spanisch, hartes Deutsch
+    lead: Kleine Artikulationsunterschiede erzeugen große Höreindrücke und sollten früh explizit gemacht werden.
+  - type: text
+    title: Beobachtungsauftrag
+    body: |
+      Viele Lernende setzen spanische Laute zu fest oder zu hart an.
+
+      Der Unterricht profitiert davon, wenn Kontraste zuerst hörbar und erst danach terminologisch beschrieben werden.
+  - type: tip_box
+    title: Unterrichtsimpuls
+    body: |
+      Arbeite mit kurzen Minimalpaaren und Nachsprechsequenzen.
+
+      Lasse Lernende den Unterschied zwischen deutscher Spannung und spanischer Lockerheit zuerst imitieren, bevor Regeln eingeführt werden.
+  - type: next_topics
+    title: Anschluss
+    topics:
+      - r
+      - final-r

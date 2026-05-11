@@ -6,6 +6,7 @@ import json
 from datetime import date, datetime, timedelta, timezone
 
 from flask import Flask, current_app, request
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 
 from .auth.models import AnalyticsDaily, AnalyticsLanguageAreaDaily
@@ -104,49 +105,68 @@ def _is_trackable_response() -> bool:
 def _bump_analytics_counters(descriptor: dict[str, str], unique_keys: set[str]) -> None:
     today = _today_utc()
     now = _now_utc()
-    with get_session() as session:
-        daily = session.execute(
-            select(AnalyticsDaily).where(AnalyticsDaily.activity_date == today)
-        ).scalars().first()
-        if daily is None:
-            daily = AnalyticsDaily(
-                activity_date=today,
-                unique_visitors=0,
-                page_views=0,
-                created_at=now,
-                updated_at=now,
-            )
-            session.add(daily)
-        daily.page_views += 1
-        if "all" in unique_keys:
-            daily.unique_visitors += 1
-        daily.updated_at = now
+    for attempt in range(2):
+        try:
+            with get_session() as session:
+                daily = session.execute(
+                    select(AnalyticsDaily).where(AnalyticsDaily.activity_date == today)
+                ).scalars().first()
+                if daily is None:
+                    daily = AnalyticsDaily(
+                        activity_date=today,
+                        unique_visitors=0,
+                        page_views=0,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                    session.add(daily)
+                daily.page_views += 1
+                if "all" in unique_keys:
+                    daily.unique_visitors += 1
+                daily.updated_at = now
 
-        corpus_language = descriptor.get("corpus_language")
-        section = descriptor.get("section")
-        if section in TRACKED_MATRIX_SECTIONS and corpus_language:
-            area = session.execute(
-                select(AnalyticsLanguageAreaDaily).where(
-                    AnalyticsLanguageAreaDaily.activity_date == today,
-                    AnalyticsLanguageAreaDaily.section == section,
-                    AnalyticsLanguageAreaDaily.corpus_language == corpus_language,
-                )
-            ).scalars().first()
-            if area is None:
-                area = AnalyticsLanguageAreaDaily(
-                    activity_date=today,
-                    section=section,
-                    corpus_language=corpus_language,
-                    unique_visitors=0,
-                    page_views=0,
-                    created_at=now,
-                    updated_at=now,
-                )
-                session.add(area)
-            area.page_views += 1
-            if f"{section}:{corpus_language}" in unique_keys:
-                area.unique_visitors += 1
-            area.updated_at = now
+                corpus_language = descriptor.get("corpus_language")
+                section = descriptor.get("section")
+                if section in TRACKED_MATRIX_SECTIONS and corpus_language:
+                    area = session.execute(
+                        select(AnalyticsLanguageAreaDaily).where(
+                            AnalyticsLanguageAreaDaily.activity_date == today,
+                            AnalyticsLanguageAreaDaily.section == section,
+                            AnalyticsLanguageAreaDaily.corpus_language == corpus_language,
+                        )
+                    ).scalars().first()
+                    if area is None:
+                        area = AnalyticsLanguageAreaDaily(
+                            activity_date=today,
+                            section=section,
+                            corpus_language=corpus_language,
+                            unique_visitors=0,
+                            page_views=0,
+                            created_at=now,
+                            updated_at=now,
+                        )
+                        session.add(area)
+                    area.page_views += 1
+                    if f"{section}:{corpus_language}" in unique_keys:
+                        area.unique_visitors += 1
+                    area.updated_at = now
+
+                session.flush()
+            return
+        except IntegrityError as exc:
+            if attempt == 1 or not _is_retryable_analytics_integrity_error(exc):
+                raise
+
+
+def _is_retryable_analytics_integrity_error(exc: IntegrityError) -> bool:
+    details = str(exc.orig or exc)
+    return any(
+        constraint in details
+        for constraint in (
+            'analytics_daily_pkey',
+            'analytics_language_area_daily_pkey',
+        )
+    )
 
 
 def track_page_response(response):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import re
@@ -29,13 +30,14 @@ from ..research_views import (
     resolve_player_audio_artifact,
     resolve_player_item_download,
 )
+from ..runtime_paths import get_public_root
+from ..teaching_content import resolve_teaching_switch_path, resolve_topic_route_target
 from .public_content import (
     DEFAULT_UI_LANGUAGE,
     LEGAL_PAGES,
     LEGACY_PROJECT_PAGE_REDIRECTS,
     PROJECT_PAGE_ORDER,
     RESEARCH_PAGE_ORDER,
-    TEACHING_PAGE_ORDER,
     build_project_page,
     build_research_language_root_page,
     build_research_page,
@@ -47,7 +49,6 @@ from .public_content import (
     get_canonical_language_slug,
     get_canonical_project_page_slug,
     get_canonical_research_page_slug,
-    get_canonical_teaching_page_slug,
     get_language,
     get_language_label,
     get_research_corpus_title,
@@ -55,7 +56,6 @@ from .public_content import (
     get_research_page_label,
     get_section_label,
     get_supported_ui_language,
-    get_teaching_page_label,
     get_text,
     get_top_navigation,
 )
@@ -360,19 +360,7 @@ def _panel_items_for_language(section_key: str, language_slug: str, ui_lang: str
             for page_slug, _ in RESEARCH_PAGE_ORDER
         ]
 
-    return [
-        {
-            "label": get_teaching_page_label(page_slug, ui_lang),
-            "href": url_for(
-                "public.teaching_language_page",
-                ui_lang=ui_lang,
-                language_slug=language_slug,
-                page_slug=page_slug,
-            ),
-            "page_slug": page_slug,
-        }
-        for page_slug, _ in TEACHING_PAGE_ORDER
-    ]
+    return []
 
 
 def _panel_config(
@@ -444,6 +432,10 @@ def _render_promat_page(
         render_navigation_drawer = False
         shell_class = "app-shell--panel-hidden app-shell--landing"
         body_class = "page-landing"
+    elif layout == "teaching":
+        render_navigation_drawer = False
+        shell_class = "app-shell--inner app-shell--panel-hidden"
+        body_class = "page-teaching"
 
     return render_template(
         template_name,
@@ -1497,6 +1489,23 @@ def _request_wants_download() -> bool:
     return value not in {"", "0", "false", "no"}
 
 
+def _resolve_public_teaching_asset(asset_path: str) -> Path | None:
+    relative_path = Path(asset_path)
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        return None
+
+    asset_root = get_public_root() / "teaching"
+    candidate = (asset_root / relative_path).resolve()
+    try:
+        candidate.relative_to(asset_root.resolve())
+    except ValueError:
+        return None
+
+    if not candidate.exists() or not candidate.is_file():
+        return None
+    return candidate
+
+
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>/audio.mp3")
 def research_player_audio(ui_lang: str, language_slug: str, session_id: str, task: str):
     _require_ui_lang(ui_lang)
@@ -1550,25 +1559,22 @@ def research_player_item_download(ui_lang: str, language_slug: str, session_id: 
 @blueprint.get("/<ui_lang>/teaching")
 def teaching_home(ui_lang: str):
     ui_lang = _require_ui_lang(ui_lang)
-    panel = _panel_config(
-        section_key="teaching",
-        section_label=get_section_label("teaching", ui_lang),
-        active_slug="language-selection",
-        context_mode="section",
-        items=[
-            {
-                "label": get_text(ui_lang, "nav.choose_language"),
-                "href": url_for("public.teaching_home", ui_lang=ui_lang),
-                "page_slug": "language-selection",
-            }
-        ],
-    )
+    panel = _panel_config(section_key="teaching", section_label=get_section_label("teaching", ui_lang), active_slug="", context_mode="none", items=[])
     return _render_promat_page(
         page=build_teaching_select_page(ui_lang),
         panel=panel,
         page_name="teaching",
         ui_lang=ui_lang,
     )
+
+
+@blueprint.get("/teaching/<path:asset_path>")
+def teaching_public_asset(asset_path: str):
+    asset_file = _resolve_public_teaching_asset(asset_path)
+    if asset_file is None:
+        abort(404)
+
+    return send_file(asset_file, conditional=True, etag=False)
 
 
 @blueprint.get("/<ui_lang>/teaching/<language_slug>")
@@ -1578,62 +1584,63 @@ def teaching_language_root(ui_lang: str, language_slug: str):
     if canonical_language_slug is None:
         abort(404)
 
-    language = get_language(canonical_language_slug)
     page = build_teaching_language_root_page(ui_lang, canonical_language_slug)
-    if page is None or language is None:
+    if page is None:
         abort(404)
+    resolved_ui_lang = page.get("resolved_ui_lang", ui_lang)
+    if resolved_ui_lang != ui_lang:
+        return redirect(
+            url_for(
+                "public.teaching_language_root",
+                ui_lang=resolved_ui_lang,
+                language_slug=canonical_language_slug,
+            ),
+            302,
+        )
 
-    language_label = get_language_label(language, ui_lang)
-    panel = _panel_config(
-        section_key="teaching",
-        section_label=get_section_label("teaching", ui_lang),
-        active_slug="",
-        language_label=language_label,
-        context_mode="language",
-        context_title=language_label,
-        context_root_href=url_for(
-            "public.teaching_language_root",
-            ui_lang=ui_lang,
-            language_slug=canonical_language_slug,
-        ),
-        context_back_href=url_for("public.teaching_home", ui_lang=ui_lang),
-        context_back_label=get_text(ui_lang, "nav.back_to_language_selection"),
-        items=_panel_items_for_language("teaching", canonical_language_slug, ui_lang),
-    )
-    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=ui_lang)
+    panel = _panel_config(section_key="teaching", section_label=get_section_label("teaching", resolved_ui_lang), active_slug="", context_mode="none", items=[])
+    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang)
 
 
 @blueprint.get("/<ui_lang>/teaching/<language_slug>/<page_slug>")
 def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
     ui_lang = _require_ui_lang(ui_lang)
     canonical_language_slug = get_canonical_language_slug(language_slug)
-    canonical_page_slug = get_canonical_teaching_page_slug(page_slug)
-    if canonical_language_slug is None or canonical_page_slug is None:
+    if canonical_language_slug is None:
         abort(404)
 
-    language = get_language(canonical_language_slug)
-    page = build_teaching_page(ui_lang, canonical_language_slug, canonical_page_slug)
-    if page is None or language is None:
+    resolution = resolve_topic_route_target(canonical_language_slug, ui_lang, page_slug)
+    if resolution["status"] == "missing-language":
+        abort(404)
+    if resolution["status"] == "redirect-hub":
+        return redirect(
+            url_for(
+                "public.teaching_language_root",
+                ui_lang=resolution["ui_lang"],
+                language_slug=canonical_language_slug,
+            ),
+            302,
+        )
+    if resolution["status"] == "redirect-topic":
+        return redirect(
+            url_for(
+                "public.teaching_language_page",
+                ui_lang=resolution["ui_lang"],
+                language_slug=canonical_language_slug,
+                page_slug=resolution["topic_slug"],
+            ),
+            302,
+        )
+    if resolution["status"] != "ok":
         abort(404)
 
-    language_label = get_language_label(language, ui_lang)
-    panel = _panel_config(
-        section_key="teaching",
-        section_label=get_section_label("teaching", ui_lang),
-        active_slug=canonical_page_slug,
-        language_label=language_label,
-        context_mode="language",
-        context_title=language_label,
-        context_root_href=url_for(
-            "public.teaching_language_root",
-            ui_lang=ui_lang,
-            language_slug=canonical_language_slug,
-        ),
-        context_back_href=url_for("public.teaching_home", ui_lang=ui_lang),
-        context_back_label=get_text(ui_lang, "nav.back_to_language_selection"),
-        items=_panel_items_for_language("teaching", canonical_language_slug, ui_lang),
-    )
-    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=ui_lang)
+    resolved_ui_lang = resolution["ui_lang"]
+    page = build_teaching_page(resolved_ui_lang, canonical_language_slug, resolution["topic_slug"])
+    if page is None:
+        abort(404)
+
+    panel = _panel_config(section_key="teaching", section_label=get_section_label("teaching", resolved_ui_lang), active_slug="", context_mode="none", items=[])
+    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang)
 
 
 @blueprint.get("/impressum")

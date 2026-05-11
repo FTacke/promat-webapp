@@ -11,6 +11,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `app/` is the only versioned application source root.
 - `data/` is the protected research-data space.
 - `public/` is the explicitly released public-media space.
+- `content/` is the versioned editorial content space for fully public file-based surfaces such as Teaching.
 - `secure/` is the clear-text space and is never accessed by the webapp.
 - `scripts/` contains repeatable import, export, setup, and pipeline steps.
 - `scripts/research_data_intake/` is the canonical root for research-data intake and derivation pipelines.
@@ -22,6 +23,20 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 
 ```text
 /{ui_lang}/{section}/{corpus_language}/{page}
+```
+
+### Public teaching route schema
+
+```text
+/{ui_lang}/teaching
+/{ui_lang}/teaching/{teaching_language}
+/{ui_lang}/teaching/{teaching_language}/{topic_slug}
+```
+
+### Public teaching asset route schema
+
+```text
+/teaching/{teaching_language}/{asset_path}
 ```
 
 ### Research detail route schema
@@ -59,6 +74,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `ui_lang`: `de`, `en`
 - `section`: `project`, `research`, `teaching`, `sample`
 - `corpus_language`: `spanish`, `french`, `german`, `english`
+- `teaching_language`: `spanish`, `french`, `german`, `english`
 
 ### Auth route schema
 
@@ -89,10 +105,11 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `phenomena` owner-set editor
 - `player`-scoped protected media delivery for current-session playback and single-item download
 
-### Active teaching pages
+### Active teaching surfaces
 
-- `phenomena`
-- `materials`
+- section root `/{ui_lang}/teaching`
+- edition hub `/{ui_lang}/teaching/{teaching_language}`
+- topic page `/{ui_lang}/teaching/{teaching_language}/{topic_slug}`
 
 ### Routing rules
 
@@ -113,6 +130,15 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus_language}/design` is the only public corpus-scoped research page.
 - The corpus root `/{ui_lang}/research/{corpus_language}` is a public corpus landing page that orients users to `design`, `speakers`, `comparison`, and `phenomena` through their canonical routes.
 - All other corpus-scoped research pages and research detail routes, including protected player-media delivery, are authenticated app surfaces and must enforce access before the workbench or media response is rendered.
+- The public Teaching area is a separate fully public content surface and does not reuse research auth, owner-bound set state, protected player routing, or protected research-data paths.
+- Teaching content is file-based under `content/teaching/{teaching_language}/{ui_lang}/...`, while released Teaching media lives under `public/teaching/...`.
+- Released Teaching media is delivered publicly through `/teaching/...` and must resolve only against `PROMAT_PUBLIC_ROOT/teaching/...`, never against `data/` or protected research routes.
+- Each `teaching_language` plus `ui_lang` pair is a Teaching edition. Editions may differ in topic set, order, copy, and didactic focus; they are not required to be one-to-one translations.
+- The Teaching section root `/{ui_lang}/teaching` lists only languages with an available edition in the requested UI language or a valid edition fallback.
+- Teaching edition hubs and topic pages do not use the permanent left sidebar navigation. They keep the shared topbar, use card-based hub navigation, and expose local edition switching inside the page body.
+- The global `DE | EN` switch must stay route-aware on Teaching routes: it preserves the current Teaching edition when available, switches to an equivalent topic when one exists, and otherwise falls back to the target edition hub.
+- Teaching may add edition-only UI languages inside `content/teaching` in the future without expanding the global app-wide `ui_lang` contract beyond the active public `de` and `en` routes.
+- Teaching remains editorial file content only; no admin editor or research workbench surface is part of the active Teaching contract.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
 - `comparison` and `phenomena` remain first-class research page routes; `phenomena` may additionally own dedicated editor subroutes, but neither page may collapse into alternate `player` path shapes.
@@ -235,6 +261,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `AUTH_DATABASE_URL` is the canonical auth/core database variable.
 - `PROMAT_RUNTIME_ROOT` is the canonical runtime root.
 - `PROMAT_PUBLIC_ROOT` is the canonical public root.
+- `PROMAT_TEACHING_CONTENT_ROOT` is the canonical optional override for the file-based Teaching content root; when unset in local development, the default is the repo-root `content/teaching` tree.
 - Paths are derived through runtime/config wiring, not freehand string paths.
 - For the default local development PostgreSQL URL `postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth`, `scripts/dev-start.ps1` is the canonical app entrypoint and must ensure the local `promat_auth_db` service plus the idempotent auth/core and research-set migrations are applied before the Flask app starts.
 - In that canonical local development flow, `scripts/dev-start.ps1` also owns the live browser loop on `127.0.0.1:8000`: it must clear stale PROMAT dev listeners before launch and start the Flask app in development reload mode so code and template changes become visible in the browser without manual process hunting.

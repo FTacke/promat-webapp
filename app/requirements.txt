@@ -97,6 +97,8 @@ pygments==2.19.2
     # via rich
 pyjwt==2.10.1
     # via flask-jwt-extended
+pyyaml==6.0.3
+    # via -r requirements.in
 python-dotenv==1.1.1
     # via -r requirements.in
 requests==2.32.5

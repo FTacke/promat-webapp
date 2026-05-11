@@ -1,0 +1,23 @@
+title: Spanisch
+lead: Öffentlicher Teaching-Hub für belastbare Aussprachethemen mit kompakten Materialien und klarer Trennung vom geschützten Forschungsbereich.
+topics:
+  - slug: which-pronunciation
+    title: Welche Aussprache zählt?
+    summary: Einstieg in Varianten, Normen und didaktische Auswahl im Spanischunterricht.
+    level: Einstieg
+    category: Orientierung
+  - slug: soft-spanish-hard-german
+    title: Weiches Spanisch, hartes Deutsch
+    summary: Kontraste zwischen spanischer und deutscher Artikulation als Ausgangspunkt für bewusste Wahrnehmung.
+    level: Basis
+    category: Kontrast
+  - slug: r
+    title: Das spanische r
+    summary: Überblick über Tap, Trill und typische Lernschwierigkeiten.
+    level: Aufbau
+    category: Artikulation
+  - slug: final-r
+    title: Finales r
+    summary: Fokus auf silben- und wortfinale Realisierungen mit Unterrichtsimpulsen und Hörbeispielen.
+    level: Aufbau
+    category: Aussprachepraxis

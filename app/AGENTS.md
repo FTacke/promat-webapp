@@ -29,6 +29,8 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 - For template/CSS/page-JS changes that affect visible order or labels, add or update focused tests and QA checks that assert the exact order and wording rendered on the affected surface.
 - If browser output disagrees with the latest code or tests, verify the active runtime listener and live HTML before treating the discrepancy as resolved.
 - Use `PROMAT_RUNTIME_ROOT` and `PROMAT_PUBLIC_ROOT` as the only runtime boundaries.
+- Keep Teaching separate from Research inside `app/`: no research-auth gate, protected player route, owner-bound state, or `data/` lookup belongs on Teaching pages.
+- Resolve Teaching editorial files only from `content/teaching/...` or `PROMAT_TEACHING_CONTENT_ROOT`, and resolve released Teaching media only from `PROMAT_PUBLIC_ROOT/teaching/...`.
 - Do not access `secure/` from web-facing runtime code.
 - Do not serve public content directly from `data/`.
 

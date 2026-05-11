@@ -18,6 +18,7 @@ from .i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, normalize_supported_ui_lang
 from .extensions import register_extensions
 from .routes import register_blueprints
 from .runtime_paths import get_logs_dir
+from .teaching_content import resolve_teaching_switch_path
 from .config import load_config
 
 
@@ -94,7 +95,8 @@ def _build_ui_lang_switch_url(target_ui_lang: str) -> str:
         else:
             rewritten_items.append((key, value))
 
-    localized_path = _swap_ui_lang_prefix(path, target_ui_lang) if _path_has_ui_lang_prefix(path) else path
+    teaching_override = resolve_teaching_switch_path(path, target_ui_lang)
+    localized_path = teaching_override or (_swap_ui_lang_prefix(path, target_ui_lang) if _path_has_ui_lang_prefix(path) else path)
     rewritten_items.append(("lang", target_ui_lang))
 
     query = urlencode(rewritten_items, doseq=True)

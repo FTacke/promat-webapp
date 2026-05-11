@@ -1,0 +1,56 @@
+title: Finales r
+description: Unterrichtsrohbau zum silben- und wortfinalen r mit Hörhinweisen, Download-Platzhalter und klaren Anschlusswegen.
+equivalents:
+  en: final-r
+credits:
+  coordinator:
+    - name: PROMAT Teaching
+      role: Koordination
+      affiliation: PROMAT
+  authors:
+    - name: Felix Tacke
+      role: Konzept
+      affiliation: PROMAT
+blocks:
+  - type: hero
+    eyebrow: Aussprachepraxis
+    title: Finales r
+    lead: Wort- und silbenfinales r verlangt kontrollierte Hörziele, nicht nur isolierte Artikulationsanweisungen.
+  - type: text
+    title: Warum dieses Thema wichtig ist
+    body: |
+      Gerade im Deutschen neigen Lernende dazu, finale Konsonanten zu stark zu schließen oder vokalisch umzudeuten.
+
+      Für spanisches finales r ist es hilfreicher, mit kurzen rhythmischen Kontexten zu arbeiten als mit isolierten Lautbeschreibungen.
+  - type: audio_example
+    title: Hörfokus
+    label: Modellbeispiel
+    transcript: mar, comer, hablar
+    segments:
+      - text: mar
+      - text: comer
+      - text: hablar
+  - type: audio_contrast
+    title: Kontrastive Beobachtung
+    examples:
+      - title: Spanisch-nah
+        transcript: Das finale r bleibt hörbar und knapp.
+      - title: Deutsch gefärbt
+        transcript: Das finale r wird zu stark geöffnet oder abgeschwächt.
+  - type: warning_box
+    title: Typische Fehlannahme
+    body: |
+      Ein stark gerolltes r ist im Finalbereich nicht automatisch die beste Unterrichtslösung.
+
+      Entscheidend ist, ob die Zielrealisierung im Kontext stabil und verständlich bleibt.
+  - type: download
+    title: Handout
+    label: Arbeitsblatt herunterladen
+    href: /teaching/spanish/downloads/asset-smoke.txt
+    description: Kleine öffentliche Smoke-Datei zur Prüfung des Teaching-Asset-Pfads.
+  - type: credits
+  - type: next_topics
+    title: Weitere Themen
+    topics:
+      - which-pronunciation
+      - r

@@ -1,0 +1,33 @@
+title: Final r
+description: Minimal English topic edition for validating the public teaching architecture and teaching-aware language switching.
+equivalents:
+  de: final-r
+credits:
+  coordinator:
+    - name: PROMAT Teaching
+      role: Coordination
+      affiliation: PROMAT
+  authors:
+    - name: Felix Tacke
+      role: Draft architecture
+      affiliation: PROMAT
+blocks:
+  - type: hero
+    eyebrow: Pronunciation practice
+    title: Final r
+    lead: Final r needs stable listening goals in context rather than isolated articulation commands.
+  - type: text
+    title: Why this matters
+    body: |
+      Learners often over-close or weaken final consonants when they transfer German habits into Spanish.
+
+      Short rhythmic contexts are usually more helpful than isolated sound descriptions.
+  - type: audio_example
+    title: Listening focus
+    transcript: mar, comer, hablar
+  - type: download
+    title: Handout
+    label: Download worksheet
+    href: /teaching/spanish/downloads/asset-smoke.txt
+    description: Small public smoke file for validating the Teaching asset path.
+  - type: credits

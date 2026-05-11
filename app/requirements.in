@@ -13,6 +13,7 @@ httpx
 imageio-ffmpeg
 pydub
 python-dotenv
+PyYAML
 requests
 gunicorn
 psycopg2-binary

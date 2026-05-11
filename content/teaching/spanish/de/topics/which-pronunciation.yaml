@@ -1,0 +1,24 @@
+title: Welche Aussprache zählt?
+description: Ein kompakter Einstieg in die Frage, wie Unterricht zwischen Standardorientierung, Variation und Lernerfreundlichkeit vermitteln kann.
+blocks:
+  - type: hero
+    eyebrow: Orientierung
+    title: Welche Aussprache zählt?
+    lead: Unterricht braucht praktikable Zielbilder, ohne reale Variation unsichtbar zu machen.
+  - type: text
+    title: Ausgangspunkt
+    body: |
+      Im Unterricht reicht es selten, nur eine abstrakte Standardnorm zu benennen.
+
+      Lernende brauchen hörbare, begründete Zielbilder und transparente Hinweise dazu, welche Varianten im Material bewusst gewählt werden.
+  - type: info_box
+    title: Didaktischer Kern
+    body: |
+      Teaching bleibt vollöffentlich und arbeitet mit kuratierten Beispielen.
+
+      Geschützte Forschungsdaten und Research-Player-Logik bleiben davon getrennt.
+  - type: next_topics
+    title: Weiter im Hub
+    topics:
+      - soft-spanish-hard-german
+      - r

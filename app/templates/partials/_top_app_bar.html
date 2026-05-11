@@ -16,6 +16,8 @@
   <div class="promat-topbar__inner">
     <div class="promat-topbar__row promat-topbar__row--primary">
       <div class="promat-topbar__brand">
+        {% set show_navigation_drawer = render_navigation_drawer if render_navigation_drawer is defined else true %}
+        {% if show_navigation_drawer %}
         <button type="button"
                 class="promat-topbar__menu"
               aria-label="{{ t('shell.topbar.open_panel') }}"
@@ -24,6 +26,7 @@
                 data-action="open-drawer">
           <span class="pm-icon-mask pm-icon-mask--menu" aria-hidden="true"></span>
         </button>
+        {% endif %}
 
     <a href="{{ url_for('public.localized_landing_page', ui_lang=current_ui_lang) }}" class="promat-site-title" aria-label="{{ t('shell.topbar.home') }}">
       <span id="siteTitle" class="promat-site-title__text" data-site-title><span class="promat-site-title__prefix">Pronunciation</span><span class="promat-site-title__line promat-site-title__line--accent">Matters</span></span>
