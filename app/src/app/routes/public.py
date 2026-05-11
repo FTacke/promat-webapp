@@ -433,8 +433,7 @@ def _render_promat_page(
         shell_class = "app-shell--panel-hidden app-shell--landing"
         body_class = "page-landing"
     elif layout == "teaching":
-        render_navigation_drawer = False
-        shell_class = "app-shell--inner app-shell--panel-hidden"
+        shell_class = "app-shell--inner"
         body_class = "page-teaching"
 
     return render_template(

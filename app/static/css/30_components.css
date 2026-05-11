@@ -1301,52 +1301,6 @@ a.promat-card:active .pm-cta-link {
   opacity: 0.9;
 }
 
-.page-teaching .promat-topbar__brand {
-  gap: 0.75rem;
-}
-
-@media (max-width: 979px) {
-  .page-teaching .promat-topbar__brand {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
-
-  .page-teaching .promat-site-title {
-    font-size: clamp(0.8rem, 3vw, 1rem);
-  }
-
-  .page-teaching .promat-site-title__text {
-    transform: none;
-  }
-}
-
-@media (max-width: 430px) {
-  .page-teaching .promat-site-title {
-    font-size: 0.86rem;
-  }
-
-  .page-teaching .promat-site-title__text {
-    gap: 0.1rem;
-    transform: scaleX(0.92);
-    transform-origin: left center;
-  }
-
-  .page-teaching .promat-topbar__language-switch {
-    padding-inline: 0;
-  }
-
-  .page-teaching .promat-topbar__language-link {
-    min-width: 1.58rem;
-    padding-inline: 0.02rem;
-    font-size: 0.68rem;
-  }
-
-  .page-teaching .promat-topbar__language-separator {
-    font-size: 0.64rem;
-    opacity: 0.56;
-  }
-}
-
 .pm-auth-surface,
 .pm-auth-stack,
 .pm-auth-form,
@@ -7590,48 +7544,6 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   .promat-topbar__language-separator {
     font-size: 0.68rem;
     opacity: 0.56;
-  }
-
-  .page-teaching .promat-topbar__row--primary {
-    grid-template-columns: minmax(0, 1fr);
-    column-gap: 0;
-    row-gap: 0.12rem;
-    align-items: start;
-  }
-
-  .page-teaching .promat-topbar__actions {
-    gap: 0.08rem;
-    justify-content: flex-start;
-  }
-
-  .page-teaching .promat-topbar__meta {
-    justify-self: start;
-  }
-
-  .page-teaching .promat-site-title {
-    font-size: 0.82rem;
-    max-width: 100%;
-    overflow: hidden;
-  }
-
-  .page-teaching .promat-site-title__text {
-    min-width: 0;
-    gap: 0.08rem;
-    transform: scaleX(0.88);
-  }
-
-  .page-teaching .promat-topbar__language-link {
-    min-width: 1.42rem;
-    padding-inline: 0;
-    font-size: 0.64rem;
-  }
-
-  .page-teaching .promat-topbar__language-separator {
-    font-size: 0.58rem;
-  }
-
-  .page-teaching .promat-topbar__language-switch {
-    transform: none;
   }
 }
 

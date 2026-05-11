@@ -955,7 +955,7 @@ def test_research_design_modal_drawer_uses_primary_tabs_and_grouped_utilities(ur
         ("/de/project/about", "Projekt", False, True),
         ("/de/research", "Forschung", False, True),
         ("/de/research/spanish/design", "Spanisch-Korpus", True, True),
-        ("/de/teaching", "Unterricht", False, False),
+        ("/de/teaching", "Unterricht", False, True),
     ],
 )
 def test_modal_drawer_context_title_only_renders_for_specific_local_context(
@@ -1435,7 +1435,7 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> Non
     assert 'Korpus wählen' not in html
 
 
-def test_teaching_language_root_uses_teaching_layout_without_drawer(url_app: Flask) -> None:
+def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Flask) -> None:
     client = url_app.test_client()
 
     response = client.get("/de/teaching/spanish")
@@ -1445,10 +1445,12 @@ def test_teaching_language_root_uses_teaching_layout_without_drawer(url_app: Fla
     assert html.count('class="promat-topbar__nav"') == 1
     assert 'promat-topbar__row--secondary' not in html
     assert 'app-shell--inner' in html
-    assert 'app-shell--panel-hidden' in html
+    assert 'app-shell--panel-hidden' not in html
     assert 'data-page="teaching"' in html
-    assert 'promat-panel__context' not in html
-    assert 'data-action="open-drawer"' not in html
+    assert 'data-action="open-drawer"' in html
+    assert 'id="navigation-drawer-modal"' in html
+    assert 'class="promat-panel__primary-tab is-active"' in html
+    assert 'promat-panel__mobile-section--context' not in html
     assert 'Spanisch' in html
     assert 'Welche Aussprache zählt?' in html
     assert 'Finales r' in html
