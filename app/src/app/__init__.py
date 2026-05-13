@@ -401,7 +401,7 @@ def register_security_headers(app: Flask) -> None:
             "img-src 'self' data: https: blob:; "
             "font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; "
             "connect-src 'self'; "
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; "
+            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://datawrapper.dwcdn.net; "
             "frame-ancestors 'none';"
         )
         response.headers["Content-Security-Policy"] = csp

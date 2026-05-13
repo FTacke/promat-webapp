@@ -1,7 +1,21 @@
 {% from 'partials/_pm_interactions.html' import render_cta_link, render_cta_link_visual %}
 
 {% macro render_corpus_card(card, heading_tag='h2') -%}
-{% if card.metadata_rows %}
+{% if card.presentation == 'teaching-selection-row' %}
+<a class="pm-card pm-card--interactive pm-teaching-language-row" href="{{ card.href }}">
+  <div class="pm-card__body pm-teaching-language-row__body">
+    <{{ heading_tag }} class="pm-card__title pm-teaching-language-row__title">{{ card.title }}</{{ heading_tag }}>
+    <div class="pm-teaching-language-row__secondary">
+      {% for row in card.metadata_rows %}
+      {% if not row.label %}
+      <p class="pm-teaching-language-row__status">{{ row.text }}</p>
+      {% endif %}
+      {% endfor %}
+      <div class="pm-teaching-language-row__action">{{ render_cta_link_visual({ 'label': card.action_label, 'tone': 'primary' }) }}</div>
+    </div>
+  </div>
+</a>
+{% elif card.metadata_rows %}
 <article class="pm-card pm-card--interactive pm-card--corpus {{ card.modifier }} pm-corpus-overview-card">
   <div class="pm-card__body pm-corpus-overview-card__body">
     <div class="pm-corpus-overview-card__header">

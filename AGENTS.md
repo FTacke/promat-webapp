@@ -34,6 +34,14 @@ For active PROMAT rules, consult these files first:
 - Run logs in `docs/agent-runs/` are non-normative work journals only.
 - Delete or merge obsolete documentation instead of preserving shadow copies.
 
+## Repo Hygiene For Temporary QA Debug Files
+
+- Do not create temporary screenshots, browser-capture artifacts, inspect scripts, measurement scripts, or ad hoc debug files in the repository root.
+- Use `tmp/ui-qa/<YYYY-MM-DD>-<short-topic>/` for one-off browser screenshots, HTML dumps, debug captures, and run-specific inspection scripts.
+- Use `scripts/qa/` for reusable QA or capture utilities that are intended to be kept.
+- Use `docs/agent-runs/` for short Markdown run reports instead of keeping root notes or screenshot evidence in the root.
+- Before finishing a run, check the repository root for accidental files such as `inspect_*.py`, `tmp_*.py`, `measure_*.py`, `verify_*.py`, `capture_*.py`, `*_screenshot.png`, `desktop_*.png`, `mobile_*.png`, and `start.txt`, then move, delete, or document them before handoff.
+
 ## UI Change Discipline
 
 - Before introducing new UI markup, CSS, or client-side interaction, inspect matching productive pages, shared partials, and shared CSS families in `app/templates/` and `app/static/css/`.

@@ -18,9 +18,9 @@
   </nav>
   {% endif %}
 
-  <h1 id="{{ content_header.title_id | default('promat-page-title') }}" class="promat-page__title pm-content-header__title">{{ content_header.title }}</h1>
+  <h1 id="{{ content_header.title_id | default('promat-page-title') }}" class="promat-page__title pm-content-header__title">{{ (content_header.title_html or content_header.title) | safe }}</h1>
 
   {% if content_header.intro %}
-  <p class="promat-page__intro pm-content-header__intro">{{ content_header.intro }}</p>
+  <p class="promat-page__intro pm-content-header__intro">{{ (content_header.intro_html or content_header.intro) | safe }}</p>
   {% endif %}
 </header>

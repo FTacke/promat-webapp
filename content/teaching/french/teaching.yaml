@@ -1,0 +1,5 @@
+teaching_lang: french
+default_ui_lang: de
+available_ui_langs:
+  - de
+  - en

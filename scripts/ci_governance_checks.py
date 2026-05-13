@@ -31,6 +31,21 @@ SKIP_SUFFIXES = {
     ".db",
 }
 
+ROOT_TEMP_PATTERNS = (
+    "inspect_*.py",
+    "tmp_*.py",
+    "measure_*.py",
+    "verify_*.py",
+    "capture_*.py",
+    "capture_*.ps1",
+    "*_screenshot.png",
+    "desktop_*.png",
+    "mobile_*.png",
+    "grid_debug_*.png",
+    "screenshot_debug*.png",
+    "start.txt",
+)
+
 
 @dataclass(frozen=True)
 class Guard:
@@ -133,8 +148,27 @@ def run_guard(guard: Guard) -> list[str]:
     return findings
 
 
+def run_root_temp_artifact_guard() -> list[str]:
+    findings: list[str] = []
+    for pattern in ROOT_TEMP_PATTERNS:
+        for path in sorted(REPO_ROOT.glob(pattern)):
+            if path.is_file():
+                findings.append(path.relative_to(REPO_ROOT).as_posix())
+    return findings
+
+
 def main() -> int:
     failures = 0
+
+    root_temp_findings = run_root_temp_artifact_guard()
+    if root_temp_findings:
+        failures += 1
+        print("FAIL: temporary QA/debug files in repo root")
+        for finding in root_temp_findings:
+            print(f"  - {finding}")
+    else:
+        print("PASS: temporary QA/debug files in repo root")
+
     for guard in GUARDS:
         findings = run_guard(guard)
         if findings:

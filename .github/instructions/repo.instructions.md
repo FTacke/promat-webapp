@@ -27,3 +27,4 @@
 - Keep `data/`, `public/`, and `secure/` strictly separated.
 - Visible German UI text and maintained German prose headings/labels must use real umlauts and `ß`; keep technical identifiers, filenames, routes, URLs, keys, and machine values ASCII/English unless an active spec explicitly requires otherwise.
 - Do not create shadow documentation buckets, parallel import contracts, or ad hoc source-of-truth notes.
+- Do not create temporary QA/debug screenshots, inspect scripts, measurement scripts, capture helpers, or notes in the repository root; use `tmp/ui-qa/<YYYY-MM-DD>-<short-topic>/` for one-off artifacts, `scripts/qa/` for reusable utilities, and `docs/agent-runs/` for Markdown run reports.

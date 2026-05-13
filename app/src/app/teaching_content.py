@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import date
+from html import escape
+from html.parser import HTMLParser
 import logging
 import os
 from functools import lru_cache
@@ -48,6 +51,114 @@ def _split_paragraphs(value: Any) -> list[str]:
     if not body:
         return []
     return [paragraph.strip() for paragraph in body.split("\n\n") if paragraph.strip()]
+
+
+def render_markdown_block(value: Any) -> str:
+    text = _as_text(value)
+    if not text:
+        return ""
+    return _MARKDOWN_RENDERER.render(text).strip()
+
+
+def render_markdown_blocks(value: Any) -> list[str]:
+    return [
+        render_markdown_block(block)
+        for block in _split_paragraphs(value)
+        if block.strip()
+    ]
+
+
+def render_markdown_inline(value: Any) -> str:
+    text = _as_text(value)
+    if not text:
+        return ""
+    return _MARKDOWN_RENDERER.renderInline(text).strip()
+
+
+class _MarkdownPlainTextParser(HTMLParser):
+    _BLOCK_TAGS = {"p", "div", "ul", "ol", "li", "blockquote", "pre", "br"}
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.parts: list[str] = []
+
+    def _append_newline(self) -> None:
+        if not self.parts or self.parts[-1].endswith("\n"):
+            return
+        self.parts.append("\n")
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "li":
+            self._append_newline()
+            self.parts.append("- ")
+            return
+        if tag == "br":
+            self._append_newline()
+            return
+        if tag in self._BLOCK_TAGS:
+            self._append_newline()
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self._BLOCK_TAGS:
+            self._append_newline()
+
+    def handle_data(self, data: str) -> None:
+        if data:
+            self.parts.append(data)
+
+    def text_content(self) -> str:
+        normalized_lines: list[str] = []
+        previous_blank = False
+        for raw_line in "".join(self.parts).replace("\xa0", " ").splitlines():
+            line = " ".join(raw_line.split())
+            if line:
+                normalized_lines.append(line)
+                previous_blank = False
+                continue
+            if normalized_lines and not previous_blank:
+                normalized_lines.append("")
+                previous_blank = True
+        return "\n".join(normalized_lines).strip()
+
+
+def render_markdown_plain_text(value: Any) -> str:
+    rendered = render_markdown_block(value)
+    if not rendered:
+        return ""
+    parser = _MarkdownPlainTextParser()
+    parser.feed(rendered)
+    parser.close()
+    return parser.text_content()
+
+
+def _markdown_blocks(value: Any) -> list[str]:
+    return render_markdown_blocks(value)
+
+
+def _markdown_inline(value: Any) -> str:
+    return render_markdown_inline(value)
+
+
+def _set_inline_markdown_fields(payload: dict[str, Any], *fields: str) -> dict[str, Any]:
+    for field in fields:
+        text = _as_text(payload.get(field))
+        payload[field] = text
+        payload[f"{field}_html"] = render_markdown_inline(text)
+    return payload
+
+
+def _text_entries(values: Any) -> list[str]:
+    entries: list[str] = []
+    if not isinstance(values, list):
+        return entries
+    for item in values:
+        if isinstance(item, dict):
+            text = _as_text(item.get("name") or item.get("label") or item.get("text"))
+        else:
+            text = _as_text(item)
+        if text and text not in entries:
+            entries.append(text)
+    return entries
 
 
 def _safe_yaml_map(path: Path) -> dict[str, Any] | None:
@@ -138,32 +249,336 @@ def _topic_card_metadata(entry: dict[str, Any]) -> list[dict[str, str]]:
     return rows
 
 
-def _audio_example_payload(teaching_lang: str, raw_item: dict[str, Any]) -> dict[str, Any]:
-    audio_url = _as_text(raw_item.get("audio"))
+def _indexed_topics(index: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {
+        _as_text(item.get("slug")): item
+        for item in index.get("topics", [])
+        if isinstance(item, dict) and _as_text(item.get("slug"))
+    }
+
+
+def _hub_topic_card(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: dict[str, Any] | None) -> dict[str, Any] | None:
+    if raw_topic is None or not topic_slug or not topic_exists(teaching_lang, ui_lang, topic_slug):
+        return None
+    return _set_inline_markdown_fields({
+        "slug": topic_slug,
+        "title": _as_text(raw_topic.get("title")) or topic_slug,
+        "summary": _as_text(raw_topic.get("summary")),
+        "metadata": _topic_card_metadata(raw_topic),
+        "href": url_for(
+            "public.teaching_language_page",
+            ui_lang=ui_lang,
+            language_slug=teaching_lang,
+            page_slug=topic_slug,
+        ),
+    }, "title", "summary")
+
+
+def _audio_example_payload(
+    teaching_lang: str,
+    raw_item: dict[str, Any],
+    *,
+    inherited_transcript: str = "",
+) -> dict[str, Any]:
+    audio_url = _as_text(raw_item.get("audio"))
+    is_available = bool(audio_url) and _public_asset_exists(audio_url)
+    transcript = _as_text(raw_item.get("transcript")) or inherited_transcript
+    note = _as_text(raw_item.get("note"))
+    return _set_inline_markdown_fields({
         "label": _as_text(raw_item.get("label")) or _as_text(raw_item.get("title")),
         "title": _as_text(raw_item.get("title")),
-        "audio": audio_url,
-        "transcript": _as_text(raw_item.get("transcript")),
+        "subtitle": _as_text(raw_item.get("subtitle")),
+        "audio": audio_url if is_available else "",
+        "transcript": transcript,
+        "transcript_html": _markdown_inline(transcript),
+        "note": note,
+        "note_html": _markdown_inline(note),
+        "source": _audio_source_payload(raw_item.get("source")),
+        "speaker_id": _as_text(raw_item.get("speaker_id")),
+        "token_id": _as_text(raw_item.get("token_id") or raw_item.get("speaker_id")),
         "segments": [
             {"text": _as_text(segment.get("text"))}
             for segment in raw_item.get("segments", [])
             if isinstance(segment, dict) and _as_text(segment.get("text"))
         ],
-        "is_available": _public_asset_exists(audio_url),
+        "is_available": is_available,
         "teaching_lang": teaching_lang,
-    }
+    }, "label", "title", "subtitle")
+
+
+def _audio_source_payload(value: Any) -> dict[str, str]:
+    if isinstance(value, dict):
+        label = _as_text(value.get("label") or value.get("title") or value.get("name") or value.get("url"))
+        url = _as_text(value.get("url"))
+        return _set_inline_markdown_fields({
+            "label": label,
+            "url": url,
+        }, "label")
+
+    label = _as_text(value)
+    return _set_inline_markdown_fields({
+        "label": label,
+        "url": "",
+    }, "label")
 
 
 def _download_payload(raw_block: dict[str, Any]) -> dict[str, Any]:
     href = _as_text(raw_block.get("href") or raw_block.get("url") or raw_block.get("file"))
-    return {
+    return _set_inline_markdown_fields({
         "title": _as_text(raw_block.get("title")),
         "label": _as_text(raw_block.get("label")) or href.rsplit("/", 1)[-1],
         "href": href,
         "description": _as_text(raw_block.get("description")),
         "is_available": _public_asset_exists(href) if href.startswith("/") else bool(href),
-    }
+    }, "title", "label", "description")
+
+
+def _embed_height(value: Any, *, default: int = 540) -> int:
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, int):
+        return value if value > 0 else default
+    raw_value = _as_text(value)
+    if raw_value.isdigit():
+        parsed = int(raw_value)
+        return parsed if parsed > 0 else default
+    return default
+
+
+def _embed_payload(raw_block: dict[str, Any]) -> dict[str, Any] | None:
+    provider = _as_text(raw_block.get("provider")).lower()
+    src = _as_text(raw_block.get("src"))
+    if provider != "datawrapper" or not src:
+        return None
+    payload = _set_inline_markdown_fields({
+        "provider": provider,
+        "src": src,
+        "height": _embed_height(raw_block.get("height")),
+        "title": _as_text(raw_block.get("title")),
+        "caption": _as_text(raw_block.get("caption")),
+    }, "title", "caption")
+    payload["title_plain"] = render_markdown_plain_text(payload["title"]) or payload["title"]
+    return payload
+
+
+_BLOCK_LAYOUT_SPAN_DEFAULTS: dict[str, int] = {
+    "hero": 2,
+    "section_heading": 2,
+    "text": 2,
+    "rich_text": 2,
+    "image": 1,
+    "topic_meta": 2,
+    "info_box": 1,
+    "tip_box": 1,
+    "warning_box": 1,
+    "audio_example": 1,
+    "audio_examples": 2,
+    "audio_contrast": 2,
+    "download": 1,
+    "embed": 2,
+    "video": 2,
+    "further_reading": 2,
+    "credits": 2,
+    "next_topics": 2,
+    "topic_grid": 2,
+    "citation": 2,
+}
+
+
+def _block_layout_span(block_type: str, raw_block: dict[str, Any]) -> int:
+    default_span = _BLOCK_LAYOUT_SPAN_DEFAULTS.get(block_type, 2)
+    raw_layout = raw_block.get("layout")
+    if not isinstance(raw_layout, dict):
+        return default_span
+
+    raw_span = raw_layout.get("span")
+    if isinstance(raw_span, bool):
+        return default_span
+    if isinstance(raw_span, int):
+        if raw_span in {1, 2}:
+            return raw_span
+        if raw_span == 3:
+            return 2
+        return default_span
+
+    raw_span_text = _as_text(raw_span)
+    if raw_span_text in {"1", "2"}:
+        return int(raw_span_text)
+    if raw_span_text == "3":
+        return 2
+    return default_span
+
+
+def _block_layout_payload(block_type: str, raw_block: dict[str, Any]) -> dict[str, int]:
+    return {"span": _block_layout_span(block_type, raw_block)}
+
+
+def _parse_iso_date(value: Any) -> date | None:
+    raw_value = _as_text(value)
+    if not raw_value:
+        return None
+    try:
+        return date.fromisoformat(raw_value)
+    except ValueError:
+        logger.warning("Ignoring invalid teaching topic date value '%s'.", raw_value)
+        return None
+
+
+def _format_topic_date(ui_lang: str, value: Any) -> str:
+    parsed = _parse_iso_date(value)
+    if parsed is None:
+        return ""
+    if ui_lang == "de":
+        return parsed.strftime("%d.%m.%Y")
+    return parsed.isoformat()
+
+
+def _topic_metadata_source(raw_topic: dict[str, Any]) -> dict[str, Any]:
+    metadata = raw_topic.get("metadata")
+    if isinstance(metadata, dict):
+        return metadata
+    return raw_topic
+
+
+def _topic_metadata(ui_lang: str, raw_topic: dict[str, Any]) -> dict[str, Any]:
+    metadata: dict[str, Any] = {"authors": None, "details": []}
+    metadata_source = _topic_metadata_source(raw_topic)
+    authors = _text_entries(metadata_source.get("authors"))
+    if not authors:
+        credits = raw_topic.get("credits") if isinstance(raw_topic.get("credits"), dict) else {}
+        authors = [person["name"] for person in _person_entries(credits.get("authors"))]
+    if authors:
+        metadata["authors"] = {
+            "key": "authors",
+            "label": translate(ui_lang, "teaching.topic.authors"),
+            "value": ", ".join(authors),
+        }
+
+    peer_review = _text_entries(metadata_source.get("peer_review"))
+    if peer_review:
+        metadata["details"].append(
+            {
+                "key": "peer_review",
+                "label": translate(ui_lang, "teaching.topic.peer_review"),
+                "value": ", ".join(peer_review),
+            }
+        )
+
+    created = _format_topic_date(ui_lang, metadata_source.get("created"))
+    if created:
+        metadata["details"].append(
+            {
+                "key": "created",
+                "label": translate(ui_lang, "teaching.topic.created"),
+                "value": created,
+            }
+        )
+
+    updated = _format_topic_date(ui_lang, metadata_source.get("updated"))
+    if updated:
+        metadata["details"].append(
+            {
+                "key": "updated",
+                "label": translate(ui_lang, "teaching.topic.updated"),
+                "value": updated,
+            }
+        )
+
+    return metadata
+
+
+def _has_topic_metadata(metadata: dict[str, Any]) -> bool:
+    return bool(metadata.get("authors") or metadata.get("details"))
+
+
+def _link_entries(values: Any) -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    if not isinstance(values, list):
+        return entries
+    for item in values:
+        if not isinstance(item, dict):
+            continue
+        label = _as_text(item.get("label"))
+        href = _as_text(item.get("href"))
+        if label and href:
+            entries.append(_set_inline_markdown_fields({"label": label, "href": href}, "label"))
+    return entries
+
+
+def _citation_payload(ui_lang: str, value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    text = _as_text(value.get("text"))
+    doi = _as_text(value.get("doi"))
+    url = _as_text(value.get("url"))
+    if not any((text, doi, url)):
+        return None
+    body_html_blocks = render_markdown_blocks(text)
+    copy_text = _as_text(value.get("copy_text"))
+    if not copy_text:
+        copy_parts: list[str] = []
+        plain_text = render_markdown_plain_text(text)
+        if plain_text:
+            copy_parts.append(plain_text)
+        if doi and doi not in plain_text:
+            copy_parts.append(doi)
+        if url and url not in plain_text:
+            copy_parts.append(url)
+        copy_text = "\n".join(copy_parts)
+    meta_rows: list[str] = []
+    if doi:
+        meta_rows.append(
+            "".join(
+                (
+                    '<div class="pm-teaching-citation__meta-item">',
+                    f'<dt class="pm-teaching-citation__label">{escape(translate(ui_lang, "teaching.citation.doi"))}</dt>',
+                    f'<dd class="pm-teaching-citation__value">{escape(doi)}</dd>',
+                    "</div>",
+                )
+            )
+        )
+    if url:
+        safe_url = escape(url, quote=True)
+        meta_rows.append(
+            "".join(
+                (
+                    '<div class="pm-teaching-citation__meta-item">',
+                    f'<dt class="pm-teaching-citation__label">{escape(translate(ui_lang, "teaching.citation.url"))}</dt>',
+                    '<dd class="pm-teaching-citation__value">',
+                    f'<a href="{safe_url}" class="pm-teaching-inline-link">{safe_url}</a>',
+                    "</dd>",
+                    "</div>",
+                )
+            )
+        )
+    if meta_rows:
+        body_html_blocks.append(f'<dl class="pm-teaching-citation__meta">{"".join(meta_rows)}</dl>')
+    payload = _set_inline_markdown_fields({
+        "title": _as_text(value.get("title")) or translate(ui_lang, "teaching.citation.heading"),
+        "text": text,
+        "doi": doi,
+        "url": url,
+        "copy_text": copy_text,
+        "body_html_blocks": body_html_blocks,
+    }, "title")
+    return payload
+
+
+def _decorate_content_header_markdown(content_header: dict[str, Any], *, title: str, intro: str) -> dict[str, Any]:
+    content_header["title_html"] = render_markdown_inline(title)
+    content_header["intro_html"] = render_markdown_inline(intro)
+    return content_header
+
+
+def _topic_page_intro(raw_topic: dict[str, Any]) -> str:
+    for raw_block in raw_topic.get("blocks", []):
+        if not isinstance(raw_block, dict) or _as_text(raw_block.get("type")) != "hero":
+            continue
+        hero_lead = _as_text(raw_block.get("lead"))
+        if hero_lead:
+            return hero_lead
+        break
+    return _as_text(raw_topic.get("description"))
 
 
 def _build_topic_grid_cards(teaching_lang: str, ui_lang: str, topic_slugs: list[str]) -> list[dict[str, Any]]:
@@ -238,39 +653,62 @@ def _teaching_switch_items(current_ui_lang: str, teaching_lang: str, *, topic_sl
     return items
 
 
-def _topic_blocks(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: dict[str, Any]) -> list[dict[str, Any]]:
+def _topic_blocks(
+    teaching_lang: str,
+    ui_lang: str,
+    topic_slug: str,
+    raw_topic: dict[str, Any],
+    topic_metadata: dict[str, Any],
+) -> list[dict[str, Any]]:
     blocks: list[dict[str, Any]] = []
+    top_level_citation = _citation_payload(ui_lang, raw_topic.get("citation"))
     for index, raw_block in enumerate(raw_topic.get("blocks", [])):
         if not isinstance(raw_block, dict):
             continue
         block_type = _as_text(raw_block.get("type"))
         block_id = f"{topic_slug}-block-{index + 1}"
         if block_type == "hero":
-            blocks.append(
-                {
-                    "type": "hero",
-                    "id": block_id,
-                    "eyebrow": _as_text(raw_block.get("eyebrow")),
-                    "title": _as_text(raw_block.get("title")) or _as_text(raw_topic.get("title")),
-                    "lead": _as_text(raw_block.get("lead")),
-                }
-            )
             continue
+        if block_type == "section_heading":
+            title = _as_text(raw_block.get("title"))
+            if title:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "section_heading",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": title,
+                        "lead": _as_text(raw_block.get("lead")),
+                    }, "title", "lead")
+                )
+            continue
+
+
         if block_type == "text":
-            paragraphs = _split_paragraphs(raw_block.get("body"))
-            if paragraphs:
-                blocks.append({"type": "text", "id": block_id, "title": _as_text(raw_block.get("title")), "paragraphs": paragraphs})
+            body_html_blocks = _markdown_blocks(raw_block.get("body"))
+            if body_html_blocks:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "text",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "body_html_blocks": body_html_blocks,
+                    }, "title")
+                )
             continue
         if block_type == "rich_text":
             body = _as_text(raw_block.get("body"))
             if body:
                 blocks.append(
-                    {
+                    _set_inline_markdown_fields({
                         "type": "rich_text",
                         "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
-                        "body_html": _MARKDOWN_RENDERER.render(body),
-                    }
+                        "variant": _as_text(raw_block.get("variant")),
+                        "body_html": render_markdown_block(body),
+                    }, "title")
                 )
             continue
         if block_type == "image":
@@ -286,13 +724,41 @@ def _topic_blocks(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: 
                         topic_slug,
                     )
                 blocks.append(
-                    {
+                    _set_inline_markdown_fields({
                         "type": "image",
                         "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
                         "src": src,
                         "alt": alt,
                         "caption": _as_text(raw_block.get("caption")),
+                    }, "caption")
+                )
+            continue
+        if block_type == "embed":
+            payload = _embed_payload(raw_block)
+            if payload is not None:
+                blocks.append(
+                    {
+                        "type": "embed",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "provider": payload["provider"],
+                        "src": payload["src"],
+                        "height": payload["height"],
+                        "title": payload["title"],
+                        "title_html": payload["title_html"],
+                        "title_plain": payload["title_plain"],
+                        "caption": payload["caption"],
+                        "caption_html": payload["caption_html"],
                     }
+                )
+            elif _as_text(raw_block.get("provider")):
+                logger.warning(
+                    "Ignoring unsupported teaching embed provider '%s' in %s/%s/%s.",
+                    _as_text(raw_block.get("provider")),
+                    teaching_lang,
+                    ui_lang,
+                    topic_slug,
                 )
             continue
         if block_type in {"info_box", "tip_box", "warning_box"}:
@@ -302,54 +768,123 @@ def _topic_blocks(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: 
                 "warning_box": "regel",
             }
             body = _split_paragraphs(raw_block.get("body"))
-            if body:
+            body_html_blocks = _markdown_blocks(raw_block.get("body"))
+            if body or body_html_blocks:
                 blocks.append(
                     {
                         "type": "admonition",
                         "id": block_id,
-                        "item": {
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "item": _set_inline_markdown_fields({
                             "id": block_id,
                             "variant": variant_map[block_type],
                             "title": _as_text(raw_block.get("title")),
                             "default_title": _as_text(raw_block.get("title")),
                             "body_paragraphs": body,
-                            "collapsible": False,
-                        },
+                            "body_html_blocks": body_html_blocks,
+                            "collapsible": bool(raw_block.get("collapsible")),
+                            "default_open": bool(raw_block.get("default_open")),
+                        }, "title", "default_title"),
                     }
                 )
             continue
+        if block_type == "topic_meta":
+            if _has_topic_metadata(topic_metadata):
+                continue
+            continue
         if block_type == "audio_example":
-            example = _audio_example_payload(teaching_lang, raw_block)
-            if example["audio"] or example["transcript"]:
+            example = _audio_example_payload(
+                teaching_lang,
+                raw_block,
+                inherited_transcript=_as_text(raw_block.get("transcript")),
+            )
+            block_source = _audio_source_payload(raw_block.get("source"))
+            if any((example["label"], example["title"], example["audio"], example["transcript"], example["note"], example["token_id"], example["segments"])):
                 blocks.append(
-                    {
-                        "type": "audio_example",
+                    _set_inline_markdown_fields({
+                        "type": "audio_examples",
                         "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
-                        "example": example,
-                    }
+                        "lead": _as_text(raw_block.get("lead")),
+                        "lead_html": _markdown_inline(raw_block.get("lead")),
+                        "source": block_source,
+                        "collapsible": bool(raw_block.get("collapsible")),
+                        "default_open": bool(raw_block.get("default_open")),
+                        "examples": [example],
+                    }, "title", "lead")
+                )
+            continue
+        if block_type == "audio_examples":
+            inherited_transcript = _as_text(raw_block.get("transcript"))
+            block_source = _audio_source_payload(raw_block.get("source"))
+            examples = [
+                _audio_example_payload(
+                    teaching_lang,
+                    item,
+                    inherited_transcript=inherited_transcript,
+                )
+                for item in raw_block.get("examples", [])
+                if isinstance(item, dict)
+            ]
+            examples = [
+                example
+                for example in examples
+                if any((example["label"], example["title"], example["audio"], example["transcript"], example["note"], example["token_id"], example["segments"]))
+            ]
+            if examples:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "audio_examples",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "lead": _as_text(raw_block.get("lead")),
+                        "lead_html": _markdown_inline(raw_block.get("lead")),
+                        "source": block_source,
+                        "collapsible": bool(raw_block.get("collapsible")),
+                        "default_open": bool(raw_block.get("default_open")),
+                        "examples": examples,
+                    }, "title", "lead")
                 )
             continue
         if block_type == "audio_contrast":
+            inherited_transcript = _as_text(raw_block.get("transcript"))
             examples = [
-                _audio_example_payload(teaching_lang, item)
+                _audio_example_payload(
+                    teaching_lang,
+                    item,
+                    inherited_transcript=inherited_transcript,
+                )
                 for item in raw_block.get("examples", [])
                 if isinstance(item, dict)
             ]
             if examples:
                 blocks.append(
-                    {
+                    _set_inline_markdown_fields({
                         "type": "audio_contrast",
                         "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
+                        "lead": _as_text(raw_block.get("lead")),
+                        "lead_html": _markdown_inline(raw_block.get("lead")),
+                        "transcript": inherited_transcript,
+                        "transcript_html": _markdown_inline(inherited_transcript),
                         "examples": examples,
-                    }
+                    }, "title", "lead")
                 )
             continue
         if block_type == "download":
             payload = _download_payload(raw_block)
             if payload["href"]:
-                blocks.append({"type": "download", "id": block_id, "download": payload})
+                blocks.append(
+                    {
+                        "type": "download",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "download": payload,
+                    }
+                )
             continue
         if block_type == "credits":
             credits = raw_topic.get("credits") if isinstance(raw_topic.get("credits"), dict) else {}
@@ -360,6 +895,7 @@ def _topic_blocks(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: 
                     {
                         "type": "credits",
                         "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
                         "groups": [
                             {"key": "coordinator", "title": translate(ui_lang, "teaching.credits.coordinator"), "people": coordinator},
                             {"key": "authors", "title": translate(ui_lang, "teaching.credits.authors"), "people": authors},
@@ -371,27 +907,84 @@ def _topic_blocks(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: 
             topic_slugs = [_as_text(value) for value in raw_block.get("topics", []) if _as_text(value)]
             cards = _build_topic_grid_cards(teaching_lang, ui_lang, topic_slugs)
             if cards:
-                blocks.append({"type": "next_topics", "id": block_id, "title": _as_text(raw_block.get("title")), "cards": cards})
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "next_topics",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "cards": cards,
+                    }, "title")
+                )
             continue
         if block_type == "topic_grid":
             topic_slugs = [_as_text(value) for value in raw_block.get("topics", []) if _as_text(value)]
             cards = _build_topic_grid_cards(teaching_lang, ui_lang, topic_slugs)
             if cards:
-                blocks.append({"type": "topic_grid", "id": block_id, "title": _as_text(raw_block.get("title")), "cards": cards})
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "topic_grid",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "cards": cards,
+                    }, "title")
+                )
             continue
         if block_type == "video":
             src = _as_text(raw_block.get("src"))
             embed_url = _as_text(raw_block.get("embed_url"))
             if src or embed_url:
                 blocks.append(
-                    {
+                    _set_inline_markdown_fields({
                         "type": "video",
                         "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
+                        "title_plain": render_markdown_plain_text(raw_block.get("title")) or _as_text(raw_block.get("title")),
                         "src": src,
                         "embed_url": embed_url,
                         "caption": _as_text(raw_block.get("caption")),
                         "is_available": _public_asset_exists(src) if src else True,
+                    }, "title", "caption")
+                )
+            continue
+        if block_type == "further_reading":
+            links = _link_entries(raw_block.get("links"))
+            body_html_blocks = _markdown_blocks(raw_block.get("body"))
+            if body_html_blocks or links:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "further_reading",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "body_html_blocks": body_html_blocks,
+                        "links": links,
+                        "collapsible": bool(raw_block.get("collapsible")),
+                        "default_open": bool(raw_block.get("default_open")),
+                    }, "title")
+                )
+            continue
+        if block_type == "citation":
+            if top_level_citation is not None:
+                if os.getenv("FLASK_ENV") == "development":
+                    logger.warning(
+                        "Ignoring explicit teaching citation block '%s' in %s/%s/%s because top-level citation metadata is present.",
+                        block_id,
+                        teaching_lang,
+                        ui_lang,
+                        topic_slug,
+                    )
+                continue
+            citation = _citation_payload(ui_lang, raw_block)
+            if citation is not None:
+                blocks.append(
+                    {
+                        "type": "citation",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "citation": citation,
                     }
                 )
             continue
@@ -403,33 +996,107 @@ def _topic_blocks(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: 
             ui_lang,
             topic_slug,
         )
+
+    if top_level_citation is not None:
+        blocks.append(
+            {
+                "type": "citation",
+                "id": f"{topic_slug}-block-citation",
+                "layout": {"span": _BLOCK_LAYOUT_SPAN_DEFAULTS["citation"]},
+                "citation": top_level_citation,
+            }
+        )
     return blocks
+
+
+def _topic_sections(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    sections: list[dict[str, Any]] = []
+    current_section: dict[str, Any] | None = None
+
+    def _append_current_section() -> None:
+        nonlocal current_section
+        if current_section is None:
+            return
+        if current_section.get("heading") or current_section.get("blocks"):
+            sections.append(current_section)
+        current_section = None
+
+    for block in blocks:
+        block_type = _as_text(block.get("type"))
+        if block_type == "section_heading":
+            _append_current_section()
+            current_section = {
+                "kind": "section",
+                "heading": block,
+                "blocks": [],
+            }
+            continue
+
+        if block_type in {"next_topics", "topic_grid", "citation"}:
+            _append_current_section()
+            sections.append(
+                {
+                    "kind": block_type,
+                    "heading": None,
+                    "blocks": [block],
+                }
+            )
+            continue
+
+        if current_section is None:
+            current_section = {
+                "kind": "intro",
+                "heading": None,
+                "blocks": [],
+            }
+        current_section["blocks"].append(block)
+
+    _append_current_section()
+    return sections
 
 
 def _hub_topic_cards(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
     index = load_teaching_index(teaching_lang, ui_lang) or {}
+    listed_topics = _indexed_topics(index)
     cards: list[dict[str, Any]] = []
-    for raw_topic in index.get("topics", []):
-        if not isinstance(raw_topic, dict):
-            continue
-        topic_slug = _as_text(raw_topic.get("slug"))
-        if not topic_slug or not topic_exists(teaching_lang, ui_lang, topic_slug):
-            continue
-        cards.append(
-            {
-                "slug": topic_slug,
-                "title": _as_text(raw_topic.get("title")) or topic_slug,
-                "summary": _as_text(raw_topic.get("summary")),
-                "metadata": _topic_card_metadata(raw_topic),
-                "href": url_for(
-                    "public.teaching_language_page",
-                    ui_lang=ui_lang,
-                    language_slug=teaching_lang,
-                    page_slug=topic_slug,
-                ),
-            }
-        )
+    for topic_slug, raw_topic in listed_topics.items():
+        card = _hub_topic_card(teaching_lang, ui_lang, topic_slug, raw_topic)
+        if card is not None:
+            cards.append(card)
     return cards
+
+
+def _hub_topic_groups(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
+    index = load_teaching_index(teaching_lang, ui_lang) or {}
+    listed_topics = _indexed_topics(index)
+    groups: list[dict[str, Any]] = []
+
+    if isinstance(index.get("groups"), list):
+        for raw_group in index["groups"]:
+            if not isinstance(raw_group, dict):
+                continue
+            cards: list[dict[str, Any]] = []
+            for raw_topic in raw_group.get("topics", []):
+                topic_slug = _as_text(raw_topic.get("slug")) if isinstance(raw_topic, dict) else _as_text(raw_topic)
+                card = _hub_topic_card(teaching_lang, ui_lang, topic_slug, listed_topics.get(topic_slug))
+                if card is not None:
+                    cards.append(card)
+            if cards:
+                groups.append(
+                    _set_inline_markdown_fields({
+                        "title": _as_text(raw_group.get("title")),
+                        "description": _as_text(raw_group.get("description") or raw_group.get("intro")),
+                        "cards": cards,
+                    }, "title", "description")
+                )
+
+    if groups:
+        return groups
+
+    flat_cards = _hub_topic_cards(teaching_lang, ui_lang)
+    if not flat_cards:
+        return []
+    return [_set_inline_markdown_fields({"title": "", "description": "", "cards": flat_cards}, "title", "description")]
 
 
 @lru_cache(maxsize=None)
@@ -502,6 +1169,10 @@ def topic_exists(teaching_lang: str, ui_lang: str, topic_slug: str) -> bool:
     return load_teaching_topic(teaching_lang, ui_lang, topic_slug) is not None
 
 
+def count_teaching_topics(teaching_lang: str, ui_lang: str) -> int:
+    return len(_hub_topic_cards(teaching_lang, ui_lang))
+
+
 def resolve_topic_slug_for_ui_lang(teaching_lang: str, current_ui_lang: str, topic_slug: str, target_ui_lang: str) -> str | None:
     if not edition_exists(teaching_lang, target_ui_lang):
         return None
@@ -528,10 +1199,28 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         return None
 
     title = _as_text(index.get("title")) or teaching_lang.replace("-", " ").title()
+    page_title = render_markdown_plain_text(title) or title
     lead = _as_text(index.get("lead"))
-    topic_cards = _hub_topic_cards(teaching_lang, effective_ui_lang)
+    topic_groups = _hub_topic_groups(teaching_lang, effective_ui_lang)
+    topic_count = sum(len(group["cards"]) for group in topic_groups)
+    content_header = _decorate_content_header_markdown(
+        build_content_header(
+            page_name="teaching",
+            title=page_title,
+            intro=lead,
+            section_label=translate(effective_ui_lang, "section.teaching"),
+            section_href=url_for("public.teaching_home", ui_lang=effective_ui_lang),
+            context_mode="section",
+            context_title=None,
+            context_root_href=None,
+            current_label=page_title,
+        ),
+        title=title,
+        intro=lead,
+    )
     return {
         "title": title,
+        "page_title": page_title,
         "intro": lead,
         "page_kind": "material",
         "layout": "teaching",
@@ -539,29 +1228,19 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         "teaching_view": "hub",
         "resolved_ui_lang": effective_ui_lang,
         "teaching_lang": teaching_lang,
-        "topic_cards": topic_cards,
+        "topic_groups": topic_groups,
+        "empty_state": None
+        if topic_count
+        else {
+            "title": translate(effective_ui_lang, "teaching.hub.empty.title"),
+            "text": translate(effective_ui_lang, "teaching.hub.empty.text"),
+        },
+        "back_link": {
+            "label": translate(effective_ui_lang, "teaching.action.back_to_selection"),
+            "href": url_for("public.teaching_home", ui_lang=effective_ui_lang),
+        },
         "teaching_switch_items": _teaching_switch_items(effective_ui_lang, teaching_lang),
-        "content_header": build_content_header(
-            page_name="teaching",
-            title=title,
-            intro=lead,
-            section_label=translate(effective_ui_lang, "section.teaching"),
-            section_href=url_for("public.teaching_home", ui_lang=effective_ui_lang),
-            context_mode="section",
-            context_title=None,
-            context_root_href=None,
-            current_label=title,
-        ),
-        "feature_cards": [
-            {
-                "title": card["title"],
-                "text": card["summary"],
-                "href": card["href"],
-                "link_label": translate(effective_ui_lang, "teaching.action.open_topic"),
-                "variant": "selection",
-            }
-            for card in topic_cards
-        ],
+        "content_header": content_header,
     }
 
 
@@ -588,11 +1267,32 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
         return None
 
     title = _as_text(raw_topic.get("title")) or topic_slug.replace("-", " ").title()
-    description = _as_text(raw_topic.get("description"))
+    page_title = render_markdown_plain_text(title) or title
+    page_intro = _topic_page_intro(raw_topic)
     hub_title = _as_text(index.get("title")) or teaching_lang.replace("-", " ").title()
+    hub_title_plain = render_markdown_plain_text(hub_title) or hub_title
+    topic_metadata = _topic_metadata(ui_lang, raw_topic)
+    blocks = _topic_blocks(teaching_lang, ui_lang, topic_slug, raw_topic, topic_metadata)
+    topic_sections = _topic_sections(blocks)
+    content_header = _decorate_content_header_markdown(
+        build_content_header(
+            page_name="teaching",
+            title=page_title,
+            intro=page_intro,
+            section_label=translate(ui_lang, "section.teaching"),
+            section_href=url_for("public.teaching_home", ui_lang=ui_lang),
+            context_mode="section",
+            context_title=None,
+            context_root_href=None,
+            current_label=page_title,
+        ),
+        title=title,
+        intro=page_intro,
+    )
     return {
         "title": title,
-        "intro": description,
+        "page_title": page_title,
+        "intro": page_intro,
         "page_kind": "material",
         "layout": "teaching",
         "template": "pages/teaching_page.html",
@@ -600,26 +1300,17 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
         "resolved_ui_lang": ui_lang,
         "teaching_lang": teaching_lang,
         "topic_slug": topic_slug,
-        "hub_title": hub_title,
+        "hub_title": hub_title_plain,
         "hub_href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
         "back_link": {
-            "label": translate(ui_lang, "teaching.action.back_to_hub"),
+            "label": translate(ui_lang, "teaching.action.back_to_topic_overview"),
             "href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
         },
+        "topic_metadata": topic_metadata,
         "teaching_switch_items": _teaching_switch_items(ui_lang, teaching_lang, topic_slug=topic_slug),
-        "blocks": _topic_blocks(teaching_lang, ui_lang, topic_slug, raw_topic),
-        "content_header": build_content_header(
-            page_name="teaching",
-            title=title,
-            intro=description,
-            section_label=translate(ui_lang, "section.teaching"),
-            section_href=url_for("public.teaching_home", ui_lang=ui_lang),
-            context_mode="section",
-            context_title=None,
-            context_root_href=None,
-            ancestors=[{"label": hub_title, "href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang)}],
-            current_label=title,
-        ),
+        "blocks": blocks,
+        "topic_sections": topic_sections,
+        "content_header": content_header,
     }
 
 

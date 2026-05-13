@@ -44,3 +44,25 @@ public/*
 !public/.gitkeep
 !public/README.md
 scripts/research_data_intake/import/*
+
+# Temporary QA/debug artifacts that must not live in repo root
+/desktop_screenshot*.png
+/desktop_verif*.png
+/mobile_screenshot*.png
+/grid_debug_screenshot*.png
+/screenshot_debug*.png
+/*_screenshot.png
+/*_verif.png
+
+# Temporary one-off inspection scripts in repo root
+/inspect_*.py
+/tmp_inspect_*.py
+/tmp_check_*.py
+/tmp_measure*.py
+/measure_layout*.py
+/verify_layout.py
+/capture_qa.py
+/capture_qa.ps1
+
+# Temporary root notes
+/start.txt

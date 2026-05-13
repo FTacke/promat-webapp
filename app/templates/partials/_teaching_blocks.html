@@ -22,117 +22,251 @@
   </li>
 {%- endmacro %}
 
-{% macro render_audio_example(example, labels) -%}
-  <article class="pm-card pm-card--material pm-teaching-audio-card{{ ' is-unavailable' if not example.is_available else '' }}">
-    <div class="pm-card__body pm-teaching-audio-card__body">
-      {% if example.title %}
-      <h4 class="pm-card__title pm-teaching-audio-card__title">{{ example.title }}</h4>
-      {% elif example.label %}
-      <h4 class="pm-card__title pm-teaching-audio-card__title">{{ example.label }}</h4>
+{% macro render_teaching_mini_player(audio_href, labels) -%}
+  {% if audio_href %}
+  <div class="pm-teaching-mini-player audio-player-shell" data-teaching-mini-player data-play-label="{{ labels.audio_play }}" data-pause-label="{{ labels.audio_pause }}">
+    <audio class="pm-teaching-mini-player__audio" preload="metadata" src="{{ audio_href }}"></audio>
+    <audio class="pm-teaching-mini-player__native" controls preload="metadata">
+      <source src="{{ audio_href }}" type="audio/mpeg">
+    </audio>
+    <button type="button" class="pm-teaching-mini-player__play" data-teaching-mini-player-toggle aria-label="{{ labels.audio_play }}" title="{{ labels.audio_play }}">
+      <span class="material-symbols-rounded" data-teaching-mini-player-icon aria-hidden="true">play_arrow</span>
+    </button>
+    <div class="pm-teaching-mini-player__track-wrap">
+      <input type="range" min="0" max="1000" step="1" value="0" class="pm-teaching-mini-player__track" data-teaching-mini-player-progress aria-label="{{ labels.audio_progress }}" disabled>
+    </div>
+    <span class="pm-teaching-mini-player__time" data-teaching-mini-player-time>0:00 / 0:00</span>
+  </div>
+  {% else %}
+  <p class="audio-card-status">{{ labels.audio_pending }}</p>
+  {% endif %}
+{%- endmacro %}
+
+{% macro render_audio_examples_item(example, labels) -%}
+  <article class="pm-teaching-audio-example audio-card audio-example-card{{ ' is-unavailable' if not example.is_available else '' }}">
+    <div class="pm-teaching-audio-example__copy">
+      {% if example.label %}
+      <h4 class="pm-teaching-audio-example__label">{{ (example.label_html or example.label) | safe }}</h4>
       {% endif %}
-      {% if example.label and example.title and example.label != example.title %}
-      <p class="pm-card__eyebrow pm-teaching-audio-card__eyebrow">{{ example.label }}</p>
-      {% endif %}
-      {% if example.audio %}
-      <audio class="pm-teaching-audio-card__player" controls preload="none">
-        <source src="{{ example.audio }}" type="audio/mpeg">
-      </audio>
-      {% endif %}
-      {% if not example.is_available %}
-      <p class="pm-teaching-audio-card__status">{{ labels.audio_pending }}</p>
-      {% endif %}
-      {% if example.transcript %}
-      <div class="pm-teaching-audio-card__meta">
-        <p class="pm-teaching-audio-card__label">{{ labels.transcript }}</p>
-        <p class="pm-teaching-audio-card__text">{{ example.transcript }}</p>
+      {% if example.transcript_html %}
+      <div class="pm-teaching-audio-example__transcript audio-quote">
+        <p class="pm-teaching-audio-example__text">{{ example.transcript_html | safe }}</p>
+        {% if example.token_id %}
+        <p class="pm-teaching-audio-example__token audio-token">{{ example.token_id }}</p>
+        {% endif %}
       </div>
       {% endif %}
-      {% if example.segments %}
-      <div class="pm-teaching-audio-card__meta">
-        <p class="pm-teaching-audio-card__label">{{ labels.segments }}</p>
-        <ul class="pm-teaching-segment-list" aria-label="{{ labels.segments }}">
-          {% for segment in example.segments %}
-          <li class="pm-teaching-segment-list__item">{{ segment.text }}</li>
-          {% endfor %}
-        </ul>
-      </div>
+      {% if example.note_html %}
+      <p class="pm-teaching-audio-example__note audio-example-note">{{ example.note_html | safe }}</p>
       {% endif %}
+    </div>
+    <div class="pm-teaching-audio-example__player audio-player-wrap">
+      {{ render_teaching_mini_player(example.audio, labels) }}
     </div>
   </article>
 {%- endmacro %}
 
+{% macro render_audio_examples_block(block, labels, show_title=True) -%}
+  <div class="pm-panel pm-reading audio-section audio-section--examples">
+    {% if (show_title and block.title) or block.lead %}
+    <header class="audio-section-header">
+      {% if show_title and block.title %}
+      <div class="audio-section-title">
+        <span class="material-symbols-rounded audio-section-icon" aria-hidden="true">graphic_eq</span>
+        <h3 class="promat-content-block__title pm-panel__title">{{ (block.title_html or block.title) | safe }}</h3>
+      </div>
+      {% endif %}
+      {% if block.lead %}
+      <p class="audio-section-description">{{ (block.lead_html or block.lead) | safe }}</p>
+      {% endif %}
+    </header>
+    {% endif %}
+    <div class="audio-grid audio-grid--examples">
+      {% for example in block.examples %}
+      {{ render_audio_examples_item(example, labels) }}
+      {% endfor %}
+    </div>
+    {% if block.source.label %}
+    <p class="audio-section-source">
+      <span class="audio-section-source-prefix">{{ labels.audio_source_prefix }}</span>
+      {% if block.source.url %}
+      <a href="{{ block.source.url }}" class="pm-teaching-inline-link" target="_blank" rel="noopener noreferrer">{{ (block.source.label_html or block.source.label) | safe }}</a>
+      {% else %}
+      <span>{{ (block.source.label_html or block.source.label) | safe }}</span>
+      {% endif %}
+    </p>
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{% macro render_audio_contrast_example(example, labels) -%}
+  <article class="pm-teaching-audio-contrast__example audio-card{{ ' is-unavailable' if not example.is_available else '' }}">
+    <div class="pm-teaching-audio-contrast__example-copy">
+      {% if example.label %}
+      <h4 class="pm-teaching-audio-contrast__example-title">{{ (example.label_html or example.label) | safe }}</h4>
+      {% endif %}
+      {% if example.subtitle %}
+      <p class="pm-teaching-audio-contrast__example-subtitle">{{ (example.subtitle_html or example.subtitle) | safe }}</p>
+      {% endif %}
+      {% if example.note_html %}
+      <p class="pm-teaching-audio-contrast__note">{{ example.note_html | safe }}</p>
+      {% endif %}
+    </div>
+    <div class="pm-teaching-audio-contrast__player audio-player-wrap">
+      {{ render_teaching_mini_player(example.audio, labels) }}
+    </div>
+  </article>
+{%- endmacro %}
+
+{% macro render_topic_metadata_rows(metadata, wrapper_class='') -%}
+  {% set authors = metadata.authors if metadata and metadata.authors else none %}
+  {% set details = metadata.details if metadata and metadata.details else [] %}
+  {% if authors or details %}
+  <div class="pm-teaching-topic-meta{{ ' ' ~ wrapper_class if wrapper_class else '' }}">
+    {% if authors %}
+    <p class="pm-teaching-topic-meta__authors">
+      <span class="pm-teaching-topic-meta__label">{{ authors.label }}:</span>
+      <span class="pm-teaching-topic-meta__value">{{ authors.value }}</span>
+    </p>
+    {% endif %}
+    {% if details %}
+    <p class="pm-teaching-topic-meta__details">
+      {% for item in details %}
+      <span class="pm-teaching-topic-meta__detail">
+        <span class="pm-teaching-topic-meta__label">{{ item.label }}:</span>
+        <span class="pm-teaching-topic-meta__value">{{ item.value }}</span>
+      </span>{% if not loop.last %}<span class="pm-teaching-topic-meta__separator" aria-hidden="true">·</span>{% endif %}
+      {% endfor %}
+    </p>
+    {% endif %}
+  </div>
+  {% endif %}
+{%- endmacro %}
+
 {% macro render_block(block, labels) -%}
+  {% set block_span = block.get('layout', {}).get('span', 2) %}
   {% if block.type == 'hero' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--hero pm-reading">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--hero pm-reading">
     {% if block.eyebrow %}
     <p class="pm-teaching-hero__eyebrow">{{ block.eyebrow }}</p>
     {% endif %}
-    <h2 class="pm-teaching-hero__title">{{ block.title }}</h2>
+    <h2 class="pm-teaching-hero__title">{{ (block.title_html or block.title) | safe }}</h2>
     {% if block.lead %}
-    <p class="pm-teaching-hero__lead">{{ block.lead }}</p>
+    <p class="pm-teaching-hero__lead">{{ (block.lead_html or block.lead) | safe }}</p>
     {% endif %}
   </section>
+  {% elif block.type == 'section_heading' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--section-heading pm-reading">
+    <h2 class="pm-teaching-section-heading__title">{{ (block.title_html or block.title) | safe }}</h2>
+  </section>
+  {% elif block.type == 'topic_meta' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--topic-meta pm-reading">
+    {{ render_topic_metadata_rows(block, 'pm-teaching-topic-meta--block') }}
+  </section>
   {% elif block.type == 'text' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-panel pm-reading">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--text pm-panel pm-reading">
     {% if block.title %}
-    <h2 class="promat-content-block__title pm-panel__title">{{ block.title }}</h2>
+    <h3 class="promat-content-block__title pm-panel__title pm-teaching-block__title">{{ (block.title_html or block.title) | safe }}</h3>
     {% endif %}
-    {% for paragraph in block.paragraphs %}
-    <p class="promat-content-block__text">{{ paragraph }}</p>
+    {% for block_html in block.body_html_blocks %}
+    <div class="promat-content-block__text pm-teaching-copy-block">{{ block_html | safe }}</div>
     {% endfor %}
   </section>
   {% elif block.type == 'rich_text' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-panel pm-reading pm-teaching-rich-text">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text{{ ' pm-teaching-rich-text--' ~ block.variant if block.variant }}"{% if block.variant %} data-block-variant="{{ block.variant }}"{% endif %}>
     {% if block.title %}
-    <h2 class="promat-content-block__title pm-panel__title">{{ block.title }}</h2>
+    <h3 class="promat-content-block__title pm-panel__title pm-teaching-block__title">{{ (block.title_html or block.title) | safe }}</h3>
     {% endif %}
     <div class="pm-teaching-rich-text__body">{{ block.body_html | safe }}</div>
   </section>
   {% elif block.type == 'image' %}
-  <figure id="{{ block.id }}" class="pm-teaching-block pm-teaching-figure">
+  <figure id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-figure">
     <img src="{{ block.src }}" alt="{{ block.alt }}" class="pm-teaching-figure__image" loading="lazy">
     {% if block.caption %}
-    <figcaption class="pm-teaching-figure__caption">{{ block.caption }}</figcaption>
+    <figcaption class="pm-teaching-figure__caption">{{ (block.caption_html or block.caption) | safe }}</figcaption>
     {% endif %}
   </figure>
+  {% elif block.type == 'embed' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--embed">
+    {% if block.provider == 'datawrapper' and block.src %}
+    <figure class="pm-embed-block pm-embed-block--datawrapper pm-teaching-embed-card" data-provider="{{ block.provider }}">
+      <div class="pm-teaching-embed-card__surface">
+        <div class="pm-embed-block__frame-wrap pm-embed-block__frame-wrap--datawrapper pm-teaching-embed-card__frame-wrap">
+          <iframe
+            class="pm-embed-block__frame pm-embed-block__frame--datawrapper"
+            title="{{ block.title_plain or block.title or 'Datawrapper embed' }}"
+            src="{{ block.src }}"
+            scrolling="no"
+            frameborder="0"
+            data-external="1"
+            data-provider="datawrapper"
+            loading="lazy"
+            style="width: 0; min-width: 100% !important; border: none; height: {{ block.height }}px;"
+          ></iframe>
+        </div>
+        {% if block.caption %}
+        <figcaption class="pm-embed-block__caption pm-teaching-embed-card__caption">{{ (block.caption_html or block.caption) | safe }}</figcaption>
+        {% endif %}
+      </div>
+    </figure>
+    {% endif %}
+  </section>
   {% elif block.type == 'admonition' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--admonition">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--admonition">
     {{ render_admonition(block.item) }}
   </section>
-  {% elif block.type == 'audio_example' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--audio">
-    {% if block.title %}
-    <div class="pm-reading">
-      <h2 class="promat-content-block__title">{{ block.title }}</h2>
-    </div>
+  {% elif block.type == 'audio_example' or block.type == 'audio_examples' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--audio pm-teaching-block--audio-examples">
+    {% if block.collapsible and block.title %}
+    <details class="pm-teaching-details pm-teaching-details--audio"{% if block.default_open %} open{% endif %}>
+      <summary class="pm-teaching-details__summary">{{ (block.title_html or block.title) | safe }}</summary>
+      <div class="pm-teaching-details__body pm-teaching-details__body--audio">
+        {{ render_audio_examples_block(block, labels, show_title=False) }}
+      </div>
+    </details>
+    {% else %}
+      {{ render_audio_examples_block(block, labels) }}
     {% endif %}
-    {{ render_audio_example(block.example, labels) }}
   </section>
   {% elif block.type == 'audio_contrast' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--audio">
-    {% if block.title %}
-    <div class="pm-reading">
-      <h2 class="promat-content-block__title">{{ block.title }}</h2>
-    </div>
-    {% endif %}
-    <div class="pm-card-grid pm-teaching-audio-grid">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--audio pm-teaching-block--audio-contrast">
+    <div class="pm-panel pm-reading audio-section audio-section--contrast">
+      <header class="audio-section-header">
+      {% if block.title %}
+      <div class="audio-section-title">
+        <span class="material-symbols-rounded audio-section-icon" aria-hidden="true">graphic_eq</span>
+        <h3 class="promat-content-block__title pm-panel__title">{{ (block.title_html or block.title) | safe }}</h3>
+      </div>
+      {% endif %}
+      {% if block.lead %}
+      <p class="audio-section-description">{{ (block.lead_html or block.lead) | safe }}</p>
+      {% endif %}
+      {% if block.transcript %}
+      <div class="pm-teaching-audio-contrast__transcript-row audio-sequence-row">
+        <span class="pm-teaching-audio-contrast__transcript-label">{{ labels.audio_word_sequence }}</span>
+        <span class="pm-teaching-audio-contrast__transcript">{{ (block.transcript_html or block.transcript) | safe }}</span>
+      </div>
+      {% endif %}
+      </header>
+      <div class="audio-grid audio-grid--contrast">
       {% for example in block.examples %}
-      {{ render_audio_example(example, labels) }}
+      {{ render_audio_contrast_example(example, labels) }}
       {% endfor %}
+      </div>
     </div>
   </section>
   {% elif block.type == 'download' %}
-  <section id="{{ block.id }}" class="pm-teaching-block">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--download">
     <article class="pm-card pm-card--material pm-teaching-download-card{{ ' is-unavailable' if not block.download.is_available else '' }}">
       <div class="pm-card__body pm-teaching-download-card__body">
         {% if block.download.title %}
-        <h2 class="pm-card__title">{{ block.download.title }}</h2>
+        <h3 class="pm-card__title pm-teaching-block__title">{{ (block.download.title_html or block.download.title) | safe }}</h3>
         {% endif %}
         {% if block.download.description %}
-        <p class="pm-card__text">{{ block.download.description }}</p>
+        <p class="pm-card__text">{{ (block.download.description_html or block.download.description) | safe }}</p>
         {% endif %}
         {% if block.download.href and block.download.is_available %}
-        <p class="pm-card__action"><a href="{{ block.download.href }}" class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ block.download.label or labels.download }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a></p>
+        <p class="pm-card__action"><a href="{{ block.download.href }}" class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ (block.download.label_html or block.download.label or labels.download) | safe }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a></p>
         {% else %}
         <p class="pm-teaching-download-card__status">{{ labels.download_pending }}</p>
         {% endif %}
@@ -140,7 +274,7 @@
     </article>
   </section>
   {% elif block.type == 'credits' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-panel pm-reading pm-teaching-credits">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--credits pm-panel pm-reading pm-teaching-credits">
     <h2 class="promat-content-block__title pm-panel__title">{{ labels.credits }}</h2>
     <div class="pm-teaching-credits__groups">
       {% for group in block.groups if group.people %}
@@ -156,19 +290,19 @@
     </div>
   </section>
   {% elif block.type in ['next_topics', 'topic_grid'] %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-feature-band">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--topic-grid">
     {% if block.title %}
-    <div class="pm-reading pm-teaching-topic-grid__heading">
-      <h2 class="promat-content-block__title">{{ block.title }}</h2>
+    <div class="pm-teaching-block__section-heading pm-teaching-topic-grid__heading">
+      <h2 class="promat-content-block__title">{{ (block.title_html or block.title) | safe }}</h2>
     </div>
     {% endif %}
-    <div class="pm-card-grid">
+    <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if block.cards | length < 3 else '' }}">
       {% for card in block.cards %}
       <a class="pm-card pm-card--interactive pm-teaching-topic-card" href="{{ card.href }}">
         <div class="pm-card__body pm-teaching-topic-card__body">
-          <h3 class="pm-card__title">{{ card.title }}</h3>
+          <h3 class="pm-card__title">{{ (card.title_html or card.title) | safe }}</h3>
           {% if card.summary %}
-          <p class="pm-card__text">{{ card.summary }}</p>
+          <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
           {% endif %}
           {% if card.metadata %}
           <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
@@ -183,17 +317,70 @@
       {% endfor %}
     </div>
   </section>
+  {% elif block.type == 'citation' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--citation">
+    {{ render_admonition({
+      'id': block.id,
+      'tag': 'aside',
+      'variant': 'citation',
+      'title': block.citation.title,
+      'title_html': block.citation.title_html,
+      'body_html_blocks': block.citation.body_html_blocks,
+      'header_action': {
+        'class': 'pm-admonition__action--copy',
+        'aria_label': labels.citation_copy,
+        'title': labels.citation_copy,
+        'copy_text': block.citation.copy_text,
+        'success_label': labels.citation_copy_copied,
+        'error_label': labels.citation_copy_failed,
+        'copied_label': labels.citation_copy_copied,
+        'default_label': labels.citation_copy,
+      },
+    }) }}
+  </section>
+  {% elif block.type == 'further_reading' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--further-reading pm-panel pm-reading">
+    {% if block.collapsible %}
+    <details class="pm-teaching-details"{% if block.default_open %} open{% endif %}>
+      <summary class="pm-teaching-details__summary">{{ (block.title_html or block.title) | safe }}</summary>
+      <div class="pm-teaching-details__body">
+        {% for block_html in block.body_html_blocks %}
+        <div class="promat-content-block__text pm-teaching-copy-block">{{ block_html | safe }}</div>
+        {% endfor %}
+        {% if block.links %}
+        <ul class="pm-teaching-reading-links">
+          {% for item in block.links %}
+          <li class="pm-teaching-reading-links__item"><a href="{{ item.href }}" class="pm-teaching-inline-link">{{ (item.label_html or item.label) | safe }}</a></li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+    </details>
+    {% else %}
+    <h2 class="promat-content-block__title pm-panel__title">{{ (block.title_html or block.title) | safe }}</h2>
+    {% for block_html in block.body_html_blocks %}
+    <div class="promat-content-block__text pm-teaching-copy-block">{{ block_html | safe }}</div>
+    {% endfor %}
+    {% if block.links %}
+    <ul class="pm-teaching-reading-links">
+      {% for item in block.links %}
+      <li class="pm-teaching-reading-links__item"><a href="{{ item.href }}" class="pm-teaching-inline-link">{{ (item.label_html or item.label) | safe }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% endif %}
+  </section>
   {% elif block.type == 'video' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-video-block">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-video-block">
     {% if block.title %}
     <div class="pm-reading">
-      <h2 class="promat-content-block__title">{{ block.title }}</h2>
+      <h3 class="promat-content-block__title pm-teaching-block__title">{{ (block.title_html or block.title) | safe }}</h3>
     </div>
     {% endif %}
     <figure class="pm-embed-block">
       <div class="pm-embed-block__frame-wrap">
         {% if block.embed_url %}
-        <iframe class="pm-embed-block__frame" src="{{ block.embed_url }}" title="{{ block.title or labels.video }}" loading="lazy" allowfullscreen></iframe>
+        <iframe class="pm-embed-block__frame" src="{{ block.embed_url }}" title="{{ block.title_plain or block.title or labels.video }}" loading="lazy" allowfullscreen></iframe>
         {% elif block.src and block.is_available %}
         <video class="pm-embed-block__frame" controls preload="none" src="{{ block.src }}"></video>
         {% else %}
@@ -201,7 +388,7 @@
         {% endif %}
       </div>
       {% if block.caption %}
-      <figcaption class="pm-embed-block__caption">{{ block.caption }}</figcaption>
+      <figcaption class="pm-embed-block__caption">{{ (block.caption_html or block.caption) | safe }}</figcaption>
       {% endif %}
     </figure>
   </section>

@@ -1,8 +1,22 @@
-title: Spanish
-lead: Public teaching hub for pronunciation topics with compact materials and a strict separation from the protected research area.
+title: Teaching Spanish pronunciation
+lead: Topic pages for Spanish pronunciation in foreign language teaching.
+groups:
+  - title: Basics
+    description: Orientation to pronunciation models, variation, and classroom pragmatics.
+    topics:
+      - which-pronunciation
+  - title: Sounds and articulation
+    description: Concrete pronunciation topics with examples and classroom prompts.
+    topics:
+      - final-r
 topics:
+  - slug: which-pronunciation
+    title: Which pronunciation should you teach?
+    summary: Orientation to pronunciation models, variation, and classroom pragmatics in Spanish teaching.
+    level: Intro
+    category: Basics
   - slug: final-r
     title: Final r
     summary: Minimal English edition for the public teaching prototype and language-switch validation.
-    level: Core
-    category: Pronunciation practice
+    level: Core topic
+    category: Sounds and articulation

@@ -1,0 +1,5 @@
+teaching_lang: german
+default_ui_lang: de
+available_ui_langs:
+  - de
+  - en

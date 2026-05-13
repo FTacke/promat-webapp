@@ -526,6 +526,7 @@ _SAMPLE_ADMONITION_VARIANTS: dict[str, dict[str, str]] = {
     "praxis": {"title_key": "sample.admonitions.item.praxis.title"},
     "context": {"title_key": "sample.admonitions.item.context.title"},
     "cite": {"title_key": "sample.admonitions.item.cite.title"},
+    "citation": {"title_key": "sample.admonitions.item.citation.title"},
     "summary": {"title_key": "sample.admonitions.item.summary.title"},
     "weiterlesen": {"title_key": "sample.admonitions.item.weiterlesen.title"},
 }
@@ -540,6 +541,7 @@ def _sample_admonition(
     collapsible: bool = False,
     default_open: bool = False,
     footer_key: str | None = None,
+    header_action: dict[str, Any] | None = None,
     tag: str = "aside",
 ) -> dict[str, Any]:
     variant_config = _SAMPLE_ADMONITION_VARIANTS[variant]
@@ -553,6 +555,7 @@ def _sample_admonition(
         "default_open": default_open,
         "body_paragraphs": [get_text(ui_lang, key) for key in body_keys],
         "footer": get_text(ui_lang, footer_key) if footer_key else None,
+        "header_action": header_action,
     }
 
 
@@ -570,7 +573,21 @@ def _sample_admonitions(ui_lang: str) -> list[dict[str, Any]]:
         _sample_admonition(ui_lang, "tip", "sample.admonitions.item.tip.body"),
         _sample_admonition(ui_lang, "praxis", "sample.admonitions.item.praxis.body"),
         _sample_admonition(ui_lang, "context", "sample.admonitions.item.context.body"),
-        _sample_admonition(ui_lang, "cite", "sample.admonitions.item.cite.body"),
+        _sample_admonition(
+            ui_lang,
+            "citation",
+            "sample.admonitions.item.citation.body",
+            header_action={
+                "class": "pm-admonition__action--copy",
+                "aria_label": get_text(ui_lang, "teaching.citation.copy"),
+                "title": get_text(ui_lang, "teaching.citation.copy"),
+                "copy_text": get_text(ui_lang, "sample.admonitions.item.citation.body"),
+                "success_label": get_text(ui_lang, "teaching.citation.copied"),
+                "error_label": get_text(ui_lang, "teaching.citation.copy_failed"),
+                "copied_label": get_text(ui_lang, "teaching.citation.copied"),
+                "default_label": get_text(ui_lang, "teaching.citation.copy"),
+            },
+        ),
         _sample_admonition(ui_lang, "summary", "sample.admonitions.item.summary.body"),
         _sample_admonition(
             ui_lang,
@@ -1040,7 +1057,8 @@ def sample_page(ui_lang: str):
             "body_paragraphs": research_feature_page.get("body_paragraphs", []),
             "action_links": _linkify(research_feature_page.get("action_links", []), ui_lang),
         },
-        "sample_teaching_feature_cards": _linkify(teaching_feature_page.get("feature_cards", []), ui_lang),
+        "sample_teaching_topic_groups": teaching_feature_page.get("topic_groups", []),
+        "sample_teaching_empty_state": teaching_feature_page.get("empty_state"),
         "sample_speaker_cards": _sample_speaker_cards(ui_lang),
         "sample_composition_admonition": _sample_admonition(
             ui_lang,

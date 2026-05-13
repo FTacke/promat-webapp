@@ -905,7 +905,7 @@ def test_security_headers_allow_project_youtube_embed() -> None:
         response = client.get("/probe")
 
     assert response.status_code == 200
-    assert "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;" in response.headers["Content-Security-Policy"]
+    assert "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://datawrapper.dwcdn.net;" in response.headers["Content-Security-Policy"]
 
 
 def test_admin_users_static_js_uses_semantic_action_button_classes(auth_app: Flask) -> None:

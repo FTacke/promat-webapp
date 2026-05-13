@@ -7,7 +7,13 @@ from typing import Any
 from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
 from ..research_capabilities import get_research_page_capability, get_research_page_order
 from ..research_sessions import load_language_sessions
-from ..teaching_content import build_teaching_hub_page, build_teaching_topic_page, list_teaching_languages, resolve_teaching_edition_ui_lang
+from ..teaching_content import (
+    build_teaching_hub_page,
+    build_teaching_topic_page,
+    count_teaching_topics,
+    list_teaching_languages,
+    resolve_teaching_edition_ui_lang,
+)
 from .public_page_content_data import (
     LEGACY_PROJECT_PAGE_REDIRECTS,
     PROJECT_PAGES_CONTENT,
@@ -386,18 +392,45 @@ def build_corpus_cards_research(ui_lang: str) -> list[dict[str, Any]]:
 def build_corpus_cards_teaching(ui_lang: str) -> list[dict[str, str]]:
     cards: list[dict[str, str]] = []
     teaching_languages = set(list_teaching_languages())
+    teaching_language_order = {
+        "spanish": 0,
+        "english": 1,
+        "french": 2,
+        "german": 3,
+    }
+    available_languages: list[tuple[int, str, dict[str, Any], str]] = []
     for language in LANGUAGES:
         if language["slug"] not in teaching_languages:
             continue
-        if resolve_teaching_edition_ui_lang(language["slug"], ui_lang) is None:
+        effective_ui_lang = resolve_teaching_edition_ui_lang(language["slug"], ui_lang)
+        if effective_ui_lang is None:
             continue
+        available_languages.append(
+            (
+                teaching_language_order.get(language["slug"], len(teaching_language_order)),
+                get_language_label(language, ui_lang),
+                language,
+                effective_ui_lang,
+            )
+        )
+
+    available_languages.sort(key=lambda item: (item[0], item[1]))
+
+    for _, title, language, effective_ui_lang in available_languages:
+        topic_count = count_teaching_topics(language["slug"], effective_ui_lang)
+        if topic_count == 1:
+            status = get_text(ui_lang, "teaching.overview.status.one", count=topic_count)
+        elif topic_count > 1:
+            status = get_text(ui_lang, "teaching.overview.status.other", count=topic_count)
+        else:
+            status = get_text(ui_lang, "teaching.overview.status.pending")
         cards.append(
             {
-                "title": get_language_label(language, ui_lang),
-                "modifier": f"pm-card--lang-{language['lang_code']}",
-                "meta": "",
-                "text": _localized(language["teaching_focus"], ui_lang),
-                "action_label": get_text(ui_lang, "nav.open_materials"),
+                "title": title,
+                "presentation": "teaching-selection-row",
+                "modifier": "",
+                "metadata_rows": [{"text": status}],
+                "action_label": get_text(ui_lang, "teaching.action.open_language"),
                 "href_key": f"teaching:{language['slug']}",
             }
         )
@@ -420,6 +453,7 @@ def build_teaching_select_page(ui_lang: str) -> dict[str, Any]:
         "title": get_section_label("teaching", ui_lang),
         "eyebrow": get_section_label("teaching", ui_lang),
         "intro": get_text(ui_lang, "teaching.overview.intro"),
+        "selection_prompt": get_text(ui_lang, "teaching.overview.prompt"),
         "page_kind": "material",
         "layout": "teaching",
         "template": "pages/teaching_page.html",

@@ -38,6 +38,7 @@ Kurze Beschreibung des Changes und des gelösten Problems.
 - [ ] kein Webapp-Zugriff auf `secure/`
 - [ ] keine direkte öffentliche Auslieferung aus `data/`
 - [ ] keine stillen Umbenennungen ohne Doku
+- [ ] Repo-Root enthält keine temporären QA-/Debug-Artefakte
 
 ## UI- und Konsistenzcheck
 

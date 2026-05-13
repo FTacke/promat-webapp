@@ -358,17 +358,11 @@
       <section class="pm-entry-showcase__variant" aria-labelledby="sample-teaching-corpus-variant">
         <div class="pm-entry-showcase__heading">
           <p id="sample-teaching-corpus-variant" class="pm-entry-showcase__label pm-entry-showcase__label--primary">Korpus-Karten · Unterricht</p>
-          <p class="pm-entry-showcase__note">Direkt aus der aktuellen Teaching-Auswahlseite übernommen, inklusive der ruhigen Sprachakzente pro Karte.</p>
+          <p class="pm-entry-showcase__note">Direkt aus der aktuellen Teaching-Auswahlseite übernommen, als ruhige vertikale Auswahlfläche statt als Sprachkartenraster.</p>
         </div>
-        <div class="pm-card-grid" aria-label="Korpus-Karten Unterricht">
+        <div class="pm-teaching-language-list" aria-label="Korpus-Karten Unterricht">
           {% for card in promat_page.sample_teaching_cards %}
-          <a class="pm-card pm-card--corpus {{ card.modifier }}" href="{{ card.href }}">
-            <div class="pm-card__body">
-              <h3 class="pm-card__title">{{ card.title }}</h3>
-              <p class="pm-card__text">{{ card.text }}</p>
-              <div class="pm-card__action">{{ render_cta_link_visual({ 'label': card.action_label, 'tone': 'primary' }) }}</div>
-            </div>
-          </a>
+          {{ render_corpus_card(card, 'h3') }}
           {% endfor %}
         </div>
       </section>
@@ -393,15 +387,46 @@
           </nav>
         </section>
 
-        <section class="pm-feature-band pm-grid pm-grid--feature pm-grid--selection" aria-label="Teaching-Auswahlkarten">
-          {% for card in promat_page.sample_teaching_feature_cards %}
-          <a class="pm-card pm-card--{{ card.variant | default('selection') }}" href="{{ card.href }}">
-            <h3 class="pm-card__title">{{ card.title }}</h3>
-            <p class="pm-card__text">{{ card.text }}</p>
-            <span class="pm-card__link">{{ card.link_label }}</span>
-          </a>
+        <div class="pm-teaching-group-stack" aria-label="Teaching-Themengruppen">
+          {% for group in promat_page.sample_teaching_topic_groups %}
+          <section class="pm-teaching-topic-group pm-teaching-content-wide" {% if group.title %}aria-labelledby="sample-teaching-group-{{ loop.index }}"{% else %}aria-label="Teaching-Themen"{% endif %}>
+            {% if group.title %}
+            <div class="pm-teaching-topic-group__header">
+              <h3 id="sample-teaching-group-{{ loop.index }}" class="pm-teaching-topic-group__title">{{ group.title }}</h3>
+              {% if group.description %}
+              <p class="pm-teaching-topic-group__description">{{ group.description }}</p>
+              {% endif %}
+            </div>
+            {% endif %}
+            <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if group.cards | length < 3 else '' }}">
+              {% for card in group.cards %}
+              <a class="pm-card pm-card--interactive pm-teaching-topic-card" href="{{ card.href }}">
+                <div class="pm-card__body pm-teaching-topic-card__body">
+                  <h3 class="pm-card__title">{{ card.title }}</h3>
+                  {% if card.summary %}
+                  <p class="pm-card__text">{{ card.summary }}</p>
+                  {% endif %}
+                  {% if card.metadata %}
+                  <ul class="pm-teaching-topic-card__meta" aria-label="{{ t('teaching.topic.meta') }}">
+                    {% for item in card.metadata %}
+                    <li class="pm-teaching-topic-card__meta-item">{{ item.value }}</li>
+                    {% endfor %}
+                  </ul>
+                  {% endif %}
+                  <p class="pm-card__action"><span class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ t('teaching.action.open_topic') }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></span></p>
+                </div>
+              </a>
+              {% endfor %}
+            </div>
+          </section>
           {% endfor %}
-        </section>
+          {% if promat_page.sample_teaching_empty_state %}
+          <div class="pm-container pm-container--tinted pm-teaching-empty-state">
+            <h3 class="pm-teaching-empty-state__title">{{ promat_page.sample_teaching_empty_state.title }}</h3>
+            <p class="pm-teaching-empty-state__text">{{ promat_page.sample_teaching_empty_state.text }}</p>
+          </div>
+          {% endif %}
+        </div>
       </section>
     </div>
   </section>

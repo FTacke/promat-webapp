@@ -1,23 +1,34 @@
-title: Spanisch
-lead: Öffentlicher Teaching-Hub für belastbare Aussprachethemen mit kompakten Materialien und klarer Trennung vom geschützten Forschungsbereich.
+title: "Spanisch: Aussprache unterrichten"
+lead: Themenseiten zur spanischen Aussprache im Fremdsprachenunterricht.
+groups:
+  - title: Grundlagen
+    description: Orientierung zu Varianten, Normen und didaktischen Entscheidungen im Unterricht.
+    topics:
+      - which-pronunciation
+      - soft-spanish-hard-german
+  - title: Laute und Artikulation
+    description: Konkrete Aussprachethemen mit Beispielen und Unterrichtsimpulsen.
+    topics:
+      - r
+      - final-r
 topics:
   - slug: which-pronunciation
-    title: Welche Aussprache zählt?
-    summary: Einstieg in Varianten, Normen und didaktische Auswahl im Spanischunterricht.
+    title: Welche Aussprache unterrichten?
+    summary: Orientierung zu Aussprachemodellen, Variation und Unterrichtspragmatik im Spanischunterricht.
     level: Einstieg
-    category: Orientierung
+    category: Grundlagen
   - slug: soft-spanish-hard-german
     title: Weiches Spanisch, hartes Deutsch
     summary: Kontraste zwischen spanischer und deutscher Artikulation als Ausgangspunkt für bewusste Wahrnehmung.
     level: Basis
-    category: Kontrast
+    category: Grundlagen
   - slug: r
     title: Das spanische r
     summary: Überblick über Tap, Trill und typische Lernschwierigkeiten.
     level: Aufbau
-    category: Artikulation
+    category: Laute und Artikulation
   - slug: final-r
     title: Finales r
     summary: Fokus auf silben- und wortfinale Realisierungen mit Unterrichtsimpulsen und Hörbeispielen.
     level: Aufbau
-    category: Aussprachepraxis
+    category: Laute und Artikulation

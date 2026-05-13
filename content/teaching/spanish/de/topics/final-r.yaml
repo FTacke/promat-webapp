@@ -1,7 +1,14 @@
 title: Finales r
-description: Unterrichtsrohbau zum silben- und wortfinalen r mit Hörhinweisen, Download-Platzhalter und klaren Anschlusswegen.
+description: Finales r wird im Unterricht besser über Hörziele, kurze Kontexte und stabile Anschlussformen aufgebaut als über isolierte Artikulationskommandos.
 equivalents:
   en: final-r
+peer_review:
+  - Gloria Gabriel
+created: 2025-07-06
+updated: 2026-03-05
+citation:
+  text: "Tacke, Felix / PROMAT Teaching (2026): Finales r."
+  url: /de/teaching/spanish/final-r
 credits:
   coordinator:
     - name: PROMAT Teaching
@@ -13,44 +20,61 @@ credits:
       affiliation: PROMAT
 blocks:
   - type: hero
-    eyebrow: Aussprachepraxis
+    layout:
+      span: 2
     title: Finales r
-    lead: Wort- und silbenfinales r verlangt kontrollierte Hörziele, nicht nur isolierte Artikulationsanweisungen.
+    lead: Wort- und silbenfinales r verlangt kontrollierte Hörziele im Kontext, nicht nur isolierte Artikulationsanweisungen.
+  - type: section_heading
+    layout:
+      span: 2
+    title: Ausgangspunkt
   - type: text
-    title: Warum dieses Thema wichtig ist
+    layout:
+      span: 1
     body: |
-      Gerade im Deutschen neigen Lernende dazu, finale Konsonanten zu stark zu schließen oder vokalisch umzudeuten.
+      Im Deutschen wird wortfinales r oft abgeschwächt, vokalisiert oder deutlich anders angebunden als im Spanischen.
 
-      Für spanisches finales r ist es hilfreicher, mit kurzen rhythmischen Kontexten zu arbeiten als mit isolierten Lautbeschreibungen.
-  - type: audio_example
-    title: Hörfokus
-    label: Modellbeispiel
-    transcript: mar, comer, hablar
-    segments:
-      - text: mar
-      - text: comer
-      - text: hablar
+      Für spanisches finales r sind deshalb kurze, rhythmische Kontexte meist hilfreicher als isolierte Lautbeschreibungen.
+  - type: tip_box
+    layout:
+      span: 1
+    title: Unterrichtsperspektive
+    body: |
+      Einstieg und Sicherung sollten vom Hören ausgehen: Was bleibt am Wortende hörbar, wie knapp ist der Auslaut, und wann kippt die Realisierung hörbar in eine deutsch geprägte Spur?
+
+      Erst danach lohnt es sich, einzelne Artikulationshinweise knapp zu ergänzen.
   - type: audio_contrast
+    layout:
+      span: 2
     title: Kontrastive Beobachtung
     examples:
       - title: Spanisch-nah
         transcript: Das finale r bleibt hörbar und knapp.
       - title: Deutsch gefärbt
         transcript: Das finale r wird zu stark geöffnet oder abgeschwächt.
-  - type: warning_box
-    title: Typische Fehlannahme
+  - type: text
+    layout:
+      span: 1
+    title: Didaktische Folgerung
     body: |
-      Ein stark gerolltes r ist im Finalbereich nicht automatisch die beste Unterrichtslösung.
+      Gute Aufgaben koppeln Hören und Sprechen eng: erst unterscheiden, dann in kurzen Wort- und Satzrahmen nachsprechen, schließlich im eigenen Rhythmus stabilisieren.
 
-      Entscheidend ist, ob die Zielrealisierung im Kontext stabil und verständlich bleibt.
+      So bleibt das Ziel konkret, ohne das finale r künstlich zu übertreiben.
   - type: download
-    title: Handout
+    layout:
+      span: 1
+    title: Material für den Unterricht
     label: Arbeitsblatt herunterladen
     href: /teaching/spanish/downloads/asset-smoke.txt
-    description: Kleine öffentliche Smoke-Datei zur Prüfung des Teaching-Asset-Pfads.
+    description: Kleine öffentliche Smoke-Datei für den Test des Teaching-Asset-Pfads und als Platzhalter für ein späteres Unterrichtsblatt.
   - type: credits
+    layout:
+      span: 2
   - type: next_topics
-    title: Weitere Themen
+    layout:
+      span: 2
+    title: Weiter im Hub
     topics:
       - which-pronunciation
       - r
+      - soft-spanish-hard-german

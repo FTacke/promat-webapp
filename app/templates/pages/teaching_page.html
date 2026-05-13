@@ -1,52 +1,69 @@
 {% extends 'base.html' %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
-{% from 'partials/_teaching_blocks.html' import render_block %}
+{% from 'partials/_pm_interactions.html' import render_action_button %}
+{% from 'partials/_teaching_blocks.html' import render_block, render_topic_metadata_rows %}
 
-{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
+{% block page_title %}{{ format_page_title(promat_page.page_title or promat_page.title) }}{% endblock %}
 
 {% block content %}
+{% set teaching_view = promat_page.teaching_view | default('overview') %}
 {% set teaching_labels = {
   'open_topic': t('teaching.action.open_topic'),
   'topic_meta': t('teaching.topic.meta'),
   'credits': t('teaching.credits.heading'),
+  'citation_copy': t('teaching.citation.copy'),
+  'citation_copy_copied': t('teaching.citation.copied'),
+  'citation_copy_failed': t('teaching.citation.copy_failed'),
+  'citation_doi': t('teaching.citation.doi'),
+  'citation_url': t('teaching.citation.url'),
   'transcript': t('teaching.audio.transcript'),
   'segments': t('teaching.audio.segments'),
+  'audio_note': t('teaching.audio.note'),
+  'audio_source': t('teaching.audio.source'),
+  'audio_speaker': t('teaching.audio.speaker_id'),
   'audio_pending': t('teaching.audio.pending'),
+  'audio_play': t('teaching.audio.play'),
+  'audio_pause': t('teaching.audio.pause'),
+  'audio_progress': t('teaching.audio.progress'),
+  'audio_source_prefix': t('teaching.audio.source_prefix'),
+  'audio_word_sequence': t('teaching.audio.word_sequence'),
   'download': t('teaching.download.label'),
   'download_pending': t('teaching.download.pending'),
   'video': t('teaching.video.label'),
   'video_pending': t('teaching.video.pending'),
 } %}
-<article class="pm-teaching-page pm-content pm-content--material" aria-labelledby="promat-page-title">
-  {% set content_header = promat_page.content_header %}
-  {% include 'partials/_content_header.html' %}
-
-  {% if promat_page.teaching_switch_items %}
-  <nav class="pm-teaching-locale-switch pm-reading" aria-label="{{ t('teaching.switch.heading') }}">
-    <p class="pm-teaching-locale-switch__label">{{ t('teaching.switch.heading') }}</p>
-    <div class="pm-teaching-locale-switch__items">
-      {% for item in promat_page.teaching_switch_items %}
-        {% if item.is_current %}
-        <span class="pm-teaching-locale-switch__item is-current" aria-current="page">{{ item.label }}</span>
-        {% elif item.href and not item.is_disabled %}
-        <a href="{{ item.href }}" class="pm-teaching-locale-switch__item{{ ' is-hub-fallback' if item.fallback_to_hub else '' }}">{{ item.label }}</a>
-        {% else %}
-        <span class="pm-teaching-locale-switch__item is-disabled" aria-disabled="true">{{ item.label }}</span>
-        {% endif %}
-      {% endfor %}
-    </div>
+<article class="pm-teaching-page pm-teaching-page--{{ teaching_view }} pm-content pm-content--material" aria-labelledby="promat-page-title"{% if promat_page.topic_slug %} data-topic-slug="{{ promat_page.topic_slug }}"{% endif %}>
+  {% if promat_page.back_link %}
+  <nav class="pm-teaching-backlink pm-reading" aria-label="{{ promat_page.back_link.label }}">
+    {{ render_action_button({ 'label': promat_page.back_link.label, 'href': promat_page.back_link.href, 'variant': 'secondary', 'size': 'small' }, 'pm-teaching-backlink__button') }}
   </nav>
   {% endif %}
 
-  {% if promat_page.back_link %}
-  <nav class="pm-teaching-backlink pm-reading" aria-label="{{ t('teaching.action.back_to_hub') }}">
-    <a href="{{ promat_page.back_link.href }}" class="pm-teaching-inline-link">{{ promat_page.back_link.label }}</a>
-  </nav>
+  {% if teaching_view == 'topic' %}
+  <div class="pm-teaching-topic-header">
+    {% set content_header = promat_page.content_header %}
+    {% include 'partials/_content_header.html' %}
+
+    {% if promat_page.topic_metadata.authors or promat_page.topic_metadata.details %}
+    <section class="pm-teaching-topic-metadata" aria-label="{{ t('teaching.topic.meta') }}">
+      {{ render_topic_metadata_rows(promat_page.topic_metadata) }}
+    </section>
+    {% endif %}
+  </div>
+  {% else %}
+    {% set content_header = promat_page.content_header %}
+    {% include 'partials/_content_header.html' %}
+  {% endif %}
+
+  {% if promat_page.selection_prompt %}
+  <section class="pm-reading pm-teaching-overview__prompt" aria-labelledby="teaching-selection-title">
+    <h2 id="teaching-selection-title" class="pm-teaching-section-title">{{ promat_page.selection_prompt }}</h2>
+  </section>
   {% endif %}
 
   {% if promat_page.corpus_cards %}
   <section class="pm-feature-band" aria-label="{{ t('teaching.overview.cards_aria') }}">
-    <div class="pm-card-grid">
+    <div class="pm-teaching-language-list">
       {% for card in promat_page.corpus_cards %}
       {{ render_corpus_card(card, 'h2') }}
       {% endfor %}
@@ -54,33 +71,74 @@
   </section>
   {% endif %}
 
-  {% if promat_page.topic_cards %}
-  <section class="pm-feature-band" aria-label="{{ t('teaching.hub.cards_aria') }}">
-    <div class="pm-card-grid">
-      {% for card in promat_page.topic_cards %}
-      <a class="pm-card pm-card--interactive pm-teaching-topic-card" href="{{ card.href }}">
-        <div class="pm-card__body pm-teaching-topic-card__body">
-          <h2 class="pm-card__title">{{ card.title }}</h2>
-          {% if card.summary %}
-          <p class="pm-card__text">{{ card.summary }}</p>
-          {% endif %}
-          {% if card.metadata %}
-          <ul class="pm-teaching-topic-card__meta" aria-label="{{ t('teaching.topic.meta') }}">
-            {% for item in card.metadata %}
-            <li class="pm-teaching-topic-card__meta-item">{{ item.value }}</li>
-            {% endfor %}
-          </ul>
-          {% endif %}
-          <p class="pm-card__action"><span class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ t('teaching.action.open_topic') }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></span></p>
-        </div>
-      </a>
-      {% endfor %}
+  {% if promat_page.topic_groups %}
+  <div class="pm-teaching-group-stack">
+    {% for group in promat_page.topic_groups %}
+    <section class="pm-teaching-topic-group pm-teaching-content-wide" {% if group.title %}aria-labelledby="teaching-group-{{ loop.index }}"{% else %}aria-label="{{ t('teaching.hub.cards_aria') }}"{% endif %}>
+      {% if group.title %}
+      <div class="pm-teaching-topic-group__header">
+        <h2 id="teaching-group-{{ loop.index }}" class="pm-teaching-topic-group__title">{{ (group.title_html or group.title) | safe }}</h2>
+        {% if group.description %}
+        <p class="pm-teaching-topic-group__description">{{ (group.description_html or group.description) | safe }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+      <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if group.cards | length < 3 else '' }}">
+        {% for card in group.cards %}
+        <a class="pm-card pm-card--interactive pm-teaching-topic-card" href="{{ card.href }}">
+          <div class="pm-card__body pm-teaching-topic-card__body">
+            <h2 class="pm-card__title">{{ (card.title_html or card.title) | safe }}</h2>
+            {% if card.summary %}
+            <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
+            {% endif %}
+            {% if card.metadata %}
+            <ul class="pm-teaching-topic-card__meta" aria-label="{{ t('teaching.topic.meta') }}">
+              {% for item in card.metadata %}
+              <li class="pm-teaching-topic-card__meta-item">{{ item.value }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            <p class="pm-card__action"><span class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ t('teaching.action.open_topic') }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></span></p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+  {% elif promat_page.empty_state %}
+  <section class="pm-feature-band pm-teaching-content-wide" aria-labelledby="teaching-empty-state-title">
+    <div class="pm-container pm-container--tinted pm-teaching-empty-state">
+      <h2 id="teaching-empty-state-title" class="pm-teaching-empty-state__title">{{ promat_page.empty_state.title }}</h2>
+      <p class="pm-teaching-empty-state__text">{{ promat_page.empty_state.text }}</p>
     </div>
   </section>
   {% endif %}
 
-  {% if promat_page.blocks %}
-  <div class="pm-teaching-block-stack">
+  {% if teaching_view == 'topic' and promat_page.topic_sections %}
+  <div class="pm-teaching-topic-sections">
+    {% for section in promat_page.topic_sections %}
+    <section class="pm-teaching-topic-section pm-teaching-topic-section--{{ section.kind }}{{ ' pm-teaching-topic-section--topic-citation' if section.kind == 'citation' else '' }}"{% if section.heading %} aria-labelledby="{{ section.heading.id }}"{% endif %}>
+      {% if section.heading %}
+      <h2 id="{{ section.heading.id }}" class="pm-teaching-section-heading__title">{{ (section.heading.title_html or section.heading.title) | safe }}</h2>
+      {% endif %}
+      {% if section.blocks %}
+      <div class="pm-teaching-topic-section__grid pm-teaching-block-grid pm-teaching-block-grid--topic{{ ' pm-teaching-topic-section__grid--citation' if section.kind == 'citation' else '' }}">
+        {% for block in section.blocks %}
+        {{ render_block(block, teaching_labels) }}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+  {% if promat_page.back_link %}
+  <nav class="pm-teaching-backlink pm-teaching-backlink--bottom pm-teaching-topic-bottom-nav pm-reading" aria-label="{{ promat_page.back_link.label }}">
+    {{ render_action_button({ 'label': promat_page.back_link.label, 'href': promat_page.back_link.href, 'variant': 'secondary', 'size': 'small' }, 'pm-teaching-backlink__button') }}
+  </nav>
+  {% endif %}
+  {% elif promat_page.blocks %}
+  <div class="pm-teaching-block-grid{{ ' pm-teaching-block-grid--topic' if teaching_view == 'topic' else '' }}">
     {% for block in promat_page.blocks %}
     {{ render_block(block, teaching_labels) }}
     {% endfor %}

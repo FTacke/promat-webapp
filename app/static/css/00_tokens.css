@@ -65,6 +65,15 @@
   --pm-surface-accent-hover: color-mix(in srgb, var(--book-bg) 95%, var(--promat-wordmark-accent));
   --pm-surface-accent-soft: color-mix(in srgb, var(--book-bg) 91%, var(--promat-wordmark-accent));
   --pm-surface-footer: color-mix(in srgb, var(--book-bg) 86%, var(--book-surface-1));
+  --pm-teaching-audio-surface: #fff;
+  --pm-teaching-audio-card-surface: #fcfcfc;
+  --pm-teaching-audio-section-border: #e5e5e5;
+  --pm-teaching-audio-card-border: #e8e8e8;
+  --pm-teaching-audio-quote-border: #e6e6e6;
+  --pm-teaching-audio-section-accent: #c7d7e8;
+  --pm-teaching-audio-icon-color: #2f5f8f;
+  --pm-teaching-audio-token-color: #777;
+  --pm-teaching-audio-subtitle-color: #666;
   --pm-surface-context: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-context));
   --pm-surface-regel: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-regel));
   --pm-surface-tip: color-mix(in srgb, var(--book-bg) var(--book-adm-tint-light), var(--book-adm-tip));
@@ -146,6 +155,12 @@
   --pm-admonition-cite-icon: var(--pm-icon-admonition-quote);
   --pm-admonition-cite-icon-color: color-mix(in srgb, var(--book-fg) 40%, var(--book-adm-cite) 60%);
   --pm-admonition-cite-title-color: var(--book-fg);
+  --pm-admonition-citation-bg: var(--pm-surface-paper);
+  --pm-admonition-citation-border: color-mix(in srgb, var(--pm-border-default) 72%, transparent);
+  --pm-admonition-citation-accent: color-mix(in srgb, var(--pm-border-default) 82%, transparent);
+  --pm-admonition-citation-icon: var(--pm-icon-admonition-quote);
+  --pm-admonition-citation-icon-color: color-mix(in srgb, var(--book-muted) 68%, var(--book-fg) 32%);
+  --pm-admonition-citation-title-color: var(--book-fg);
   --pm-admonition-summary-bg: color-mix(in srgb, var(--pm-surface-paper) 98%, var(--book-bg) 2%);
   --pm-admonition-summary-border: color-mix(in srgb, var(--pm-border-default) 88%, transparent);
   --pm-admonition-summary-accent: color-mix(in srgb, var(--pm-border-default) 78%, transparent);
@@ -170,6 +185,8 @@
   --pm-radius-sm: 7px;
   --pm-radius-container: 8px;
   --pm-radius-pill: 24px;
+  --pm-teaching-audio-section-radius: 12px;
+  --pm-teaching-audio-card-radius: 10px;
 
   --pm-space-xs: 12px;
   --pm-space-sm: 16px;
@@ -756,6 +773,9 @@ html[data-theme="auto"][data-system-dark="false"] {
   --book-adm-weiterlesen: #1c1a20;
   --promat-topbar-bg-solid: rgba(253, 252, 252, 0.94);
   --promat-topbar-bg-blur: rgba(253, 252, 252, 0.7);
+  --pm-admonition-citation-bg: #fff;
+  --pm-admonition-citation-border: #e5e5e5;
+  --pm-admonition-citation-accent: #e5e5e5;
 }
 
 html[data-theme="dark"],
@@ -796,6 +816,9 @@ html[data-theme="auto"][data-system-dark="true"] {
   --book-adm-weiterlesen: #c8c6d4;
   --promat-topbar-bg-solid: rgba(26, 29, 34, 0.94);
   --promat-topbar-bg-blur: rgba(26, 29, 34, 0.72);
+  --pm-admonition-citation-bg: color-mix(in srgb, var(--book-surface-2) 86%, var(--book-bg) 14%);
+  --pm-admonition-citation-border: color-mix(in srgb, var(--book-border) 94%, transparent);
+  --pm-admonition-citation-accent: color-mix(in srgb, var(--book-border-strong) 90%, transparent);
   --pm-nav-state-hover-bg: var(--pm-surface-accent-hover);
   --pm-nav-state-hover-border: transparent;
   --pm-nav-state-active-bg: var(--pm-surface-accent-soft);
