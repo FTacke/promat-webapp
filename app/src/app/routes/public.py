@@ -252,6 +252,13 @@ def _build_content_header(
     page_name: str,
     ui_lang: str,
 ) -> dict[str, Any]:
+    back_link = None
+    if panel.get("context_back_href") and panel.get("context_back_label"):
+        back_link = {
+            "href": panel["context_back_href"],
+            "label": panel["context_back_label"],
+        }
+
     return build_shared_content_header(
         page_name=page_name,
         title=page["title"],
@@ -265,6 +272,7 @@ def _build_content_header(
         is_language_root=bool(page.get("is_language_root")),
         ancestors=page.get("nav_ancestors", []),
         current_label=page.get("nav_current_label"),
+        back_link=back_link,
     )
 
 

@@ -418,20 +418,22 @@ def build_corpus_cards_teaching(ui_lang: str) -> list[dict[str, str]]:
 
     for _, title, language, effective_ui_lang in available_languages:
         topic_count = count_teaching_topics(language["slug"], effective_ui_lang)
+        is_available = topic_count > 0
         if topic_count == 1:
             status = get_text(ui_lang, "teaching.overview.status.one", count=topic_count)
         elif topic_count > 1:
             status = get_text(ui_lang, "teaching.overview.status.other", count=topic_count)
         else:
-            status = get_text(ui_lang, "teaching.overview.status.pending")
+            status = get_text(ui_lang, "teaching.topic.pending")
         cards.append(
             {
                 "title": title,
                 "presentation": "teaching-selection-row",
                 "modifier": "",
+                "is_available": is_available,
                 "metadata_rows": [{"text": status}],
-                "action_label": get_text(ui_lang, "teaching.action.open_language"),
-                "href_key": f"teaching:{language['slug']}",
+                "action_label": get_text(ui_lang, "teaching.action.open_language") if is_available else "",
+                **({"href_key": f"teaching:{language['slug']}"} if is_available else {}),
             }
         )
     return cards
@@ -450,10 +452,11 @@ def build_research_select_page(ui_lang: str) -> dict[str, Any]:
 
 def build_teaching_select_page(ui_lang: str) -> dict[str, Any]:
     return {
-        "title": get_section_label("teaching", ui_lang),
+        "title": get_text(ui_lang, "teaching.overview.prompt"),
         "eyebrow": get_section_label("teaching", ui_lang),
-        "intro": get_text(ui_lang, "teaching.overview.intro"),
-        "selection_prompt": get_text(ui_lang, "teaching.overview.prompt"),
+        "intro": "",
+        "overview_intro": get_text(ui_lang, "teaching.overview.orientation"),
+        "selection_prompt": "",
         "page_kind": "material",
         "layout": "teaching",
         "template": "pages/teaching_page.html",

@@ -5,6 +5,7 @@
 
 {% block content %}
 {% set content_header = {
+  'back_link': auth_back_link | default(none),
   'breadcrumbs': auth_breadcrumbs | default([]),
   'title': auth_heading | default(''),
   'intro': auth_intro | default(''),

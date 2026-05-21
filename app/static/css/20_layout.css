@@ -105,6 +105,16 @@ body.app-shell.page-landing .md3-content-wrapper {
   padding-bottom: var(--pm-content-header-padding-bottom);
 }
 
+.pm-content-header__back,
+.pm-back-link {
+  justify-self: start;
+}
+
+.pm-content-header__back {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .pm-breadcrumb__list {
   display: flex;
   flex-wrap: wrap;
@@ -126,7 +136,15 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin: 0;
 }
 
+.pm-content-header__back + .pm-breadcrumb {
+  margin-top: var(--pm-content-header-back-link-gap);
+}
+
 .pm-breadcrumb + .pm-content-header__title {
+  margin-top: var(--pm-content-header-breadcrumb-title-gap);
+}
+
+.pm-content-header__back + .pm-content-header__title {
   margin-top: var(--pm-content-header-breadcrumb-title-gap);
 }
 
@@ -959,14 +977,19 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-inline: auto;
 }
 
-.pm-teaching-topic-header,
+.pm-teaching-topic-header {
+  width: min(100%, 68rem);
+  max-width: 68rem;
+  margin-inline: auto;
+}
+
 .pm-teaching-topic-metadata {
   width: min(100%, 56rem);
   max-width: 56rem;
   margin-inline: auto;
+  justify-self: center;
 }
 
-.pm-teaching-page--topic .pm-teaching-backlink,
 .pm-teaching-page--topic .pm-teaching-block-grid {
   width: min(100%, 66rem);
   max-width: 66rem;
@@ -988,6 +1011,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   gap: 0.6rem;
 }
 
+.pm-teaching-overview__intro,
 .pm-teaching-overview__prompt,
 .pm-teaching-topic-group__header {
   display: grid;
@@ -1003,22 +1027,36 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-teaching-language-list {
-  width: min(100%, 50rem);
+  width: min(100%, 38rem);
   margin-inline: auto;
+  gap: 0.82rem;
+}
+
+.pm-teaching-group-stack {
+  gap: clamp(2.4rem, 2rem + 1vw, 3.3rem);
 }
 
 .pm-teaching-topic-group {
-  width: min(100%, 70rem);
-  max-width: 70rem;
+  width: min(100%, 68rem);
+  max-width: 68rem;
+  margin-inline: auto;
+  gap: 1rem;
+}
+
+.pm-teaching-page--overview .pm-content-header,
+.pm-teaching-page--hub .pm-content-header,
+.pm-teaching-page--topic .pm-content-header {
+  width: min(100%, 68rem);
+  max-width: 68rem;
   margin-inline: auto;
 }
 
-.pm-teaching-page--hub .pm-content-header,
-.pm-teaching-page--hub .pm-teaching-backlink,
-.pm-teaching-page--topic .pm-content-header {
-  width: min(100%, 70rem);
-  max-width: 70rem;
-  margin-inline: auto;
+.pm-teaching-page--overview .pm-content-header {
+  width: min(100%, 58rem);
+  max-width: 58rem;
+  justify-items: center;
+  text-align: center;
+  gap: clamp(0.45rem, 0.9vw, 0.72rem);
 }
 
 .pm-teaching-page--hub .pm-content-header {
@@ -1026,17 +1064,48 @@ body.app-shell.page-landing .md3-content-wrapper {
   text-align: center;
 }
 
+.pm-teaching-overview__intro,
+.pm-teaching-overview__prompt {
+  width: min(100%, 58rem);
+  margin-inline: auto;
+  justify-items: center;
+  text-align: center;
+}
+
+.pm-teaching-page--overview .pm-teaching-overview__intro {
+  margin-top: clamp(0.16rem, 0.55vw, 0.42rem);
+}
+
+.pm-teaching-topic-grid {
+  gap: 0.9rem;
+}
+
+.pm-teaching-page--overview .pm-content-header__intro,
 .pm-teaching-page--hub .pm-content-header__intro,
 .pm-teaching-page--topic .pm-content-header__intro {
   max-width: min(100%, 72ch);
 }
 
+.pm-teaching-page--topic .pm-breadcrumb,
+.pm-teaching-page--topic .pm-content-header__title,
+.pm-teaching-page--topic .pm-content-header__intro {
+  width: min(100%, 56rem);
+  max-width: 56rem;
+  justify-self: center;
+}
+
+.pm-teaching-page--overview .pm-content-header__intro,
 .pm-teaching-page--hub .pm-content-header__intro {
   margin-inline: auto;
 }
 
 .pm-teaching-page--topic .pm-teaching-topic-header {
   margin-bottom: clamp(2.6rem, 4.8vw, 4.15rem);
+}
+
+.pm-teaching-page--hub .pm-teaching-topic-grid,
+.pm-sample .pm-teaching-topic-grid {
+  align-items: start;
 }
 
 .pm-teaching-topic-grid {

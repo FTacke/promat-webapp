@@ -44,10 +44,6 @@
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
 
-  <div class="pm-reading pm-player-page-actions">
-    {{ render_navigation_pill({ 'label': t('common.actions.back'), 'href': promat_page.origin_link.href, 'size': 'medium', 'direction': 'back' }) }}
-  </div>
-
   <div class="pm-feature-band pm-player-layout">
     <section class="pm-player-runtime">
       {% if promat_page.player.mode in ['wordlist', 'text', 'interview'] %}

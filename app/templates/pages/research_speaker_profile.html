@@ -107,8 +107,8 @@
       </div>
     </section>
 
-    <nav class="pm-profile-navigation pm-container" aria-label="{{ t('research.profile.navigation_aria') }}">
-      {{ render_navigation_pill({ 'label': t('research.player.back_speakers'), 'href': promat_page.speakers_href, 'size': 'medium', 'direction': 'back' }) }}
+    <nav class="pm-back-link pm-back-link--bottom pm-profile-navigation" aria-label="{{ t('research.profile.navigation_aria') }}">
+      {{ render_navigation_pill({ 'label': t('research.player.back_speakers'), 'href': promat_page.speakers_href, 'size': 'medium', 'direction': 'back' }, 'pm-back-link__pill') }}
     </nav>
   </div>
 </article>

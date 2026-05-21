@@ -1,4 +1,5 @@
 {% from 'partials/_admonition.html' import render_admonition %}
+{% from 'partials/_pm_interactions.html' import render_cta_link_visual %}
 
 {% macro render_person(person) -%}
   {% set has_external_url = person.url.startswith('http://') or person.url.startswith('https://') %}
@@ -22,9 +23,9 @@
   </li>
 {%- endmacro %}
 
-{% macro render_teaching_mini_player(audio_href, labels) -%}
+{% macro render_teaching_mini_player(audio_href, labels, feedback_target_id='') -%}
   {% if audio_href %}
-  <div class="pm-teaching-mini-player audio-player-shell" data-teaching-mini-player data-play-label="{{ labels.audio_play }}" data-pause-label="{{ labels.audio_pause }}">
+  <div class="pm-teaching-mini-player audio-player-shell" data-teaching-mini-player data-audio-state="idle" data-play-label="{{ labels.audio_play }}" data-pause-label="{{ labels.audio_pause }}"{% if feedback_target_id %} data-audio-feedback-target="{{ feedback_target_id }}"{% endif %}>
     <audio class="pm-teaching-mini-player__audio" preload="metadata" src="{{ audio_href }}"></audio>
     <audio class="pm-teaching-mini-player__native" controls preload="metadata">
       <source src="{{ audio_href }}" type="audio/mpeg">
@@ -42,14 +43,14 @@
   {% endif %}
 {%- endmacro %}
 
-{% macro render_audio_examples_item(example, labels) -%}
+{% macro render_audio_examples_item(example, labels, feedback_target_id='') -%}
   <article class="pm-teaching-audio-example audio-card audio-example-card{{ ' is-unavailable' if not example.is_available else '' }}">
     <div class="pm-teaching-audio-example__copy">
       {% if example.label %}
       <h4 class="pm-teaching-audio-example__label">{{ (example.label_html or example.label) | safe }}</h4>
       {% endif %}
       {% if example.transcript_html %}
-      <div class="pm-teaching-audio-example__transcript audio-quote">
+      <div class="pm-teaching-audio-example__transcript audio-quote" data-audio-state="idle"{% if feedback_target_id %} id="{{ feedback_target_id }}"{% endif %}>
         <p class="pm-teaching-audio-example__text">{{ example.transcript_html | safe }}</p>
         {% if example.token_id %}
         <p class="pm-teaching-audio-example__token audio-token">{{ example.token_id }}</p>
@@ -61,7 +62,7 @@
       {% endif %}
     </div>
     <div class="pm-teaching-audio-example__player audio-player-wrap">
-      {{ render_teaching_mini_player(example.audio, labels) }}
+      {{ render_teaching_mini_player(example.audio, labels, feedback_target_id) }}
     </div>
   </article>
 {%- endmacro %}
@@ -83,7 +84,7 @@
     {% endif %}
     <div class="audio-grid audio-grid--examples">
       {% for example in block.examples %}
-      {{ render_audio_examples_item(example, labels) }}
+      {{ render_audio_examples_item(example, labels, block.id ~ '-audio-example-' ~ loop.index) }}
       {% endfor %}
     </div>
     {% if block.source.label %}
@@ -99,7 +100,7 @@
   </div>
 {%- endmacro %}
 
-{% macro render_audio_contrast_example(example, labels) -%}
+{% macro render_audio_contrast_example(example, labels, feedback_target_id='') -%}
   <article class="pm-teaching-audio-contrast__example audio-card{{ ' is-unavailable' if not example.is_available else '' }}">
     <div class="pm-teaching-audio-contrast__example-copy">
       {% if example.label %}
@@ -113,7 +114,7 @@
       {% endif %}
     </div>
     <div class="pm-teaching-audio-contrast__player audio-player-wrap">
-      {{ render_teaching_mini_player(example.audio, labels) }}
+      {{ render_teaching_mini_player(example.audio, labels, feedback_target_id) }}
     </div>
   </article>
 {%- endmacro %}
@@ -140,6 +141,46 @@
     </p>
     {% endif %}
   </div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro render_teaching_topic_card(card, labels, heading_tag='h3', compact=false) -%}
+  {% set is_available = card.is_available | default(true) %}
+  {% set card_classes = 'pm-card pm-teaching-topic-card ' ~ ('pm-card--interactive pm-teaching-topic-card--available' if is_available else 'pm-teaching-topic-card--pending') ~ (' pm-teaching-topic-card--compact' if compact else '') %}
+  {% if is_available and card.href %}
+  <a class="{{ card_classes }}" href="{{ card.href }}">
+    <div class="pm-card__body pm-teaching-topic-card__body">
+      <{{ heading_tag }} class="pm-card__title">{{ (card.title_html or card.title) | safe }}</{{ heading_tag }}>
+      {% if card.summary %}
+      <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
+      {% endif %}
+      {% if not compact and card.metadata %}
+      <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
+        {% for item in card.metadata %}
+        <li class="pm-teaching-topic-card__meta-item"><span class="pm-teaching-topic-card__pill">{{ item.value }}</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="pm-card__action pm-teaching-topic-card__action">{{ render_cta_link_visual({ 'label': labels.open_topic, 'tone': 'primary' }) }}</p>
+    </div>
+  </a>
+  {% else %}
+  <article class="{{ card_classes }}" aria-disabled="true">
+    <div class="pm-card__body pm-teaching-topic-card__body">
+      <{{ heading_tag }} class="pm-card__title">{{ (card.title_html or card.title) | safe }}</{{ heading_tag }}>
+      {% if card.summary %}
+      <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
+      {% endif %}
+      {% if not compact and card.metadata %}
+      <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
+        {% for item in card.metadata %}
+        <li class="pm-teaching-topic-card__meta-item"><span class="pm-teaching-topic-card__pill">{{ item.value }}</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="pm-card__action pm-teaching-topic-card__action"><span class="pm-teaching-topic-card__status">{{ labels.topic_pending }}</span></p>
+    </div>
+  </article>
   {% endif %}
 {%- endmacro %}
 
@@ -244,13 +285,13 @@
       {% if block.transcript %}
       <div class="pm-teaching-audio-contrast__transcript-row audio-sequence-row">
         <span class="pm-teaching-audio-contrast__transcript-label">{{ labels.audio_word_sequence }}</span>
-        <span class="pm-teaching-audio-contrast__transcript">{{ (block.transcript_html or block.transcript) | safe }}</span>
+        <span class="pm-teaching-audio-contrast__transcript" data-audio-state="idle" id="{{ block.id }}-audio-sequence"><span class="pm-teaching-audio-contrast__transcript-text">{{ (block.transcript_html or block.transcript) | safe }}</span></span>
       </div>
       {% endif %}
       </header>
       <div class="audio-grid audio-grid--contrast">
       {% for example in block.examples %}
-      {{ render_audio_contrast_example(example, labels) }}
+      {{ render_audio_contrast_example(example, labels, block.id ~ '-audio-sequence') }}
       {% endfor %}
       </div>
     </div>
@@ -298,22 +339,7 @@
     {% endif %}
     <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if block.cards | length < 3 else '' }}">
       {% for card in block.cards %}
-      <a class="pm-card pm-card--interactive pm-teaching-topic-card" href="{{ card.href }}">
-        <div class="pm-card__body pm-teaching-topic-card__body">
-          <h3 class="pm-card__title">{{ (card.title_html or card.title) | safe }}</h3>
-          {% if card.summary %}
-          <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
-          {% endif %}
-          {% if card.metadata %}
-          <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
-            {% for item in card.metadata %}
-            <li class="pm-teaching-topic-card__meta-item">{{ item.value }}</li>
-            {% endfor %}
-          </ul>
-          {% endif %}
-          <p class="pm-card__action"><span class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ labels.open_topic }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></span></p>
-        </div>
-      </a>
+      {{ render_teaching_topic_card(card, labels, 'h3') }}
       {% endfor %}
     </div>
   </section>

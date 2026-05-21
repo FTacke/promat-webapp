@@ -23,10 +23,100 @@ function getKnownDuration(audio) {
   return 0;
 }
 
-function syncMiniPlayer(player, audio, toggle, icon, progress, timeLabel, playLabel, pauseLabel) {
+const LINKED_AUDIO_PROGRESS_LEAD_FACTOR = 1.08;
+
+let teachingMiniPlayerCounter = 0;
+
+function ensureFeedbackKey(player) {
+  if (!player.dataset.audioFeedbackKey) {
+    teachingMiniPlayerCounter += 1;
+    player.dataset.audioFeedbackKey = `pm-teaching-mini-player-${teachingMiniPlayerCounter}`;
+  }
+
+  return player.dataset.audioFeedbackKey;
+}
+
+function getPlaybackState(audio, forcedState = '') {
+  if (forcedState === 'playing' || forcedState === 'paused' || forcedState === 'idle') {
+    return forcedState;
+  }
+
+  const currentTime = Number.isFinite(audio.currentTime) ? Math.max(0, audio.currentTime) : 0;
+  if (!audio.paused) {
+    return 'playing';
+  }
+
+  if (audio.ended) {
+    return 'idle';
+  }
+
+  if (currentTime > 0) {
+    return 'paused';
+  }
+
+  return 'idle';
+}
+
+function prefersReducedMotion() {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function getPlaybackProgress(audio, leadFactor = 1) {
+  const duration = getKnownDuration(audio);
+  const currentTime = Number.isFinite(audio.currentTime) ? Math.max(0, audio.currentTime) : 0;
+  if (!Number.isFinite(duration) || duration <= 0) {
+    return 0;
+  }
+
+  const rawProgress = currentTime / duration;
+  const visualProgress = Math.min(1, Math.max(0, rawProgress * leadFactor));
+  return visualProgress * 100;
+}
+
+function getFeedbackTarget(player) {
+  const targetId = player.dataset.audioFeedbackTarget || '';
+  if (!targetId) {
+    return null;
+  }
+
+  const target = document.getElementById(targetId);
+  return target instanceof HTMLElement ? target : null;
+}
+
+function syncLinkedAudioFeedback(player, audio, forcedState = '') {
+  const state = getPlaybackState(audio, forcedState);
+  const target = getFeedbackTarget(player);
+  player.dataset.audioState = state;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const playerKey = ensureFeedbackKey(player);
+  const ownerKey = target.dataset.audioFeedbackOwner || '';
+  const progressValue = state === 'idle' ? 0 : getPlaybackProgress(audio, LINKED_AUDIO_PROGRESS_LEAD_FACTOR);
+
+  if ((state === 'paused' || state === 'idle') && ownerKey && ownerKey !== playerKey) {
+    return;
+  }
+
+  if (state === 'playing' || (state === 'paused' && progressValue > 0)) {
+    target.dataset.audioFeedbackOwner = playerKey;
+  }
+
+  if (state === 'idle') {
+    delete target.dataset.audioFeedbackOwner;
+  }
+
+  target.dataset.audioState = state;
+  target.style.setProperty('--pm-audio-linked-progress', `${progressValue.toFixed(3)}%`);
+}
+
+function syncMiniPlayer(player, audio, toggle, icon, progress, timeLabel, playLabel, pauseLabel, forcedState = '') {
   const duration = getKnownDuration(audio);
   const currentTime = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
-  const isPlaying = !audio.paused;
+  const playbackState = getPlaybackState(audio, forcedState);
+  const isPlaying = playbackState === 'playing';
   const nextLabel = isPlaying ? pauseLabel : playLabel;
 
   toggle.setAttribute('aria-label', nextLabel);
@@ -42,6 +132,8 @@ function syncMiniPlayer(player, audio, toggle, icon, progress, timeLabel, playLa
     progress.value = '0';
     timeLabel.textContent = '0:00 / 0:00';
   }
+
+  syncLinkedAudioFeedback(player, audio, playbackState);
 }
 
 function pauseOtherTeachingPlayers(currentAudio) {
@@ -49,6 +141,11 @@ function pauseOtherTeachingPlayers(currentAudio) {
     if (!(audioElement instanceof HTMLAudioElement) || audioElement === currentAudio) {
       return;
     }
+    if (audioElement.paused) {
+      return;
+    }
+
+    audioElement.dataset.pauseReason = 'superseded';
     audioElement.pause();
   });
 }
@@ -72,7 +169,33 @@ export function initTeachingMiniPlayers() {
 
     const playLabel = player.dataset.playLabel || 'Play audio';
     const pauseLabel = player.dataset.pauseLabel || 'Pause audio';
-    const sync = () => syncMiniPlayer(player, audio, toggle, icon, progress, timeLabel, playLabel, pauseLabel);
+    const sync = (forcedState = '') => syncMiniPlayer(player, audio, toggle, icon, progress, timeLabel, playLabel, pauseLabel, forcedState);
+    let feedbackFrameId = 0;
+
+    const stopFeedbackLoop = () => {
+      if (feedbackFrameId) {
+        cancelAnimationFrame(feedbackFrameId);
+        feedbackFrameId = 0;
+      }
+    };
+
+    const startFeedbackLoop = () => {
+      if (feedbackFrameId || prefersReducedMotion()) {
+        return;
+      }
+
+      const tick = () => {
+        if (audio.paused || audio.ended) {
+          feedbackFrameId = 0;
+          return;
+        }
+
+        syncLinkedAudioFeedback(player, audio, 'playing');
+        feedbackFrameId = requestAnimationFrame(tick);
+      };
+
+      feedbackFrameId = requestAnimationFrame(tick);
+    };
 
     if (audio.preload !== 'metadata') {
       audio.preload = 'metadata';
@@ -108,9 +231,22 @@ export function initTeachingMiniPlayers() {
     audio.addEventListener('play', () => {
       pauseOtherTeachingPlayers(audio);
       sync();
+      startFeedbackLoop();
     });
-    audio.addEventListener('pause', sync);
-    audio.addEventListener('ended', sync);
+    audio.addEventListener('pause', () => {
+      stopFeedbackLoop();
+      const pauseReason = audio.dataset.pauseReason || '';
+      delete audio.dataset.pauseReason;
+      sync(pauseReason === 'superseded' || pauseReason === 'ended' ? 'idle' : '');
+    });
+    audio.addEventListener('ended', () => {
+      stopFeedbackLoop();
+      audio.dataset.pauseReason = 'ended';
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        audio.currentTime = 0;
+      }
+      sync('idle');
+    });
 
     player.dataset.teachingMiniPlayerReady = 'true';
     player.classList.add('is-ready');
@@ -120,5 +256,9 @@ export function initTeachingMiniPlayers() {
     }
 
     sync();
+
+    if (!audio.paused && !audio.ended) {
+      startFeedbackLoop();
+    }
   }
 }

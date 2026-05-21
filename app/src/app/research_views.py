@@ -1038,6 +1038,10 @@ def build_speaker_profile_page(
             context_mode="language",
             context_title=_language_context(ui_lang, language_slug)[1],
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
+            back_link={
+                "label": _t(ui_lang, "research.player.back_speakers"),
+                "href": url_for("public.research_language_page", ui_lang=ui_lang, language_slug=language_slug, page_slug="speakers"),
+            },
             ancestors=[
                 {
                     "label": get_research_page_label("speakers", ui_lang),
@@ -3093,6 +3097,7 @@ def build_player_page(
             context_mode="language",
             context_title=_language_context(ui_lang, language_slug)[1],
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
+            back_link=origin_link,
             ancestors=ancestors,
         ),
         "origin_link": origin_link,

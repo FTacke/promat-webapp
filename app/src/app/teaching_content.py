@@ -249,6 +249,10 @@ def _topic_card_metadata(entry: dict[str, Any]) -> list[dict[str, str]]:
     return rows
 
 
+def _hub_overview_intro(index: dict[str, Any]) -> str:
+    return _as_text(index.get("overview_intro") or index.get("hub_intro") or index.get("orientation"))
+
+
 def _indexed_topics(index: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {
         _as_text(item.get("slug")): item
@@ -257,9 +261,48 @@ def _indexed_topics(index: dict[str, Any]) -> dict[str, dict[str, Any]]:
     }
 
 
-def _hub_topic_card(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: dict[str, Any] | None) -> dict[str, Any] | None:
-    if raw_topic is None or not topic_slug or not topic_exists(teaching_lang, ui_lang, topic_slug):
+def _explicit_public_availability(entry: dict[str, Any] | None) -> bool | None:
+    if not isinstance(entry, dict):
         return None
+    for key in ("is_available", "is_public", "published"):
+        if key not in entry:
+            continue
+        value = entry.get(key)
+        if isinstance(value, bool):
+            return value
+        normalized = _as_text(value).lower()
+        if normalized in {"true", "yes", "1", "published", "public", "ready"}:
+            return True
+        if normalized in {"false", "no", "0", "draft", "private", "pending", "planned"}:
+            return False
+    return None
+
+
+def topic_is_public(teaching_lang: str, ui_lang: str, topic_slug: str, entry: dict[str, Any] | None = None) -> bool:
+    explicit_state = _explicit_public_availability(entry)
+    if explicit_state is False:
+        return False
+    exists = topic_exists(teaching_lang, ui_lang, topic_slug)
+    if explicit_state is True:
+        return exists
+    return exists
+
+
+def _hub_topic_card(
+    teaching_lang: str,
+    ui_lang: str,
+    topic_slug: str,
+    raw_topic: dict[str, Any] | None,
+    *,
+    include_unavailable: bool = False,
+) -> dict[str, Any] | None:
+    if raw_topic is None or not topic_slug:
+        return None
+
+    is_available = topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic)
+    if not is_available and not include_unavailable:
+        return None
+
     return _set_inline_markdown_fields({
         "slug": topic_slug,
         "title": _as_text(raw_topic.get("title")) or topic_slug,
@@ -270,7 +313,8 @@ def _hub_topic_card(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic
             ui_lang=ui_lang,
             language_slug=teaching_lang,
             page_slug=topic_slug,
-        ),
+        ) if is_available else "",
+        "is_available": is_available,
     }, "title", "summary")
 
 
@@ -1055,12 +1099,18 @@ def _topic_sections(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sections
 
 
-def _hub_topic_cards(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
+def _hub_topic_cards(teaching_lang: str, ui_lang: str, *, include_unavailable: bool = False) -> list[dict[str, Any]]:
     index = load_teaching_index(teaching_lang, ui_lang) or {}
     listed_topics = _indexed_topics(index)
     cards: list[dict[str, Any]] = []
     for topic_slug, raw_topic in listed_topics.items():
-        card = _hub_topic_card(teaching_lang, ui_lang, topic_slug, raw_topic)
+        card = _hub_topic_card(
+            teaching_lang,
+            ui_lang,
+            topic_slug,
+            raw_topic,
+            include_unavailable=include_unavailable,
+        )
         if card is not None:
             cards.append(card)
     return cards
@@ -1078,7 +1128,13 @@ def _hub_topic_groups(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
             cards: list[dict[str, Any]] = []
             for raw_topic in raw_group.get("topics", []):
                 topic_slug = _as_text(raw_topic.get("slug")) if isinstance(raw_topic, dict) else _as_text(raw_topic)
-                card = _hub_topic_card(teaching_lang, ui_lang, topic_slug, listed_topics.get(topic_slug))
+                card = _hub_topic_card(
+                    teaching_lang,
+                    ui_lang,
+                    topic_slug,
+                    listed_topics.get(topic_slug),
+                    include_unavailable=True,
+                )
                 if card is not None:
                     cards.append(card)
             if cards:
@@ -1093,7 +1149,7 @@ def _hub_topic_groups(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
     if groups:
         return groups
 
-    flat_cards = _hub_topic_cards(teaching_lang, ui_lang)
+    flat_cards = _hub_topic_cards(teaching_lang, ui_lang, include_unavailable=True)
     if not flat_cards:
         return []
     return [_set_inline_markdown_fields({"title": "", "description": "", "cards": flat_cards}, "title", "description")]
@@ -1201,6 +1257,7 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
     title = _as_text(index.get("title")) or teaching_lang.replace("-", " ").title()
     page_title = render_markdown_plain_text(title) or title
     lead = _as_text(index.get("lead"))
+    overview_intro = _hub_overview_intro(index)
     topic_groups = _hub_topic_groups(teaching_lang, effective_ui_lang)
     topic_count = sum(len(group["cards"]) for group in topic_groups)
     content_header = _decorate_content_header_markdown(
@@ -1214,6 +1271,10 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
             context_title=None,
             context_root_href=None,
             current_label=page_title,
+            back_link={
+                "label": translate(effective_ui_lang, "teaching.action.back_to_selection"),
+                "href": url_for("public.teaching_home", ui_lang=effective_ui_lang),
+            },
         ),
         title=title,
         intro=lead,
@@ -1222,6 +1283,7 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         "title": title,
         "page_title": page_title,
         "intro": lead,
+        "overview_intro": overview_intro,
         "page_kind": "material",
         "layout": "teaching",
         "template": "pages/teaching_page.html",
@@ -1285,6 +1347,10 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
             context_title=None,
             context_root_href=None,
             current_label=page_title,
+            back_link={
+                "label": translate(ui_lang, "teaching.action.back_to_language_hub", hub_title=hub_title_plain),
+                "href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
+            },
         ),
         title=title,
         intro=page_intro,
@@ -1303,7 +1369,7 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
         "hub_title": hub_title_plain,
         "hub_href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
         "back_link": {
-            "label": translate(ui_lang, "teaching.action.back_to_topic_overview"),
+            "label": translate(ui_lang, "teaching.action.back_to_language_hub", hub_title=hub_title_plain),
             "href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
         },
         "topic_metadata": topic_metadata,

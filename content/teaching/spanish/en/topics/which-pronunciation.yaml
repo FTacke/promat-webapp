@@ -52,50 +52,6 @@ blocks:
       This topic page makes the difference between *seseo* and *distinción* audible and shows why both pronunciation norms are equally legitimate.
 
   # ──────────────────────────────────────────────
-  # Seseo and distinción
-  # ──────────────────────────────────────────────
-
-  - type: section_heading
-    layout:
-      span: 2
-    title: "*Seseo* and *distinción*"
-
-  - type: text
-    layout:
-      span: 1
-    body: |
-      The best-known and most important pronunciation feature for teaching is the difference between *seseo* and *distinción*.
-      The two terms describe whether `s` and `z/c` before `e/i` are pronounced the same way or differently.
-
-  - type: embed
-    layout:
-      span: 1
-    title: "Spain: *distinción*, *seseo*, and *ceceo*"
-    provider: datawrapper
-    src: https://datawrapper.dwcdn.net/poSnB/9/
-    height: 533
-
-  - type: info_box
-    layout:
-      span: 1
-    title: "The majority uses *seseo*"
-    body: |
-      With *distinción*, `s` and `z/c` before `e/i` are pronounced differently: *casa* and *caza* have different sounds.
-      With *seseo*, they merge: *casa* and *caza* are pronounced the same way.
-      *Distinción*, that is, the distinction, is used only in central and northern Spain.
-      *Seseo* is common in almost all of Spanish America, on the Canary Islands, and in parts of Andalusia, where more than 90% of all Spanish speakers live.
-
-      Rule of thumb: whoever pronounces `caza` like `casa` speaks equally good Spanish.
-
-  - type: embed
-    layout:
-      span: 1
-    title: "*Seseo* in Spanish America"
-    provider: datawrapper
-    src: https://datawrapper.dwcdn.net/Uza2n/5/
-    height: 831
-
-  # ──────────────────────────────────────────────
   # Listening comparison
   # ──────────────────────────────────────────────
 
@@ -108,8 +64,8 @@ blocks:
     layout:
       span: 2
     body: |
-      The same spellings can be pronounced differently depending on the pronunciation model.
-      For teaching, what matters is making both realizations, *distinción* and *seseo*, audible as equally legitimate variation.
+      How does the difference sound? The following recordings present the same word pair and word sequence once with *distinción* and once with *seseo*.
+      For teaching, the key point is to make both realizations, *distinción* and *seseo*, audible as equally legitimate variation.
 
   - type: audio_contrast
     layout:
@@ -144,13 +100,57 @@ blocks:
         note: "`c`, `z`, and `ci` are pronounced like `s` here."
 
   # ──────────────────────────────────────────────
+  # Seseo and distinción
+  # ──────────────────────────────────────────────
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: "*Seseo* and *distinción*"
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      The contrast heard in the recordings is not limited to individual words; it reflects regional pronunciation norms.
+      The maps below show where *seseo* and where *distinción* is the usual pronunciation.
+
+  - type: embed
+    layout:
+      span: 1
+    title: "Spain: *distinción*, *seseo*, and *ceceo*"
+    provider: datawrapper
+    src: https://datawrapper.dwcdn.net/poSnB/9/
+    height: 533
+
+  - type: info_box
+    layout:
+      span: 1
+    title: "The majority is *seseante*"
+    body: |
+      With *distinción*, `s` and `z/c` before `e/i` are pronounced differently: *casa* and *caza* have different sounds.
+      With *seseo*, they merge: *casa* and *caza* are pronounced the same way.
+      *Distinción* is used only in central and northern Spain.
+      *Seseo* is common in almost all of Spanish America, on the Canary Islands, and in parts of Andalusia, where more than 90% of all Spanish speakers live.
+
+      Rule of thumb: if you pronounce `caza` like `casa`, your Spanish is still fully correct.
+
+  - type: embed
+    layout:
+      span: 1
+    title: "*Seseo* in Spanish America"
+    provider: datawrapper
+    src: https://datawrapper.dwcdn.net/Uza2n/5/
+    height: 831
+
+  # ──────────────────────────────────────────────
   # Seseo in different countries
   # ──────────────────────────────────────────────
 
   - type: section_heading
     layout:
       span: 2
-    title: "*Seseo* in different countries"
+    title: "*Seseo* in Spanish America: listening examples"
 
   - type: text
     layout:
@@ -197,13 +197,17 @@ blocks:
       span: 2
     title: Classroom prompts
 
+  - type: text
+    layout:
+      span: 2
+    body: |
+      The contrast between *seseo* and *distinción* leads to practical classroom decisions:
+
   - type: rich_text
     layout:
       span: 2
     variant: didactic_close
     body: |
-      The contrast between *seseo* and *distinción* leads to practical classroom decisions:
-
       - **Make variation audible**  
         The map and speaker numbers can trigger an aha moment: the pronunciation many textbooks present as standard is only the norm in a small part of the Spanish-speaking world.
       - **Listen before naming the concept**  

@@ -1,22 +1,38 @@
-title: Teaching Spanish pronunciation
-lead: Topic pages for Spanish pronunciation in foreign language teaching.
+title: "Spanish: Topic pages"
+overview_intro: The topic pages offer orientation for teaching Spanish pronunciation and each focus on a specific phenomenon that can be addressed in class in about 10-15 minutes. They are designed for teachers who want to give learners' pronunciation targeted attention and provide audio examples, additional illustrative material, and concrete classroom prompts.
 groups:
   - title: Basics
     description: Orientation to pronunciation models, variation, and classroom pragmatics.
     topics:
       - which-pronunciation
+      - soft-spanish-hard-german
   - title: Sounds and articulation
     description: Concrete pronunciation topics with examples and classroom prompts.
     topics:
+      - r
       - final-r
 topics:
   - slug: which-pronunciation
     title: Which pronunciation should you teach?
     summary: Orientation to pronunciation models, variation, and classroom pragmatics in Spanish teaching.
+    is_available: true
     level: Intro
     category: Basics
+  - slug: soft-spanish-hard-german
+    title: Soft Spanish, hard German
+    summary: Contrasts between Spanish and German articulation as a starting point for conscious listening and classroom practice.
+    is_available: false
+    level: Core topic
+    category: Basics
+  - slug: r
+    title: Spanish r
+    summary: Overview of tap, trill, and typical learning difficulties.
+    is_available: false
+    level: Core topic
+    category: Sounds and articulation
   - slug: final-r
     title: Final r
     summary: Minimal English edition for the public teaching prototype and language-switch validation.
+    is_available: false
     level: Core topic
     category: Sounds and articulation

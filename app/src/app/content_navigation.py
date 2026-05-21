@@ -81,6 +81,7 @@ def build_content_header(
     ancestors: Sequence[Mapping[str, Any]] | None = None,
     current_label: str | None = None,
     current_href: str | None = None,
+    back_link: Mapping[str, Any] | None = None,
     title_id: str = "promat-page-title",
 ) -> dict[str, Any]:
     path = build_navigation_path(
@@ -102,6 +103,7 @@ def build_content_header(
     show_desktop = depth >= 3
 
     return {
+        "back_link": dict(back_link) if back_link else None,
         "breadcrumbs": path if show_mobile else [],
         "breadcrumb_depth": depth,
         "breadcrumb_mode": "all" if show_desktop else "mobile-only" if show_mobile else "hidden",

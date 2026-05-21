@@ -581,11 +581,11 @@ def test_generic_html_403_renders_error_page(auth_app: Flask) -> None:
 @pytest.mark.parametrize(
     ("path", "expected_status", "expected_title", "expected_message", "expected_primary_label", "expected_secondary_label"),
     [
-        ("/auth-test/bad-request?ui_lang=en", 400, "Bad request", "The request could not be processed.", "Back to home", "Back"),
-        ("/auth-test/unauthorized?ui_lang=en", 401, "Unauthorized", "This resource is available only after sign-in.", "Login", "Back to home"),
-        ("/auth-test/forbidden?ui_lang=en", 403, "Access denied", "You do not have permission to access this page.", "Back to home", "Back"),
-        ("/en/missing-page", 404, "Page not found", "The requested page does not exist or has been moved.", "Back to home", "Back"),
-        ("/auth-test/server-error?ui_lang=en", 500, "Internal server error", "An unexpected error occurred.", "Back to home", "Reload page"),
+        ("/auth-test/bad-request?ui_lang=en", 400, "Bad request", "The request could not be processed.", "Home", "Back"),
+        ("/auth-test/unauthorized?ui_lang=en", 401, "Unauthorized", "This resource is available only after sign-in.", "Login", "Home"),
+        ("/auth-test/forbidden?ui_lang=en", 403, "Access denied", "You do not have permission to access this page.", "Home", "Back"),
+        ("/en/missing-page", 404, "Page not found", "The requested page does not exist or has been moved.", "Home", "Back"),
+        ("/auth-test/server-error?ui_lang=en", 500, "Internal server error", "An unexpected error occurred.", "Home", "Reload page"),
     ],
 )
 def test_error_pages_render_english_shared_copy(
@@ -679,6 +679,7 @@ def test_password_forgot_page_uses_user_facing_copy_in_english(auth_app: Flask) 
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
     assert html.count('pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium') >= 2
     assert 'pm-nav-pill--back' in html
+    assert 'pm-nav-pill__label">Login</span>' in html
     assert "md3-card" not in html
     assert "md3-button" not in html
     assert "md3-outlined-textfield" not in html
@@ -700,6 +701,7 @@ def test_password_reset_page_uses_user_facing_invalid_link_copy(auth_app: Flask)
     assert "pm-auth-secondary" in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
     assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-auth-secondary__action-link' in html
+    assert 'pm-nav-pill__label">Login</span>' in html
     assert "md3-card" not in html
     assert "md3-button" not in html
     assert "md3-outlined-textfield" not in html
@@ -844,6 +846,22 @@ def test_account_page_renders_real_account_surface_for_user(auth_app: Flask) -> 
     assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium' in html
     assert 'pm-account-security-action' in html
     assert "Internal area" not in html
+
+
+def test_account_password_page_uses_header_back_link_to_account(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="alice@example.org")
+
+    assert login_response.status_code == 303
+    response = client.get("/auth/account/password?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'class="pm-back-link pm-content-header__back"' in html
+    assert 'pm-nav-pill__label">My account</span>' in html
+    assert html.count('pm-nav-pill--back') == 1
+    assert "Current password" in html
+    assert "Save password" in html
 
 
 def test_account_page_user_menu_stays_compact_for_regular_users(auth_app: Flask) -> None:

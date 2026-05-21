@@ -2,10 +2,13 @@
 
 {% macro render_corpus_card(card, heading_tag='h2') -%}
 {% if card.presentation == 'teaching-selection-row' %}
-<a class="pm-card pm-card--interactive pm-teaching-language-row" href="{{ card.href }}">
-  <div class="pm-card__body pm-teaching-language-row__body">
+{% set is_available = card.is_available | default(true) %}
+{% set row_classes = 'pm-card pm-teaching-language-row ' ~ ('pm-card--interactive pm-teaching-language-row--available' if is_available else 'pm-teaching-language-row--pending') %}
+{% if is_available and card.href %}
+<a class="{{ row_classes }}" href="{{ card.href }}">
+  <div class="pm-card__body pm-teaching-language-row__body pm-teaching-language-row__body--available">
     <{{ heading_tag }} class="pm-card__title pm-teaching-language-row__title">{{ card.title }}</{{ heading_tag }}>
-    <div class="pm-teaching-language-row__secondary">
+    <div class="pm-teaching-language-row__aside pm-teaching-language-row__aside--available">
       {% for row in card.metadata_rows %}
       {% if not row.label %}
       <p class="pm-teaching-language-row__status">{{ row.text }}</p>
@@ -15,6 +18,20 @@
     </div>
   </div>
 </a>
+{% else %}
+<article class="{{ row_classes }}" aria-disabled="true">
+  <div class="pm-card__body pm-teaching-language-row__body pm-teaching-language-row__body--pending">
+    <{{ heading_tag }} class="pm-card__title pm-teaching-language-row__title">{{ card.title }}</{{ heading_tag }}>
+    <div class="pm-teaching-language-row__aside pm-teaching-language-row__aside--pending">
+      {% for row in card.metadata_rows %}
+      {% if not row.label %}
+      <p class="pm-teaching-language-row__status">{{ row.text }}</p>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</article>
+{% endif %}
 {% elif card.metadata_rows %}
 <article class="pm-card pm-card--interactive pm-card--corpus {{ card.modifier }} pm-corpus-overview-card">
   <div class="pm-card__body pm-corpus-overview-card__body">

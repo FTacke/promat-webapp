@@ -650,7 +650,7 @@ def test_build_teaching_hub_page_groups_topics_and_sets_back_link(teaching_app: 
     )
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: \"Spanisch: Aussprache unterrichten\"\ngroups:\n  - title: Grundlagen\n    description: Kurze Einordnung\n    topics:\n      - topic-one\n  - title: Leer\n    topics:\n      - missing-topic\ntopics:\n  - slug: topic-one\n    title: Thema eins\n    category: Grundlagen\n",
+        "title: \"Spanisch: Aussprache unterrichten\"\noverview_intro: Zwischen Hero und Karten\ngroups:\n  - title: Grundlagen\n    description: Kurze Einordnung\n    topics:\n      - topic-one\n  - title: Leer\n    topics:\n      - missing-topic\ntopics:\n  - slug: topic-one\n    title: Thema eins\n    category: Grundlagen\n",
     )
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
@@ -661,11 +661,73 @@ def test_build_teaching_hub_page_groups_topics_and_sets_back_link(teaching_app: 
         page = teaching_content.build_teaching_hub_page("de", "spanish")
 
     assert page is not None
-    assert page["back_link"]["label"] == "← Zur Sprachauswahl"
+    assert page["back_link"]["label"] == "Sprachauswahl"
+    assert page["content_header"]["back_link"] == {
+        "label": "Sprachauswahl",
+        "href": "/de/teaching",
+    }
+    assert page["overview_intro"] == "Zwischen Hero und Karten"
     assert [group["title"] for group in page["topic_groups"]] == ["Grundlagen"]
     assert page["topic_groups"][0]["description"] == "Kurze Einordnung"
     assert [card["slug"] for card in page["topic_groups"][0]["cards"]] == ["topic-one"]
     assert page["empty_state"] is None
+
+
+def test_build_teaching_hub_page_keeps_listed_missing_topics_as_unavailable_cards(teaching_app: Flask, tmp_path: Path) -> None:
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
+        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
+    )
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
+        "title: \"Spanisch: Aussprache unterrichten\"\ngroups:\n  - title: Grundlagen\n    topics:\n      - topic-one\n      - topic-two\ntopics:\n  - slug: topic-one\n    title: Thema eins\n    level: Einstieg\n    category: Grundlagen\n  - slug: topic-two\n    title: Thema zwei\n    summary: Noch nicht fertig\n    level: Aufbau\n    category: Grundlagen\n",
+    )
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
+        "title: Thema eins\nblocks: []\n",
+    )
+
+    with teaching_app.test_request_context():
+        page = teaching_content.build_teaching_hub_page("de", "spanish")
+
+    assert page is not None
+    cards = page["topic_groups"][0]["cards"]
+    assert [card["slug"] for card in cards] == ["topic-one", "topic-two"]
+    assert cards[0]["is_available"] is True
+    assert cards[1]["is_available"] is False
+    assert cards[1]["href"] == ""
+
+
+def test_build_teaching_hub_page_keeps_explicitly_unavailable_topics_pending_even_when_file_exists(
+    teaching_app: Flask,
+    tmp_path: Path,
+) -> None:
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
+        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
+    )
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
+        "title: \"Spanisch: Aussprache unterrichten\"\ngroups:\n  - title: Grundlagen\n    topics:\n      - topic-one\n      - topic-two\ntopics:\n  - slug: topic-one\n    title: Thema eins\n    is_available: true\n  - slug: topic-two\n    title: Thema zwei\n    is_available: false\n",
+    )
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
+        "title: Thema eins\nblocks: []\n",
+    )
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-two.yaml",
+        "title: Thema zwei\nblocks: []\n",
+    )
+
+    with teaching_app.test_request_context():
+        page = teaching_content.build_teaching_hub_page("de", "spanish")
+
+    assert page is not None
+    cards = page["topic_groups"][0]["cards"]
+    assert [card["slug"] for card in cards] == ["topic-one", "topic-two"]
+    assert cards[0]["is_available"] is True
+    assert cards[1]["is_available"] is False
+    assert cards[1]["href"] == ""
 
 
 def test_build_teaching_hub_page_returns_empty_state_for_empty_languages(teaching_app: Flask, tmp_path: Path) -> None:

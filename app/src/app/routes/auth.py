@@ -271,6 +271,10 @@ def _build_account_context(ui_lang: str, *, user, page_key: str) -> dict[str, ob
         translate=translate,
         section_label=section_label,
         current_href=url_for("auth.account_page", ui_lang=ui_lang),
+        back_link={
+            "label": _t(ui_lang, "auth.account.heading"),
+            "href": url_for("auth.account_page", ui_lang=ui_lang),
+        } if page_key == "account_password" else None,
     )
     return {
         "auth_ui_lang": ui_lang,

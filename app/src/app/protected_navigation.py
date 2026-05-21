@@ -44,6 +44,7 @@ def build_protected_content_header(
     section_label: str | None = None,
     section_href: str | None = None,
     current_href: str | None = None,
+    back_link: dict[str, str] | None = None,
 ):
     return build_content_header(
         page_name=page_name,
@@ -55,4 +56,5 @@ def build_protected_content_header(
         context_title=None,
         context_root_href=None,
         current_href=current_href,
+        back_link=back_link,
     )

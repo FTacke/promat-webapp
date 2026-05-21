@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
-{% from 'partials/_pm_interactions.html' import render_action_button %}
-{% from 'partials/_teaching_blocks.html' import render_block, render_topic_metadata_rows %}
+{% from 'partials/_pm_interactions.html' import render_navigation_pill %}
+{% from 'partials/_teaching_blocks.html' import render_block, render_teaching_topic_card, render_topic_metadata_rows %}
 
 {% block page_title %}{{ format_page_title(promat_page.page_title or promat_page.title) }}{% endblock %}
 
@@ -33,12 +33,6 @@
   'video_pending': t('teaching.video.pending'),
 } %}
 <article class="pm-teaching-page pm-teaching-page--{{ teaching_view }} pm-content pm-content--material" aria-labelledby="promat-page-title"{% if promat_page.topic_slug %} data-topic-slug="{{ promat_page.topic_slug }}"{% endif %}>
-  {% if promat_page.back_link %}
-  <nav class="pm-teaching-backlink pm-reading" aria-label="{{ promat_page.back_link.label }}">
-    {{ render_action_button({ 'label': promat_page.back_link.label, 'href': promat_page.back_link.href, 'variant': 'secondary', 'size': 'small' }, 'pm-teaching-backlink__button') }}
-  </nav>
-  {% endif %}
-
   {% if teaching_view == 'topic' %}
   <div class="pm-teaching-topic-header">
     {% set content_header = promat_page.content_header %}
@@ -53,6 +47,12 @@
   {% else %}
     {% set content_header = promat_page.content_header %}
     {% include 'partials/_content_header.html' %}
+  {% endif %}
+
+  {% if promat_page.overview_intro %}
+  <section class="pm-reading pm-teaching-overview__intro" aria-label="{{ t('teaching.overview.intro') }}">
+    <p class="pm-teaching-overview__intro-text">{{ (promat_page.overview_intro_html or promat_page.overview_intro) | safe }}</p>
+  </section>
   {% endif %}
 
   {% if promat_page.selection_prompt %}
@@ -85,22 +85,7 @@
       {% endif %}
       <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if group.cards | length < 3 else '' }}">
         {% for card in group.cards %}
-        <a class="pm-card pm-card--interactive pm-teaching-topic-card" href="{{ card.href }}">
-          <div class="pm-card__body pm-teaching-topic-card__body">
-            <h2 class="pm-card__title">{{ (card.title_html or card.title) | safe }}</h2>
-            {% if card.summary %}
-            <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
-            {% endif %}
-            {% if card.metadata %}
-            <ul class="pm-teaching-topic-card__meta" aria-label="{{ t('teaching.topic.meta') }}">
-              {% for item in card.metadata %}
-              <li class="pm-teaching-topic-card__meta-item">{{ item.value }}</li>
-              {% endfor %}
-            </ul>
-            {% endif %}
-            <p class="pm-card__action"><span class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ t('teaching.action.open_topic') }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></span></p>
-          </div>
-        </a>
+        {{ render_teaching_topic_card(card, { 'open_topic': t('teaching.action.open_topic'), 'topic_pending': t('teaching.topic.pending'), 'topic_meta': t('teaching.topic.meta') }, 'h2', compact=true) }}
         {% endfor %}
       </div>
     </section>
@@ -133,8 +118,8 @@
     {% endfor %}
   </div>
   {% if promat_page.back_link %}
-  <nav class="pm-teaching-backlink pm-teaching-backlink--bottom pm-teaching-topic-bottom-nav pm-reading" aria-label="{{ promat_page.back_link.label }}">
-    {{ render_action_button({ 'label': promat_page.back_link.label, 'href': promat_page.back_link.href, 'variant': 'secondary', 'size': 'small' }, 'pm-teaching-backlink__button') }}
+  <nav class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav" aria-label="{{ promat_page.back_link.label }}">
+    {{ render_navigation_pill({ 'label': promat_page.back_link.label, 'href': promat_page.back_link.href, 'size': 'medium', 'direction': 'back' }, 'pm-back-link__pill') }}
   </nav>
   {% endif %}
   {% elif promat_page.blocks %}

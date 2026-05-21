@@ -3,10 +3,16 @@
 {% from 'partials/_research_speaker_card.html' import render_speaker_card %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
 {% from 'partials/_pm_interactions.html' import render_cta_link, render_cta_link_visual, render_inline_text_link, render_interaction_item, render_navigation_pill %}
+{% from 'partials/_teaching_blocks.html' import render_teaching_topic_card %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
 {% block content %}
+{% set sample_teaching_labels = {
+  'open_topic': t('teaching.action.open_topic'),
+  'topic_pending': t('teaching.topic.pending'),
+  'topic_meta': t('teaching.topic.meta')
+} %}
 <article class="promat-page promat-page--sample pm-content pm-sample" aria-labelledby="promat-page-title">
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
@@ -159,9 +165,7 @@
               <a href="#sample-entry-cards-title" class="pm-action-button pm-action-button--primary pm-action-button--medium">
                 <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.go_home') }}</span>
               </a>
-              <a href="#sample-pattern-lab-title" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
-                <span class="pm-action-button__label">{{ t('sample.pattern_lab.actions.back') }}</span>
-              </a>
+              {{ render_navigation_pill({ 'label': t('sample.pattern_lab.actions.back'), 'href': '#sample-pattern-lab-title', 'size': 'medium', 'direction': 'back' }) }}
             </div>
           </section>
         </div>
@@ -400,22 +404,7 @@
             {% endif %}
             <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if group.cards | length < 3 else '' }}">
               {% for card in group.cards %}
-              <a class="pm-card pm-card--interactive pm-teaching-topic-card" href="{{ card.href }}">
-                <div class="pm-card__body pm-teaching-topic-card__body">
-                  <h3 class="pm-card__title">{{ card.title }}</h3>
-                  {% if card.summary %}
-                  <p class="pm-card__text">{{ card.summary }}</p>
-                  {% endif %}
-                  {% if card.metadata %}
-                  <ul class="pm-teaching-topic-card__meta" aria-label="{{ t('teaching.topic.meta') }}">
-                    {% for item in card.metadata %}
-                    <li class="pm-teaching-topic-card__meta-item">{{ item.value }}</li>
-                    {% endfor %}
-                  </ul>
-                  {% endif %}
-                  <p class="pm-card__action"><span class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ t('teaching.action.open_topic') }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></span></p>
-                </div>
-              </a>
+              {{ render_teaching_topic_card(card, sample_teaching_labels, 'h3', compact=true) }}
               {% endfor %}
             </div>
           </section>
@@ -891,8 +880,8 @@
             </section>
           </section>
 
-          <nav class="pm-profile-navigation pm-container" aria-label="Navigation Dummy">
-            {{ render_navigation_pill({ 'label': 'Zurück zu Sprecher:innen', 'href': '#sample-research-speaker-cards-title', 'size': 'medium', 'direction': 'back' }) }}
+          <nav class="pm-back-link pm-back-link--bottom pm-profile-navigation" aria-label="Navigation Dummy">
+            {{ render_navigation_pill({ 'label': t('research.player.back_speakers'), 'href': '#sample-research-speaker-cards-title', 'size': 'medium', 'direction': 'back' }, 'pm-back-link__pill') }}
           </nav>
         </div>
       </section>
