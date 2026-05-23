@@ -77,7 +77,10 @@ function init() {
   const titleInput = root.querySelector("[data-phenomena-title-input]");
   const noteInput = root.querySelector("[data-phenomena-note-input]");
   const saveButton = root.querySelector("[data-phenomena-save-action]");
+  const saveButtonLabel = root.querySelector("[data-phenomena-save-label]");
   const discardButton = root.querySelector("[data-phenomena-discard-action]");
+  const curatedToggleButton = root.querySelector("[data-phenomena-curated-toggle-action]");
+  const curatedToggleLabel = root.querySelector("[data-phenomena-curated-toggle-label]");
   const typeBadge = root.querySelector("[data-phenomena-type-badge]");
   const stateBadge = root.querySelector("[data-phenomena-state-badge]");
   const statusText = root.querySelector("[data-phenomena-status-text]");
@@ -172,6 +175,14 @@ function init() {
     return snapshot() !== baseline;
   }
 
+  function isCuratedRecord() {
+    return record?.visibility === "curated";
+  }
+
+  function isCuratedAdminRecord() {
+    return state.isAdmin && isCuratedRecord();
+  }
+
   function currentTypeKey() {
     return state.editorMode === "preset" ? "curated" : "custom";
   }
@@ -179,6 +190,9 @@ function init() {
   function currentStateKey() {
     if (isDirty()) {
       return "unsaved";
+    }
+    if (isCuratedRecord() && record.lifecycle === "archived") {
+      return "archived";
     }
     if (saveCompleted || record.state === "saved") {
       return "saved";
@@ -215,6 +229,31 @@ function init() {
     const disabled = pending || (!isDirty() && !allowWithoutDirty);
     saveButton.disabled = disabled;
     saveButton.classList.toggle("is-disabled", disabled);
+    if (saveButtonLabel) {
+      saveButtonLabel.textContent = isCuratedAdminRecord() ? state.labels.updateCurated : state.labels.save;
+    }
+  }
+
+  async function performSave() {
+    if (pending) {
+      return;
+    }
+    if (!state.isAuthenticated) {
+      window.location.href = state.loginHref;
+      return;
+    }
+    pending = true;
+    syncStatus();
+    try {
+      await persistCurrentRecord();
+      showSnackbar(state.labels.saveSuccess, "success");
+      closeDialog(confirmDialog);
+    } catch (error) {
+      showSnackbar(error.message || state.labels.saveError, "error");
+    } finally {
+      pending = false;
+      syncStatus();
+    }
   }
 
   function syncStatus() {
@@ -234,6 +273,8 @@ function init() {
     if (statusText) {
       if (stateKey === "unsaved") {
         statusText.textContent = state.labels.unsavedStateText;
+      } else if (stateKey === "archived") {
+        statusText.textContent = state.labels.archivedStateText;
       } else if (stateKey === "saved") {
         statusText.textContent = state.labels.savedStateText;
       } else {
@@ -241,10 +282,25 @@ function init() {
       }
     }
     if (curatedHint) {
-      curatedHint.hidden = !(record.source_preset_id && (state.editorMode === "preset" || record.state === "draft"));
+      if (isCuratedAdminRecord()) {
+        curatedHint.textContent = state.labels.curatedAdminHint;
+        curatedHint.hidden = false;
+      } else {
+        curatedHint.textContent = state.labels.curatedHint;
+        curatedHint.hidden = !(isCuratedRecord() || (record.source_preset_id && (state.editorMode === "preset" || record.state === "draft")));
+      }
     }
     if (discardButton) {
-      discardButton.textContent = record.state === "saved" ? state.labels.delete : state.labels.discard;
+      discardButton.textContent = isCuratedRecord() ? state.labels.discard : (record.state === "saved" ? state.labels.delete : state.labels.discard);
+    }
+    if (curatedToggleButton) {
+      const showCuratedToggle = isCuratedAdminRecord();
+      curatedToggleButton.hidden = !showCuratedToggle;
+      curatedToggleButton.disabled = pending;
+      curatedToggleButton.classList.toggle("is-disabled", pending);
+      if (curatedToggleLabel) {
+        curatedToggleLabel.textContent = record.lifecycle === "archived" ? state.labels.reactivateCurated : state.labels.archiveCurated;
+      }
     }
     syncHeadingTitle();
     syncSaveAction();
@@ -478,6 +534,22 @@ function init() {
     }));
 
     let setId = record.set_id;
+    if (isCuratedAdminRecord()) {
+      const updated = await requestJson(buildUrl(state.adminUpdateCuratedSetUrlTemplate, record.set_id), {
+        method: "PUT",
+        body: {
+          label,
+          note,
+          items: itemsPayload,
+        },
+      });
+      record = updated.set;
+      selectedItems = (record.items || []).slice().sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0));
+      baseline = snapshot();
+      saveCompleted = true;
+      renderAll();
+      return;
+    }
     if (state.editorMode === "preset") {
       const created = await requestJson(state.createSetUrl, {
         method: "POST",
@@ -552,6 +624,16 @@ function init() {
 
   async function discardOrDelete() {
     const dirty = isDirty();
+    if (isCuratedRecord()) {
+      if (!dirty) {
+        navigateToOverview();
+        return;
+      }
+      openConfirm(state.labels.discardTitle, state.labels.discardMessage, state.labels.confirmDiscard, () => {
+        navigateToOverview();
+      }, "standard");
+      return;
+    }
     if (!record.set_id) {
       if (!dirty) {
         navigateToOverview();
@@ -573,6 +655,25 @@ function init() {
       await requestJson(buildUrl(state.deleteSetUrlTemplate, record.set_id), { method: "DELETE" });
       navigateToOverview();
     }, isSavedCustom ? "danger" : "standard");
+  }
+
+  async function toggleCuratedLifecycle() {
+    const archived = record.lifecycle === "archived";
+    const title = archived ? state.labels.reactivateCuratedTitle : state.labels.archiveCuratedTitle;
+    const message = archived ? state.labels.reactivateCuratedMessage : state.labels.archiveCuratedMessage;
+    const confirmLabel = archived ? state.labels.reactivateCurated : state.labels.archiveCurated;
+    openConfirm(title, message, confirmLabel, async () => {
+      const response = await requestJson(
+        buildUrl(archived ? state.adminReactivateCuratedSetUrlTemplate : state.adminArchiveCuratedSetUrlTemplate, record.set_id),
+        { method: "POST" },
+      );
+      record = response.set;
+      selectedItems = (record.items || []).slice().sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0));
+      baseline = snapshot();
+      saveCompleted = true;
+      renderAll();
+      showSnackbar(archived ? state.labels.reactivateSuccess : state.labels.archiveSuccess, "success");
+    }, archived ? "standard" : "danger");
   }
 
   titleInput.value = record.label || "";
@@ -699,21 +800,16 @@ function init() {
     if (pending) {
       return;
     }
-    if (!state.isAuthenticated) {
-      window.location.href = state.loginHref;
+    if (isCuratedAdminRecord()) {
+      openConfirm(
+        state.labels.updateCuratedTitle,
+        state.labels.updateCuratedMessage,
+        state.labels.updateCurated,
+        performSave,
+      );
       return;
     }
-    pending = true;
-    syncStatus();
-    try {
-      await persistCurrentRecord();
-      showSnackbar(state.labels.saveSuccess, "success");
-    } catch (error) {
-      showSnackbar(error.message || state.labels.saveError, "error");
-    } finally {
-      pending = false;
-      syncStatus();
-    }
+    await performSave();
   });
 
   discardButton?.addEventListener("click", async () => {
@@ -724,6 +820,17 @@ function init() {
       await discardOrDelete();
     } catch (error) {
       showSnackbar(error.message || state.labels.delete, "error");
+    }
+  });
+
+  curatedToggleButton?.addEventListener("click", async () => {
+    if (pending || !isCuratedAdminRecord()) {
+      return;
+    }
+    try {
+      await toggleCuratedLifecycle();
+    } catch (error) {
+      showSnackbar(error.message || state.labels.requestFailed, "error");
     }
   });
 

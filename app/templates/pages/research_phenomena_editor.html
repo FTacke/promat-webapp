@@ -33,8 +33,11 @@
           <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-discard-action>
             <span class="pm-action-button__label">{{ t('research.phenomena.editor.discard') }}</span>
           </button>
+          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-curated-toggle-action hidden>
+            <span class="pm-action-button__label" data-phenomena-curated-toggle-label></span>
+          </button>
           <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-save-action>
-            <span class="pm-action-button__label">{{ t('common.actions.save') }}</span>
+            <span class="pm-action-button__label" data-phenomena-save-label>{{ t('common.actions.save') }}</span>
           </button>
         </div>
       </div>

@@ -28,6 +28,7 @@ from app.research_sets import (  # noqa: E402
     ResearchSet,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
+    create_curated_set,
     create_draft_set,
     delete_owned_set,
     delete_expired_drafts,
@@ -59,8 +60,8 @@ def test_list_selectable_owned_sets_returns_saved_sets_and_optional_current_draf
             current_set_id=current_draft.set_id,
         )
 
-    assert [record.label for record in visible_without_current] == ["Gespeichertes Set"]
-    assert [record.label for record in visible_with_current] == ["Aktiver Draft", "Gespeichertes Set"]
+    assert [record.label for record in visible_without_current] == ["Starter", "Gespeichertes Set"]
+    assert [record.label for record in visible_with_current] == ["Aktiver Draft", "Starter", "Gespeichertes Set"]
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
@@ -158,7 +159,7 @@ def _write_minimal_research_runtime(runtime_root: Path) -> None:
     _write_session(runtime_root, "spanish", "ES-L-0002-2026-S01", _session_payload("ES-L-0002", "ES-L-0002-2026-S01"))
 
 
-def _insert_user(user_id: str, username: str) -> None:
+def _insert_user(user_id: str, username: str, *, role: str = "user") -> None:
     now = datetime.now(timezone.utc)
     with get_session() as session:
         session.add(
@@ -167,7 +168,7 @@ def _insert_user(user_id: str, username: str) -> None:
                 username=username,
                 email=f"{username}@example.org",
                 password_hash="not-used-in-tests",
-                role="user",
+                role=role,
                 is_active=True,
                 must_reset_password=False,
                 created_at=now,
@@ -176,11 +177,11 @@ def _insert_user(user_id: str, username: str) -> None:
         )
 
 
-def _auth_header(app: Flask, user_id: str, username: str) -> dict[str, str]:
+def _auth_header(app: Flask, user_id: str, username: str, *, role: str = "user") -> dict[str, str]:
     with app.app_context():
         token = create_access_token(
             identity=user_id,
-            additional_claims={"username": username, "role": "user", "must_reset_password": False},
+            additional_claims={"username": username, "role": role, "must_reset_password": False},
         )
     return {"Authorization": f"Bearer {token}"}
 
@@ -215,6 +216,19 @@ def set_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         Base.metadata.create_all(bind=get_engine())
         _insert_user("user-1", "alice")
         _insert_user("user-2", "bob")
+        _insert_user("admin-1", "admin", role="admin")
+        curated_set = create_curated_set(
+            admin_user_id="admin-1",
+            corpus_language="spanish",
+            label="Starter",
+            note="Minimal DB-curated set for research set tests.",
+            items=[
+                {"task": "wordlist", "item_id": "wl_001"},
+                {"task": "text", "item_id": "d_01", "segment_id": "rise", "note": "focus"},
+            ],
+            preferred_task="text",
+        )
+        app.config["TEST_CURATED_SET_ID"] = curated_set.set_id
 
     app.register_blueprint(research_api_blueprint)
     _clear_runtime_caches()
@@ -281,7 +295,7 @@ def test_create_draft_from_valid_preset_materializes_items(set_app: Flask) -> No
         "/api/research/sets",
         json={
             "corpus_language": "spanish",
-            "preset_id": "starter_preset",
+            "preset_id": set_app.config["TEST_CURATED_SET_ID"],
             "workbench_state": {"preferred_task": "text"},
         },
         headers=_auth_header(set_app, "user-1", "alice"),
@@ -289,7 +303,7 @@ def test_create_draft_from_valid_preset_materializes_items(set_app: Flask) -> No
 
     assert response.status_code == 201
     payload = response.get_json()
-    assert payload["set"]["source_preset_id"] == "starter_preset"
+    assert payload["set"]["source_preset_id"] == set_app.config["TEST_CURATED_SET_ID"]
     assert payload["set"]["workbench_state"]["preferred_task"] == "text"
     assert payload["set"]["workbench_state"]["comparison_view_task"] == "all"
     assert "preferred_task" not in payload["set"]
@@ -381,7 +395,7 @@ def test_save_as_new_set_creates_saved_copy(set_app: Flask) -> None:
     client = set_app.test_client()
     create_response = client.post(
         "/api/research/sets",
-        json={"corpus_language": "spanish", "preset_id": "starter_preset"},
+        json={"corpus_language": "spanish", "preset_id": set_app.config["TEST_CURATED_SET_ID"]},
         headers=_auth_header(set_app, "user-1", "alice"),
     )
     draft_payload = create_response.get_json()["set"]
@@ -408,7 +422,7 @@ def test_preset_derived_draft_exposes_suggested_save_label(set_app: Flask) -> No
     client = set_app.test_client()
     create_response = client.post(
         "/api/research/sets",
-        json={"corpus_language": "spanish", "preset_id": "starter_preset"},
+        json={"corpus_language": "spanish", "preset_id": set_app.config["TEST_CURATED_SET_ID"]},
         headers=_auth_header(set_app, "user-1", "alice"),
     )
 
@@ -536,7 +550,7 @@ def test_list_sets_endpoint_returns_only_saved_sets_by_default(set_app: Flask) -
 
     assert response.status_code == 200
     payload = response.get_json()
-    assert [entry["label"] for entry in payload["sets"]] == ["Freies Set"]
+    assert [entry["label"] for entry in payload["sets"]] == ["Starter", "Freies Set"]
 
 
 def test_delete_set_endpoint_removes_owned_set(set_app: Flask) -> None:
@@ -565,7 +579,7 @@ def test_save_as_new_set_rejects_empty_label(set_app: Flask) -> None:
     client = set_app.test_client()
     create_response = client.post(
         "/api/research/sets",
-        json={"corpus_language": "spanish", "preset_id": "starter_preset"},
+        json={"corpus_language": "spanish", "preset_id": set_app.config["TEST_CURATED_SET_ID"]},
         headers=_auth_header(set_app, "user-1", "alice"),
     )
     draft_id = create_response.get_json()["set"]["set_id"]
@@ -604,7 +618,7 @@ def test_foreign_owned_set_is_not_readable_or_mutable(set_app: Flask) -> None:
     client = set_app.test_client()
     create_response = client.post(
         "/api/research/sets",
-        json={"corpus_language": "spanish", "preset_id": "starter_preset"},
+        json={"corpus_language": "spanish", "preset_id": set_app.config["TEST_CURATED_SET_ID"]},
         headers=_auth_header(set_app, "user-1", "alice"),
     )
     set_id = create_response.get_json()["set"]["set_id"]
@@ -658,7 +672,11 @@ def test_cleanup_removes_expired_drafts(set_app: Flask) -> None:
 def test_list_and_delete_helpers_work_for_owned_sets(set_app: Flask) -> None:
     with set_app.app_context():
         first = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
-        second = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        second = create_draft_set(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            source_curated_set_id=set_app.config["TEST_CURATED_SET_ID"],
+        )
         update_set_metadata(owner_user_id="user-1", set_id=first.set_id, state="saved", label="A")
         update_set_metadata(owner_user_id="user-1", set_id=second.set_id, state="saved", label="B")
 

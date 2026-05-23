@@ -43,10 +43,17 @@
 
           <div class="pm-phenomena-overview-card__actions">
             {% if entry.kind == 'curated' %}
-            {{ render_navigation_pill({ 'label': t('common.actions.view'), 'href': entry.open_href, 'size': 'small' }) }}
-            <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-modify-preset="{{ entry.preset_id }}">
-              <span class="pm-action-button__label">{{ t('common.actions.modify') }}</span>
+            {{ render_navigation_pill({ 'label': t('common.actions.view'), 'href': entry.view_href, 'size': 'small' }) }}
+            {% if entry.edit_curated_href %}
+            {{ render_action_button({ 'label': t('common.actions.edit_curated'), 'href': entry.edit_curated_href, 'variant': 'secondary', 'size': 'small' }) }}
+            {% endif %}
+            {% if entry.edit_as_own_href %}
+            {{ render_action_button({ 'label': t('common.actions.edit_as_own_set'), 'href': entry.edit_as_own_href, 'variant': 'secondary', 'size': 'small' }) }}
+            {% else %}
+            <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-copy-curated-set="{{ entry.copy_source_set_id }}">
+              <span class="pm-action-button__label">{{ t('common.actions.edit_as_own_set') }}</span>
             </button>
+            {% endif %}
             {% else %}
             {{ render_navigation_pill({ 'label': t('common.actions.edit'), 'href': entry.open_href, 'size': 'small' }) }}
             <details class="pm-comparison-more-filters pm-phenomena-overflow" data-phenomena-overflow>

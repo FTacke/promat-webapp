@@ -28,7 +28,7 @@ from app.research_phenomena_views import (
 )
 from app.research_presets import clear_research_preset_caches
 from app.research_sessions import load_language_sessions, load_person_records
-from app.research_sets import create_draft_set, update_set_metadata
+from app.research_sets import create_curated_set, create_draft_set, update_set_metadata
 from app.routes.auth import blueprint as auth_blueprint
 from app.routes.research_api import blueprint as research_api_blueprint
 from app.routes.public import blueprint as public_blueprint
@@ -135,7 +135,7 @@ def _write_minimal_research_runtime(runtime_root: Path) -> None:
     _write_session(runtime_root, "spanish", "ES-L-0002-2026-S01", _session_payload("ES-L-0002", "ES-L-0002-2026-S01", ("wordlist",)))
 
 
-def _insert_user(user_id: str, username: str) -> None:
+def _insert_user(user_id: str, username: str, *, role: str = "user") -> None:
     now = datetime.now(timezone.utc)
     with get_session() as session:
         session.add(
@@ -144,7 +144,7 @@ def _insert_user(user_id: str, username: str) -> None:
                 username=username,
                 email=f"{username}@example.org",
                 password_hash="not-used-in-tests",
-                role="user",
+                role=role,
                 is_active=True,
                 must_reset_password=False,
                 created_at=now,
@@ -189,12 +189,24 @@ def phenomena_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
     with app.app_context():
         Base.metadata.create_all(bind=get_engine())
         _insert_user("user-1", "alice")
+        _insert_user("admin-1", "admin", role="admin")
+        curated_set = create_curated_set(
+            admin_user_id="admin-1",
+            corpus_language="spanish",
+            label="Starter",
+            note="Minimal DB-curated set for phenomena tests.",
+            items=[
+                {"task": "wordlist", "item_id": "wl_001"},
+                {"task": "text", "item_id": "d_01"},
+            ],
+        )
+        app.config["TEST_CURATED_SET_ID"] = curated_set.set_id
 
     @app.before_request
     def _set_test_auth_context() -> None:
         g.user = app.config.get("TEST_AUTH_USER")
         g.user_id = app.config.get("TEST_AUTH_USER_ID")
-        g.role = None
+        g.role = app.config.get("TEST_AUTH_ROLE")
 
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(research_api_blueprint)
@@ -224,20 +236,61 @@ def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenome
     assert page["content_header"]["intro"] == "Kuratierte Sets öffnen, bearbeiten oder ein neues Set mit ausgewählten Items aus Wortliste und Text anlegen."
     assert [entry["kind"] for entry in page["entries"]] == ["curated", "custom"]
     assert page["entries"][1]["title"] == "Mein Fokusset"
+    curated_entry = page["entries"][0]
     assert page["client_state"]["labels"]["view"] == "Ansehen"
     assert page["client_state"]["labels"]["edit"] == "Bearbeiten"
-    assert page["client_state"]["labels"]["modify"] == "Modifizieren"
+    assert page["client_state"]["labels"]["editCurated"] == "Kuratiertes Set bearbeiten"
+    assert page["client_state"]["labels"]["editAsOwnSet"] == "Als eigenes Set bearbeiten"
+    assert curated_entry["view_href"].endswith(f"/de/research/spanish/phenomena/presets/{phenomena_app.config['TEST_CURATED_SET_ID']}")
+    assert curated_entry["edit_curated_href"] is None
+    assert curated_entry["edit_as_own_href"] is None
+    assert curated_entry["copy_source_set_id"] == phenomena_app.config["TEST_CURATED_SET_ID"]
     assert page["search_placeholder"] == "Set suchen"
     assert page["entries"][0]["preview"]
     assert all(entry["title"] != "Nur Draft" for entry in page["entries"])
 
 
+def test_build_phenomena_overview_page_exposes_admin_curated_actions(phenomena_app: Flask) -> None:
+    with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
+        g.user = "admin"
+        g.user_id = "admin-1"
+        g.role = "admin"
+        page = build_phenomena_overview_page("de", "spanish")
+
+    assert page is not None
+    curated_entry = page["entries"][0]
+    assert curated_entry["edit_curated_href"].endswith(f"/de/research/spanish/phenomena/presets/{phenomena_app.config['TEST_CURATED_SET_ID']}")
+    assert curated_entry["edit_as_own_href"] is None
+    assert curated_entry["copy_source_set_id"] == phenomena_app.config["TEST_CURATED_SET_ID"]
+
+
+def test_build_phenomena_overview_page_prefers_existing_private_copy_for_edit_as_own_set(phenomena_app: Flask) -> None:
+    with phenomena_app.app_context():
+        private_copy = create_draft_set(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            source_curated_set_id=phenomena_app.config["TEST_CURATED_SET_ID"],
+        )
+
+    with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_phenomena_overview_page("de", "spanish")
+
+    assert page is not None
+    curated_entry = page["entries"][0]
+    assert curated_entry["edit_curated_href"] is None
+    assert curated_entry["edit_as_own_href"].endswith(f"/de/research/spanish/phenomena/sets/{private_copy.set_id}")
+
+
 def test_build_phenomena_preset_editor_page_exposes_curated_initial_record(phenomena_app: Flask) -> None:
-    with phenomena_app.test_request_context("/de/research/spanish/phenomena/presets/starter_preset"):
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/presets/{curated_set_id}"):
         g.user = None
         g.user_id = None
         g.role = None
-        page = build_phenomena_preset_editor_page("de", "spanish", "starter_preset")
+        page = build_phenomena_preset_editor_page("de", "spanish", curated_set_id)
 
     assert page is not None
     assert page["template"] == "pages/research_phenomena_editor.html"
@@ -247,7 +300,8 @@ def test_build_phenomena_preset_editor_page_exposes_curated_initial_record(pheno
     assert page["content_header"]["intro"] == "Set bearbeiten"
     assert [item["label"] for item in page["content_header"]["breadcrumbs"]][-2:] == ["Phänomene", "Starter"]
     assert page["client_state"]["editorMode"] == "preset"
-    assert page["client_state"]["initialRecord"]["state"] == "curated"
+    assert page["client_state"]["initialRecord"]["state"] == "saved"
+    assert page["client_state"]["initialRecord"]["visibility"] == "curated"
     assert page["client_state"]["initialRecord"]["label"] == "Starter"
     assert page["client_state"]["labels"]["selectedItems"] == "Ausgewählte Items"
     assert page["client_state"]["labels"]["curatedHint"] == "Änderungen an diesem kuratierten Set werden als neues eigenes Set gespeichert."
@@ -257,7 +311,11 @@ def test_build_phenomena_preset_editor_page_exposes_curated_initial_record(pheno
 
 def test_build_phenomena_set_editor_page_loads_owned_set(phenomena_app: Flask) -> None:
     with phenomena_app.app_context():
-        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        draft = create_draft_set(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            source_curated_set_id=phenomena_app.config["TEST_CURATED_SET_ID"],
+        )
         update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Set", note="Merken", state="saved")
 
     with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/sets/{draft.set_id}"):
@@ -276,17 +334,18 @@ def test_build_phenomena_set_editor_page_loads_owned_set(phenomena_app: Flask) -
 
 
 def test_phenomena_pages_expose_english_labels_for_migrated_surfaces(phenomena_app: Flask) -> None:
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
     with phenomena_app.test_request_context("/en/research/spanish/phenomena"):
         g.user = None
         g.user_id = None
         g.role = None
         overview_page = build_phenomena_overview_page("en", "spanish")
 
-    with phenomena_app.test_request_context("/en/research/spanish/phenomena/presets/starter_preset"):
+    with phenomena_app.test_request_context(f"/en/research/spanish/phenomena/presets/{curated_set_id}"):
         g.user = None
         g.user_id = None
         g.role = None
-        editor_page = build_phenomena_preset_editor_page("en", "spanish", "starter_preset")
+        editor_page = build_phenomena_preset_editor_page("en", "spanish", curated_set_id)
 
     assert overview_page is not None
     assert overview_page["heading"] == "1 Choose a set"
@@ -295,6 +354,8 @@ def test_phenomena_pages_expose_english_labels_for_migrated_surfaces(phenomena_a
     assert overview_page["search_placeholder"] == "Search sets"
     assert overview_page["client_state"]["labels"]["requestFailed"] == "Request failed."
     assert overview_page["client_state"]["labels"]["view"] == "View"
+    assert overview_page["client_state"]["labels"]["editCurated"] == "Edit curated set"
+    assert overview_page["client_state"]["labels"]["editAsOwnSet"] == "Edit as own set"
 
     assert editor_page is not None
     assert [item["label"] for item in editor_page["content_header"]["breadcrumbs"]][:2] == ["Research", "Spanish corpus"]
@@ -315,6 +376,7 @@ def test_public_phenomena_overview_route_redirects_to_login_without_auth(phenome
 def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: Flask) -> None:
     phenomena_app.config["TEST_AUTH_USER"] = "alice"
     phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
     client = phenomena_app.test_client()
     response = client.get("/de/research/spanish/phenomena")
 
@@ -325,6 +387,9 @@ def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: F
     assert "Set suchen" in html
     assert "Neues Set" in html
     assert "Ansehen" in html
+    assert ">Als eigenes Set bearbeiten<" in html
+    assert ">Kuratiertes Set bearbeiten<" not in html
+    assert "Modifizieren" not in html
     assert "Öffnen" not in html
     assert "pm-phenomena-overview-card__preview" not in html
     rename_start = html.rfind("<dialog", 0, html.index('data-phenomena-rename-dialog'))
@@ -361,29 +426,50 @@ def test_public_phenomena_overview_route_renders_edit_action_for_owned_custom_se
 
     phenomena_app.config["TEST_AUTH_USER"] = "alice"
     phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
     client = phenomena_app.test_client()
     response = client.get("/de/research/spanish/phenomena")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "Bearbeiten" in html
-    assert "Modifizieren" in html
+    assert "Modifizieren" not in html
     assert "Öffnen" not in html
 
 
-def test_public_preset_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:
+def test_public_phenomena_overview_route_renders_all_curated_actions_for_admins(phenomena_app: Flask) -> None:
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
     client = phenomena_app.test_client()
-    response = client.get("/de/research/spanish/phenomena/presets/starter_preset")
+    response = client.get("/de/research/spanish/phenomena")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Ansehen" in html
+    assert ">Kuratiertes Set bearbeiten<" in html
+    assert ">Als eigenes Set bearbeiten<" in html
+    assert f'href="/de/research/spanish/phenomena/presets/{curated_set_id}"' in html
+    assert f'data-phenomena-copy-curated-set="{curated_set_id}"' in html
+
+
+def test_public_preset_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
 
     assert response.status_code == 302
-    assert response.headers["Location"] == "/login?next=/de/research/spanish/phenomena/presets/starter_preset"
+    assert response.headers["Location"] == f"/login?next=/de/research/spanish/phenomena/presets/{curated_set_id}"
 
 
 def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) -> None:
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
     phenomena_app.config["TEST_AUTH_USER"] = "alice"
     phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
     client = phenomena_app.test_client()
-    response = client.get("/de/research/spanish/phenomena/presets/starter_preset")
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
@@ -404,6 +490,24 @@ def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) ->
     assert 'class="pm-action-button__label" data-phenomena-editor-confirm-submit-label' in confirm_slice
     assert 'md3-dialog' not in confirm_slice
     assert "md3-button" not in html
+
+
+def test_public_preset_editor_route_exposes_admin_curated_actions_for_admins(phenomena_app: Flask) -> None:
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-phenomena-curated-toggle-action' in html
+    assert 'data-phenomena-save-label' in html
+    assert '"isAdmin": true' in html
+    assert 'Kuratiertes Set wirklich aktualisieren?' in html
+    assert 'global am kuratierten Original gespeichert.' in html
+    assert '/api/research/admin/curated-sets/__SET_ID__/archive' in html
 
 
 def test_public_set_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:

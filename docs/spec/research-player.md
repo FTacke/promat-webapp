@@ -54,7 +54,7 @@ This file is the binding source of truth for the active architecture of the rese
 ### Optional query context
 
 - `source`: identifies the entry source and may use `speakers`, `profile`, `comparison`, or `phenomena`; the legacy value `recordings` may still be accepted for compatibility and resolves to the speakers-table return context.
-- `preset_id`: identifies an optional phenomena preset context.
+- `preset_id`: carries an optional legacy compatibility alias for a curated phenomena `set_id`.
 - `set_id`: identifies an optional user-owned draft or saved set context.
 - `compare_session`: identifies an optional secondary comparison session.
 - `compare_mode`: identifies an optional compare-item override and currently uses `manual`; omitted compare mode keeps the default compare item-check behavior `Beide abspielen`.
@@ -67,7 +67,7 @@ This file is the binding source of truth for the active architecture of the rese
 - Optional query context may refine the player state, but it must not create separate route families or separate player implementations.
 - Invalid optional query context must degrade to the nearest valid base state instead of breaking the whole page.
 - Source context is navigational context only and must not alter the base architecture of the player.
-- If `set_id` and `preset_id` are both present, `set_id` wins for the active working selection and `preset_id` remains provenance or bootstrap context only.
+- If `set_id` and `preset_id` are both present, `set_id` wins for the active working selection and `preset_id` remains compatibility or bootstrap context only.
 - The player route stays task-specific even when the referenced set contains mixed `wordlist` and `text` items; no `mixed` task value is allowed.
 - When the HTML player route is rendered without owner-bound access to the requested `set_id`, the page degrades to the nearest session-and-task base state and may show only a generic set-context notice; it must not leak owner-bound set contents, labels, or existence details.
 - Protected media delivery for the current player stays inside the same route family via `.../audio.mp3` for full-task playback and `.../items/{item_id}.mp3` for single-item download.
@@ -85,7 +85,7 @@ The player state must be able to represent at least these values:
 - `task_key`
 - `available_tasks`
 - `render_mode`
-- `preset_id` as optional preset context
+- `preset_id` as optional curated-set compatibility context
 - `set_id` as optional user-owned working-set context
 - `compare_session_id` as optional comparison context
 - `focused_item_id` as optional item focus
@@ -277,7 +277,6 @@ The player state must be able to represent at least these values:
 ### Required configuration files
 
 - `player_config.json`
-- `phenomena_presets.json`
 
 ### Task catalogs
 
@@ -301,41 +300,26 @@ The player state must be able to represent at least these values:
 - The active player no longer infers real text capability from `player_config.json`; true text behavior comes from the explicit `player_source` metadata in the task catalog.
 - `text.display_label` and `text.default_render_mode` may remain present for compatibility, but they must not override a task catalog that explicitly declares sentence-list or connected-text behavior.
 
-### `phenomena_presets.json`
+### Curated set rules
 
-Each preset must carry at least:
-
-- `preset_id`
-- `label`
-- `description`
-- `language`
-- `items`
-
-Each preset item reference must carry at least:
-
-- `task`
-- `item_id`
-
-Optional preset item fields may include:
-
-- `segment_id`
-- `note`
-- `sort_key`
-
-### Preset rules
-
-- A preset may contain mixed task selections, for example `wordlist` and `text` items in one curated set.
-- Preset data is maintained separately from session audio and alignment artifacts so that corpora can extend or revise presets without regenerating the source alignment data.
-- Opening a preset for active user work must resolve into one server-side set context instead of a browser-only working state.
+- Productive curated research sets live in PostgreSQL inside the same canonical `research_sets` model as private user sets.
+- Curated sets use `visibility = curated` and keep their lifecycle under the same model instead of a parallel file-backed preset store.
+- A curated set may contain mixed task selections, for example `wordlist` and `text` items in one curated set.
+- Curated set content is maintained separately from session audio and alignment artifacts so corpora can extend or revise curated selections without regenerating alignment data.
+- Opening a curated set for active user work must resolve into one server-side set context instead of a browser-only working state.
 - In player context, the player filters the referenced set to the curated or edited items of the current task.
-- Manual additions or removals mutate the active set state and never mutate the preset configuration files.
+- Manual additions or removals mutate the active set state and never mutate a file-backed preset source, because productive curated configuration is DB-backed.
+- The legacy `preset_id` query or payload carrier remains a compatibility alias for a DB-curated `set_id`; it is not a separate productive identifier space anymore.
 
 ### Set-context rules
 
 - Active user work across `phenomena`, `comparison`, and `player` uses one server-side set model in PostgreSQL.
 - The canonical working reference for user-owned selection state is `set_id`.
+- Curated sets are globally visible rows in that same PostgreSQL model, while private sets remain owner-bound rows.
 - Draft and saved sets are lifecycle states of the same technical model rather than separate storage mechanisms.
 - The canonical set core stores owner-bound lifecycle, label or note, preset provenance, and explicit item references; it is the only truth for durable set content.
+- Productive copy-on-write starts from a visible curated row in PostgreSQL and materializes a private draft row; normal user edits never mutate the curated original.
+- Admin-only curated management may update, archive, or reactivate the curated original through the same model; local dev bootstrap must ensure exactly one canonical curated test set exists in the database.
 - Workbench-specific state lives in a dedicated owner-bound `workbench_state` attached to the same `set_id`; it currently carries persisted comparison task filters and comparison session selections without redefining the set core.
 - The active set JSON contract exposes that workbench-specific state only under `workbench_state`; parallel top-level alias fields for those values are not part of the productive API anymore.
 - `phenomena` and `comparison` each expose exactly one visible owner-side persistence action `Als neues Set speichern`; it reuses the canonical set `save-as` flow, creates a new saved copy, and switches the active workbench context to that new `set_id`.

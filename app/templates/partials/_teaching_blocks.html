@@ -26,8 +26,8 @@
 {% macro render_teaching_mini_player(audio_href, labels, feedback_target_id='') -%}
   {% if audio_href %}
   <div class="pm-teaching-mini-player audio-player-shell" data-teaching-mini-player data-audio-state="idle" data-play-label="{{ labels.audio_play }}" data-pause-label="{{ labels.audio_pause }}"{% if feedback_target_id %} data-audio-feedback-target="{{ feedback_target_id }}"{% endif %}>
-    <audio class="pm-teaching-mini-player__audio" preload="metadata" src="{{ audio_href }}"></audio>
-    <audio class="pm-teaching-mini-player__native" controls preload="metadata">
+    <audio class="pm-teaching-mini-player__audio" preload="none" src="{{ audio_href }}"></audio>
+    <audio class="pm-teaching-mini-player__native" controls preload="none">
       <source src="{{ audio_href }}" type="audio/mpeg">
     </audio>
     <button type="button" class="pm-teaching-mini-player__play" data-teaching-mini-player-toggle aria-label="{{ labels.audio_play }}" title="{{ labels.audio_play }}">

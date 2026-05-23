@@ -52,12 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize shared admonition toggles
     initAdmonitions();
-    initTeachingCitationCopy();
     
     // Initialize Page Router
     initPageRouter();
-
-    initTeachingMiniPlayers();
 });
 
 document.addEventListener("turbo:load", () => {

@@ -187,6 +187,32 @@ function init() {
     }
   }
 
+  async function openOwnCopy(sourceSetId) {
+    if (pending) {
+      return;
+    }
+    if (!state.isAuthenticated && state.loginHref) {
+      window.location.href = state.loginHref;
+      return;
+    }
+    pending = true;
+    try {
+      const response = await requestJson(buildUrl(state.privateCopySetUrlTemplate, sourceSetId), {
+        method: "POST",
+        body: { lifecycle: "draft" },
+      });
+      const setId = response?.set?.set_id;
+      if (!setId) {
+        throw new Error(state.labels.createError);
+      }
+      window.location.href = buildUrl(state.setEditorHrefTemplate, setId);
+    } catch (error) {
+      showSnackbar(error.message || state.labels.createError, "error");
+    } finally {
+      pending = false;
+    }
+  }
+
   function openRenameDialog(setId, currentLabel) {
     renameTargetId = setId;
     if (renameInput) {
@@ -214,10 +240,10 @@ function init() {
   searchInput?.addEventListener("input", applyFilter);
 
   root.addEventListener("click", (event) => {
-    const modifyButton = event.target.closest("[data-phenomena-modify-preset]");
-    if (modifyButton) {
+    const copyButton = event.target.closest("[data-phenomena-copy-curated-set]");
+    if (copyButton) {
       event.preventDefault();
-      createList({ preset_id: modifyButton.dataset.phenomenaModifyPreset });
+      openOwnCopy(copyButton.dataset.phenomenaCopyCuratedSet);
       return;
     }
 

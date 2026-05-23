@@ -20,11 +20,12 @@ from .research_capabilities import (
     task_supports_player_compare,
     task_supports_set_filtering,
 )
-from .research_presets import ResearchConfigError, load_phenomena_preset_map, load_task_catalogs
+from .research_presets import load_task_catalogs
 from .research_sets import (
     ResearchSetNotFoundError,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
+    get_visible_set,
     load_owned_set,
 )
 from .research_sessions import SessionRecord, get_session, load_language_sessions, session_has_task, sort_sessions_by_recency
@@ -552,6 +553,7 @@ def resolve_player_set_context(
     *,
     owner_user_id: str | None,
     load_owned_set_fn=load_owned_set,
+    load_visible_set_fn=get_visible_set,
 ) -> dict[str, Any] | None:
     normalized_set_id = _normalize_text(requested_set_id)
     normalized_preset_id = _normalize_text(requested_preset_id)
@@ -571,15 +573,28 @@ def resolve_player_set_context(
         try:
             stored_set = load_owned_set_fn(owner_user_id=owner_user_id, set_id=normalized_set_id)
         except (ResearchSetNotFoundError, ResearchSetValidationError, RuntimeError):
-            return {
-                "status": "unavailable",
-                "requested_set_id": normalized_set_id,
-                "task_items": [],
-                "task_counts": {task_name: 0 for task_name in ("wordlist", "text")},
-                "focused_item_id": None,
-                "requested_focus_item": requested_focus_item,
-                "effective_preset_id": None,
-            }
+            try:
+                stored_set = load_visible_set_fn(owner_user_id=owner_user_id, set_id=normalized_set_id)
+            except (ResearchSetNotFoundError, ResearchSetValidationError, RuntimeError):
+                return {
+                    "status": "unavailable",
+                    "requested_set_id": normalized_set_id,
+                    "task_items": [],
+                    "task_counts": {task_name: 0 for task_name in ("wordlist", "text")},
+                    "focused_item_id": None,
+                    "requested_focus_item": requested_focus_item,
+                    "effective_preset_id": None,
+                }
+            except ResearchSetStorageUnavailableError:
+                return {
+                    "status": "storage-unavailable",
+                    "requested_set_id": normalized_set_id,
+                    "task_items": [],
+                    "task_counts": {task_name: 0 for task_name in ("wordlist", "text")},
+                    "focused_item_id": None,
+                    "requested_focus_item": requested_focus_item,
+                    "effective_preset_id": None,
+                }
         except ResearchSetStorageUnavailableError:
             return {
                 "status": "storage-unavailable",
@@ -641,21 +656,42 @@ def resolve_player_set_context(
 
         return {
             "status": "loaded",
-            "requested_set_id": normalized_set_id,
+            "requested_set_id": stored_set.set_id,
             "stored_set": stored_set,
             "task_items": task_items,
             "task_counts": task_counts,
             "focused_item_id": focused_item_id,
             "requested_focus_item": requested_focus_item,
-            "effective_preset_id": stored_set.source_preset_id,
+            "effective_preset_id": None,
         }
 
     if not normalized_preset_id:
         return None
 
     try:
-        preset = load_phenomena_preset_map(language_slug)[normalized_preset_id]
-    except (KeyError, ResearchConfigError):
+        stored_set = load_visible_set_fn(owner_user_id=owner_user_id, set_id=normalized_preset_id, touch_access=False)
+    except (ResearchSetNotFoundError, ResearchSetValidationError, RuntimeError):
+        return {
+            "status": "unavailable",
+            "requested_set_id": None,
+            "task_items": [],
+            "task_counts": {task_name: 0 for task_name in ("wordlist", "text")},
+            "focused_item_id": None,
+            "requested_focus_item": requested_focus_item,
+            "effective_preset_id": normalized_preset_id,
+        }
+    except ResearchSetStorageUnavailableError:
+        return {
+            "status": "storage-unavailable",
+            "requested_set_id": None,
+            "task_items": [],
+            "task_counts": {task_name: 0 for task_name in ("wordlist", "text")},
+            "focused_item_id": None,
+            "requested_focus_item": requested_focus_item,
+            "effective_preset_id": normalized_preset_id,
+        }
+
+    if stored_set.corpus_language != language_slug or stored_set.visibility != "curated":
         return {
             "status": "unavailable",
             "requested_set_id": None,
@@ -667,7 +703,7 @@ def resolve_player_set_context(
         }
 
     task_counts = {task_name: 0 for task_name in ("wordlist", "text")}
-    for reference in preset.items:
+    for reference in stored_set.items:
         if reference.task in task_counts:
             task_counts[reference.task] += 1
 
@@ -675,7 +711,7 @@ def resolve_player_set_context(
     catalogs = load_task_catalogs(language_slug)
     catalog = catalogs.get(task_key) if task_supports_set_filtering(task_key) else None
     if catalog is not None:
-        for reference in preset.items:
+        for reference in stored_set.items:
             if reference.task != task_key:
                 continue
             catalog_item = catalog.items_by_id.get(reference.item_id)
@@ -705,13 +741,13 @@ def resolve_player_set_context(
 
     return {
         "status": "loaded",
-        "requested_set_id": None,
-        "stored_set": None,
+        "requested_set_id": stored_set.set_id,
+        "stored_set": stored_set,
         "task_items": task_items,
         "task_counts": task_counts,
         "focused_item_id": focused_item_id,
         "requested_focus_item": requested_focus_item,
-        "effective_preset_id": preset.preset_id,
+        "effective_preset_id": stored_set.set_id,
     }
 
 

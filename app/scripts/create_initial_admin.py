@@ -96,6 +96,7 @@ def main():
     from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
     from src.app.auth.models import Base, User
     from src.app.auth import services
+    from src.app.research_sets import ensure_curated_test_set
 
     class AppLike:
         def __init__(self, cfg):
@@ -130,6 +131,7 @@ def main():
     tmp_app.config.update(cfg)
 
     with tmp_app.app_context():
+        admin_user_id: str | None = None
         with get_session() as session:
             # Check if username exists
             existing = (
@@ -166,6 +168,7 @@ def main():
                 existing.updated_at = now
                 if args.display_name:
                     existing.display_name = args.display_name
+                admin_user_id = existing.id
                 print(
                     f"Updated existing user '{args.username}' as admin (unlocked, password reset)"
                 )
@@ -193,7 +196,12 @@ def main():
                 if args.display_name:
                     u.display_name = args.display_name
                 session.add(u)
+                admin_user_id = u.id
                 print(f"Created admin user '{args.username}' (unlocked)")
+
+        if admin_user_id:
+            curated_set = ensure_curated_test_set(admin_user_id=admin_user_id)
+            print(f"Ensured curated test set '{curated_set.label}' ({curated_set.set_id})")
 
 
 if __name__ == "__main__":

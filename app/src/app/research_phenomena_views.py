@@ -9,15 +9,15 @@ from flask import g, request, url_for
 from .content_navigation import build_content_header
 from .i18n import translate, translate_many
 from .research_capabilities import get_research_task_label, phenomena_task_keys
-from .research_presets import ResearchConfigError, load_phenomena_preset_map, load_phenomena_presets, load_task_catalogs
+from .research_presets import load_task_catalogs
 from .research_sets import (
     ResearchSetNotFoundError,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
     StoredResearchSet,
     StoredResearchSetItem,
-    list_selectable_owned_sets,
-    load_owned_set,
+    get_visible_set,
+    list_visible_sets_for_user,
 )
 from .routes.public_content import get_language, get_language_label, get_research_corpus_title, get_research_page_label, get_section_label
 
@@ -40,12 +40,17 @@ def _is_authenticated() -> bool:
     return _current_owner_user_id() is not None
 
 
+def _is_admin() -> bool:
+    return getattr(g, "role", None) == "admin"
+
+
 def _editor_status_labels(ui_lang: str) -> dict[str, str]:
     return translate_many(
         ui_lang,
         {
             "curated": "common.status.curated",
             "custom": "common.status.custom",
+            "archived": "common.status.archived",
             "saved": "common.status.saved",
             "unsaved": "common.status.unsaved",
             "new": "common.status.new",
@@ -174,27 +179,47 @@ def _editor_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, A
     }
 
 
-def _overview_card_from_preset(
+def _overview_card_from_curated_set(
     *,
-    preset,
+    stored_set: StoredResearchSet,
+    own_copy_set: StoredResearchSet | None,
+    is_admin: bool,
     ui_lang: str,
     language_slug: str,
     catalogs_by_task: dict[str, list[dict[str, str | None]]],
 ) -> dict[str, Any]:
+    editor_href = url_for(
+        "public.research_phenomena_preset_editor",
+        ui_lang=ui_lang,
+        language_slug=language_slug,
+        preset_id=stored_set.set_id,
+    )
     return {
-        "entry_id": f"preset:{preset.preset_id}",
+        "entry_id": f"set:{stored_set.set_id}",
         "kind": "curated",
-        "title": preset.label,
-        "item_count": len(preset.items),
-        "preview": _preview_text(preset.items, catalogs_by_task=catalogs_by_task),
-        "status_label": _t(ui_lang, "common.status.curated"),
-        "open_href": url_for(
-            "public.research_phenomena_preset_editor",
-            ui_lang=ui_lang,
-            language_slug=language_slug,
-            preset_id=preset.preset_id,
+        "title": _display_set_label(stored_set.label, ui_lang),
+        "item_count": len(stored_set.items),
+        "preview": _preview_text(stored_set.items, catalogs_by_task=catalogs_by_task),
+        "status_label": _t(
+            ui_lang,
+            "common.status.archived" if stored_set.lifecycle == "archived" else "common.status.curated",
         ),
-        "preset_id": preset.preset_id,
+        "open_href": editor_href,
+        "view_href": editor_href,
+        "edit_curated_href": editor_href if is_admin else None,
+        "edit_as_own_href": (
+            url_for(
+                "public.research_phenomena_set_editor",
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                set_id=own_copy_set.set_id,
+            )
+            if own_copy_set is not None
+            else None
+        ),
+        "copy_source_set_id": stored_set.set_id,
+        "preset_id": stored_set.set_id,
+        "set_id": stored_set.set_id,
     }
 
 
@@ -229,33 +254,56 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
         return None
 
     catalogs_by_task, task_labels = _catalog_payload(language_slug, ui_lang)
-    curated_entries = [
-        _overview_card_from_preset(
-            preset=preset,
-            ui_lang=ui_lang,
-            language_slug=language_slug,
-            catalogs_by_task=catalogs_by_task,
-        )
-        for preset in load_phenomena_presets(language_slug)
-    ]
-
+    curated_entries: list[dict[str, Any]] = []
     custom_entries: list[dict[str, Any]] = []
-    if _is_authenticated():
+    private_copy_targets: dict[str, StoredResearchSet] = {}
+    try:
+        visible_sets = list_visible_sets_for_user(
+            owner_user_id=_current_owner_user_id(),
+            corpus_language=language_slug,
+            include_drafts=False,
+            include_archived_curated=_is_admin(),
+        )
+    except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
+        visible_sets = tuple()
+
+    owner_user_id = _current_owner_user_id()
+    if owner_user_id is not None:
         try:
-            custom_entries = [
-                _overview_card_from_set(
+            private_copy_candidates = list_visible_sets_for_user(
+                owner_user_id=owner_user_id,
+                corpus_language=language_slug,
+                include_drafts=True,
+                include_archived_curated=_is_admin(),
+            )
+        except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
+            private_copy_candidates = tuple()
+        for candidate in private_copy_candidates:
+            if candidate.visibility != "private" or not candidate.source_curated_set_id:
+                continue
+            private_copy_targets.setdefault(candidate.source_curated_set_id, candidate)
+
+    for stored_set in visible_sets:
+        if stored_set.visibility == "curated":
+            curated_entries.append(
+                _overview_card_from_curated_set(
                     stored_set=stored_set,
+                    own_copy_set=private_copy_targets.get(stored_set.set_id),
+                    is_admin=_is_admin(),
                     ui_lang=ui_lang,
                     language_slug=language_slug,
                     catalogs_by_task=catalogs_by_task,
                 )
-                for stored_set in list_selectable_owned_sets(
-                    owner_user_id=_current_owner_user_id() or "",
-                    corpus_language=language_slug,
-                )
-            ]
-        except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
-            custom_entries = []
+            )
+            continue
+        custom_entries.append(
+            _overview_card_from_set(
+                stored_set=stored_set,
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                catalogs_by_task=catalogs_by_task,
+            )
+        )
 
     page = _base_page(get_research_page_label("phenomena", ui_lang), ui_lang=ui_lang, language_slug=language_slug)
     page.update(
@@ -274,6 +322,7 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
                 "isAuthenticated": _is_authenticated(),
                 "entries": curated_entries + custom_entries,
                 "createSetUrl": url_for("research_api.create_set"),
+                "privateCopySetUrlTemplate": url_for("research_api.private_copy_set", set_id="__SET_ID__"),
                 "patchSetUrlTemplate": url_for("research_api.patch_set", set_id="__SET_ID__"),
                 "deleteSetUrlTemplate": url_for("research_api.delete_set", set_id="__SET_ID__"),
                 "setEditorHrefTemplate": url_for(
@@ -296,7 +345,8 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
                             "deleteCancel": "common.actions.cancel",
                             "view": "common.actions.view",
                             "edit": "common.actions.edit",
-                            "modify": "common.actions.modify",
+                            "editCurated": "common.actions.edit_curated",
+                            "editAsOwnSet": "common.actions.edit_as_own_set",
                             "rename": "common.actions.rename",
                             "delete": "common.actions.delete",
                             "createError": "research.phenomena.overview.create_error",
@@ -321,37 +371,17 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
 
 def _editor_record_from_preset(language_slug: str, preset_id: str) -> dict[str, Any] | None:
     try:
-        preset = load_phenomena_preset_map(language_slug)[preset_id]
-    except (KeyError, ResearchConfigError):
+        stored_set = get_visible_set(
+            owner_user_id=_current_owner_user_id(),
+            set_id=preset_id,
+            include_archived_curated=_is_admin(),
+            touch_access=False,
+        )
+    except (ResearchSetNotFoundError, ResearchSetValidationError, ResearchSetStorageUnavailableError, RuntimeError):
         return None
-
-    return {
-        "set_id": None,
-        "corpus_language": language_slug,
-        "label": preset.label,
-        "note": None,
-        "state": "curated",
-        "source_preset_id": preset.preset_id,
-        "created_at": None,
-        "updated_at": None,
-        "last_accessed_at": None,
-        "expires_at": None,
-        "items": [
-            {
-                "task": reference.task,
-                "item_id": reference.item_id,
-                "sort_order": index,
-                "segment_id": reference.segment_id,
-                "note": reference.note,
-            }
-            for index, reference in enumerate(preset.items, start=1)
-        ],
-        "workbench_state": {
-            "preferred_task": None,
-            "comparison_view_task": "all",
-            "sessions": [],
-        },
-    }
+    if stored_set.corpus_language != language_slug or stored_set.visibility != "curated":
+        return None
+    return stored_set.to_dict()
 
 
 def _editor_state(
@@ -367,11 +397,15 @@ def _editor_state(
         "languageSlug": language_slug,
         "editorMode": editor_mode,
         "isAuthenticated": _is_authenticated(),
+        "isAdmin": _is_admin(),
         "initialRecord": record,
         "catalogsByTask": catalogs_by_task,
         "taskLabels": task_labels,
         "statusLabels": _editor_status_labels(ui_lang),
         "createSetUrl": url_for("research_api.create_set"),
+        "adminUpdateCuratedSetUrlTemplate": url_for("research_api.update_admin_curated_set", set_id="__SET_ID__"),
+        "adminArchiveCuratedSetUrlTemplate": url_for("research_api.archive_admin_curated_set", set_id="__SET_ID__"),
+        "adminReactivateCuratedSetUrlTemplate": url_for("research_api.reactivate_admin_curated_set", set_id="__SET_ID__"),
         "patchSetUrlTemplate": url_for("research_api.patch_set", set_id="__SET_ID__"),
         "putItemsUrlTemplate": url_for("research_api.put_set_items", set_id="__SET_ID__"),
         "deleteSetUrlTemplate": url_for("research_api.delete_set", set_id="__SET_ID__"),
@@ -405,8 +439,21 @@ def _editor_state(
                     "remove": "common.actions.remove",
                     "dragHandle": "research.phenomena.editor.drag_handle",
                     "curatedHint": "research.phenomena.editor.curated_hint",
+                    "curatedAdminHint": "research.phenomena.editor.curated_admin_hint",
                     "saveSuccess": "research.phenomena.editor.save_success",
                     "saveError": "research.phenomena.editor.save_error",
+                    "updateCurated": "research.phenomena.editor.update_curated",
+                    "updateCuratedTitle": "research.phenomena.editor.update_curated_title",
+                    "updateCuratedMessage": "research.phenomena.editor.update_curated_message",
+                    "archiveCurated": "research.phenomena.editor.archive_curated",
+                    "reactivateCurated": "research.phenomena.editor.reactivate_curated",
+                    "archiveCuratedTitle": "research.phenomena.editor.archive_curated_title",
+                    "archiveCuratedMessage": "research.phenomena.editor.archive_curated_message",
+                    "reactivateCuratedTitle": "research.phenomena.editor.reactivate_curated_title",
+                    "reactivateCuratedMessage": "research.phenomena.editor.reactivate_curated_message",
+                    "archiveSuccess": "research.phenomena.editor.archive_success",
+                    "reactivateSuccess": "research.phenomena.editor.reactivate_success",
+                    "archivedStateText": "research.phenomena.editor.archived_state_text",
                     "requestFailed": "common.errors.request_failed",
                     "deleteTitle": "research.phenomena.editor.delete_title",
                     "discardTitle": "research.phenomena.editor.discard_title",
@@ -460,7 +507,12 @@ def build_phenomena_set_editor_page(ui_lang: str, language_slug: str, set_id: st
         return None
 
     try:
-        stored_set = load_owned_set(owner_user_id=owner_user_id, set_id=set_id, touch_access=True)
+        stored_set = get_visible_set(
+            owner_user_id=owner_user_id,
+            set_id=set_id,
+            include_archived_curated=_is_admin(),
+            touch_access=True,
+        )
     except (ResearchSetNotFoundError, ResearchSetValidationError, ResearchSetStorageUnavailableError, RuntimeError):
         return None
 
@@ -469,8 +521,16 @@ def build_phenomena_set_editor_page(ui_lang: str, language_slug: str, set_id: st
     page.update(
         {
             "template": "pages/research_phenomena_editor.html",
-            "editor_hint": _t(ui_lang, "research.phenomena.editor.hint_custom"),
-            "client_state": _editor_state(ui_lang=ui_lang, language_slug=language_slug, record=record, editor_mode="set"),
+            "editor_hint": _t(
+                ui_lang,
+                "research.phenomena.editor.hint_curated" if stored_set.visibility == "curated" else "research.phenomena.editor.hint_custom",
+            ),
+            "client_state": _editor_state(
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                record=record,
+                editor_mode="preset" if stored_set.visibility == "curated" else "set",
+            ),
         }
     )
     return page

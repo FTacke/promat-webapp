@@ -24,7 +24,7 @@ from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, init_engine, get_session
 from app.research_presets import clear_research_preset_caches
 from app.research_sessions import load_language_sessions, load_person_records
-from app.research_sets import create_draft_set, replace_set_sessions, update_set_metadata
+from app.research_sets import create_curated_set, create_draft_set, replace_set_sessions, update_set_metadata
 from app.research_views import build_comparison_page, _is_playable_audio_artifact
 from app.routes.public import blueprint as public_blueprint
 
@@ -249,7 +249,7 @@ def _write_minimal_research_runtime(runtime_root: Path) -> None:
     )
 
 
-def _insert_user(user_id: str, username: str) -> None:
+def _insert_user(user_id: str, username: str, *, role: str = "user") -> None:
     now = datetime.now(timezone.utc)
     with get_session() as session:
         session.add(
@@ -258,7 +258,7 @@ def _insert_user(user_id: str, username: str) -> None:
                 username=username,
                 email=f"{username}@example.org",
                 password_hash="not-used-in-tests",
-                role="user",
+                role=role,
                 is_active=True,
                 must_reset_password=False,
                 created_at=now,
@@ -304,6 +304,19 @@ def comparison_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
     with app.app_context():
         Base.metadata.create_all(bind=get_engine())
         _insert_user("user-1", "alice")
+        _insert_user("admin-1", "admin", role="admin")
+        curated_set = create_curated_set(
+            admin_user_id="admin-1",
+            corpus_language="spanish",
+            label="Starter",
+            note="Minimal DB-curated set for comparison tests.",
+            items=[
+                {"task": "wordlist", "item_id": "wl_001"},
+                {"task": "text", "item_id": "d_01"},
+            ],
+            comparison_view_task="wordlist",
+        )
+        app.config["TEST_CURATED_SET_ID"] = curated_set.set_id
 
     @app.before_request
     def _set_test_auth_context() -> None:
@@ -340,7 +353,7 @@ def test_build_comparison_page_exposes_session_catalog_and_filter_state(comparis
     assert page["client_state"]["labels"]["fullListLabel"] == "Alle Items"
     assert page["client_state"]["labels"]["fullTextLabel"] == "Ganzer Text"
     assert page["client_state"]["labels"]["downloadClip"] == "MP3 laden"
-    assert page["client_state"]["materialPresets"][0]["presetId"] == "starter_preset"
+    assert page["client_state"]["materialPresets"][0]["presetId"] == comparison_app.config["TEST_CURATED_SET_ID"]
     assert page["client_state"]["materialPresets"][0]["items"] == [
         {"task": "wordlist", "item_id": "wl_001"},
         {"task": "text", "item_id": "d_01"},
@@ -358,7 +371,11 @@ def test_build_comparison_page_exposes_session_catalog_and_filter_state(comparis
 
 def test_build_comparison_page_marks_requested_set_for_client_loading(comparison_app: Flask) -> None:
     with comparison_app.app_context():
-        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        draft = create_draft_set(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            source_curated_set_id=comparison_app.config["TEST_CURATED_SET_ID"],
+        )
         draft = replace_set_sessions(
             owner_user_id="user-1",
             set_id=draft.set_id,
@@ -395,7 +412,11 @@ def test_build_comparison_page_exposes_english_labels_for_migrated_workspace(com
 
 def test_build_comparison_page_includes_saved_custom_sets_in_material_options(comparison_app: Flask) -> None:
     with comparison_app.app_context():
-        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        draft = create_draft_set(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            source_curated_set_id=comparison_app.config["TEST_CURATED_SET_ID"],
+        )
         update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Fokusset", state="saved")
         hidden_draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
         update_set_metadata(owner_user_id="user-1", set_id=hidden_draft.set_id, label="Nur Draft")
@@ -462,7 +483,11 @@ def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Fla
 
 def test_comparison_topbar_language_switch_preserves_requested_set_and_task_query(comparison_app: Flask) -> None:
     with comparison_app.app_context():
-        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", source_preset_id="starter_preset")
+        draft = create_draft_set(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            source_curated_set_id=comparison_app.config["TEST_CURATED_SET_ID"],
+        )
 
     comparison_app.config["TEST_AUTH_USER"] = "alice"
     comparison_app.config["TEST_AUTH_USER_ID"] = "user-1"
@@ -471,7 +496,9 @@ def test_comparison_topbar_language_switch_preserves_requested_set_and_task_quer
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert f'href="/en/research/spanish/comparison?set_id={draft.set_id}&amp;task=text"' in html
+    assert 'data-ui-lang-link="en"' in html
+    assert f'"requestedSetId": "{draft.set_id}"' in html
+    assert '"defaultViewTask": "text"' in html
     assert "data-comparison-rate-value" in html
     assert "data-comparison-status-actions" not in html
     assert "data-comparison-launcher" not in html

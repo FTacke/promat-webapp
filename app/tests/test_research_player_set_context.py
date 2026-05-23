@@ -25,7 +25,14 @@ from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
 from app.research_player_runtime import resolve_player_runtime_state
 from app.research_presets import clear_research_preset_caches
 from app.research_sessions import get_session as get_research_session, load_language_sessions, load_person_records
-from app.research_sets import ResearchSetStorageUnavailableError, create_draft_set, replace_set_items, update_set_metadata
+from app.research_sets import (
+    RESEARCH_CURATED_TEST_SET_ID,
+    ResearchSetStorageUnavailableError,
+    create_draft_set,
+    ensure_curated_test_set,
+    replace_set_items,
+    update_set_metadata,
+)
 from app.research_views import build_player_page, _is_playable_audio_artifact
 from app.routes.public import blueprint as public_blueprint
 
@@ -293,7 +300,7 @@ def _write_connected_text_catalog(runtime_root: Path) -> None:
     )
 
 
-def _insert_user(user_id: str, username: str) -> None:
+def _insert_user(user_id: str, username: str, *, role: str = "user") -> None:
     now = datetime.now(timezone.utc)
     with get_session() as session:
         session.add(
@@ -302,7 +309,7 @@ def _insert_user(user_id: str, username: str) -> None:
                 username=username,
                 email=f"{username}@example.org",
                 password_hash="not-used-in-tests",
-                role="user",
+                role=role,
                 is_active=True,
                 must_reset_password=False,
                 created_at=now,
@@ -348,6 +355,8 @@ def player_set_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         Base.metadata.create_all(bind=get_engine())
         _insert_user("user-1", "alice")
         _insert_user("user-2", "bob")
+        _insert_user("admin-1", "admin", role="admin")
+        ensure_curated_test_set(admin_user_id="admin-1")
 
     @app.before_request
     def _set_test_auth_context() -> None:
@@ -529,12 +538,12 @@ def test_player_set_select_uses_saved_workbench_list_and_only_keeps_current_draf
         )
 
     assert base_page is not None
-    assert [option["label"] for option in base_page["player"]["set_select"]["options"]] == ["Alle Items", "Starter", "Gespeichertes Set"]
+    assert [option["label"] for option in base_page["player"]["set_select"]["options"]] == ["Alle Items", "PROMAT Testset", "Gespeichertes Set"]
 
     assert current_draft_page is not None
     assert [option["label"] for option in current_draft_page["player"]["set_select"]["options"]] == [
         "Alle Items",
-        "Starter",
+        "PROMAT Testset",
         "Aktiver Draft",
         "Gespeichertes Set",
     ]
@@ -552,13 +561,13 @@ def test_player_set_select_marks_curated_preset_as_active_context(player_set_app
             "ES-L-0001-2026-S01",
             "wordlist",
             "phenomena",
-            preset_id="starter_preset",
+            preset_id=RESEARCH_CURATED_TEST_SET_ID,
         )
 
     assert page is not None
-    assert [option["label"] for option in page["player"]["set_select"]["options"][:2]] == ["Alle Items", "Starter"]
+    assert [option["label"] for option in page["player"]["set_select"]["options"][:2]] == ["Alle Items", "PROMAT Testset"]
     assert page["player"]["set_select"]["options"][1]["current"] is True
-    assert [item["item_id"] for item in page["player"]["items"]] == ["wl_001"]
+    assert [item["item_id"] for item in page["player"]["items"]] == ["wl_001", "wl_002"]
 
 
 def test_player_task_switches_keep_set_and_focus_context(player_set_app: Flask) -> None:
@@ -576,7 +585,7 @@ def test_player_task_switches_keep_set_and_focus_context(player_set_app: Flask) 
             "wordlist",
             "phenomena",
             set_id=set_id,
-            preset_id="starter_preset",
+            preset_id=RESEARCH_CURATED_TEST_SET_ID,
             focus_item="wl_001",
         )
 
@@ -584,7 +593,7 @@ def test_player_task_switches_keep_set_and_focus_context(player_set_app: Flask) 
     text_panel = next(panel for panel in page["task_panels"] if panel["key"] == "text")
     assert text_panel["href"] is not None
     assert text_panel["href"].endswith(
-        f"/de/research/spanish/player/ES-L-0001-2026-S01/text?source=phenomena&set_id={set_id}&preset_id=starter_preset&focus_item=wl_001"
+        f"/de/research/spanish/player/ES-L-0001-2026-S01/text?source=phenomena&set_id={set_id}&preset_id={RESEARCH_CURATED_TEST_SET_ID}&focus_item=wl_001"
     )
     assert page["player"]["client_state"]["singleViewHref"].endswith(
         f"/de/research/spanish/player/ES-L-0001-2026-S01/wordlist?source=phenomena&set_id={set_id}&focus_item=wl_001"

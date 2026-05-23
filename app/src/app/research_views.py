@@ -37,12 +37,13 @@ from .research_player_runtime import (
     resolve_player_runtime_state,
     resolve_player_set_context,
 )
-from .research_presets import load_phenomena_presets, load_task_catalogs
+from .research_presets import load_task_catalogs
 from .research_sets import (
-    list_selectable_owned_sets,
-    load_owned_set,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
+    list_selectable_owned_sets,
+    list_visible_sets_for_user,
+    load_owned_set,
 )
 from .research_sessions import (
     LEVEL_ORDER,
@@ -1208,10 +1209,19 @@ def _phenomena_preset_cards(language_slug: str, ui_lang: str) -> list[dict[str, 
     }
     task_labels = _phenomena_task_labels(language_slug, ui_lang)
     cards: list[dict[str, Any]] = []
-    for preset in load_phenomena_presets(language_slug):
+    try:
+        curated_sets = [
+            stored_set
+            for stored_set in list_visible_sets_for_user(owner_user_id=None, corpus_language=language_slug)
+            if stored_set.visibility == "curated"
+        ]
+    except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
+        curated_sets = []
+
+    for stored_set in curated_sets:
         task_counts = {task_key: 0 for task_key in PHENOMENA_ITEM_TASKS}
         preview_labels: list[str] = []
-        for reference in preset.items:
+        for reference in stored_set.items:
             if reference.task not in task_counts:
                 continue
             task_counts[reference.task] += 1
@@ -1221,15 +1231,16 @@ def _phenomena_preset_cards(language_slug: str, ui_lang: str) -> list[dict[str, 
         preferred_task = _phenomena_preferred_task(task_counts)
         cards.append(
             {
-                "preset_id": preset.preset_id,
-                "label": preset.label,
-                "description": preset.description,
-                "item_count": len(preset.items),
+                "preset_id": stored_set.set_id,
+                "set_id": stored_set.set_id,
+                "label": stored_set.label or _t(ui_lang, "common.untitled"),
+                "description": stored_set.note,
+                "item_count": len(stored_set.items),
                 "task_counts": task_counts,
                 "task_summary": _phenomena_task_summary(task_counts, task_labels),
                 "preview_labels": preview_labels,
                 "preferred_task": preferred_task,
-                "login_href": _phenomena_login_href(ui_lang, language_slug, preset_id=preset.preset_id, task=preferred_task),
+                "login_href": _phenomena_login_href(ui_lang, language_slug, preset_id=stored_set.set_id, task=preferred_task),
             }
         )
     return cards
@@ -1238,49 +1249,30 @@ def _phenomena_preset_cards(language_slug: str, ui_lang: str) -> list[dict[str, 
 def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[str, object]]:
     task_labels = _phenomena_task_labels(language_slug, ui_lang)
     presets: list[dict[str, object]] = []
-    for preset in load_phenomena_presets(language_slug):
-        task_counts = {task_key: 0 for task_key in PHENOMENA_ITEM_TASKS}
-        for reference in preset.items:
-            if reference.task in task_counts:
-                task_counts[reference.task] += 1
-        presets.append(
-            {
-                "presetId": preset.preset_id,
-                "kind": "curated",
-                "optionLabel": f"{preset.label} · curated",
-                "label": preset.label,
-                "preferredTask": _phenomena_preferred_task(task_counts),
-                "taskSummary": _phenomena_task_summary(task_counts, task_labels),
-                "items": [
-                    {
-                        "task": reference.task,
-                        "item_id": reference.item_id,
-                    }
-                    for reference in preset.items
-                ],
-            }
-        )
-
-    owner_user_id = _current_owner_user_id()
-    if owner_user_id is None:
-        return presets
-
     try:
-        saved_sets = list_selectable_owned_sets(owner_user_id=owner_user_id, corpus_language=language_slug)
+        visible_sets = list_visible_sets_for_user(
+            owner_user_id=_current_owner_user_id(),
+            corpus_language=language_slug,
+            include_drafts=False,
+        )
     except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
         return presets
 
-    for stored_set in saved_sets:
+    for stored_set in visible_sets:
         task_counts = {task_key: 0 for task_key in PHENOMENA_ITEM_TASKS}
         for reference in stored_set.items:
             if reference.task in task_counts:
                 task_counts[reference.task] += 1
         presets.append(
             {
-                "presetId": f"saved:{stored_set.set_id}",
-                "kind": "custom",
+                "presetId": stored_set.set_id if stored_set.visibility == "curated" else f"saved:{stored_set.set_id}",
+                "kind": stored_set.visibility,
                 "setId": stored_set.set_id,
-                "optionLabel": f"{stored_set.label or _t(ui_lang, 'common.untitled')} · {_t(ui_lang, 'common.status.custom')}",
+                "optionLabel": (
+                    f"{stored_set.label or _t(ui_lang, 'common.untitled')} · {_t(ui_lang, 'common.status.curated')}"
+                    if stored_set.visibility == "curated"
+                    else f"{stored_set.label or _t(ui_lang, 'common.untitled')} · {_t(ui_lang, 'common.status.custom')}"
+                ),
                 "label": stored_set.label or _t(ui_lang, "common.untitled"),
                 "preferredTask": stored_set.workbench_state.comparison_view_task or _phenomena_preferred_task(task_counts),
                 "taskSummary": _phenomena_task_summary(task_counts, task_labels),
@@ -2559,10 +2551,19 @@ def _build_player_set_select(
         }
     ]
 
-    for preset in load_phenomena_presets(language_slug):
+    try:
+        curated_sets = [
+            stored_set
+            for stored_set in list_visible_sets_for_user(owner_user_id=None, corpus_language=language_slug)
+            if stored_set.visibility == "curated"
+        ]
+    except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
+        curated_sets = []
+
+    for stored_set in curated_sets:
         options.append(
             {
-                "label": preset.label,
+                "label": stored_set.label or _t(ui_lang, "common.untitled"),
                 "href": _player_page_href(
                     ui_lang,
                     language_slug,
@@ -2571,10 +2572,10 @@ def _build_player_set_select(
                     source,
                     compare_session_id=compare_session_id,
                     compare_mode=compare_mode,
-                    preset_id=preset.preset_id,
+                    preset_id=stored_set.set_id,
                     render_mode=render_mode if task_key == "text" else None,
                 ),
-                "current": active_set_id is None and preset.preset_id == active_preset_id,
+                "current": stored_set.set_id == active_set_id or (active_set_id is None and stored_set.set_id == active_preset_id),
             }
         )
 
@@ -2590,6 +2591,8 @@ def _build_player_set_select(
             stored_sets = []
 
         for stored_set in stored_sets:
+            if stored_set.visibility != "private":
+                continue
             options.append(
                 {
                     "label": stored_set.label or _t(ui_lang, "common.untitled"),

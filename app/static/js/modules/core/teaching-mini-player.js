@@ -197,10 +197,6 @@ export function initTeachingMiniPlayers() {
       feedbackFrameId = requestAnimationFrame(tick);
     };
 
-    if (audio.preload !== 'metadata') {
-      audio.preload = 'metadata';
-    }
-
     toggle.addEventListener('click', async () => {
       if (!audio.paused) {
         audio.pause();
@@ -250,10 +246,6 @@ export function initTeachingMiniPlayers() {
 
     player.dataset.teachingMiniPlayerReady = 'true';
     player.classList.add('is-ready');
-
-    if (audio.readyState < 1) {
-      audio.load();
-    }
 
     sync();
 

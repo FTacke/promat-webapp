@@ -315,11 +315,12 @@ function init() {
         item_id: item.item_id,
       }))
       : [];
+    const isCurated = storedSet && storedSet.visibility === "curated";
     return {
-      presetId: `saved:${storedSet.set_id}`,
-      kind: "custom",
+      presetId: isCurated ? storedSet.set_id : `saved:${storedSet.set_id}`,
+      kind: isCurated ? "curated" : "custom",
       setId: storedSet.set_id,
-      optionLabel: `${label} · ${labels.stateCustom || ""}`,
+      optionLabel: `${label} · ${isCurated ? (labels.stateCurated || "") : (labels.stateCustom || "")}`,
       label,
       preferredTask: workbenchState.comparison_view_task || workbenchState.preferred_task || resolveViewTaskForItems(items, null),
       taskSummary: "",
@@ -338,9 +339,7 @@ function init() {
       if (!payload || !Array.isArray(payload.sets)) {
         return;
       }
-      const curatedPresets = materialPresets.filter((preset) => preset.kind !== "custom");
-      const savedPresets = payload.sets.map(normalizeSavedSetPreset);
-      setMaterialPresets([...curatedPresets, ...savedPresets]);
+      setMaterialPresets(payload.sets.map(normalizeSavedSetPreset));
       render();
     } catch (error) {
       if (error.status !== 401 && error.status !== 404) {
@@ -645,13 +644,28 @@ function init() {
     return activeSet ? (activeSet.workbench_state.sessions || []).map((entry) => entry.session_id) : [];
   }
 
+  function isDraftRecord(record) {
+    return Boolean(record && record.visibility === "private" && record.state === "draft");
+  }
+
   async function ensureDraft() {
-    if (activeSet) {
+    if (isDraftRecord(activeSet)) {
       return activeSet;
     }
     if (!state.isAuthenticated) {
       redirectToLogin();
       throw new Error(labels.loginText || requestFailedLabel);
+    }
+
+    if (activeSet && activeSet.set_id) {
+      const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(activeSet.set_id)}/private-copy`, {
+        method: "POST",
+        body: {
+          lifecycle: "draft",
+        },
+      });
+      applySet(payload.set, { implicit: false });
+      return activeSet;
     }
 
     const payload = await requestJson(state.createSetHref, {
@@ -1400,11 +1414,13 @@ function init() {
     visibleViewTask = nextViewTask;
     syncUrl();
     render();
-    if (!activeSet) {
+    if (!activeSet && !state.isAuthenticated) {
       return;
     }
 
-    const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(activeSet.set_id)}`, {
+    const ensuredSet = await ensureDraft();
+
+    const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(ensuredSet.set_id)}`, {
       method: "PATCH",
       body: {
         workbench_state: {

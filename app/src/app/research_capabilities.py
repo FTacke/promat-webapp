@@ -180,17 +180,16 @@ def _corpus_has_compare_runtime(language_slug: str) -> bool:
 
 
 def _corpus_has_phenomena_runtime(language_slug: str) -> bool:
-    from .research_presets import ResearchConfigError, load_phenomena_presets, load_task_catalogs
+    from .research_presets import ResearchConfigError, load_task_catalogs
 
     try:
         catalogs = load_task_catalogs(language_slug)
-        presets = load_phenomena_presets(language_slug)
     except ResearchConfigError:
         return False
 
     if any(task_key not in catalogs for task_key in phenomena_task_keys()):
         return False
-    return isinstance(presets, tuple)
+    return True
 
 
 def _render_mode_to_view(render_mode: str) -> str:
