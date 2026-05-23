@@ -11,12 +11,39 @@ import { initConfig } from "./config.js";
 import { initFlashSnackbar } from "./snackbar.js";
 import { initExternalHttpLinks } from "./external-links.js";
 import { initAdmonitions } from "./admonitions.js";
-import { initDatawrapperEmbeds } from "./datawrapper.js";
-import { initTeachingCitationCopy } from "./teaching-citation-copy.js";
-import { initTeachingMiniPlayers } from "./teaching-mini-player.js";
 
 // Import legacy main.js to preserve existing functionality (Navigation, Token Refresh, etc.)
 import "../../main.js";
+
+function initDatawrapperEmbedsWhenPresent() {
+    if (!document.querySelector('iframe[data-provider="datawrapper"]')) {
+        return;
+    }
+
+    void import("./datawrapper.js").then(({ initDatawrapperEmbeds }) => {
+        initDatawrapperEmbeds();
+    });
+}
+
+function initTeachingCitationCopyWhenPresent() {
+    if (!document.querySelector("[data-copy-text]")) {
+        return;
+    }
+
+    void import("./teaching-citation-copy.js").then(({ initTeachingCitationCopy }) => {
+        initTeachingCitationCopy();
+    });
+}
+
+function initTeachingMiniPlayersWhenPresent() {
+    if (!document.querySelector("[data-teaching-mini-player]")) {
+        return;
+    }
+
+    void import("./teaching-mini-player.js").then(({ initTeachingMiniPlayers }) => {
+        initTeachingMiniPlayers();
+    });
+}
 
 // Initialize Config
 initConfig();
@@ -40,11 +67,11 @@ initFlashSnackbar();
 initExternalHttpLinks();
 
 // Register one shared listener for responsive Datawrapper embeds.
-initDatawrapperEmbeds();
+initDatawrapperEmbedsWhenPresent();
 
 // Enable compact public mini-players on Teaching pages when present.
-initTeachingMiniPlayers();
-initTeachingCitationCopy();
+initTeachingMiniPlayersWhenPresent();
+initTeachingCitationCopyWhenPresent();
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Auth Handler (401 listener and param check)
@@ -59,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener("turbo:load", () => {
     initAdmonitions();
-    initTeachingCitationCopy();
-    initTeachingMiniPlayers();
+    initDatawrapperEmbedsWhenPresent();
+    initTeachingCitationCopyWhenPresent();
+    initTeachingMiniPlayersWhenPresent();
 });

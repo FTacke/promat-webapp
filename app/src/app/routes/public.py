@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 import re
+import time
 from urllib.parse import unquote, urlparse
 
 from flask import Blueprint, abort, flash, g, jsonify, make_response, redirect, render_template, request, send_file, url_for
-from sqlalchemy import text
+from sqlalchemy import event, text
 
 from ..auth import Role
 from ..auth import services as auth_services
@@ -32,6 +34,7 @@ from ..research_views import (
 )
 from ..runtime_paths import get_public_root
 from ..teaching_content import resolve_teaching_switch_path, resolve_topic_route_target
+from ..extensions.sqlalchemy_ext import get_engine
 from .public_content import (
     DEFAULT_UI_LANGUAGE,
     LEGAL_PAGES,
@@ -232,6 +235,14 @@ def _require_ui_lang(ui_lang: str) -> str:
     if resolved is None:
         abort(404)
     return resolved
+
+
+def _player_profile_requested() -> bool:
+    return request.args.get("_profile") == "1" or request.headers.get("X-Promat-Profile") == "1"
+
+
+def _player_prewarm_requested() -> bool:
+    return request.headers.get("X-Promat-Player-Prewarm") == "1"
 
 
 def _section_home_href(section_key: str, ui_lang: str) -> str | None:
@@ -1438,13 +1449,48 @@ def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>")
 def research_player(ui_lang: str, language_slug: str, session_id: str, task: str):
+    profile_requested = _player_profile_requested()
+    prewarm_requested = _player_prewarm_requested()
+    route_started_at = time.perf_counter()
+    access_started_at = time.perf_counter()
+    db_metrics = {"count": 0, "duration_ms": 0.0}
+    player_profile: dict[str, float] = {}
+    engine = None
+    before_cursor_execute = None
+    after_cursor_execute = None
+
+    if profile_requested:
+        engine = get_engine()
+
+        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            del cursor, statement, parameters, executemany
+            context._promat_started_at = time.perf_counter()
+
+        def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            del conn, cursor, statement, parameters, executemany
+            started_at = getattr(context, "_promat_started_at", None)
+            if started_at is None:
+                return
+            db_metrics["count"] += 1
+            db_metrics["duration_ms"] += (time.perf_counter() - started_at) * 1000.0
+
+        event.listen(engine, "before_cursor_execute", before_cursor_execute)
+        event.listen(engine, "after_cursor_execute", after_cursor_execute)
+
     ui_lang = _require_ui_lang(ui_lang)
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
+        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
+            event.remove(engine, "before_cursor_execute", before_cursor_execute)
+            event.remove(engine, "after_cursor_execute", after_cursor_execute)
         abort(404)
 
     access_response = _require_research_route_access(detail_route="player")
+    access_ms = (time.perf_counter() - access_started_at) * 1000.0
     if access_response is not None:
+        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
+            event.remove(engine, "before_cursor_execute", before_cursor_execute)
+            event.remove(engine, "after_cursor_execute", after_cursor_execute)
         return access_response
 
     language = get_language(canonical_language_slug)
@@ -1456,6 +1502,7 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
     focus_item = request.args.get("focus_item")
     focus_segment = request.args.get("focus_segment")
     render_mode = request.args.get("render_mode")
+    build_started_at = time.perf_counter()
     page = build_player_page(
         ui_lang,
         canonical_language_slug,
@@ -1469,9 +1516,47 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
         focus_item,
         focus_segment,
         render_mode,
+        profile=player_profile if profile_requested else None,
     )
+    build_ms = (time.perf_counter() - build_started_at) * 1000.0
     if page is None or language is None:
+        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
+            event.remove(engine, "before_cursor_execute", before_cursor_execute)
+            event.remove(engine, "after_cursor_execute", after_cursor_execute)
         abort(404)
+
+    if prewarm_requested:
+        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
+            event.remove(engine, "before_cursor_execute", before_cursor_execute)
+            event.remove(engine, "after_cursor_execute", after_cursor_execute)
+        route_ms = (time.perf_counter() - route_started_at) * 1000.0
+        response = make_response("", 204)
+        response.headers["X-Promat-Player-Prewarm"] = "1"
+        if profile_requested:
+            response.headers["X-Promat-Player-Profile"] = json.dumps(
+                {
+                    "access_ms": round(access_ms, 3),
+                    "build_ms": round(build_ms, 3),
+                    "render_ms": 0.0,
+                    "route_ms": round(route_ms, 3),
+                    "db_query_count": db_metrics["count"],
+                    "db_duration_ms": round(db_metrics["duration_ms"], 3),
+                    **{key: round(value, 3) for key, value in player_profile.items()},
+                },
+                ensure_ascii=True,
+                separators=(",", ":"),
+            )
+            response.headers["Server-Timing"] = ", ".join(
+                [
+                    f"access;dur={access_ms:.3f}",
+                    f"build;dur={build_ms:.3f}",
+                    f"render;dur=0.000",
+                    f"route;dur={route_ms:.3f}",
+                    f"db;dur={db_metrics['duration_ms']:.3f};desc=queries:{db_metrics['count']}",
+                    *(f"runtime-{key.removesuffix('_ms')};dur={value:.3f}" for key, value in player_profile.items()),
+                ]
+            )
+        return response
 
     language_label = get_language_label(language, ui_lang)
     corpus_title = get_research_corpus_title(language, ui_lang)
@@ -1500,7 +1585,43 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
         context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
-    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+    render_started_at = time.perf_counter()
+    html = _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+    render_ms = (time.perf_counter() - render_started_at) * 1000.0
+
+    if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
+        event.remove(engine, "before_cursor_execute", before_cursor_execute)
+        event.remove(engine, "after_cursor_execute", after_cursor_execute)
+
+    if not profile_requested:
+        return html
+
+    route_ms = (time.perf_counter() - route_started_at) * 1000.0
+    response = make_response(html)
+    response.headers["X-Promat-Player-Profile"] = json.dumps(
+        {
+            "access_ms": round(access_ms, 3),
+            "build_ms": round(build_ms, 3),
+            "render_ms": round(render_ms, 3),
+            "route_ms": round(route_ms, 3),
+            "db_query_count": db_metrics["count"],
+            "db_duration_ms": round(db_metrics["duration_ms"], 3),
+            **{key: round(value, 3) for key, value in player_profile.items()},
+        },
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+    response.headers["Server-Timing"] = ", ".join(
+        [
+            f"access;dur={access_ms:.3f}",
+            f"build;dur={build_ms:.3f}",
+            f"render;dur={render_ms:.3f}",
+            f"route;dur={route_ms:.3f}",
+            f"db;dur={db_metrics['duration_ms']:.3f};desc=queries:{db_metrics['count']}",
+            *(f"runtime-{key.removesuffix('_ms')};dur={value:.3f}" for key, value in player_profile.items()),
+        ]
+    )
+    return response
 
 
 def _player_download_filename(person_id: str, task_key: str, item_id: str, download_label: str) -> str:

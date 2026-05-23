@@ -14,11 +14,21 @@ Wenn dieser Default-Port auf dem lokalen Host nicht veroeffentlicht werden kann,
 ## Standardstart
 
 1. Im Workspace-Root `./scripts/dev-start.ps1` ausfuehren.
-2. Das Script startet bei der kanonischen lokalen `AUTH_DATABASE_URL` automatisch `promat_auth_db`, wartet auf Readiness und fuehrt die idempotente Auth-/Research-Set-Migrationskette aus.
-3. Wenn `127.0.0.1:54321` lokal nicht bindbar ist, waehlt das Script einen freien Fallback-Port, setzt `PROMAT_DEV_DB_PORT` und richtet `AUTH_DATABASE_URL` fuer diesen Start darauf aus.
-4. Im selben lokalen Dev-Fall setzt das Script den Standard-Admin `admin_dev` idempotent zurueck und setzt dessen Passwort auf `Admin0000!`.
-5. Vor dem Webstart beendet das Script alle noch laufenden PROMAT-Dev-Prozesse aus demselben Workspace, damit auf Port `8000` kein stale Listener altes HTML weiter ausliefert.
-6. Danach startet die Flask-App ueber `python -m src.app.main` in Development-Reload-Modus auf `127.0.0.1:8000`, sodass Python-, Template- und sonstige Flask-Dev-Aenderungen im Browser ohne manuelle Prozesssuche sichtbar werden.
+2. Das Root-Script ist der kanonische Einstieg und delegiert an `./app/scripts/dev-start.ps1`; die interne Variante ist die Implementierung, nicht der bevorzugte manuelle Startpfad.
+3. Das Script startet bei der kanonischen lokalen `AUTH_DATABASE_URL` automatisch `promat_auth_db`, wartet auf Readiness und fuehrt die idempotente Auth-/Research-Set-Migrationskette aus.
+4. Diese lokale Migrationskette wird auf bestehendem Dev-Postgres erneut ausgefuehrt. Darum muessen die SQL-Migrationen rerun-idempotent bleiben.
+5. Wenn spaetere Schemaaenderungen Legacy-Spalten, Legacy-Indizes oder Legacy-Constraints ablösen, muessen aeltere Migrationen gegen fehlende Legacy-Objekte abgesichert werden, statt bei einem erneuten Dev-Start zu scheitern.
+6. Bei Migrationsfehlern gibt `scripts/apply_auth_migration.py` die Engine und die betroffene SQL-Datei aus; `app/scripts/dev-start.ps1` bricht danach bewusst mit einem Verweis auf diese Fehlermeldung ab.
+7. Wenn `127.0.0.1:54321` lokal nicht bindbar ist, waehlt das Script einen freien Fallback-Port, setzt `PROMAT_DEV_DB_PORT` und richtet `AUTH_DATABASE_URL` fuer diesen Start darauf aus.
+8. Im selben lokalen Dev-Fall setzt das Script den Standard-Admin `admin_dev` idempotent zurueck und setzt dessen Passwort auf `Admin0000!`.
+9. Vor dem Webstart beendet das Script alle noch laufenden PROMAT-Dev-Prozesse aus demselben Workspace, damit auf Port `8000` kein stale Listener altes HTML weiter ausliefert.
+10. Danach startet die Flask-App ueber `python -m src.app.main` in Development-Reload-Modus auf `127.0.0.1:8000`, sodass Python-, Template- und sonstige Flask-Dev-Aenderungen im Browser ohne manuelle Prozesssuche sichtbar werden.
+
+## Lokale Validierung
+
+1. Im App-Root `python scripts/apply_auth_migration.py --engine postgres` ausfuehren.
+2. Im Workspace-Root `./scripts/dev-start.ps1` ausfuehren.
+3. `http://127.0.0.1:8000/health` pruefen.
 
 ## Erstinitialisierung oder Admin-Reset
 

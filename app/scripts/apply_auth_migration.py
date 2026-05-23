@@ -88,6 +88,7 @@ def apply_postgres_migration(reset: bool = False) -> None:
         db_url = f"{db_url}{separator}connect_timeout=10"
 
     conn = None
+    current_migration_path: Path | None = None
     try:
         print("Connecting to PostgreSQL...")
         conn = psycopg2.connect(db_url)
@@ -116,16 +117,30 @@ def apply_postgres_migration(reset: bool = False) -> None:
                 print("Existing tables dropped.")
 
             for migration_path in migration_files:
+                current_migration_path = migration_path
                 print(f"Executing migration SQL: {migration_path.name}...")
                 cur.execute(_read_sql(migration_path))
                 conn.commit()
                 print(f"PostgreSQL migration applied successfully: {migration_path.name}")
+                current_migration_path = None
 
     except OperationalError as e:
         print(f"ERROR: Database connection failed: {e}", file=sys.stderr)
         sys.exit(1)
     except psycopg2.Error as e:
-        print(f"ERROR: Migration failed: {e}", file=sys.stderr)
+        migration_label = current_migration_path.name if current_migration_path is not None else "unknown"
+        message_parts = [
+            f"ERROR: PostgreSQL migration failed",
+            f"engine=postgres",
+            f"migration={migration_label}",
+        ]
+        if getattr(e, "diag", None) is not None and getattr(e.diag, "message_primary", None):
+            message_parts.append(f"detail={e.diag.message_primary}")
+        elif str(e):
+            message_parts.append(f"detail={e}")
+        print("; ".join(message_parts), file=sys.stderr)
+        if getattr(e, "pgerror", None):
+            print(e.pgerror.strip(), file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         print(f"ERROR: Unexpected error: {e}", file=sys.stderr)

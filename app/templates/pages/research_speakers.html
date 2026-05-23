@@ -120,3 +120,7 @@
   </section>
 </article>
 {% endblock %}
+
+{% block extra_scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/research-speakers.js') }}"></script>
+{% endblock %}

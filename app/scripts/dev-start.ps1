@@ -161,7 +161,7 @@ if ($shouldBootstrapLocalPostgres) {
 
 	& $pythonSource (Join-Path $appRoot 'scripts\apply_auth_migration.py') --engine postgres
 	if ($LASTEXITCODE -ne 0) {
-		throw 'Auth-/Research-Set-Migration fehlgeschlagen.'
+		throw 'Auth-/Research-Set-Migration fehlgeschlagen (engine=postgres). Siehe die vorherige Fehlermeldung aus scripts/apply_auth_migration.py fuer die betroffene Migration.'
 	}
 }
 

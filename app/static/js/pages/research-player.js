@@ -228,6 +228,81 @@ function findActiveToken(tokens, currentMs) {
   };
 }
 
+function parseDatasetInteger(value) {
+  const parsed = Number.parseInt(value || '', 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function collectSpeakerItemsFromDom(itemElements) {
+  const itemsBySpeaker = new Map();
+
+  for (const element of itemElements) {
+    const speakerKey = element.dataset.speakerKey;
+    const itemId = element.dataset.itemId;
+    const startMs = parseDatasetInteger(element.dataset.startMs);
+    const endMs = parseDatasetInteger(element.dataset.endMs);
+    if (!speakerKey || !itemId || startMs === null || endMs === null) {
+      continue;
+    }
+
+    const speakerItems = itemsBySpeaker.get(speakerKey) || [];
+    const tokens = Array.from(element.querySelectorAll('[data-player-token]')).map((tokenElement, tokenIndex) => {
+      const tokenStartMs = parseDatasetInteger(tokenElement.dataset.playerTokenStartMs);
+      const tokenEndMs = parseDatasetInteger(tokenElement.dataset.playerTokenEndMs);
+      if (tokenStartMs === null || tokenEndMs === null) {
+        return null;
+      }
+
+      const explicitTokenIndex = parseDatasetInteger(tokenElement.dataset.playerTokenIndex);
+      return {
+        tokenId: tokenElement.dataset.playerTokenId || null,
+        tokenIndex: explicitTokenIndex === null ? tokenIndex : explicitTokenIndex,
+        startMs: tokenStartMs,
+        endMs: tokenEndMs,
+      };
+    }).filter(Boolean);
+
+    speakerItems.push({
+      itemId,
+      itemIndex: speakerItems.length,
+      startMs,
+      endMs,
+      tokens,
+    });
+    itemsBySpeaker.set(speakerKey, speakerItems);
+  }
+
+  return itemsBySpeaker;
+}
+
+function ensureAudioMetadata(audio) {
+  if (!audio) {
+    return Promise.reject(new Error('Audio element is missing.'));
+  }
+  if (audio.readyState >= 1) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('error', handleError);
+    };
+    const handleLoadedMetadata = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = () => {
+      cleanup();
+      reject(new Error('Audio metadata could not be loaded.'));
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('error', handleError);
+    audio.load();
+  });
+}
+
 function init() {
   const root = document.querySelector('[data-player-root]');
   const state = parseState();
@@ -280,16 +355,18 @@ function init() {
   const pauseLabel = toggle.dataset.pauseLabel || '';
   const desktopMedia = window.matchMedia(`(min-width: ${Number(state.mobileMinWidth || 900)}px)`);
   const audioMap = new Map(audioElements.map((element) => [element.dataset.speakerKey, element]));
+  const domSpeakerItems = collectSpeakerItemsFromDom(itemElements);
   const speakerState = new Map(
     state.speakers.map((speaker) => [
       speaker.key,
       {
         ...speaker,
+        items: state.syncFromDom ? (domSpeakerItems.get(speaker.key) || []) : (Array.isArray(speaker.items) ? speaker.items : []),
         activeItemId: null,
         activeItemIndex: -1,
         activeTokenId: null,
         activeTokenIndex: -1,
-        itemsById: new Map((speaker.items || []).map((item) => [item.itemId, item])),
+        itemsById: new Map((state.syncFromDom ? (domSpeakerItems.get(speaker.key) || []) : (Array.isArray(speaker.items) ? speaker.items : [])).map((item) => [item.itemId, item])),
       },
     ]),
   );
@@ -937,11 +1014,12 @@ function init() {
     clearClipPlayback();
     pauseOtherAudios(speakerKey);
     setActiveSpeaker(speakerKey);
-    audio.currentTime = item.startMs / 1000;
-    syncProgress();
-    syncActiveItems();
+    return ensureAudioMetadata(audio).then(() => {
+      audio.currentTime = item.startMs / 1000;
+      syncProgress();
+      syncActiveItems();
 
-    return new Promise((resolve) => {
+      return new Promise((resolve) => {
       let settled = false;
       const endSeconds = item.endMs / 1000;
 
@@ -966,24 +1044,25 @@ function init() {
         resolve(completed);
       };
 
-      const onTimeUpdate = () => {
-        if ((audio.currentTime || 0) >= endSeconds) {
-          audio.pause();
-          audio.currentTime = endSeconds;
-          finish(true);
-        }
-      };
+        const onTimeUpdate = () => {
+          if ((audio.currentTime || 0) >= endSeconds) {
+            audio.pause();
+            audio.currentTime = endSeconds;
+            finish(true);
+          }
+        };
 
-      const onEnded = () => finish(true);
-      const cleanup = () => finish(false);
+        const onEnded = () => finish(true);
+        const cleanup = () => finish(false);
 
-      clipCleanup = cleanup;
-      audio.addEventListener('timeupdate', onTimeUpdate);
-      audio.addEventListener('ended', onEnded);
-      audio.play().then(() => {
-        startSyncLoop();
-      }).catch(() => finish(false));
-    });
+        clipCleanup = cleanup;
+        audio.addEventListener('timeupdate', onTimeUpdate);
+        audio.addEventListener('ended', onEnded);
+        audio.play().then(() => {
+          startSyncLoop();
+        }).catch(() => finish(false));
+      });
+    }).catch(() => false);
   }
 
   async function startSequence(itemId) {

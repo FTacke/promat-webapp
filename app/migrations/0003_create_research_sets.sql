@@ -25,7 +25,18 @@ CREATE TABLE IF NOT EXISTS research_sets (
 );
 
 CREATE INDEX IF NOT EXISTS idx_research_sets_owner_user_id ON research_sets (owner_user_id);
-CREATE INDEX IF NOT EXISTS idx_research_sets_owner_state ON research_sets (owner_user_id, state);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'research_sets'
+      AND column_name = 'state'
+  ) THEN
+    CREATE INDEX IF NOT EXISTS idx_research_sets_owner_state ON research_sets (owner_user_id, state);
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_research_sets_language ON research_sets (corpus_language);
 CREATE INDEX IF NOT EXISTS idx_research_sets_expires_at ON research_sets (expires_at);
 CREATE INDEX IF NOT EXISTS idx_research_sets_last_accessed_at ON research_sets (last_accessed_at);

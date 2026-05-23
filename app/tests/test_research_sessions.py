@@ -21,7 +21,12 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 from app.config.data_conventions import build_person_id, build_session_id, parse_person_id, parse_session_id
 from app import register_context_processors
 from app.research_presets import clear_research_preset_caches
-from app.research_player_runtime import _build_interview_text_segments, _normalize_bundle_tokens, _normalize_interview_annotations
+from app.research_player_runtime import (
+    _build_interview_text_segments,
+    _normalize_bundle_tokens,
+    _normalize_interview_annotations,
+    load_task_ready_sessions,
+)
 from app.research_views import build_player_page, build_speaker_profile_page, build_speakers_page
 from app.routes.auth import blueprint as auth_blueprint
 from app.routes.public import _sample_speaker_cards, blueprint as public_blueprint
@@ -37,6 +42,7 @@ def _clear_research_caches() -> None:
     clear_research_preset_caches()
     load_language_sessions.cache_clear()
     load_person_records.cache_clear()
+    load_task_ready_sessions.cache_clear()
 
 
 def _write_minimal_research_player_config(runtime_root: Path) -> None:
@@ -2294,6 +2300,20 @@ def test_authenticated_research_workbench_pages_render_after_access_gate(
     response = client.get(f"/{ui_lang}/research/{language_slug}/{page_slug}")
 
     assert response.status_code == 200
+
+
+def test_research_player_prewarm_request_warms_route_without_rendering_body(url_app: Flask) -> None:
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    response = client.get(
+        "/en/research/spanish/player/ES-L-0001-2026-S01/wordlist?source=speakers",
+        headers={"X-Promat-Player-Prewarm": "1"},
+    )
+
+    assert response.status_code == 204
+    assert response.headers["X-Promat-Player-Prewarm"] == "1"
+    assert response.get_data(as_text=True) == ""
 
 
 @pytest.mark.parametrize("ui_lang", ["de", "en"])

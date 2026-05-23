@@ -328,24 +328,19 @@ function init() {
     };
   }
 
-  async function loadOwnedSetPresets() {
-    if (!state.isAuthenticated) {
-      return;
-    }
-
-    try {
-      const query = new URLSearchParams({ corpus_language: state.languageSlug });
-      const payload = await requestJson(`${state.setApiBaseHref}?${query.toString()}`);
-      if (!payload || !Array.isArray(payload.sets)) {
-        return;
-      }
-      setMaterialPresets(payload.sets.map(normalizeSavedSetPreset));
-      render();
-    } catch (error) {
-      if (error.status !== 401 && error.status !== 404) {
-        console.warn("Could not load saved set presets.", error);
-      }
-    }
+  function buildImplicitDefaultWorkspace() {
+    return {
+      set_id: null,
+      visibility: "private",
+      state: "implicit",
+      label: null,
+      items: defaultSetItems(),
+      workbench_state: {
+        comparison_view_task: visibleViewTask,
+        preferred_task: visibleViewTask,
+        sessions: [],
+      },
+    };
   }
 
   function applyPlaybackSettings() {
@@ -702,25 +697,7 @@ function init() {
     }
 
     try {
-      const created = await requestJson(state.createSetHref, {
-        method: "POST",
-        body: {
-          corpus_language: state.languageSlug,
-          workbench_state: {
-            comparison_view_task: visibleViewTask,
-          },
-        },
-      });
-      const items = defaultSetItems();
-      if (!items.length) {
-        applySet(created.set, { implicit: true });
-        return;
-      }
-      const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(created.set.set_id)}/items`, {
-        method: "PUT",
-        body: { items },
-      });
-      applySet(payload.set, { implicit: true });
+      applySet(buildImplicitDefaultWorkspace(), { implicit: true });
     } catch (error) {
       isBootstrappingWorkspace = false;
       transientMessage = error.message || saveErrorFallbackLabel;
@@ -1657,7 +1634,6 @@ function init() {
   }
   applyPlaybackSettings();
   render();
-  void loadOwnedSetPresets();
   if (state.requestedSetId) {
     loadRequestedSet();
   } else {

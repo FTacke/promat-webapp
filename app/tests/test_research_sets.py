@@ -245,6 +245,8 @@ def test_research_set_migration_declares_expected_tables() -> None:
     assert "CREATE TABLE IF NOT EXISTS research_set_sessions" in content
     assert "REFERENCES users(user_id) ON DELETE CASCADE" in content
     assert "state IN ('draft', 'saved')" in content
+    assert "column_name = 'state'" in content
+    assert "CREATE INDEX IF NOT EXISTS idx_research_sets_owner_state ON research_sets (owner_user_id, state)" in content
 
     extension_migration = (TEST_REPO_ROOT / "app" / "migrations" / "0004_extend_research_sets_for_phenomena_editor.sql").read_text(
         encoding="utf-8"
@@ -258,6 +260,14 @@ def test_research_set_migration_declares_expected_tables() -> None:
     assert "CREATE TABLE IF NOT EXISTS research_set_workbench_sessions" in workbench_split_migration
     assert "DROP COLUMN IF EXISTS preferred_task" in workbench_split_migration
     assert "DROP TABLE IF EXISTS research_set_sessions" in workbench_split_migration
+
+    unify_migration = (TEST_REPO_ROOT / "app" / "migrations" / "0006_unify_research_sets_for_curated_db_model.sql").read_text(
+        encoding="utf-8"
+    )
+    assert "ALTER TABLE research_sets RENAME COLUMN state TO lifecycle" in unify_migration
+    assert "DROP CONSTRAINT IF EXISTS ck_research_sets_visibility" in unify_migration
+    assert "DROP CONSTRAINT IF EXISTS ck_research_sets_lifecycle" in unify_migration
+    assert "DROP CONSTRAINT IF EXISTS ck_research_sets_visibility_lifecycle" in unify_migration
 
 
 def test_apply_auth_migration_discovers_full_postgres_chain() -> None:

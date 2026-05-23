@@ -22,7 +22,7 @@ from app.auth.models import Base, User
 from app.routes.auth import blueprint as auth_blueprint
 from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
-from app.research_player_runtime import resolve_player_runtime_state
+from app.research_player_runtime import load_task_ready_sessions, resolve_player_runtime_state
 from app.research_presets import clear_research_preset_caches
 from app.research_sessions import get_session as get_research_session, load_language_sessions, load_person_records
 from app.research_sets import (
@@ -41,6 +41,7 @@ def _clear_runtime_caches() -> None:
     clear_research_preset_caches()
     load_language_sessions.cache_clear()
     load_person_records.cache_clear()
+    load_task_ready_sessions.cache_clear()
     _is_playable_audio_artifact.cache_clear()
 
 
@@ -704,6 +705,8 @@ def test_text_player_builds_productive_sentence_list_with_set_context(player_set
     assert page["player"]["set_notice"] is None
     assert [item["item_id"] for item in page["player"]["items"]] == ["d_01", "d_02"]
     assert page["player"]["client_state"]["focusedItemId"] == "d_01"
+    assert page["player"]["client_state"]["syncFromDom"] is True
+    assert "items" not in page["player"]["client_state"]["speakers"][0]
 
 
 def test_connected_text_source_falls_back_to_list_view_inside_set_excerpt(player_set_app: Flask) -> None:
@@ -858,6 +861,9 @@ def test_text_player_route_renders_productive_runtime(player_set_app: Flask) -> 
     assert 'data-player-focus-item="d_01"' in html
     assert 'data-player-focus-item="d_02"' not in html
     assert '/de/research/spanish/player/ES-L-0001-2026-S01/text/audio.mp3' in html
+    assert 'preload="none"' in html
+    assert '"syncFromDom": true' in html
+    assert '"startMs"' not in html
 
 
 def test_text_compare_builds_productive_compare_view_model(player_set_app: Flask) -> None:

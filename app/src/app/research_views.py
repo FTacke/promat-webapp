@@ -2633,6 +2633,7 @@ def build_player_page(
     focus_item: str | None = None,
     focus_segment: str | None = None,
     render_mode: str | None = None,
+    profile: dict[str, float] | None = None,
 ) -> dict[str, Any] | None:
     session = get_session(language_slug, session_id)
     task = get_research_task(task_key)
@@ -2653,6 +2654,7 @@ def build_player_page(
         focus_item=focus_item,
         focus_segment=focus_segment,
         render_mode=render_mode,
+        profile=profile,
         load_owned_set_fn=load_owned_set,
     )
     set_context = runtime_state.set_context
@@ -2899,6 +2901,7 @@ def build_player_page(
             active_preset_id=active_selector_preset_id,
             render_mode=active_render_mode_query,
         )
+        sync_from_dom = task_key in {"wordlist", "text"}
         primary_client_sync_items = _client_sync_items(primary_items)
         secondary_client_sync_items = _client_sync_items(secondary_items) if compare_session and compare_bundle else []
         player_view = {
@@ -2980,6 +2983,7 @@ def build_player_page(
                 "requestedMode": effective_compare_mode,
                 "compareOpen": compare_is_ready,
                 "canCompare": can_compare,
+                "syncFromDom": sync_from_dom,
                 "mobileMinWidth": 900,
                 "rateOptions": [0.5, 0.75, 1.0, 1.25, 1.5],
                 "defaultRate": 1.0,
@@ -3005,14 +3009,14 @@ def build_player_page(
                         "key": "primary",
                         "sessionId": session.session_id,
                         "label": session.session_id,
-                        "items": primary_client_sync_items,
+                        **({"items": primary_client_sync_items} if not sync_from_dom else {}),
                     }
                 ] + ([
                     {
                         "key": "secondary",
                         "sessionId": compare_session.session_id,
                         "label": compare_session.session_id,
-                        "items": secondary_client_sync_items,
+                        **({"items": secondary_client_sync_items} if not sync_from_dom else {}),
                     }
                 ] if compare_session and compare_bundle else []),
                 "compareReady": compare_is_ready,
@@ -3021,7 +3025,7 @@ def build_player_page(
                 "statusLabel": _player_controls_status_label(ui_lang),
                 "togglePlay": _player_play_label(ui_lang),
                 "togglePause": _player_pause_label(ui_lang),
-                "items": primary_client_sync_items,
+                "items": [] if sync_from_dom else primary_client_sync_items,
             },
             "items": primary_items,
         }

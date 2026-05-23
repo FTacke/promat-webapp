@@ -55,7 +55,13 @@ ALTER TABLE research_sets ALTER COLUMN lifecycle SET NOT NULL;
 ALTER TABLE research_sets ALTER COLUMN version SET DEFAULT 1;
 
 ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_state;
+ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_visibility;
+ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_lifecycle;
 ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_saved_label;
+ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_visibility_lifecycle;
+ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_owner_scope;
+ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_curated_expiry;
+ALTER TABLE research_sets DROP CONSTRAINT IF EXISTS ck_research_sets_version;
 
 ALTER TABLE research_sets ADD CONSTRAINT ck_research_sets_visibility CHECK (
   visibility IN ('private', 'curated')
