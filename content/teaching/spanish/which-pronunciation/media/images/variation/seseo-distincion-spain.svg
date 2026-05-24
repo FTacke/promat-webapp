@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Seseo, distinción and ceceo in Spain</title>
+  <desc id="desc">Schematic teaching graphic dividing Spain into classroom-oriented regions for distinción, seseo, and ceceo.</desc>
+  <rect width="1200" height="760" fill="#f5efe6" />
+  <rect x="84" y="92" width="1032" height="576" rx="36" fill="#fffaf5" stroke="#d2c4a8" stroke-width="6" />
+  <path d="M250 308 C324 248, 452 222, 572 244 C692 266, 792 294, 886 356 C922 380, 952 436, 926 478 C880 554, 768 582, 648 592 C506 604, 344 592, 260 536 C202 498, 176 432, 198 384 C214 348, 224 332, 250 308 Z" fill="#efe4c9" stroke="#cebfa0" stroke-width="4" />
+  <path d="M382 316 C458 284, 584 280, 700 310 C756 324, 834 358, 836 414 C840 466, 780 502, 688 522 C578 548, 430 546, 338 510 C280 488, 246 452, 244 410 C242 374, 300 344, 382 316 Z" fill="#c9b26d" opacity="0.95" />
+  <path d="M312 470 C372 446, 460 444, 538 460 C570 468, 600 484, 600 506 C600 536, 540 554, 478 564 C410 574, 320 568, 282 544 C254 526, 252 492, 312 470 Z" fill="#c56e4b" opacity="0.95" />
+  <path d="M606 470 C648 452, 710 448, 758 460 C792 468, 818 484, 818 504 C818 530, 786 548, 736 558 C670 572, 592 564, 562 540 C538 520, 550 494, 606 470 Z" fill="#8d453f" opacity="0.9" />
+  <text x="382" y="394" font-family="Noto Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#4b3f2f">Distinción</text>
+  <text x="332" y="530" font-family="Noto Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#4b3f2f">Seseo</text>
+  <text x="640" y="528" font-family="Noto Sans, Arial, sans-serif" font-size="28" font-weight="700" fill="#fff8ef">Ceceo</text>
+  <rect x="120" y="620" width="40" height="24" rx="12" fill="#c9b26d" />
+  <text x="176" y="640" font-family="Noto Sans, Arial, sans-serif" font-size="22" fill="#4b3f2f">Distinción</text>
+  <rect x="520" y="620" width="40" height="24" rx="12" fill="#c56e4b" />
+  <text x="576" y="640" font-family="Noto Sans, Arial, sans-serif" font-size="22" fill="#4b3f2f">Seseo</text>
+  <rect x="832" y="620" width="40" height="24" rx="12" fill="#8d453f" />
+  <text x="888" y="640" font-family="Noto Sans, Arial, sans-serif" font-size="22" fill="#4b3f2f">Ceceo</text>
+</svg>

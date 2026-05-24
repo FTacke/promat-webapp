@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Seseo in Spanish America</title>
+  <desc id="desc">Didactic schematic showing seseo as the dominant pronunciation model across Spanish-speaking America.</desc>
+  <rect width="1200" height="760" fill="#f7f1e3" />
+  <rect x="84" y="92" width="1032" height="576" rx="36" fill="#fffaf0" stroke="#d2c4a8" stroke-width="6" />
+  <path d="M220 280 C280 220, 360 210, 430 250 C465 272, 505 320, 482 376 C456 436, 380 470, 332 522 C296 560, 248 596, 202 574 C154 550, 152 476, 164 428 C176 378, 172 322, 220 280 Z" fill="#d4b26a" opacity="0.95" />
+  <path d="M592 262 C638 224, 720 222, 774 258 C828 294, 854 350, 848 420 C842 482, 804 544, 738 572 C672 600, 586 592, 530 544 C476 498, 468 420, 490 362 C512 304, 546 298, 592 262 Z" fill="#cf8354" opacity="0.9" />
+  <path d="M896 304 C936 270, 994 274, 1038 300 C1072 320, 1086 368, 1068 412 C1044 472, 978 518, 922 510 C870 500, 840 444, 844 392 C848 352, 864 330, 896 304 Z" fill="#c45847" opacity="0.88" />
+  <circle cx="346" cy="386" r="16" fill="#4b3f2f" />
+  <circle cx="654" cy="392" r="16" fill="#4b3f2f" />
+  <circle cx="948" cy="392" r="16" fill="#4b3f2f" />
+  <text x="374" y="394" font-family="Noto Sans, Arial, sans-serif" font-size="24" font-weight="600" fill="#4b3f2f">México/Centroamérica</text>
+  <text x="682" y="400" font-family="Noto Sans, Arial, sans-serif" font-size="24" font-weight="600" fill="#4b3f2f">Caribe/Andes</text>
+  <text x="976" y="398" font-family="Noto Sans, Arial, sans-serif" font-size="24" font-weight="600" fill="#4b3f2f">Cono Sur</text>
+  <rect x="120" y="620" width="240" height="28" rx="14" fill="#c45847" />
+  <text x="380" y="642" font-family="Noto Sans, Arial, sans-serif" font-size="24" fill="#4b3f2f">Seseo</text>
+</svg>

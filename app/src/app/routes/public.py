@@ -33,7 +33,7 @@ from ..research_views import (
     resolve_player_item_download,
 )
 from ..runtime_paths import get_public_root
-from ..teaching_content import resolve_teaching_switch_path, resolve_topic_route_target
+from ..teaching_content import resolve_teaching_switch_path, resolve_teaching_topic_media_artifact, resolve_topic_route_target
 from ..extensions.sqlalchemy_ext import get_engine
 from .public_content import (
     DEFAULT_UI_LANGUAGE,
@@ -1635,23 +1635,6 @@ def _request_wants_download() -> bool:
     return value not in {"", "0", "false", "no"}
 
 
-def _resolve_public_teaching_asset(asset_path: str) -> Path | None:
-    relative_path = Path(asset_path)
-    if relative_path.is_absolute() or ".." in relative_path.parts:
-        return None
-
-    asset_root = get_public_root() / "teaching"
-    candidate = (asset_root / relative_path).resolve()
-    try:
-        candidate.relative_to(asset_root.resolve())
-    except ValueError:
-        return None
-
-    if not candidate.exists() or not candidate.is_file():
-        return None
-    return candidate
-
-
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>/audio.mp3")
 def research_player_audio(ui_lang: str, language_slug: str, session_id: str, task: str):
     _require_ui_lang(ui_lang)
@@ -1714,9 +1697,9 @@ def teaching_home(ui_lang: str):
     )
 
 
-@blueprint.get("/teaching/<path:asset_path>")
-def teaching_public_asset(asset_path: str):
-    asset_file = _resolve_public_teaching_asset(asset_path)
+@blueprint.get("/teaching-media/<teaching_lang>/<topic_slug>/<media_type>/<path:filename>")
+def teaching_topic_media(teaching_lang: str, topic_slug: str, media_type: str, filename: str):
+    asset_file = resolve_teaching_topic_media_artifact(teaching_lang, topic_slug, media_type, filename)
     if asset_file is None:
         abort(404)
 

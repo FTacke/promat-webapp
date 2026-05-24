@@ -1,0 +1,202 @@
+title: Which pronunciation should you teach?
+summary: Orientation to pronunciation models, variation, and classroom pragmatics in Spanish teaching.
+description: Is there one correct pronunciation in Spanish? And what does that mean for teaching?
+equivalents:
+  de: which-pronunciation
+metadata:
+  authors:
+    - Felix Tacke
+  peer_review:
+    -
+  created: 2026-05-11
+  updated: 2026-05-13
+citation:
+  title: Cite this topic page
+  text: >-
+    Tacke, Felix (2026): “Which pronunciation should be taught? (topic page)”.
+    In: *Pronunciation Matters*.
+    Online: [pronunciation-matters.de](https://www.pronunciation-matters.de)
+  copy_text: >-
+    Tacke, Felix (2026): “Which pronunciation should be taught? (topic page)”.
+    In: Pronunciation Matters.
+    Online: https://www.pronunciation-matters.de
+blocks:
+  - type: topic_meta
+    layout:
+      span: 2
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Careful pronunciation exists in all Spanish-speaking countries; it just sounds different.
+      Many teachers and learners silently assume that the pronunciation of central and northern Spain is the actual target pronunciation. It is not.
+      This question becomes most audible in one feature: is there a distinction between `s` and `z/c` (*distinción*) or not (*seseo*)?
+  - type: info_box
+    layout:
+      span: 1
+    title: At a glance
+    body: |
+      More than 90% of Spanish speakers live outside Spain.
+      The vast majority do not distinguish *caza* and *casa* in pronunciation and still speak equally correct Spanish.
+      This topic page makes the difference between *seseo* and *distinción* audible and shows why both pronunciation norms are equally legitimate.
+  - type: section_heading
+    layout:
+      span: 2
+    title: Listening comparison
+  - type: text
+    layout:
+      span: 2
+    body: |
+      How does the difference sound? The following recordings present the same word pair and word sequence once with *distinción* and once with *seseo*.
+      For teaching, the key point is to make both realizations, *distinción* and *seseo*, audible as equally legitimate variation.
+  - type: audio_contrast
+    layout:
+      span: 2
+    title: "With and without distinction: *casa* vs. *caza*"
+    lead: "This comparison shows that `z/c` and `s`, depending on where speakers come from, are pronounced either differently or the same."
+    transcript: "casa – caza"
+    examples:
+      - label: "*Distinción*"
+        subtitle: Central/northern Spain
+        audio: variation/distincion-casa-caza.mp3
+        note: "*casa* and *caza* are pronounced differently."
+      - label: "*Seseo*"
+        subtitle: Spanish America / Canary Islands / parts of Andalusia
+        audio: variation/seseo-casa-caza.mp3
+        note: "*casa* and *caza* are pronounced the same way."
+  - type: audio_contrast
+    layout:
+      span: 2
+    title: "Different, but just as correct"
+    lead: "This word series makes the pronunciation with an interdental sound and as `s` especially easy to hear."
+    transcript: "gracias – ciudad – paz – ración"
+    examples:
+      - label: "*Distinción*"
+        subtitle: Central/northern Spain
+        audio: variation/distincion-word-series.mp3
+        note: "Particularly audible in `c` in *gracias* and *ciudad* as well as `z` in *paz*."
+      - label: "*Seseo*"
+        subtitle: Spanish America / Canary Islands / parts of Andalusia
+        audio: variation/seseo-word-series.mp3
+        note: "`c`, `z`, and `ci` are pronounced like `s` here."
+  - type: section_heading
+    layout:
+      span: 2
+    title: "*Seseo* and *distinción*"
+  - type: text
+    layout:
+      span: 1
+    body: |
+      The contrast heard in the recordings is not limited to individual words; it reflects regional pronunciation norms.
+      The maps below show where *seseo* and where *distinción* is the usual pronunciation.
+  - type: embed
+    layout:
+      span: 1
+    title: "Spain: *distinción*, *seseo*, and *ceceo*"
+    provider: datawrapper
+    src: https://datawrapper.dwcdn.net/poSnB/9/
+    height: 533
+  - type: info_box
+    layout:
+      span: 1
+    title: "The majority is *seseante*"
+    body: |
+      With *distinción*, `s` and `z/c` before `e/i` are pronounced differently: *casa* and *caza* have different sounds.
+      With *seseo*, they merge: *casa* and *caza* are pronounced the same way.
+      *Distinción* is used only in central and northern Spain.
+      *Seseo* is common in almost all of Spanish America, on the Canary Islands, and in parts of Andalusia, where more than 90% of all Spanish speakers live.
+
+      Rule of thumb: if you pronounce `caza` like `casa`, your Spanish is still fully correct.
+  - type: embed
+    layout:
+      span: 1
+    title: "*Seseo* in Spanish America"
+    provider: datawrapper
+    src: https://datawrapper.dwcdn.net/Uza2n/5/
+    height: 831
+  - type: section_heading
+    layout:
+      span: 2
+    title: "*Seseo* in Spanish America: listening examples"
+  - type: text
+    layout:
+      span: 2
+    body: |
+      Short excerpts from radio broadcasts show that *seseo* is the normal pronunciation in many varieties.
+  - type: audio_examples
+    layout:
+      span: 2
+    title: "*Seseo* in authentic audio excerpts"
+    lead: "These examples feature radio speakers from Spanish America. They show how normal it is to realize `z` and `c` before `e/i` as `s`."
+    source:
+      label: CO.RA.PAN
+      url: https://corapan.hispanistica.com
+    examples:
+      - label: Mexico
+        transcript: "… esta mujer que se *hizo* famosa en 2017 *gracias* a un video que se hizo viral."
+        note: "In *gracias* and *hizo*, `z/c` before `e/i` is pronounced like `s`."
+        token_id: MEXb80def27c
+        audio: corapan/MEXb80def27c.mp3
+      - label: Chile
+        transcript: "Se ve espectacular y está más *cerca*."
+        note: "In *cerca*, `c` is pronounced like `s`."
+        token_id: CHL8b78ac16b
+        audio: corapan/CHL8b78ac16b.mp3
+      - label: Argentina
+        transcript: "… *cerca* de Miami."
+        note: "Here too, `c` in *cerca* is pronounced like `s`."
+        token_id: ARGCBAeca46a987
+        audio: corapan/ARGCBAeca46a987.mp3
+      - label: Costa Rica
+        transcript: "Gana una *cena* para cuatro personas."
+        note: "In *cena*, `c` is pronounced like `s`."
+        token_id: CRI61d9dc2dc
+        audio: corapan/CRI61d9dc2dc.mp3
+  - type: section_heading
+    layout:
+      span: 2
+    title: Classroom prompts
+  - type: text
+    layout:
+      span: 2
+    body: |
+      The contrast between *seseo* and *distinción* leads to practical classroom decisions:
+  - type: rich_text
+    layout:
+      span: 2
+    variant: didactic_close
+    body: |
+      - **Make variation audible**  
+        The map and speaker numbers can trigger an aha moment: the pronunciation many textbooks present as standard is only the norm in a small part of the Spanish-speaking world.
+      - **Listen before naming the concept**  
+        Play the recordings first and let learners describe the contrast before introducing technical terms.
+      - **Explain norms transparently**  
+        Learners should understand that *distinción* and *seseo* are not a hierarchy of right and wrong, but regionally valid pronunciation norms.
+      - **Choose your own target consciously**  
+        Teachers should make their own pronunciation choice explicit and explain why they use it.
+  - type: section_heading
+    layout:
+      span: 2
+    title: "Outlook: More pronunciation features"
+  - type: text
+    layout:
+      span: 1
+    body: |
+      **`ll` and `y`**
+
+      The traditional distinction between `ll` and `y` is now rare; in most varieties both are pronounced alike, a pattern known as *yeísmo*.
+      In Argentina and Uruguay, the sound is often noticeably different and can sound sh-like.
+      This is not inferior pronunciation either, but part of the accepted national norm.
+
+      → [Listening examples and textbook background](https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo)
+  - type: text
+    layout:
+      span: 1
+    body: |
+      **/s/ weakening**
+
+      In many regions, /s/ is weakened or deleted at the end of a syllable or word.
+      This is not careless speech, but a regular part of the pronunciation norm in those areas.
+      In teaching, the phenomenon matters most for listening comprehension.
+
+      → [Listening examples and textbook background](https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund)

@@ -1,0 +1,202 @@
+title: Welche Aussprache unterrichten?
+summary: "Orientierung zu Aussprachmodellen und Variation im Spanischunterricht: Warum *seseo* und *distinción* gleichberechtigte Aussprachenormen sind und was das für den Unterricht bedeutet."
+description: Gibt es die eine richtige Aussprache im Spanischen? Und was heißt das für den Unterricht?
+equivalents:
+  en: which-pronunciation
+metadata:
+  authors:
+    - Felix Tacke
+  peer_review:
+    -
+  created: 2026-05-11
+  updated: 2026-05-13
+citation:
+  title: Diese Themenseite zitieren
+  text: >-
+    Tacke, Felix (2026): „Welche Aussprache unterrichten? (Themenseite)“.
+    In: *Pronunciation Matters*.
+    Online: [pronunciation-matters.de](https://www.pronunciation-matters.de).
+  copy_text: >-
+    Tacke, Felix (2026): „Welche Aussprache unterrichten? (Themenseite)“.
+    In: Pronunciation Matters.
+    Online: https://www.pronunciation-matters.de.
+blocks:
+  - type: topic_meta
+    layout:
+      span: 2
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Sorgfältige Aussprache gibt es in allen spanischsprachigen Ländern – sie klingt nur unterschiedlich.
+      Viele Lehrkräfte und Lernende gehen stillschweigend davon aus, die Aussprache Zentral- und Nordspaniens sei die eigentliche Zielaussprache. Das ist sie nicht.
+      Am deutlichsten hörbar wird diese Frage an einem Merkmal: Wird zwischen `s` und `z/c` unterschieden (*distinción*) – oder nicht (*seseo*)?
+  - type: info_box
+    layout:
+      span: 1
+    title: Auf einen Blick
+    body: |
+      Über 90 % der Spanischsprechenden leben außerhalb Spaniens.
+      Die große Mehrheit unterscheidet *caza* und *casa* in der Aussprache nicht – und spricht damit ein ebenso korrektes Spanisch.
+      Diese Themenseite macht den Unterschied zwischen dem *seseo* und der *distinción* hörbar und zeigt, warum beide Aussprachenormen gleichberechtigt sind.
+  - type: section_heading
+    layout:
+      span: 2
+    title: Hörvergleich
+  - type: text
+    layout:
+      span: 2
+    body: |
+      Wie klingt der Unterschied? Die folgenden Aufnahmen zeigen dasselbe Wortpaar und dieselbe Wortreihe – einmal mit *distinción*, einmal mit *seseo*.
+      Für den Unterricht ist entscheidend, beide Realisierungen – *distinción* und *seseo* – als gleichberechtigte Variation hörbar zu machen.
+  - type: audio_contrast
+    layout:
+      span: 2
+    title: "Mit und ohne Unterscheidung: *casa* vs. *caza*"
+    lead: "Der Vergleich zeigt, dass `z/c` und `s` – je nach Herkunft der Sprecher:innen – unterschiedlich oder gleich ausgesprochen werden."
+    transcript: "casa – caza"
+    examples:
+      - label: "*Distinción*"
+        subtitle: Zentral-/Nordspanien
+        audio: variation/distincion-casa-caza.mp3
+        note: "*casa* und *caza* werden unterschiedlich ausgesprochen."
+      - label: "*Seseo*"
+        subtitle: Hispanoamerika / Kanaren / Teile Andalusiens
+        audio: variation/seseo-casa-caza.mp3
+        note: "*casa* und *caza* werden gleich ausgesprochen."
+  - type: audio_contrast
+    layout:
+      span: 2
+    title: "Anders, aber genauso korrekt"
+    lead: "Anhand dieser Wortreihe wird die Aussprache mit Interdentallaut und als `s` besonders deutlich hörbar."
+    transcript: "gracias – ciudad – paz – ración"
+    examples:
+      - label: "*Distinción*"
+        subtitle: Zentral-/Nordspanien
+        audio: variation/distincion-word-series.mp3
+        note: "Besonders hörbar bei `c` in *gracias* und *ciudad* sowie `z` in *paz*."
+      - label: "*Seseo*"
+        subtitle: Hispanoamerika / Kanaren / Teile Andalusiens
+        audio: variation/seseo-word-series.mp3
+        note: "`c`, `z` und `ci` werden hier wie `s` ausgesprochen."
+  - type: section_heading
+    layout:
+      span: 2
+    title: "*Seseo* und *distinción*"
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Der Unterschied, den die Aufnahmen zeigen, betrifft nicht einzelne Wörter, sondern ganze Regionen.
+      Die folgenden Karten zeigen, wo der *seseo* und wo die *distinción* die übliche Aussprache ist.
+  - type: embed
+    layout:
+      span: 1
+    title: "Spanien: *distinción*, *seseo* und *ceceo*"
+    provider: datawrapper
+    src: https://datawrapper.dwcdn.net/poSnB/9/
+    height: 533
+  - type: info_box
+    layout:
+      span: 1
+    title: "Die Mehrheit ist *seseante*"
+    body: |
+      Bei der *distinción* werden `s` und `z/c` vor `e/i` unterschiedlich ausgesprochen: *casa* und *caza* haben verschiedene Laute.
+      Beim *seseo* fallen sie zusammen: *casa* und *caza* werden gleich ausgesprochen.
+      Die *distinción*, also die Unterscheidung, wird nur in Zentral- und Nordspanien gemacht.
+      Der *seseo* ist in fast ganz Hispanoamerika, auf den Kanaren und in Teilen Andalusiens üblich – dort, wo über 90 % aller Spanischsprechenden leben.
+
+      Merksatz: Wer `caza` wie `casa` ausspricht, spricht ein ebenso gutes Spanisch.
+  - type: embed
+    layout:
+      span: 1
+    title: "*Seseo* in Hispanoamerika"
+    provider: datawrapper
+    src: https://datawrapper.dwcdn.net/Uza2n/5/
+    height: 831
+  - type: section_heading
+    layout:
+      span: 2
+    title: "Der *seseo* in Hispanoamerika: Hörbeispiele"
+  - type: text
+    layout:
+      span: 2
+    body: |
+      Kurze Ausschnitte aus Radiosendungen zeigen, dass der *seseo* in vielen Varietäten die normale Aussprache ist.
+  - type: audio_examples
+    layout:
+      span: 2
+    title: "Der *seseo* in authentischen Audioausschnitten"
+    lead: "In diesen Beispielen hört man Radiosprecher:innen aus Hispanoamerika. Sie veranschaulichen, wie normal es ist, `z` und `c` vor `e/i` als `s` zu realisieren."
+    source:
+      label: CO.RA.PAN
+      url: https://corapan.hispanistica.com
+    examples:
+      - label: Mexiko
+        transcript: "… esta mujer que se *hizo* famosa en 2017 *gracias* a un video que se hizo viral."
+        note: "In *gracias* und *hizo* werden `z/c` vor `e/i` wie `s` ausgesprochen."
+        token_id: MEXb80def27c
+        audio: corapan/MEXb80def27c.mp3
+      - label: Chile
+        transcript: "Se ve espectacular y está más *cerca*."
+        note: "In *cerca* wird `c` wie `s` ausgesprochen."
+        token_id: CHL8b78ac16b
+        audio: corapan/CHL8b78ac16b.mp3
+      - label: Argentinien
+        transcript: "… *cerca* de Miami."
+        note: "Auch hier wird `c` in *cerca* wie `s` ausgesprochen."
+        token_id: ARGCBAeca46a987
+        audio: corapan/ARGCBAeca46a987.mp3
+      - label: Costa Rica
+        transcript: "Gana una *cena* para cuatro personas."
+        note: "In *cena* wird `c` wie `s` ausgesprochen."
+        token_id: CRI61d9dc2dc
+        audio: corapan/CRI61d9dc2dc.mp3
+  - type: section_heading
+    layout:
+      span: 2
+    title: Impulse für den Unterricht
+  - type: text
+    layout:
+      span: 2
+    body: |
+      Aus den Vergleichen ergeben sich konkrete Entscheidungen für den Unterricht:
+  - type: rich_text
+    layout:
+      span: 2
+    variant: didactic_close
+    body: |
+      - **Variation hörbar machen**  
+        Die Karte und die Sprecherzahlen können bei Lernenden einen Aha-Moment auslösen: Die Aussprache, die viele Schulbücher als Standard vermitteln, ist nur in einem kleinen Teil der spanischsprachigen Welt die Norm.
+      - **Erst hören, dann erklären**  
+        Hörbeispiele abspielen und Kontraste benennen lassen, bevor Fachbegriffe eingeführt werden.
+      - **Normen transparent machen**  
+        Lernende sollen verstehen: *distinción* und *seseo* sind keine Fehlerhierarchie, sondern regionale Aussprachevarianten.
+      - **Eigene Ausspracheentscheidung bewusst treffen**  
+        Lehrkräfte sollten die eigene Aussprachewahl offenlegen und begründen.
+  - type: section_heading
+    layout:
+      span: 2
+    title: "Ausblick: Weitere Aussprachemerkmale"
+  - type: text
+    layout:
+      span: 1
+    body: |
+      **`ll` und `y`**
+
+      Die traditionelle Unterscheidung von `ll` und `y` wird heute fast nirgends mehr gemacht – der *yeísmo*, also die gleiche Aussprache beider als `[ʝ]`, ist die Norm.
+      In Argentinien und Uruguay klingt der Laut dabei auffällig anders, nämlich wie `sch`.
+      Auch das ist kein Fehler, sondern gehört dort zur nationalen Aussprachenorm.
+
+      → [Hörbeispiele und Vertiefung im Lehrbuch](https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo)
+  - type: text
+    layout:
+      span: 1
+    body: |
+      **/s/-Abschwächung**
+
+      In vielen Ländern wird /s/ am Silben- oder Wortende abgeschwächt oder ganz getilgt.
+      Das ist kein Zeichen nachlässiger Aussprache, sondern entspricht je nach Region und Land der Aussprachenorm.
+      Für den Unterricht ist das Phänomen vor allem beim Hörverstehen relevant.
+
+      → [Hörbeispiele und Vertiefung im Lehrbuch](https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund)

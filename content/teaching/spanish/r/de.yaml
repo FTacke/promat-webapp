@@ -1,0 +1,31 @@
+title: Das spanische r
+summary: Überblick über die wichtigsten Realisierungen des spanischen r und ihre Relevanz für die Unterrichtsplanung.
+description: Überblick über die wichtigsten Realisierungen des spanischen r und ihre Relevanz für die Unterrichtsplanung.
+equivalents:
+  en: r
+is_public: false
+credits:
+  coordinator:
+    - name: PROMAT Teaching
+      role: Redaktion
+      affiliation: PROMAT
+  authors:
+    - name: Felix Tacke
+      role: Rohbaukonzept
+      affiliation: PROMAT
+blocks:
+  - type: hero
+    eyebrow: Artikulation
+    title: Das spanische r
+    lead: Tap und Trill brauchen im Unterricht unterschiedliche Aufgabenformate und unterschiedliche Geduld.
+  - type: rich_text
+    title: Was Lernende unterscheiden sollten
+    body: |
+      Lernende profitieren von einer klaren Unterscheidung zwischen dem **einfachen Schlaglaut** und dem **gerollten r**.
+
+      Für den Unterricht ist wichtiger, *wann* eine Unterscheidung hörbar relevant wird, als eine vollständige phonetische Terminologie von Anfang an.
+  - type: topic_grid
+    title: Vertiefen
+    topics:
+      - final-r
+  - type: credits

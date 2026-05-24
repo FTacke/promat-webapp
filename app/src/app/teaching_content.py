@@ -23,6 +23,8 @@ from .runtime_paths import get_public_root
 
 logger = logging.getLogger(__name__)
 
+_TOPIC_MEDIA_TYPES = frozenset({"audio", "downloads", "images", "video"})
+
 
 def _discover_default_teaching_content_root(module_path: Path | None = None) -> Path:
     resolved_module_path = (module_path or Path(__file__)).resolve()
@@ -175,18 +177,39 @@ def clear_teaching_content_caches() -> None:
     load_teaching_manifest.cache_clear()
     load_teaching_index.cache_clear()
     load_teaching_topic.cache_clear()
+    load_teaching_media_manifest.cache_clear()
 
 
 def _manifest_path(teaching_lang: str) -> Path:
     return TEACHING_CONTENT_ROOT / teaching_lang / "teaching.yaml"
 
 
+def _hub_path(teaching_lang: str, ui_lang: str) -> Path:
+    return TEACHING_CONTENT_ROOT / teaching_lang / "hubs" / f"{ui_lang}.yaml"
+
+
 def _index_path(teaching_lang: str, ui_lang: str) -> Path:
-    return TEACHING_CONTENT_ROOT / teaching_lang / ui_lang / "index.yaml"
+    return _hub_path(teaching_lang, ui_lang)
+
+
+def _topic_dir(teaching_lang: str, topic_slug: str) -> Path:
+    return TEACHING_CONTENT_ROOT / teaching_lang / topic_slug
+
+
+def _topic_locale_path(teaching_lang: str, ui_lang: str, topic_slug: str) -> Path:
+    return _topic_dir(teaching_lang, topic_slug) / f"{ui_lang}.yaml"
 
 
 def _topic_path(teaching_lang: str, ui_lang: str, topic_slug: str) -> Path:
-    return TEACHING_CONTENT_ROOT / teaching_lang / ui_lang / "topics" / f"{topic_slug}.yaml"
+    return _topic_locale_path(teaching_lang, ui_lang, topic_slug)
+
+
+def _media_manifest_path(teaching_lang: str, topic_slug: str) -> Path:
+    return _topic_dir(teaching_lang, topic_slug) / "media.yaml"
+
+
+def _topic_media_root(teaching_lang: str, topic_slug: str) -> Path:
+    return _topic_dir(teaching_lang, topic_slug) / "media"
 
 
 def _normalize_ui_langs(values: Any) -> list[str]:
@@ -198,22 +221,6 @@ def _normalize_ui_langs(values: Any) -> list[str]:
         if candidate and candidate not in normalized:
             normalized.append(candidate)
     return normalized
-
-
-def _public_asset_path(asset_url: str | None) -> Path | None:
-    candidate = _as_text(asset_url)
-    if not candidate or not candidate.startswith("/"):
-        return None
-    parsed = urlparse(candidate)
-    relative_path = parsed.path.lstrip("/")
-    if not relative_path:
-        return None
-    return get_public_root() / relative_path
-
-
-def _public_asset_exists(asset_url: str | None) -> bool:
-    asset_path = _public_asset_path(asset_url)
-    return bool(asset_path and asset_path.exists() and asset_path.is_file())
 
 
 def _person_entries(values: Any) -> list[dict[str, str]]:
@@ -253,12 +260,65 @@ def _hub_overview_intro(index: dict[str, Any]) -> str:
     return _as_text(index.get("overview_intro") or index.get("hub_intro") or index.get("orientation"))
 
 
-def _indexed_topics(index: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    return {
-        _as_text(item.get("slug")): item
-        for item in index.get("topics", [])
-        if isinstance(item, dict) and _as_text(item.get("slug"))
-    }
+def _normalize_topic_reference(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        slug = _as_text(value.get("slug"))
+        if not slug:
+            return None
+        return {**value, "slug": slug}
+
+    slug = _as_text(value)
+    if not slug:
+        return None
+    return {"slug": slug}
+
+
+def _hub_group_entries(index: dict[str, Any]) -> list[dict[str, Any]]:
+    groups: list[dict[str, Any]] = []
+
+    if isinstance(index.get("groups"), list):
+        for raw_group in index["groups"]:
+            if not isinstance(raw_group, dict):
+                continue
+            topic_refs = [
+                reference
+                for raw_topic in raw_group.get("topics", [])
+                for reference in [_normalize_topic_reference(raw_topic)]
+                if reference is not None
+            ]
+            groups.append(
+                {
+                    "title": _as_text(raw_group.get("title")),
+                    "description": _as_text(raw_group.get("description") or raw_group.get("intro")),
+                    "topics": topic_refs,
+                }
+            )
+
+    if groups:
+        return groups
+
+    flat_topics = [
+        reference
+        for raw_topic in index.get("topics", [])
+        for reference in [_normalize_topic_reference(raw_topic)]
+        if reference is not None
+    ]
+    if not flat_topics:
+        return []
+    return [{"title": "", "description": "", "topics": flat_topics}]
+
+
+def _hub_topic_entries(index: dict[str, Any]) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for group in _hub_group_entries(index):
+        for entry in group["topics"]:
+            topic_slug = _as_text(entry.get("slug"))
+            if not topic_slug or topic_slug in seen:
+                continue
+            entries.append(entry)
+            seen.add(topic_slug)
+    return entries
 
 
 def _explicit_public_availability(entry: dict[str, Any] | None) -> bool | None:
@@ -278,35 +338,131 @@ def _explicit_public_availability(entry: dict[str, Any] | None) -> bool | None:
     return None
 
 
-def topic_is_public(teaching_lang: str, ui_lang: str, topic_slug: str, entry: dict[str, Any] | None = None) -> bool:
-    explicit_state = _explicit_public_availability(entry)
-    if explicit_state is False:
+def _topic_author_names(raw_topic: dict[str, Any]) -> list[str]:
+    authors = _text_entries(_topic_metadata_source(raw_topic).get("authors"))
+    if authors:
+        return authors
+
+    credits = raw_topic.get("credits") if isinstance(raw_topic.get("credits"), dict) else {}
+    return [person["name"] for person in _person_entries(credits.get("authors"))]
+
+
+def _topic_card_byline(ui_lang: str, raw_topic: dict[str, Any]) -> str:
+    authors = _topic_author_names(raw_topic)
+    if not authors:
+        return ""
+    return translate(ui_lang, "teaching.topic.byline", authors=", ".join(authors))
+
+
+def topic_is_public(
+    teaching_lang: str,
+    ui_lang: str,
+    topic_slug: str,
+    entry: dict[str, Any] | None = None,
+    raw_topic: dict[str, Any] | None = None,
+) -> bool:
+    explicit_values = [
+        _explicit_public_availability(source)
+        for source in (entry, raw_topic)
+        if isinstance(source, dict)
+    ]
+    if any(value is False for value in explicit_values):
         return False
-    exists = topic_exists(teaching_lang, ui_lang, topic_slug)
-    if explicit_state is True:
+    exists = raw_topic is not None if raw_topic is not None else topic_exists(teaching_lang, ui_lang, topic_slug)
+    if any(value is True for value in explicit_values):
         return exists
     return exists
+
+
+def resolve_teaching_topic_media_artifact(
+    teaching_lang: str,
+    topic_slug: str,
+    media_type: str,
+    filename: str,
+) -> Path | None:
+    if media_type not in _TOPIC_MEDIA_TYPES:
+        return None
+
+    normalized_filename = _as_text(filename).replace("\\", "/")
+    if not normalized_filename:
+        return None
+
+    parsed = urlparse(normalized_filename)
+    if parsed.scheme or normalized_filename.startswith("/"):
+        return None
+
+    relative_path = Path(normalized_filename)
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        return None
+
+    media_root = (_topic_media_root(teaching_lang, topic_slug) / media_type).resolve()
+    candidate = (media_root / relative_path).resolve()
+    try:
+        candidate.relative_to(media_root)
+    except ValueError:
+        return None
+
+    if not candidate.exists() or not candidate.is_file():
+        return None
+    return candidate
+
+
+def _resolve_topic_media_url(teaching_lang: str, topic_slug: str, media_type: str, value: Any) -> str:
+    candidate = _as_text(value).replace("\\", "/")
+    if not candidate:
+        return ""
+
+    parsed = urlparse(candidate)
+    if parsed.scheme in {"http", "https"} or candidate.startswith("/"):
+        return candidate
+
+    artifact = resolve_teaching_topic_media_artifact(teaching_lang, topic_slug, media_type, candidate)
+    if artifact is None:
+        return ""
+
+    return url_for(
+        "public.teaching_topic_media",
+        teaching_lang=teaching_lang,
+        topic_slug=topic_slug,
+        media_type=media_type,
+        filename=candidate,
+    )
+
+
+def _topic_media_is_available(teaching_lang: str, topic_slug: str, media_type: str, value: Any) -> bool:
+    candidate = _as_text(value).replace("\\", "/")
+    if not candidate:
+        return False
+    parsed = urlparse(candidate)
+    if parsed.scheme in {"http", "https"} or candidate.startswith("/"):
+        return True
+    return resolve_teaching_topic_media_artifact(teaching_lang, topic_slug, media_type, candidate) is not None
 
 
 def _hub_topic_card(
     teaching_lang: str,
     ui_lang: str,
     topic_slug: str,
-    raw_topic: dict[str, Any] | None,
+    raw_entry: dict[str, Any] | None,
     *,
     include_unavailable: bool = False,
 ) -> dict[str, Any] | None:
-    if raw_topic is None or not topic_slug:
+    if not topic_slug:
         return None
 
-    is_available = topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic)
+    raw_topic = load_teaching_topic(teaching_lang, ui_lang, topic_slug)
+    if raw_topic is None:
+        return None
+
+    is_available = topic_is_public(teaching_lang, ui_lang, topic_slug, raw_entry, raw_topic)
     if not is_available and not include_unavailable:
         return None
 
     return _set_inline_markdown_fields({
         "slug": topic_slug,
         "title": _as_text(raw_topic.get("title")) or topic_slug,
-        "summary": _as_text(raw_topic.get("summary")),
+        "summary": _as_text(raw_topic.get("summary") or raw_topic.get("description")),
+        "byline": _topic_card_byline(ui_lang, raw_topic),
         "metadata": _topic_card_metadata(raw_topic),
         "href": url_for(
             "public.teaching_language_page",
@@ -315,17 +471,18 @@ def _hub_topic_card(
             page_slug=topic_slug,
         ) if is_available else "",
         "is_available": is_available,
-    }, "title", "summary")
+    }, "title", "summary", "byline")
 
 
 def _audio_example_payload(
     teaching_lang: str,
+    topic_slug: str,
     raw_item: dict[str, Any],
     *,
     inherited_transcript: str = "",
 ) -> dict[str, Any]:
-    audio_url = _as_text(raw_item.get("audio"))
-    is_available = bool(audio_url) and _public_asset_exists(audio_url)
+    audio_url = _resolve_topic_media_url(teaching_lang, topic_slug, "audio", raw_item.get("audio"))
+    is_available = _topic_media_is_available(teaching_lang, topic_slug, "audio", raw_item.get("audio"))
     transcript = _as_text(raw_item.get("transcript")) or inherited_transcript
     note = _as_text(raw_item.get("note"))
     return _set_inline_markdown_fields({
@@ -347,6 +504,7 @@ def _audio_example_payload(
         ],
         "is_available": is_available,
         "teaching_lang": teaching_lang,
+        "topic_slug": topic_slug,
     }, "label", "title", "subtitle")
 
 
@@ -366,14 +524,15 @@ def _audio_source_payload(value: Any) -> dict[str, str]:
     }, "label")
 
 
-def _download_payload(raw_block: dict[str, Any]) -> dict[str, Any]:
-    href = _as_text(raw_block.get("href") or raw_block.get("url") or raw_block.get("file"))
+def _download_payload(teaching_lang: str, topic_slug: str, raw_block: dict[str, Any]) -> dict[str, Any]:
+    raw_href = _as_text(raw_block.get("href") or raw_block.get("url") or raw_block.get("file"))
+    href = _resolve_topic_media_url(teaching_lang, topic_slug, "downloads", raw_href)
     return _set_inline_markdown_fields({
         "title": _as_text(raw_block.get("title")),
-        "label": _as_text(raw_block.get("label")) or href.rsplit("/", 1)[-1],
+        "label": _as_text(raw_block.get("label")) or raw_href.rsplit("/", 1)[-1],
         "href": href,
         "description": _as_text(raw_block.get("description")),
-        "is_available": _public_asset_exists(href) if href.startswith("/") else bool(href),
+        "is_available": _topic_media_is_available(teaching_lang, topic_slug, "downloads", raw_href),
     }, "title", "label", "description")
 
 
@@ -627,29 +786,25 @@ def _topic_page_intro(raw_topic: dict[str, Any]) -> str:
 
 def _build_topic_grid_cards(teaching_lang: str, ui_lang: str, topic_slugs: list[str]) -> list[dict[str, Any]]:
     cards: list[dict[str, Any]] = []
-    index = load_teaching_index(teaching_lang, ui_lang) or {}
-    listed_topics = {
-        _as_text(item.get("slug")): item
-        for item in index.get("topics", [])
-        if isinstance(item, dict) and _as_text(item.get("slug"))
-    }
     for topic_slug in topic_slugs:
-        entry = listed_topics.get(topic_slug)
-        if not entry or not topic_exists(teaching_lang, ui_lang, topic_slug):
+        raw_topic = load_teaching_topic(teaching_lang, ui_lang, topic_slug)
+        if raw_topic is None or not topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic=raw_topic):
             continue
         cards.append(
-            {
+            _set_inline_markdown_fields({
                 "slug": topic_slug,
-                "title": _as_text(entry.get("title")) or topic_slug,
-                "summary": _as_text(entry.get("summary")),
-                "metadata": _topic_card_metadata(entry),
+                "title": _as_text(raw_topic.get("title")) or topic_slug,
+                "summary": _as_text(raw_topic.get("summary") or raw_topic.get("description")),
+                "byline": _topic_card_byline(ui_lang, raw_topic),
+                "metadata": _topic_card_metadata(raw_topic),
                 "href": url_for(
                     "public.teaching_language_page",
                     ui_lang=ui_lang,
                     language_slug=teaching_lang,
                     page_slug=topic_slug,
                 ),
-            }
+                "is_available": True,
+            }, "title", "summary", "byline")
         )
     return cards
 
@@ -756,7 +911,7 @@ def _topic_blocks(
                 )
             continue
         if block_type == "image":
-            src = _as_text(raw_block.get("src"))
+            src = _resolve_topic_media_url(teaching_lang, topic_slug, "images", raw_block.get("src"))
             alt = _as_text(raw_block.get("alt"))
             if src:
                 if not alt:
@@ -839,6 +994,7 @@ def _topic_blocks(
         if block_type == "audio_example":
             example = _audio_example_payload(
                 teaching_lang,
+                topic_slug,
                 raw_block,
                 inherited_transcript=_as_text(raw_block.get("transcript")),
             )
@@ -865,6 +1021,7 @@ def _topic_blocks(
             examples = [
                 _audio_example_payload(
                     teaching_lang,
+                    topic_slug,
                     item,
                     inherited_transcript=inherited_transcript,
                 )
@@ -897,6 +1054,7 @@ def _topic_blocks(
             examples = [
                 _audio_example_payload(
                     teaching_lang,
+                    topic_slug,
                     item,
                     inherited_transcript=inherited_transcript,
                 )
@@ -919,7 +1077,7 @@ def _topic_blocks(
                 )
             continue
         if block_type == "download":
-            payload = _download_payload(raw_block)
+            payload = _download_payload(teaching_lang, topic_slug, raw_block)
             if payload["href"]:
                 blocks.append(
                     {
@@ -976,7 +1134,8 @@ def _topic_blocks(
                 )
             continue
         if block_type == "video":
-            src = _as_text(raw_block.get("src"))
+            raw_src = _as_text(raw_block.get("src"))
+            src = _resolve_topic_media_url(teaching_lang, topic_slug, "video", raw_src)
             embed_url = _as_text(raw_block.get("embed_url"))
             if src or embed_url:
                 blocks.append(
@@ -989,7 +1148,7 @@ def _topic_blocks(
                         "src": src,
                         "embed_url": embed_url,
                         "caption": _as_text(raw_block.get("caption")),
-                        "is_available": _public_asset_exists(src) if src else True,
+                        "is_available": _topic_media_is_available(teaching_lang, topic_slug, "video", raw_src) if src else True,
                     }, "title", "caption")
                 )
             continue
@@ -1101,14 +1260,14 @@ def _topic_sections(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def _hub_topic_cards(teaching_lang: str, ui_lang: str, *, include_unavailable: bool = False) -> list[dict[str, Any]]:
     index = load_teaching_index(teaching_lang, ui_lang) or {}
-    listed_topics = _indexed_topics(index)
     cards: list[dict[str, Any]] = []
-    for topic_slug, raw_topic in listed_topics.items():
+    for entry in _hub_topic_entries(index):
+        topic_slug = _as_text(entry.get("slug"))
         card = _hub_topic_card(
             teaching_lang,
             ui_lang,
             topic_slug,
-            raw_topic,
+            entry,
             include_unavailable=include_unavailable,
         )
         if card is not None:
@@ -1118,33 +1277,29 @@ def _hub_topic_cards(teaching_lang: str, ui_lang: str, *, include_unavailable: b
 
 def _hub_topic_groups(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
     index = load_teaching_index(teaching_lang, ui_lang) or {}
-    listed_topics = _indexed_topics(index)
     groups: list[dict[str, Any]] = []
 
-    if isinstance(index.get("groups"), list):
-        for raw_group in index["groups"]:
-            if not isinstance(raw_group, dict):
-                continue
-            cards: list[dict[str, Any]] = []
-            for raw_topic in raw_group.get("topics", []):
-                topic_slug = _as_text(raw_topic.get("slug")) if isinstance(raw_topic, dict) else _as_text(raw_topic)
-                card = _hub_topic_card(
-                    teaching_lang,
-                    ui_lang,
-                    topic_slug,
-                    listed_topics.get(topic_slug),
-                    include_unavailable=True,
-                )
-                if card is not None:
-                    cards.append(card)
-            if cards:
-                groups.append(
-                    _set_inline_markdown_fields({
-                        "title": _as_text(raw_group.get("title")),
-                        "description": _as_text(raw_group.get("description") or raw_group.get("intro")),
-                        "cards": cards,
-                    }, "title", "description")
-                )
+    for raw_group in _hub_group_entries(index):
+        cards: list[dict[str, Any]] = []
+        for raw_topic in raw_group["topics"]:
+            topic_slug = _as_text(raw_topic.get("slug"))
+            card = _hub_topic_card(
+                teaching_lang,
+                ui_lang,
+                topic_slug,
+                raw_topic,
+                include_unavailable=True,
+            )
+            if card is not None:
+                cards.append(card)
+        if cards:
+            groups.append(
+                _set_inline_markdown_fields({
+                    "title": raw_group["title"],
+                    "description": raw_group["description"],
+                    "cards": cards,
+                }, "title", "description")
+            )
 
     if groups:
         return groups
@@ -1186,7 +1341,11 @@ def list_existing_ui_editions(teaching_lang: str) -> list[str]:
     manifest = load_teaching_manifest(teaching_lang)
     if manifest is None:
         return []
-    return [ui_lang for ui_lang in manifest["available_ui_langs"] if _index_path(teaching_lang, ui_lang).exists()]
+    return [
+        ui_lang
+        for ui_lang in manifest["available_ui_langs"]
+        if _index_path(teaching_lang, ui_lang).exists()
+    ]
 
 
 def edition_exists(teaching_lang: str, ui_lang: str) -> bool:
@@ -1221,6 +1380,11 @@ def load_teaching_topic(teaching_lang: str, ui_lang: str, topic_slug: str) -> di
     return _safe_yaml_map(_topic_path(teaching_lang, ui_lang, topic_slug))
 
 
+@lru_cache(maxsize=None)
+def load_teaching_media_manifest(teaching_lang: str, topic_slug: str) -> dict[str, Any] | None:
+    return _safe_yaml_map(_media_manifest_path(teaching_lang, topic_slug))
+
+
 def topic_exists(teaching_lang: str, ui_lang: str, topic_slug: str) -> bool:
     return load_teaching_topic(teaching_lang, ui_lang, topic_slug) is not None
 
@@ -1237,10 +1401,17 @@ def resolve_topic_slug_for_ui_lang(teaching_lang: str, current_ui_lang: str, top
     if current_topic is not None:
         equivalents = current_topic.get("equivalents") if isinstance(current_topic.get("equivalents"), dict) else {}
         equivalent_slug = _as_text(equivalents.get(target_ui_lang))
-        if equivalent_slug and topic_exists(teaching_lang, target_ui_lang, equivalent_slug):
+        equivalent_topic = load_teaching_topic(teaching_lang, target_ui_lang, equivalent_slug) if equivalent_slug else None
+        if equivalent_slug and equivalent_topic is not None and topic_is_public(
+            teaching_lang,
+            target_ui_lang,
+            equivalent_slug,
+            raw_topic=equivalent_topic,
+        ):
             return equivalent_slug
 
-    if topic_exists(teaching_lang, target_ui_lang, topic_slug):
+    target_topic = load_teaching_topic(teaching_lang, target_ui_lang, topic_slug)
+    if target_topic is not None and topic_is_public(teaching_lang, target_ui_lang, topic_slug, raw_topic=target_topic):
         return topic_slug
     return None
 
@@ -1312,11 +1483,23 @@ def resolve_topic_route_target(teaching_lang: str, requested_ui_lang: str, topic
         return {"status": "missing-language"}
 
     if effective_ui_lang != requested_ui_lang:
-        if topic_exists(teaching_lang, effective_ui_lang, topic_slug):
+        effective_topic = load_teaching_topic(teaching_lang, effective_ui_lang, topic_slug)
+        if effective_topic is not None and topic_is_public(
+            teaching_lang,
+            effective_ui_lang,
+            topic_slug,
+            raw_topic=effective_topic,
+        ):
             return {"status": "redirect-topic", "ui_lang": effective_ui_lang, "topic_slug": topic_slug}
         return {"status": "redirect-hub", "ui_lang": effective_ui_lang}
 
-    if not topic_exists(teaching_lang, effective_ui_lang, topic_slug):
+    effective_topic = load_teaching_topic(teaching_lang, effective_ui_lang, topic_slug)
+    if effective_topic is None or not topic_is_public(
+        teaching_lang,
+        effective_ui_lang,
+        topic_slug,
+        raw_topic=effective_topic,
+    ):
         return {"status": "redirect-hub", "ui_lang": effective_ui_lang}
 
     return {"status": "ok", "ui_lang": effective_ui_lang, "topic_slug": topic_slug}
@@ -1325,7 +1508,7 @@ def resolve_topic_route_target(teaching_lang: str, requested_ui_lang: str, topic
 def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str) -> dict[str, Any] | None:
     raw_topic = load_teaching_topic(teaching_lang, ui_lang, topic_slug)
     index = load_teaching_index(teaching_lang, ui_lang)
-    if raw_topic is None or index is None:
+    if raw_topic is None or index is None or not topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic=raw_topic):
         return None
 
     title = _as_text(raw_topic.get("title")) or topic_slug.replace("-", " ").title()

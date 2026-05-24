@@ -20,9 +20,67 @@ from app.routes.public import blueprint as public_blueprint
 from app import teaching_content
 
 
-def _write_text(path: Path, content: str) -> None:
+def _write_raw_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def _write_text(path: Path, content: str) -> None:
+    _write_raw_text(path, content)
+
+    parts = list(path.parts)
+    try:
+        teaching_index = parts.index("teaching")
+    except ValueError:
+        return
+
+    teaching_parts = parts[teaching_index + 1 :]
+    if len(teaching_parts) == 3 and teaching_parts[2] == "index.yaml":
+        teaching_lang, ui_lang, _ = teaching_parts
+        _write_raw_text(path.parents[1] / "hubs" / f"{ui_lang}.yaml", content)
+        return
+
+    if len(teaching_parts) == 4 and teaching_parts[2] == "topics":
+        teaching_lang, ui_lang, _, filename = teaching_parts
+        _write_raw_text(path.parents[2] / Path(filename).stem / f"{ui_lang}.yaml", content)
+
+
+def _write_teaching_manifest(
+    root: Path,
+    teaching_lang: str = "spanish",
+    *,
+    default_ui_lang: str = "de",
+    available_ui_langs: tuple[str, ...] = ("de",),
+) -> None:
+    lines = [
+        f"teaching_lang: {teaching_lang}",
+        f"default_ui_lang: {default_ui_lang}",
+        "available_ui_langs:",
+        *[f"  - {ui_lang}" for ui_lang in available_ui_langs],
+        "",
+    ]
+    _write_text(root / "content" / "teaching" / teaching_lang / "teaching.yaml", "\n".join(lines))
+
+
+def _write_teaching_hub(root: Path, teaching_lang: str, ui_lang: str, content: str) -> None:
+    _write_text(root / "content" / "teaching" / teaching_lang / "hubs" / f"{ui_lang}.yaml", content)
+
+
+def _write_teaching_topic(root: Path, teaching_lang: str, topic_slug: str, ui_lang: str, content: str) -> None:
+    _write_text(root / "content" / "teaching" / teaching_lang / topic_slug / f"{ui_lang}.yaml", content)
+
+
+def _write_teaching_media(
+    root: Path,
+    teaching_lang: str,
+    topic_slug: str,
+    media_type: str,
+    relative_path: str,
+    content: bytes,
+) -> None:
+    media_path = root / "content" / "teaching" / teaching_lang / topic_slug / "media" / media_type / Path(relative_path)
+    media_path.parent.mkdir(parents=True, exist_ok=True)
+    media_path.write_bytes(content)
 
 
 @pytest.fixture
@@ -55,17 +113,15 @@ def test_build_teaching_topic_page_keeps_image_block_without_alt(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
-        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: Spanisch\ntopics:\n  - slug: topic-one\n    title: Thema eins\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
-        "title: Thema eins\nblocks:\n  - type: image\n    src: /teaching/spanish/images/example.png\n",
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "images", "example.png", b"image")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
+        "title: Thema eins\nblocks:\n  - type: image\n    src: example.png\n",
     )
 
     with teaching_app.test_request_context():
@@ -102,17 +158,16 @@ def test_build_teaching_topic_page_adds_inline_markdown_html_for_title_fields(
     teaching_app: Flask,
     tmp_path: Path,
 ) -> None:
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
-        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: Spanisch\ntopics:\n  - slug: topic-one\n    title: Thema eins\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
-        "title: 'Welche Aussprache mit *seseo*?'\nblocks:\n  - type: section_heading\n    title: '*Seseo* und *distinción*'\n  - type: audio_contrast\n    title: 'Mit und ohne Unterscheidung: *casa* vs. *caza*'\n    transcript: 'casa – caza'\n    examples:\n      - label: '*Distinción*'\n        audio: /teaching/spanish/audio/variation/distincion-casa-caza.mp3\n      - label: '*Seseo*'\n        audio: /teaching/spanish/audio/variation/seseo-casa-caza.mp3\n  - type: audio_examples\n    title: 'Noch ein Aussprachemerkmal: `ll` und `y`'\n    collapsible: true\n    examples:\n      - label: 'Beispiel'\n        audio: /teaching/spanish/audio/variation/seseo-casa-caza.mp3\n",
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "audio", "variation/distincion-casa-caza.mp3", b"distincion")
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "audio", "variation/seseo-casa-caza.mp3", b"seseo")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
+        "title: 'Welche Aussprache mit *seseo*?'\nblocks:\n  - type: section_heading\n    title: '*Seseo* und *distinción*'\n  - type: audio_contrast\n    title: 'Mit und ohne Unterscheidung: *casa* vs. *caza*'\n    transcript: 'casa – caza'\n    examples:\n      - label: '*Distinción*'\n        audio: variation/distincion-casa-caza.mp3\n      - label: '*Seseo*'\n        audio: variation/seseo-casa-caza.mp3\n  - type: audio_examples\n    title: 'Noch ein Aussprachemerkmal: `ll` und `y`'\n    collapsible: true\n    examples:\n      - label: 'Beispiel'\n        audio: variation/seseo-casa-caza.mp3\n",
     )
 
     with teaching_app.test_request_context():
@@ -132,16 +187,13 @@ def test_build_teaching_topic_page_adds_inline_markdown_html_for_title_fields(
 
 
 def test_build_teaching_topic_page_skips_empty_credits_groups(teaching_app: Flask, tmp_path: Path) -> None:
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
-        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: Spanisch\ntopics:\n  - slug: topic-one\n    title: Thema eins\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
         "title: Thema eins\ncredits:\n  authors:\n    - role: Ohne Namen\nblocks:\n  - type: credits\n",
     )
 
@@ -153,22 +205,16 @@ def test_build_teaching_topic_page_skips_empty_credits_groups(teaching_app: Flas
 
 
 def test_build_teaching_topic_page_keeps_only_existing_next_topics(teaching_app: Flask, tmp_path: Path) -> None:
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
-        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: Spanisch\ntopics:\n  - slug: topic-one\n    title: Thema eins\n  - slug: topic-two\n    title: Thema zwei\n  - slug: topic-missing\n    title: Thema fehlt\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n  - topic-two\n  - topic-missing\n")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
         "title: Thema eins\nblocks:\n  - type: next_topics\n    topics:\n      - topic-two\n      - topic-missing\n",
     )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-two.yaml",
-        "title: Thema zwei\nblocks: []\n",
-    )
+    _write_teaching_topic(tmp_path, "spanish", "topic-two", "de", "title: Thema zwei\nblocks: []\n")
 
     with teaching_app.test_request_context():
         page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
@@ -183,16 +229,13 @@ def test_build_teaching_topic_page_ignores_unknown_block_types(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
-        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: Spanisch\ntopics:\n  - slug: topic-one\n    title: Thema eins\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
         "title: Thema eins\nblocks:\n  - type: strange_box\n  - type: text\n    body: Testabsatz\n",
     )
 
@@ -205,17 +248,15 @@ def test_build_teaching_topic_page_ignores_unknown_block_types(
 
 
 def test_build_teaching_topic_page_applies_layout_span_defaults_and_fallbacks(teaching_app: Flask, tmp_path: Path) -> None:
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
-        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: Spanisch\ntopics:\n  - slug: topic-one\n    title: Thema eins\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
-        "title: Thema eins\nblocks:\n  - type: hero\n    lead: Leitgedanke\n  - type: text\n    layout:\n      span: 1\n    body: Testabsatz\n  - type: rich_text\n    layout:\n      span: 9\n    body: '**Test**'\n  - type: warning_box\n    body: Hinweis\n  - type: download\n    layout:\n      span: '3'\n    href: /teaching/spanish/downloads/test.txt\n",
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "downloads", "test.txt", b"download")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
+        "title: Thema eins\nblocks:\n  - type: hero\n    lead: Leitgedanke\n  - type: text\n    layout:\n      span: 1\n    body: Testabsatz\n  - type: rich_text\n    layout:\n      span: 9\n    body: '**Test**'\n  - type: warning_box\n    body: Hinweis\n  - type: download\n    layout:\n      span: '3'\n    href: test.txt\n",
     )
 
     with teaching_app.test_request_context():
@@ -232,20 +273,14 @@ def test_build_teaching_topic_page_applies_layout_span_defaults_and_fallbacks(te
 
 
 def test_build_teaching_topic_page_groups_blocks_into_sections(teaching_app: Flask, tmp_path: Path) -> None:
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
-        "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "index.yaml",
-        "title: Spanisch\ntopics:\n  - slug: topic-one\n    title: Thema eins\n  - slug: topic-two\n    title: Thema zwei\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-two.yaml",
-        "title: Thema zwei\nblocks: []\n",
-    )
-    _write_text(
-        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n  - topic-two\n")
+    _write_teaching_topic(tmp_path, "spanish", "topic-two", "de", "title: Thema zwei\nblocks: []\n")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
         "title: Thema eins\ndescription: Kurze Einleitung\nblocks:\n  - type: text\n    body: Introtext\n  - type: info_box\n    title: Einstieg\n    body: Erste Info\n  - type: section_heading\n    title: Abschnitt eins\n  - type: text\n    layout:\n      span: 1\n    body: Erster Abschnittstext\n  - type: embed\n    layout:\n      span: 1\n    provider: datawrapper\n    src: https://datawrapper.dwcdn.net/Uza2n/1/\n  - type: next_topics\n    title: Weiter im Hub\n    topics:\n      - topic-two\ncitation:\n  text: 'Beispielzitat.'\n",
     )
 
@@ -673,7 +708,7 @@ def test_build_teaching_hub_page_groups_topics_and_sets_back_link(teaching_app: 
     assert page["empty_state"] is None
 
 
-def test_build_teaching_hub_page_keeps_listed_missing_topics_as_unavailable_cards(teaching_app: Flask, tmp_path: Path) -> None:
+def test_build_teaching_hub_page_keeps_unpublished_topics_as_unavailable_cards(teaching_app: Flask, tmp_path: Path) -> None:
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
         "teaching_lang: spanish\ndefault_ui_lang: de\navailable_ui_langs:\n  - de\n",
@@ -685,6 +720,10 @@ def test_build_teaching_hub_page_keeps_listed_missing_topics_as_unavailable_card
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
         "title: Thema eins\nblocks: []\n",
+    )
+    _write_text(
+        tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-two.yaml",
+        "title: Thema zwei\ndescription: Noch nicht fertig\nis_public: false\nblocks: []\n",
     )
 
     with teaching_app.test_request_context():
@@ -716,7 +755,7 @@ def test_build_teaching_hub_page_keeps_explicitly_unavailable_topics_pending_eve
     )
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-two.yaml",
-        "title: Thema zwei\nblocks: []\n",
+        "title: Thema zwei\nis_public: false\nblocks: []\n",
     )
 
     with teaching_app.test_request_context():

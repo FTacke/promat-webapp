@@ -36,7 +36,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 ### Public teaching asset route schema
 
 ```text
-/teaching/{teaching_language}/{asset_path}
+/teaching-media/{teaching_language}/{topic_slug}/{media_type}/{filename}
 ```
 
 ### Research detail route schema
@@ -131,8 +131,8 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The corpus root `/{ui_lang}/research/{corpus_language}` is a public corpus landing page that orients users to `design`, `speakers`, `comparison`, and `phenomena` through their canonical routes.
 - All other corpus-scoped research pages and research detail routes, including protected player-media delivery, are authenticated app surfaces and must enforce access before the workbench or media response is rendered.
 - The public Teaching area is a separate fully public content surface and does not reuse research auth, owner-bound set state, protected player routing, or protected research-data paths.
-- Teaching content is file-based under `content/teaching/{teaching_language}/{ui_lang}/...`, while released Teaching media lives under `public/teaching/...`.
-- Released Teaching media is delivered publicly through `/teaching/...` and must resolve only against `PROMAT_PUBLIC_ROOT/teaching/...`, never against `data/` or protected research routes.
+- Teaching content is file-based under `content/teaching/{teaching_language}/hubs/{ui_lang}.yaml` for hub editions and `content/teaching/{teaching_language}/{topic_slug}/{ui_lang}.yaml` for topic editions.
+- Topic-local Teaching media lives beside the topic source under `content/teaching/{teaching_language}/{topic_slug}/media/{media_type}/...` and is delivered publicly only through `/teaching-media/{teaching_language}/{topic_slug}/{media_type}/{filename}`. Public Teaching media delivery must resolve only against that topic-local media root, never against `data/`, `secure/`, or protected research routes.
 - Each `teaching_language` plus `ui_lang` pair is a Teaching edition. Editions may differ in topic set, order, copy, and didactic focus; they are not required to be one-to-one translations.
 - The Teaching section root `/{ui_lang}/teaching` is a teacher-first language selection that lists only languages with an available edition in the requested UI language or a valid edition fallback, shows their current topic-count status from the resolved edition, and renders as one neutral single-column selection list of compact clickable rows rather than a multi-column language-card grid. The page-entry `h1` is the direct selection question (`Welche Sprache unterrichten Sie?` / `Which language do you teach?`), and the former duplicate hero subtitle line is not part of the active contract.
 - On desktop, each Teaching root selection row keeps one calm horizontal axis with the language title on the left, muted status centered toward the right, and the quiet `Öffnen`/`Open` CTA at the far right for available rows. On mobile, rows may stack into compact two-step text/action flow without a cramped three-column line. Languages whose public Teaching edition exists but currently has no released topic pages remain visible as muted non-link pending rows with `In Vorbereitung` / `In preparation` instead of a CTA.
@@ -141,7 +141,9 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The Teaching root and edition hubs may show one short calm orientation paragraph directly below the main header to frame the page before users enter the selection list or topic groups.
 - Teaching hub groups may carry one short muted introductory sentence from the content model to orient teachers before the topic cards.
 - Teaching hub topic cards remain one uniform card family with no featured, wide, compact, or mixed-height variants; hub grids may expand from one column on mobile to two on tablet and up to three equal-width columns on desktop.
-- Teaching hub indexes may intentionally list planned topics whose content page does not exist yet or whose editorial index explicitly marks them as not yet publicly available. Those entries render as muted pending cards with a visible status label, but without a link target, keyboard focus target, or fake empty topic route.
+- Teaching hub files define grouping, order, and optional release-state overrides only; public card title, summary, and authorship come from the referenced topic edition file, not from duplicated card copy inside the hub.
+- Teaching hub cards may show one quiet byline line sourced from topic authors directly below the summary. Missing authors simply omit that line; the card family does not introduce a second metadata chip row in compact hub mode.
+- Planned topics remain visible only when the hub references a real topic edition file whose topic metadata explicitly marks the page as not yet public. Those entries render as muted pending cards with a visible status label, but without a link target, keyboard focus target, or fake empty topic route.
 - Teaching hub group membership follows editorial content and didactic grouping, not layout demonstration goals; topics must not be regrouped only to fill a three-column row, and groups with one or two cards stay in the same card family on a compact centered row instead of stretching into special sizes.
 - Teaching topic pages render content in narrative sections. Blocks before the first `section_heading` form an intro section, each `section_heading` starts a new section, and `next_topics`/`citation` may close the page as their own sections. The section wrapper carries the outer rhythm while the existing two-column block grid continues to handle `layout.span: 1 | 2` inside each section; mobile stays one column, and no masonry, height balancing, right-hand aside column, or visual reordering is part of the active Teaching contract.
 - Topic routes use their own calmer header composition: the shared Teaching content header remains the only page-entry `h1` surface, but it sits inside a narrower centered topic-header container than the topic content grid. Hero content may supply the intro text, but it must not re-render as a duplicate visible title block inside the body. Topic metadata sits directly below the intro as part of the header composition, not as a visible body card, and citation content may close the page as one full-width block.
@@ -164,6 +166,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The global `DE | EN` switch must stay route-aware on Teaching routes: it preserves the current Teaching edition when available, switches to an equivalent topic when one exists, and otherwise falls back to the target edition hub.
 - Teaching may add edition-only UI languages inside `content/teaching` in the future without expanding the global app-wide `ui_lang` contract beyond the active public `de` and `en` routes.
 - Teaching remains editorial file content only; no admin editor or research workbench surface is part of the active Teaching contract.
+- The canonical editorial validator for Teaching content is the repository script `scripts/validate_teaching_content.py`. It validates manifests, hub references, topic files, topic-equivalent links, and topic-local media references against the active content tree.
 - `player` is a research detail route under one concrete corpus language and must not fork into separate task-specific route families.
 - The `task` segment of the player route uses only the canonical research task keys `wordlist`, `text`, and `interview`.
 - `comparison` and `phenomena` remain first-class research page routes; `phenomena` may additionally own dedicated editor subroutes, but neither page may collapse into alternate `player` path shapes.

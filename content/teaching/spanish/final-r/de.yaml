@@ -1,0 +1,79 @@
+title: Finales r
+summary: Finales r wird im Unterricht besser über Hörziele, kurze Kontexte und stabile Anschlussformen aufgebaut als über isolierte Artikulationskommandos.
+description: Finales r wird im Unterricht besser über Hörziele, kurze Kontexte und stabile Anschlussformen aufgebaut als über isolierte Artikulationskommandos.
+equivalents:
+  en: final-r
+peer_review:
+  - Gloria Gabriel
+created: 2025-07-06
+updated: 2026-03-05
+citation:
+  text: "Tacke, Felix / PROMAT Teaching (2026): Finales r."
+  url: /de/teaching/spanish/final-r
+credits:
+  coordinator:
+    - name: PROMAT Teaching
+      role: Koordination
+      affiliation: PROMAT
+  authors:
+    - name: Felix Tacke
+      role: Konzept
+      affiliation: PROMAT
+blocks:
+  - type: hero
+    layout:
+      span: 2
+    title: Finales r
+    lead: Wort- und silbenfinales r verlangt kontrollierte Hörziele im Kontext, nicht nur isolierte Artikulationsanweisungen.
+  - type: section_heading
+    layout:
+      span: 2
+    title: Ausgangspunkt
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Im Deutschen wird wortfinales r oft abgeschwächt, vokalisiert oder deutlich anders angebunden als im Spanischen.
+
+      Für spanisches finales r sind deshalb kurze, rhythmische Kontexte meist hilfreicher als isolierte Lautbeschreibungen.
+  - type: tip_box
+    layout:
+      span: 1
+    title: Unterrichtsperspektive
+    body: |
+      Einstieg und Sicherung sollten vom Hören ausgehen: Was bleibt am Wortende hörbar, wie knapp ist der Auslaut, und wann kippt die Realisierung hörbar in eine deutsch geprägte Spur?
+
+      Erst danach lohnt es sich, einzelne Artikulationshinweise knapp zu ergänzen.
+  - type: audio_contrast
+    layout:
+      span: 2
+    title: Kontrastive Beobachtung
+    examples:
+      - title: Spanisch-nah
+        transcript: Das finale r bleibt hörbar und knapp.
+      - title: Deutsch gefärbt
+        transcript: Das finale r wird zu stark geöffnet oder abgeschwächt.
+  - type: text
+    layout:
+      span: 1
+    title: Didaktische Folgerung
+    body: |
+      Gute Aufgaben koppeln Hören und Sprechen eng: erst unterscheiden, dann in kurzen Wort- und Satzrahmen nachsprechen, schließlich im eigenen Rhythmus stabilisieren.
+
+      So bleibt das Ziel konkret, ohne das finale r künstlich zu übertreiben.
+  - type: download
+    layout:
+      span: 1
+    title: Material für den Unterricht
+    label: Arbeitsblatt herunterladen
+    href: final-r-handout.txt
+    description: Kleines Handout für den Unterricht zur Arbeit mit hörbarem finalem `r` in kurzen Kontexten.
+  - type: credits
+    layout:
+      span: 2
+  - type: next_topics
+    layout:
+      span: 2
+    title: Weiter im Hub
+    topics:
+      - which-pronunciation

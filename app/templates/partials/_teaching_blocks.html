@@ -154,6 +154,9 @@
       {% if card.summary %}
       <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
       {% endif %}
+      {% if card.byline %}
+      <p class="pm-teaching-topic-card__byline">{{ (card.byline_html or card.byline) | safe }}</p>
+      {% endif %}
       {% if not compact and card.metadata %}
       <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
         {% for item in card.metadata %}
@@ -170,6 +173,9 @@
       <{{ heading_tag }} class="pm-card__title">{{ (card.title_html or card.title) | safe }}</{{ heading_tag }}>
       {% if card.summary %}
       <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
+      {% endif %}
+      {% if card.byline %}
+      <p class="pm-teaching-topic-card__byline">{{ (card.byline_html or card.byline) | safe }}</p>
       {% endif %}
       {% if not compact and card.metadata %}
       <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">

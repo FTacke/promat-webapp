@@ -2471,8 +2471,23 @@ a.promat-card:active .pm-cta-link {
   line-height: 1.5;
 }
 
+.pm-teaching-topic-card__byline {
+  margin: 0;
+  color: color-mix(in srgb, var(--book-muted) 86%, var(--book-fg) 14%);
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.pm-teaching-topic-card--compact .pm-teaching-topic-card__byline {
+  font-size: 0.89rem;
+}
+
 .pm-teaching-topic-card--compact.pm-teaching-topic-card--pending .pm-card__text {
   color: color-mix(in srgb, var(--book-muted) 88%, var(--pm-surface-paper) 12%);
+}
+
+.pm-teaching-topic-card--pending .pm-teaching-topic-card__byline {
+  color: color-mix(in srgb, var(--book-muted) 90%, var(--pm-surface-paper) 10%);
 }
 
 .pm-teaching-topic-card__meta,
