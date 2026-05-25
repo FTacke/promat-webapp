@@ -31,14 +31,14 @@ blocks:
       Sorgfältige Aussprache gibt es in allen spanischsprachigen Ländern – sie klingt nur unterschiedlich.
       Viele Lehrkräfte und Lernende gehen stillschweigend davon aus, die Aussprache Zentral- und Nordspaniens sei die eigentliche Zielaussprache. Das ist sie nicht.
       Am deutlichsten hörbar wird diese Frage an einem Merkmal: Wird zwischen `s` und `z/c` unterschieden (*distinción*) – oder nicht (*seseo*)?
-  - type: info_box
+  - type: overview
     layout:
       span: 1
     title: Auf einen Blick
-    body: |
-      Über 90 % der Spanischsprechenden leben außerhalb Spaniens.
-      Die große Mehrheit unterscheidet *caza* und *casa* in der Aussprache nicht – und spricht damit ein ebenso korrektes Spanisch.
-      Diese Themenseite macht den Unterschied zwischen dem *seseo* und der *distinción* hörbar und zeigt, warum beide Aussprachenormen gleichberechtigt sind.
+    items:
+      - Über 90 % der Spanischsprechenden leben außerhalb Spaniens.
+      - Die Mehrheit spricht *caza* und *casa* gleich aus (*seseo*).
+      - Diese Seite macht die Unterschiede in den Aussprachemodellen hörbar und erklärt, warum *seseo* und *distinción* gleichermaßen korrekt sind.
   - type: section_heading
     layout:
       span: 2
@@ -174,29 +174,17 @@ blocks:
         Lernende sollen verstehen: *distinción* und *seseo* sind keine Fehlerhierarchie, sondern regionale Aussprachevarianten.
       - **Eigene Ausspracheentscheidung bewusst treffen**  
         Lehrkräfte sollten die eigene Aussprachewahl offenlegen und begründen.
-  - type: section_heading
+  - type: further_reading
     layout:
       span: 2
-    title: "Ausblick: Weitere Aussprachemerkmale"
-  - type: text
-    layout:
-      span: 1
-    body: |
-      **`ll` und `y`**
-
-      Die traditionelle Unterscheidung von `ll` und `y` wird heute fast nirgends mehr gemacht – der *yeísmo*, also die gleiche Aussprache beider als `[ʝ]`, ist die Norm.
-      In Argentinien und Uruguay klingt der Laut dabei auffällig anders, nämlich wie `sch`.
-      Auch das ist kein Fehler, sondern gehört dort zur nationalen Aussprachenorm.
-
-      → [Hörbeispiele und Vertiefung im Lehrbuch](https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo)
-  - type: text
-    layout:
-      span: 1
-    body: |
-      **/s/-Abschwächung**
-
-      In vielen Ländern wird /s/ am Silben- oder Wortende abgeschwächt oder ganz getilgt.
-      Das ist kein Zeichen nachlässiger Aussprache, sondern entspricht je nach Region und Land der Aussprachenorm.
-      Für den Unterricht ist das Phänomen vor allem beim Hörverstehen relevant.
-
-      → [Hörbeispiele und Vertiefung im Lehrbuch](https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund)
+    title: Vertiefung
+    description: Weitere Aussprachemerkmale werden im begleitenden Material mit Hörbeispielen aufgegriffen.
+    items:
+      - title: "`ll` und `y`"
+        text: Die traditionelle Unterscheidung von `ll` und `y` wird heute fast nirgends mehr gemacht – der *yeísmo*, also die gleiche Aussprache beider als `[ʝ]`, ist die Norm. In Argentinien und Uruguay klingt der Laut dabei auffällig anders, nämlich wie `sch`. Auch das ist kein Fehler, sondern gehört dort zur nationalen Aussprachenorm.
+        cta: Hörbeispiele zur Vertiefung öffnen
+        href: https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo
+      - title: /s/-Abschwächung
+        text: In vielen Ländern wird /s/ am Silben- oder Wortende abgeschwächt oder ganz getilgt. Das ist kein Zeichen nachlässiger Aussprache, sondern entspricht je nach Region und Land der Aussprachenorm. Für den Unterricht ist das Phänomen vor allem beim Hörverstehen relevant.
+        cta: Hörbeispiele zur Vertiefung öffnen
+        href: https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund

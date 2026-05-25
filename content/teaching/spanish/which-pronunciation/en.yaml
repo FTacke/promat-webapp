@@ -31,14 +31,14 @@ blocks:
       Careful pronunciation exists in all Spanish-speaking countries; it just sounds different.
       Many teachers and learners silently assume that the pronunciation of central and northern Spain is the actual target pronunciation. It is not.
       This question becomes most audible in one feature: is there a distinction between `s` and `z/c` (*distinción*) or not (*seseo*)?
-  - type: info_box
+  - type: overview
     layout:
       span: 1
     title: At a glance
-    body: |
-      More than 90% of Spanish speakers live outside Spain.
-      The vast majority do not distinguish *caza* and *casa* in pronunciation and still speak equally correct Spanish.
-      This topic page makes the difference between *seseo* and *distinción* audible and shows why both pronunciation norms are equally legitimate.
+    items:
+      - More than 90% of Spanish speakers live outside Spain.
+      - Most speakers pronounce *caza* and *casa* the same way (*seseo*).
+      - This page makes the differences between pronunciation models audible and explains why *seseo* and *distinción* are equally correct.
   - type: section_heading
     layout:
       span: 2
@@ -174,29 +174,17 @@ blocks:
         Learners should understand that *distinción* and *seseo* are not a hierarchy of right and wrong, but regionally valid pronunciation norms.
       - **Choose your own target consciously**  
         Teachers should make their own pronunciation choice explicit and explain why they use it.
-  - type: section_heading
+  - type: further_reading
     layout:
       span: 2
-    title: "Outlook: More pronunciation features"
-  - type: text
-    layout:
-      span: 1
-    body: |
-      **`ll` and `y`**
-
-      The traditional distinction between `ll` and `y` is now rare; in most varieties both are pronounced alike, a pattern known as *yeísmo*.
-      In Argentina and Uruguay, the sound is often noticeably different and can sound sh-like.
-      This is not inferior pronunciation either, but part of the accepted national norm.
-
-      → [Listening examples and textbook background](https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo)
-  - type: text
-    layout:
-      span: 1
-    body: |
-      **/s/ weakening**
-
-      In many regions, /s/ is weakened or deleted at the end of a syllable or word.
-      This is not careless speech, but a regular part of the pronunciation norm in those areas.
-      In teaching, the phenomenon matters most for listening comprehension.
-
-      → [Listening examples and textbook background](https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund)
+    title: Further exploration
+    description: Additional pronunciation features are explored through accompanying audio examples.
+    items:
+      - title: "`ll` and `y`"
+        text: The traditional distinction between `ll` and `y` is now rare; in most varieties both are pronounced alike, a pattern known as *yeísmo*. In Argentina and Uruguay, the sound is often noticeably different and can sound sh-like. This is not inferior pronunciation either, but part of the accepted national norm.
+        cta: Open audio examples for further exploration
+        href: https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo
+      - title: /s/ weakening
+        text: In many regions, /s/ is weakened or deleted at the end of a syllable or word. This is not careless speech, but a regular part of the pronunciation norm in those areas. In teaching, the phenomenon matters most for listening comprehension.
+        cta: Open audio examples for further exploration
+        href: https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund

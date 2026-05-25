@@ -1663,11 +1663,12 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'class="pm-teaching-topic-header"' in html
     assert 'class="pm-teaching-topic-sections"' in html
     assert 'class="pm-teaching-topic-section pm-teaching-topic-section--intro"' in html
-    assert html.count('class="pm-teaching-topic-section pm-teaching-topic-section--section"') == 5
+    assert html.count('class="pm-teaching-topic-section pm-teaching-topic-section--section"') == 4
+    assert html.count('class="pm-teaching-topic-section pm-teaching-topic-section--further_reading"') == 1
     assert 'class="pm-teaching-topic-section pm-teaching-topic-section--citation pm-teaching-topic-section--topic-citation"' in html
     assert 'data-admonition-variant="citation"' in html
     assert html.count('data-admonition-variant="citation"') == 1
-    assert html.count('class="pm-teaching-section-heading__title"') == 5
+    assert html.count('class="pm-teaching-section-heading__title"') == 4
     assert html.count('class="pm-back-link') == 2
     assert html.count('pm-back-link__pill') == 2
     assert 'class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav"' in html
@@ -1679,10 +1680,19 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'Aus den Vergleichen ergeben sich konkrete Entscheidungen für den Unterricht:' in html
     assert '>Vertiefung im Lehrbuch<' not in html
     assert 'Wer mehr wissen will' not in html
+    assert 'data-admonition-variant="overview"' in html
+    assert html.count('data-admonition-variant="overview"') == 1
+    assert html.count('data-admonition-variant="context"') == 1
+    assert 'class="pm-teaching-block pm-teaching-block--span-1 pm-teaching-block--overview"' in html
+    assert 'class="pm-admonition pm-admonition--overview"' in html
     assert 'Variation hörbar machen' in html
     assert 'Normen transparent machen' in html
     assert '<h3 class="promat-content-block__title pm-panel__title">Mit und ohne Unterscheidung: <em>casa</em> vs. <em>caza</em></h3>' in html
-    assert '<strong><code>ll</code> und <code>y</code></strong>' in html
+    assert '<code>ll</code> und <code>y</code>' in html
+    assert 'class="pm-teaching-further-reading__title">Vertiefung</h2>' in html
+    assert 'Hörbeispiele zur Vertiefung öffnen' in html
+    assert html.count('Hörbeispiele zur Vertiefung öffnen') == 2
+    assert 'Ausblick: Weitere Aussprachemerkmale' not in html
     assert 'class="pm-teaching-section-heading__title"><p>' not in html
     assert '<h3 class="promat-content-block__title pm-panel__title"><p>' not in html
     assert '<h3 class="pm-admonition__title"><p>' not in html
@@ -1775,6 +1785,8 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'window.addEventListener("message"' not in html
     assert 'datawrapper-height' not in html
     assert 'pm-teaching-details__summary' not in html
+    assert 'data-admonition-toggle' not in html
+    assert 'pm-admonition__chevron' not in html
     assert html.count('class="pm-teaching-audio-contrast__example audio-card"') == 4
     assert html.count('class="pm-teaching-audio-contrast__transcript" data-audio-state="idle" id="') == 2
     assert html.count('class="pm-teaching-audio-contrast__transcript-row audio-sequence-row"') == 2
@@ -1796,7 +1808,7 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert '<em>cena</em>' in html
     assert 'text-transform: uppercase' not in html
     assert 'Diese Themenseite zitieren' in html
-    assert html.index('Ausblick: Weitere Aussprachemerkmale') < html.index('Diese Themenseite zitieren') < html.rindex('pm-nav-pill__label">Spanisch: Themenseiten</span>')
+    assert html.index('Impulse für den Unterricht') < html.index('Vertiefung') < html.index('Diese Themenseite zitieren') < html.rindex('pm-nav-pill__label">Spanisch: Themenseiten</span>')
     assert '*Pronunciation Matters*' not in html
     assert '[pronunciation-matters.de]' not in html
     assert 'Noch ein Aussprachemerkmal: `ll` und `y`' not in html
@@ -1834,12 +1846,18 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav"' in html
     assert 'Classroom prompts' in html
     assert 'class="pm-teaching-block pm-teaching-block--span-2 pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text pm-teaching-rich-text--didactic_close" data-block-variant="didactic_close"' in html
-    assert 'Outlook: More pronunciation features' in html
+    assert 'At a glance' in html
+    assert 'data-admonition-variant="overview"' in html
+    assert 'Further exploration' in html
+    assert 'Open audio examples for further exploration' in html
+    assert 'Outlook: More pronunciation features' not in html
     assert 'For those who want to know more' not in html
     assert 'Continue in this hub' not in html
     assert '<em>Pronunciation Matters</em>' in html
     assert 'href="https://www.pronunciation-matters.de"' in html
     assert 'aria-label="Copy citation"' in html
+    assert 'data-admonition-toggle' not in html
+    assert 'pm-admonition__chevron' not in html
     assert '*Pronunciation Matters*' not in html
     assert '[pronunciation-matters.de]' not in html
 
@@ -2418,6 +2436,8 @@ def test_sample_page_places_admonitions_before_pattern_lab_with_visible_titles(u
     assert 'Tipp' in admonition_slice
     assert 'Praxis' in admonition_slice
     assert 'Kontext' in admonition_slice
+    assert 'Auf einen Blick' in admonition_slice
+    assert 'Zitieren' in admonition_slice
     assert 'Zitation' in admonition_slice
     assert 'Zusammenfassung' in admonition_slice
     assert 'Weiterlesen' in admonition_slice
@@ -2426,16 +2446,18 @@ def test_sample_page_places_admonitions_before_pattern_lab_with_visible_titles(u
     assert '>tip<' not in admonition_slice
     assert '>praxis<' not in admonition_slice
     assert '>context<' not in admonition_slice
+    assert '>overview<' not in admonition_slice
     assert '>cite<' not in admonition_slice
     assert '>citation<' not in admonition_slice
     assert '>summary<' not in admonition_slice
     assert '>weiterlesen<' not in admonition_slice
+    assert 'data-admonition-variant="overview"' in admonition_slice
+    assert 'data-admonition-variant="cite"' in admonition_slice
     assert 'data-admonition-variant="citation"' in admonition_slice
     assert 'aria-label="Zitat kopieren"' in admonition_slice
-    assert 'data-admonition-toggle' in admonition_slice
-    assert 'aria-expanded="true"' in admonition_slice
-    assert 'aria-expanded="false"' in admonition_slice
-    assert 'sample-admonition-weiterlesen-panel' in admonition_slice
+    assert 'data-admonition-toggle' not in admonition_slice
+    assert 'aria-expanded=' not in admonition_slice
+    assert 'pm-admonition__chevron' not in admonition_slice
 
 
 def test_sample_page_exposes_pm_pattern_lab_before_interaction_preview(url_app: Flask) -> None:
@@ -2571,11 +2593,15 @@ def test_sample_page_localizes_admonitions_in_english(url_app: Flask) -> None:
     assert 'Tip' in html
     assert 'Practice' in html
     assert 'Context' in html
+    assert 'At a glance' in html
+    assert 'Citing' in html
     assert 'Citation' in html
     assert 'Summary' in html
     assert 'Further reading' in html
     assert 'Example media: audio excerpt' in html
     assert 'aria-label="Copy citation"' in html
+    assert 'data-admonition-toggle' not in html
+    assert 'pm-admonition__chevron' not in html
 
 
 def test_sample_speaker_cards_keep_focused_learner_meta_selection() -> None:

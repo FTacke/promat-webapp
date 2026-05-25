@@ -97,15 +97,12 @@
   --pm-icon-admonition-compass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.25'/%3E%3Cpath d='M14.9 9.1l-1.8 5.2-5.2 1.8 1.8-5.2 5.2-1.8Z'/%3E%3Cpath d='M11 13l2-2'/%3E%3C/svg%3E");
   --pm-icon-admonition-quote: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.5 9.25c-1.5.48-2.5 1.82-2.5 3.5V16h4v-4H9.9c.1-1.01.73-1.84 1.85-2.3l-1.25-.45Z'/%3E%3Cpath d='M18.5 9.25c-1.5.48-2.5 1.82-2.5 3.5V16h4v-4h-2.1c.1-1.01.73-1.84 1.85-2.3l-1.25-.45Z'/%3E%3C/svg%3E");
   --pm-icon-admonition-book-open: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 6.5c-1.55-1.1-3.47-1.65-5.75-1.65-1.02 0-1.75.82-1.75 1.85V18.6c0 .88.72 1.6 1.6 1.6 2.14 0 4.12.56 5.9 1.58V6.5Z'/%3E%3Cpath d='M12 6.5c1.55-1.1 3.47-1.65 5.75-1.65 1.02 0 1.75.82 1.75 1.85V18.6c0 .88-.72 1.6-1.6 1.6-2.14 0-4.12.56-5.9 1.58V6.5Z'/%3E%3Cpath d='M12 7.1v14.68'/%3E%3C/svg%3E");
-  --pm-icon-admonition-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 10.5l5 5 5-5'/%3E%3C/svg%3E");
-  --pm-icon-admonition-expand: var(--pm-icon-admonition-compass);
-
   --pm-admonition-title-font: var(--pm-type-nav-family);
-  --pm-admonition-title-size: clamp(1.08rem, 1.04rem + 0.18vw, 1.18rem);
+  --pm-admonition-title-size: var(--pm-type-ui-title-size);
   --pm-admonition-title-weight: 600;
-  --pm-admonition-title-line-height: 1.32;
+  --pm-admonition-title-line-height: 1;
   --pm-admonition-title-color: var(--book-fg);
-  --pm-admonition-body-font: var(--pm-type-reading-family);
+  --pm-admonition-body-font: var(--pm-type-nav-family);
   --pm-admonition-body-size: 1.08rem;
   --pm-admonition-body-line-height: 1.68;
   --pm-admonition-body-color: var(--book-fg);
@@ -117,12 +114,18 @@
   --pm-admonition-radius: var(--pm-radius-container);
   --pm-admonition-border-width: 1px;
   --pm-admonition-border-left-width: 3px;
-  --pm-admonition-header-gap: 0.72rem;
+  --pm-admonition-header-gap: 0.82rem;
   --pm-admonition-body-gap: 0.82rem;
   --pm-admonition-footer-gap: 0.78rem;
-  --pm-admonition-icon-size: 1.48rem;
-  --pm-admonition-icon-box-size: 2rem;
-  --pm-admonition-toggle-box-size: 1.7rem;
+  --pm-admonition-header-margin: 0;
+  --pm-admonition-header-divider-width: 0;
+  --pm-admonition-header-divider-color: transparent;
+  --pm-admonition-header-divider-space-after: 0;
+  --pm-admonition-header-divider-space-before: 0;
+  --pm-admonition-icon-size: 1.5rem;
+  --pm-admonition-icon-box-size: 1.5rem;
+  --pm-admonition-action-size: max(var(--pm-touch-target-min), 2.5rem);
+  --pm-admonition-action-icon-size: 1.5rem;
 
   --pm-admonition-hoermal-bg: color-mix(in srgb, var(--pm-surface-paper) 96%, var(--book-adm-hoermal) 4%);
   --pm-admonition-hoermal-border: color-mix(in srgb, var(--pm-border-default) 92%, var(--book-adm-hoermal) 8%);
@@ -154,6 +157,18 @@
   --pm-admonition-context-icon: var(--pm-icon-admonition-info);
   --pm-admonition-context-icon-color: color-mix(in srgb, var(--book-fg) 42%, var(--book-adm-context) 58%);
   --pm-admonition-context-title-color: var(--book-fg);
+  --pm-overview-bg: color-mix(in srgb, var(--pm-surface-paper) 86%, var(--promat-wordmark-accent) 14%);
+  --pm-overview-accent: color-mix(in srgb, var(--promat-wordmark-accent) 70%, var(--book-fg) 30%);
+  --pm-overview-title-color: var(--book-fg);
+  --pm-overview-body-color: color-mix(in srgb, var(--book-fg) 88%, var(--book-muted) 12%);
+  --pm-overview-divider-color: color-mix(in srgb, var(--promat-wordmark-accent) 18%, transparent);
+  --pm-overview-bullet-color: var(--pm-overview-accent);
+  --pm-admonition-overview-bg: var(--pm-overview-bg);
+  --pm-admonition-overview-border: transparent;
+  --pm-admonition-overview-accent: var(--pm-overview-accent);
+  --pm-admonition-overview-icon: var(--pm-icon-admonition-compass);
+  --pm-admonition-overview-icon-color: color-mix(in srgb, var(--promat-wordmark-accent) 76%, var(--book-fg) 24%);
+  --pm-admonition-overview-title-color: var(--pm-overview-title-color);
   --pm-admonition-cite-bg: color-mix(in srgb, var(--pm-surface-paper) 95%, var(--book-adm-cite) 5%);
   --pm-admonition-cite-border: color-mix(in srgb, var(--pm-border-default) 91%, var(--book-adm-cite) 9%);
   --pm-admonition-cite-accent: var(--book-adm-cite);
@@ -169,7 +184,7 @@
   --pm-admonition-summary-bg: color-mix(in srgb, var(--pm-surface-paper) 98%, var(--book-bg) 2%);
   --pm-admonition-summary-border: color-mix(in srgb, var(--pm-border-default) 88%, transparent);
   --pm-admonition-summary-accent: color-mix(in srgb, var(--pm-border-default) 78%, transparent);
-  --pm-admonition-summary-icon: var(--pm-icon-admonition-expand);
+  --pm-admonition-summary-icon: var(--pm-icon-admonition-compass);
   --pm-admonition-summary-icon-color: color-mix(in srgb, var(--book-muted) 78%, var(--book-fg) 22%);
   --pm-admonition-summary-title-color: var(--book-fg);
   --pm-admonition-weiterlesen-bg: color-mix(in srgb, var(--pm-surface-paper) 98%, var(--book-paper) 2%);
@@ -178,6 +193,23 @@
   --pm-admonition-weiterlesen-icon: var(--pm-icon-admonition-book-open);
   --pm-admonition-weiterlesen-icon-color: color-mix(in srgb, var(--book-fg) 76%, var(--book-muted) 24%);
   --pm-admonition-weiterlesen-title-color: color-mix(in srgb, var(--book-fg) 94%, var(--book-muted));
+  --pm-teaching-further-reading-inline-width: 85%;
+  --pm-teaching-further-reading-max-width: 56rem;
+  --pm-teaching-further-reading-surface: var(--pm-admonition-weiterlesen-bg);
+  --pm-teaching-further-reading-border: var(--pm-admonition-weiterlesen-border);
+  --pm-teaching-further-reading-title-color: var(--pm-admonition-weiterlesen-title-color);
+  --pm-teaching-further-reading-description-color: color-mix(in srgb, var(--book-fg) 70%, var(--book-muted) 30%);
+  --pm-teaching-further-reading-icon-color: var(--pm-admonition-weiterlesen-icon-color);
+  --pm-teaching-further-reading-divider-color: color-mix(in srgb, var(--pm-teaching-further-reading-border) 82%, transparent);
+  --pm-teaching-further-reading-card-surface: var(--pm-surface-paper);
+  --pm-teaching-further-reading-card-border: color-mix(in srgb, var(--pm-border-default) 90%, transparent);
+  --pm-teaching-further-reading-card-accent: color-mix(in srgb, var(--pm-border-default) 82%, transparent);
+  --pm-audio-section-title-font: var(--pm-admonition-title-font);
+  --pm-audio-section-title-size: var(--pm-admonition-title-size);
+  --pm-audio-section-title-weight: var(--pm-admonition-title-weight);
+  --pm-audio-section-title-line-height: var(--pm-admonition-title-line-height);
+  --pm-audio-section-title-gap: var(--pm-admonition-header-gap);
+  --pm-audio-section-icon-size: var(--pm-admonition-icon-size);
 
   --pm-border-default: var(--book-border);
   --pm-border-fine: color-mix(in srgb, var(--book-border) 78%, transparent);
@@ -249,6 +281,7 @@
   --pm-type-nav-line: 1.3;
   --pm-type-nav-tracking: 0.005em;
   --pm-type-nav-weight: 500;
+  --pm-type-ui-title-size: 1.5rem;
 
   --pm-type-panel-family: var(--book-font-ui);
   --pm-type-panel-size: 0.95rem;

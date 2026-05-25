@@ -281,19 +281,44 @@ def test_build_teaching_topic_page_groups_blocks_into_sections(teaching_app: Fla
         "spanish",
         "topic-one",
         "de",
-        "title: Thema eins\ndescription: Kurze Einleitung\nblocks:\n  - type: text\n    body: Introtext\n  - type: info_box\n    title: Einstieg\n    body: Erste Info\n  - type: section_heading\n    title: Abschnitt eins\n  - type: text\n    layout:\n      span: 1\n    body: Erster Abschnittstext\n  - type: embed\n    layout:\n      span: 1\n    provider: datawrapper\n    src: https://datawrapper.dwcdn.net/Uza2n/1/\n  - type: next_topics\n    title: Weiter im Hub\n    topics:\n      - topic-two\ncitation:\n  text: 'Beispielzitat.'\n",
+        "title: Thema eins\ndescription: Kurze Einleitung\nblocks:\n  - type: text\n    body: Introtext\n  - type: info_box\n    title: Einstieg\n    body: Erste Info\n  - type: section_heading\n    title: Abschnitt eins\n  - type: text\n    layout:\n      span: 1\n    body: Erster Abschnittstext\n  - type: embed\n    layout:\n      span: 1\n    provider: datawrapper\n    src: https://datawrapper.dwcdn.net/Uza2n/1/\n  - type: next_topics\n    title: Weiter im Hub\n    topics:\n      - topic-two\n  - type: further_reading\n    title: Vertiefung\n    description: Mehr dazu in zwei kurzen Vertiefungen.\n    items:\n      - title: '`ll` und `y`'\n        text: Die traditionelle Unterscheidung ist heute selten.\n        cta: Hörbeispiele zur Vertiefung öffnen\n        href: https://example.test/ll-y\ncitation:\n  text: 'Beispielzitat.'\n",
     )
 
     with teaching_app.test_request_context():
         page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
 
     assert page is not None
-    assert [section["kind"] for section in page["topic_sections"]] == ["intro", "section", "next_topics", "citation"]
+    assert [section["kind"] for section in page["topic_sections"]] == ["intro", "section", "next_topics", "further_reading", "citation"]
     assert [block["type"] for block in page["topic_sections"][0]["blocks"]] == ["text", "admonition"]
     assert page["topic_sections"][1]["heading"]["title"] == "Abschnitt eins"
     assert [block["layout"]["span"] for block in page["topic_sections"][1]["blocks"]] == [1, 1]
     assert page["topic_sections"][2]["blocks"][0]["type"] == "next_topics"
-    assert page["topic_sections"][3]["blocks"][0]["type"] == "citation"
+    assert page["topic_sections"][3]["blocks"][0]["type"] == "further_reading"
+    assert page["topic_sections"][4]["blocks"][0]["type"] == "citation"
+
+
+def test_build_teaching_topic_page_parses_overview_block_with_list_items(teaching_app: Flask, tmp_path: Path) -> None:
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
+        "title: Thema eins\nblocks:\n  - type: overview\n    title: Auf einen Blick\n    items:\n      - Mehr als 90 % leben außerhalb Spaniens.\n      - Die Mehrheit spricht *caza* und *casa* gleich aus.\n",
+    )
+
+    with teaching_app.test_request_context():
+        page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
+
+    assert page is not None
+    overview_block = page["blocks"][0]
+    assert overview_block["type"] == "overview"
+    assert overview_block["layout"]["span"] == 1
+    assert overview_block["title"] == "Auf einen Blick"
+    assert overview_block["title_html"] == "Auf einen Blick"
+    assert "<ul>" in overview_block["body_html_blocks"][0]
+    assert "<em>caza</em>" in overview_block["body_html_blocks"][0]
 
 
 def test_build_teaching_topic_page_derives_metadata_and_appends_top_level_citation(teaching_app: Flask, tmp_path: Path) -> None:
@@ -405,8 +430,8 @@ def test_build_teaching_topic_page_handles_audio_examples_and_contrast_transcrip
     contrast_block = page["blocks"][1]
     assert examples_block["type"] == "audio_examples"
     assert len(examples_block["examples"]) == 2
-    assert examples_block["collapsible"] is True
-    assert examples_block["default_open"] is False
+    assert "collapsible" not in examples_block
+    assert "default_open" not in examples_block
     assert examples_block["source"]["label"] == "CO.RA.PAN"
     assert examples_block["source"]["url"] == "https://corapan.hispanistica.com"
     assert examples_block["examples"][0]["token_id"] == "MX1"
@@ -567,9 +592,35 @@ def test_build_teaching_topic_page_keeps_only_valid_further_reading_links(teachi
     assert page is not None
     reading_block = page["blocks"][0]
     assert reading_block["type"] == "further_reading"
-    assert reading_block["collapsible"] is True
-    assert reading_block["default_open"] is False
+    assert "collapsible" not in reading_block
+    assert "default_open" not in reading_block
     assert reading_block["links"] == [{"label": "Gültig", "label_html": "Gültig", "href": "#"}]
+
+
+def test_build_teaching_topic_page_keeps_only_valid_structured_further_reading_items(teaching_app: Flask, tmp_path: Path) -> None:
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "topic-one",
+        "de",
+        "title: Thema eins\nblocks:\n  - type: further_reading\n    title: Vertiefung\n    description: Weitere Aussprachemerkmale in kurzen Anschlussmaterialien.\n    items:\n      - title: '`ll` und `y`'\n        text: Der *yeísmo* ist weit verbreitet.\n        cta: Hörbeispiele zur Vertiefung öffnen\n        href: https://example.test/ll-y\n      - title: 'Ohne Ziel'\n        text: Fehlt der Link, fliegt der Eintrag raus.\n        cta: Hörbeispiele zur Vertiefung öffnen\n      - title: '/s/-Abschwächung'\n        text: Das Phänomen ist vor allem beim Hörverstehen relevant.\n        cta: Hörbeispiele zur Vertiefung öffnen\n        href: https://example.test/s\n",
+    )
+
+    with teaching_app.test_request_context():
+        page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
+
+    assert page is not None
+    reading_block = page["blocks"][0]
+    assert reading_block["type"] == "further_reading"
+    assert reading_block["description"] == "Weitere Aussprachemerkmale in kurzen Anschlussmaterialien."
+    assert reading_block["description_html"] == "Weitere Aussprachemerkmale in kurzen Anschlussmaterialien."
+    assert len(reading_block["items"]) == 2
+    assert reading_block["items"][0]["title_html"] == "<code>ll</code> und <code>y</code>"
+    assert reading_block["items"][0]["text_html"] == "Der <em>yeísmo</em> ist weit verbreitet."
+    assert reading_block["items"][0]["cta"] == "Hörbeispiele zur Vertiefung öffnen"
+    assert reading_block["items"][0]["href"] == "https://example.test/ll-y"
 
 
 def test_build_teaching_topic_page_prioritizes_top_level_citation_and_uses_copy_text(

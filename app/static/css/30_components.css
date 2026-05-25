@@ -1608,8 +1608,7 @@ a.promat-card:active .pm-cta-link {
 
 .pm-teaching-section-heading__lead,
 .pm-teaching-citation__label,
-.pm-teaching-reading-links__item,
-.pm-teaching-details__summary {
+.pm-teaching-reading-links__item {
   color: var(--book-muted);
 }
 
@@ -1652,12 +1651,11 @@ a.promat-card:active .pm-cta-link {
 .pm-teaching-page--topic .pm-teaching-topic-meta__value,
 .pm-teaching-page--topic .pm-teaching-citation__label,
 .pm-teaching-page--topic .pm-teaching-citation__value,
-.pm-teaching-page--topic .pm-teaching-reading-links__item,
-.pm-teaching-page--topic .pm-teaching-details__summary {
+.pm-teaching-page--topic .pm-teaching-reading-links__item {
   font-family: var(--book-font-ui);
 }
 
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] {
+.pm-teaching-page--topic {
   --pm-teaching-topic-icon-audio: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M5 9v6h4l5 4V5l-5 4H5Z'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7'/%3E%3Cpath d='M19 6a8.5 8.5 0 0 1 0 12'/%3E%3C/svg%3E");
   --pm-teaching-topic-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' viewBox='0 0 24 24'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
   --pm-teaching-topic-icon-tip: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M9 18h6'/%3E%3Cpath d='M10 22h4'/%3E%3Cpath d='M12 2a7 7 0 0 0-4 12.75c.5.35 1 1 1 1.75V18h6v-1.5c0-.75.5-1.4 1-1.75A7 7 0 0 0 12 2Z'/%3E%3C/svg%3E");
@@ -1675,7 +1673,6 @@ a.promat-card:active .pm-cta-link {
   --pm-icon-admonition-compass: var(--pm-teaching-topic-icon-compass);
   --pm-icon-admonition-quote: var(--pm-teaching-topic-icon-quote);
   --pm-icon-admonition-book-open: var(--pm-teaching-topic-icon-book);
-  --pm-icon-admonition-expand: var(--pm-teaching-topic-icon-compass);
   --pm-admonition-hoermal-icon: var(--pm-teaching-topic-icon-audio);
   --pm-admonition-regel-icon: var(--pm-teaching-topic-icon-warning);
   --pm-admonition-tip-icon: var(--pm-teaching-topic-icon-tip);
@@ -1686,20 +1683,11 @@ a.promat-card:active .pm-cta-link {
   --pm-admonition-summary-icon: var(--pm-teaching-topic-icon-compass);
   --pm-admonition-weiterlesen-icon: var(--pm-teaching-topic-icon-book);
   --pm-admonition-action-icon: var(--pm-teaching-topic-icon-copy);
-  --pm-teaching-topic-admonition-icon-size: 1.15rem;
-  --pm-teaching-topic-admonition-icon-box-size: 1.35rem;
-  --pm-teaching-topic-citation-icon-size: 1.18rem;
-  --pm-teaching-topic-citation-icon-box-size: 1.4rem;
-  --pm-teaching-topic-citation-action-size: 2.3rem;
-  --pm-teaching-topic-citation-action-icon-size: 1.45rem;
 }
 
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition {
+.pm-teaching-page--topic .pm-admonition {
   --pm-admonition-title-font: var(--book-font-ui);
   --pm-admonition-body-font: var(--book-font-ui);
-  --pm-admonition-title-weight: 600;
-  --pm-admonition-icon-size: var(--pm-teaching-topic-admonition-icon-size);
-  --pm-admonition-icon-box-size: var(--pm-teaching-topic-admonition-icon-box-size);
 }
 
 .pm-teaching-page--topic .pm-admonition__text {
@@ -1725,74 +1713,6 @@ a.promat-card:active .pm-cta-link {
 
 .pm-teaching-page--topic .pm-teaching-topic-meta__details {
   max-width: 100%;
-}
-
-.pm-teaching-page--topic .pm-admonition__title,
-.pm-teaching-page--topic .pm-card__title.pm-teaching-block__title,
-.pm-teaching-page--topic .pm-card__title.pm-teaching-embed-card__title,
-.pm-teaching-page--topic .pm-teaching-audio-contrast__example-title,
-.pm-teaching-page--topic .pm-teaching-audio-example__label {
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.28;
-}
-
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-block--span-1 .pm-admonition[data-admonition-variant="context"] {
-  --pm-admonition-padding-inline: 1.25rem;
-  --pm-admonition-padding-block-start: 1.25rem;
-  --pm-admonition-padding-block-end: 1.25rem;
-  --pm-admonition-border-left-width: 1px;
-  --pm-admonition-header-gap: 0.5rem;
-  --pm-admonition-body-gap: 0.75rem;
-  --pm-admonition-background: color-mix(in srgb, var(--pm-primary) 3%, white);
-  --pm-admonition-border: color-mix(in srgb, var(--md-sys-color-primary) 22%, var(--pm-border-default) 78%);
-  --pm-admonition-accent: color-mix(in srgb, var(--pm-primary) 16%, var(--pm-border));
-  --pm-admonition-icon-color: var(--md-sys-color-primary);
-}
-
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition--citation,
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition.citation {
-  --pm-admonition-icon-size: var(--pm-teaching-topic-citation-icon-size);
-  --pm-admonition-icon-box-size: var(--pm-teaching-topic-citation-icon-box-size);
-  --pm-admonition-icon-color: var(--book-muted);
-}
-
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition--citation .pm-admonition__action,
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition.citation .pm-admonition__action,
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition--citation .pm-admonition__action[data-copy-state="done"],
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition.citation .pm-admonition__action[data-copy-state="done"] {
-  background: transparent;
-  border-color: transparent;
-  color: var(--book-muted);
-}
-
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition--citation .pm-admonition__action[data-copy-state="error"],
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition.citation .pm-admonition__action[data-copy-state="error"] {
-  background: transparent;
-  border-color: transparent;
-  color: var(--book-muted);
-}
-
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition--citation .pm-admonition__action,
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition.citation .pm-admonition__action {
-  inline-size: var(--pm-teaching-topic-citation-action-size);
-  block-size: var(--pm-teaching-topic-citation-action-size);
-}
-
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition--citation .pm-admonition__action-icon,
-.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-admonition.citation .pm-admonition__action-icon {
-  inline-size: var(--pm-teaching-topic-citation-action-icon-size);
-  block-size: var(--pm-teaching-topic-citation-action-icon-size);
-}
-
-.pm-teaching-page--topic .pm-teaching-block--span-1 .pm-admonition[data-admonition-variant="context"] .pm-admonition__title {
-  font-size: 1.08rem;
-  font-weight: 600;
-}
-
-.pm-teaching-page--topic .pm-teaching-block--span-1 .pm-admonition[data-admonition-variant="context"] .pm-admonition__text {
-  font-size: 1.02rem;
-  line-height: 1.6;
 }
 
 .pm-teaching-page--topic .pm-teaching-rich-text--didactic_close {
@@ -1992,12 +1912,14 @@ a.promat-card:active .pm-cta-link {
 
 .audio-section-title {
   margin: 0;
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--pm-audio-section-icon-size) minmax(0, 1fr);
   align-items: center;
-  gap: 0.65rem;
-  font-size: 1.15rem;
-  font-weight: 700;
-  line-height: 1.25;
+  column-gap: var(--pm-audio-section-title-gap);
+  font-family: var(--pm-audio-section-title-font);
+  font-size: var(--pm-audio-section-title-size);
+  font-weight: var(--pm-audio-section-title-weight);
+  line-height: var(--pm-audio-section-title-line-height);
 }
 
 .audio-section-title > .promat-content-block__title,
@@ -2008,13 +1930,12 @@ a.promat-card:active .pm-cta-link {
 }
 
 .audio-section-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: var(--pm-audio-section-icon-size);
+  height: var(--pm-audio-section-icon-size);
   flex: 0 0 auto;
   color: var(--pm-teaching-audio-icon-color);
-  font-size: 1.25rem;
+  font-size: var(--pm-audio-section-icon-size);
   line-height: 1;
-  transform: translateY(1px);
 }
 
 .audio-section-description {
@@ -2638,6 +2559,112 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   max-width: min(100%, 65ch);
 }
 
+.pm-teaching-block--overview .pm-admonition {
+  box-shadow: none;
+}
+
+.pm-teaching-block--overview .pm-admonition__text {
+  color: var(--pm-overview-body-color);
+}
+
+.pm-teaching-block--overview .pm-admonition__text > ul {
+  display: grid;
+  gap: var(--pm-admonition-body-gap);
+  margin: 0;
+  padding-inline-start: var(--promat-space-4);
+}
+
+.pm-teaching-block--overview .pm-admonition__text > ul > li::marker {
+  color: var(--pm-overview-bullet-color);
+}
+
+.pm-teaching-further-reading {
+  display: grid;
+  gap: clamp(0.96rem, 0.84rem + 0.36vw, 1.24rem);
+  padding: clamp(1rem, 0.94rem + 0.24vw, 1.24rem);
+  border: 1px solid var(--pm-teaching-further-reading-border);
+  border-radius: calc(var(--pm-radius-container) + 2px);
+  background: var(--pm-teaching-further-reading-surface);
+  font-family: var(--pm-admonition-body-font);
+}
+
+.pm-teaching-further-reading__header {
+  display: grid;
+  gap: calc(var(--pm-admonition-body-gap) * 0.5);
+  padding-block-end: calc(var(--pm-divider-space-after) * 0.75);
+  margin-block-end: calc(var(--pm-divider-space-before) * 0.2);
+  border-bottom: 1px solid var(--pm-teaching-further-reading-divider-color);
+}
+
+.pm-teaching-further-reading__title-row {
+  display: grid;
+  grid-template-columns: var(--pm-admonition-icon-box-size) minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--pm-admonition-header-gap);
+}
+
+.pm-teaching-further-reading__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--pm-admonition-icon-box-size);
+  block-size: var(--pm-admonition-icon-box-size);
+  color: var(--pm-teaching-further-reading-icon-color);
+  font-size: var(--pm-admonition-icon-size);
+  line-height: 1;
+}
+
+.pm-teaching-further-reading__title,
+.pm-teaching-further-reading__description,
+.pm-teaching-further-reading-card__text {
+  margin: 0;
+}
+
+.pm-teaching-further-reading__title {
+  color: var(--pm-teaching-further-reading-title-color);
+  font-family: var(--pm-admonition-title-font);
+  font-size: var(--pm-admonition-title-size);
+  font-weight: var(--pm-admonition-title-weight);
+  line-height: var(--pm-admonition-title-line-height);
+  letter-spacing: 0;
+}
+
+.pm-teaching-further-reading__description {
+  max-width: min(100%, 68ch);
+  color: var(--pm-teaching-further-reading-description-color);
+  font-family: var(--pm-admonition-body-font);
+  font-size: var(--pm-admonition-body-size);
+  line-height: var(--pm-admonition-body-line-height);
+}
+
+.pm-teaching-further-reading__grid {
+  gap: 0.82rem;
+  align-items: start;
+}
+
+.pm-teaching-further-reading-card {
+  border-color: var(--pm-teaching-further-reading-card-border);
+  border-top-color: var(--pm-teaching-further-reading-card-accent);
+  background: var(--pm-teaching-further-reading-card-surface);
+}
+
+.pm-teaching-further-reading-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.72rem;
+  height: 100%;
+}
+
+.pm-teaching-further-reading-card__text {
+  color: var(--book-muted);
+  font-family: var(--pm-admonition-body-font);
+  line-height: 1.58;
+}
+
+.pm-teaching-further-reading-card__action {
+  margin-top: auto;
+}
+
 .pm-teaching-citation__meta {
   margin-top: 0.2rem;
 }
@@ -2659,34 +2686,9 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   }
 }
 
-.pm-teaching-details {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.pm-teaching-details__summary {
-  cursor: pointer;
-  font-weight: 600;
-  list-style: none;
-}
-
-.pm-teaching-details__summary::-webkit-details-marker {
-  display: none;
-}
-
-.pm-teaching-details__body,
 .pm-teaching-reading-links {
   display: grid;
   gap: 0.65rem;
-}
-
-.pm-teaching-details--audio {
-  gap: 0;
-}
-
-.pm-teaching-details__body--audio {
-  gap: 0.9rem;
-  padding-top: 0.45rem;
 }
 
 .pm-teaching-reading-links {

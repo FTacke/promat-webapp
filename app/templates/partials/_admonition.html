@@ -15,16 +15,7 @@
   {% endif %}
 {%- endmacro %}
 
-{% macro _render_admonition_header(resolved_title, resolved_title_html, panel_id, is_collapsible, is_open, header_action=None) -%}
-  {% if is_collapsible %}
-  <button type="button" class="pm-admonition__toggle" data-admonition-toggle aria-expanded="{{ 'true' if is_open else 'false' }}" aria-controls="{{ panel_id }}">
-    <span class="pm-admonition__icon" aria-hidden="true"></span>
-    <span class="pm-admonition__header-body">
-      <span class="pm-admonition__title">{{ (resolved_title_html or resolved_title) | safe }}</span>
-    </span>
-    <span class="pm-admonition__chevron" aria-hidden="true"></span>
-  </button>
-  {% else %}
+{% macro _render_admonition_header(resolved_title, resolved_title_html, header_action=None) -%}
   <div class="pm-admonition__header{{ ' pm-admonition__header--with-action' if header_action }}">
     <span class="pm-admonition__icon" aria-hidden="true"></span>
     <div class="pm-admonition__header-body">
@@ -32,7 +23,6 @@
     </div>
     {{ _render_admonition_header_action(header_action) }}
   </div>
-  {% endif %}
 {%- endmacro %}
 
 {% macro render_admonition(item) -%}
@@ -43,12 +33,9 @@
   {% endif %}
   {% set resolved_title = item.title or item.default_title %}
   {% set resolved_title_html = item.title_html or item.default_title_html %}
-  {% set is_collapsible = item.collapsible | default(false) %}
-  {% set is_open = item.default_open | default(false) %}
-  {% set panel_id = item.panel_id | default(item.id ~ '-panel') %}
-  <{{ root_tag }} class="{{ classes | join(' ') }}" data-admonition data-admonition-variant="{{ item.variant }}" data-admonition-open="{{ 'true' if is_open else 'false' }}">
-    {{ _render_admonition_header(resolved_title, resolved_title_html, panel_id, is_collapsible, is_open, item.header_action) }}
-    <div id="{{ panel_id }}" class="pm-admonition__panel"{% if is_collapsible and not is_open %} hidden{% endif %}>
+  <{{ root_tag }} class="{{ classes | join(' ') }}" data-admonition data-admonition-variant="{{ item.variant }}">
+    {{ _render_admonition_header(resolved_title, resolved_title_html, item.header_action) }}
+    <div class="pm-admonition__panel">
       <div class="pm-admonition__body">
         {% if item.body_html_blocks %}
         {% for block_html in item.body_html_blocks %}

@@ -10,7 +10,6 @@ import { initPreloadGuard, initPageTitleAndScroll } from "./ui.js";
 import { initConfig } from "./config.js";
 import { initFlashSnackbar } from "./snackbar.js";
 import { initExternalHttpLinks } from "./external-links.js";
-import { initAdmonitions } from "./admonitions.js";
 
 // Import legacy main.js to preserve existing functionality (Navigation, Token Refresh, etc.)
 import "../../main.js";
@@ -76,16 +75,12 @@ initTeachingCitationCopyWhenPresent();
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Auth Handler (401 listener and param check)
     initAuthHandler();
-
-    // Initialize shared admonition toggles
-    initAdmonitions();
     
     // Initialize Page Router
     initPageRouter();
 });
 
 document.addEventListener("turbo:load", () => {
-    initAdmonitions();
     initDatawrapperEmbedsWhenPresent();
     initTeachingCitationCopyWhenPresent();
     initTeachingMiniPlayersWhenPresent();

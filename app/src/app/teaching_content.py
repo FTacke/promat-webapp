@@ -571,6 +571,7 @@ _BLOCK_LAYOUT_SPAN_DEFAULTS: dict[str, int] = {
     "rich_text": 2,
     "image": 1,
     "topic_meta": 2,
+    "overview": 1,
     "info_box": 1,
     "tip_box": 1,
     "warning_box": 1,
@@ -705,6 +706,34 @@ def _link_entries(values: Any) -> list[dict[str, str]]:
         href = _as_text(item.get("href"))
         if label and href:
             entries.append(_set_inline_markdown_fields({"label": label, "href": href}, "label"))
+    return entries
+
+
+def _overview_item_entries(values: Any) -> list[str]:
+    if not isinstance(values, list):
+        return []
+    return [item_text for item in values if (item_text := _as_text(item))]
+
+
+def _markdown_list_block(items: list[str]) -> str | None:
+    if not items:
+        return None
+    return render_markdown_block("\n".join(f"- {item}" for item in items))
+
+
+def _further_reading_item_entries(values: Any) -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    if not isinstance(values, list):
+        return entries
+    for item in values:
+        if not isinstance(item, dict):
+            continue
+        title = _as_text(item.get("title"))
+        text = _as_text(item.get("text"))
+        cta = _as_text(item.get("cta"))
+        href = _as_text(item.get("href"))
+        if title and text and cta and href:
+            entries.append(_set_inline_markdown_fields({"title": title, "text": text, "cta": cta, "href": href}, "title", "text", "cta"))
     return entries
 
 
@@ -882,6 +911,20 @@ def _topic_blocks(
                 )
             continue
 
+        if block_type == "overview":
+            list_block = _markdown_list_block(_overview_item_entries(raw_block.get("items")))
+            if list_block:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "overview",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "body_html_blocks": [list_block],
+                    }, "title")
+                )
+            continue
+
 
         if block_type == "text":
             body_html_blocks = _markdown_blocks(raw_block.get("body"))
@@ -981,8 +1024,6 @@ def _topic_blocks(
                             "default_title": _as_text(raw_block.get("title")),
                             "body_paragraphs": body,
                             "body_html_blocks": body_html_blocks,
-                            "collapsible": bool(raw_block.get("collapsible")),
-                            "default_open": bool(raw_block.get("default_open")),
                         }, "title", "default_title"),
                     }
                 )
@@ -1009,8 +1050,6 @@ def _topic_blocks(
                         "lead": _as_text(raw_block.get("lead")),
                         "lead_html": _markdown_inline(raw_block.get("lead")),
                         "source": block_source,
-                        "collapsible": bool(raw_block.get("collapsible")),
-                        "default_open": bool(raw_block.get("default_open")),
                         "examples": [example],
                     }, "title", "lead")
                 )
@@ -1043,8 +1082,6 @@ def _topic_blocks(
                         "lead": _as_text(raw_block.get("lead")),
                         "lead_html": _markdown_inline(raw_block.get("lead")),
                         "source": block_source,
-                        "collapsible": bool(raw_block.get("collapsible")),
-                        "default_open": bool(raw_block.get("default_open")),
                         "examples": examples,
                     }, "title", "lead")
                 )
@@ -1153,19 +1190,21 @@ def _topic_blocks(
                 )
             continue
         if block_type == "further_reading":
+            items = _further_reading_item_entries(raw_block.get("items"))
             links = _link_entries(raw_block.get("links"))
             body_html_blocks = _markdown_blocks(raw_block.get("body"))
-            if body_html_blocks or links:
+            if body_html_blocks or links or items:
                 blocks.append(
                     _set_inline_markdown_fields({
                         "type": "further_reading",
                         "id": block_id,
                         "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
+                        "description": _as_text(raw_block.get("description")),
+                        "description_html": _markdown_inline(raw_block.get("description")),
                         "body_html_blocks": body_html_blocks,
+                        "items": items,
                         "links": links,
-                        "collapsible": bool(raw_block.get("collapsible")),
-                        "default_open": bool(raw_block.get("default_open")),
                     }, "title")
                 )
             continue
@@ -1235,7 +1274,7 @@ def _topic_sections(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
             continue
 
-        if block_type in {"next_topics", "topic_grid", "citation"}:
+        if block_type in {"next_topics", "topic_grid", "further_reading", "citation"}:
             _append_current_section()
             sections.append(
                 {

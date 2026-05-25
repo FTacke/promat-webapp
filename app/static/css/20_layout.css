@@ -995,6 +995,12 @@ body.app-shell.page-landing .md3-content-wrapper {
   max-width: 66rem;
 }
 
+.pm-teaching-page--topic .pm-teaching-block--further-reading {
+  width: min(var(--pm-teaching-further-reading-inline-width), var(--pm-teaching-further-reading-max-width));
+  max-width: 100%;
+  margin-inline: auto;
+}
+
 .pm-teaching-block-grid {
   display: grid;
   row-gap: clamp(1rem, 2vw, 1.45rem);
@@ -1182,6 +1188,12 @@ body.app-shell.page-landing .md3-content-wrapper {
 
   .pm-teaching-credits__groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 759px) {
+  .pm-teaching-page--topic .pm-teaching-block--further-reading {
+    width: 100%;
   }
 }
 
