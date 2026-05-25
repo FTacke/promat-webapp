@@ -886,6 +886,13 @@ def _build_metadata_payload(plan: SessionImportPlan, session_dir: Path) -> tuple
         "childhood_region": plan.person.childhood_region,
         "origin_country": plan.person.origin_country,
         "origin_region": plan.person.origin_region,
+        "person_notes": plan.person.person_notes,
+        "research_consent_signed": plan.person.research_consent_signed,
+        "teaching_consent_signed": plan.person.teaching_consent_signed,
+        "consent_date": plan.person.consent_date.isoformat() if plan.person.consent_date else None,
+        "consent_file": plan.person.consent_file,
+        "questionnaire_file": plan.person.questionnaire_file,
+        "secure_notes": plan.person.secure_notes,
         "standard_variety": plan.session.standard_variety,
         "level_code": plan.session.level_code,
         "level_self": plan.session.level_self,
@@ -894,6 +901,7 @@ def _build_metadata_payload(plan: SessionImportPlan, session_dir: Path) -> tuple
         "context": plan.session.context,
         "recorded_by": plan.session.recorded_by,
         "needs_review": plan.person.needs_review or plan.session.needs_review,
+        "session_notes": plan.session.session_notes,
         "notes": plan.session.session_notes,
         "tasks": tasks,
         "files": files,
@@ -937,6 +945,12 @@ def _upsert_person_row(db_session: Session, person: IntakePersonRow, now: dateti
     row.origin_region = person.origin_region
     row.needs_review = person.needs_review
     row.person_notes = person.person_notes
+    row.research_consent_signed = person.research_consent_signed
+    row.teaching_consent_signed = person.teaching_consent_signed
+    row.consent_date = person.consent_date
+    row.consent_file = person.consent_file
+    row.questionnaire_file = person.questionnaire_file
+    row.secure_notes = person.secure_notes
     row.updated_at = now
     return row
 

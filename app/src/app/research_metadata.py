@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .auth.models import Base
@@ -14,6 +14,14 @@ class ResearchPerson(Base):
     __tablename__ = "research_people"
     __table_args__ = (
         CheckConstraint("speaker_type IN ('learner', 'native_speaker')", name="ck_research_people_speaker_type"),
+        CheckConstraint(
+            "research_consent_signed IS NULL OR research_consent_signed IN ('yes', 'no', 'unknown')",
+            name="ck_research_people_research_consent_signed",
+        ),
+        CheckConstraint(
+            "teaching_consent_signed IS NULL OR teaching_consent_signed IN ('yes', 'no', 'unknown')",
+            name="ck_research_people_teaching_consent_signed",
+        ),
     )
 
     person_id: Mapped[str] = mapped_column(String(16), primary_key=True)
@@ -31,6 +39,12 @@ class ResearchPerson(Base):
     origin_region: Mapped[str | None] = mapped_column(Text, nullable=True)
     needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     person_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    research_consent_signed: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    teaching_consent_signed: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    consent_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    consent_file: Mapped[str | None] = mapped_column(Text, nullable=True)
+    questionnaire_file: Mapped[str | None] = mapped_column(Text, nullable=True)
+    secure_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
@@ -96,7 +110,7 @@ class ResearchSessionExposure(Base):
     )
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False)
     country: Mapped[str | None] = mapped_column(Text, nullable=True)
-    duration_months: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    duration_months: Mapped[float | None] = mapped_column(Float, nullable=True)
     exposure_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
     exposure_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     needs_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

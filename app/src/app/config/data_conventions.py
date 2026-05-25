@@ -32,7 +32,7 @@ FILE_ROLES: tuple[str, ...] = (
 )
 
 STANDARD_VARIETIES: dict[str, tuple[str, ...]] = {
-    "es": ("es_std", "mx_std", "ar_std", "co_std", "cl_std"),
+    "es": ("es_std", "mx_std", "ar_std", "co_std", "ec_std", "cl_std", "pe_std", "bo_std", "uy_std", "py_std", "ve_std"),
     "en": ("gb_std", "us_std", "au_std", "nz_std"),
     "fr": ("fr_std", "ca_std", "fr_ch_std", "be_std"),
     "de": ("de_std", "at_std", "de_ch_std", "de_south_std"),

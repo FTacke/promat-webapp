@@ -102,11 +102,30 @@ Wenn für einen Task ein kanonischer Katalog unter `data/config/research_player/
 
 - Der finale Import aus Batch/Working nach `data/` läuft über `import_batch_to_production.py`.
 - Die finale `session_id`-Setzung ist Teil dieses zentralen Imports.
+- Der zentrale Import liest die aktiven Workbook-Sheets `Secure_Person_Intake`, `Research_Person`, `Research_Session_Intake`, `Exposure` und `Vocabularies` als Intake-Vertrag.
 - Reale Batch-`raw/`-Master werden dort archivisch korrekt nach `data/sessions/{language}/{session_id}/raw/` übernommen; fehlende Raw-Master bleiben sichtbar fehlend.
 - Produktions-`derived/*.mp3` für `wordlist` und `text` werden dort über die wiederverwendbaren Task-Prozessoren erzeugt.
 - `interview` wird dort jetzt ebenfalls produktiv übernommen: `source/interview.wav`, `alignment/interview.json` und `derived/interview.mp3` landen im Runtime-Session-Baum, und die Runtime-`metadata.json` referenziert die tatsächlich erzeugten Interview-Artefakte.
 - Für Native Speaker bleibt `interview` auch im Produktionsimport ein neutral nicht erwarteter Task: fehlende Working- oder Raw-Interview-Dateien zählen dort nicht als Defizit und erzeugen keine Runtime-Interview-Artefakte.
 - Produktive MFA-Ausführung bleibt weiterhin ein vorgelagerter externer oder manueller Schritt vor dem finalen Import.
+
+## Intake-Verhalten
+
+- `Secure_Person_Intake.research_consent_signed` ist der aktive Feldname für geschützte Research-Einwilligung.
+- Der Importer akzeptiert den deprecated Workbook-Header `consent_signed` noch übergangsweise als Fallback für `research_consent_signed` und gibt dabei eine Warnung aus.
+- `Secure_Person_Intake.teaching_consent_signed` ist ein Safety- und Eligibility-Flag für manuelle Teaching-Auswahl; es veröffentlicht nichts automatisch.
+- `Exposure.duration_months` akzeptiert numerische Monatswerte mit Dezimalpunkt oder Dezimalkomma und normalisiert zum Runtime-Wert, zum Beispiel `0,75` zu `0.75`.
+- Nicht numerische Freitextwerte in `Exposure.duration_months` werden nicht heuristisch umgedeutet; der Importer warnt und lässt das Feld leer.
+- `Vocabularies.exposure_type` liefert die kontrollierten Werte für `Exposure.type`.
+- Der deprecated Exposure-Typ `unspecified` wird defensiv mit Warnung zu `unknown` normalisiert.
+- Workbook-`standard_variety` darf uppercase sein und wird zu lowercase Runtime-Werten normalisiert; dazu gehören auch die erweiterten spanischen Werte `EC_STD`, `CL_STD`, `PE_STD`, `BO_STD`, `UY_STD`, `PY_STD` und `VE_STD`.
+
+## Dry Run
+
+- Für Real-Workbook-Validierung kann der zentrale Importer gezielt mit einem expliziten Workbook im Dry Run aufgerufen werden.
+- Beispiel:
+	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir <batch-dir> --workbook <path-to-workbook.xlsx> --target-language fr --dry-run`
+- Wenn ein Workbook nicht im aktuell gewählten Batch unter `intake_data/` liegt, sollte für den Test `--workbook` verwendet werden, statt die Batch-Auflösung umzubauen.
 
 ## Einstiegspunkte
 

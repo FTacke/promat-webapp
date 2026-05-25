@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -10,6 +10,46 @@ from openpyxl import load_workbook
 
 from app.config.data_conventions import CONTEXT_VALUES, L1_CODES, SPEAKER_TYPES, STANDARD_VARIETIES, build_session_id_from_ref, normalize_session_ref
 from language_config import resolve_language_config
+
+
+ACTIVE_SHEETS: tuple[str, ...] = (
+    "Secure_Person_Intake",
+    "Research_Person",
+    "Research_Session_Intake",
+    "Exposure",
+    "Vocabularies",
+)
+
+EXPOSURE_TYPES: tuple[str, ...] = (
+    "study",
+    "erasmus",
+    "work",
+    "travel",
+    "family",
+    "volunteering",
+    "school_exchange",
+    "other",
+    "unknown",
+)
+
+STANDARD_VARIETY_ALIASES: dict[str, str] = {
+    "CH_FR_STD": "fr_ch_std",
+    "FR_CH_STD": "fr_ch_std",
+    "CH_DE_STD": "de_ch_std",
+    "DE_CH_STD": "de_ch_std",
+}
+
+
+@dataclass(frozen=True, slots=True)
+class SecurePersonIntakeRow:
+    person_id: str
+    research_consent_signed: str | None
+    teaching_consent_signed: str | None
+    consent_date: date | None
+    consent_file: str | None
+    questionnaire_file: str | None
+    secure_notes: str | None
+    row_number: int
 
 
 class IntakeWorkbookError(ValueError):
@@ -40,6 +80,12 @@ class IntakePersonRow:
     needs_review: bool
     person_notes: str | None
     row_number: int
+    research_consent_signed: str | None = None
+    teaching_consent_signed: str | None = None
+    consent_date: date | None = None
+    consent_file: str | None = None
+    questionnaire_file: str | None = None
+    secure_notes: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,7 +113,7 @@ class IntakeExposureRow:
     session_ref: str
     target_language: str
     country: str | None
-    duration_months: int | None
+    duration_months: float | None
     exposure_type: str | None
     exposure_notes: str | None
     needs_review: bool
@@ -117,6 +163,34 @@ def _normalize_int(value: Any, *, field_name: str, row_number: int, required: bo
     if text and text.isdigit():
         return int(text)
     raise IntakeWorkbookError(f"Invalid {field_name} value at row {row_number}: expected integer, got {value!r}")
+
+
+def _normalize_yes_no_unknown(value: Any, *, field_name: str, row_number: int) -> str | None:
+    text = (_normalize_optional_text(value) or "").lower()
+    if not text:
+        return None
+    if text in {"yes", "no", "unknown"}:
+        return text
+    raise IntakeWorkbookError(
+        f"Invalid {field_name} value at row {row_number}: expected yes/no/unknown or empty, got {value!r}"
+    )
+
+
+def _normalize_duration_months(value: Any, *, row_number: int) -> tuple[float | None, str | None]:
+    if value in (None, ""):
+        return None, None
+    if isinstance(value, bool):
+        return None, f"Invalid duration_months value in Exposure row {row_number}: expected numeric months, got {value!r}; field left empty."
+    if isinstance(value, (int, float)):
+        return float(value), None
+    text = _normalize_optional_text(value)
+    if text is None:
+        return None, None
+    normalized = text.replace(",", ".")
+    try:
+        return float(normalized), None
+    except ValueError:
+        return None, f"Invalid duration_months value in Exposure row {row_number}: expected numeric months, got {value!r}; field left empty."
 
 
 def _normalize_date(value: Any, *, field_name: str, row_number: int) -> date | None:
@@ -184,6 +258,129 @@ def _row_dict(headers: tuple[str, ...], values: tuple[Any, ...]) -> dict[str, An
     return {header: values[index] if index < len(values) else None for index, header in enumerate(headers)}
 
 
+def _normalize_standard_variety(value: Any, *, row_number: int, target_language: str) -> str | None:
+    text = _normalize_optional_text(value)
+    if text is None:
+        return None
+    workbook_value = text.upper()
+    normalized = STANDARD_VARIETY_ALIASES.get(workbook_value, workbook_value.lower())
+    if normalized not in STANDARD_VARIETIES[target_language]:
+        raise IntakeWorkbookError(
+            f"Invalid standard_variety in Research_Session_Intake row {row_number}: {value!r}"
+        )
+    return normalized
+
+
+def _normalize_exposure_type(value: Any, *, row_number: int) -> tuple[str | None, str | None]:
+    normalized = (_normalize_optional_text(value) or "").lower()
+    if not normalized:
+        return None, None
+    if normalized == "unspecified":
+        return "unknown", f"Deprecated exposure type unspecified in Exposure row {row_number}; normalized to unknown."
+    if normalized == "study_abroad":
+        return "study", f"Deprecated exposure type study_abroad in Exposure row {row_number}; normalized to study."
+    if normalized not in EXPOSURE_TYPES:
+        raise IntakeWorkbookError(
+            f"Invalid type value in Exposure row {row_number}: expected one of {', '.join(EXPOSURE_TYPES)}, got {value!r}"
+        )
+    return normalized, None
+
+
+def _validate_required_headers(
+    sheet_name: str,
+    headers: tuple[str, ...],
+    *,
+    warnings_out: list[str],
+) -> tuple[str, ...]:
+    normalized_headers = headers
+    if sheet_name == "Secure_Person_Intake" and "research_consent_signed" not in normalized_headers and "consent_signed" in normalized_headers:
+        normalized_headers = tuple("research_consent_signed" if header == "consent_signed" else header for header in normalized_headers)
+        warnings_out.append("Deprecated column consent_signed used; please rename to research_consent_signed.")
+    if sheet_name == "Vocabularies":
+        normalized_headers = tuple("l1_code" if header.startswith("l1_code") else header for header in normalized_headers)
+
+    required_headers: dict[str, tuple[str, ...]] = {
+        "Secure_Person_Intake": (
+            "person_id",
+            "last_name",
+            "first_name",
+            "email",
+            "research_consent_signed",
+            "consent_date",
+            "consent_file",
+            "teaching_consent_signed",
+            "questionnaire_file",
+            "paper_original_location",
+            "intake_date",
+            "intake_by",
+            "needs_review",
+            "verified_by",
+            "verified_date",
+            "secure_notes",
+        ),
+        "Research_Person": (
+            "person_id",
+            "speaker_type",
+            "l1",
+            "l1_additional",
+            "mother_l1",
+            "father_l1",
+            "additional_languages",
+            "gender",
+            "birth_year",
+            "current_region",
+            "childhood_region",
+            "origin_country",
+            "origin_region",
+            "needs_review",
+            "person_notes",
+        ),
+        "Research_Session_Intake": (
+            "person_id",
+            "session_ref",
+            "session_id",
+            "target_language",
+            "standard_variety",
+            "level_self",
+            "level_code",
+            "recording_year",
+            "recording_date",
+            "recorded_by",
+            "context",
+            "needs_review",
+            "session_notes",
+        ),
+        "Exposure": (
+            "person_id",
+            "session_ref",
+            "target_language",
+            "country",
+            "duration_months",
+            "type",
+            "exposure_notes",
+            "needs_review",
+        ),
+        "Vocabularies": (
+            "gender",
+            "speaker_type",
+            "l1_code",
+            "target_language",
+            "level_code",
+            "level_self",
+            "standard_variety",
+            "context",
+            "exposure_type",
+            "task_type",
+            "recorded_by",
+            "yes_no_unknown",
+        ),
+    }
+    missing = [header for header in required_headers[sheet_name] if header not in normalized_headers]
+    if missing:
+        raise IntakeWorkbookError(f"Workbook sheet {sheet_name!r} is missing required headers: {', '.join(missing)}")
+    return normalized_headers
+
+
 def _normalize_person_row(row: dict[str, Any], row_number: int) -> IntakePersonRow:
     person_id = (_normalize_optional_text(row.get("person_id")) or "").upper()
     if not person_id:
@@ -209,6 +406,30 @@ def _normalize_person_row(row: dict[str, Any], row_number: int) -> IntakePersonR
         origin_region=_normalize_optional_text(row.get("origin_region")),
         needs_review=_normalize_bool_flag(row.get("needs_review"), field_name="needs_review", row_number=row_number),
         person_notes=_normalize_optional_text(row.get("person_notes")),
+        row_number=row_number,
+    )
+
+
+def _normalize_secure_person_row(row: dict[str, Any], row_number: int) -> SecurePersonIntakeRow:
+    person_id = (_normalize_optional_text(row.get("person_id")) or "").upper()
+    if not person_id:
+        raise IntakeWorkbookError(f"Missing person_id in Secure_Person_Intake row {row_number}")
+    return SecurePersonIntakeRow(
+        person_id=person_id,
+        research_consent_signed=_normalize_yes_no_unknown(
+            row.get("research_consent_signed"),
+            field_name="research_consent_signed",
+            row_number=row_number,
+        ),
+        teaching_consent_signed=_normalize_yes_no_unknown(
+            row.get("teaching_consent_signed"),
+            field_name="teaching_consent_signed",
+            row_number=row_number,
+        ),
+        consent_date=_normalize_date(row.get("consent_date"), field_name="consent_date", row_number=row_number),
+        consent_file=_normalize_optional_text(row.get("consent_file")),
+        questionnaire_file=_normalize_optional_text(row.get("questionnaire_file")),
+        secure_notes=_normalize_optional_text(row.get("secure_notes")),
         row_number=row_number,
     )
 
@@ -245,21 +466,20 @@ def _normalize_session_row(row: dict[str, Any], row_number: int) -> tuple[str | 
 
     level_self = _normalize_optional_text(row.get("level_self"))
     level_code = _normalize_optional_text(row.get("level_code"))
-    standard_variety = _normalize_optional_text(row.get("standard_variety"))
+    standard_variety = _normalize_standard_variety(row.get("standard_variety"), row_number=row_number, target_language=target_language)
     context = (_normalize_optional_text(row.get("context")) or "").lower() or None
     if context is not None and context not in CONTEXT_VALUES:
         raise IntakeWorkbookError(f"Invalid context in Research_Session_Intake row {row_number}: {row.get('context')!r}")
-    if standard_variety is not None:
-        standard_variety = standard_variety.lower()
-        if standard_variety not in STANDARD_VARIETIES[target_language]:
-            raise IntakeWorkbookError(
-                f"Invalid standard_variety in Research_Session_Intake row {row_number}: {row.get('standard_variety')!r}"
-            )
+
+    try:
+        session_id = build_session_id_from_ref(person_id, recording_year, session_ref)
+    except ValueError as exc:
+        raise IntakeWorkbookError(f"Invalid person/session combination in Research_Session_Intake row {row_number}: {exc}") from exc
 
     session = IntakeSessionRow(
         person_id=person_id,
         session_ref=session_ref,
-        session_id=build_session_id_from_ref(person_id, recording_year, session_ref),
+        session_id=session_id,
         target_language=target_language,
         corpus_language=language_config.corpus_slug,
         standard_variety=standard_variety,
@@ -276,7 +496,7 @@ def _normalize_session_row(row: dict[str, Any], row_number: int) -> tuple[str | 
     return target_language, session, warning
 
 
-def _normalize_exposure_row(row: dict[str, Any], row_number: int) -> tuple[str, IntakeExposureRow]:
+def _normalize_exposure_row(row: dict[str, Any], row_number: int) -> tuple[str, IntakeExposureRow, tuple[str, ...]]:
     person_id = (_normalize_optional_text(row.get("person_id")) or "").upper()
     if not person_id:
         raise IntakeWorkbookError(f"Missing person_id in Exposure row {row_number}")
@@ -284,21 +504,26 @@ def _normalize_exposure_row(row: dict[str, Any], row_number: int) -> tuple[str, 
     if session_ref is None:
         raise IntakeWorkbookError(f"Invalid session_ref in Exposure row {row_number}: {row.get('session_ref')!r}")
     target_language = _normalize_target_language(row.get("target_language"), field_name="target_language", row_number=row_number)
+    duration_months, duration_warning = _normalize_duration_months(row.get("duration_months"), row_number=row_number)
+    exposure_type, type_warning = _normalize_exposure_type(row.get("type"), row_number=row_number)
+    warnings_out = tuple(warning for warning in (duration_warning, type_warning) if warning is not None)
     exposure = IntakeExposureRow(
         person_id=person_id,
         session_ref=session_ref,
         target_language=target_language,
         country=_normalize_optional_text(row.get("country")),
-        duration_months=_normalize_int(row.get("duration_months"), field_name="duration_months", row_number=row_number),
-        exposure_type=(_normalize_optional_text(row.get("type")) or "").lower() or None,
+        duration_months=duration_months,
+        exposure_type=exposure_type,
         exposure_notes=_normalize_optional_text(row.get("exposure_notes")),
         needs_review=_normalize_bool_flag(row.get("needs_review"), field_name="needs_review", row_number=row_number),
         row_number=row_number,
     )
-    return target_language, exposure
+    return target_language, exposure, warnings_out
 
 
 def _load_sheet_headers(workbook, sheet_name: str) -> tuple[str, ...]:
+    if sheet_name not in workbook.sheetnames:
+        raise IntakeWorkbookError(f"Workbook is missing required sheet {sheet_name!r}")
     worksheet = workbook[sheet_name]
     first_row = next(worksheet.iter_rows(min_row=1, max_row=1, values_only=True), None)
     if first_row is None:
@@ -329,9 +554,35 @@ def load_intake_workbook(
             warnings_out: list[str] = []
             errors_out: list[str] = []
 
-            person_headers = _load_sheet_headers(workbook, "Research_Person")
-            session_headers = _load_sheet_headers(workbook, "Research_Session_Intake")
-            exposure_headers = _load_sheet_headers(workbook, "Exposure")
+            for sheet_name in ACTIVE_SHEETS:
+                if sheet_name not in workbook.sheetnames:
+                    raise IntakeWorkbookError(f"Workbook is missing required sheet {sheet_name!r}")
+
+            secure_headers = _validate_required_headers(
+                "Secure_Person_Intake",
+                _load_sheet_headers(workbook, "Secure_Person_Intake"),
+                warnings_out=warnings_out,
+            )
+            person_headers = _validate_required_headers(
+                "Research_Person",
+                _load_sheet_headers(workbook, "Research_Person"),
+                warnings_out=warnings_out,
+            )
+            session_headers = _validate_required_headers(
+                "Research_Session_Intake",
+                _load_sheet_headers(workbook, "Research_Session_Intake"),
+                warnings_out=warnings_out,
+            )
+            exposure_headers = _validate_required_headers(
+                "Exposure",
+                _load_sheet_headers(workbook, "Exposure"),
+                warnings_out=warnings_out,
+            )
+            _validate_required_headers(
+                "Vocabularies",
+                _load_sheet_headers(workbook, "Vocabularies"),
+                warnings_out=warnings_out,
+            )
 
             filtered_sessions: list[IntakeSessionRow] = []
             session_keys: set[SessionLinkKey] = set()
@@ -393,6 +644,30 @@ def load_intake_workbook(
                     continue
                 all_people[person.person_id] = person
 
+            secure_people: dict[str, SecurePersonIntakeRow] = {}
+            secure_sheet = workbook["Secure_Person_Intake"]
+            for row_number, row_values in enumerate(secure_sheet.iter_rows(min_row=2, values_only=True), start=2):
+                if not any(value not in (None, "") for value in row_values):
+                    continue
+                row = _row_dict(secure_headers, row_values)
+                raw_person_id = _raw_person_id(row.get("person_id"))
+                if raw_person_id is None:
+                    errors_out.append(f"Missing person_id in Secure_Person_Intake row {row_number}")
+                    continue
+                if raw_person_id not in referenced_person_ids:
+                    continue
+                try:
+                    secure_person = _normalize_secure_person_row(row, row_number)
+                except IntakeWorkbookError as exc:
+                    errors_out.append(str(exc))
+                    continue
+                if secure_person.person_id in secure_people:
+                    errors_out.append(
+                        f"Duplicate person_id in Secure_Person_Intake: {secure_person.person_id} (row {row_number})"
+                    )
+                    continue
+                secure_people[secure_person.person_id] = secure_person
+
             filtered_people: dict[str, IntakePersonRow] = {}
             for session in filtered_sessions:
                 person = all_people.get(session.person_id)
@@ -409,7 +684,19 @@ def load_intake_workbook(
                     errors_out.append(
                         f"Native-speaker session row {session.row_number} must not define level_self or level_code"
                     )
-                filtered_people[person.person_id] = person
+                secure_person = secure_people.get(person.person_id)
+                if secure_person is None:
+                    filtered_people[person.person_id] = person
+                    continue
+                filtered_people[person.person_id] = replace(
+                    person,
+                    research_consent_signed=secure_person.research_consent_signed,
+                    teaching_consent_signed=secure_person.teaching_consent_signed,
+                    consent_date=secure_person.consent_date,
+                    consent_file=secure_person.consent_file,
+                    questionnaire_file=secure_person.questionnaire_file,
+                    secure_notes=secure_person.secure_notes,
+                )
 
             exposures_by_key: dict[SessionLinkKey, list[IntakeExposureRow]] = {}
             exposure_sheet = workbook["Exposure"]
@@ -429,10 +716,11 @@ def load_intake_workbook(
                 if row_target_language != normalized_target_language:
                     continue
                 try:
-                    exposure_target_language, exposure = _normalize_exposure_row(row, row_number)
+                    exposure_target_language, exposure, exposure_warnings = _normalize_exposure_row(row, row_number)
                 except IntakeWorkbookError as exc:
                     errors_out.append(str(exc))
                     continue
+                warnings_out.extend(exposure_warnings)
                 if exposure_target_language != normalized_target_language:
                     continue
                 if normalized_person_filter is not None and exposure.person_id != normalized_person_filter:

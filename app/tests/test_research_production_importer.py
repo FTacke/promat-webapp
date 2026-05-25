@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from openpyxl import Workbook
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
@@ -48,6 +49,7 @@ def _session_row(
     standard_variety: str | None = None,
     level_self: str | None = None,
     level_code: str | None = None,
+    session_notes: str | None = "test learner session",
 ) -> list[object]:
     return [
         person_id,
@@ -62,7 +64,7 @@ def _session_row(
         recorded_by,
         context,
         "no",
-        None,
+        session_notes,
     ]
 
 
@@ -72,11 +74,62 @@ def _write_workbook(
     person_id: str = "ES-L-0001",
     speaker_type: str = "learner",
     include_out_of_scope_invalid_row: bool = False,
+    use_deprecated_consent_column: bool = False,
+    research_consent_signed: str = "yes",
+    teaching_consent_signed: str = "unknown",
+    standard_variety: str | None = None,
+    exposure_duration: object = 6,
+    exposure_type: str = "erasmus",
+    exposure_country: str = "Spain",
+    exposure_notes: str = "Semester in Madrid.",
 ) -> Path:
     workbook_path = tmp_path / "intake.xlsx"
     workbook = Workbook()
 
-    person_sheet = workbook.active
+    secure_sheet = workbook.active
+    secure_sheet.title = "Secure_Person_Intake"
+    secure_sheet.append(
+        [
+            "person_id",
+            "last_name",
+            "first_name",
+            "email",
+            "consent_signed" if use_deprecated_consent_column else "research_consent_signed",
+            "consent_date",
+            "consent_file",
+            "teaching_consent_signed",
+            "questionnaire_file",
+            "paper_original_location",
+            "intake_date",
+            "intake_by",
+            "needs_review",
+            "verified_by",
+            "verified_date",
+            "secure_notes",
+        ]
+    )
+    secure_sheet.append(
+        [
+            person_id,
+            "Mustermann",
+            "Anna",
+            "anna@example.test",
+            research_consent_signed,
+            "2026-03-14",
+            "consent_anna.pdf",
+            teaching_consent_signed,
+            "questionnaire_anna.pdf",
+            "cabinet A",
+            "2026-03-14",
+            "Ana Romero",
+            "no",
+            None,
+            None,
+            "Internal secure note.",
+        ]
+    )
+
+    person_sheet = workbook.create_sheet("Research_Person")
     person_sheet.title = "Research_Person"
     person_sheet.append(
         [
@@ -141,7 +194,7 @@ def _write_workbook(
             session_ref="S01",
             workbook_session_id="SHOULD-BE-IGNORED",
             target_language="ES",
-            standard_variety="ES_STD" if speaker_type == "native_speaker" else None,
+            standard_variety=standard_variety if standard_variety is not None else ("ES_STD" if speaker_type == "native_speaker" else None),
             level_self="B1-B2" if speaker_type == "learner" else None,
             level_code="B1" if speaker_type == "learner" else None,
             recording_year=2026,
@@ -179,13 +232,34 @@ def _write_workbook(
                 person_id,
                 "S01",
                 "ES",
-                "Spain",
-                6,
-                "erasmus",
-                "Semester in Madrid.",
+                exposure_country,
+                exposure_duration,
+                exposure_type,
+                exposure_notes,
                 "no",
             ]
         )
+
+    vocabulary_sheet = workbook.create_sheet("Vocabularies")
+    vocabulary_sheet.append(
+        [
+            "gender",
+            "speaker_type",
+            "l1_code",
+            "target_language",
+            "level_code",
+            "level_self",
+            "standard_variety",
+            "context",
+            "exposure_type",
+            "task_type",
+            "recorded_by",
+            "yes_no_unknown",
+        ]
+    )
+    vocabulary_sheet.append(["female", "learner", "DE", "ES", "B1", "B1-B2", "EC_STD", "baseline", "study", "wordlist", "Ana Romero", "yes"])
+    vocabulary_sheet.append([None, None, None, None, None, None, "CL_STD", None, "erasmus", None, None, "no"])
+    vocabulary_sheet.append([None, None, None, None, None, None, "PE_STD", None, "school_exchange", None, None, "unknown"])
 
     workbook.save(workbook_path)
     workbook.close()
@@ -274,9 +348,65 @@ def test_load_intake_workbook_derives_session_id_and_ignores_out_of_scope_rows(t
     assert workbook_data.errors == ()
     assert len(workbook_data.sessions) == 1
     assert workbook_data.sessions[0].session_id == "ES-L-0001-2026-S01"
+    assert workbook_data.persons["ES-L-0001"].research_consent_signed == "yes"
+    assert workbook_data.persons["ES-L-0001"].teaching_consent_signed == "unknown"
     assert workbook_data.warnings == (
         "Research_Session_Intake row 2 contains session_id='SHOULD-BE-IGNORED'; ignored because session_id is derived.",
     )
+
+
+def test_load_intake_workbook_accepts_deprecated_consent_column_with_warning(tmp_path: Path) -> None:
+    workbook_path = _write_workbook(tmp_path, use_deprecated_consent_column=True)
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    assert workbook_data.errors == ()
+    assert workbook_data.persons["ES-L-0001"].research_consent_signed == "yes"
+    assert workbook_data.warnings[0] == "Deprecated column consent_signed used; please rename to research_consent_signed."
+
+
+@pytest.mark.parametrize(
+    ("raw_duration", "expected_duration"),
+    [("0,75", 0.75), ("3,5", 3.5), ("6,5", 6.5), ("0.75", 0.75), ("3.5", 3.5)],
+)
+def test_load_intake_workbook_normalizes_decimal_exposure_duration_months(
+    tmp_path: Path,
+    raw_duration: object,
+    expected_duration: float,
+) -> None:
+    workbook_path = _write_workbook(tmp_path, exposure_duration=raw_duration)
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    exposure = workbook_data.exposures_by_key[next(iter(workbook_data.exposures_by_key))][0]
+    assert exposure.duration_months == expected_duration
+
+
+def test_load_intake_workbook_keeps_country_string_and_normalizes_unspecified_exposure_type(tmp_path: Path) -> None:
+    workbook_path = _write_workbook(
+        tmp_path,
+        exposure_duration="3",
+        exposure_type="unspecified",
+        exposure_country="France; Israel",
+        exposure_notes="Stayed in Strasbourg and Vannes for approximately three weeks.",
+    )
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    exposure = workbook_data.exposures_by_key[next(iter(workbook_data.exposures_by_key))][0]
+    assert exposure.country == "France; Israel"
+    assert exposure.exposure_type == "unknown"
+    assert exposure.exposure_notes == "Stayed in Strasbourg and Vannes for approximately three weeks."
+    assert workbook_data.warnings[-1] == "Deprecated exposure type unspecified in Exposure row 2; normalized to unknown."
+
+
+@pytest.mark.parametrize("workbook_value", ["EC_STD", "CL_STD", "PE_STD", "BO_STD", "UY_STD", "PY_STD", "VE_STD"])
+def test_load_intake_workbook_accepts_new_standard_varieties(tmp_path: Path, workbook_value: str) -> None:
+    workbook_path = _write_workbook(tmp_path, speaker_type="native_speaker", standard_variety=workbook_value)
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    assert workbook_data.sessions[0].standard_variety == workbook_value.lower()
 
 
 def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Path, monkeypatch) -> None:
@@ -333,6 +463,9 @@ def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Pat
     }
     exposure_entry = metadata["exposure_entries"][0]
     assert exposure_entry["exposure_notes"] == "Semester in Madrid."
+    assert metadata["research_consent_signed"] == "yes"
+    assert metadata["teaching_consent_signed"] == "unknown"
+    assert metadata["session_notes"] == "test learner session"
 
     file_paths = {entry["path"] for entry in metadata["files"]}
     assert "source/interview.wav" in file_paths
@@ -357,6 +490,8 @@ def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Pat
     assert session_rows[0].documented_tasks == "interview"
     assert len(exposure_rows) == 1
     assert exposure_rows[0].exposure_notes == "Semester in Madrid."
+    assert person_rows[0].research_consent_signed == "yes"
+    assert person_rows[0].teaching_consent_signed == "unknown"
 
 
 def test_production_import_does_not_treat_source_as_raw_fallback(tmp_path: Path, monkeypatch) -> None:

@@ -488,6 +488,10 @@ def _learner_payload(
     exposure_entries: list[dict[str, object]] | None = None,
     stays_in_target_country: bool | None = True,
     l1_additional: str | list[str] | None = None,
+    person_notes: str | None = None,
+    research_consent_signed: str | None = None,
+    teaching_consent_signed: str | None = None,
+    secure_notes: str | None = None,
 ) -> dict[str, object]:
     return {
         "person_id": person_id,
@@ -503,6 +507,13 @@ def _learner_payload(
         "birth_year": 1998,
         "current_region": "Berlin, Germany",
         "childhood_region": "Saxony, Germany",
+        "person_notes": person_notes,
+        "research_consent_signed": research_consent_signed,
+        "teaching_consent_signed": teaching_consent_signed,
+        "consent_date": "2026-03-14" if research_consent_signed else None,
+        "consent_file": "consent_anna.pdf" if research_consent_signed else None,
+        "questionnaire_file": "questionnaire_anna.pdf" if research_consent_signed else None,
+        "secure_notes": secure_notes,
         "level_code": level_code,
         "level_self": level_code,
         "recording_year": recording_year,
@@ -511,6 +522,7 @@ def _learner_payload(
         "recorded_by": "Ana Romero",
         "stays_in_target_country": stays_in_target_country,
         "exposure_entries": exposure_entries or [],
+        "session_notes": "test learner session",
         "notes": "test learner session",
         "tasks": [_task(task_type) for task_type in task_types],
     }
@@ -708,9 +720,12 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
             task_types=("wordlist", "text", "interview"),
             l1_additional="IT; EN",
             exposure_entries=[
-                {"country": "Spain", "duration_months": 6, "type": "erasmus", "exposure_notes": "Austauschsemester in Madrid."},
-                {"country": "Mexico", "duration_months": 2, "type": "travel", "exposure_notes": ""},
+                {"country": "France; Israel", "duration_months": 3, "type": "school_exchange", "exposure_notes": "Participated in a one-month school exchange in Provence and stayed for two months with family in Israel."},
             ],
+            person_notes="Stable internal biography note.",
+            research_consent_signed="yes",
+            teaching_consent_signed="unknown",
+            secure_notes="Check teaching release before editorial reuse.",
         ),
     )
 
@@ -729,12 +744,19 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
     assert person_rows["Weitere L1"] == "IT, EN"
     assert person_rows["Zusätzliche Sprachen"] == "English, French"
 
-    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
-    assert [entry["text"] for entry in exposure_row["entries"]] == [
-        "Spain · 6 Monate · Erasmus",
-        "Mexico · 2 Monate · Reise",
+    person_rows = {row["label"]: row["value"] for row in page["person_section"]["rows"]}
+    assert person_rows["Person-Notizen"] == "Stable internal biography note."
+    assert person_rows["Research-Einwilligung"] == "Ja"
+    assert person_rows["Teaching-Freigabe"] == "Unbekannt · Vor Verwendung prüfen"
+    assert person_rows["Interne Notizen"] == "Check teaching release before editorial reuse."
+
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
+    assert exposure_row["entries"] == [
+        {
+            "text": "3 Monate · France; Israel · Schulaustausch",
+            "note": "Participated in a one-month school exchange in Provence and stayed for two months with family in Israel.",
+        }
     ]
-    assert [entry["note"] for entry in exposure_row["entries"]] == ["Austauschsemester in Madrid.", ""]
     assert [task["key"] for task in page["sessions_section"]["cards"][0]["tasks"]] == ["wordlist", "text", "interview"]
     assert all(not task["is_disabled"] for task in page["sessions_section"]["cards"][0]["tasks"])
 
@@ -809,8 +831,8 @@ def test_profile_page_supports_single_exposure_entry_without_note(runtime_env: P
         page = build_speaker_profile_page("de", "spanish", "ES-L-0002", session_id)
 
     assert page is not None
-    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
-    assert exposure_row["entries"] == [{"text": "Spain · 3 Monate · Studium", "note": ""}]
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "3 Monate · Spain · Studium", "note": ""}]
 
 
 def test_profile_page_uses_compact_exposure_fallback_when_no_entries_exist(runtime_env: Path, url_app: Flask) -> None:
@@ -836,9 +858,9 @@ def test_profile_page_uses_compact_exposure_fallback_when_no_entries_exist(runti
         page = build_speaker_profile_page("de", "spanish", "ES-L-0004", session_id)
 
     assert page is not None
-    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
     assert exposure_row["kind"] == "exposure"
-    assert exposure_row["value"] == "Keine erfassten Sprachaufenthalte"
+    assert exposure_row["value"] == "Keine"
     assert "entries" not in exposure_row
 
 
@@ -867,8 +889,207 @@ def test_profile_page_preserves_long_exposure_note_for_wrapping(runtime_env: Pat
         page = build_speaker_profile_page("de", "spanish", "ES-L-0005", session_id)
 
     assert page is not None
-    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Sprachaufenthalte")
-    assert exposure_row["entries"] == [{"text": "Spain · 4 Monate · Arbeit", "note": long_note}]
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "4 Monate · Spain · Arbeit", "note": long_note}]
+
+
+def test_profile_page_hides_unknown_exposure_type_label(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0007-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0007",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[
+                {"country": "France", "duration_months": 0.75, "type": "unknown", "exposure_notes": "Stayed in Strasbourg and Vannes for approximately three weeks."},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0007", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "0,75 Monate · France", "note": "Stayed in Strasbourg and Vannes for approximately three weeks."}]
+
+
+def test_profile_page_keeps_exposure_note_exact_when_note_contains_place_and_duration(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0012-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0012",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[
+                {"country": "Spain", "duration_months": 10, "type": "unknown", "exposure_notes": "Stayed in Valencia for 10 months."},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0012", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "10 Monate · Spain", "note": "Stayed in Valencia for 10 months."}]
+    assert exposure_row["entries"][0]["note"] != "Valencia"
+
+
+def test_profile_page_keeps_complex_exposure_note_unchanged(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0013-2026-S01"
+    note = "Completed a voluntary social year in Ontario for 16 months. Participated in a school exchange in France."
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0013",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B2",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[
+                {"country": "France", "duration_months": 17, "type": "volunteering", "exposure_notes": note},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0013", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "17 Monate · France · Freiwilligendienst", "note": note}]
+
+
+def test_profile_page_uses_generic_stay_header_when_only_note_exists(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0014-2026-S01"
+    note = "Stayed in Paris for approximately three weeks."
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0014",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[
+                {"country": None, "duration_months": None, "type": None, "exposure_notes": note},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("de", "spanish", "ES-L-0014", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
+    assert exposure_row["entries"] == [{"text": "Aufenthalt", "note": note}]
+
+
+def test_speakers_page_card_shows_compact_stays_summary(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0008-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0008",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[
+                {"country": "Morocco", "duration_months": 3.5, "type": "study", "exposure_notes": "Completed a semester abroad for approximately 3.5 months."},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speakers_page("de", "spanish", {})
+
+    card = next(entry for entry in page["cards"] if entry["person_id"] == "ES-L-0008")
+    stays_row = next(row for row in card["meta_rows"] if row["label"] == "Aufenthalte")
+    assert stays_row["value"] == "Ja · 3,5 Monate"
+    assert card["table_stays"] == "Ja · 3,5 Monate"
+
+
+def test_speakers_page_card_shows_none_without_exposure(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0009-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0009",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="A2",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[],
+            stays_in_target_country=False,
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speakers_page("de", "spanish", {})
+
+    card = next(entry for entry in page["cards"] if entry["person_id"] == "ES-L-0009")
+    stays_row = next(row for row in card["meta_rows"] if row["label"] == "Aufenthalte")
+    assert stays_row["value"] == "Keine"
+
+
+def test_english_profile_localizes_exposure_labels(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0011-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0011",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B2",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[
+                {"country": "France; Israel", "duration_months": 3, "type": "school_exchange", "exposure_notes": "Full note kept."},
+            ],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speaker_profile_page("en", "spanish", "ES-L-0011", session_id)
+
+    assert page is not None
+    exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Stays abroad / language stays")
+    assert exposure_row["entries"] == [{"text": "3 months · France; Israel · School exchange", "note": "Full note kept."}]
 
 
 def test_research_profile_renders_exposure_entries_with_grouped_markup(runtime_env: Path, url_app: Flask) -> None:
@@ -904,6 +1125,37 @@ def test_research_profile_renders_exposure_entries_with_grouped_markup(runtime_e
     assert 'pm-profile-metadata__entry-line pm-profile-metadata__entry-summary' in html
     assert 'pm-profile-metadata__note pm-profile-metadata__entry-note' in html
     assert 'Semester in Salamanca.' in html
+
+
+def test_research_profile_html_does_not_replace_exposure_note_with_extracted_place(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0015-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0015",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[
+                {"country": "Spain", "duration_months": 10, "type": "unknown", "exposure_notes": "Stayed in Valencia for 10 months."},
+            ],
+        ),
+    )
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/speakers/ES-L-0015?session={session_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '10 Monate · Spain' in html
+    assert 'Stayed in Valencia for 10 months.' in html
+    assert 'pm-profile-metadata__entry-summary">Valencia<' not in html
 
 
 def test_research_overview_renders_shared_sidebar_header_and_single_header_nav(url_app: Flask) -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import urlencode
@@ -96,11 +97,11 @@ RESEARCH_PAGE_INTRO_KEYS = {
 EXPOSURE_TYPE_LABEL_KEYS = {
     "erasmus": "research.shared.exposure_type.erasmus",
     "study": "research.shared.exposure_type.study",
-    "study_abroad": "research.shared.exposure_type.study_abroad",
     "work": "research.shared.exposure_type.work",
     "travel": "research.shared.exposure_type.travel",
     "family": "research.shared.exposure_type.family",
-    "other": "research.shared.exposure_type.other",
+    "volunteering": "research.shared.exposure_type.volunteering",
+    "school_exchange": "research.shared.exposure_type.school_exchange",
 }
 
 PHENOMENA_ITEM_TASKS: tuple[str, ...] = set_filter_task_keys()
@@ -196,6 +197,10 @@ def _target_country_stay_label(ui_lang: str) -> str:
     return _t(ui_lang, "common.labels.target_country_stays")
 
 
+def _profile_exposure_label(ui_lang: str) -> str:
+    return _t(ui_lang, "research.profile.exposure_label")
+
+
 def _standard_variety_label(ui_lang: str) -> str:
     return _t(ui_lang, "common.labels.standard_variety")
 
@@ -272,41 +277,97 @@ def _format_additional_languages(values: tuple[str, ...]) -> str:
     return ", ".join(values)
 
 
-def _format_duration_months(duration_months: int | None, ui_lang: str) -> str | None:
+def _decimal_value(value: float | int | None) -> Decimal | None:
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _format_decimal(value: float | int | None, ui_lang: str) -> str | None:
+    decimal_value = _decimal_value(value)
+    if decimal_value is None:
+        return None
+    text = format(decimal_value.normalize(), "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    if ui_lang == "de":
+        return text.replace(".", ",")
+    return text
+
+
+def _format_duration_months(duration_months: float | int | None, ui_lang: str) -> str | None:
     if duration_months is None:
         return None
-    if duration_months == 1:
-        return _t(ui_lang, "research.shared.duration_month.one", count=duration_months)
-    return _t(ui_lang, "research.shared.duration_month.other", count=duration_months)
+    decimal_value = _decimal_value(duration_months)
+    if decimal_value is None:
+        return None
+    count = _format_decimal(duration_months, ui_lang)
+    if count is None:
+        return None
+    if decimal_value == Decimal("1"):
+        return _t(ui_lang, "research.shared.duration_month.one", count=count)
+    return _t(ui_lang, "research.shared.duration_month.other", count=count)
 
 
 def _format_exposure_type(exposure_type: str | None, ui_lang: str) -> str | None:
     if not exposure_type:
         return None
     normalized = exposure_type.strip().lower()
+    if normalized in {"unknown", "unspecified", "other"}:
+        return None
     if normalized in EXPOSURE_TYPE_LABEL_KEYS:
         return _t(ui_lang, EXPOSURE_TYPE_LABEL_KEYS[normalized])
     return _humanize_value(normalized)
 
 
+def _format_exposure_country(country: str | None) -> str | None:
+    if not country:
+        return None
+    normalized = country.strip()
+    return normalized or None
+
+
+def _display_exposure_note(exposure_notes: str | None) -> str:
+    if not isinstance(exposure_notes, str):
+        return ""
+    return exposure_notes
+
+
+def _compact_session_stay_summary(session: SessionRecord, ui_lang: str) -> str:
+    if not session.exposure_entries:
+        if session.stays_in_target_country is True:
+            return _yes_label(ui_lang)
+        return _t(ui_lang, "research.exposure.none_compact")
+
+    for entry in session.exposure_entries:
+        duration = _format_duration_months(entry.duration_months, ui_lang)
+        if duration:
+            return f"{_yes_label(ui_lang)} · {duration}"
+    return _yes_label(ui_lang)
+
+
 def _build_exposure_row(session: SessionRecord, ui_lang: str) -> dict[str, Any]:
-    label = _target_country_stay_label(ui_lang)
+    label = _profile_exposure_label(ui_lang)
     if session.exposure_entries:
         entries = []
         for entry in session.exposure_entries:
             parts = []
-            if entry.country:
-                parts.append(_humanize_value(entry.country))
             duration = _format_duration_months(entry.duration_months, ui_lang)
             if duration:
                 parts.append(duration)
+            country = _format_exposure_country(entry.country)
+            if country:
+                parts.append(country)
             exposure_type = _format_exposure_type(entry.type, ui_lang)
             if exposure_type:
                 parts.append(exposure_type)
             entries.append(
                 {
                     "text": " · ".join(parts) if parts else _t(ui_lang, "research.exposure.language_stay"),
-                    "note": entry.exposure_notes or "",
+                    "note": _display_exposure_note(entry.exposure_notes),
                 }
             )
         return {"label": label, "kind": "exposure", "entries": entries}
@@ -315,17 +376,17 @@ def _build_exposure_row(session: SessionRecord, ui_lang: str) -> dict[str, Any]:
         return {
             "label": label,
             "kind": "exposure",
-            "value": _t(ui_lang, "research.exposure.none"),
+            "value": _t(ui_lang, "research.exposure.none_compact"),
         }
 
     if session.stays_in_target_country is True:
         return {
             "label": label,
             "kind": "exposure",
-            "value": _t(ui_lang, "research.exposure.recorded_without_details"),
+            "value": _yes_label(ui_lang),
         }
 
-    return {"label": label, "kind": "exposure", "value": _t(ui_lang, "research.exposure.not_recorded")}
+    return {"label": label, "kind": "exposure", "value": _t(ui_lang, "research.exposure.none_compact")}
 
 
 def _uses_native_filters(selected_group: str) -> bool:
@@ -550,7 +611,7 @@ def _speaker_result_meta_rows(person: PersonRecord, selected_session: SessionRec
         },
         {"label": "L1", "value": person.l1 or "-"},
         {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang)},
-        {"label": _target_country_stay_label(ui_lang), "value": _summarize_target_country_stays(person, ui_lang)},
+        {"label": _t(ui_lang, "research.speakers.table.stays"), "value": _compact_session_stay_summary(selected_session, ui_lang)},
     ]
 
 
@@ -603,7 +664,7 @@ def _speaker_result_row(person: PersonRecord, selected_session: SessionRecord, u
         "table_level": _format_level(selected_session, ui_lang) if not person.is_native else "–",
         "table_detail": table_detail_value if table_detail_value != "-" else "–",
         "table_gender": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang),
-        "table_stays": _summarize_target_country_stays(person, ui_lang) if not person.is_native else "–",
+        "table_stays": _compact_session_stay_summary(selected_session, ui_lang) if not person.is_native else "–",
         "table_actions": task_links,
     }
 
@@ -948,20 +1009,59 @@ def _person_section_rows(person: PersonRecord, ui_lang: str) -> list[dict[str, s
         rows.append({"label": _origin_region_label(ui_lang), "value": person.origin_region or "-"})
         if variety_value != "-" and not _display_values_match(variety_value, origin_country_value):
             rows.append({"label": _standard_variety_label(ui_lang), "value": variety_value})
-        return rows
+    else:
+        rows.extend(
+            [
+                {"label": "L1", "value": person.l1 or "-"},
+                {"label": _l1_additional_label(ui_lang), "value": _format_additional_languages(person.l1_additional)},
+                {"label": _mother_l1_label(ui_lang), "value": person.mother_l1 or "-"},
+                {"label": _father_l1_label(ui_lang), "value": person.father_l1 or "-"},
+                {"label": _additional_languages_label(ui_lang), "value": _format_additional_languages(person.additional_languages)},
+                {"label": _t(ui_lang, "common.labels.current_region"), "value": person.current_region or "-"},
+                {"label": _t(ui_lang, "common.labels.childhood_region"), "value": person.childhood_region or "-"},
+            ]
+        )
 
-    rows.extend(
-        [
-            {"label": "L1", "value": person.l1 or "-"},
-            {"label": _l1_additional_label(ui_lang), "value": _format_additional_languages(person.l1_additional)},
-            {"label": _mother_l1_label(ui_lang), "value": person.mother_l1 or "-"},
-            {"label": _father_l1_label(ui_lang), "value": person.father_l1 or "-"},
-            {"label": _additional_languages_label(ui_lang), "value": _format_additional_languages(person.additional_languages)},
-            {"label": _t(ui_lang, "common.labels.current_region"), "value": person.current_region or "-"},
-            {"label": _t(ui_lang, "common.labels.childhood_region"), "value": person.childhood_region or "-"},
-        ]
-    )
+    if person.origin_region:
+        rows.append({"label": _origin_region_label(ui_lang), "value": person.origin_region})
+    if person.person_notes:
+        rows.append({"label": _t(ui_lang, "common.labels.person_notes"), "value": person.person_notes})
+    if person.research_consent_signed:
+        rows.append({"label": _t(ui_lang, "common.labels.research_consent_signed"), "value": _consent_status_value(person.research_consent_signed, ui_lang)})
+    if person.teaching_consent_signed:
+        rows.append({"label": _t(ui_lang, "common.labels.teaching_consent_signed"), "value": _teaching_consent_value(person.teaching_consent_signed, ui_lang)})
+    if person.consent_date:
+        rows.append({"label": _t(ui_lang, "common.labels.consent_date"), "value": person.consent_date.isoformat()})
+    if person.consent_file:
+        rows.append({"label": _t(ui_lang, "common.labels.consent_file"), "value": person.consent_file})
+    if person.questionnaire_file:
+        rows.append({"label": _t(ui_lang, "common.labels.questionnaire_file"), "value": person.questionnaire_file})
+    if person.secure_notes:
+        rows.append({"label": _t(ui_lang, "common.labels.secure_notes"), "value": person.secure_notes})
     return rows
+
+
+
+def _consent_status_value(value: str | None, ui_lang: str) -> str:
+    normalized = (value or "").strip().lower()
+    if normalized == "yes":
+        return _yes_label(ui_lang)
+    if normalized == "no":
+        return _no_label(ui_lang)
+    if normalized == "unknown":
+        return _t(ui_lang, "common.values.unknown")
+    return "-"
+
+
+def _teaching_consent_value(value: str | None, ui_lang: str) -> str:
+    normalized = (value or "").strip().lower()
+    if normalized == "yes":
+        return _t(ui_lang, "research.profile.teaching_consent.yes")
+    if normalized == "no":
+        return _t(ui_lang, "research.profile.teaching_consent.no")
+    if normalized == "unknown":
+        return _t(ui_lang, "research.profile.teaching_consent.unknown")
+    return "-"
 
 
 def _session_card_rows(session: SessionRecord, ui_lang: str) -> list[dict[str, Any]]:
@@ -2093,7 +2193,7 @@ def _build_player_summary_rows(session: SessionRecord, ui_lang: str) -> list[dic
         {"label": "Person-ID", "value": session.person_id},
         {"label": _recording_date_label(ui_lang), "value": _format_recording_date(session)},
         {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, session.gender or "unknown", ui_lang)},
-        {"label": _target_country_stay_label(ui_lang), "value": exposure_value},
+        {"label": _t(ui_lang, "research.speakers.table.stays"), "value": exposure_value},
         {"label": _recorded_by_label(ui_lang), "value": session.recorded_by or "-"},
     ]
 

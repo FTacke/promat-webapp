@@ -525,6 +525,13 @@ working/{person_id}/interview/alignment/interview.json
 - `childhood_region`
 - `origin_country`
 - `origin_region`
+- `person_notes`
+- `research_consent_signed`
+- `teaching_consent_signed`
+- `consent_date`
+- `consent_file`
+- `questionnaire_file`
+- `secure_notes`
 
 ### Session-level fields
 
@@ -541,6 +548,7 @@ working/{person_id}/interview/alignment/interview.json
 - `stays_in_target_country`
 - `exposure_entries`
 - `standard_variety`
+- `session_notes`
 - `notes`
 - `tasks`
 - `files`
@@ -550,6 +558,12 @@ working/{person_id}/interview/alignment/interview.json
 - `stays_in_target_country` is the compact session-level summary field.
 - `exposure_entries` stores structured stay details per session.
 - Each entry may contain `country`, `duration_months`, `type`, and optional `exposure_notes`.
+- Active intake practice uses at most one exposure entry per session, but the stored entry may summarize multiple places or stays.
+- `country` may remain a semicolon-separated original string such as `France; Israel`.
+- `duration_months` may be an integer or decimal month count.
+- `unknown`, `unspecified`, `other`, and empty exposure types are non-prominent fallback states and must not appear as visible UI type labels.
+- Protected research profile views show stay details as `{duration} · {country} · {type}` when present and show `exposure_notes` in full below.
+- Speaker cards and speaker-table summaries reduce stays to `None`, `Yes`, or `Yes · {duration}` without countries, types, or notes.
 
 ## Controlled Vocabularies
 
@@ -659,7 +673,13 @@ es_std
 mx_std
 ar_std
 co_std
+ec_std
 cl_std
+pe_std
+bo_std
+uy_std
+py_std
+ve_std
 gb_std
 us_std
 au_std
@@ -679,6 +699,7 @@ Rules:
 - `standard_variety` always stays lowercase snake_case.
 - Swiss varieties are actively disambiguated as `fr_ch_std` and `de_ch_std`.
 - `ch_std` is not an active standard.
+- Intake workbook aliases `CH_FR_STD` and `CH_DE_STD` normalize to the same runtime canonical values.
 
 ### `yes_no_unknown`
 

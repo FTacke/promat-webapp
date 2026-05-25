@@ -71,9 +71,10 @@ person_id
 last_name
 first_name
 email
-consent_signed
+research_consent_signed
 consent_date
 consent_file
+teaching_consent_signed
 questionnaire_file
 paper_original_location
 intake_date
@@ -87,6 +88,11 @@ secure_notes
 Rules:
 
 - Clear names and other identifying data stay in this sheet only.
+- `research_consent_signed` records consent for protected research use.
+- `teaching_consent_signed` records the separate safety and eligibility flag for manual public Teaching selection.
+- `research_consent_signed` and `teaching_consent_signed` use `yes`, `no`, or `unknown`.
+- `teaching_consent_signed` is never an automatic Teaching import or release switch by itself.
+- For a transition period, the importer may accept the deprecated workbook column `consent_signed` as `research_consent_signed` and must emit a warning.
 - `verified_by` and `verified_date` stay empty until review has happened.
 
 ### `Research_Person`
@@ -116,6 +122,9 @@ Rules:
 - `l1_additional` is optional, remains separate from `additional_languages`, and stores multiple values as semicolon-separated L1 codes.
 - `current_region` and `childhood_region` are learner-oriented fields.
 - `origin_country` and `origin_region` are native-comparison fields.
+- `origin_region` should stay concise and readable.
+- Complex biographical details belong in `person_notes`, not in `origin_region`.
+- `person_notes` is an internal research note field and is not part of public Teaching or other public-facing views.
 
 ### `Research_Session_Intake`
 
@@ -142,8 +151,10 @@ Rules:
 - `session_id` stays empty in intake.
 - `target_language` uses the active language codes and may appear in workbook practice as uppercase corpus codes such as `ES`; the importer normalizes them to lowercase runtime values.
 - `standard_variety` may appear in workbook practice as uppercase values such as `ES_STD`; the importer normalizes them to lowercase runtime values.
+- Intake may use `CH_FR_STD` and `CH_DE_STD`; runtime canonical values remain `fr_ch_std` and `de_ch_std`.
 - `context` uses `baseline` or `follow_up` when relevant.
 - If `level_self = B1-B2`, then `level_code = B1`.
+- `session_notes` is an internal note for this exact recording session and is not part of public Teaching or other public-facing views.
 
 ### `Exposure`
 
@@ -162,9 +173,19 @@ Rules:
 
 - Each row must match an existing combination of `person_id` and `session_ref`.
 - If there is no exposure, there is no row.
+- In the active workbook contract, exposure is session-related and links through `person_id` plus `session_ref`, not through `session_id`.
+- In active practice there is at most one `Exposure` row per `person_id` plus `session_ref`.
+- That single row may summarize multiple countries or stays in `country` and `exposure_notes`.
+- The importer must not split one `Exposure` row into multiple exposure records heuristically.
 - `country` may be `unknown` if exposure exists but country is not known.
 - `duration_months` stays empty if the duration is not known reliably.
+- `duration_months` stores numeric month values.
+- Decimal values are allowed.
+- The importer accepts decimal comma and decimal point and normalizes them transparently, for example `0,75` to `0.75` and `3,5` to `3.5`.
+- Non-numeric prose such as `unknown`, `about three weeks`, or `6 months` is not silently reinterpreted; the importer warns and leaves the field empty.
 - The workbook header is the literal column name `type`; the importer maps it to session exposure metadata internally.
+- `Vocabularies.exposure_type` provides the controlled values for `Exposure.type`.
+- `exposure_notes` stores the full internal free-text stay description and is never regenerated from other fields.
 
 ### `Vocabularies`
 
@@ -230,19 +251,59 @@ Rule:
 
 ### `standard_variety`
 
-Examples:
+Workbook values:
 
 ```text
 ES_STD
 MX_STD
-FR_CH_STD
-DE_CH_STD
+AR_STD
+CO_STD
+EC_STD
+CL_STD
+PE_STD
+BO_STD
+UY_STD
+PY_STD
+VE_STD
+GB_STD
+US_STD
+AU_STD
+NZ_STD
+FR_STD
+CA_STD
+CH_FR_STD
+BE_STD
+DE_STD
+AT_STD
+CH_DE_STD
+DE_SOUTH_STD
 ```
 
 Rule:
 
 - Workbook values may use uppercase forms.
 - The importer normalizes them to the canonical lowercase runtime values.
+- Swiss workbook aliases `CH_FR_STD` and `CH_DE_STD` normalize to the runtime canonical values `fr_ch_std` and `de_ch_std`.
+
+### `exposure_type`
+
+```text
+study
+erasmus
+work
+travel
+family
+volunteering
+school_exchange
+other
+unknown
+```
+
+Rules:
+
+- `Vocabularies.exposure_type` is the controlled list for `Exposure.type`.
+- The deprecated value `unspecified` is not an active standard and should be migrated to `unknown`.
+- The importer may still accept `unspecified` defensively during transition and must normalize it transparently with a warning.
 
 ### `context`
 
@@ -266,6 +327,10 @@ yes
 no
 unknown
 ```
+
+Rules:
+
+- This list applies to `research_consent_signed`, `teaching_consent_signed`, and `needs_review`.
 
 ## Learner Example
 

@@ -287,6 +287,13 @@ Rules:
 - `childhood_region`
 - `origin_country`
 - `origin_region`
+- `person_notes`
+- `research_consent_signed`
+- `teaching_consent_signed`
+- `consent_date`
+- `consent_file`
+- `questionnaire_file`
+- `secure_notes`
 
 ### Session fields used by the UI
 
@@ -301,6 +308,7 @@ Rules:
 - `recorded_by`
 - `stays_in_target_country`
 - `standard_variety`
+- `session_notes`
 - `notes`
 - `tasks`
 - `files`
@@ -311,6 +319,12 @@ Rules:
 - `exposure_entries.duration_months`
 - `exposure_entries.type`
 - `exposure_entries.exposure_notes`
+
+Rules:
+
+- These internal metadata fields are available only in protected Research contexts, not in public Teaching or other public routes.
+- `person_notes`, `session_notes`, and `secure_notes` are internal readable notes.
+- `teaching_consent_signed` is a protected safety and eligibility flag for manual Teaching selection only and is not an automatic publication switch.
 
 ## Non-goals of the Current Runtime
 

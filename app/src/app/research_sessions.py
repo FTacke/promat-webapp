@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -61,7 +62,7 @@ LEGACY_EXPOSURE_COLLECTION_CANDIDATES: tuple[str, ...] = (
 @dataclass(frozen=True)
 class ExposureEntry:
     country: str | None
-    duration_months: int | None
+    duration_months: float | None
     type: str | None
     exposure_notes: str | None
 
@@ -91,6 +92,13 @@ class SessionRecord:
     childhood_region: str | None
     origin_region: str | None
     origin_country: str | None
+    person_notes: str | None
+    research_consent_signed: str | None
+    teaching_consent_signed: str | None
+    consent_date: date | None
+    consent_file: str | None
+    questionnaire_file: str | None
+    secure_notes: str | None
     level_code: str | None
     level_self: str | None
     standard_variety: str | None
@@ -155,6 +163,13 @@ class PersonRecord:
     origin_region: str | None
     origin_country: str | None
     standard_variety: str | None
+    person_notes: str | None
+    research_consent_signed: str | None
+    teaching_consent_signed: str | None
+    consent_date: date | None
+    consent_file: str | None
+    questionnaire_file: str | None
+    secure_notes: str | None
     sessions: tuple[SessionRecord, ...]
 
     @property
@@ -231,6 +246,23 @@ def _metadata_int(metadata: dict[str, Any], field_name: str) -> int | None:
     return None
 
 
+def _metadata_float(metadata: dict[str, Any], field_name: str) -> float | None:
+    value = metadata.get(field_name)
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        normalized = value.strip().replace(",", ".")
+        if not normalized:
+            return None
+        try:
+            return float(Decimal(normalized))
+        except (InvalidOperation, ValueError):
+            return None
+    return None
+
+
 def _normalize_string_list(value: Any) -> tuple[str, ...]:
     if isinstance(value, list):
         return tuple(str(item).strip() for item in value if isinstance(item, str) and item.strip())
@@ -256,7 +288,11 @@ def _extract_exposure_entries(metadata: dict[str, Any]) -> tuple[ExposureEntry, 
             entries.append(
                 ExposureEntry(
                     country=country.strip() if isinstance(country, str) and country.strip() else None,
-                    duration_months=duration_months if isinstance(duration_months, int) else _metadata_int(raw_entry, "duration_months"),
+                    duration_months=(
+                        float(duration_months)
+                        if isinstance(duration_months, (int, float)) and not isinstance(duration_months, bool)
+                        else _metadata_float(raw_entry, "duration_months")
+                    ),
                     type=exposure_type.strip() if isinstance(exposure_type, str) and exposure_type.strip() else None,
                     exposure_notes=exposure_notes.strip() if isinstance(exposure_notes, str) and exposure_notes.strip() else None,
                 )
@@ -264,7 +300,7 @@ def _extract_exposure_entries(metadata: dict[str, Any]) -> tuple[ExposureEntry, 
         return tuple(entries)
 
     country = _metadata_string(metadata, "country")
-    duration_months = _metadata_int(metadata, "duration_months")
+    duration_months = _metadata_float(metadata, "duration_months")
     exposure_type = _metadata_string(metadata, "type")
     exposure_notes = _metadata_string(metadata, "exposure_notes")
     if any((country, duration_months, exposure_type, exposure_notes)):
@@ -413,6 +449,13 @@ def _read_session_record(metadata_path: Path) -> SessionRecord:
         childhood_region=_metadata_string(payload, "childhood_region"),
         origin_region=_metadata_string(payload, "origin_region"),
         origin_country=_metadata_string(payload, "origin_country"),
+        person_notes=_metadata_string(payload, "person_notes"),
+        research_consent_signed=_metadata_string(payload, "research_consent_signed"),
+        teaching_consent_signed=_metadata_string(payload, "teaching_consent_signed"),
+        consent_date=_parse_iso_date(payload.get("consent_date")),
+        consent_file=_metadata_string(payload, "consent_file"),
+        questionnaire_file=_metadata_string(payload, "questionnaire_file"),
+        secure_notes=_metadata_string(payload, "secure_notes"),
         level_code=_metadata_string(payload, "level_code"),
         level_self=_metadata_string(payload, "level_self"),
         standard_variety=_metadata_string(payload, "standard_variety"),
@@ -420,7 +463,7 @@ def _read_session_record(metadata_path: Path) -> SessionRecord:
         recording_date=_parse_iso_date(payload.get("recording_date")),
         context=_metadata_string(payload, "context"),
         recorded_by=_metadata_string(payload, "recorded_by"),
-        notes=_metadata_string(payload, "notes"),
+        notes=_metadata_string(payload, "session_notes") or _metadata_string(payload, "notes"),
         documented_task_types=_extract_task_types(payload),
         stays_in_target_country=_resolve_stays_in_target_country(payload),
         exposure_entries=_extract_exposure_entries(payload),
@@ -485,6 +528,13 @@ def _aggregate_person_record(person_id: str, sessions: Iterable[SessionRecord]) 
         origin_region=_latest_non_empty_value(sorted_sessions, "origin_region"),
         origin_country=_latest_non_empty_value(sorted_sessions, "origin_country"),
         standard_variety=_latest_non_empty_value(sorted_sessions, "standard_variety"),
+        person_notes=_latest_non_empty_value(sorted_sessions, "person_notes"),
+        research_consent_signed=_latest_non_empty_value(sorted_sessions, "research_consent_signed"),
+        teaching_consent_signed=_latest_non_empty_value(sorted_sessions, "teaching_consent_signed"),
+        consent_date=_latest_non_empty_value(sorted_sessions, "consent_date"),
+        consent_file=_latest_non_empty_value(sorted_sessions, "consent_file"),
+        questionnaire_file=_latest_non_empty_value(sorted_sessions, "questionnaire_file"),
+        secure_notes=_latest_non_empty_value(sorted_sessions, "secure_notes"),
         sessions=sorted_sessions,
     )
 
