@@ -114,7 +114,7 @@ jobs:
       - name: Importer smoke tests
         working-directory: app
         run: |
-          python -m pytest tests/test_research_production_importer.py -q
+          python -m pytest tests/test_research_production_importer_smoke.py -q
 
 
   js-smokes:
