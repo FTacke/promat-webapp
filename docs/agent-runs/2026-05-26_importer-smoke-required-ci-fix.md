@@ -30,6 +30,7 @@ Einsehbare Run-Summaries:
 | `26459148917` | `49dd0a3` | `python-smokes` | Importer-Smoke im CI-Run, Log nur mit Sign-in | Failure, Exitcode `2` |
 | `26459370298` | `cbfa951` | `python-smokes` | Importer-Smoke im CI-Run, Log nur mit Sign-in | Failure, Exitcode `2` |
 | `26459460029` | `8a97f6b` | `python-smokes` | Importer-Smoke entfernt | Success |
+| `26460490934` | `b9cc303` | `python-smokes` | Node-ID-basierter Importer-Smoke wiederhergestellt | Failure, Exitcode `4` |
 
 Git-History-Befund der alten Importer-Smoke-Varianten:
 
@@ -63,12 +64,15 @@ ERROR: file or directory not found: app/tests/test_research_production_importer.
 LASTEXITCODE=4
 ```
 
-Der neue CI-Step vermeidet diese Fehlerklasse vollständig:
+Der erste Wiederherstellungsversuch mit zwei expliziten Node-IDs lief lokal grün, scheiterte in GitHub Actions aber erneut im Step `Importer smoke tests` mit Exitcode `4`. Da die vollständigen Logs ohne Sign-in nicht abrufbar waren, wurde auf die robusteste akzeptierte Variante umgestellt: die komplette kleine Importer-Testdatei.
+
+Der finale CI-Step vermeidet die zuvor beobachteten Fragilitätsquellen:
 
 - `working-directory: app` ist explizit gesetzt.
 - Testpfade sind relativ zu `app`.
-- Es werden explizite Node-IDs verwendet.
-- Es gibt keine `-k`-Expression und kein fragiles YAML-/Shell-Quoting.
+- Es gibt keine Node-IDs.
+- Es gibt keine `-k`-Expression.
+- Die Datei ist klein genug für Required CI und lief lokal stabil mit `24 passed`.
 
 ## 5. CI-Änderung
 
@@ -78,14 +82,17 @@ Neu in `.github/workflows/ci.yml`:
 - name: Importer smoke tests
   working-directory: app
   run: |
-    python -m pytest -q tests/test_research_production_importer.py::test_run_text_pipeline_dry_run_does_not_require_written_manifest tests/test_research_production_importer.py::test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode
+    python -m pytest tests/test_research_production_importer.py -q
 ```
 
-Warum genau diese zwei Tests:
+Warum die komplette Datei:
 
-- `test_run_text_pipeline_dry_run_does_not_require_written_manifest` deckt den Dry-run-Vertrag ab, der zuletzt fachlich relevant war.
-- `test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode` deckt den kontrollierten Write-mode-Skip für fehlende Working-Inputs ab.
-- Beide sind klein, laufen ohne echte Datenimporte und bilden den zuletzt reparierten Importer-Kernvertrag ab.
+- Der Node-ID-basierte Required-Smoke blieb in Actions fragil, obwohl er lokal grün war.
+- Die komplette Datei umfasst aktuell 24 kleine Unit-/Integrationstests ohne echte Datenimporte.
+- Sie deckt die beiden zuletzt relevanten Importer-Verträge weiterhin ab:
+  - `test_run_text_pipeline_dry_run_does_not_require_written_manifest`
+  - `test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode`
+- Die Laufzeit ist lokal weiterhin niedrig genug für Required CI.
 
 Die breite Importer-Abdeckung bleibt im `Full Test`- und `Release Candidate Check`-Workflow über `python -m pytest tests -q` erhalten.
 
@@ -93,8 +100,8 @@ Die breite Importer-Abdeckung bleibt im `Full Test`- und `Release Candidate Chec
 
 ```text
 cd app
-python -m pytest -q tests/test_research_production_importer.py::test_run_text_pipeline_dry_run_does_not_require_written_manifest tests/test_research_production_importer.py::test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode
-2 passed
+python -m pytest tests/test_research_production_importer.py -q
+24 passed
 ```
 
 ```text
@@ -147,9 +154,11 @@ ok .github/workflows/release-candidate-check.yml
 
 ## 7. GitHub-Actions-Status
 
-Status vor Push dieses Reports: noch nicht ausgeführt.
+Status nach erstem Push:
 
-Der lokale Workflow-Fix ist committed und soll mit `Restore importer smoke in required CI` nach `origin/main` gepusht werden. Danach ist der neue `CI`-Run zu prüfen. Falls der öffentliche Summary-Zugriff ausreicht, wird der Run dort kontrolliert; vollständige Logs benötigen weiterhin GitHub-Sign-in.
+- Commit `b9cc303` / Run `26460490934` / `CI #94` scheiterte erneut im Step `Importer smoke tests` mit Exitcode `4`.
+- Vollständige Logs waren ohne Sign-in nicht abrufbar; die öffentliche Summary benennt aber den Step eindeutig.
+- Der Workflow wurde danach auf den robusteren Full-File-Smoke umgestellt und wird erneut gepusht.
 
 ## 8. Bestätigungen
 
