@@ -729,13 +729,6 @@ body[data-scrolled="true"] .md3-top-app-bar__title-page {
 }
 
 /* ============================================
-   Login Sheet Styles
-   ============================================
-   MOVED TO: static/css/md3/components/status-banner.css
-   (Loaded BEFORE this file to ensure proper cascade)
-   ============================================ */
-
-/* ============================================
    Responsive Adjustments
    ============================================ */
 

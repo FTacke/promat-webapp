@@ -55,7 +55,6 @@
     <script src="{{ url_for('static', filename='js/auth-setup.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/logout.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/theme-toggle.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/navigation-drawer-init.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/drawer-logo.js') }}" defer></script>
     <!-- htmx for progressive enhancement -->
     <script src="{{ url_for('static', filename='vendor/htmx.min.js') }}" defer></script>
@@ -79,7 +78,7 @@
     {% endif %}
 
     <main id="main-content" class="site-main">
-      <div class="md3-content-wrapper">
+      <div class="pm-content-wrapper">
         {% if show_navigation_drawer %}
         <aside id="navigation-drawer">
           {% include 'partials/_navigation_drawer.html' %}
@@ -93,7 +92,7 @@
     
     <div id="modal-root" aria-live="polite"></div>
     
-    <footer id="site-footer" class="md3-footer">
+    <footer id="site-footer" class="pm-footer-shell">
       {% include 'partials/footer.html' %}
     </footer>
     

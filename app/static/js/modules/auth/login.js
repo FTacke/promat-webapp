@@ -124,7 +124,7 @@ export function initLoginForm(formSelector, options = {}) {
     // Disable form during submission
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.classList.add("md3-button--loading");
+      submitBtn.classList.add("pm-action-button--loading");
     }
 
     try {
@@ -153,7 +153,7 @@ export function initLoginForm(formSelector, options = {}) {
         // Re-enable form
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.classList.remove("md3-button--loading");
+          submitBtn.classList.remove("pm-action-button--loading");
         }
       }
     } catch (err) {
@@ -162,7 +162,7 @@ export function initLoginForm(formSelector, options = {}) {
 
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.classList.remove("md3-button--loading");
+        submitBtn.classList.remove("pm-action-button--loading");
       }
     }
   });
@@ -177,10 +177,10 @@ export function initLoginForm(formSelector, options = {}) {
  */
 function showFormError(form, message) {
   // Look for existing error container or create one
-  let errorEl = form.querySelector(".md3-form-error");
+  let errorEl = form.querySelector(".pm-form-error, .md3-form-error");
   if (!errorEl) {
     errorEl = document.createElement("div");
-    errorEl.className = "md3-form-error md3-snackbar md3-snackbar--error";
+    errorEl.className = "pm-form-error md3-form-error pm-snackbar md3-snackbar pm-snackbar--error md3-snackbar--error";
     errorEl.setAttribute("role", "alert");
     form.insertBefore(errorEl, form.firstChild);
   }
@@ -199,7 +199,7 @@ function showFormError(form, message) {
  * @param {HTMLFormElement} form
  */
 export function clearFormErrors(form) {
-  const errorEl = form.querySelector(".md3-form-error");
+  const errorEl = form.querySelector(".pm-form-error, .md3-form-error");
   if (errorEl) {
     errorEl.style.display = "none";
   }

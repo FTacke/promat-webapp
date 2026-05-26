@@ -24,10 +24,12 @@ main.site-main,
   overflow: visible;
 }
 
+.pm-content-wrapper,
 .md3-content-wrapper {
   margin: 0 auto;
 }
 
+body.app-shell.page-landing .pm-content-wrapper,
 body.app-shell.page-landing .md3-content-wrapper {
   min-height: 100%;
   width: min(100%, var(--pm-layout-shell-max-width-current));
@@ -986,6 +988,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 @media (min-width: 980px) {
+  body.app-shell.page-landing .pm-content-wrapper,
   body.app-shell.page-landing .md3-content-wrapper {
     display: block;
   }
@@ -1034,6 +1037,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 @media (min-width: 980px) {
+  .pm-content-wrapper,
   .md3-content-wrapper {
     padding-left: var(--promat-shell-inline-padding);
     padding-right: var(--promat-shell-inline-padding);

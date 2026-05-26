@@ -48,14 +48,16 @@ const ALERT_TITLES = {
 export function createAlertHTML(type, title, message, inline = true) {
   const icon = ALERT_ICONS[type] || 'info';
   const displayTitle = title || ALERT_TITLES[type] || '';
-  const inlineClass = inline ? 'md3-alert--inline' : 'md3-alert--banner';
+  const inlineClass = inline
+    ? 'pm-alert--inline md3-alert--inline'
+    : 'pm-alert--banner md3-alert--banner';
   
   return `
-    <div class="md3-alert md3-alert--${type} ${inlineClass}" role="alert" aria-live="assertive">
-      <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">${icon}</span>
-      <div class="md3-alert__content">
-        <p class="md3-alert__title">${escapeHTML(displayTitle)}</p>
-        <p class="md3-alert__text">${escapeHTML(message)}</p>
+    <div class="pm-alert md3-alert pm-alert--${type} md3-alert--${type} ${inlineClass}" role="alert" aria-live="assertive">
+      <span class="material-symbols-rounded pm-alert__icon md3-alert__icon" aria-hidden="true">${icon}</span>
+      <div class="pm-alert__content md3-alert__content">
+        <p class="pm-alert__title md3-alert__title">${escapeHTML(displayTitle)}</p>
+        <p class="pm-alert__text md3-alert__text">${escapeHTML(message)}</p>
       </div>
     </div>
   `.trim();

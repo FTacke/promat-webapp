@@ -104,6 +104,11 @@ EXPOSURE_TYPE_LABEL_KEYS = {
     "school_exchange": "research.shared.exposure_type.school_exchange",
 }
 
+DECIMAL_SEPARATOR_BY_LANG = {
+    "de": ",",
+    "en": ".",
+}
+
 PHENOMENA_ITEM_TASKS: tuple[str, ...] = set_filter_task_keys()
 PLAYER_PRODUCTIVE_TASKS: tuple[str, ...] = player_productive_task_keys()
 COMPARISON_VIEW_TASKS: tuple[str, ...] = comparison_view_task_keys()
@@ -293,9 +298,7 @@ def _format_decimal(value: float | int | None, ui_lang: str) -> str | None:
     text = format(decimal_value.normalize(), "f")
     if "." in text:
         text = text.rstrip("0").rstrip(".")
-    if ui_lang == "de":
-        return text.replace(".", ",")
-    return text
+    return text.replace(".", DECIMAL_SEPARATOR_BY_LANG.get(ui_lang, "."))
 
 
 def _format_duration_months(duration_months: float | int | None, ui_lang: str) -> str | None:

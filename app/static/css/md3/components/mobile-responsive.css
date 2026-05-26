@@ -30,6 +30,7 @@ body {
 /* Main Content Container soll nie breiter als Viewport sein */
 #main-content,
 .site-main,
+.pm-content-wrapper,
 .md3-content-wrapper {
   max-width: 100%;
   overflow-x: hidden;
@@ -514,4 +515,3 @@ td.wrap-text {
     max-width: 100% !important;
   }
 }
-

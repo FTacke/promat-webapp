@@ -63,6 +63,10 @@ scripts/research_data_intake/import/*
 /verify_layout.py
 /capture_qa.py
 /capture_qa.ps1
+/qa_check.py
+/simple_qa.py
+/_es_diag.txt
+/app/capture_qa.py
 
 # Temporary root notes
 /start.txt

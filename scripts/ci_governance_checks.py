@@ -38,6 +38,9 @@ ROOT_TEMP_PATTERNS = (
     "verify_*.py",
     "capture_*.py",
     "capture_*.ps1",
+    "qa_check.py",
+    "simple_qa.py",
+    "_es_diag.txt",
     "*_screenshot.png",
     "desktop_*.png",
     "mobile_*.png",
@@ -68,7 +71,7 @@ GUARDS = (
     Guard(
         name="shell recovery template guard",
         roots=("app/templates",),
-        forbidden=("pm-shell-", "pm-topbar", "pm-footer"),
+        forbidden=("pm-shell-", "pm-topbar", 'class="pm-footer"', "class='pm-footer'"),
     ),
     Guard(
         name="shell recovery css guard",

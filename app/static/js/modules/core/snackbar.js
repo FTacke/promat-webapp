@@ -28,7 +28,7 @@ export function showSnackbar(message, type = 'success', duration = SNACKBAR_DURA
 
   // Create snackbar element
   const snackbar = document.createElement('div');
-  snackbar.className = `md3-snackbar md3-snackbar--${type}`;
+  snackbar.className = `pm-snackbar md3-snackbar pm-snackbar--${type} md3-snackbar--${type}`;
   snackbar.setAttribute('role', 'status');
   snackbar.setAttribute('aria-live', 'polite');
 
@@ -41,13 +41,13 @@ export function showSnackbar(message, type = 'success', duration = SNACKBAR_DURA
   };
 
   snackbar.innerHTML = `
-    <span class="material-symbols-rounded md3-snackbar__icon" aria-hidden="true">${iconMap[type] || 'info'}</span>
-    <span class="md3-snackbar__message">${escapeHtml(message)}</span>
-    <button class="md3-snackbar__action" type="button" aria-label="Schließen">OK</button>
+    <span class="material-symbols-rounded pm-snackbar__icon md3-snackbar__icon" aria-hidden="true">${iconMap[type] || 'info'}</span>
+    <span class="pm-snackbar__message md3-snackbar__message">${escapeHtml(message)}</span>
+    <button class="pm-snackbar__action md3-snackbar__action" type="button" aria-label="Schließen">OK</button>
   `;
 
   // Add dismiss handler
-  const dismissBtn = snackbar.querySelector('.md3-snackbar__action');
+  const dismissBtn = snackbar.querySelector('.pm-snackbar__action, .md3-snackbar__action');
   dismissBtn.addEventListener('click', () => hideSnackbar());
 
   // Add to DOM

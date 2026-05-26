@@ -49,6 +49,7 @@ main.site-main,
   width: 100%;
 }
 
+.pm-content-wrapper,
 .md3-content-wrapper {
   min-height: calc(100vh - var(--promat-topbar-height));
   width: min(100%, var(--pm-layout-shell-max-width-current));
@@ -102,6 +103,7 @@ h6:focus[tabindex="-1"] {
 }
 
 @media (min-width: 980px) {
+  .pm-content-wrapper,
   .md3-content-wrapper {
     display: grid;
     grid-template-columns: minmax(14rem, var(--pm-layout-panel-width-current)) minmax(0, var(--pm-layout-content-width-current));
@@ -133,6 +135,7 @@ h6:focus[tabindex="-1"] {
     display: none;
   }
 
+  body.app-shell.app-shell--panel-hidden .pm-content-wrapper,
   body.app-shell.app-shell--panel-hidden .md3-content-wrapper {
     grid-template-columns: minmax(0, var(--pm-layout-content-width-current));
     justify-content: center;
@@ -142,6 +145,7 @@ h6:focus[tabindex="-1"] {
     display: none;
   }
 
+  body.app-shell.page-teaching .pm-content-wrapper,
   body.app-shell.page-teaching .md3-content-wrapper {
     grid-template-columns: minmax(0, var(--pm-layout-content-width-current));
     justify-content: center;
@@ -153,6 +157,7 @@ h6:focus[tabindex="-1"] {
 }
 
 @media (max-width: 979px) {
+  .pm-content-wrapper,
   .md3-content-wrapper {
     width: min(100%, calc(var(--pm-layout-content-width-current) + (2 * var(--promat-shell-inline-padding))));
     max-width: calc(var(--pm-layout-content-width-current) + (2 * var(--promat-shell-inline-padding)));
