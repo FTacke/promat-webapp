@@ -4,16 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 2 * * *"
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/full-test.yml"
-      - ".github/workflows/ci.yml"
-      - "app/tests/test_research_sessions.py"
-      - "app/tests/test_research_production_importer.py"
-      - "scripts/research_data_intake/**"
-      - "content/**"
-      - "data/**"
 
 permissions:
   contents: read
