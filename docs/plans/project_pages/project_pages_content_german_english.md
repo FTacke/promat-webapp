@@ -621,7 +621,6 @@ Nicht pauschal verwenden:
 - KI-gestützte Transkription aller Sprachdaten
 - automatische Zeitmarkierung aller Aufnahmen
 - öffentliche Forschungsdatenbank
-- Sample-Bereich als öffentlicher Produktbereich
 
 Stattdessen verwenden:
 
@@ -637,7 +636,6 @@ Terms to avoid as general descriptions:
 - AI-assisted transcription of all speech data
 - automatic timestamping of all recordings
 - public research database
-- the sample area as a public product area
 
 Use instead:
 

@@ -381,7 +381,6 @@ textarea {
   letter-spacing: var(--pm-type-reading-h3-tracking);
 }
 
-.pm-sample-section__title,
 .pm-panel__heading {
   margin: 0;
   font-family: var(--book-font-ui);
@@ -397,7 +396,6 @@ textarea {
   letter-spacing: var(--pm-type-reading-h3-tracking);
 }
 
-.pm-sample-section__intro,
 .pm-panel__text,
 .pm-panel__list {
   margin: 0;
@@ -406,62 +404,6 @@ textarea {
   line-height: var(--pm-type-reading-line);
   letter-spacing: var(--pm-type-reading-tracking);
   font-weight: var(--pm-type-reading-weight);
-}
-
-.pm-entry-showcase__label,
-.pm-entry-showcase__note {
-  margin: 0;
-}
-
-.pm-interaction-preview__row-label,
-.pm-interaction-preview__mock-eyebrow,
-.pm-interaction-preview__meta-label {
-  margin: 0;
-  font-family: var(--pm-type-meta-family);
-  font-size: var(--pm-type-meta-size);
-  line-height: var(--pm-type-meta-line);
-  letter-spacing: var(--pm-type-meta-tracking);
-  font-weight: 600;
-  color: color-mix(in srgb, var(--book-fg) 76%, var(--book-muted));
-}
-
-.pm-interaction-preview__meta-value,
-.pm-interaction-preview__mock-note {
-  margin: 0;
-  font-family: var(--pm-type-panel-family);
-  font-size: 0.92rem;
-  line-height: 1.45;
-  color: color-mix(in srgb, var(--book-fg) 88%, var(--book-muted));
-}
-
-.pm-entry-showcase__label {
-  font-family: var(--pm-type-meta-family);
-  font-size: 0.82rem;
-  line-height: 1.35;
-  letter-spacing: 0.04em;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.pm-entry-showcase__label--primary {
-  color: var(--promat-primary);
-}
-
-.pm-entry-showcase__label--accent {
-  color: color-mix(in srgb, var(--promat-wordmark-accent) 80%, var(--promat-primary));
-}
-
-.pm-entry-showcase__note {
-  font-family: var(--pm-type-meta-family);
-  font-size: 0.94rem;
-  line-height: 1.45;
-  letter-spacing: 0.004em;
-  font-weight: 500;
-  color: color-mix(in srgb, var(--book-fg) 54%, var(--book-muted));
-}
-
-.pm-entry-showcase__candidate--experimental .pm-entry-showcase__note {
-  color: color-mix(in srgb, var(--book-muted) 60%, var(--promat-wordmark-accent));
 }
 
 .pm-panel__subheading,

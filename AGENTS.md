@@ -56,7 +56,7 @@ For active PROMAT rules, consult these files first:
 - Prefer calm, linear flows over parallel work islands; avoid mini-overlabels, duplicate status blocks, and mixed one-page workbenches unless the active spec explicitly requires them.
 - For research UI, use `comparison` as the default reference for step containers, selection blocks, badge or meta rhythm, and vertical work sequences; use `player` as the default reference for dense material rows, compact work heads, sticky anchors, and muted versus active states.
 - If shared CSS files or shared partials change, regression-check at least one unaffected page that uses the same component family.
-- Any substantial UI change requires a browser pass and screenshots before completion; if a mirrored element exists in `sample`, update it in the same run.
+- Any substantial UI change requires a browser pass and screenshots before completion; if the changed shared UI family appears on multiple real routes, update and re-check those routes in the same run.
 - Browser acceptance for finished bilingual surfaces must cover the real app routes in both `de` and `en`, including dialogs, placeholders, empty states, overflow actions, and longer English labels where they affect layout.
 - Do not close substantial UI runs on green tests alone; fix and re-check until the browser screenshots are linguistically and visually clean for the in-scope surfaces.
 - If the user asks for an exact visual order, placement, or wording, that exact arrangement is the acceptance target for the run. A similar layout is not sufficient.
@@ -70,7 +70,6 @@ For active PROMAT rules, consult these files first:
 - Research-access changes must keep the corpus-scoped rule generic: under `/{ui_lang}/research/{corpus}` only `design` may stay public, while all other research pages, detail routes, and player-media routes must gate access before rendering and must not rely on corpus-specific exceptions.
 - If research intake runtime, archive, batch, or upload-package contracts change, update `docs/spec/platform-data-files.md` and the relevant runbook in the same run.
 - If the shared app-shell or navigation hierarchy changes, update the active rule in `docs/spec/platform-data-files.md` in the same run.
-- If an active layout element changes on a real page and `sample` contains that element, update `app/templates/pages/sample_page.html` in the same run.
 - If a durable architectural decision is accepted, add or update an ADR in `docs/decisions/`.
 - If a repeatable workflow changes, add or update the relevant runbook in `docs/runbooks/`.
 - Every substantive run adds one entry under `docs/agent-runs/`.

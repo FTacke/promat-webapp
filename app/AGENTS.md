@@ -14,7 +14,7 @@ Dieses Dokument ergänzt das Root-`AGENTS.md` für Arbeiten innerhalb von `app/`
 - Route research task subsets, compare rules, set-filter rules, render-mode vocabularies, and corpus surface readiness through `app/src/app/research_capabilities.py`; do not introduce parallel capability literals in page builders, routes, sessions, sets, or presets.
 - For corpus-scoped research routing, keep the access boundary generic: only `design` may remain public, and all other research pages, profile/detail routes, and protected player-media routes must enforce auth before page or media rendering.
 - If shared app-shell or sidebar-navigation rules change, update `docs/spec/platform-data-files.md` in the same run.
-- If a shared layout element changes on a real page and `sample` showcases it, update `templates/pages/sample_page.html` in the same run.
+- If a shared layout element changes on a real page, regression-check the other real routes that use the same family in the same run.
 - Before adding new template, CSS, or page-JS patterns, inspect the relevant productive templates, shared partials, and shared CSS families first.
 - Reuse or extend existing UI families before creating page-local variants for buttons, form controls, badges or chips, cards or list rows, dialogs, empty states, sticky anchors, or overflow actions.
 - Finished UI inside `app/` must ship in `de` and `en` together; do not defer English-visible copy on already-finished surfaces.

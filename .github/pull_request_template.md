@@ -48,7 +48,7 @@ Kurze Beschreibung des Changes und des gelösten Problems.
 - [ ] Designsystem-/Shell-Auswirkungen geprüft oder explizit als nicht betroffen bewertet
 - [ ] Shell nicht migriert, außer dies ist explizit Scope des Changes
 - [ ] bestehende UI-Familien wiederverwendet oder erweitert statt neu erfunden
-- [ ] `sample` aktualisiert, falls ein repräsentiertes aktives UI-Element geändert wurde
+- [ ] weitere reale Routen mit derselben shared UI-Familie geprüft, falls betroffen
 - [ ] Browser-Durchlauf und Screenshots ergänzt, falls die Änderung visuell substanziell ist
 - [ ] bei Änderungen an globalem oder shared CSS die betroffenen Familien auf mindestens einer weiteren Seite gegengeprüft
 

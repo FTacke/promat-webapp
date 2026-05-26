@@ -29,7 +29,7 @@ from app.research_player_runtime import (
 )
 from app.research_views import build_player_page, build_speaker_profile_page, build_speakers_page
 from app.routes.auth import blueprint as auth_blueprint
-from app.routes.public import _sample_speaker_cards, blueprint as public_blueprint
+from app.routes.public import blueprint as public_blueprint
 from app.research_sessions import (
     load_language_sessions,
     load_person_records,
@@ -2114,24 +2114,20 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert '[pronunciation-matters.de]' not in html
 
 
-def test_sample_page_uses_shared_inner_shell_renderer(url_app: Flask) -> None:
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+def test_sample_route_is_removed_and_top_navigation_omits_sample(url_app: Flask, ui_lang: str) -> None:
     client = url_app.test_client()
 
-    response = client.get("/de/sample")
+    response = client.get(f"/{ui_lang}/sample")
+
+    assert response.status_code == 404
+
+    response = client.get(f"/{ui_lang}/project")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert html.count('class="promat-topbar__nav"') == 1
-    assert 'promat-topbar__row--secondary' not in html
-    assert 'class="app-shell app-shell--inner"' in html
-    assert 'data-page="sample"' in html
-    assert 'data-context-mode="none"' in html
-    assert 'promat-panel__context' in html
-    assert 'promat-panel__section-header' in html
-    assert 'pm-icon-mask--section' in html
-    assert '>Sample<' in html
-    assert 'pages/sample_page.html' not in html
-    assert 'class="pm-breadcrumb' not in html
+    assert f'href="/{ui_lang}/sample"' not in html
 
 
 @pytest.mark.parametrize(
@@ -2589,283 +2585,6 @@ def test_removed_recordings_route_falls_through_to_not_found(url_app: Flask, ui_
     response = client.get(f"/{ui_lang}/research/spanish/recordings")
 
     assert response.status_code == 404
-
-
-def test_sample_page_reflects_current_landing_and_corpus_cards(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/de/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert re.search(r'pm-cta-link__label">Zur Forschung</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
-    assert re.search(r'pm-cta-link__label">Zum Unterricht</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
-    assert 'Spanisch-Korpus' in html
-    assert 'Französisch-Korpus' in html
-    assert re.search(r'pm-cta-link__label">Korpus öffnen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
-    assert re.search(r'pm-cta-link__label">Materialien öffnen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
-    assert 'pm-teaching-language-row__body--available' in html
-    assert 'pm-teaching-language-row__body--pending' in html
-    assert 'pm-teaching-language-row__aside--available' in html
-    assert 'pm-teaching-language-row__aside--pending' in html
-    assert 'pm-teaching-topic-card--compact' in html
-    assert 'pm-teaching-topic-card__meta' not in html
-    assert 'pm-teaching-topic-card__pill' not in html
-    assert 'pm-teaching-language-row__secondary' not in html
-    assert 'pm-teaching-topic-grid--compact' in html
-    assert 'Projektleitung' in html
-    assert 'Durchführung' in html
-    assert 'Materialkonzeption' in html
-    assert re.search(r'Aufnahmen von \d+ Lernenden', html) is not None
-    assert 'Korpus im Aufbau' in html
-    assert 'pm-corpus-overview-card__section--primary' in html
-    assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in html
-    assert 'pm-corpus-overview-card--shared-accent' in html
-    assert 'pm-corpus-overview-card__action' in html
-    assert 'pm-corpus-overview-card__footer' in html
-    assert html.count('pm-teaching-language-row--available') == 1
-    assert html.count('pm-teaching-language-row--pending') == 3
-    assert 'pm-teaching-language-row__primary' not in html
-    assert 'class="pm-teaching-topic-group pm-teaching-content-wide"' in html
-    assert 'Weiches Spanisch, hartes Deutsch' in html
-    assert 'Learner-Sessions' not in html
-    assert 'Research-Einstieg auf Sprach-Unterseiten' in html
-    assert 'pm-research-language-root__item' not in html
-    assert 'pm-research-language-root__list' not in html
-    assert 'Forschungsbereich zur französischen Lernendenaussprache.' in html
-    assert re.search(r'pm-nav-pill__label">Zugang beantragen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
-    assert re.search(r'pm-nav-pill__label">Zum Login</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
-
-
-def test_sample_page_uses_current_research_component_patterns(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/de/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'pm-speaker-card__body' in html
-    assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in html
-    assert 'pm-speaker-card__footer-section--recordings' in html
-    assert 'pm-speaker-card__footer-section--recordings pm-card__divider-buffer' not in html
-    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
-    assert 'pm-inline-text-link__label">Profil</span>' in html
-    assert 'pm-speaker-task-link' not in html
-    assert 'pm-speaker-card__match' not in html
-    assert 'pm-speaker-card--learner' in html
-    assert 'pm-speaker-card--native' in html
-    assert 'pm-research-meta-badge--level pm-research-meta-badge--a1' in html
-    assert 'pm-research-meta-badge--level pm-research-meta-badge--a2' in html
-    assert 'pm-research-meta-badge--level pm-research-meta-badge--b1' in html
-    assert 'pm-research-meta-badge--level pm-research-meta-badge--b2' in html
-    assert 'pm-speaker-card--a1' not in html
-    assert 'pm-speaker-card--a2' not in html
-    assert 'pm-speaker-card--b1' not in html
-    assert 'pm-speaker-card--b2' not in html
-    assert 'Sprecher:in' in html
-    assert 'Status und Tabelle in Sprecher:innen' in html
-    assert 'Chips, Badges und Action-Buttons' in html
-    assert 'Task-Aktionen' in html
-    assert 'pm-profile-session--a2 is-selected' in html
-    assert 'pm-profile-session--native is-selected' in html
-    assert 'Zugeordnete Sessions' in html
-    assert 'Niveau / Varietät' not in html
-
-
-def test_sample_page_places_admonitions_before_pattern_lab_with_visible_titles(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/de/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    admonition_start = html.index('id="sample-admonitions-title"')
-    pattern_start = html.index('data-sample-pattern-lab')
-    assert admonition_start < pattern_start
-    admonition_slice = html[admonition_start:pattern_start]
-    assert 'Hörbeispiel' in admonition_slice
-    assert 'Regel' in admonition_slice
-    assert 'Tipp' in admonition_slice
-    assert 'Praxis' in admonition_slice
-    assert 'Kontext' in admonition_slice
-    assert 'Auf einen Blick' in admonition_slice
-    assert 'Zitieren' in admonition_slice
-    assert 'Zitation' in admonition_slice
-    assert 'Zusammenfassung' in admonition_slice
-    assert 'Weiterlesen' in admonition_slice
-    assert '>hoermal<' not in admonition_slice
-    assert '>regel<' not in admonition_slice
-    assert '>tip<' not in admonition_slice
-    assert '>praxis<' not in admonition_slice
-    assert '>context<' not in admonition_slice
-    assert '>overview<' not in admonition_slice
-    assert '>cite<' not in admonition_slice
-    assert '>citation<' not in admonition_slice
-    assert '>summary<' not in admonition_slice
-    assert '>weiterlesen<' not in admonition_slice
-    assert 'data-admonition-variant="overview"' in admonition_slice
-    assert 'data-admonition-variant="cite"' in admonition_slice
-    assert 'data-admonition-variant="citation"' in admonition_slice
-    assert 'aria-label="Zitat kopieren"' in admonition_slice
-    assert 'data-admonition-toggle' not in admonition_slice
-    assert 'aria-expanded=' not in admonition_slice
-    assert 'pm-admonition__chevron' not in admonition_slice
-
-
-def test_sample_page_exposes_pm_pattern_lab_before_interaction_preview(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/de/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'data-sample-pattern-lab' in html
-    assert 'PM Komponentenmuster' in html
-    assert 'pm-dialog pm-surface-density--compact pm-dialog--compact pm-pattern-lab__dialog-demo' in html
-    assert 'pm-dialog pm-surface-density--compact pm-dialog--compact pm-dialog--danger pm-pattern-lab__dialog-demo' in html
-    assert 'pm-dialog pm-surface-density--spacious pm-pattern-lab__dialog-demo pm-pattern-lab__dialog-demo--wide' in html
-    assert 'pm-action-row pm-action-row--end' in html
-    assert 'pm-object-summary pm-object-summary--danger' in html
-    assert 'pm-form' in html
-    assert 'pm-form-field--error' in html
-    assert 'pm-form-control--error' in html
-    assert 'pm-error-surface' in html
-    assert 'pm-error-surface pm-surface-density--standard' in html
-    assert 'pm-error-surface__code' in html
-    assert 'pm-media-surface' in html
-    assert 'pm-workbench-card' in html
-    pattern_start = html.index('data-sample-pattern-lab')
-    preview_start = html.index('pm-interaction-preview')
-    assert pattern_start < preview_start
-    pattern_end = preview_start
-    pattern_slice = html[pattern_start:pattern_end]
-    assert 'md3-dialog' not in pattern_slice
-    assert 'md3-error' not in pattern_slice
-    assert 'md3-button' not in pattern_slice
-    assert 'sample-pattern-form-name' in pattern_slice
-    assert 'sample-pattern-field-visibility' in pattern_slice
-    assert 'material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading' not in pattern_slice
-
-
-def test_sample_page_pattern_lab_uses_density_layout_and_quiet_error_actions(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/en/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    pattern_start = html.index('data-sample-pattern-lab')
-    preview_start = html.index('pm-interaction-preview')
-    pattern_slice = html[pattern_start:preview_start]
-    assert 'pm-surface-density--compact' in pattern_slice
-    assert 'pm-surface-density--standard' in pattern_slice
-    assert 'pm-surface-density--spacious' in pattern_slice
-    assert 'pm-pattern-lab__dialog-demo pm-pattern-lab__dialog-demo--wide' in pattern_slice
-    assert 'pm-error-surface__actions pm-action-row' in pattern_slice
-    assert 'Save</span>' in pattern_slice
-    assert 'Save changes' not in pattern_slice
-    error_start = pattern_slice.index('pm-error-surface pm-surface-density--standard')
-    surface_start = pattern_slice.index('pm-entry-showcase__variant', error_start)
-    error_slice = pattern_slice[error_start:surface_start]
-    assert 'material-symbols-rounded' not in error_slice
-    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in error_slice
-    assert 'pm-nav-pill--secondary' in error_slice
-    assert 'pm-nav-pill--back' in error_slice
-
-
-def test_sample_page_exposes_semantic_interaction_preview_without_global_migration(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/de/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'Interaktionssystem Vorschau' in html
-    assert 'pm-action-button pm-action-button--primary pm-action-button--medium' in html
-    assert 'pm-action-button pm-action-button--secondary pm-action-button--small' in html
-    assert 'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small' in html
-    assert 'pm-cta-link pm-cta-link--primary' in html
-    assert 'pm-cta-link pm-cta-link--accent' in html
-    assert 'pm-filter-chip is-active' in html
-    assert 'pm-button pm-button--' not in html
-    assert re.search(r'pm-action-button pm-action-button--secondary pm-action-button--medium" type="button">\s*<span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>\s*<span class="pm-action-button__label">Vergleich</span>', html, re.S) is not None
-    assert re.search(r'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--small" href="#sample-research-profile-title">\s*<span class="pm-nav-pill__label">Profil</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
-    assert re.search(r'pm-cta-link pm-cta-link--accent" href="#sample-entry-cards-title">\s*<span class="pm-cta-link__label">Zum Unterricht</span>', html, re.S) is not None
-    assert 'pm-nav-pill pm-nav-pill--primary pm-nav-pill--medium pm-research-language-root__action' in html
-    assert 'class="pm-back-link pm-back-link--bottom pm-profile-navigation"' in html
-    assert re.search(r'pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-nav-pill--back pm-back-link__pill" href="#sample-research-speaker-cards-title">\s*<span class="pm-interaction__arrow pm-interaction__arrow--leading" aria-hidden="true">←</span>\s*<span class="pm-nav-pill__label">Sprecher:innen</span>', html, re.S) is not None
-
-
-def test_sample_page_localizes_interaction_preview_in_english(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/en/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'Interaction System Preview' in html
-    assert 'Action Buttons' in html
-    assert 'Navigation Pills' in html
-    assert 'CTA Links' in html
-    assert 'Request access' in html
-    assert 'Open request form' in html
-    assert 'Learn more' in html
-    assert 'Apply filters' in html
-    assert 'Compare' in html
-    assert 'Create user' in html
-
-
-def test_sample_page_localizes_pm_pattern_lab_in_english(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/en/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'PM component patterns' in html
-    assert 'Dialogs and form dialog' in html
-    assert 'Dialog title' in html
-    assert 'Delete custom set?' in html
-    assert 'Edit set' in html
-    assert 'Page not found' in html
-    assert 'PM field set / form controls' in html
-    assert 'Short example excerpt for a compact media surface' in html
-    assert 'PM workbench card' in html
-
-
-def test_sample_page_localizes_admonitions_in_english(url_app: Flask) -> None:
-    client = url_app.test_client()
-
-    response = client.get("/en/sample")
-
-    assert response.status_code == 200
-    html = response.get_data(as_text=True)
-    assert 'Listening example' in html
-    assert 'Rule' in html
-    assert 'Tip' in html
-    assert 'Practice' in html
-    assert 'Context' in html
-    assert 'At a glance' in html
-    assert 'Citing' in html
-    assert 'Citation' in html
-    assert 'Summary' in html
-    assert 'Further reading' in html
-    assert 'Example media: audio excerpt' in html
-    assert 'aria-label="Copy citation"' in html
-    assert 'data-admonition-toggle' not in html
-    assert 'pm-admonition__chevron' not in html
-
-
-def test_sample_speaker_cards_keep_focused_learner_meta_selection() -> None:
-    learner_card = next(card for card in _sample_speaker_cards("de") if card["person_id"] == "ES-L-0101")
-    native_card = next(card for card in _sample_speaker_cards("de") if card["person_id"] == "ES-N-0001")
-
-    assert [row["label"] for row in learner_card["meta_rows"]] == ["Niveau", "L1", "Geschlecht", "Sprachaufenthalte"]
-    assert learner_card["meta_rows"][0]["badges"][0]["modifiers"] == ["level", "a1"]
-    assert native_card["profile_label"] == "Profil"
-    assert native_card["meta_rows"][0]["value"] == "Spanien"
-    assert native_card["meta_rows"][0]["badges"][0] == {"label": "Spanien", "modifiers": ["native-detail"]}
-    assert all(row["value"] != "ES_STD" for row in native_card["meta_rows"])
 
 
 def test_speakers_page_uses_neutral_learner_cards_with_level_badges(runtime_env: Path, url_app: Flask) -> None:

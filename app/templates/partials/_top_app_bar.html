@@ -9,7 +9,6 @@
   { 'label': t('section.project'), 'href': url_for('public.project_home', ui_lang=current_ui_lang), 'key': 'project' },
   { 'label': t('section.research'), 'href': url_for('public.research_home', ui_lang=current_ui_lang), 'key': 'research' },
   { 'label': t('section.teaching'), 'href': url_for('public.teaching_home', ui_lang=current_ui_lang), 'key': 'teaching' },
-  { 'label': t('section.sample'), 'href': url_for('public.sample_page', ui_lang=current_ui_lang), 'key': 'sample' },
 ]) %}
 
 <div class="promat-topbar" role="banner" data-element="top-app-bar" data-auth="{{ 'true' if is_authenticated else 'false' }}">

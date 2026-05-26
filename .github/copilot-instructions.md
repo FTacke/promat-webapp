@@ -20,7 +20,6 @@ Before changing architecture, routing, data paths, governance files, or repo str
 - Update the relevant spec file before or together with any implementation change that affects active rules.
 - Do not migrate the recovered productive shell from the accepted `promat-*` shell state to `pm-shell-*`, `pm-topbar*`, or `pm-footer*` without explicit scope plus browser- and screenshot-proven parity on real routes.
 - Treat shared app-shell and sidebar-navigation hierarchy as active platform rules; update `docs/spec/platform-data-files.md` when they change, and do not treat old run logs as the current UI contract.
-- Treat `sample` as a mirror of current real layout elements, not as an experimental design source; when a represented layout element changes on a real page, update `app/templates/pages/sample_page.html` in the same run.
 - Before introducing new UI patterns, inspect the relevant productive pages, shared partials, and shared CSS families first.
 - Reuse or extend existing UI families before creating page-local variants for buttons, form controls, badges or chips, cards or list rows, dialogs, empty states, or overflow actions.
 - For research UI, treat `comparison` as the primary reference for step containers, selection blocks, badge or meta rhythm, and linear vertical work sequences; treat `player` as the reference for dense material rows, compact work heads, sticky anchors, and muted versus active row states.

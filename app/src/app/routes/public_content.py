@@ -171,7 +171,6 @@ def get_top_navigation(ui_lang: str) -> list[dict[str, str]]:
         {"key": "project", "label": get_section_label("project", ui_lang), "href_key": "project_root"},
         {"key": "research", "label": get_section_label("research", ui_lang), "href_key": "research_root"},
         {"key": "teaching", "label": get_section_label("teaching", ui_lang), "href_key": "teaching_root"},
-        {"key": "sample", "label": get_section_label("sample", ui_lang), "href_key": "sample_root"},
     ]
 
 

@@ -72,7 +72,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 ### Active technical route values
 
 - `ui_lang`: `de`, `en`
-- `section`: `project`, `research`, `teaching`, `sample`
+- `section`: `project`, `research`, `teaching`
 - `corpus_language`: `spanish`, `french`, `german`, `english`
 - `teaching_language`: `spanish`, `french`, `german`, `english`
 
@@ -214,7 +214,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - On public research pages for unauthenticated users, protected research targets stay visible in the sidebar but use muted locked navigation states rather than per-item login notices.
 - In those muted locked research sidebar states, the lock icon renders immediately after the visible page label and no additional visible `login required` helper line is repeated inside the navigation list.
 - Breadcrumbs are rendered only when they add real orientation value, not as a pseudo-context line that merely repeats section or language.
-- Page-level back navigation uses one shared compact back-link family across public, auth, protected-account, research, teaching, and sample surfaces: the control sits above breadcrumbs and the page-entry heading, stays left-aligned inside the current content container even when the surrounding header copy is centered or kept on a narrower inner measure, and uses the shared back-pill arrow plus a target-only localized label such as `Sprachauswahl` / `Language selection` rather than visible helper phrases like `Zurück`, `Zur`, `Zu`, or `Back to`.
+- Page-level back navigation uses one shared compact back-link family across public, auth, protected-account, research, and teaching surfaces: the control sits above breadcrumbs and the page-entry heading, stays left-aligned inside the current content container even when the surrounding header copy is centered or kept on a narrower inner measure, and uses the shared back-pill arrow plus a target-only localized label such as `Sprachauswahl` / `Language selection` rather than visible helper phrases like `Zurück`, `Zur`, `Zu`, or `Back to`.
 - An optional second back link may repeat at the bottom only on long detail pages, but it must reuse the same compact back-link component and target-only label; full-width back bars or page-local back-button families are not part of the active contract.
 - Shared back-links must not be re-wrapped in `pm-container`, `pm-reading`, or other helper wrappers that narrow the row, create panel chrome, or move the pill off the main content axis; top and bottom instances align to the same page content edge.
 - Desktop shows breadcrumbs only from hierarchy depth 3 onward because the sidebar already carries orientation on flatter levels.
@@ -222,16 +222,9 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - When a breadcrumb is shown, it always renders the full path including the current page as the final, non-clickable item.
 - The shared shell must not hide horizontal layout defects through body-level overflow clipping; mobile overflow is corrected at the responsible grid, menu, popover, control cluster, or scroll-container level.
 
-## Sample Surface
-
-- `sample` is a showcase for current, already accepted layout elements of the webapp.
-- `sample` never defines the target UI for product pages; it mirrors the current implementation on real pages.
-- `sample` may host clearly marked temporary preview zones for upcoming shared component families, but those previews remain QA-only until a later spec change authorizes productive migration.
-- If an active layout element is changed on a real page and `sample` contains that element, `sample` must be updated in the same run.
-
 ## Active UI System
 
-- Productive pages, shared partials, and established CSS families are the visual source for recurring UI work; `sample` mirrors them but does not replace them as the design reference.
+- Productive pages, shared partials, and established CSS families are the visual source for recurring UI work.
 - `de` and `en` are the active public UI languages for finished surfaces under the canonical `ui_lang` route context.
 - Finished or newly completed UI surfaces must ship with both `de` and `en` display strings in the same run; do not treat English as a later copy-only follow-up for already-finished visible UI.
 - Visible UI strings for finished surfaces must resolve through the shared translation layer and server-provided localized payloads; do not hardcode visible `de`/`en` branches or fallback copy in Python builders, Jinja templates, or page JavaScript.

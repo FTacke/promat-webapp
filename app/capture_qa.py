@@ -9,8 +9,7 @@ async def capture():
         '/de/teaching/english',
         '/de/teaching/spanish/final-r',
         '/en/teaching',
-        '/en/teaching/spanish',
-        '/de/sample'
+        '/en/teaching/spanish'
     ]
     base_url = 'http://127.0.0.1:8010'
     output_dir = 'tmp/ui-qa/2026-05-11-teaching-polish-followup-fresh'

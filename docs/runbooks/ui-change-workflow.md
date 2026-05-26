@@ -22,7 +22,6 @@ Diesen Ablauf für visuelle oder interaktive UI-Änderungen in `app/templates/`,
 - `comparison`: Step-Container, Auswahlblöcke, Badge- und Meta-Rhythmus, klare vertikale Arbeitssequenzen, ruhige sekundäre Aktionen
 - `player`: dichte Materiallisten, kompakte Work-Heads, Sticky-Anker, Muted-vs-Active-Zustände, kompakte Icon-Aktionen und Controls
 - `speakers`, Profil: Speaker-Cards, kompakte Task-Aktionen, Zeilen- und Tabellenaktionen, reduzierte Metadatenhierarchie
-- `sample`: nur als Spiegel bereits aktiver Elemente mitziehen, niemals als upstream Designquelle benutzen
 
 ## Schritte
 
@@ -31,7 +30,7 @@ Diesen Ablauf für visuelle oder interaktive UI-Änderungen in `app/templates/`,
 3. Wiederverwendung vor Neuerfindung: bestehende Familien für Buttons, Inputs, Selects, Textareas, Badges, Chips, Karten, Listenzeilen, Step-Container, Dialoge, Empty States, Sticky-Anker, Status- und Auswahlzustände sowie Overflow-Menüs erweitern oder wiederverwenden. Neue page-lokale Muster nur dann einführen, wenn kein bestehendes Muster die Aufgabe sauber löst.
 4. Hierarchie ruhig halten: lineare Flows bevorzugen, Mini-Oberlabels und doppelte Statuskästen reduzieren, und keine zweite konkurrierende Arbeitsinsel aufbauen. Overview-Seiten bleiben Overview-Seiten; Bearbeitungslogik gehört auf Detail- oder Editorseiten.
 5. Shared CSS als Hochrisikobereich behandeln: wenn `20_layout.css`, `30_components.css`, `40_cards.css` oder ein Shared Partial geändert wird, mindestens eine weitere unbetroffene Seite mit derselben Komponentenfamilie gezielt gegenprüfen.
-6. `sample` im selben Run aktualisieren, wenn das geänderte reale UI-Element dort bereits repräsentiert wird.
+6. Wenn das geänderte UI-Element oder dieselbe shared Komponentenfamilie auf weiteren realen Routen vorkommt, diese im selben Run mitziehen und gezielt gegenprüfen.
 7. Bei substanziellen UI-Änderungen im Browser validieren: reale Route oder manuellen Klickpfad durchlaufen, Screenshots unter `tmp/ui-qa/` erzeugen und das Ergebnis aktiv gegen die produktiven Referenzflächen prüfen.
 8. Wenn die betroffene Oberfläche als fertig oder produktiv bilingual gilt, denselben realen Pfad in `de` und `en` prüfen. Dabei nicht nur die Hauptansicht, sondern auch Dialoge, Placeholders, Empty States, Overflow-Menüs, Snackbars und Bereiche mit längeren englischen Labels gezielt abdecken.
 9. Wenn der Run sichtbare Access-Grenzen oder geschützte Workbench-Routen ändert, im Browser immer beide Zustände prüfen: unauthenticated Zugriff muss an der Login- oder Access-Schranke enden, und derselbe Pfad muss nach Login normal rendern, ohne die geschützte Oberfläche schon vorher im Hintergrund auszuliefern.
@@ -54,7 +53,7 @@ Diesen Ablauf für visuelle oder interaktive UI-Änderungen in `app/templates/`,
 - gefundene sichtbare Defekte iterativ behoben und neu geprüft, statt nur den ersten Screenshot-Stand zu protokollieren
 - bei exakten UI-Vorgaben zusätzlich die konkrete Reihenfolge, Platzierung und sichtbare Beschriftung der betroffenen Controls gegen die Anforderung geprüft
 - bei Diskrepanzen zwischen Code/Test und Browser die aktive Runtime oder stale Listener explizit geprüft und bereinigt
-- `sample` mitgezogen, falls ein repräsentiertes Element geändert wurde
+- weitere reale Routen mit derselben Komponentenfamilie mitgeprüft, falls betroffen
 - relevante Tests oder Render-Regressionen ergänzt oder erneut ausgeführt
 
 ## Risiken und Rückbau

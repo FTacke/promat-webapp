@@ -4,7 +4,7 @@
 - Root `AGENTS.md` and scoped `AGENTS.md` files govern how changes are made, not the factual product rules themselves.
 - Update existing spec files before creating any new active documentation.
 - Shared app-shell and sidebar-navigation hierarchy count as active platform rules; update `docs/spec/platform-data-files.md` when they change, and do not rely on old run logs as the current UI source of truth.
-- `sample` mirrors current accepted layout elements and is never the upstream design source; when a represented layout element changes on a real page, update `app/templates/pages/sample_page.html` in the same run.
+- Productive pages, shared partials, and established CSS families are the visual source for recurring UI work; do not treat deleted QA surfaces as the upstream design reference.
 - For substantial UI changes, follow `docs/runbooks/ui-change-workflow.md` in addition to the binding specs and AGENTS files.
 - Before building new UI markup, CSS, or client interaction, inspect the relevant productive pages, shared partials, and existing CSS families.
 - Reuse or extend existing UI families before creating page-local variants for buttons, inputs, selects, textareas, badges, chips, cards, list rows, dialogs, empty states, sticky anchors, or overflow actions.

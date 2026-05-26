@@ -8,8 +8,7 @@ routes = [
     '/de/teaching/english',
     '/de/teaching/spanish/final-r',
     '/en/teaching',
-    '/en/teaching/spanish',
-    '/de/sample'
+    '/en/teaching/spanish'
 ]
 
 qa_dir = 'tmp/ui-qa/2026-05-11-teaching-layout-grid'
