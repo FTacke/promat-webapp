@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 import tempfile
-import traceback
 from pathlib import Path
 
 
@@ -97,10 +96,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except Exception as exc:
-        detail = f"{type(exc).__name__}: {exc}"
-        print(f"::error title=Importer smoke failed::{detail}")
-        traceback.print_exc()
-        raise SystemExit(1)
+    raise SystemExit(main())
