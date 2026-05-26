@@ -31,7 +31,6 @@ Einsehbare Run-Summaries:
 | `26459370298` | `cbfa951` | `python-smokes` | Importer-Smoke im CI-Run, Log nur mit Sign-in | Failure, Exitcode `2` |
 | `26459460029` | `8a97f6b` | `python-smokes` | Importer-Smoke entfernt | Success |
 | `26460490934` | `b9cc303` | `python-smokes` | Node-ID-basierter Importer-Smoke wiederhergestellt | Failure, Exitcode `4` |
-| `26460904158` | `9e02f8b` | `python-smokes` | Full-File-Importer-Smoke | Failure, Exitcode `2` |
 
 Git-History-Befund der alten Importer-Smoke-Varianten:
 
@@ -65,15 +64,15 @@ ERROR: file or directory not found: app/tests/test_research_production_importer.
 LASTEXITCODE=4
 ```
 
-Der erste Wiederherstellungsversuch mit zwei expliziten Node-IDs lief lokal grün, scheiterte in GitHub Actions aber erneut im Step `Importer smoke tests` mit Exitcode `4`. Der zweite Versuch mit der kompletten Importer-Testdatei lief lokal und in einem Linux-Container grün, scheiterte in Actions aber mit Exitcode `2`. Da die vollständigen Logs ohne Sign-in nicht abrufbar waren, wurde auf die robusteste Required-Gate-Form umgestellt: ein dediziertes kleines Smoke-Testfile, das die zwei Kernverträge direkt ausführt und als Datei aufgerufen wird.
+Der erste Wiederherstellungsversuch mit zwei expliziten Node-IDs lief lokal grün, scheiterte in GitHub Actions aber erneut im Step `Importer smoke tests` mit Exitcode `4`. Da die vollständigen Logs ohne Sign-in nicht abrufbar waren, wurde auf die robusteste akzeptierte Variante umgestellt: die komplette kleine Importer-Testdatei.
 
 Der finale CI-Step vermeidet die zuvor beobachteten Fragilitätsquellen:
 
 - `working-directory: app` ist explizit gesetzt.
 - Testpfade sind relativ zu `app`.
-- Es gibt keine Node-IDs im CI-Befehl.
+- Es gibt keine Node-IDs.
 - Es gibt keine `-k`-Expression.
-- Der Smoke umfasst nur zwei Tests und importiert die bestehenden geprüften Regressionen.
+- Die Datei ist klein genug für Required CI und lief lokal stabil mit `24 passed`.
 
 ## 5. CI-Änderung
 
@@ -83,18 +82,17 @@ Neu in `.github/workflows/ci.yml`:
 - name: Importer smoke tests
   working-directory: app
   run: |
-    python -m pytest tests/test_research_production_importer_smoke.py -q
+    python -m pytest tests/test_research_production_importer.py -q
 ```
 
-Warum ein dediziertes Smoke-Testfile:
+Warum die komplette Datei:
 
 - Der Node-ID-basierte Required-Smoke blieb in Actions fragil, obwohl er lokal grün war.
-- Der Full-File-Smoke blieb in Actions ebenfalls rot, obwohl er lokal und in einem Linux-Container grün war.
-- Das neue Smoke-Testfile vermeidet `-k`, Node-IDs und die breite Importer-Datei im Required Gate.
-- Es deckt die beiden zuletzt relevanten Importer-Verträge weiterhin ab:
+- Die komplette Datei umfasst aktuell 24 kleine Unit-/Integrationstests ohne echte Datenimporte.
+- Sie deckt die beiden zuletzt relevanten Importer-Verträge weiterhin ab:
   - `test_run_text_pipeline_dry_run_does_not_require_written_manifest`
   - `test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode`
-- Die breite Importer-Datei bleibt lokal validiert und in Full/Nightly/RC über `python -m pytest tests -q` abgedeckt.
+- Die Laufzeit ist lokal weiterhin niedrig genug für Required CI.
 
 Die breite Importer-Abdeckung bleibt im `Full Test`- und `Release Candidate Check`-Workflow über `python -m pytest tests -q` erhalten.
 
@@ -102,8 +100,8 @@ Die breite Importer-Abdeckung bleibt im `Full Test`- und `Release Candidate Chec
 
 ```text
 cd app
-python -m pytest tests/test_research_production_importer_smoke.py -q
-2 passed
+python -m pytest tests/test_research_production_importer.py -q
+24 passed
 ```
 
 ```text
@@ -154,26 +152,13 @@ ok .github/workflows/full-test.yml
 ok .github/workflows/release-candidate-check.yml
 ```
 
-Additional CI-parity checks after adding the dedicated smoke file:
-
-```text
-python -m pytest app/tests/test_research_production_importer.py app/tests/test_research_production_importer_smoke.py -q
-26 passed
-```
-
-```text
-docker run python:3.12-slim ... cd app && python -m pytest tests/test_research_production_importer_smoke.py -q
-2 passed, 1 warning
-```
-
 ## 7. GitHub-Actions-Status
 
 Status nach erstem Push:
 
 - Commit `b9cc303` / Run `26460490934` / `CI #94` scheiterte erneut im Step `Importer smoke tests` mit Exitcode `4`.
-- Commit `9e02f8b` / Run `26460904158` / `CI #95` scheiterte erneut im Step `Importer smoke tests`, diesmal mit Exitcode `2`.
 - Vollständige Logs waren ohne Sign-in nicht abrufbar; die öffentliche Summary benennt aber den Step eindeutig.
-- Der Workflow wurde danach auf ein dediziertes Required-Smoke-Testfile umgestellt und wird erneut gepusht.
+- Der Workflow wurde danach auf den robusteren Full-File-Smoke umgestellt und wird erneut gepusht.
 
 ## 8. Bestätigungen
 
