@@ -2,24 +2,33 @@
 
 ## Zweck
 
-Wiederholbarer Implementierungs- und Betriebsablauf für die Erzeugung der `wordlist`-Produktionsartefakte des Research-Players.
+Wiederholbarer Implementierungs- und Betriebsablauf für die Erzeugung der `wordlist`-Player-Artefakte aus expliziten operativen Eingaben.
+
+Dieses Runbook beschreibt den Task-Vertrag der Ableitung. Der reguläre Einstieg für Batch-Importe bleibt `scripts/research_data_intake/import_batch_to_production.py`; `produce_wordlist_artifacts.py` ist der fokussierte Ableitungshelfer für den `wordlist`-Task.
+
+## Operative Eingaben
+
+- `data/config/research_player/spanish/task_catalogs/wordlist.json`
+- eine explizite `wordlist`-Source-WAV als operative Ableitungsbasis
+- eine explizite `wordlist`-TextGrid-Datei als Alignment-Quelle
+
+Im Batch-Kontext stammen diese operativen Eingaben typischerweise aus:
+
+- `working/{person_id}/wordlist/source/wordlist.wav`
+- `working/{person_id}/wordlist/alignment/wordlist.TextGrid`
+
+Im Runtime-Kontext werden nur die Zielartefakte gespeichert, nicht diese Ableitungsquellen.
 
 ## CLI-Einstieg
 
 - Einzelne Session validieren, ohne Schreibzugriff:
-	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --session-id ES-L-0001-2026-S01 --dry-run`
+  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --session-id ES-L-0001-2026-S01 --dry-run`
 - Einzelne Session produzieren:
-	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --session-id ES-L-0001-2026-S01`
+  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --session-id ES-L-0001-2026-S01`
 - Alle aktuell geeigneten spanischen Sessions produzieren:
-	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --all-suitable-sessions`
+  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --all-suitable-sessions`
 - Optionale Label-Prüfung mit Warnungen:
-	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --all-suitable-sessions --validate-labels warn`
-
-## Verbindliche Quellen
-
-- `data/config/research_player/spanish/task_catalogs/wordlist.json`
-- `source/wordlist.wav`
-- `alignment/wordlist.TextGrid`
+  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/produce_wordlist_artifacts.py --all-suitable-sessions --validate-labels warn`
 
 ## Katalog-Provenienz
 
@@ -30,22 +39,17 @@ Wiederholbarer Implementierungs- und Betriebsablauf für die Erzeugung der `word
 ## Autoritätsregel
 
 - Wenn ein kanonischer Task-Katalog vorliegt, ist dieser Katalog die verbindliche Inhaltsquelle für Reihenfolge, `item_id`, `item_number` und `text`.
-- `alignment/wordlist.TextGrid` liefert die Zeitgrenzen und die Reihenfolge der nicht-silence-Intervalle, aber nicht die maßgeblichen `text`-Werte für JSON und Split-Referenzierung.
+- Die TextGrid-Datei liefert die Zeitgrenzen und die Reihenfolge der nicht-silence-Intervalle, aber nicht die maßgeblichen `text`-Werte für JSON und Split-Referenzierung.
 - Die Katalogwerte werden unverändert übernommen: keine Orthographienormalisierung, keine Unicode-Vereinfachung, keine Akzentbereinigung, keine automatische Groß-/Kleinschreibungsänderung und keine stillschweigende Änderung von Leerzeichen oder Gedankenstrichen.
-- Der kommende Implementierungs-Run darf TextGrid-Labels gegen die kanonischen Katalogtexte validieren, aber erkannte Abweichungen dürfen nicht stillschweigend normalisiert werden.
-
-## Eingaben
-
-- `data/config/research_player/spanish/task_catalogs/wordlist.json` als kanonische Inhaltsquelle
-- `source/wordlist.wav` als Audioquelle für das Full-MP3
-- `alignment/wordlist.TextGrid` als Quelle der Intervallgrenzen
-- `docs/model_mds/spanish_wordlist.txt` und `docs/model_mds/01_Spanisch_Wortliste.pdf` nur als Provenienz- und Audit-Referenzen des Katalogs, nicht als operative Produktionsquelle solange der Katalog vorhanden ist
+- Der Run darf TextGrid-Labels gegen die kanonischen Katalogtexte validieren, aber erkannte Abweichungen dürfen nicht stillschweigend normalisiert werden.
 
 ## Zielartefakte
 
 - `derived/wordlist.mp3`
 - `items/wordlist/{item_id}.mp3`
 - `alignment/wordlist.json`
+
+Diese Zielartefakte sind runtime-tauglich. Die operative Source-WAV und das TextGrid gehören nicht in `data/sessions/`.
 
 ## ID- und Nummerierungsvertrag
 
@@ -58,24 +62,24 @@ Wiederholbarer Implementierungs- und Betriebsablauf für die Erzeugung der `word
 ## Fehlerbedingungen
 
 - Wenn der Task-Katalog nicht geladen werden kann oder nicht exakt `92` Items enthält, schlägt der Produktions-Run fehl.
-- Wenn die Zahl der nicht-silence-Intervalle in `alignment/wordlist.TextGrid` nicht exakt `92` beträgt, schlägt der Produktions-Run fehl.
-- Wenn die Intervallreihenfolge nicht positionsgleich auf den kanonischen Task-Katalog gemappt werden kann, schlägt der Produktions-Run fehl.
+- Wenn die Zahl der nicht-silence-Intervalle in der `wordlist`-TextGrid-Datei nicht exakt `92` beträgt, schlägt der Produktions-Run fehl.
+- Wenn die Intervallreihenfolge nicht positionsgleich auf die `92` Katalog-Items gemappt werden kann, schlägt der Produktions-Run fehl.
 - Wenn für ein Intervall keine kanonische Katalogzuordnung hergestellt werden kann, schlägt der Produktions-Run fehl.
-- Wenn die kanonischen `wordlist`-Grenzen über die verfügbare Dauer von `source/wordlist.wav` hinausreichen, ist die Session für diesen Produktionspfad nicht verarbeitbar.
-- Wenn eine optionale Label-Validierung gegen TextGrid-Labels Abweichungen erkennt, darf der Run nur kontrolliert fehlschlagen oder explizit warnen; stillschweigende Textumschreibung ist unzulässig.
+- Wenn die kanonischen `wordlist`-Grenzen über die verfügbare Dauer der Source-WAV hinausreichen, ist die Session für diesen Produktionspfad nicht verarbeitbar.
+- Wenn eine optionale Label-Validierung Abweichungen erkennt, darf der Run nur kontrolliert fehlschlagen oder explizit warnen; stillschweigende Textumschreibung ist unzulässig.
 
 ## Ablauf
 
 1. Den kanonischen Task-Katalog `data/config/research_player/spanish/task_catalogs/wordlist.json` laden.
 2. Prüfen, dass der Katalog genau `92` Items enthält.
-3. `alignment/wordlist.TextGrid` lesen.
+3. Die operative `wordlist`-TextGrid-Datei lesen.
 4. Führende, zwischenliegende und abschließende Silence-Intervalle verwerfen.
 5. Prüfen, dass genau `92` nicht-silence-Intervalle vorliegen.
 6. Die Intervallreihenfolge positionsgleich auf die `92` Katalog-Items mappen.
 7. Optional die TextGrid-Labels gegen die kanonischen `text`-Werte des Katalogs validieren.
 8. Die gelesenen Zeitwerte vor weiterer Ableitung auf vier Nachkommastellen runden.
 9. Die gerundeten kanonischen Zeitgrenzen einmalig als ganzzahlige `start_ms`- und `end_ms`-Werte serialisieren.
-10. `derived/wordlist.mp3` aus `source/wordlist.wav` mit Lautheitsstandardisierung sowie MP3 in mono mit `160 kbps` CBR erzeugen.
+10. `derived/wordlist.mp3` aus der operativen `wordlist`-Source-WAV mit Lautheitsstandardisierung sowie MP3 in mono mit `160 kbps` CBR erzeugen.
 11. `items/wordlist/{item_id}.mp3` aus dem bereits standardisierten Full-MP3 mit denselben Web-Parametern erzeugen.
 12. Für jeden Split `250 ms` Vorlauf und `250 ms` Nachlauf anwenden.
 13. Die gepaddeten Split-Grenzen an die verfügbare Audiolänge klammern.
@@ -93,7 +97,7 @@ Wiederholbarer Implementierungs- und Betriebsablauf für die Erzeugung der `word
 
 - Web-Derivate für den aktuellen `wordlist`-Pfad werden als MP3 in mono mit `160 kbps` CBR erzeugt.
 - Diese Parameter gelten einheitlich für `derived/wordlist.mp3` und `items/wordlist/{item_id}.mp3`.
-- `source/wordlist.wav` bleibt die maßgebliche Analyse- und Ableitungsgrundlage; MP3-Derivate sind Web-, Player-, Vergleichs- und Download-Artefakte.
+- Die operative Source-WAV bleibt die maßgebliche Analyse- und Ableitungsgrundlage; MP3-Derivate sind Web-, Player-, Vergleichs- und Download-Artefakte.
 
 ## Interner Pfad vs. Download-Dateiname
 

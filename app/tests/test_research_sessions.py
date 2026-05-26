@@ -3072,6 +3072,35 @@ def test_speakers_table_route_localizes_labels_in_english(runtime_env: Path, url
     assert 'pm-research-speaker-cell__session' not in html
 
 
+@pytest.mark.parametrize(
+    ("ui_lang", "expected_message"),
+    [
+        ("de", "Keine Sprecherdaten vorhanden."),
+        ("en", "No speaker data available."),
+    ],
+)
+def test_speakers_route_renders_plain_empty_state_without_runtime_sessions(
+    runtime_env: Path,
+    url_app: Flask,
+    ui_lang: str,
+    expected_message: str,
+) -> None:
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/spanish/speakers")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert expected_message in html
+    assert "Keine passenden Personen gefunden." not in html
+    assert "No matching people found." not in html
+    assert "Geplante Übersicht" not in html
+    assert "Geplante Filter" not in html
+    assert "Struktureller Stand" not in html
+    assert 'class="pm-research-empty__text">' in html
+
+
 def test_research_workbench_builders_expose_english_shared_labels(runtime_env: Path, url_app: Flask) -> None:
     learner_session = "ES-L-0001-2026-S01"
     native_session = "ES-N-0001-2026-S01"

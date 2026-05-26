@@ -18,6 +18,24 @@ BATCH_NAME_TOKEN = "batch"
 SUPPORTED_TASKS = ("wordlist", "text", "interview")
 SUPPORTED_TRANSFER_MODES = ("copy", "move", "symlink")
 
+IGNORED_BATCH_DIR_NAMES = {"working", "reports", "exports", "__pycache__", ".mfa_cache"}
+WORKBOOK_EXTENSIONS = {".xlsx"}
+ROLE_ALIASES = {
+    "raw": "raw",
+    "origin": "origin",
+    "processed": "source",
+    "source": "source",
+    "amberscript": "alignment_source",
+    "alignment": "alignment_source",
+}
+ROLE_PRIORITY = ("source", "raw", "origin", "alignment_source")
+
+_PERSON_ID_PATTERN = re.compile(
+    r"(?P<corpus>[A-Za-z]{2,})[-_](?P<speaker_marker>[A-Za-z])[-_](?P<person_number>\d{4})",
+    re.IGNORECASE,
+)
+_TOKEN_SPLIT_PATTERN = re.compile(r"[^A-Za-z0-9]+")
+
 _BATCH_FILE_PATTERN = re.compile(
     r"^(?P<corpus>[A-Za-z]{2,})[-_](?P<speaker_marker>[A-Za-z])[-_](?P<person_number>\d{4})"
     r"_(?P<task>wordlist|text|interview)_(?P<stage>raw|processed)\.(?P<extension>wav|textgrid|json)$",
@@ -34,6 +52,7 @@ class ParsedBatchFile:
     task: str
     stage: str
     file_kind: str
+    file_role: str
 
     @property
     def canonical_name(self) -> str:
@@ -44,6 +63,20 @@ class ParsedBatchFile:
         return f"{self.task}.TextGrid"
 
 
+@dataclass(frozen=True, slots=True)
+class BatchWorkbookCandidate:
+    source_path: Path
+    source_root: str
+    relative_source: str
+
+
+@dataclass(frozen=True, slots=True)
+class BatchScanReport:
+    workbooks: tuple[BatchWorkbookCandidate, ...]
+    parsed_files: tuple[ParsedBatchFile, ...]
+    warnings: tuple[str, ...]
+
+
 @dataclass(slots=True)
 class BatchTaskCandidates:
     processed_wav: list[ParsedBatchFile]
@@ -52,6 +85,11 @@ class BatchTaskCandidates:
     raw_textgrid: list[ParsedBatchFile]
     processed_json: list[ParsedBatchFile]
     raw_json: list[ParsedBatchFile]
+    source_wav: list[ParsedBatchFile]
+    origin_wav: list[ParsedBatchFile]
+    alignment_textgrid: list[ParsedBatchFile]
+    alignment_json: list[ParsedBatchFile]
+    interview_alignment_json: list[ParsedBatchFile]
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,8 +116,6 @@ def batch_validation_issues(path: Path, require_processed: bool = True) -> list[
     issues: list[str] = []
     if not is_batch_directory_name(path.name):
         issues.append(f"batch directory name must contain '{BATCH_NAME_TOKEN}'")
-    if require_processed and not (path / "processed").is_dir():
-        issues.append("missing required processed/ directory")
     return issues
 
 
@@ -169,30 +205,161 @@ def parse_batch_filename(path: Path, source_root: str, batch_dir: Path) -> Parse
         task=str(match.group("task") or "").lower(),
         stage=str(match.group("stage") or "").lower(),
         file_kind=file_kind,
+        file_role="source" if str(match.group("stage") or "").lower() == "processed" else "raw",
+    )
+
+
+def _relative_source_root(path: Path, batch_dir: Path) -> str:
+    relative_parts = path.relative_to(batch_dir).parts
+    if len(relative_parts) <= 1:
+        return "batch_root"
+    return relative_parts[0]
+
+
+def _path_tokens(path: Path) -> list[str]:
+    return [token for token in _TOKEN_SPLIT_PATTERN.split(path.stem.lower()) if token]
+
+
+def _detect_person_id(path: Path) -> str | None:
+    match = _PERSON_ID_PATTERN.search(path.stem)
+    if match is None:
+        return None
+    return canonical_person_id(
+        corpus=str(match.group("corpus") or ""),
+        speaker_marker=str(match.group("speaker_marker") or ""),
+        person_number=str(match.group("person_number") or ""),
+    )
+
+
+def _detect_task(tokens: list[str]) -> str | None:
+    matches = [task for task in SUPPORTED_TASKS if task in tokens]
+    if len(matches) != 1:
+        return None
+    return matches[0]
+
+
+def _detect_role(tokens: list[str], *, extension: str) -> str | None:
+    matched_roles = {ROLE_ALIASES[token] for token in tokens if token in ROLE_ALIASES}
+    if extension == ".textgrid":
+        return "alignment_source" if not matched_roles or matched_roles <= {"alignment_source", "source", "raw"} else None
+    if extension == ".json":
+        if not matched_roles:
+            return "alignment_source"
+        if matched_roles <= {"alignment_source", "source", "raw"}:
+            return "alignment_source"
+        return None
+    if len(matched_roles) != 1:
+        return None
+    return next(iter(matched_roles))
+
+
+def _stage_for_role(role: str) -> str:
+    if role == "raw":
+        return "raw"
+    return "processed"
+
+
+def _parse_drop_in_file(path: Path, batch_dir: Path) -> tuple[ParsedBatchFile | BatchWorkbookCandidate | None, str | None]:
+    extension = path.suffix.lower()
+    relative_source = str(path.relative_to(batch_dir)).replace("\\", "/")
+    source_root = _relative_source_root(path, batch_dir)
+
+    if path.name.startswith("~$"):
+        return None, None
+    if extension in WORKBOOK_EXTENSIONS:
+        return BatchWorkbookCandidate(source_path=path, source_root=source_root, relative_source=relative_source), None
+    if extension not in {".wav", ".json", ".textgrid"}:
+        return None, f"unsupported intake file type skipped: {relative_source}"
+
+    tokens = _path_tokens(path)
+    person_id = _detect_person_id(path)
+    if person_id is None:
+        return None, f"unrecognized intake filename without person_id: {relative_source}"
+    task = _detect_task(tokens)
+    if task is None:
+        return None, f"unrecognized intake filename without unique task token: {relative_source}"
+    role = _detect_role(tokens, extension=extension)
+    if role is None:
+        return None, f"ambiguous or unsupported intake role in filename: {relative_source}"
+
+    if extension == ".wav":
+        file_kind = "wav"
+        if role == "alignment_source":
+            return None, f"invalid WAV alignment role in filename: {relative_source}"
+    elif extension == ".json":
+        if task == "wordlist":
+            return None, f"unexpected JSON intake source for wordlist task: {relative_source}"
+        file_kind = "json"
+    else:
+        if task == "interview":
+            return None, f"unexpected TextGrid intake source for interview task: {relative_source}"
+        file_kind = "textgrid"
+
+    return (
+        ParsedBatchFile(
+            source_path=path,
+            source_root=source_root,
+            relative_source=relative_source,
+            person_id=person_id,
+            task=task,
+            stage=_stage_for_role(role),
+            file_kind=file_kind,
+            file_role=role,
+        ),
+        None,
+    )
+
+
+def _iter_batch_files(batch_dir: Path) -> list[Path]:
+    files: list[Path] = []
+    _collect_batch_files(batch_dir, batch_dir, files)
+    return sorted(files)
+
+
+def _collect_batch_files(current: Path, batch_dir: Path, result: list[Path]) -> None:
+    try:
+        children = list(current.iterdir())
+    except OSError:
+        return
+    for child in sorted(children):
+        if child.is_dir():
+            rel_parts = child.relative_to(batch_dir).parts
+            if any(part in IGNORED_BATCH_DIR_NAMES for part in rel_parts):
+                continue
+            _collect_batch_files(child, batch_dir, result)
+        else:
+            try:
+                if child.is_file():
+                    result.append(child)
+            except OSError:
+                pass
+
+
+def scan_import_batch(batch_dir: Path) -> BatchScanReport:
+    parsed_files: list[ParsedBatchFile] = []
+    workbook_candidates: list[BatchWorkbookCandidate] = []
+    warnings: list[str] = []
+    for path in _iter_batch_files(batch_dir):
+        parsed, warning = _parse_drop_in_file(path, batch_dir)
+        if warning is not None:
+            warnings.append(warning)
+            continue
+        if parsed is None:
+            continue
+        if isinstance(parsed, BatchWorkbookCandidate):
+            workbook_candidates.append(parsed)
+        else:
+            parsed_files.append(parsed)
+    return BatchScanReport(
+        workbooks=tuple(workbook_candidates),
+        parsed_files=tuple(parsed_files),
+        warnings=tuple(warnings),
     )
 
 
 def collect_batch_files(batch_dir: Path) -> tuple[list[ParsedBatchFile], list[str]]:
-    parsed_files: list[ParsedBatchFile] = []
-    warnings: list[str] = []
-    for source_root in ("processed", "raw"):
-        source_dir = batch_dir / source_root
-        if not source_dir.exists():
-            continue
-        for path in sorted(source_dir.iterdir()):
-            if not path.is_file():
-                continue
-            parsed = parse_batch_filename(path=path, source_root=source_root, batch_dir=batch_dir)
-            if parsed is None:
-                warnings.append(f"unparsed filename under {source_root}: {path.name}")
-                continue
-            if parsed.file_kind != "json" and parsed.stage != source_root:
-                warnings.append(
-                    f"stage mismatch for {path.name}: filename stage={parsed.stage} folder={source_root}; skipped"
-                )
-                continue
-            parsed_files.append(parsed)
-    return parsed_files, warnings
+    scan_report = scan_import_batch(batch_dir)
+    return list(scan_report.parsed_files), list(scan_report.warnings)
 
 
 def empty_batch_task_candidates() -> BatchTaskCandidates:
@@ -203,6 +370,11 @@ def empty_batch_task_candidates() -> BatchTaskCandidates:
         raw_textgrid=[],
         processed_json=[],
         raw_json=[],
+        source_wav=[],
+        origin_wav=[],
+        alignment_textgrid=[],
+        alignment_json=[],
+        interview_alignment_json=[],
     )
 
 
@@ -211,8 +383,26 @@ def build_batch_inventory(parsed_files: list[ParsedBatchFile]) -> dict[str, dict
     for entry in parsed_files:
         person_inventory = inventory.setdefault(entry.person_id, {})
         task_bucket = person_inventory.setdefault(entry.task, empty_batch_task_candidates())
-        bucket_name = f"{entry.source_root}_{entry.file_kind}"
-        getattr(task_bucket, bucket_name).append(entry)
+        if entry.file_kind == "wav":
+            if entry.file_role == "raw":
+                task_bucket.raw_wav.append(entry)
+            elif entry.file_role == "origin":
+                task_bucket.origin_wav.append(entry)
+            elif entry.file_role == "source":
+                task_bucket.source_wav.append(entry)
+                task_bucket.processed_wav.append(entry)
+        elif entry.file_kind == "textgrid":
+            task_bucket.alignment_textgrid.append(entry)
+            task_bucket.processed_textgrid.append(entry)
+            if entry.file_role == "raw":
+                task_bucket.raw_textgrid.append(entry)
+        elif entry.file_kind == "json":
+            task_bucket.alignment_json.append(entry)
+            task_bucket.processed_json.append(entry)
+            if entry.file_role == "raw":
+                task_bucket.raw_json.append(entry)
+            if entry.task == "interview":
+                task_bucket.interview_alignment_json.append(entry)
     return inventory
 
 
@@ -282,7 +472,7 @@ def file_snapshot(path: Path, root: Path) -> dict[str, object]:
 
 
 def read_json_file(path: Path) -> dict[str, object]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError(f"JSON root must be an object: {path}")
     return payload

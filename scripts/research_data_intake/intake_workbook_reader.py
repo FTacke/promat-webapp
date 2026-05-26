@@ -4,7 +4,11 @@ from dataclasses import dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
+import re
+import tempfile
 import warnings
+import zipfile
+from xml.etree import ElementTree
 
 from openpyxl import load_workbook
 
@@ -39,15 +43,27 @@ STANDARD_VARIETY_ALIASES: dict[str, str] = {
     "DE_CH_STD": "de_ch_std",
 }
 
+EXCEL_MAX_ROW = 1048576
+WHOLE_COLUMN_SQREF_PATTERN = re.compile(r"^(?P<start>[A-Z]{1,3}):(?P<end>[A-Z]{1,3})$")
+
 
 @dataclass(frozen=True, slots=True)
 class SecurePersonIntakeRow:
     person_id: str
+    last_name: str | None
+    first_name: str | None
+    email: str | None
     research_consent_signed: str | None
     teaching_consent_signed: str | None
     consent_date: date | None
     consent_file: str | None
     questionnaire_file: str | None
+    paper_original_location: str | None
+    intake_date: date | None
+    intake_by: str | None
+    needs_review: bool
+    verified_by: str | None
+    verified_date: date | None
     secure_notes: str | None
     row_number: int
 
@@ -127,6 +143,7 @@ class IntakeWorkbookData:
     persons: dict[str, IntakePersonRow]
     sessions: tuple[IntakeSessionRow, ...]
     exposures_by_key: dict[SessionLinkKey, tuple[IntakeExposureRow, ...]]
+    secure_persons: dict[str, SecurePersonIntakeRow]
     warnings: tuple[str, ...]
     errors: tuple[str, ...]
 
@@ -256,6 +273,67 @@ def _normalize_target_language(value: Any, *, field_name: str, row_number: int) 
 
 def _row_dict(headers: tuple[str, ...], values: tuple[Any, ...]) -> dict[str, Any]:
     return {header: values[index] if index < len(values) else None for index, header in enumerate(headers)}
+
+
+def _normalize_sqref_token(token: str) -> tuple[str, bool]:
+    match = WHOLE_COLUMN_SQREF_PATTERN.fullmatch(token.strip().upper())
+    if match is None:
+        return token, False
+    start_column = match.group("start")
+    end_column = match.group("end")
+    return f"{start_column}2:{end_column}{EXCEL_MAX_ROW}", True
+
+
+def _normalize_sqref_value(value: str) -> tuple[str, bool]:
+    tokens = value.split()
+    normalized_tokens: list[str] = []
+    changed = False
+    for token in tokens:
+        normalized_token, token_changed = _normalize_sqref_token(token)
+        normalized_tokens.append(normalized_token)
+        changed = changed or token_changed
+    if not changed:
+        return value, False
+    return " ".join(normalized_tokens), True
+
+
+def _normalized_workbook_copy_for_openpyxl(workbook_path: Path) -> tuple[Path, tuple[str, ...]]:
+    temp_file = tempfile.NamedTemporaryFile(prefix="promat-intake-workbook-", suffix=".xlsx", delete=False)
+    temp_path = Path(temp_file.name)
+    temp_file.close()
+    warnings_out: list[str] = []
+
+    try:
+        with zipfile.ZipFile(workbook_path, "r") as source_zip, zipfile.ZipFile(temp_path, "w") as target_zip:
+            for item in source_zip.infolist():
+                data = source_zip.read(item.filename)
+                if item.filename.startswith("xl/worksheets/") and item.filename.endswith(".xml"):
+                    try:
+                        root = ElementTree.fromstring(data)
+                    except ElementTree.ParseError:
+                        target_zip.writestr(item, data)
+                        continue
+                    changed = False
+                    for element in root.iter():
+                        sqref_value = element.attrib.get("sqref")
+                        if sqref_value is None:
+                            continue
+                        normalized_sqref, sqref_changed = _normalize_sqref_value(sqref_value)
+                        if not sqref_changed:
+                            continue
+                        element.set("sqref", normalized_sqref)
+                        changed = True
+                        warnings_out.append(
+                            f"Workbook data-validation sqref {sqref_value!r} in {item.filename} normalized to {normalized_sqref!r} for openpyxl read only; original workbook was not modified."
+                        )
+                    if changed:
+                        data = ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
+                target_zip.writestr(item, data)
+    except Exception:
+        temp_path.unlink(missing_ok=True)
+        raise
+
+    return temp_path, tuple(warnings_out)
 
 
 def _normalize_standard_variety(value: Any, *, row_number: int, target_language: str) -> str | None:
@@ -416,6 +494,9 @@ def _normalize_secure_person_row(row: dict[str, Any], row_number: int) -> Secure
         raise IntakeWorkbookError(f"Missing person_id in Secure_Person_Intake row {row_number}")
     return SecurePersonIntakeRow(
         person_id=person_id,
+        last_name=_normalize_optional_text(row.get("last_name")),
+        first_name=_normalize_optional_text(row.get("first_name")),
+        email=_normalize_optional_text(row.get("email")),
         research_consent_signed=_normalize_yes_no_unknown(
             row.get("research_consent_signed"),
             field_name="research_consent_signed",
@@ -429,6 +510,12 @@ def _normalize_secure_person_row(row: dict[str, Any], row_number: int) -> Secure
         consent_date=_normalize_date(row.get("consent_date"), field_name="consent_date", row_number=row_number),
         consent_file=_normalize_optional_text(row.get("consent_file")),
         questionnaire_file=_normalize_optional_text(row.get("questionnaire_file")),
+        paper_original_location=_normalize_optional_text(row.get("paper_original_location")),
+        intake_date=_normalize_date(row.get("intake_date"), field_name="intake_date", row_number=row_number),
+        intake_by=_normalize_optional_text(row.get("intake_by")),
+        needs_review=_normalize_bool_flag(row.get("needs_review"), field_name="needs_review", row_number=row_number),
+        verified_by=_normalize_optional_text(row.get("verified_by")),
+        verified_date=_normalize_date(row.get("verified_date"), field_name="verified_date", row_number=row_number),
         secure_notes=_normalize_optional_text(row.get("secure_notes")),
         row_number=row_number,
     )
@@ -538,20 +625,29 @@ def load_intake_workbook(
     workbook_path: Path,
     *,
     target_language: str,
-    person_id_filter: str | None = None,
+    person_id_filter: str | set[str] | None = None,
 ) -> IntakeWorkbookData:
     normalized_target_language = resolve_language_config(target_language).code
-    normalized_person_filter = (_normalize_optional_text(person_id_filter) or "").upper() or None
+    if isinstance(person_id_filter, set):
+        normalized_person_filter: set[str] | None = {p.strip().upper() for p in person_id_filter if p.strip()} or None
+    else:
+        single = (_normalize_optional_text(person_id_filter) or "").upper()
+        normalized_person_filter = {single} if single else None
 
+    normalized_workbook_path, workbook_normalization_warnings = _normalized_workbook_copy_for_openpyxl(workbook_path)
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
             message="Data Validation extension is not supported and will be removed",
             category=UserWarning,
         )
-        workbook = load_workbook(workbook_path, read_only=True, data_only=True)
         try:
-            warnings_out: list[str] = []
+            workbook = load_workbook(normalized_workbook_path, read_only=True, data_only=True)
+        except Exception:
+            normalized_workbook_path.unlink(missing_ok=True)
+            raise
+        try:
+            warnings_out: list[str] = list(workbook_normalization_warnings)
             errors_out: list[str] = []
 
             for sheet_name in ACTIVE_SHEETS:
@@ -612,7 +708,7 @@ def load_intake_workbook(
                     warnings_out.append(session_warning)
                 if session_target_language != normalized_target_language:
                     continue
-                if normalized_person_filter is not None and session.person_id != normalized_person_filter:
+                if normalized_person_filter is not None and session.person_id not in normalized_person_filter:
                     continue
                 key = SessionLinkKey(person_id=session.person_id, session_ref=session.session_ref)
                 if key in session_keys:
@@ -723,7 +819,7 @@ def load_intake_workbook(
                 warnings_out.extend(exposure_warnings)
                 if exposure_target_language != normalized_target_language:
                     continue
-                if normalized_person_filter is not None and exposure.person_id != normalized_person_filter:
+                if normalized_person_filter is not None and exposure.person_id not in normalized_person_filter:
                     continue
                 key = SessionLinkKey(person_id=exposure.person_id, session_ref=exposure.session_ref)
                 if key not in session_keys:
@@ -734,6 +830,7 @@ def load_intake_workbook(
                 exposures_by_key.setdefault(key, []).append(exposure)
         finally:
             workbook.close()
+            normalized_workbook_path.unlink(missing_ok=True)
 
     return IntakeWorkbookData(
         workbook_path=workbook_path,
@@ -741,6 +838,7 @@ def load_intake_workbook(
         persons=filtered_people,
         sessions=tuple(filtered_sessions),
         exposures_by_key={key: tuple(values) for key, values in exposures_by_key.items()},
+        secure_persons=secure_people,
         warnings=tuple(warnings_out),
         errors=tuple(errors_out),
     )

@@ -170,6 +170,57 @@ def _normalized_item_payloads(payload: dict[str, Any], session_id: str, person_i
     return items
 
 
+def _normalized_omitted_item_payloads(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_items = payload.get("omitted_items")
+    if raw_items is None:
+        return []
+    if not isinstance(raw_items, list):
+        raise ValueError("alignment/text.json omitted_items must be a list when present")
+    omitted_items: list[dict[str, Any]] = []
+    for index, raw_item in enumerate(raw_items, start=1):
+        if not isinstance(raw_item, dict):
+            raise ValueError(f"omitted text item {index} must be an object")
+        item_id = raw_item.get("item_id")
+        item_number = raw_item.get("item_number")
+        text_value = raw_item.get("text")
+        omit_reason = raw_item.get("omit_reason")
+        if not isinstance(item_id, str) or not item_id.strip():
+            raise ValueError(f"omitted text item {index} is missing item_id")
+        if not isinstance(item_number, str) or not item_number.strip():
+            raise ValueError(f"omitted text item {item_id} is missing item_number")
+        if not isinstance(text_value, str) or not text_value.strip():
+            raise ValueError(f"omitted text item {item_id} is missing text")
+        if raw_item.get("omitted") is not True:
+            raise ValueError(f"omitted text item {item_id} must set omitted=true")
+        if not isinstance(omit_reason, str) or not omit_reason.strip():
+            raise ValueError(f"omitted text item {item_id} is missing omit_reason")
+        for forbidden_key in ("start_ms", "end_ms", "split_mp3"):
+            if forbidden_key in raw_item:
+                raise ValueError(f"omitted text item {item_id} must not include {forbidden_key}")
+        omitted_items.append(
+            {
+                "item_id": item_id,
+                "item_number": item_number,
+                "text": text_value,
+                "omitted": True,
+                "omit_reason": omit_reason,
+            }
+        )
+    payload["omitted_items"] = omitted_items
+    return omitted_items
+
+
+def _runtime_warnings(payload: dict[str, Any]) -> list[str]:
+    raw_warnings = payload.get("_import_warnings")
+    if not isinstance(raw_warnings, list):
+        return []
+    return [
+        str(warning)
+        for warning in raw_warnings
+        if isinstance(warning, str) and not warning.startswith("session_id remains unresolved in the working tree")
+    ]
+
+
 def _split_item_boundaries(items: list[dict[str, Any]], duration_seconds: float) -> list[tuple[str, float, float]]:
     boundaries: list[tuple[str, float, float]] = []
     for item in items:
@@ -197,6 +248,12 @@ def produce_text_artifacts(
 
     payload = _load_alignment_payload(working_alignment_json)
     items = _normalized_item_payloads(payload, session_id=session_id, person_id=person_id)
+    omitted_items = _normalized_omitted_item_payloads(payload)
+    warnings = _runtime_warnings(payload)
+    if warnings:
+        payload["_import_warnings"] = warnings
+    else:
+        payload.pop("_import_warnings", None)
     source_profile = probe_audio_profile(source_wav)
     source_duration = float(source_profile.get("duration") or 0.0)
     if source_duration <= 0:
@@ -207,6 +264,8 @@ def produce_text_artifacts(
             "session_id": session_id,
             "person_id": person_id,
             "item_count": len(items),
+            "omitted_item_count": len(omitted_items),
+            "warnings": warnings,
             "source_profile": source_profile,
             "mode": "dry-run",
         }
@@ -236,6 +295,8 @@ def produce_text_artifacts(
         "session_id": session_id,
         "person_id": person_id,
         "item_count": len(items),
+        "omitted_item_count": len(omitted_items),
+        "warnings": warnings,
         "verification": {"derived_profile": derived_profile},
         "mode": "write",
     }

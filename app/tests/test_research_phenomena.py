@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -452,6 +453,40 @@ def test_public_phenomena_overview_route_renders_all_curated_actions_for_admins(
     assert ">Als eigenes Set bearbeiten<" in html
     assert f'href="/de/research/spanish/phenomena/presets/{curated_set_id}"' in html
     assert f'data-phenomena-copy-curated-set="{curated_set_id}"' in html
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "expected_message"),
+    [
+        ("de", "Keine Sets vorhanden."),
+        ("en", "No sets available."),
+    ],
+)
+def test_phenomena_overview_route_renders_plain_empty_state_without_runtime_sessions(
+    phenomena_app: Flask,
+    ui_lang: str,
+    expected_message: str,
+) -> None:
+    runtime_root = Path(os.environ["PROMAT_RUNTIME_ROOT"])
+    sessions_root = runtime_root / "data" / "sessions" / "spanish"
+    shutil.rmtree(sessions_root, ignore_errors=True)
+    sessions_root.mkdir(parents=True, exist_ok=True)
+    _clear_runtime_caches()
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/{ui_lang}/research/spanish/phenomena")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert expected_message in html
+    assert f'data-phenomena-empty-title>{expected_message}</h3>' in html
+    assert "Geplante Oberfläche" not in html
+    assert "Geplante Übersicht" not in html
+    assert "Hinweis zur Zuordnung" not in html
+    assert "data-phenomena-copy-curated-set" not in html
 
 
 def test_public_preset_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:

@@ -231,6 +231,8 @@ def get_research_page_surface_mode(language_slug: str, page_slug: str) -> Resear
     normalized_language = (language_slug or "").strip().lower()
     surface_mode = DEFAULT_RESEARCH_PAGE_SURFACE_MODES[capability.slug]
 
+    if normalized_language == "spanish" and capability.slug in {"speakers", "comparison"}:
+        return "productive"
     if capability.slug == "speakers" and _corpus_has_session_runtime(normalized_language):
         return "productive"
     if capability.slug == "comparison" and _corpus_has_compare_runtime(normalized_language):

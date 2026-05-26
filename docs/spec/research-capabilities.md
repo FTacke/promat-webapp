@@ -111,10 +111,12 @@ This file is the binding source of truth for the active research capability mode
 - All active corpora share the same page slugs and the same access model.
 - Surface-mode differences describe whether a protected page currently renders productive content or a protected placeholder; they must not weaken auth behavior.
 - `design` is content-bearing for all corpora.
-- `speakers` is productive for a corpus when canonical runtime sessions exist under `data/sessions/{corpus}/`.
-- `comparison` is productive for a corpus when the canonical runtime contains at least one compare-capable task with ready player bundles, meaning documented task metadata plus valid derived audio and alignment JSON resolve through the shared player runtime.
+- For the active Spanish protected workbench pages, `speakers` and `comparison` stay on their productive final surfaces even when canonical runtime session data is currently empty.
+- In that empty-runtime case, `speakers` must render its normal final page with a plain empty state instead of protected planning copy or dummy cards.
+- In that empty-runtime case, `comparison` must render its normal final workbench with plain empty result areas instead of protected planning copy or dummy rows.
 - `phenomena` is productive for a corpus when the canonical task catalogs and `phenomena_presets.json` load successfully through the shared research-player config layer.
-- A corpus without those runtime/config prerequisites remains on protected placeholders for the affected workbench pages.
+- When a corpus has no runtime sessions, `phenomena` overview entries must collapse to a plain empty state rather than showing planning placeholders or set lists detached from runtime availability.
+- Protected planning placeholders for `speakers`, `comparison`, and `phenomena` are retired; headings such as `Geplante Übersicht`, `Geplante Filter`, `Struktureller Stand`, or `Geplante Oberfläche` are not part of the active protected research contract.
 - Corpus-specific productive readiness must be expressed through the capability layer, not through corpus-specific access exceptions or ad hoc router branches.
 
 ## Non-Negotiable Consistency Rules

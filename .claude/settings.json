@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(PROMAT_PUBLIC_ROOT=/c/dev/promat/public .venv/Scripts/python.exe -c ' *)",
+      "Bash(python -m pytest app/tests/test_research_intake_storage.py app/tests/test_research_production_importer.py app/tests/test_research_working_tree_intake.py app/tests/test_research_raw_sync_importer.py -q)",
+      "Bash(.venv\\\\Scripts\\\\python.exe scripts\\\\research_data_intake\\\\import_batch_to_production.py --batch en_batch_20260525 --target-language en --archive-root C:\\\\dev\\\\promat_data_archive --run-working --run-mfa --mfa-executable docker --sync-tasks --cleanup-working-on-success --dry-run)",
+      "Bash(\".venv/Scripts/python.exe\" scripts/research_data_intake/import_batch_to_production.py --batch en_batch_20260525 --target-language en --archive-root \"C:/dev/promat_data_archive\" --run-working --run-mfa --mfa-executable docker --sync-tasks --cleanup-working-on-success --dry-run)",
+      "Bash(.venv/Scripts/python.exe -c ' *)"
+    ]
+  }
+}

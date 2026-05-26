@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -479,6 +480,46 @@ def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Fla
     assert "data-comparison-stop" not in html
     assert "data-comparison-playback-status" not in html
     assert "data-comparison-volume-value" in html
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "expected_message"),
+    [
+        ("de", "Keine Vergleichsdaten vorhanden."),
+        ("en", "No comparison data available."),
+    ],
+)
+def test_comparison_route_uses_final_empty_state_without_runtime_sessions(
+    comparison_app: Flask,
+    ui_lang: str,
+    expected_message: str,
+) -> None:
+    runtime_root = Path(comparison_app.config["TEST_RUNTIME_ROOT"])
+    sessions_root = runtime_root / "data" / "sessions" / "spanish"
+    shutil.rmtree(sessions_root, ignore_errors=True)
+    sessions_root.mkdir(parents=True, exist_ok=True)
+    _clear_runtime_caches()
+
+    comparison_app.config["TEST_AUTH_USER"] = "alice"
+    comparison_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    client = comparison_app.test_client()
+    response = client.get(f"/{ui_lang}/research/spanish/comparison")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "pm-comparison-state" in html
+    assert expected_message in html
+    assert "Geplante Oberfläche" not in html
+
+    with comparison_app.test_request_context(f"/{ui_lang}/research/spanish/comparison"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_comparison_page(ui_lang, "spanish", {})
+
+    assert page is not None
+    assert page["client_state"]["hasRuntimeData"] is False
+    assert page["client_state"]["labels"]["noDataText"] == expected_message
 
 
 def test_comparison_topbar_language_switch_preserves_requested_set_and_task_query(comparison_app: Flask) -> None:

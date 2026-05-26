@@ -32,6 +32,10 @@ Before changing architecture, routing, data paths, governance files, or repo str
 - If tests and the live browser disagree, assume stale runtime or stale QA assumptions until proven otherwise; verify the active listener and current live HTML before claiming the fix is done.
 - For research-access changes, treat `/{ui_lang}/research/{corpus}/design` as the only public corpus-scoped research page unless the active spec says otherwise; all other research pages, detail routes, and player-media routes must gate access before rendering, without corpus-specific exceptions or body-level login CTAs.
 - For research architecture changes, keep `app/src/app/research_capabilities.py` aligned with `docs/spec/research-capabilities.md` and remove duplicated capability literals instead of adding new parallel lookups.
+- For research intake changes, keep `data/sessions/` runtime-only for final JSON/MP3 artifacts, keep the local archive outside the repo under `PROMAT_LOCAL_ARCHIVE_ROOT`, and keep prod upload packages as explicit allowlist exports from validated runtime results.
+- Do not copy WAV, TextGrid, XLSX, secure files, or `raw/` / `source/` trees into runtime session trees or prod upload packages.
+- For research intake file identity, use explicit filename-driven classification for person, task, role, and provenance; do not invent mappings heuristically from workbook prose or ambiguous filenames.
+- Research intake runs do not touch `content/`, Teaching content, or Teaching media unless the user explicitly scopes those areas in.
 - ADRs explain why; runbooks explain how; run logs are never normative.
 - Do not create shadow docs, free-form note buckets, or new active rules in run logs.
 - `app/` is the only application source root.

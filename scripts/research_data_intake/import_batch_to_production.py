@@ -9,7 +9,7 @@ from pathlib import Path
 import shutil
 import sys
 import tempfile
-from typing import Any
+from typing import Any, Sequence
 
 from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.orm import Session, selectinload, sessionmaker
@@ -18,10 +18,19 @@ from sqlalchemy.orm import Session, selectinload, sessionmaker
 REPO_ROOT = Path(__file__).resolve().parents[2]
 APP_SRC = REPO_ROOT / "app" / "src"
 SCRIPT_ROOT = Path(__file__).resolve().parent
+ALIGNMENT_EXPORT_ROOT = SCRIPT_ROOT / "alignment_export"
+IMPORT_SCRIPT_ROOT = SCRIPT_ROOT / "import"
+APP_SCRIPT_ROOT = REPO_ROOT / "app" / "scripts"
 if str(APP_SRC) not in sys.path:
     sys.path.insert(0, str(APP_SRC))
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
+if str(ALIGNMENT_EXPORT_ROOT) not in sys.path:
+    sys.path.insert(0, str(ALIGNMENT_EXPORT_ROOT))
+if str(IMPORT_SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(IMPORT_SCRIPT_ROOT))
+if str(APP_SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(APP_SCRIPT_ROOT))
 
 os.environ.setdefault("FLASK_ENV", "development")
 os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(REPO_ROOT))
@@ -31,6 +40,10 @@ from app.config import DEFAULT_DEV_DATABASE_URL  # noqa: E402
 from app.research_capabilities import RESEARCH_TASK_KEYS, get_research_task_capability, is_task_available_for_speaker_type  # noqa: E402
 from app.research_metadata import ResearchPerson, ResearchSession, ResearchSessionExposure  # noqa: E402
 from app.runtime_paths import get_sessions_root  # noqa: E402
+from apply_auth_migration import apply_postgres_migration  # noqa: E402
+from alignment_export.import_text_mfa_alignment import import_text_mfa_alignment_for_person  # noqa: E402
+from alignment_export.prepare_text_mfa_corpus import prepare_text_mfa_for_person  # noqa: E402
+from alignment_export.run_text_mfa import check_mfa_available, run_text_mfa_for_person  # noqa: E402
 from audio_conversion.ffmpeg_audio import create_full_task_mp3, ensure_media_tools  # noqa: E402
 from intake_batch_common import (  # noqa: E402
     build_batch_inventory,
@@ -39,12 +52,16 @@ from intake_batch_common import (  # noqa: E402
     files_match,
     is_native_speaker_person_id,
     resolve_batch_dir,
+    scan_import_batch,
     working_alignment_path,
+    working_intake_state_path,
     working_source_path,
     working_task_root,
 )
-from intake_workbook_reader import IntakeExposureRow, IntakePersonRow, IntakeSessionRow, SessionLinkKey, load_intake_workbook  # noqa: E402
+from intake_storage import validate_runtime_tree, write_batch_archive_reports, write_secure_person_export, write_session_archive  # noqa: E402
+from intake_workbook_reader import IntakeExposureRow, IntakePersonRow, IntakeSessionRow, SecurePersonIntakeRow, SessionLinkKey, load_intake_workbook  # noqa: E402
 from language_config import resolve_language_config  # noqa: E402
+from organize_batch_working_tree import organize_batch_working_tree  # noqa: E402
 from produce_text_artifacts import produce_text_artifacts  # noqa: E402
 from produce_wordlist_artifacts import produce_wordlist_artifacts  # noqa: E402
 
@@ -81,6 +98,8 @@ class SessionImportPlan:
     person: IntakePersonRow
     session: IntakeSessionRow
     exposures: tuple[IntakeExposureRow, ...]
+    secure_person: SecurePersonIntakeRow | None
+    source_batch: str
     mode_action: str
     reason: str | None
     session_id_change_from: str | None
@@ -90,6 +109,7 @@ class SessionImportPlan:
     target_runtime_exists: bool
     task_plans: tuple[TaskSyncPlan, ...]
     raw_plans: tuple[RawSyncPlan, ...]
+    archive_inputs: tuple[Any, ...]
     warnings: tuple[str, ...]
     conflicts: tuple[str, ...]
 
@@ -135,7 +155,7 @@ class SessionWorkspace:
         else:
             self.target_dir.mkdir(parents=True, exist_ok=True)
             self.created_target = True
-        for relative_dir in ("raw", "source", "alignment", "derived", "items"):
+        for relative_dir in ("alignment", "derived", "items"):
             (self.target_dir / relative_dir).mkdir(parents=True, exist_ok=True)
 
     def commit(self) -> None:
@@ -159,10 +179,16 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Import a research intake batch into production runtime sessions and metadata."
     )
-    parser.add_argument("--batch-dir", required=True, help="Batch directory below scripts/research_data_intake/import/.")
-    parser.add_argument("--workbook", help="Optional explicit intake workbook path; defaults to intake_data/*.xlsx.")
+    parser.add_argument("--batch-dir", "--batch", dest="batch_dir", required=True, help="Batch directory below scripts/research_data_intake/import/.")
+    parser.add_argument("--workbook", help="Optional explicit intake workbook path; defaults to recursive workbook discovery inside the batch.")
     parser.add_argument("--target-language", default="es", help="Target language code or slug. Default: es.")
-    parser.add_argument("--person-id", help="Optional single person filter, for smoke tests or controlled imports.")
+    parser.add_argument("--person-id", action="append", dest="person_ids", metavar="PERSON_ID", help="Optional person filter; can be repeated for multiple IDs.")
+    parser.add_argument("--archive-root", help="Optional explicit local archive root; defaults to PROMAT_LOCAL_ARCHIVE_ROOT.")
+    parser.add_argument("--runtime-root", help="Optional explicit PROMAT runtime root that contains data/ and public/.")
+    parser.add_argument("--run-working", action="store_true", help="Build or refresh the batch-local working tree for the in-scope people before importing runtime artifacts.")
+    parser.add_argument("--run-mfa", action="store_true", help="Prepare text MFA inputs, run MFA, and import working text alignment JSON before runtime sync.")
+    parser.add_argument("--cleanup-working-on-success", action="store_true", help="Remove the in-scope batch-local working tree after a successful import run.")
+    parser.add_argument("--mfa-executable", default="mfa", help="MFA executable name or absolute path for --run-mfa. Default: mfa.")
     parser.add_argument(
         "--auth-database-url",
         help="Optional AUTH database URL; defaults to AUTH_DATABASE_URL or the active development default.",
@@ -185,7 +211,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--sync-raw-only",
         action="store_true",
-        help="Only backfill or validate raw master archival into existing runtime sessions without task regeneration.",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--allow-session-id-change",
@@ -211,16 +237,14 @@ def _discover_workbook_path(batch_dir: Path, explicit_workbook: str | None) -> P
             raise ProductionImportError(f"Unknown workbook path: {workbook_path}")
         return workbook_path
 
-    intake_data_dir = batch_dir / "intake_data"
-    if not intake_data_dir.exists():
-        raise ProductionImportError(f"Batch has no intake_data directory: {intake_data_dir}")
-    workbook_candidates = sorted(path for path in intake_data_dir.glob("*.xlsx") if not path.name.startswith("~$"))
+    scan_report = scan_import_batch(batch_dir)
+    workbook_candidates = sorted(candidate.source_path for candidate in scan_report.workbooks)
     if not workbook_candidates:
-        raise ProductionImportError(f"No intake workbook (*.xlsx) found in {intake_data_dir}")
+        raise ProductionImportError(f"No intake workbook (*.xlsx) found in {batch_dir}")
     if len(workbook_candidates) > 1:
         joined = ", ".join(path.name for path in workbook_candidates)
         raise ProductionImportError(
-            f"Multiple workbook candidates found in {intake_data_dir}; use --workbook explicitly. Found: {joined}"
+            f"Multiple workbook candidates found in {batch_dir}; use --workbook explicitly. Found: {joined}"
         )
     return workbook_candidates[0]
 
@@ -230,6 +254,159 @@ def _resolve_database_url(explicit_value: str | None) -> str:
     if not value:
         raise ProductionImportError("AUTH database URL is required.")
     return value
+
+
+def _resolve_optional_path(value: str | None) -> Path | None:
+    if value is None or not value.strip():
+        return None
+    path = Path(value)
+    if not path.is_absolute():
+        path = (Path.cwd() / path).resolve()
+    return path
+
+
+def _apply_runtime_overrides(args: argparse.Namespace) -> None:
+    runtime_root = _resolve_optional_path(args.runtime_root)
+    archive_root = _resolve_optional_path(args.archive_root)
+    if runtime_root is not None:
+        os.environ["PROMAT_RUNTIME_ROOT"] = str(runtime_root)
+    if archive_root is not None:
+        os.environ["PROMAT_LOCAL_ARCHIVE_ROOT"] = str(archive_root)
+
+
+def _text_task_catalog_path(target_language: str) -> Path:
+    language_slug = resolve_language_config(target_language).corpus_slug
+    return REPO_ROOT / "data" / "config" / "research_player" / language_slug / "task_catalogs" / "text.json"
+
+
+def _ensure_db_schema(database_url: str, *, should_write_db: bool, dry_run: bool) -> str | None:
+    if not should_write_db or dry_run:
+        return None
+    if not database_url.startswith("postgresql"):
+        return None
+    os.environ["AUTH_DATABASE_URL"] = database_url
+    apply_postgres_migration(reset=False)
+    return "Applied PostgreSQL auth/research metadata migrations before DB upsert."
+
+
+def _run_working_pipeline(
+    *,
+    batch_dir: Path,
+    person_ids: set[str] | None,
+    dry_run: bool,
+) -> dict[str, object]:
+    report_payload = organize_batch_working_tree(
+        batch_dir=batch_dir,
+        transfer_mode="copy",
+        dry_run=dry_run,
+        replace_existing=True,
+        force_tasks=set(),
+        person_ids=person_ids or None,
+    )
+    summary = report_payload.get("summary")
+    if isinstance(summary, dict) and int(summary.get("errors") or 0) > 0:
+        raise ProductionImportError(
+            f"working-tree build reported errors for {batch_dir.name}; see task statuses in the organizer report"
+        )
+    return report_payload
+
+
+def _run_text_pipeline(
+    *,
+    batch_dir: Path,
+    person_id: str,
+    target_language: str,
+    mfa_executable: str,
+    dry_run: bool,
+) -> list[str]:
+    source_wav = working_source_path(batch_dir, person_id, "text")
+    source_textgrid = working_alignment_path(batch_dir, person_id, "text")
+    if not source_wav.exists() or not source_textgrid.exists():
+        if dry_run:
+            return [
+                f"Planned text MFA for {person_id}: working text inputs are not present during dry-run; a write run with --run-working would create them before MFA when batch files exist.",
+            ]
+        return [
+            f"Skipped text MFA for {person_id}: working text inputs are not present; task will remain missing unless existing runtime artifacts are available.",
+        ]
+    text_catalog_path = _text_task_catalog_path(target_language)
+    if not text_catalog_path.exists():
+        raise ProductionImportError(f"Missing text task catalog for MFA prep: {text_catalog_path}")
+    prepare_result = prepare_text_mfa_for_person(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        text_source_json=text_catalog_path,
+        cli_language=target_language,
+        dry_run=dry_run,
+        replace_existing=True,
+    )
+    if dry_run:
+        return [
+            f"Prepared text MFA corpus for {person_id}: segments={prepare_result['segments']}",
+            *[
+                f"Text MFA prep warning for {person_id}: {warning}"
+                for warning in prepare_result.get("warnings", [])
+                if isinstance(warning, str)
+            ],
+            f"Planned MFA for {person_id}: executable={mfa_executable}",
+            f"Planned working text alignment import for {person_id} after MFA outputs are available.",
+        ]
+    mfa_result = run_text_mfa_for_person(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        language=target_language,
+        mfa_executable=mfa_executable,
+        dry_run=dry_run,
+    )
+    import_result = import_text_mfa_alignment_for_person(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        cli_language=target_language,
+        dry_run=dry_run,
+        fail_on_missing_output=True,
+        replace_existing=True,
+    )
+    if import_result.skipped_reason is not None:
+        raise ProductionImportError(f"text MFA import skipped unexpectedly for {person_id}: {import_result.skipped_reason}")
+    return [
+        f"Prepared text MFA corpus for {person_id}: segments={prepare_result['segments']}",
+        *[
+            f"Text MFA prep warning for {person_id}: {warning}"
+            for warning in prepare_result.get("warnings", [])
+            if isinstance(warning, str)
+        ],
+        f"Ran MFA for {person_id}: executable={mfa_result['mfa_executable']} version={mfa_result['mfa_version']}",
+        f"Imported working text alignment for {person_id}: items={import_result.item_count} tokens={import_result.token_count}",
+    ]
+
+
+def _cleanup_working_people(batch_dir: Path, person_ids: Sequence[str]) -> str:
+    working_root = batch_dir / "working"
+    removed_people: list[str] = []
+    for person_id in person_ids:
+        person_root = working_root / person_id
+        if person_root.exists():
+            shutil.rmtree(person_root)
+            removed_people.append(person_id)
+
+    state_path = working_intake_state_path(batch_dir)
+    if state_path.exists():
+        payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
+        persons_payload = payload.get("persons")
+        if isinstance(persons_payload, dict):
+            for person_id in person_ids:
+                persons_payload.pop(person_id, None)
+            if persons_payload:
+                state_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            else:
+                state_path.unlink()
+
+    if working_root.exists() and not any(working_root.iterdir()):
+        shutil.rmtree(working_root)
+        return "Removed person-scoped working trees and deleted the now-empty batch working/ root."
+    if removed_people:
+        return "Removed person-scoped working trees: " + ", ".join(sorted(removed_people))
+    return "No working tree cleanup was necessary."
 
 
 def _normalize_text_list(values: tuple[str, ...]) -> str | None:
@@ -245,16 +422,26 @@ def _task_label(task_key: str) -> str:
     return capability.long_label("de")
 
 
-def _raw_target_path(session_dir: Path, task_key: str) -> Path:
-    return session_dir / "raw" / f"{task_key}.wav"
-
-
 def _task_status_from_session_dir(session_dir: Path, task_key: str) -> bool:
-    source_path = session_dir / "source" / f"{task_key}.wav"
-    alignment_path = session_dir / "alignment" / f"{task_key}.TextGrid"
     alignment_json_path = session_dir / "alignment" / f"{task_key}.json"
     derived_mp3_path = session_dir / "derived" / f"{task_key}.mp3"
-    return source_path.exists() or alignment_path.exists() or alignment_json_path.exists() or derived_mp3_path.exists()
+    return alignment_json_path.exists() or derived_mp3_path.exists()
+
+
+def _archive_inputs_for_person(parsed_batch_files: list[Any], person_id: str) -> tuple[tuple[Any, ...], tuple[str, ...]]:
+    selected = [entry for entry in parsed_batch_files if entry.person_id == person_id]
+    seen_keys: dict[tuple[str, str, str], Any] = {}
+    conflicts: list[str] = []
+    for entry in selected:
+        key = (entry.task, entry.file_role, entry.file_kind)
+        if key in seen_keys:
+            conflicts.append(
+                f"multiple archive inputs for {person_id} {entry.task}/{entry.file_role}/{entry.file_kind}: "
+                f"{seen_keys[key].relative_source}, {entry.relative_source}"
+            )
+            continue
+        seen_keys[key] = entry
+    return tuple(sorted(seen_keys.values(), key=lambda item: (item.task, item.file_role, item.file_kind))), tuple(conflicts)
 
 
 def _task_not_expected_status(task_key: str, person_id: str, speaker_type: str | None) -> tuple[str, str] | None:
@@ -283,111 +470,6 @@ def _documented_tasks_from_session_dir(
         if _task_status_from_session_dir(session_dir, task_key):
             documented.append(task_key)
     return tuple(documented)
-
-
-def _plan_raw_syncs(
-    *,
-    batch_inventory: dict[str, dict[str, Any]],
-    person_id: str,
-    speaker_type: str | None = None,
-    target_session_dir: Path,
-    warnings: list[str],
-    conflicts: list[str],
-) -> tuple[RawSyncPlan, ...]:
-    raw_plans: list[RawSyncPlan] = []
-    person_inventory = batch_inventory.get(person_id, {})
-    for task_key in RESEARCH_TASK_KEYS:
-        not_expected = _task_not_expected_status(task_key, person_id, speaker_type)
-        target_path = _raw_target_path(target_session_dir, task_key)
-        if not_expected is not None:
-            status, reason = not_expected
-            raw_plans.append(
-                RawSyncPlan(
-                    task_key=task_key,
-                    action="skip",
-                    status=status,
-                    reason=reason,
-                    source_path=None,
-                    target_path=target_path,
-                    relative_source=None,
-                )
-            )
-            continue
-
-        bucket = person_inventory.get(task_key)
-        candidates = [] if bucket is None else bucket.raw_wav
-        selected_entry, candidate_warning = choose_unique_candidate(
-            candidates,
-            source_label="batch/raw",
-            selection_label=f"{person_id}/{task_key} raw master",
-        )
-        if candidate_warning is not None:
-            warnings.append(candidate_warning)
-            conflicts.append(f"raw master mapping is ambiguous for {person_id}/{task_key}")
-            raw_plans.append(
-                RawSyncPlan(
-                    task_key=task_key,
-                    action="conflict",
-                    status="ambiguous",
-                    reason=candidate_warning,
-                    source_path=None,
-                    target_path=target_path,
-                    relative_source=None,
-                )
-            )
-            continue
-        if selected_entry is None:
-            raw_plans.append(
-                RawSyncPlan(
-                    task_key=task_key,
-                    action="missing",
-                    status="missing",
-                    reason="no batch raw master found",
-                    source_path=None,
-                    target_path=target_path,
-                    relative_source=None,
-                )
-            )
-            continue
-        if target_path.exists():
-            if files_match(selected_entry.source_path, target_path):
-                raw_plans.append(
-                    RawSyncPlan(
-                        task_key=task_key,
-                        action="keep",
-                        status="present",
-                        reason="identical raw master already archived",
-                        source_path=selected_entry.source_path,
-                        target_path=target_path,
-                        relative_source=selected_entry.relative_source,
-                    )
-                )
-                continue
-            conflicts.append(f"existing raw file differs for {person_id}/{task_key}")
-            raw_plans.append(
-                RawSyncPlan(
-                    task_key=task_key,
-                    action="conflict",
-                    status="conflict",
-                    reason=f"existing archived raw differs from batch source {selected_entry.relative_source}",
-                    source_path=selected_entry.source_path,
-                    target_path=target_path,
-                    relative_source=selected_entry.relative_source,
-                )
-            )
-            continue
-        raw_plans.append(
-            RawSyncPlan(
-                task_key=task_key,
-                action="sync",
-                status="ready",
-                reason=None,
-                source_path=selected_entry.source_path,
-                target_path=target_path,
-                relative_source=selected_entry.relative_source,
-            )
-        )
-    return tuple(raw_plans)
 
 
 def _detect_working_task(
@@ -615,14 +697,9 @@ def _build_import_plans(
             )
             for task_key in RESEARCH_TASK_KEYS
         )
-        raw_plans = _plan_raw_syncs(
-            batch_inventory=batch_inventory,
-            person_id=workbook_session.person_id,
-            speaker_type=person.speaker_type,
-            target_session_dir=target_session_dir,
-            warnings=warnings,
-            conflicts=conflicts,
-        )
+        archive_inputs, archive_conflicts = _archive_inputs_for_person(parsed_batch_files, workbook_session.person_id)
+        conflicts.extend(archive_conflicts)
+        raw_plans = tuple()
         if mode_action not in {"skip", "conflict"} and conflicts:
             mode_action = "conflict"
             reason = "; ".join(conflicts)
@@ -658,6 +735,8 @@ def _build_import_plans(
                 person=person,
                 session=workbook_session,
                 exposures=exposures,
+                secure_person=workbook_data.secure_persons.get(workbook_session.person_id),
+                source_batch=batch_dir.name,
                 mode_action=mode_action,
                 reason=reason,
                 session_id_change_from=session_id_change_from,
@@ -667,6 +746,7 @@ def _build_import_plans(
                 target_runtime_exists=target_runtime_exists,
                 task_plans=task_plans,
                 raw_plans=raw_plans,
+                archive_inputs=archive_inputs,
                 warnings=tuple(warnings),
                 conflicts=tuple(conflicts),
             )
@@ -740,7 +820,7 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
             plan.session.session_id,
             f"({plan.person.person_id}/{plan.session.session_ref})",
             f"tasks[{', '.join(task_summary_parts)}]",
-            f"raw[{', '.join(raw_summary_parts)}]",
+            f"archive_inputs={len(plan.archive_inputs)}",
         ]
         if plan.reason:
             details.append(f"reason={plan.reason}")
@@ -801,43 +881,22 @@ def _build_task_entries(
     for task_key in RESEARCH_TASK_KEYS:
         if person_id is not None and _task_not_expected_status(task_key, person_id, speaker_type) is not None:
             continue
-        raw_path = _raw_target_path(session_dir, task_key)
-        if raw_path.exists():
-            files.append(
-                {
-                    "path": str(raw_path.relative_to(session_dir)).replace("\\", "/"),
-                    "file_role": "audio_raw",
-                    "format": "wav",
-                    "status": "archived",
-                }
-            )
         if not _task_status_from_session_dir(session_dir, task_key):
             continue
-        source_rel = f"source/{task_key}.wav"
-        alignment_rel = f"alignment/{task_key}.TextGrid"
         derived_rel = f"derived/{task_key}.mp3"
         alignment_json_rel = f"alignment/{task_key}.json"
-        source_path = session_dir / source_rel
-        alignment_path = session_dir / alignment_rel
         derived_path = session_dir / derived_rel
         alignment_json_path = session_dir / alignment_json_rel
         task_entry: dict[str, Any] = {
             "task_type": task_key,
             "label": _task_label(task_key),
-            "source_file": source_rel,
         }
-        if alignment_path.exists():
-            task_entry["alignment_file"] = alignment_rel
-        elif alignment_json_path.exists():
+        if alignment_json_path.exists():
             task_entry["alignment_file"] = alignment_json_rel
         if derived_path.exists():
             task_entry["derived_file"] = derived_rel
         tasks.append(task_entry)
 
-        if source_path.exists():
-            files.append({"path": source_rel, "file_role": "audio_source", "format": "wav", "status": "source"})
-        if alignment_path.exists():
-            files.append({"path": alignment_rel, "file_role": "textgrid", "format": "textgrid", "status": "processed"})
         if alignment_json_path.exists():
             files.append({"path": alignment_json_rel, "file_role": "alignment_json", "format": "json", "status": "processed"})
         if derived_path.exists():
@@ -890,9 +949,6 @@ def _build_metadata_payload(plan: SessionImportPlan, session_dir: Path) -> tuple
         "research_consent_signed": plan.person.research_consent_signed,
         "teaching_consent_signed": plan.person.teaching_consent_signed,
         "consent_date": plan.person.consent_date.isoformat() if plan.person.consent_date else None,
-        "consent_file": plan.person.consent_file,
-        "questionnaire_file": plan.person.questionnaire_file,
-        "secure_notes": plan.person.secure_notes,
         "standard_variety": plan.session.standard_variety,
         "level_code": plan.session.level_code,
         "level_self": plan.session.level_self,
@@ -1014,16 +1070,12 @@ def _sync_wordlist_task(plan: SessionImportPlan, task_plan: TaskSyncPlan, valida
     assert task_plan.alignment_textgrid is not None
     session_dir = plan.target_session_dir
     language_slug = resolve_language_config(plan.session.target_language).corpus_slug
-    source_target = session_dir / "source" / "wordlist.wav"
-    alignment_target = session_dir / "alignment" / "wordlist.TextGrid"
-    _copy_file(task_plan.source_wav, source_target)
-    _copy_file(task_plan.alignment_textgrid, alignment_target)
     return produce_wordlist_artifacts(
         session_dir=session_dir,
         session_id=plan.session.session_id,
         person_id=plan.person.person_id,
-        source_wav=source_target,
-        alignment_textgrid=alignment_target,
+        source_wav=task_plan.source_wav,
+        alignment_textgrid=task_plan.alignment_textgrid,
         language_slug=language_slug,
         dry_run=False,
         validate_labels=validate_wordlist_labels,
@@ -1035,15 +1087,11 @@ def _sync_text_task(plan: SessionImportPlan, task_plan: TaskSyncPlan) -> dict[st
     assert task_plan.source_wav is not None
     assert task_plan.working_alignment_json is not None
     session_dir = plan.target_session_dir
-    source_target = session_dir / "source" / "text.wav"
-    _copy_file(task_plan.source_wav, source_target)
-    if task_plan.alignment_textgrid is not None:
-        _copy_file(task_plan.alignment_textgrid, session_dir / "alignment" / "text.TextGrid")
     return produce_text_artifacts(
         session_dir=session_dir,
         session_id=plan.session.session_id,
         person_id=plan.person.person_id,
-        source_wav=source_target,
+        source_wav=task_plan.source_wav,
         working_alignment_json=task_plan.working_alignment_json,
         dry_run=False,
     )
@@ -1053,11 +1101,8 @@ def _sync_interview_task(plan: SessionImportPlan, task_plan: TaskSyncPlan) -> di
     assert task_plan.source_wav is not None
     assert task_plan.working_alignment_json is not None
     session_dir = plan.target_session_dir
-    source_target = session_dir / "source" / "interview.wav"
     alignment_target = session_dir / "alignment" / "interview.json"
     derived_target = session_dir / "derived" / "interview.mp3"
-
-    _copy_file(task_plan.source_wav, source_target)
 
     payload = json.loads(task_plan.working_alignment_json.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -1070,7 +1115,7 @@ def _sync_interview_task(plan: SessionImportPlan, task_plan: TaskSyncPlan) -> di
     payload["audio"] = {"full_mp3": "derived/interview.mp3"}
     alignment_target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    create_full_task_mp3(source_target, derived_target)
+    create_full_task_mp3(task_plan.source_wav, derived_target)
 
     return {
         "session_id": plan.session.session_id,
@@ -1091,9 +1136,6 @@ def _sync_raw_files(raw_plans: tuple[RawSyncPlan, ...]) -> None:
 
 def _remove_runtime_task_artifacts(session_dir: Path, task_key: str) -> None:
     artifact_paths = [
-        _raw_target_path(session_dir, task_key),
-        session_dir / "source" / f"{task_key}.wav",
-        session_dir / "alignment" / f"{task_key}.TextGrid",
         session_dir / "alignment" / f"{task_key}.json",
         session_dir / "derived" / f"{task_key}.mp3",
     ]
@@ -1110,20 +1152,38 @@ def _apply_plan(
     plan: SessionImportPlan,
     *,
     validate_wordlist_labels: str,
+    write_archive: bool = True,
+    write_db: bool = True,
+    archive_root: Path | None = None,
 ) -> None:
     workspace = SessionWorkspace(target_dir=plan.target_session_dir, seed_dir=plan.existing_session_dir)
     workspace.prepare()
     try:
-        _sync_raw_files(plan.raw_plans)
+        runtime_warnings: list[str] = list(plan.warnings)
+        skipped_or_missing_artifacts = [
+            {
+                "task": task_plan.task_key,
+                "action": task_plan.action,
+                "status": task_plan.status,
+                "reason": task_plan.reason,
+            }
+            for task_plan in plan.task_plans
+            if task_plan.action != "sync"
+        ]
         for task_plan in plan.task_plans:
             if task_plan.action != "sync":
                 continue
             if task_plan.task_key == "wordlist":
-                _sync_wordlist_task(plan, task_plan, validate_wordlist_labels=validate_wordlist_labels)
+                task_result = _sync_wordlist_task(plan, task_plan, validate_wordlist_labels=validate_wordlist_labels)
             elif task_plan.task_key == "text":
-                _sync_text_task(plan, task_plan)
+                task_result = _sync_text_task(plan, task_plan)
             elif task_plan.task_key == "interview":
-                _sync_interview_task(plan, task_plan)
+                task_result = _sync_interview_task(plan, task_plan)
+            else:
+                task_result = {}
+            result_warnings = task_result.get("warnings") if isinstance(task_result, dict) else None
+            if isinstance(result_warnings, list):
+                runtime_warnings.extend(str(warning) for warning in result_warnings if isinstance(warning, str))
 
         for task_key in RESEARCH_TASK_KEYS:
             if _task_not_expected_status(task_key, plan.person.person_id, plan.person.speaker_type) is not None:
@@ -1131,13 +1191,105 @@ def _apply_plan(
 
         metadata_payload, documented_tasks = _build_metadata_payload(plan, plan.target_session_dir)
         _write_metadata_json(plan.target_session_dir, metadata_payload)
-        now = datetime.now(UTC)
-        _upsert_person_row(db_session, plan.person, now=now)
-        _upsert_session_row(db_session, plan, documented_tasks=documented_tasks, now=now)
-        db_session.commit()
+        runtime_errors = validate_runtime_tree(plan.target_session_dir, required_tasks=documented_tasks)
+        if runtime_errors:
+            raise ProductionImportError(
+                f"runtime validation failed for {plan.session.session_id}: " + "; ".join(runtime_errors)
+            )
+        if write_archive:
+            archive_result = write_session_archive(
+                session_dir=plan.target_session_dir,
+                language_code=plan.session.target_language,
+                session_id=plan.session.session_id,
+                person_id=plan.person.person_id,
+                source_batch=plan.source_batch,
+                input_files=plan.archive_inputs,
+                warnings=runtime_warnings,
+                skipped_or_missing_artifacts=skipped_or_missing_artifacts,
+                importer_version="import_batch_to_production",
+                archive_root=archive_root,
+                report_payload={"documented_tasks": list(documented_tasks)},
+            )
+            if plan.secure_person is not None:
+                sp = plan.secure_person
+                secure_data = {
+                    "last_name": sp.last_name,
+                    "first_name": sp.first_name,
+                    "email": sp.email,
+                    "research_consent_signed": sp.research_consent_signed,
+                    "teaching_consent_signed": sp.teaching_consent_signed,
+                    "consent_date": sp.consent_date.isoformat() if sp.consent_date else None,
+                    "consent_file": sp.consent_file,
+                    "questionnaire_file": sp.questionnaire_file,
+                    "paper_original_location": sp.paper_original_location,
+                    "intake_date": sp.intake_date.isoformat() if sp.intake_date else None,
+                    "intake_by": sp.intake_by,
+                    "needs_review": sp.needs_review,
+                    "verified_by": sp.verified_by,
+                    "verified_date": sp.verified_date.isoformat() if sp.verified_date else None,
+                    "secure_notes": sp.secure_notes,
+                }
+                write_secure_person_export(
+                    archive_session_dir=archive_result.archive_session_dir,
+                    person_id=plan.person.person_id,
+                    secure_data=secure_data,
+                )
+        if write_db:
+            now = datetime.now(UTC)
+            _upsert_person_row(db_session, plan.person, now=now)
+            _upsert_session_row(db_session, plan, documented_tasks=documented_tasks, now=now)
+            db_session.commit()
         workspace.commit()
+        return {
+            "person": {
+                "person_id": plan.person.person_id,
+                "speaker_type": plan.person.speaker_type,
+                "l1": plan.person.l1,
+                "l1_additional": list(plan.person.l1_additional),
+                "mother_l1": plan.person.mother_l1,
+                "father_l1": plan.person.father_l1,
+                "additional_languages": list(plan.person.additional_languages),
+                "gender": plan.person.gender,
+                "birth_year": plan.person.birth_year,
+                "current_region": plan.person.current_region,
+                "childhood_region": plan.person.childhood_region,
+                "origin_country": plan.person.origin_country,
+                "origin_region": plan.person.origin_region,
+                "research_consent_signed": plan.person.research_consent_signed,
+                "teaching_consent_signed": plan.person.teaching_consent_signed,
+            },
+            "session": {
+                "session_id": plan.session.session_id,
+                "person_id": plan.person.person_id,
+                "session_ref": plan.session.session_ref,
+                "corpus_language": plan.session.corpus_language,
+                "target_language": plan.session.target_language,
+                "standard_variety": plan.session.standard_variety,
+                "level_self": plan.session.level_self,
+                "level_code": plan.session.level_code,
+                "recording_year": plan.session.recording_year,
+                "recording_date": plan.session.recording_date.isoformat() if plan.session.recording_date else None,
+                "recorded_by": plan.session.recorded_by,
+                "context": plan.session.context,
+                "documented_tasks": list(documented_tasks),
+            },
+            "exposures": [
+                {
+                    "session_id": plan.session.session_id,
+                    "country": exposure.country,
+                    "duration_months": exposure.duration_months,
+                    "type": exposure.exposure_type,
+                    "exposure_notes": exposure.exposure_notes,
+                }
+                for exposure in plan.exposures
+            ],
+            "warnings": runtime_warnings,
+            "archive_input_count": len(plan.archive_inputs),
+            "db_update": "applied" if write_db else "skipped_by_flag",
+        }
     except Exception:
-        db_session.rollback()
+        if write_db:
+            db_session.rollback()
         workspace.rollback()
         raise
 
@@ -1170,6 +1322,80 @@ def _apply_raw_only_backfill(plan: SessionImportPlan) -> None:
         raise
 
 
+def _render_markdown_list(items: Sequence[str]) -> str:
+    if not items:
+        return "- none\n"
+    return "".join(f"- {item}\n" for item in items)
+
+
+def _write_batch_reports(
+    *,
+    batch_name: str,
+    workbook_warnings: Sequence[str],
+    plan_warnings: Sequence[str],
+    applied_results: Sequence[dict[str, Any]],
+    run_notes: Sequence[str] = (),
+    archive_root: Path | None = None,
+) -> None:
+    import_payload = {
+        "batch_name": batch_name,
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "persons": [result["person"] for result in applied_results],
+        "sessions": [result["session"] for result in applied_results],
+        "exposures": [entry for result in applied_results for entry in result["exposures"]],
+    }
+    intake_report = "".join(
+        [
+            f"# Intake Report {batch_name}\n\n",
+            "## Workbook Warnings\n",
+            _render_markdown_list(list(workbook_warnings)),
+            "\n## Plan Warnings\n",
+            _render_markdown_list(list(plan_warnings)),
+            "\n## Run Notes\n",
+            _render_markdown_list(list(run_notes)),
+        ]
+    )
+    validation_report = "".join(
+        [
+            f"# Validation Report {batch_name}\n\n",
+            f"Imported sessions: {len(applied_results)}\n\n",
+            "## Session Warnings\n",
+            _render_markdown_list(
+                [
+                    f"{result['session']['session_id']}: {warning}"
+                    for result in applied_results
+                    for warning in result["warnings"]
+                ]
+            ),
+            "\n## Run Notes\n",
+            _render_markdown_list(list(run_notes)),
+        ]
+    )
+    archive_report = "".join(
+        [
+            f"# Archive Report {batch_name}\n\n",
+            "## Archived Session Inputs\n",
+            _render_markdown_list(
+                [
+                    f"{result['session']['session_id']}: archive_inputs={result['archive_input_count']}"
+                    for result in applied_results
+                ]
+            ),
+            "\n## Run Notes\n",
+            _render_markdown_list(list(run_notes)),
+        ]
+    )
+    write_batch_archive_reports(
+        batch_name=batch_name,
+        import_payload=import_payload,
+        intake_report_markdown=intake_report,
+        validation_report_markdown=validation_report,
+        archive_report_markdown=archive_report,
+        run_notes=run_notes,
+        archive_root=archive_root,
+    )
+
+
 def _assert_schema_ready(engine) -> None:
     inspector = inspect(engine)
     required_tables = ("research_people", "research_sessions", "research_session_exposures")
@@ -1183,17 +1409,21 @@ def _assert_schema_ready(engine) -> None:
 def main() -> int:
     args = parse_args()
     try:
+        _apply_runtime_overrides(args)
         if args.sync_raw_only and args.sync_tasks:
             raise ProductionImportError("--sync-raw-only cannot be combined with --sync-tasks")
         if args.sync_raw_only and args.create_missing_only:
             raise ProductionImportError("--sync-raw-only cannot be combined with --create-missing-only")
+        if args.sync_raw_only:
+            raise ProductionImportError("--sync-raw-only is obsolete under the runtime-only session model.")
         batch_dir = resolve_batch_dir(args.batch_dir, require_processed=False)
         workbook_path = _discover_workbook_path(batch_dir, args.workbook)
         target_language = resolve_language_config(args.target_language).code
+        person_id_filter: set[str] | None = set(args.person_ids) if args.person_ids else None
         workbook_data = load_intake_workbook(
             workbook_path,
             target_language=target_language,
-            person_id_filter=args.person_id,
+            person_id_filter=person_id_filter,
         )
         if workbook_data.errors:
             print("[workbook-errors]")
@@ -1203,7 +1433,35 @@ def main() -> int:
         if not workbook_data.sessions:
             raise ProductionImportError("No matching workbook sessions found for the requested target language/person filter.")
 
+        run_notes: list[str] = []
+        in_scope_people = sorted(workbook_data.persons)
+        if args.run_working:
+            working_report = _run_working_pipeline(
+                batch_dir=batch_dir,
+                person_ids=person_id_filter,
+                dry_run=args.dry_run,
+            )
+            run_notes.append(
+                f"Working-tree orchestration completed for {', '.join(working_report.get('person_ids', [])) or 'all in-scope people'}."
+            )
+        if args.run_mfa:
+            mfa_version = check_mfa_available(args.mfa_executable)
+            run_notes.append(f"Verified MFA executable {args.mfa_executable}: {mfa_version}")
+            for person_id in in_scope_people:
+                run_notes.extend(
+                    _run_text_pipeline(
+                        batch_dir=batch_dir,
+                        person_id=person_id,
+                        target_language=target_language,
+                        mfa_executable=args.mfa_executable,
+                        dry_run=args.dry_run,
+                    )
+                )
+
         database_url = _resolve_database_url(args.auth_database_url)
+        schema_note = _ensure_db_schema(database_url, should_write_db=True, dry_run=args.dry_run)
+        if schema_note is not None:
+            run_notes.append(schema_note)
         engine = create_engine(database_url, future=True)
         _assert_schema_ready(engine)
         session_factory = sessionmaker(bind=engine, future=True)
@@ -1222,20 +1480,43 @@ def main() -> int:
             if summary.conflict_count:
                 return 1
             if args.dry_run:
+                if run_notes:
+                    print()
+                    print("[run-notes]")
+                    for note in run_notes:
+                        print(f"- {note}")
                 return 0
             if args.sync_tasks and summary.task_sync_count:
                 ensure_media_tools()
+            applied_results: list[dict[str, Any]] = []
+            archive_root = _resolve_optional_path(args.archive_root)
             for plan in plans:
                 if plan.mode_action not in {"create", "update"}:
                     continue
                 if args.sync_raw_only:
                     _apply_raw_only_backfill(plan)
                 else:
-                    _apply_plan(
-                        db_session,
-                        plan,
-                        validate_wordlist_labels=args.validate_wordlist_labels,
+                    applied_results.append(
+                        _apply_plan(
+                            db_session,
+                            plan,
+                            validate_wordlist_labels=args.validate_wordlist_labels,
+                            write_archive=True,
+                            write_db=True,
+                            archive_root=archive_root,
+                        )
                     )
+            if args.cleanup_working_on_success and args.run_working and not args.dry_run:
+                run_notes.append(_cleanup_working_people(batch_dir, in_scope_people))
+            if applied_results:
+                _write_batch_reports(
+                    batch_name=batch_dir.name,
+                    workbook_warnings=workbook_data.warnings,
+                    plan_warnings=plan_warnings,
+                    applied_results=applied_results,
+                    run_notes=run_notes,
+                    archive_root=archive_root,
+                )
         return 0
     except ProductionImportError as exc:
         print(f"ERROR: {exc}")

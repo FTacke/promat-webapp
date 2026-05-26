@@ -949,6 +949,8 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
         )
 
     results = _build_speaker_results(ui_lang, language_slug, filtered_people)
+    has_runtime_data = bool(persons)
+    filter_form = _speakers_filter_form(ui_lang, language_slug, filters_with_view, persons)
 
     return {
         "title": get_research_page_label("speakers", ui_lang),
@@ -966,7 +968,7 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
         ),
         "quick_filters": quick_filters,
-        "filter_form": _speakers_filter_form(ui_lang, language_slug, filters_with_view, persons),
+        "filter_form": filter_form,
         "status": {
             "result_count": len(filtered_people),
             "active_filter_count": len(active_filters),
@@ -988,9 +990,9 @@ def build_speakers_page(ui_lang: str, language_slug: str, query_args: Mapping[st
         "results": results,
         "cards": results,
         "empty_state": {
-            "message": _t(ui_lang, "research.speakers.empty_message"),
-            "reset_href": _speakers_filter_form(ui_lang, language_slug, filters_with_view, persons)["reset_href"],
-            "reset_label": _reset_filters_label(ui_lang),
+            "message": _t(ui_lang, "research.speakers.no_data_message") if not has_runtime_data else _t(ui_lang, "research.speakers.empty_message"),
+            "reset_href": filter_form["reset_href"] if has_runtime_data else None,
+            "reset_label": _reset_filters_label(ui_lang) if has_runtime_data else None,
         },
     }
 
@@ -1419,6 +1421,10 @@ def _comparison_empty_text(ui_lang: str) -> str:
     return _t(ui_lang, "research.comparison.empty_text")
 
 
+def _comparison_no_data_text(ui_lang: str) -> str:
+    return _t(ui_lang, "research.comparison.no_data_message")
+
+
 def _comparison_login_text(ui_lang: str) -> str:
     return _t(ui_lang, "research.comparison.login_text")
 
@@ -1601,9 +1607,13 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
         page_notice = None
 
     default_view_task = requested_view_task or comparison_default_view_task()
+    session_catalog = _comparison_session_catalog(language_slug, ui_lang)
+    has_runtime_data = bool(session_catalog)
     workspace_mode = "empty"
     workspace_text = _comparison_empty_text(ui_lang) if is_authenticated else _comparison_login_text(ui_lang)
-    if requested_set_id:
+    if not has_runtime_data:
+        workspace_text = _comparison_no_data_text(ui_lang)
+    elif requested_set_id:
         workspace_mode = "load-set"
         workspace_text = _comparison_pending_set_text(ui_lang) if is_authenticated else _comparison_login_text(ui_lang)
 
@@ -1652,6 +1662,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
             "uiLang": ui_lang,
             "languageSlug": language_slug,
             "isAuthenticated": is_authenticated,
+            "hasRuntimeData": has_runtime_data,
             "requestedSetId": requested_set_id,
             "defaultViewTask": default_view_task,
             "comparisonPageHref": _comparison_page_href(ui_lang, language_slug),
@@ -1667,7 +1678,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
                 for view_task in COMPARISON_VIEW_TASKS
             ],
             "catalogsByTask": _phenomena_catalog_payload(language_slug, ui_lang),
-            "sessionCatalog": _comparison_session_catalog(language_slug, ui_lang),
+            "sessionCatalog": session_catalog,
             "labels": {
                 **translate_many(
                     ui_lang,
@@ -1675,6 +1686,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
                         "statusTitle": "research.comparison.status_title",
                         "emptyTitle": "research.comparison.empty_title",
                         "emptyText": "research.comparison.empty_text",
+                        "noDataText": "research.comparison.no_data_message",
                         "loginText": "research.comparison.login_text",
                         "loginLabel": "research.comparison.login_label",
                         "loadingSet": "research.comparison.pending_set_text",

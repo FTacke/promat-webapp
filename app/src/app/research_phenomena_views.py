@@ -10,6 +10,7 @@ from .content_navigation import build_content_header
 from .i18n import translate, translate_many
 from .research_capabilities import get_research_task_label, phenomena_task_keys
 from .research_presets import load_task_catalogs
+from .research_sessions import load_language_sessions
 from .research_sets import (
     ResearchSetNotFoundError,
     ResearchSetStorageUnavailableError,
@@ -254,56 +255,58 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
         return None
 
     catalogs_by_task, task_labels = _catalog_payload(language_slug, ui_lang)
+    has_runtime_data = bool(load_language_sessions(language_slug))
     curated_entries: list[dict[str, Any]] = []
     custom_entries: list[dict[str, Any]] = []
     private_copy_targets: dict[str, StoredResearchSet] = {}
-    try:
-        visible_sets = list_visible_sets_for_user(
-            owner_user_id=_current_owner_user_id(),
-            corpus_language=language_slug,
-            include_drafts=False,
-            include_archived_curated=_is_admin(),
-        )
-    except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
-        visible_sets = tuple()
-
     owner_user_id = _current_owner_user_id()
-    if owner_user_id is not None:
+    if has_runtime_data:
         try:
-            private_copy_candidates = list_visible_sets_for_user(
+            visible_sets = list_visible_sets_for_user(
                 owner_user_id=owner_user_id,
                 corpus_language=language_slug,
-                include_drafts=True,
+                include_drafts=False,
                 include_archived_curated=_is_admin(),
             )
         except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
-            private_copy_candidates = tuple()
-        for candidate in private_copy_candidates:
-            if candidate.visibility != "private" or not candidate.source_curated_set_id:
-                continue
-            private_copy_targets.setdefault(candidate.source_curated_set_id, candidate)
+            visible_sets = tuple()
 
-    for stored_set in visible_sets:
-        if stored_set.visibility == "curated":
-            curated_entries.append(
-                _overview_card_from_curated_set(
+        if owner_user_id is not None:
+            try:
+                private_copy_candidates = list_visible_sets_for_user(
+                    owner_user_id=owner_user_id,
+                    corpus_language=language_slug,
+                    include_drafts=True,
+                    include_archived_curated=_is_admin(),
+                )
+            except (ResearchSetStorageUnavailableError, ResearchSetValidationError, RuntimeError):
+                private_copy_candidates = tuple()
+            for candidate in private_copy_candidates:
+                if candidate.visibility != "private" or not candidate.source_curated_set_id:
+                    continue
+                private_copy_targets.setdefault(candidate.source_curated_set_id, candidate)
+
+        for stored_set in visible_sets:
+            if stored_set.visibility == "curated":
+                curated_entries.append(
+                    _overview_card_from_curated_set(
+                        stored_set=stored_set,
+                        own_copy_set=private_copy_targets.get(stored_set.set_id),
+                        is_admin=_is_admin(),
+                        ui_lang=ui_lang,
+                        language_slug=language_slug,
+                        catalogs_by_task=catalogs_by_task,
+                    )
+                )
+                continue
+            custom_entries.append(
+                _overview_card_from_set(
                     stored_set=stored_set,
-                    own_copy_set=private_copy_targets.get(stored_set.set_id),
-                    is_admin=_is_admin(),
                     ui_lang=ui_lang,
                     language_slug=language_slug,
                     catalogs_by_task=catalogs_by_task,
                 )
             )
-            continue
-        custom_entries.append(
-            _overview_card_from_set(
-                stored_set=stored_set,
-                ui_lang=ui_lang,
-                language_slug=language_slug,
-                catalogs_by_task=catalogs_by_task,
-            )
-        )
 
     page = _base_page(get_research_page_label("phenomena", ui_lang), ui_lang=ui_lang, language_slug=language_slug)
     page.update(
@@ -313,13 +316,14 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
             "search_placeholder": _t(ui_lang, "research.phenomena.overview.search_placeholder"),
             "new_set_label": _t(ui_lang, "research.phenomena.overview.new_set"),
             "entries": curated_entries + custom_entries,
-            "empty_title": _t(ui_lang, "research.phenomena.overview.empty_title"),
-            "empty_text": _t(ui_lang, "research.phenomena.overview.empty_text"),
+            "empty_title": _t(ui_lang, "research.phenomena.overview.no_data_title") if not has_runtime_data else _t(ui_lang, "research.phenomena.overview.empty_title"),
+            "empty_text": "" if not has_runtime_data else _t(ui_lang, "research.phenomena.overview.empty_text"),
             "is_authenticated": _is_authenticated(),
             "client_state": {
                 "uiLang": ui_lang,
                 "languageSlug": language_slug,
                 "isAuthenticated": _is_authenticated(),
+                "hasRuntimeData": has_runtime_data,
                 "entries": curated_entries + custom_entries,
                 "createSetUrl": url_for("research_api.create_set"),
                 "privateCopySetUrlTemplate": url_for("research_api.private_copy_set", set_id="__SET_ID__"),
@@ -355,6 +359,7 @@ def build_phenomena_overview_page(ui_lang: str, language_slug: str) -> dict[str,
                             "itemsLabel": "common.labels.items_count",
                             "emptyTitle": "research.phenomena.overview.empty_title",
                             "emptyText": "research.phenomena.overview.empty_text",
+                            "noDataTitle": "research.phenomena.overview.no_data_title",
                             "requestFailed": "common.errors.request_failed",
                             "moreActions": "common.actions.more",
                         },

@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import os
 import sys
+import zipfile
 from pathlib import Path
 
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
@@ -31,6 +33,7 @@ def _set_runtime_env(tmp_path: Path, monkeypatch) -> Path:
     (runtime_root / "data" / "sessions").mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(runtime_root))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
+    monkeypatch.setenv("PROMAT_LOCAL_ARCHIVE_ROOT", str(tmp_path / "archive-root"))
     research_sessions.load_language_sessions.cache_clear()
     research_sessions.load_person_records.cache_clear()
     return runtime_root
@@ -266,6 +269,17 @@ def _write_workbook(
     return workbook_path
 
 
+def _patch_workbook_sqref(workbook_path: Path, original: str, replacement: str) -> None:
+    patched_path = workbook_path.with_suffix(".patched.xlsx")
+    with zipfile.ZipFile(workbook_path, "r") as source_zip, zipfile.ZipFile(patched_path, "w") as target_zip:
+        for item in source_zip.infolist():
+            data = source_zip.read(item.filename)
+            if item.filename.startswith("xl/worksheets/") and item.filename.endswith(".xml"):
+                data = data.replace(original.encode("utf-8"), replacement.encode("utf-8"))
+            target_zip.writestr(item, data)
+    patched_path.replace(workbook_path)
+
+
 def _prepare_interview_batch(
     tmp_path: Path,
     *,
@@ -275,7 +289,28 @@ def _prepare_interview_batch(
 ) -> Path:
     batch_dir = tmp_path / "spanish_batch_20260421"
     (batch_dir / "intake_data").mkdir(parents=True, exist_ok=True)
+    (batch_dir / "processed").mkdir(parents=True, exist_ok=True)
     filename_prefix = person_id.lower().replace("-", "_")
+
+    (batch_dir / "processed" / f"{filename_prefix}_interview_processed.wav").write_bytes(b"batch-source-interview")
+    (batch_dir / "processed" / f"{filename_prefix}_interview_processed.json").write_text(
+        json.dumps(
+            {
+                "segments": [
+                    {
+                        "speaker": "spk1",
+                        "words": [
+                            {"start": 0.0, "end": 0.5, "text": "Item", "duration": 0.5, "conf": 1, "pristine": True}
+                        ],
+                    }
+                ]
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     if include_working_interview:
         (batch_dir / "working" / person_id / "interview" / "source").mkdir(parents=True, exist_ok=True)
@@ -365,6 +400,26 @@ def test_load_intake_workbook_accepts_deprecated_consent_column_with_warning(tmp
     assert workbook_data.warnings[0] == "Deprecated column consent_signed used; please rename to research_consent_signed."
 
 
+def test_load_intake_workbook_normalizes_whole_column_sqref_without_modifying_original(tmp_path: Path) -> None:
+    workbook_path = _write_workbook(tmp_path)
+    workbook = load_workbook(workbook_path)
+    sheet = workbook["Research_Session_Intake"]
+    validation = DataValidation(type="list", formula1='"baseline,follow_up"')
+    sheet.add_data_validation(validation)
+    validation.add("H2:H1048576")
+    workbook.save(workbook_path)
+    workbook.close()
+    _patch_workbook_sqref(workbook_path, "H2:H1048576", "H:H")
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    assert workbook_data.errors == ()
+    assert workbook_data.sessions[0].session_id == "ES-L-0001-2026-S01"
+    assert any("sqref 'H:H'" in warning and "original workbook was not modified" in warning for warning in workbook_data.warnings)
+    with zipfile.ZipFile(workbook_path, "r") as workbook_zip:
+        assert b'sqref="H:H"' in workbook_zip.read("xl/worksheets/sheet3.xml")
+
+
 @pytest.mark.parametrize(
     ("raw_duration", "expected_duration"),
     [("0,75", 0.75), ("3,5", 3.5), ("6,5", 6.5), ("0.75", 0.75), ("3.5", 3.5)],
@@ -442,11 +497,12 @@ def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Pat
         production_importer._apply_plan(db_session, plan, validate_wordlist_labels="off")
 
     session_dir = runtime_root / "data" / "sessions" / "spanish" / "ES-L-0001-2026-S01"
+    archive_dir = tmp_path / "archive-root" / "sessions" / "es" / "ES-L-0001-2026-S01"
     metadata = json.loads((session_dir / "metadata.json").read_text(encoding="utf-8"))
     interview_alignment = json.loads((session_dir / "alignment" / "interview.json").read_text(encoding="utf-8"))
 
-    assert (session_dir / "source" / "interview.wav").read_bytes() == b"working-interview-wav"
-    assert (session_dir / "raw" / "interview.wav").read_bytes() == b"batch-raw-interview"
+    assert not (session_dir / "source" / "interview.wav").exists()
+    assert not (session_dir / "raw" / "interview.wav").exists()
     assert (session_dir / "derived" / "interview.mp3").read_bytes() == b"runtime-interview-mp3"
     assert interview_alignment["session_id"] == "ES-L-0001-2026-S01"
     assert interview_alignment["audio"] == {"full_mp3": "derived/interview.mp3"}
@@ -457,7 +513,6 @@ def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Pat
     assert interview_task == {
         "task_type": "interview",
         "label": "Interview zur Aussprache",
-        "source_file": "source/interview.wav",
         "alignment_file": "alignment/interview.json",
         "derived_file": "derived/interview.mp3",
     }
@@ -468,10 +523,17 @@ def test_production_import_syncs_interview_runtime_db_and_metadata(tmp_path: Pat
     assert metadata["session_notes"] == "test learner session"
 
     file_paths = {entry["path"] for entry in metadata["files"]}
-    assert "source/interview.wav" in file_paths
     assert "alignment/interview.json" in file_paths
     assert "derived/interview.mp3" in file_paths
-    assert "raw/interview.wav" in file_paths
+    assert "source/interview.wav" not in file_paths
+    assert "raw/interview.wav" not in file_paths
+
+    archive_manifest = json.loads((archive_dir / "metadata" / "archive_manifest.json").read_text(encoding="utf-8"))
+    assert (archive_dir / "source" / "interview.wav").read_bytes() == b"batch-source-interview"
+    assert (archive_dir / "raw" / "interview.wav").read_bytes() == b"batch-raw-interview"
+    assert (archive_dir / "runtime" / "derived" / "interview.mp3").read_bytes() == b"runtime-interview-mp3"
+    assert archive_manifest["session_id"] == "ES-L-0001-2026-S01"
+    assert archive_manifest["source_batch"] == "spanish_batch_20260421"
 
     research_sessions.load_language_sessions.cache_clear()
     research_sessions.load_person_records.cache_clear()
@@ -520,8 +582,11 @@ def test_production_import_does_not_treat_source_as_raw_fallback(tmp_path: Path,
         production_importer._apply_plan(db_session, plans[0], validate_wordlist_labels="off")
 
     session_dir = runtime_root / "data" / "sessions" / "spanish" / "ES-L-0001-2026-S01"
-    assert (session_dir / "source" / "interview.wav").exists()
+    archive_dir = tmp_path / "archive-root" / "sessions" / "es" / "ES-L-0001-2026-S01"
+    assert not (session_dir / "source" / "interview.wav").exists()
     assert not (session_dir / "raw" / "interview.wav").exists()
+    assert (archive_dir / "source" / "interview.wav").exists()
+    assert not (archive_dir / "raw" / "interview.wav").exists()
 
 
 def test_production_import_rerun_is_idempotent_for_interview_session(tmp_path: Path, monkeypatch) -> None:
@@ -567,10 +632,10 @@ def test_production_import_rerun_is_idempotent_for_interview_session(tmp_path: P
     interview_tasks = [task for task in metadata["tasks"] if task["task_type"] == "interview"]
     assert len(interview_tasks) == 1
     file_paths = [entry["path"] for entry in metadata["files"]]
-    assert file_paths.count("source/interview.wav") == 1
     assert file_paths.count("alignment/interview.json") == 1
     assert file_paths.count("derived/interview.mp3") == 1
-    assert file_paths.count("raw/interview.wav") == 1
+    assert file_paths.count("source/interview.wav") == 0
+    assert file_paths.count("raw/interview.wav") == 0
 
     with session_factory() as db_session:
         person_rows = db_session.scalars(select(ResearchPerson)).all()
@@ -608,11 +673,8 @@ def test_production_import_skips_native_speaker_interview_even_with_inputs(tmp_p
         assert len(plans) == 1
         plan = plans[0]
         by_task = {task_plan.task_key: task_plan for task_plan in plan.task_plans}
-        by_raw = {raw_plan.task_key: raw_plan for raw_plan in plan.raw_plans}
         assert by_task["interview"].action == "skip"
         assert by_task["interview"].status == "not_expected_for_native_speaker"
-        assert by_raw["interview"].action == "skip"
-        assert by_raw["interview"].status == "not_expected_for_native_speaker"
 
         production_importer._apply_plan(db_session, plan, validate_wordlist_labels="off")
 
@@ -633,3 +695,84 @@ def test_production_import_skips_native_speaker_interview_even_with_inputs(tmp_p
 
     assert [row.session_id for row in session_rows] == ["ES-N-0001-2026-S01"]
     assert session_rows[0].documented_tasks is None
+
+
+def test_load_intake_workbook_exposes_secure_persons(tmp_path: Path) -> None:
+    workbook_path = _write_workbook(tmp_path, person_id="ES-L-0001")
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    assert "ES-L-0001" in workbook_data.secure_persons
+    sp = workbook_data.secure_persons["ES-L-0001"]
+    assert sp.last_name == "Mustermann"
+    assert sp.first_name == "Anna"
+    assert sp.email == "anna@example.test"
+    assert sp.research_consent_signed == "yes"
+    assert sp.needs_review is False
+    assert sp.intake_by == "Ana Romero"
+    assert sp.paper_original_location == "cabinet A"
+
+
+def test_load_intake_workbook_person_id_filter_accepts_set(tmp_path: Path) -> None:
+    workbook_path = _write_workbook(tmp_path, person_id="ES-L-0001")
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es", person_id_filter={"ES-L-0001"})
+
+    assert len(workbook_data.sessions) == 1
+    assert workbook_data.sessions[0].person_id == "ES-L-0001"
+    assert workbook_data.errors == ()
+
+
+def test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode(tmp_path: Path) -> None:
+    batch_dir = tmp_path / "spanish_batch_20260525"
+    batch_dir.mkdir()
+
+    notes = production_importer._run_text_pipeline(
+        batch_dir=batch_dir,
+        person_id="ES-L-0010",
+        target_language="es",
+        mfa_executable="docker",
+        dry_run=False,
+    )
+
+    assert notes == [
+        "Skipped text MFA for ES-L-0010: working text inputs are not present; task will remain missing unless existing runtime artifacts are available."
+    ]
+
+
+def test_run_text_pipeline_dry_run_does_not_require_written_manifest(tmp_path: Path, monkeypatch) -> None:
+    batch_dir = tmp_path / "english_batch_20260525"
+    person_id = "EN-L-0008"
+    (batch_dir / "working" / person_id / "text" / "source").mkdir(parents=True)
+    (batch_dir / "working" / person_id / "text" / "alignment").mkdir()
+    (batch_dir / "working" / person_id / "text" / "source" / "text.wav").write_bytes(b"wav")
+    (batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid").write_text("textgrid", encoding="utf-8")
+    text_catalog_path = tmp_path / "text.json"
+    text_catalog_path.write_text('{"task": "text", "language": "en", "items": []}\n', encoding="utf-8")
+
+    monkeypatch.setattr(production_importer, "_text_task_catalog_path", lambda target_language: text_catalog_path)
+    monkeypatch.setattr(
+        production_importer,
+        "prepare_text_mfa_for_person",
+        lambda **kwargs: {"segments": 55, "warnings": ["EN-L-0008 text: omitted t_01 because the spoken title was not recorded"]},
+    )
+
+    def fail_run_text_mfa_for_person(**kwargs):
+        raise AssertionError("dry-run must not require a written mfa_manifest.json")
+
+    monkeypatch.setattr(production_importer, "run_text_mfa_for_person", fail_run_text_mfa_for_person)
+
+    notes = production_importer._run_text_pipeline(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        target_language="en",
+        mfa_executable="docker",
+        dry_run=True,
+    )
+
+    assert notes == [
+        "Prepared text MFA corpus for EN-L-0008: segments=55",
+        "Text MFA prep warning for EN-L-0008: EN-L-0008 text: omitted t_01 because the spoken title was not recorded",
+        "Planned MFA for EN-L-0008: executable=docker",
+        "Planned working text alignment import for EN-L-0008 after MFA outputs are available.",
+    ]

@@ -114,7 +114,9 @@
     {% else %}
     <div class="pm-research-empty pm-container pm-container--tinted">
       <p class="pm-research-empty__text">{{ promat_page.empty_state.message }}</p>
+      {% if promat_page.empty_state.reset_href and promat_page.empty_state.reset_label %}
       {{ render_action_button({ 'label': promat_page.empty_state.reset_label, 'variant': 'secondary', 'size': 'medium', 'href': promat_page.empty_state.reset_href }) }}
+      {% endif %}
     </div>
     {% endif %}
   </section>

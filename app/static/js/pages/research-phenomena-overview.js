@@ -70,6 +70,8 @@ function init() {
   const listShell = root.querySelector("[data-phenomena-list-shell]");
   const list = root.querySelector("[data-phenomena-entry-list]");
   const emptyState = root.querySelector("[data-phenomena-empty-state]");
+  const emptyTitle = root.querySelector("[data-phenomena-empty-title]");
+  const emptyText = root.querySelector("[data-phenomena-empty-text]");
   const newListButton = root.querySelector("[data-phenomena-new-set]");
   const renameDialog = document.querySelector("[data-phenomena-rename-dialog]");
   const renameForm = document.querySelector("[data-phenomena-rename-form]");
@@ -129,6 +131,7 @@ function init() {
 
   function applyFilter() {
     const term = (searchInput?.value || "").trim().toLowerCase();
+    const hasBaseEntries = Array.isArray(state.entries) && state.entries.length > 0;
     let visibleCount = 0;
     entryCards().forEach((card) => {
       const haystack = `${card.dataset.title || ""}`;
@@ -140,6 +143,14 @@ function init() {
     });
     if (emptyState) {
       emptyState.hidden = visibleCount > 0;
+      if (emptyTitle) {
+        emptyTitle.textContent = hasBaseEntries ? (state.labels?.emptyTitle || "") : (state.labels?.noDataTitle || "");
+      }
+      if (emptyText) {
+        const nextText = hasBaseEntries ? (state.labels?.emptyText || "") : (state.labels?.noDataText || "");
+        emptyText.textContent = nextText;
+        emptyText.hidden = !nextText;
+      }
     }
     if (listShell) {
       listShell.hidden = visibleCount === 0;

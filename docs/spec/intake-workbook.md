@@ -30,6 +30,12 @@ The active import-relevant sheets are exactly:
 
 ## Core Workbook Rules
 
+### Reader tolerance
+
+- The importer must read UTF-8 workbook-adjacent JSON sources with or without a UTF-8 BOM.
+- Workbook XML data-validation ranges that use whole-column `sqref` values such as `H:H` are tolerated by normalizing an internal temporary copy for parsing, for example to `H2:H1048576`.
+- That compatibility normalization must not overwrite the original workbook and must be reported as an import warning.
+
 ### ID logic
 
 - `person_id` follows `{CORPUS_CODE}-{SPEAKER_MARKER}-{NNNN}`.

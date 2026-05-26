@@ -1,0 +1,104 @@
+--- ES-L-0001 ---
+ERROR ValueError: 'Segment 29 has a non-positive duration: scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0001_interview_processed.json'
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 18, 'spk2': 18}"
+    bracket seg 7 word 15: '[wl_089],'
+    bracket seg 15 word 18: '[wl_063].'
+    bracket seg 21 word 14: '[d_05].'
+    bracket seg 25 word 30: '[d_17],'
+    seg 29: zero/neg duration start=259.12 end=259.12
+--- ES-L-0002 ---
+ERROR InterviewImportError: 'Invalid material reference marker \'"[\u0254\u026a\u032f]foria"\': scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0002_interview_processed.json'
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 20, 'spk2': 20}"
+    bracket seg 10 word 12: '[d_16].'
+    bracket seg 10 word 30: '"que[t\u0361\u0283]a"'
+    bracket seg 10 word 37: '[wl_024],'
+    bracket seg 10 word 40: '"[\u0254\u026a\u032f]foria"'
+    bracket seg 10 word 46: '[\u0254\u026a\u032f]'
+    bracket seg 10 word 61: '[wl_038]'
+    bracket seg 10 word 77: '"vi[\u0272]o"'
+    bracket seg 10 word 81: '"vi[n]o".'
+    bracket seg 10 word 95: '[d_26]:'
+    bracket seg 10 word 97: '[muxa\u027eo]",'
+    seg 17: zero/neg duration start=219.49 end=219.49
+--- ES-L-0003 ---
+ERROR InterviewImportError: "Invalid material reference marker '[\u03b8]': scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0003_interview_processed.json"
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 8, 'spk2': 7}"
+    bracket seg 6 word 7: '[d_30]'
+    bracket seg 6 word 63: '[\u03b8]'
+    bracket seg 6 word 102: '[\u03b8]'
+    bracket seg 8 word 66: '"ejemplo[\u03b8]"'
+    bracket seg 8 word 71: '[\u03b8]'
+    bracket seg 8 word 92: '"ejemplo[s]"'
+    bracket seg 8 word 95: '[s],'
+    bracket seg 9 word 12: '[d_16],'
+    bracket seg 12 word 19: '"[s]-[\u03b8]-Ding"'
+    bracket seg 14 word 7: '"[s]-[\u03b8]-Ding",'
+--- ES-L-0004 ---
+ERROR InterviewImportError: "Invalid material reference marker '[x]': scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0004_interview_processed.json"
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 10, 'spk2': 10}"
+    bracket seg 6 word 76: '[wl_068].'
+    bracket seg 11 word 11: '[d_08],'
+    bracket seg 15 word 15: '[d_02].'
+    bracket seg 17 word 9: '[d_19].'
+    bracket seg 18 word 23: '"M\xe9[x]ico",'
+    bracket seg 18 word 29: '[x]'
+    bracket seg 18 word 34: '[ks].'
+--- ES-L-0005 ---
+ERROR InterviewImportError: "Invalid material reference marker '[eu],': scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0005_interview_processed.json"
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 10, 'spk2': 10}"
+    bracket seg 4 word 38: '[wl_029]'
+    bracket seg 4 word 45: '[wl_087]'
+    bracket seg 9 word 14: '[wl_024]-'
+    bracket seg 12 word 22: '[eu],'
+    bracket seg 12 word 28: '[\u0254\u026a\u032f]?"'
+    bracket seg 13 word 11: '[wl_058]'
+    bracket seg 18 word 10: '"[k]uidar"'
+    bracket seg 18 word 12: '"[\u03b8]uidar"?'
+--- ES-L-0007 ---
+ERROR InterviewImportError: 'Invalid material reference marker \'[\u0254\u026a\u032f]foria"\': scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0007_interview_processed.json'
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 15, 'spk2': 15}"
+    bracket seg 14 word 11: '[wl_088]'
+    bracket seg 14 word 14: '[wl_090]'
+    bracket seg 14 word 57: '[wl_061]'
+    bracket seg 16 word 27: '[d_17]'
+    bracket seg 16 word 29: '[\u0254\u026a\u032f]foria"'
+    bracket seg 16 word 31: '"[eu\u032f]foria".'
+    bracket seg 17 word 35: '[wl_028]'
+    bracket seg 23 word 17: '[d_05].'
+    bracket seg 24 word 59: 'e[ks]ige"'
+    bracket seg 24 word 63: '[x]?'
+    seg 25: zero/neg duration start=264.33 end=264.33
+--- ES-L-0008 ---
+ERROR ValueError: 'Segment 6 has a non-positive duration: scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0008_interview_processed.json'
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 19, 'spk2': 19}"
+    bracket seg 8 word 19: '[x]'
+    bracket seg 8 word 24: '[\u0292]?"'
+    bracket seg 8 word 46: '[wl_076],'
+    bracket seg 11 word 19: '[wl_087]-'
+    bracket seg 17 word 11: '[wl_005]'
+    bracket seg 20 word 30: '[\u0254\u026a\u032f]'
+    bracket seg 20 word 32: '\'n[eu\u032f]tro\'?"'
+    bracket seg 25 word 7: '[wl_028]'
+    bracket seg 31 word 10: '[d_05].'
+    seg 6: zero/neg duration start=52.91 end=52.91
+--- ES-L-0009 ---
+ERROR InterviewImportError: 'Invalid material reference marker \'"[\u0254\u026a\u032f]foria"\': scripts\\research_data_intake\\import\\es_batch_20260525\\es_l_0009_interview_processed.json'
+  declared: "{'spk1': 'Speaker 1', 'spk2': 'Speaker 2'}"
+  in segs: "{'spk1': 13, 'spk2': 12}"
+    bracket seg 11 word 29: '[wl_080],'
+    bracket seg 12 word 28: '[wl_024],'
+    bracket seg 14 word 8: '"[\u0254\u026a\u032f]foria"'
+    bracket seg 14 word 10: '"[eu\u032f]foria",'
+    bracket seg 14 word 34: '[wl_080]'
+    bracket seg 14 word 41: '[wl_024]'
+    bracket seg 16 word 3: '[wl_080]'
+    bracket seg 16 word 7: '[wl_024]?'
+    bracket seg 18 word 15: '"[\u0254\u026a\u032f]ropa".'
+    bracket seg 19 word 12: '[d_05].'

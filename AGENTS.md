@@ -17,12 +17,17 @@ For active PROMAT rules, consult these files first:
 
 - `app/` is the only application source root.
 - `data/`, `public/`, and `secure/` keep their strict runtime boundaries.
+- Research intake is separate from Teaching import or publication work; do not route research intake changes through `content/`, `content/teaching/`, or `public/teaching/`.
 - Teaching is a fully public editorial surface separate from Research; do not route it through research auth, protected player delivery, owner-bound set state, or `data/` paths.
 - Teaching content stays under `content/teaching/...`, and released Teaching media stays under `public/teaching/...` with public delivery only from the public-root boundary.
 - Technical keys, slugs, routes, field names, and controlled vocabularies stay English.
 - User-visible German text stays separable from technical keys and uses real umlauts and `ß`.
 - Do not reintroduce old German technical slugs, legacy runtime paths, or old public routes.
 - Do not introduce Dev-only shadow architectures or fallback data stores.
+- `data/sessions/` is runtime-only for final research JSON/MP3 artifacts; do not copy WAV, TextGrid, XLSX, `secure/`, `raw/`, `source/`, or other intake/intermediate trees into it.
+- The local research archive lives outside the repo under `PROMAT_LOCAL_ARCHIVE_ROOT`; do not create a second in-repo archive root.
+- Prod upload packages are explicit allowlist exports from validated runtime artifacts and optional import payloads; do not ship WAV, TextGrid, XLSX, `secure/`, `raw/`, `source/`, or batch working files in them.
+- Research intake must not invent metadata, task mappings, or audio provenance heuristically when filename-driven classification is missing or ambiguous.
 
 ## Documentation Rules
 
@@ -63,6 +68,7 @@ For active PROMAT rules, consult these files first:
 - If routing, data paths, IDs, vocabularies, research-access logic, or intake rules change, update the relevant file in `docs/spec/` in the same run.
 - If research task subsets, page capability metadata, render-mode vocabularies, or corpus-specific workbench readiness change, update `docs/spec/research-capabilities.md` in the same run.
 - Research-access changes must keep the corpus-scoped rule generic: under `/{ui_lang}/research/{corpus}` only `design` may stay public, while all other research pages, detail routes, and player-media routes must gate access before rendering and must not rely on corpus-specific exceptions.
+- If research intake runtime, archive, batch, or upload-package contracts change, update `docs/spec/platform-data-files.md` and the relevant runbook in the same run.
 - If the shared app-shell or navigation hierarchy changes, update the active rule in `docs/spec/platform-data-files.md` in the same run.
 - If an active layout element changes on a real page and `sample` contains that element, update `app/templates/pages/sample_page.html` in the same run.
 - If a durable architectural decision is accepted, add or update an ADR in `docs/decisions/`.

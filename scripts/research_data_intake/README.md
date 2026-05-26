@@ -2,45 +2,39 @@
 
 ## Zweck
 
-Dieser Bereich bündelt die Intake- und Ableitungspipeline für forschungsbezogene Session-Daten.
+Dieser Bereich bündelt die lokale Research-Intake-, Ableitungs-, Archiv- und Upload-Paket-Pipeline für PROMAT.
 
-Wenn für einen Task ein kanonischer Katalog unter `data/config/research_player/{language}/task_catalogs/` existiert, verwenden Ableitungsschritte diesen Katalog als Inhaltsbasis und ergänzen nur session-spezifische Zeit-, Split- und Audio-Daten.
+Teaching gehört nicht zu dieser Pipeline. `content/`, `public/teaching/` und Teaching-Media bleiben bei Research-Intake-Runs unangetastet.
 
-## Gehört hierher
+## Zielmodell
 
-- Session-Setup und Seed-Skripte für Forschungsdaten
-- Audio-Ableitung für Research-Player-Artefakte
-- Item-Splitting für task-spezifische Derivate
-- Alignment- oder JSON-Export für Player-fähige Strukturdaten
-- intake-nahe Batch- und Vorverarbeitungsschritte für Forschungsdaten
+- Batch-Eingänge liegen unter `scripts/research_data_intake/import/{batch_name}/`.
+- Der Batch ist ein Drop-in-Verzeichnis ohne manuelle Unterordnerpflicht.
+- Der Scanner klassifiziert Workbook, WAV, TextGrid und JSON strikt aus Dateinamen.
+- Batch-lokales `working/` bleibt eine Zwischenstruktur nur für Vorbereitung und MFA-Schritte.
+- `data/sessions/` ist Runtime-only und enthält nur finale JSON/MP3-Artefakte.
+- Das lokale Langzeitarchiv liegt außerhalb des Repo-Workspaces unter `PROMAT_LOCAL_ARCHIVE_ROOT`, standardmäßig lokal zum Beispiel `C:\dev\promat_data_archive`.
+- Das Archiv ist session-zentriert unter `sessions/{language_code}/{session_id}/...`.
+- Prod-Uploads entstehen als explizite Allowlist-Pakete unter `scripts/research_data_intake/exports/{upload_id}/` aus bereits validierten Runtime-Artefakten und optionalem `db/import_payload.json`.
 
-## Gehört nicht hierher
+## Batch-Scan und Klassifizierung
 
-- allgemeine Dev-Start- oder Setup-Skripte
-- allgemeine Maintenance-Skripte ohne direkten Intake- oder Ableitungsbezug
-- Public-Export-Schritte, die ausschließlich freigegebene Inhalte nach `public/` schreiben
+- Batch-Ordnernamen müssen `batch` enthalten.
+- Dateien dürfen direkt im Batch oder in optionalen Hilfsunterordnern liegen.
+- Es gibt keine Pflicht mehr für `processed/`, `raw/`, `source/` oder `intake_data/`.
+- Die Klassifizierung muss aus expliziten Dateinamen kommen: `person_id`, Task, Rolle und Dateityp.
+- Mehrdeutigkeit, Konflikte oder nicht erkennbare Dateien werden reportet; die Pipeline rät nicht.
 
-## Struktur
+Unterstützte Batch-Rollen:
 
-- `session_setup/`: sessionbezogene Seeds und Setup-Schritte
-- `audio_conversion/`: Ableitung von Full-MP3-Webartefakten
-- `item_split/`: Ableitung von Split-MP3-Artefakten
-- `alignment_export/`: Export playerfähiger Alignment- oder JSON-Artefakte sowie vorbereitende Alignment-Schritte wie MFA-Zwischenkorpora und Working-Tree-Rückimporte
-- `import/`: generische Batch-Eingänge, intake-nahe Importschritte und zugehörige Hilfsartefakte
+- `raw`: echte unbearbeitete WAV-Master
+- `source`: operative Analyse-/Ableitungs-WAVs, auch aus `*_processed.wav`
+- `alignment_source`: TextGrids, Amberscript-JSON, andere alignment-nahe JSON-Quellen
+- Workbook: `*.xlsx`
 
-## Generische Batch-Ordner
+## Working-Tree
 
-- `scripts/research_data_intake/import/` ist der generische Intake-Eingangsbereich für konkrete Roh- oder Vorverarbeitungsbatches.
-- Ein verarbeitbarer Batch ist ein Ordner unter diesem Import-Root, dessen Name `batch` enthält und der mindestens `processed/` enthält.
-- `raw/` und `intake_data/` sind optionale begleitende Eingangsbereiche.
-- Batch-Ordner dürfen nicht auf feste Namen wie `spanish_batch` oder `spanisch_batch` verdrahtet sein; die Resolver-Logik arbeitet auf beliebigen passenden Batch-Namen.
-- `processed/` ist der zentrale Eingang für die aktuelle Weiterverarbeitung von task-bezogenen WAVs und TextGrids.
-- `processed/` bleibt auch für den inkrementellen Working-Tree der primäre Intake-Eingang; `raw/` bleibt optional und darf nicht als Ersatz für den operativen `source/`-Layer umgedeutet werden.
-- Wenn `raw/` echte unveränderte Original-WAV-Master enthält, ist dieser Bereich die Archivquelle für den produktiven Session-Baum unter `data/sessions/{language}/{session_id}/raw/`.
-- `raw/` und `processed` beziehungsweise später `source/` dürfen dabei nicht vermischt werden.
-- `working/` innerhalb eines Batch-Ordners ist eine vorbereitende person- und task-zentrierte Arbeitsstruktur, keine Produktionsablage.
-
-## Working-Tree-Zielstruktur
+Batch-lokale Zielstruktur:
 
 - `working/.intake_state.json`
 - `working/{person_id}/wordlist/source/wordlist.wav`
@@ -54,83 +48,154 @@ Wenn für einen Task ein kanonischer Katalog unter `data/config/research_player/
 - `working/{person_id}/interview/source/interview.wav`
 - `working/{person_id}/interview/alignment/interview.json`
 
-## Aktuell implementierte Working-Pipeline
+Regeln:
 
-- `import/organize_batch_working_tree.py` organisiert einen gewählten Batch inkrementell pro `person_id` und Task in die kanonische `working/`-Struktur, führt den batch-lokalen Zustand in `working/.intake_state.json` und ersetzt nur die tatsächlich geänderten Task-Unterbäume.
-- Für `wordlist` und `text` vergleicht dieser Organizer nur die relevanten `processed/`-Inputs je Task, lässt unveränderte Tasks unangetastet und räumt bei Änderungen nur `working/{person_id}/{task}/` gezielt neu auf.
-- Für `interview` organisiert derselbe Schritt `working/{person_id}/interview/source/interview.wav` plus `working/{person_id}/interview/alignment/interview.json`; das JSON wird aus dem ausgewählten Amberscript-Export transformiert, nicht als Rohdatei weitergereicht.
-- Für Native Speaker mit `person_id`-Marker `-N-` ist `interview` in diesem Pfad fachlich nicht erwartet; fehlende Interview-WAVs oder -JSONs werden deshalb neutral als `not_expected_for_native_speaker` statt als fehlend gemeldet.
-- Interview-Materialreferenzen werden in Amberscript nur noch als kompakte Marker direkt am referenzierenden Token gepflegt, zum Beispiel `89[wl_089].`, `D5[d_05]` oder `Nummero [wl_087]`.
-- Diese Marker bleiben im Working-JSON nicht roh stehen: `segment.text` bildet weiterhin die sichtbare Segmentoberfläche, `tokens[].text` enthält den gesprochenen Kern, optionale nachgestellte Markerinterpunktion bleibt tokennah in `tokens[].suffix`, und `annotations[]` tragen nur die strukturierte `material_ref`-Referenz mit `item_id`, `task`, `label`, `item_number`, `canonical_text` und `insert_after_token_id`.
-- Sichtbare Referenzlabels werden dabei nicht frei aus dem Editor übernommen, sondern ausschließlich aus den kanonischen Katalogen unter `data/config/research_player/{language}/task_catalogs/wordlist.json` und `text.json` aufgelöst.
-- `alignment_export/import_interview_amberscript.py` ist der wiederverwendbare Transformationsschritt für Amberscript-JSON nach `working/{person_id}/interview/alignment/interview.json`.
-- `alignment_export/prepare_text_mfa_corpus.py` erzeugt aus `working/{person_id}/text/` den MFA-Zwischenstand aus segmentierten `.wav`-Dateien, `.lab`-Dateien, `mfa_output/` und `mfa_manifest.json`.
-- `alignment_export/import_text_mfa_alignment.py` importiert die MFA-Ergebnisse aus `working/{person_id}/text/mfa_output/` zurück in `working/{person_id}/text/alignment/text.json`.
-- Dieses `alignment/text.json` ist ein bewusst batch-lokales Zwischenartefakt im Working-Tree und noch kein finaler Transfer nach `data/`.
-- `import_batch_to_production.py` ist der zentrale orchestrierende Produktionsimport: Workbook lesen, Session-ID ableiten, PostgreSQL-Metadaten schreiben, Runtime-Session-Verzeichnisse erzeugen, echte Raw-Master archivieren und produktive `wordlist`-/`text`-Artefakte delegieren sowie `interview` aus dem Working-Tree in den Runtime-Baum übernehmen.
-- Der aktuelle `text`-Workflow arbeitet mit kanonischen Zieltexten aus einer expliziten Textquelle und benutzt das vorhandene `text.TextGrid` nur als Segmentgrenzenquelle.
-- MFA-Warnungen zu OOVs, Dysfluencies und Selbstreparaturen sind Qualitätssignale, aber im aktuellen Working-Pfad nicht automatisch Abbruchgründe.
-- Für `text` wird bewusst auf kanonische Zielwörter aligned; Dysfluency-Elemente müssen in diesem Schritt nicht vollständig als eigene Zielstruktur modelliert werden.
-- Für `interview` bevorzugt der Organizer `*_interview_processed.wav` und `*_interview_processed.json`; wenn diese fehlen, fallen WAV und JSON separat auf `*_interview_raw.wav` beziehungsweise `*_interview_raw.json` zurück. Mehrere gleichrangige Kandidaten sind harte Konflikte.
+- `working/` ist nur Vorbereitung und nie Runtime oder Prod-Ziel.
+- Der Organizer arbeitet inkrementell pro `person_id` und Task.
+- Für `wordlist` und `text` braucht der Organizer klassifizierte `source`-WAVs plus alignment source TextGrid.
+- Für `interview` braucht der Organizer eine klassifizierte `source`-WAV plus eine klassifizierte alignment-source JSON-Datei.
+- `raw` kann als Fallback genutzt werden wenn kein `source`-WAV vorhanden ist; das Archiv dokumentiert dies in `task_audio_roles`.
+- Native Speaker mit `-N-` bleiben für `interview` neutral `not_expected_for_native_speaker`.
 
-## Sprachkonfiguration
+## Runtime-Vertrag
 
-- `produce_wordlist_artifacts.py` und `produce_text_artifacts.py` akzeptieren ebenfalls `--language`, damit Katalogauflösung und Runtime-Session-Auswahl nicht implizit nur auf Spanisch festliegen.
-- Im aktuellen Repo ist `data/config/research_player/english/task_catalogs/` jetzt die kanonische Inhaltsquelle für den späteren generischen `english_batch`-Working- und Produktionspfad; der englische `text`-Katalog bleibt item-zentriert, obwohl er als connected text modelliert ist.
+`data/sessions/{language}/{session_id}/` darf nur enthalten:
 
-## Optionaler MFA-Modell-Preload
+- `metadata.json`
+- `alignment/{task}.json`
+- `derived/{task}.mp3`
+- `items/{task}/{item_id}.mp3`
 
-- `alignment_export/preload_mfa_models.py` prüft die konfigurierte MFA-CLI und zeigt die zugehörigen Modelle für konfigurierte Intake-Sprachen an.
-- Standardmodus ist rein lesend und lädt nichts herunter.
-- Mit `--download-models` werden die konfigurierten Acoustic- und Dictionary-Modelle explizit geladen.
-- Wenn die MFA-CLI lokal nicht verfügbar ist, bricht dieses Skript sauber mit einer ehrlichen Fehlermeldung ab.
-- Beispiel nur prüfen:
-	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/alignment_export/preload_mfa_models.py --language es`
-- Beispiel mit explizitem Download in einer MFA-fähigen Shell:
-	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/alignment_export/preload_mfa_models.py --language es --download-models`
+Nie in Runtime:
 
-## CLI-Realität
+- `*.wav`
+- `*.TextGrid`
+- `*.xlsx`
+- `secure/`
+- `raw/`
+- `source/`
+- `alignment_source/`
+- `working/`
+- `mfa_corpus/`
+- `mfa_output/`
 
-- Alle neuen Working-Tree-Schritte erwarten weiterhin explizit `--batch-dir`; verarbeitet wird genau der Batch, den die Resolver-Logik unter `scripts/research_data_intake/import/` auflöst.
-- Batch-Läufe nennen in ihrer Ausgabe immer den tatsächlich verarbeiteten Batch-Pfad.
-- `import/organize_batch_working_tree.py` meldet taskweise ehrliche Stati wie `unchanged`, `rebuilt`, `missing_json` oder Konflikte und überschreibt ohne nachweisbare Vorzustandslogik keine fremd oder unklar entstandenen Task-Unterbäume stillschweigend.
-- Interview-Transformationen melden bei kaputten Markerformen oder unbekannten `item_id`-Werten ebenfalls ehrliche Fehlerstati wie `error_invalid_material_ref_marker` oder `error_unknown_material_ref_item_id`, statt halbsyntaktische Rohmarker in das Working-JSON durchzureichen.
-- `import/organize_batch_working_tree.py` unterstützt optional `--force-task {wordlist,text,interview}` für gezielte Task-Rebuilds und `--report-json <path>` für maschinenlesbare Run-Reports.
-- Bestehende reale Ergebnisse im `working/`-Baum werden ohne taskbezogene Änderungsursache oder explizites `--replace-existing` nicht pauschal überschrieben.
+## Lokales Archiv
 
-## Aktueller Produktionsstand
+Session-zentrierte Struktur außerhalb des Repo-Workspaces:
 
-- Der finale Import aus Batch/Working nach `data/` läuft über `import_batch_to_production.py`.
-- Die finale `session_id`-Setzung ist Teil dieses zentralen Imports.
-- Der zentrale Import liest die aktiven Workbook-Sheets `Secure_Person_Intake`, `Research_Person`, `Research_Session_Intake`, `Exposure` und `Vocabularies` als Intake-Vertrag.
-- Reale Batch-`raw/`-Master werden dort archivisch korrekt nach `data/sessions/{language}/{session_id}/raw/` übernommen; fehlende Raw-Master bleiben sichtbar fehlend.
-- Produktions-`derived/*.mp3` für `wordlist` und `text` werden dort über die wiederverwendbaren Task-Prozessoren erzeugt.
-- `interview` wird dort jetzt ebenfalls produktiv übernommen: `source/interview.wav`, `alignment/interview.json` und `derived/interview.mp3` landen im Runtime-Session-Baum, und die Runtime-`metadata.json` referenziert die tatsächlich erzeugten Interview-Artefakte.
-- Für Native Speaker bleibt `interview` auch im Produktionsimport ein neutral nicht erwarteter Task: fehlende Working- oder Raw-Interview-Dateien zählen dort nicht als Defizit und erzeugen keine Runtime-Interview-Artefakte.
-- Produktive MFA-Ausführung bleibt weiterhin ein vorgelagerter externer oder manueller Schritt vor dem finalen Import.
+```text
+PROMAT_LOCAL_ARCHIVE_ROOT/
+  sessions/
+    es/
+      ES-L-0001-2026-S01/
+        secure/
+        raw/
+        source/
+        alignment_source/
+        runtime/
+        metadata/archive_manifest.json
+        reports/
+```
 
-## Intake-Verhalten
+Regeln:
 
-- `Secure_Person_Intake.research_consent_signed` ist der aktive Feldname für geschützte Research-Einwilligung.
-- Der Importer akzeptiert den deprecated Workbook-Header `consent_signed` noch übergangsweise als Fallback für `research_consent_signed` und gibt dabei eine Warnung aus.
-- `Secure_Person_Intake.teaching_consent_signed` ist ein Safety- und Eligibility-Flag für manuelle Teaching-Auswahl; es veröffentlicht nichts automatisch.
-- `Exposure.duration_months` akzeptiert numerische Monatswerte mit Dezimalpunkt oder Dezimalkomma und normalisiert zum Runtime-Wert, zum Beispiel `0,75` zu `0.75`.
-- Nicht numerische Freitextwerte in `Exposure.duration_months` werden nicht heuristisch umgedeutet; der Importer warnt und lässt das Feld leer.
-- `Vocabularies.exposure_type` liefert die kontrollierten Werte für `Exposure.type`.
-- Der deprecated Exposure-Typ `unspecified` wird defensiv mit Warnung zu `unknown` normalisiert.
-- Workbook-`standard_variety` darf uppercase sein und wird zu lowercase Runtime-Werten normalisiert; dazu gehören auch die erweiterten spanischen Werte `EC_STD`, `CL_STD`, `PE_STD`, `BO_STD`, `UY_STD`, `PY_STD` und `VE_STD`.
+- `secure/` ist lokal-only und nie Runtime oder Prod.
+- `runtime/` spiegelt die final erzeugten Runtime-Artefakte.
+- `archive_manifest.json` enthält Session-ID, Person-ID, Sprache, Source-Batch, Zeitstempel, Importer-Version, Input-/Output-Dateien mit Checksums, Warnungen und fehlende oder optionale Artefakte.
+- Das Archiv darf im normalen Importlauf beschrieben werden, aber nicht implizit durch Dev-Reset gelöscht werden.
 
-## Dry Run
+## Prod-Upload-Paket
 
-- Für Real-Workbook-Validierung kann der zentrale Importer gezielt mit einem expliziten Workbook im Dry Run aufgerufen werden.
-- Beispiel:
-	`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir <batch-dir> --workbook <path-to-workbook.xlsx> --target-language fr --dry-run`
-- Wenn ein Workbook nicht im aktuell gewählten Batch unter `intake_data/` liegt, sollte für den Test `--workbook` verwendet werden, statt die Batch-Auflösung umzubauen.
+Beispielstruktur:
 
-## Einstiegspunkte
+```text
+scripts/research_data_intake/exports/{upload_id}/
+  sessions/
+  db/import_payload.json
+  config/research_player/
+  manifest.json
+  checksums.sha256
+  reports/
+```
 
-- Die bestehende `wordlist`-Produktionspipeline bleibt in `scripts/research_data_intake/produce_wordlist_artifacts.py` separat bestehen.
-- Die `text`-Produktionspipeline steht wiederverwendbar in `scripts/research_data_intake/produce_text_artifacts.py` bereit.
-- Der zentrale Workbook-plus-Working-Import steht in `scripts/research_data_intake/import_batch_to_production.py`.
-- Für reine Nacharchivierung bereits importierter Sessions unterstützt derselbe zentrale Importer den Modus `--sync-raw-only`.
-- Der wiederholbare Ablauf für den generischen Batch- und Working-Pfad steht ergänzend in `docs/runbooks/research-intake-working-pipeline.md`.
+Erlaubt:
+
+- `sessions/.../metadata.json`
+- `sessions/.../alignment/*.json`
+- `sessions/.../derived/*.mp3`
+- `sessions/.../items/**/*.mp3`
+- `db/import_payload.json`
+- `config/research_player/**/*.json` nur wenn explizit runtime-relevant
+- `manifest.json`
+- `checksums.sha256`
+- `reports/*.md|*.txt|*.json`
+
+Verboten:
+
+- `*.wav`
+- `*.TextGrid`
+- `*.xlsx`
+- `secure/`
+- `raw/`
+- `source/`
+- `alignment_source/`
+- `working/`
+- `mfa_corpus/`
+- `mfa_output/`
+- Consent-/Questionnaire-PDFs
+- temporäre Dateien
+
+## Commands
+
+Drop-in-Batch scannen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/scan_import_batch.py --batch-dir spanish_batch_20260421`
+
+JSON-Dry-Run-Report für den Scan:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/scan_import_batch.py --batch-dir spanish_batch_20260421 --json`
+
+Batch in den Working-Tree organisieren:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import/organize_batch_working_tree.py --batch-dir spanish_batch_20260421`
+
+Zentralen lokalen Import nach Runtime, Dev-DB und Archiv dry-run planen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanish_batch_20260421 --target-language es --sync-tasks --dry-run`
+
+Kontrollierten lokalen Import ausführen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanish_batch_20260421 --target-language es --sync-tasks`
+
+Runtime-Session validieren:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py runtime-tree --session-dir C:/dev/promat/data/sessions/spanish/ES-L-0001-2026-S01`
+
+Archiv-Session validieren:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py archive-tree --archive-session-dir C:/dev/promat_data_archive/sessions/es/ES-L-0001-2026-S01`
+
+Prod-Upload-Paket bauen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/build_prod_upload_package.py --language spanish --session-id ES-L-0001-2026-S01 --db-payload C:/dev/promat_data_archive/batches/spanish_batch_20260421/import_payload.json`
+
+Prod-Upload-Paket validieren:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py prod-package --package-dir C:/dev/promat/scripts/research_data_intake/exports/promat_upload_20260525T120000Z`
+
+Expliziten Dev-Research-File-Reset nur dry-run anzeigen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/reset_dev_research_runtime.py`
+
+Expliziten Dev-Research-File-Reset ausführen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/reset_dev_research_runtime.py --yes`
+
+## Wichtige Trennungen
+
+- Research Intake ist nicht Teaching Import.
+- `content/` bleibt bei Research-Intake unangetastet.
+- `public/teaching/` und Teaching-Media bleiben unangetastet.
+- `data/config/research_player/` ist kanonische Runtime-Konfiguration und keine wegzuwerfende Batch-Altlast.
+- Der File-Cleanup-Stand vom 2026-05-25 bleibt gültig; ein Dev-Postgres-Reset ist ein separater expliziter Schritt und kein Nebeneffekt des Imports.
+- Prod wird nicht direkt aus `data/sessions` per rsync befüllt, sondern nur über explizite Upload-Pakete.

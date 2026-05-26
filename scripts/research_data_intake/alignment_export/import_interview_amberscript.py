@@ -27,6 +27,10 @@ SPEAKER_CODE_MAP = {
     "spk1": "interviewer",
     "spk2": "participant",
 }
+SPEAKER_NAME_ALIAS_MAP = {
+    "speaker 1": "spk1",
+    "speaker 2": "spk2",
+}
 ANNOTATION_TASK_PREFIXES = (
     ("wl_", "wordlist"),
     ("d_", "text"),
@@ -35,6 +39,8 @@ ANNOTATION_TASK_PREFIXES = (
     ("t_", "text"),
 )
 MATERIAL_REF_PATTERN = re.compile(r"\[(?P<item_id>(?:wl_|d_|qy_|qw_|t_)\d+)\]")
+BRACKET_PATTERN = re.compile(r"\[(?P<content>[^\[\]]+)\]")
+MATERIAL_REF_LIKE_PATTERN = re.compile(r"^[A-Za-z]+_\d+$")
 
 
 class InterviewImportError(ValueError):
@@ -115,12 +121,49 @@ def _require_word_text(word_payload: dict[str, Any], source_json_path: Path, seg
     return value.strip()
 
 
-def _speaker_code(raw_value: Any, source_json_path: Path, segment_number: int) -> str:
+def _speaker_aliases(payload: dict[str, Any], source_json_path: Path, warnings: list[str]) -> dict[str, str]:
+    speakers_payload = payload.get("speakers")
+    if not isinstance(speakers_payload, list):
+        return {}
+
+    aliases: dict[str, str] = {}
+    seen_targets: set[str] = set()
+    for index, speaker_payload in enumerate(speakers_payload, start=1):
+        if not isinstance(speaker_payload, dict):
+            continue
+        raw_spkid = speaker_payload.get("spkid")
+        raw_name = speaker_payload.get("name")
+        if not isinstance(raw_spkid, str) or not raw_spkid.strip():
+            continue
+        if not isinstance(raw_name, str) or not raw_name.strip():
+            continue
+        alias_target = SPEAKER_NAME_ALIAS_MAP.get(raw_name.strip().lower())
+        if alias_target is None:
+            continue
+        if alias_target in seen_targets:
+            raise InterviewImportError(
+                "error_ambiguous_speaker_mapping",
+                f"Amberscript speaker alias {alias_target!r} is not unique in speakers[{index}]: {source_json_path}",
+            )
+        aliases[raw_spkid.strip().lower()] = alias_target
+        seen_targets.add(alias_target)
+        if raw_spkid.strip().lower() != alias_target:
+            warnings.append(
+                f"Amberscript speaker id {raw_spkid!r} mapped to {alias_target} from speakers[] name {raw_name!r}"
+            )
+    return aliases
+
+
+def _speaker_code(raw_value: Any, source_json_path: Path, segment_number: int, speaker_aliases: dict[str, str]) -> str:
     if not isinstance(raw_value, str) or not raw_value.strip():
         raise ValueError(f"Segment {segment_number} must declare a speaker code in {source_json_path}")
     normalized = raw_value.strip().lower()
+    normalized = speaker_aliases.get(normalized, normalized)
     if normalized not in SPEAKER_CODE_MAP:
-        raise ValueError(f"Unsupported Amberscript speaker code {raw_value!r} in segment {segment_number}: {source_json_path}")
+        raise InterviewImportError(
+            "error_unsupported_speaker_code",
+            f"Unsupported Amberscript speaker code {raw_value!r} in segment {segment_number}: {source_json_path}",
+        )
     return SPEAKER_CODE_MAP[normalized]
 
 
@@ -174,20 +217,13 @@ def _split_material_ref_token(*, raw_text: str, source_json_path: Path) -> tuple
         )
 
     normalized_suffix = suffix.strip()
-    if normalized_suffix and not re.fullmatch(r"[.,!?;:]+", normalized_suffix):
+    if normalized_suffix and not re.fullmatch(r"[.,!?;:\-]+", normalized_suffix):
         raise InterviewImportError(
             "error_invalid_material_ref_marker",
             f"Material reference marker must only carry trailing punctuation, got {raw_text!r}: {source_json_path}",
         )
 
-    cleaned_text = prefix.rstrip()
-    if not cleaned_text:
-        raise InterviewImportError(
-            "error_invalid_material_ref_marker",
-            f"Material reference marker lost its spoken anchor in {raw_text!r}: {source_json_path}",
-        )
-
-    return cleaned_text, normalized_suffix, match.group("item_id")
+    return prefix.rstrip(), normalized_suffix, match.group("item_id")
 
 
 def _material_ref_annotation(
@@ -240,6 +276,54 @@ def _token_text_for_segment_text(token: dict[str, object]) -> str:
     return str(token["text"])
 
 
+def _is_intraword_bracket_literal(raw_text: str) -> bool:
+    match = re.search(r"\[[^\]]+\]", raw_text)
+    if match is None:
+        return False
+    has_left_anchor = match.start() > 0 and raw_text[match.start() - 1].isalnum()
+    has_right_anchor = match.end() < len(raw_text) and raw_text[match.end()].isalnum()
+    return has_left_anchor and has_right_anchor
+
+
+def _invalid_material_ref_like_marker(raw_text: str) -> str | None:
+    for match in BRACKET_PATTERN.finditer(raw_text):
+        content = match.group("content").strip()
+        if MATERIAL_REF_LIKE_PATTERN.fullmatch(content):
+            return content
+    return None
+
+
+def _warn_for_transcript_bracket_annotation(raw_text: str, warnings: list[str]) -> None:
+    if "[" not in raw_text and "]" not in raw_text:
+        return
+    if raw_text.count("[") != raw_text.count("]"):
+        raise InterviewImportError(
+            "error_invalid_material_ref_marker",
+            f"Unbalanced bracket annotation {raw_text!r}",
+        )
+    if BRACKET_PATTERN.search(raw_text) is None:
+        raise InterviewImportError(
+            "error_invalid_material_ref_marker",
+            f"Invalid bracket annotation {raw_text!r}",
+        )
+    warnings.append(f"Transcript bracket annotation kept as token text without material_ref: {raw_text!r}")
+
+
+def _append_suffix_to_previous_token(tokens: list[dict[str, object]], suffix: str) -> None:
+    if not suffix:
+        return
+    if not tokens:
+        raise InterviewImportError(
+            "error_invalid_material_ref_marker",
+            "Material reference marker lost its spoken anchor before any token was emitted.",
+        )
+    previous_suffix = tokens[-1].get("suffix")
+    if isinstance(previous_suffix, str) and previous_suffix:
+        tokens[-1]["suffix"] = f"{previous_suffix}{suffix}"
+    else:
+        tokens[-1]["suffix"] = suffix
+
+
 def build_interview_alignment_payload(
     *,
     source_json_path: Path,
@@ -251,11 +335,13 @@ def build_interview_alignment_payload(
     normalized_person_id = _normalize_person_id(person_id)
     language_slug = person_id_language_slug(normalized_person_id)
 
+    warnings: list[str] = []
+    speaker_aliases = _speaker_aliases(payload, source_json_path, warnings)
     segments: list[dict[str, object]] = []
     for segment_index, segment_payload in enumerate(segments_payload, start=1):
         words_payload = _require_words(segment_payload, source_json_path, segment_index)
         segment_id = f"seg_{segment_index:03d}"
-        speaker_code = _speaker_code(segment_payload.get("speaker"), source_json_path, segment_index)
+        speaker_code = _speaker_code(segment_payload.get("speaker"), source_json_path, segment_index, speaker_aliases)
         first_start_ms = _require_word_timing(words_payload[0], "start", source_json_path, segment_index, 1)
         last_end_ms = _require_word_timing(
             words_payload[-1],
@@ -265,32 +351,44 @@ def build_interview_alignment_payload(
             len(words_payload),
         )
         if last_end_ms <= first_start_ms:
-            raise ValueError(f"Segment {segment_index} has a non-positive duration: {source_json_path}")
+            warnings.append(f"segment {segment_index} has zero duration; clamped to 1ms")
+            last_end_ms = first_start_ms + 1
 
         tokens: list[dict[str, object]] = []
         annotations: list[dict[str, object]] = []
         previous_token_id: str | None = None
+        max_token_end_ms = last_end_ms
 
         for word_index, word_payload in enumerate(words_payload, start=1):
             text = _require_word_text(word_payload, source_json_path, segment_index, word_index)
             start_ms = _require_word_timing(word_payload, "start", source_json_path, segment_index, word_index)
             end_ms = _require_word_timing(word_payload, "end", source_json_path, segment_index, word_index)
             if end_ms <= start_ms:
-                raise ValueError(
-                    f"Segment {segment_index} word {word_index} has a non-positive duration in {source_json_path}"
+                warnings.append(
+                    f"segment {segment_index} word {word_index} ({text!r}) has zero duration; clamped to 1ms"
                 )
+                end_ms = start_ms + 1
+            max_token_end_ms = max(max_token_end_ms, end_ms)
 
             material_ref_match = MATERIAL_REF_PATTERN.search(text)
             if material_ref_match is not None:
                 cleaned_text, token_suffix, item_id = _split_material_ref_token(raw_text=text, source_json_path=source_json_path)
-                previous_token_id = _append_token(
-                    tokens,
-                    segment_id=segment_id,
-                    text=cleaned_text,
-                    start_ms=start_ms,
-                    end_ms=end_ms,
-                    suffix=token_suffix,
-                )
+                if cleaned_text:
+                    previous_token_id = _append_token(
+                        tokens,
+                        segment_id=segment_id,
+                        text=cleaned_text,
+                        start_ms=start_ms,
+                        end_ms=end_ms,
+                        suffix=token_suffix,
+                    )
+                else:
+                    if previous_token_id is None:
+                        raise InterviewImportError(
+                            "error_invalid_material_ref_marker",
+                            f"Material reference marker lost its spoken anchor in {text!r}: {source_json_path}",
+                        )
+                    _append_suffix_to_previous_token(tokens, token_suffix)
                 annotations.append(
                     _material_ref_annotation(
                         item_id=item_id,
@@ -300,6 +398,14 @@ def build_interview_alignment_payload(
                     )
                 )
             else:
+                invalid_ref_like_marker = _invalid_material_ref_like_marker(text)
+                if invalid_ref_like_marker is not None and not _is_intraword_bracket_literal(text):
+                    raise InterviewImportError(
+                        "error_invalid_material_ref_marker",
+                        f"Invalid material reference marker {invalid_ref_like_marker!r} in {text!r}: {source_json_path}",
+                    )
+                if "[" in text or "]" in text:
+                    _warn_for_transcript_bracket_annotation(text, warnings)
                 previous_token_id = _append_token(
                     tokens,
                     segment_id=segment_id,
@@ -307,18 +413,13 @@ def build_interview_alignment_payload(
                     start_ms=start_ms,
                     end_ms=end_ms,
                 )
-            if material_ref_match is None and ("[" in text or "]" in text):
-                raise InterviewImportError(
-                    "error_invalid_material_ref_marker",
-                    f"Invalid material reference marker {text!r}: {source_json_path}",
-                )
 
         segment_payload_json: dict[str, object] = {
             "segment_id": segment_id,
             "segment_number": str(segment_index),
             "speaker_code": speaker_code,
             "start_ms": first_start_ms,
-            "end_ms": last_end_ms,
+            "end_ms": max(last_end_ms, max_token_end_ms),
             "text": " ".join(_token_text_for_segment_text(token) for token in tokens),
         }
         if tokens:
@@ -330,7 +431,7 @@ def build_interview_alignment_payload(
     if not segments:
         raise ValueError(f"No usable interview segments were derived from {source_json_path}")
 
-    return {
+    result: dict[str, object] = {
         "session_id": session_id,
         "person_id": normalized_person_id,
         "task": "interview",
@@ -339,6 +440,9 @@ def build_interview_alignment_payload(
         },
         "segments": segments,
     }
+    if warnings:
+        result["_import_warnings"] = warnings
+    return result
 
 
 def write_interview_alignment_json(path: Path, payload: dict[str, object]) -> None:

@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <div class="pm-container pm-container--tinted pm-phenomena-overview__list-shell" data-phenomena-list-shell>
+    <div class="pm-container pm-container--tinted pm-phenomena-overview__list-shell" data-phenomena-list-shell{% if not promat_page.entries %} hidden{% endif %}>
       <div class="pm-phenomena-overview__list" data-phenomena-entry-list>
         {% for entry in promat_page.entries %}
         <article class="pm-phenomena-overview-card" data-phenomena-entry data-entry-id="{{ entry.entry_id }}" data-kind="{{ entry.kind }}" data-title="{{ entry.title|lower }}">
@@ -70,9 +70,13 @@
       </div>
     </div>
 
-    <div class="pm-container pm-container--tinted pm-phenomena-empty-state" data-phenomena-empty-state hidden>
-      <h3 class="pm-phenomena-empty-state__title">{{ promat_page.empty_title }}</h3>
-      <p class="pm-phenomena-empty-state__text">{{ promat_page.empty_text }}</p>
+    <div class="pm-container pm-container--tinted pm-phenomena-empty-state" data-phenomena-empty-state{% if promat_page.entries %} hidden{% endif %}>
+      <h3 class="pm-phenomena-empty-state__title" data-phenomena-empty-title>{{ promat_page.empty_title }}</h3>
+      {% if promat_page.empty_text %}
+      <p class="pm-phenomena-empty-state__text" data-phenomena-empty-text>{{ promat_page.empty_text }}</p>
+      {% else %}
+      <p class="pm-phenomena-empty-state__text" data-phenomena-empty-text hidden></p>
+      {% endif %}
     </div>
   </section>
 

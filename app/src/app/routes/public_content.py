@@ -557,64 +557,41 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
 
     pages: dict[str, dict[str, Any]] = {
         "speakers": {
-            "title": "Sprecher:innen",
-            "eyebrow": "Forschung · Spanisch",
-            "intro": "Personbasierter Zugang über Sprecher:innen mit reduzierten Metadaten, vorbereiteten Filtern und sessionbezogenen Player-Einstiegen.",
+            "title": get_research_page_label("speakers", ui_lang),
+            "eyebrow": f"{get_section_label('research', ui_lang)} · {title}",
+            "intro": get_text(ui_lang, "research.speakers.intro"),
             "page_kind": "workbench",
             "access": "protected",
             "sections": [
                 {
-                    "heading": "Geplante Übersicht",
-                    "paragraphs": [
-                        "Die Oberfläche ist für eine card-basierte Darstellung mit ID, level, L1 und weiteren Kernmetadaten vorbereitet.",
-                    ],
-                },
-                {
-                    "heading": "Geplante Filter",
-                    "bullets": [
-                        "level_code",
-                        "l1",
-                        "speaker_type",
-                        "gender",
-                        "standard_variety",
-                    ],
-                },
-                {
-                    "heading": "Struktureller Stand",
-                    "paragraphs": [
-                        "Die Seite markiert den später geschützten Forschungszugang, setzt aber bewusst noch keine halbgare Auth- oder Player-Logik produktiv um.",
-                    ],
+                    "heading": get_research_page_label("speakers", ui_lang),
+                    "paragraphs": [get_text(ui_lang, "research.speakers.no_data_message")],
                 },
             ],
         },
         "comparison": {
-            "title": "Vergleich",
-            "eyebrow": "Forschung · Spanisch",
-            "intro": "Itembasierter Vergleich über mehrere Sprecher:innen hinweg mit späterem Inline-Audio.",
+            "title": get_research_page_label("comparison", ui_lang),
+            "eyebrow": f"{get_section_label('research', ui_lang)} · {title}",
+            "intro": get_text(ui_lang, "research.comparison.intro"),
             "page_kind": "workbench",
             "access": "protected",
             "sections": [
                 {
-                    "heading": "Geplante Oberfläche",
-                    "paragraphs": [
-                        "Die Vergleichsseite ist auf eine grid- oder tabellenbasierte Darstellung vorbereitet, in der Zeilen Items und Spalten Sprecher:innen abbilden.",
-                    ],
+                    "heading": get_research_page_label("comparison", ui_lang),
+                    "paragraphs": [get_text(ui_lang, "research.comparison.no_data_message")],
                 },
             ],
         },
         "phenomena": {
-            "title": "Phänomene",
-            "eyebrow": "Forschung · Spanisch",
-            "intro": "Linguistisch motivierter Zugang über Kategorien und Phänomene mit späterem Inline-Audio.",
+            "title": get_research_page_label("phenomena", ui_lang),
+            "eyebrow": f"{get_section_label('research', ui_lang)} · {title}",
+            "intro": get_text(ui_lang, "research.phenomena.intro"),
             "page_kind": "workbench",
             "access": "protected",
             "sections": [
                 {
-                    "heading": "Hinweis zur Zuordnung",
-                    "paragraphs": [
-                        "Die Zuordnung von Items zu Phänomenen bleibt heuristisch und garantiert keine eindeutige Realisierung.",
-                        "Die Seite ist deshalb als vorbereitete Forschungsoberfläche angelegt und noch nicht final datengetrieben ausgebaut.",
-                    ],
+                    "heading": get_research_page_label("phenomena", ui_lang),
+                    "paragraphs": [get_text(ui_lang, "research.phenomena.overview.no_data_title")],
                 },
             ],
         },

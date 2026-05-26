@@ -199,6 +199,10 @@ function init() {
     };
   }
 
+  function hasRuntimeData() {
+    return Boolean(state.hasRuntimeData ?? ((state.sessionCatalog || []).length > 0));
+  }
+
   function setMaterialPresets(nextPresets) {
     materialPresets = Array.isArray(nextPresets) ? nextPresets.slice() : [];
     state.materialPresets = materialPresets;
@@ -1243,13 +1247,14 @@ function init() {
   }
 
   function renderSessions() {
+    const noDataText = !hasRuntimeData() ? (labels.noDataText || "") : null;
     renderSessionList(
       learnerSessionsList,
       availableLearnerSessions(),
       {
         isSelectedList: false,
         actionLabel: labels.addSessionLabel || "",
-        emptyText: labels.availableEmptyFiltered || "",
+        emptyText: noDataText || labels.availableEmptyFiltered || "",
       },
     );
     renderSessionList(
@@ -1258,7 +1263,7 @@ function init() {
       {
         isSelectedList: false,
         actionLabel: labels.addSessionLabel || "",
-        emptyText: labels.availableEmptyFiltered || "",
+        emptyText: noDataText || labels.availableEmptyFiltered || "",
       },
     );
     renderSessionList(
@@ -1267,7 +1272,7 @@ function init() {
       {
         isSelectedList: true,
         actionLabel: labels.removeSessionLabel || "",
-        emptyText: labels.selectedEmpty || labels.workspaceEmptySessions || "",
+        emptyText: noDataText || labels.selectedEmpty || labels.workspaceEmptySessions || "",
       },
     );
   }
@@ -1283,6 +1288,12 @@ function init() {
 
     const items = visibleItems();
     const sessions = selectedSessions();
+    if (!hasRuntimeData()) {
+      matrixSummary.textContent = labels.materialText || "";
+      matrixEmpty.textContent = labels.noDataText || "";
+      matrixWrap.hidden = true;
+      return;
+    }
     if (!activeSet) {
       matrixSummary.textContent = labels.materialText || "";
       matrixEmpty.textContent = labels.workspaceEmptyItems || "";
