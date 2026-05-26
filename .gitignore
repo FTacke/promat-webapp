@@ -69,4 +69,3 @@ scripts/research_data_intake/import/*
 /app/capture_qa.py
 
 # Temporary root notes
-/start.txt

@@ -42,10 +42,11 @@ For active PROMAT rules, consult these files first:
 ## Repo Hygiene For Temporary QA Debug Files
 
 - Do not create temporary screenshots, browser-capture artifacts, inspect scripts, measurement scripts, or ad hoc debug files in the repository root.
+- Keep `start.txt` in the repository root as a tracked local dev helper entrypoint; do not delete it as temporary hygiene debris.
 - Use `tmp/ui-qa/<YYYY-MM-DD>-<short-topic>/` for one-off browser screenshots, HTML dumps, debug captures, and run-specific inspection scripts.
 - Use `scripts/qa/` for reusable QA or capture utilities that are intended to be kept.
 - Use `docs/agent-runs/` for short Markdown run reports instead of keeping root notes or screenshot evidence in the root.
-- Before finishing a run, check the repository root for accidental files such as `inspect_*.py`, `tmp_*.py`, `measure_*.py`, `verify_*.py`, `capture_*.py`, `*_screenshot.png`, `desktop_*.png`, `mobile_*.png`, and `start.txt`, then move, delete, or document them before handoff.
+- Before finishing a run, check the repository root for accidental files such as `inspect_*.py`, `tmp_*.py`, `measure_*.py`, `verify_*.py`, `capture_*.py`, `*_screenshot.png`, `desktop_*.png`, and `mobile_*.png`, then move, delete, or document them before handoff.
 
 ## UI Change Discipline
 
