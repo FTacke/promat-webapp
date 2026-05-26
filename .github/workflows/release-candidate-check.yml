@@ -91,15 +91,19 @@ jobs:
           docker build -f app/Dockerfile -t promat-release-candidate-check .
 
       - name: Install Playwright for optional responsive smoke
-        if: ${{ inputs.run_responsive_smoke && inputs.responsive_smoke_base_url != '' && secrets.PROMAT_QA_EMAIL != '' && secrets.PROMAT_QA_PASSWORD != '' }}
+        if: ${{ inputs.run_responsive_smoke && inputs.responsive_smoke_base_url != '' }}
         run: |
           python -m pip install playwright
           python -m playwright install --with-deps chromium
 
       - name: Optional responsive smoke
-        if: ${{ inputs.run_responsive_smoke && inputs.responsive_smoke_base_url != '' && secrets.PROMAT_QA_EMAIL != '' && secrets.PROMAT_QA_PASSWORD != '' }}
+        if: ${{ inputs.run_responsive_smoke && inputs.responsive_smoke_base_url != '' }}
         env:
           PROMAT_QA_EMAIL: ${{ secrets.PROMAT_QA_EMAIL }}
           PROMAT_QA_PASSWORD: ${{ secrets.PROMAT_QA_PASSWORD }}
         run: |
+          if [ -z "$PROMAT_QA_EMAIL" ] || [ -z "$PROMAT_QA_PASSWORD" ]; then
+            echo "Skipping responsive smoke: PROMAT_QA_EMAIL/PROMAT_QA_PASSWORD secrets are not configured."
+            exit 0
+          fi
           python scripts/qa/responsive_smoke.py --run-id github-release-candidate --base-url "${{ inputs.responsive_smoke_base_url }}"
