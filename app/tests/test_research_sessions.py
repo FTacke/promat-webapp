@@ -1849,7 +1849,7 @@ def test_teaching_topic_media_route_serves_released_media(url_app: Flask) -> Non
     response = client.get("/teaching-media/spanish/final-r/downloads/final-r-handout.txt")
 
     assert response.status_code == 200
-    assert response.data == b"PROMAT Teaching placeholder export for the public final-r worksheet.\r\n"
+    assert response.data.replace(b"\r\n", b"\n") == b"PROMAT Teaching placeholder export for the public final-r worksheet.\n"
 
 
 def test_teaching_topic_media_route_blocks_parent_traversal(url_app: Flask) -> None:
@@ -2564,12 +2564,29 @@ def test_authenticated_research_workbench_pages_render_after_access_gate(
     assert response.status_code == 200
 
 
-def test_research_player_prewarm_request_warms_route_without_rendering_body(url_app: Flask) -> None:
+def test_research_player_prewarm_request_warms_route_without_rendering_body(runtime_env: Path, url_app: Flask) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist",),
+        ),
+    )
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+
     _set_test_auth(url_app)
     client = url_app.test_client()
 
     response = client.get(
-        "/en/research/spanish/player/ES-L-0001-2026-S01/wordlist?source=speakers",
+        f"/en/research/spanish/player/{session_id}/wordlist?source=speakers",
         headers={"X-Promat-Player-Prewarm": "1"},
     )
 
