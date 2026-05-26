@@ -10,12 +10,14 @@ import re
 import time
 from urllib.parse import unquote, urlparse
 
-from flask import Blueprint, abort, flash, g, jsonify, make_response, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, current_app, flash, g, jsonify, make_response, redirect, render_template, request, send_file, url_for
+from itsdangerous import BadSignature, URLSafeSerializer
 from sqlalchemy import event, text
 
 from ..auth import Role
 from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
+from ..extensions import limiter
 from ..i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, resolve_request_ui_language, resolve_ui_language
 from ..research_capabilities import get_research_page_surface_mode
 from ..research_access import requires_research_auth
@@ -33,6 +35,7 @@ from ..research_views import (
     resolve_player_item_download,
 )
 from ..runtime_paths import get_public_root
+from ..services.access_request_notifications import deliver_access_request_notification
 from ..teaching_content import resolve_teaching_switch_path, resolve_teaching_topic_media_artifact, resolve_topic_route_target
 from ..extensions.sqlalchemy_ext import get_engine
 from .public_content import (
@@ -67,6 +70,8 @@ blueprint = Blueprint("public", __name__)
 
 
 _ACCESS_REQUEST_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_ACCESS_REQUEST_HONEYPOT_FIELD = "website"
+_ACCESS_REQUEST_FORM_TOKEN_FIELD = "access_request_form_token"
 _ACCESS_REQUEST_MAX_LENGTHS = {
     "first_name": 160,
     "last_name": 160,
@@ -148,6 +153,79 @@ def _empty_access_request_form() -> dict[str, Any]:
     }
 
 
+def _access_request_email_domain(email: str) -> str:
+    normalized = auth_services.normalize_email(email)
+    return normalized.partition("@")[2] or "unknown"
+
+
+def _access_request_form_serializer() -> URLSafeSerializer:
+    return URLSafeSerializer(current_app.secret_key, salt="auth.access-request.form")
+
+
+def _build_access_request_form_token(*, next_url: str, ui_lang: str, issued_at: float | None = None) -> str:
+    payload = {
+        "issued_at": float(issued_at if issued_at is not None else time.time()),
+        "next": next_url,
+        "ui_lang": ui_lang,
+    }
+    return _access_request_form_serializer().dumps(payload)
+
+
+def _resolve_access_request_form_token(raw_token: str | None) -> dict[str, Any] | None:
+    if not raw_token:
+        return None
+    try:
+        payload = _access_request_form_serializer().loads(raw_token)
+    except BadSignature:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return payload
+
+
+def _access_request_submission_is_suspicious(*, ui_lang: str, next_url: str, form_values: dict[str, Any]) -> bool:
+    honeypot_value = str(request.form.get(_ACCESS_REQUEST_HONEYPOT_FIELD) or "").strip()
+    if honeypot_value:
+        current_app.logger.info(
+            "Access request blocked by honeypot | ui_lang=%s | email_domain=%s",
+            ui_lang,
+            _access_request_email_domain(form_values.get("email", "")),
+        )
+        return True
+
+    token_payload = _resolve_access_request_form_token(request.form.get(_ACCESS_REQUEST_FORM_TOKEN_FIELD))
+    if token_payload is None:
+        current_app.logger.info("Access request blocked by invalid form token | ui_lang=%s", ui_lang)
+        return True
+    if token_payload.get("next") != next_url or token_payload.get("ui_lang") != ui_lang:
+        current_app.logger.info("Access request blocked by mismatched form token context | ui_lang=%s", ui_lang)
+        return True
+
+    issued_at = token_payload.get("issued_at")
+    if not isinstance(issued_at, (int, float)):
+        current_app.logger.info("Access request blocked by invalid form timing token | ui_lang=%s", ui_lang)
+        return True
+
+    token_age_seconds = float(time.time()) - float(issued_at)
+    configured_min_submit_seconds = current_app.config.get("AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS")
+    configured_max_age_seconds = current_app.config.get("AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS")
+    min_submit_seconds = 0.5 if configured_min_submit_seconds is None else float(configured_min_submit_seconds)
+    max_age_seconds = 43200 if configured_max_age_seconds is None else int(configured_max_age_seconds)
+
+    if token_age_seconds < min_submit_seconds:
+        current_app.logger.info(
+            "Access request blocked by submit timing guard | ui_lang=%s | email_domain=%s",
+            ui_lang,
+            _access_request_email_domain(form_values.get("email", "")),
+        )
+        return True
+    if token_age_seconds > max_age_seconds:
+        current_app.logger.info("Access request blocked by expired form token | ui_lang=%s", ui_lang)
+        return True
+
+    return False
+
+
 def _coerce_access_request_form(form_data) -> dict[str, Any]:
     values = _empty_access_request_form()
     if not form_data:
@@ -189,6 +267,14 @@ def _validate_access_request_form(ui_lang: str, values: dict[str, Any]) -> dict[
         if len(field_value) > max_length:
             errors[field_name] = get_text(ui_lang, "auth.access_request.error.too_long")
 
+    for field_name in ("first_name", "last_name", "institution", "role_or_function", "email"):
+        field_value = str(values.get(field_name) or "")
+        if any(character in field_value for character in {"\r", "\n", "\x00"}):
+            errors[field_name] = get_text(ui_lang, "auth.access_request.error.invalid_input")
+
+    if "\x00" in str(values.get("purpose") or ""):
+        errors["purpose"] = get_text(ui_lang, "auth.access_request.error.invalid_input")
+
     if not values.get("consent_confirmed"):
         errors["consent_confirmed"] = get_text(ui_lang, "auth.access_request.error.confirmation_required")
 
@@ -197,6 +283,7 @@ def _validate_access_request_form(ui_lang: str, values: dict[str, Any]) -> dict[
 
 def _render_access_request_page(*, next_url: str, form_values: dict[str, Any] | None = None, form_errors: dict[str, str] | None = None, status_code: int = 200):
     ui_lang = _resolve_auth_ui_lang(next_url)
+    form_token = _build_access_request_form_token(next_url=next_url, ui_lang=ui_lang)
     response = make_response(
         render_template(
             "auth/access_request.html",
@@ -204,6 +291,7 @@ def _render_access_request_page(*, next_url: str, form_values: dict[str, Any] | 
             login_href=_build_login_href(ui_lang, next_url),
             access_request_form=_coerce_access_request_form(form_values),
             access_request_errors=form_errors or {},
+            access_request_form_token=form_token,
             auth_ui_lang=ui_lang,
             page_name="access-request",
             shell_class="app-shell--panel-hidden",
@@ -524,15 +612,25 @@ def login_page():
     return _no_store_response(response)
 
 
-@blueprint.route("/access-request", methods=["GET", "POST"], endpoint="access_request_page")
+@blueprint.get("/access-request", endpoint="access_request_page")
 def access_request_page():
-    raw_next = request.form.get("next") if request.method == "POST" else request.args.get("next")
+    raw_next = request.args.get("next")
     next_url = _safe_next_value(raw_next) or ""
     ui_lang = _resolve_auth_ui_lang(next_url)
     if getattr(g, "user_id", None):
         return _redirect_authenticated_public_auth(next_url=next_url, ui_lang=ui_lang)
-    if request.method == "GET":
-        return _render_access_request_page(next_url=next_url)
+    return _render_access_request_page(next_url=next_url)
+
+
+@blueprint.post("/access-request", endpoint="access_request_submit")
+@limiter.limit("5 per hour")
+@limiter.limit("20 per day")
+def access_request_submit():
+    raw_next = request.form.get("next")
+    next_url = _safe_next_value(raw_next) or ""
+    ui_lang = _resolve_auth_ui_lang(next_url)
+    if getattr(g, "user_id", None):
+        return _redirect_authenticated_public_auth(next_url=next_url, ui_lang=ui_lang)
 
     form_values = _coerce_access_request_form(request.form)
     form_errors = _validate_access_request_form(ui_lang, form_values)
@@ -544,7 +642,11 @@ def access_request_page():
             status_code=400,
         )
 
-    auth_services.create_access_request(
+    if _access_request_submission_is_suspicious(ui_lang=ui_lang, next_url=next_url, form_values=form_values):
+        flash(get_text(ui_lang, "auth.access_request.success"), "success")
+        return redirect(_build_access_request_href(ui_lang, next_url), 303)
+
+    access_request = auth_services.create_access_request(
         first_name=form_values["first_name"],
         last_name=form_values["last_name"],
         institution=form_values["institution"],
@@ -557,6 +659,7 @@ def access_request_page():
         user_agent=request.user_agent.string if request.user_agent else None,
         ip_address=request.headers.get("X-Forwarded-For", request.remote_addr),
     )
+    deliver_access_request_notification(access_request)
     flash(get_text(ui_lang, "auth.access_request.success"), "success")
     return redirect(_build_access_request_href(ui_lang, next_url), 303)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
+import logging
 import os
 from pathlib import Path
 import re
@@ -20,10 +21,11 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 from app import register_auth_context, register_context_processors, register_error_handlers, register_security_headers
 from app.auth.models import AccessRequest, AnalyticsDaily, AnalyticsLanguageAreaDaily, Base, ResetToken, User
 from app.auth import services as auth_services
-from app.extensions import register_extensions
+from app.extensions import limiter, register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
 from app.routes.admin import blueprint as admin_blueprint
 from app.routes.auth import blueprint as auth_blueprint
+from app.routes import public as public_routes
 from app.routes.public import blueprint as public_blueprint
 
 
@@ -79,6 +81,11 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         template_folder=str(app_root / "templates"),
         static_folder=str(app_root / "static"),
     )
+    sent_access_request_messages: list[object] = []
+
+    def fake_access_request_mail_sender(message) -> None:
+        sent_access_request_messages.append(message)
+
     app.config.update(
         TESTING=True,
         SECRET_KEY="test-secret",
@@ -86,8 +93,24 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         JWT_SECRET_KEY="test-secret",
         JWT_TOKEN_LOCATION=["cookies"],
         JWT_COOKIE_CSRF_PROTECT=False,
+        RATE_LIMIT_STORAGE_URI="memory://",
+        RATELIMIT_STORAGE_URI="memory://",
         AUTH_DATABASE_URL=f"sqlite:///{db_path.as_posix()}",
         AUTH_RESET_TOKEN_EXP_DAYS=14,
+        AUTH_ACCESS_REQUEST_MAIL_ENABLED=True,
+        AUTH_ACCESS_REQUEST_EMAIL="access-requests@example.org",
+        AUTH_ACCESS_REQUEST_SUBJECT='Zugangsanfrage "Pronunciation Matters"',
+        AUTH_ACCESS_REQUEST_FROM_EMAIL="noreply@promat.test",
+        AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED=True,
+        AUTH_ACCESS_REQUEST_SMTP_HOST="smtp.promat.test",
+        AUTH_ACCESS_REQUEST_SMTP_PORT=587,
+        AUTH_ACCESS_REQUEST_SMTP_USE_TLS=True,
+        AUTH_ACCESS_REQUEST_SMTP_USE_SSL=False,
+        AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS=10,
+        AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS=43200,
+        AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS=0,
+        AUTH_ACCESS_REQUEST_MAIL_SENDER=fake_access_request_mail_sender,
+        TEST_ACCESS_REQUEST_MESSAGES=sent_access_request_messages,
     )
 
     register_context_processors(app)
@@ -175,6 +198,39 @@ def _render_auth_template(app: Flask, template_name: str, *, ui_lang: str) -> st
             current_ui_lang=ui_lang,
             ui_lang=ui_lang,
         )
+
+
+def _extract_hidden_input_value(html: str, name: str) -> str:
+    match = re.search(rf'name="{re.escape(name)}" value="([^"]*)"', html)
+    assert match is not None
+    return match.group(1)
+
+
+def _build_access_request_payload(
+    client,
+    *,
+    next_url: str = "/de/research/spanish",
+    overrides: dict[str, str] | None = None,
+) -> dict[str, str]:
+    response = client.get(f"/access-request?next={next_url}")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    payload = {
+        "first_name": "Mara",
+        "last_name": "Fischer",
+        "institution": "Universität Marburg",
+        "role_or_function": "Wissenschaftliche Mitarbeiterin",
+        "email": "mara.fischer@uni-marburg.de",
+        "purpose": "Ich benötige Zugang für ein Seminar zur Ausspracheforschung und für die Auswertung ausgewählter Korpusdaten.",
+        "consent_confirmed": "1",
+        "ui_lang": "de",
+        "next": next_url,
+        "website": "",
+        "access_request_form_token": _extract_hidden_input_value(html, "access_request_form_token"),
+    }
+    if overrides:
+        payload.update(overrides)
+    return payload
 
 
 def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None:
@@ -279,11 +335,11 @@ def test_landing_page_renders_english_copy_and_shared_language_switch(auth_app: 
     html = response.get_data(as_text=True)
     assert "Exploring and teaching foreign languages digitally." in html
     assert "Research pronunciation" in html
-    assert "Empirical speech data and analysis tools for research and university teaching." in html
+    assert "Empirical speech data on learner pronunciation and analysis tools for research and university teaching." in html
     assert "Go to research" in html
     assert "Research setting with a discussion and audio analysis on a laptop" in html
     assert "Teach pronunciation" in html
-    assert "Practice-oriented materials for teaching, practising, and reflecting on pronunciation." in html
+    assert "Teaching materials for practising and reflecting on pronunciation in foreign language education." in html
     assert "Go to teaching" in html
     assert "Classroom scene representing teaching materials and listening examples" in html
     assert 'class="promat-topbar__language-switch"' in html
@@ -334,6 +390,8 @@ def test_access_request_page_renders_form_and_login_link_with_return_target(auth
     assert 'name="email"' in html
     assert 'name="purpose"' in html
     assert 'name="consent_confirmed"' in html
+    assert 'name="website"' in html
+    assert 'name="access_request_form_token"' in html
     assert html.count('href="/login?next=/de/research/spanish"') == 1
     assert "Anfrage absenden" in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
@@ -342,20 +400,11 @@ def test_access_request_page_renders_form_and_login_link_with_return_target(auth
 
 def test_access_request_submit_persists_request_and_shows_success(auth_app: Flask) -> None:
     client = auth_app.test_client()
+    payload = _build_access_request_payload(client)
 
     response = client.post(
         "/access-request",
-        data={
-            "first_name": "Mara",
-            "last_name": "Fischer",
-            "institution": "Universität Marburg",
-            "role_or_function": "Wissenschaftliche Mitarbeiterin",
-            "email": "mara.fischer@uni-marburg.de",
-            "purpose": "Ich benötige Zugang für ein Seminar zur Ausspracheforschung und für die Auswertung ausgewählter Korpusdaten.",
-            "consent_confirmed": "1",
-            "ui_lang": "de",
-            "next": "/de/research/spanish",
-        },
+        data=payload,
         follow_redirects=False,
     )
 
@@ -378,22 +427,56 @@ def test_access_request_submit_persists_request_and_shows_success(auth_app: Flas
         assert requests[0].email == "mara.fischer@uni-marburg.de"
         assert requests[0].requested_path == "/de/research/spanish"
         assert requests[0].consent_confirmed is True
+        assert requests[0].status == "notified"
+
+    sent_messages = auth_app.config["TEST_ACCESS_REQUEST_MESSAGES"]
+    assert len(sent_messages) == 1
+    message = sent_messages[0]
+    assert message.from_address == "noreply@promat.test"
+    assert message.to_address == "access-requests@example.org"
+    assert message.reply_to == "mara.fischer@uni-marburg.de"
+    assert message.subject == 'Zugangsanfrage "Pronunciation Matters"'
+    assert "Request ID:" in message.body
+    assert "Name: Fischer, Mara" in message.body
+    assert "Email: mara.fischer@uni-marburg.de" in message.body
+    assert "Institution: Universität Marburg" in message.body
+    assert "Role / function: Wissenschaftliche Mitarbeiterin" in message.body
+    assert "Ich benötige Zugang für ein Seminar" in message.body
+
+
+def test_access_request_submit_marks_notification_failure_without_losing_request(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    auth_app.config["AUTH_ACCESS_REQUEST_MAIL_SENDER"] = lambda _message: (_ for _ in ()).throw(RuntimeError("smtp down"))
+    payload = _build_access_request_payload(client)
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    with auth_app.app_context():
+        with get_session() as session:
+            requests = session.query(AccessRequest).all()
+        assert len(requests) == 1
+        assert requests[0].status == "notification_failed"
 
 
 def test_access_request_submit_shows_field_errors(auth_app: Flask) -> None:
     client = auth_app.test_client()
-
-    response = client.post(
-        "/access-request",
-        data={
+    payload = _build_access_request_payload(
+        client,
+        overrides={
             "first_name": "",
             "last_name": "",
             "institution": "",
             "role_or_function": "",
             "email": "invalid",
             "purpose": "",
-            "ui_lang": "de",
+            "consent_confirmed": "",
         },
+    )
+
+    response = client.post(
+        "/access-request",
+        data=payload,
         follow_redirects=False,
     )
 
@@ -403,6 +486,114 @@ def test_access_request_submit_shows_field_errors(auth_app: Flask) -> None:
     assert "Bitte geben Sie Ihren Vornamen ein." in html
     assert "Bitte geben Sie eine gültige E-Mail-Adresse ein." in html
     assert "Bitte bestätigen Sie die Datenschutz- und Vertraulichkeitsvorgaben." in html
+
+
+def test_access_request_submit_keeps_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    for index in range(5):
+        payload = _build_access_request_payload(
+            client,
+            overrides={"email": f"rate.limit.{index}@uni-marburg.de"},
+        )
+        response = client.post("/access-request", data=payload, follow_redirects=False)
+        assert response.status_code == 303
+
+    blocked = client.post(
+        "/access-request",
+        data=_build_access_request_payload(
+            client,
+            overrides={"email": "rate.limit.blocked@uni-marburg.de"},
+        ),
+        follow_redirects=False,
+    )
+
+    assert blocked.status_code == 429
+
+
+def test_access_request_honeypot_submit_skips_db_and_mail(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(client, overrides={"website": "https://spam.invalid"})
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    with auth_app.app_context():
+        with get_session() as session:
+            requests = session.query(AccessRequest).all()
+        assert requests == []
+    assert auth_app.config["TEST_ACCESS_REQUEST_MESSAGES"] == []
+
+
+def test_access_request_submit_timing_guard_skips_db_and_mail(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = auth_app.test_client()
+    auth_app.config["AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS"] = 1.0
+    monkeypatch.setattr(public_routes.time, "time", lambda: 100.0)
+    payload = _build_access_request_payload(client)
+    monkeypatch.setattr(public_routes.time, "time", lambda: 100.2)
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    with auth_app.app_context():
+        with get_session() as session:
+            requests = session.query(AccessRequest).all()
+        assert requests == []
+    assert auth_app.config["TEST_ACCESS_REQUEST_MESSAGES"] == []
+
+
+def test_access_request_rejects_too_long_fields(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(client, overrides={"purpose": "x" * 4001})
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 400
+    assert "Bitte kürzen Sie diesen Eintrag." in response.get_data(as_text=True)
+
+
+def test_access_request_rejects_header_injection_input(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(
+        client,
+        overrides={
+            "first_name": "Mara\r\nInjected",
+            "email": "mara.fischer@uni-marburg.de\r\nBcc:evil@example.org",
+        },
+    )
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 400
+    html = response.get_data(as_text=True)
+    assert "Bitte entfernen Sie unzulässige Zeichen aus diesem Feld." in html
+    with auth_app.app_context():
+        with get_session() as session:
+            requests = session.query(AccessRequest).all()
+        assert requests == []
+    assert auth_app.config["TEST_ACCESS_REQUEST_MESSAGES"] == []
+
+
+def test_access_request_logs_metadata_without_full_pii(
+    auth_app: Flask,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(client)
+
+    with caplog.at_level(logging.INFO):
+        response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert "Recorded access request | request_id=" in caplog.text
+    assert "Access request notification sent | request_id=" in caplog.text
+    assert "mara.fischer@uni-marburg.de" not in caplog.text
+    assert "Universität Marburg" not in caplog.text
+    assert "Ich benötige Zugang für ein Seminar" not in caplog.text
+    assert "Purpose:" not in caplog.text
 
 
 def test_public_auth_pages_redirect_authenticated_users(auth_app: Flask) -> None:
@@ -642,17 +833,24 @@ def test_login_blocks_expired_account_with_localized_message(auth_app: Flask) ->
     assert "Access for this account has expired." in response.get_data(as_text=True)
 
 
-def test_password_forgot_creates_reset_token_without_leaking_account(auth_app: Flask) -> None:
+def test_password_forgot_creates_reset_token_without_leaking_account(auth_app: Flask, caplog: pytest.LogCaptureFixture) -> None:
     client = auth_app.test_client()
 
-    response = client.post(
-        "/auth/password/forgot",
-        data={"email": "alice@example.org", "ui_lang": "en"},
-        follow_redirects=False,
-    )
+    with caplog.at_level(logging.INFO):
+        response = client.post(
+            "/auth/password/forgot",
+            data={"email": "alice@example.org", "ui_lang": "en"},
+            follow_redirects=False,
+        )
 
     assert response.status_code == 200
     assert "a new link to set the password has been prepared" in response.get_data(as_text=True)
+    assert "Prepared password-reset message metadata" in caplog.text
+    assert "recipient_domain=example.org" in caplog.text
+    assert "alice@example.org" not in caplog.text
+    assert "/auth/password/reset?token=" not in caplog.text
+    assert "token=" not in caplog.text
+    assert "Use this link to choose a new password" not in caplog.text
     with auth_app.app_context():
         with get_session() as session:
             tokens = session.query(ResetToken).filter(ResetToken.user_id == "user-1").all()
@@ -733,24 +931,25 @@ def test_password_reset_updates_password_and_consumes_token(auth_app: Flask) -> 
         assert status == "used"
 
 
-def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask) -> None:
+def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask, caplog: pytest.LogCaptureFixture) -> None:
     client = auth_app.test_client()
     login_response = _login(client, email="admin@example.org")
 
     assert login_response.status_code == 303
 
-    response = client.post(
-        "/admin/users",
-        json={
-            "first_name": "Nora",
-            "last_name": "New",
-            "email": "new.user@example.org",
-            "role": "user",
-            "access_expires_on": "2030-01-31",
-            "invite_note": "Please review the shared corpus guidelines before your first login.",
-        },
-        headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
-    )
+    with caplog.at_level(logging.INFO):
+        response = client.post(
+            "/admin/users",
+            json={
+                "first_name": "Nora",
+                "last_name": "New",
+                "email": "new.user@example.org",
+                "role": "user",
+                "access_expires_on": "2030-01-31",
+                "invite_note": "Please review the shared corpus guidelines before your first login.",
+            },
+            headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
+        )
 
     assert response.status_code == 201
     payload = response.get_json()
@@ -758,6 +957,12 @@ def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask) ->
     assert "/auth/password/reset?token=" in payload["inviteLink"]
     assert "ui_lang=en" in payload["inviteLink"]
     assert "Please review the shared corpus guidelines" in payload["inviteMailBody"]
+    assert "Prepared admin invite message metadata" in caplog.text
+    assert "recipient_domain=example.org" in caplog.text
+    assert "new.user@example.org" not in caplog.text
+    assert payload["inviteLink"] not in caplog.text
+    assert "token=" not in caplog.text
+    assert payload["inviteMailBody"] not in caplog.text
 
     with auth_app.app_context():
         user = auth_services.find_user_by_email("new.user@example.org")
@@ -768,6 +973,174 @@ def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask) ->
         assert user.created_by_user_id == "admin-1"
         assert user.must_reset_password is True
         assert user.access_expires_at.date().isoformat() == "2030-01-31"
+
+
+def test_admin_reset_password_preview_keeps_secret_logging(auth_app: Flask, caplog: pytest.LogCaptureFixture) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    with caplog.at_level(logging.INFO):
+        response = client.post(
+            "/admin/users/user-1/reset-password",
+            headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
+        )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["ok"] is True
+    assert "Prepared admin reset message metadata" in caplog.text
+    assert "recipient_domain=example.org" in caplog.text
+    assert "alice@example.org" not in caplog.text
+    assert payload["inviteLink"] not in caplog.text
+    assert "token=" not in caplog.text
+    assert payload["inviteMailBody"] not in caplog.text
+
+
+def test_login_post_keeps_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    for _ in range(5):
+        response = client.post(
+            "/auth/login",
+            data={"email": "alice@example.org", "password": "WrongPass1"},
+            follow_redirects=False,
+        )
+        assert response.status_code in {401, 403}
+
+    blocked = client.post(
+        "/auth/login",
+        data={"email": "alice@example.org", "password": "WrongPass1"},
+        follow_redirects=False,
+    )
+
+    assert blocked.status_code == 429
+
+
+def test_password_forgot_submit_keeps_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    for _ in range(5):
+        response = client.post(
+            "/auth/password/forgot",
+            data={"email": "alice@example.org", "ui_lang": "en"},
+            follow_redirects=False,
+        )
+        assert response.status_code == 200
+
+    blocked = client.post(
+        "/auth/password/forgot",
+        data={"email": "alice@example.org", "ui_lang": "en"},
+        follow_redirects=False,
+    )
+
+    assert blocked.status_code == 429
+
+
+def test_password_reset_api_keeps_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    for _ in range(10):
+        response = client.post(
+            "/auth/reset-password/confirm",
+            json={
+                "resetToken": "invalid-token",
+                "newPassword": "ValidPass2",
+                "confirmPassword": "ValidPass2",
+            },
+            follow_redirects=False,
+        )
+        assert response.status_code == 400
+
+    blocked = client.post(
+        "/auth/reset-password/confirm",
+        json={
+            "resetToken": "invalid-token",
+            "newPassword": "ValidPass2",
+            "confirmPassword": "ValidPass2",
+        },
+        follow_redirects=False,
+    )
+
+    assert blocked.status_code == 429
+
+
+def test_admin_user_create_keeps_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    for index in range(10):
+        response = client.post(
+            "/admin/users",
+            json={
+                "first_name": "Rate",
+                "last_name": "Limit",
+                "email": f"rate.limit.{index}@example.org",
+                "role": "user",
+                "access_expires_on": "2030-01-31",
+            },
+            headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
+        )
+        assert response.status_code == 201
+
+    blocked = client.post(
+        "/admin/users",
+        json={
+            "first_name": "Rate",
+            "last_name": "Blocked",
+            "email": "rate.limit.blocked@example.org",
+            "role": "user",
+            "access_expires_on": "2030-01-31",
+        },
+        headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
+    )
+
+    assert blocked.status_code == 429
+
+
+def test_admin_user_patch_keeps_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    for index in range(10):
+        response = client.patch(
+            "/admin/users/user-1?ui_lang=en",
+            json={"first_name": f"Alice-{index}"},
+        )
+        assert response.status_code == 200
+
+    blocked = client.patch(
+        "/admin/users/user-1?ui_lang=en",
+        json={"first_name": "Alice-blocked"},
+    )
+
+    assert blocked.status_code == 429
+
+
+def test_admin_user_reset_keeps_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    for _ in range(10):
+        response = client.post(
+            "/admin/users/user-1/reset-password",
+            headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
+        )
+        assert response.status_code == 200
+
+    blocked = client.post(
+        "/admin/users/user-1/reset-password",
+        headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
+    )
+
+    assert blocked.status_code == 429
 
 
 def test_admin_user_page_renders_in_english_after_admin_login(auth_app: Flask) -> None:
@@ -923,7 +1296,41 @@ def test_security_headers_allow_project_youtube_embed() -> None:
         response = client.get("/probe")
 
     assert response.status_code == 200
-    assert "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://datawrapper.dwcdn.net;" in response.headers["Content-Security-Policy"]
+    csp = response.headers["Content-Security-Policy"]
+    assert "script-src 'self';" in csp
+    assert "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;" in csp
+    assert "font-src 'self' https://fonts.gstatic.com;" in csp
+    assert "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net;" in csp
+    assert "object-src 'none';" in csp
+    assert "base-uri 'self';" in csp
+    assert "form-action 'self';" in csp
+    assert "cdnjs.cloudflare.com" not in csp
+    assert "cdn.jsdelivr.net" not in csp
+    assert "youtube-nocookie.com" not in csp
+
+
+def test_access_request_page_does_not_load_removed_icon_cdns(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/access-request")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "fonts.googleapis.com/css2?family=Inter" in html
+    assert "fonts.gstatic.com" in html
+    assert "css/md3/components/material-symbols-fallback.css" in html
+    assert "cdnjs.cloudflare.com/ajax/libs/font-awesome" not in html
+    assert "cdn.jsdelivr.net/npm/bootstrap-icons" not in html
+
+
+def test_legacy_auth_snackbar_icon_path_is_removed() -> None:
+    legacy_module = TEST_REPO_ROOT / "app" / "static" / "js" / "modules" / "auth" / "snackbar.js"
+    snackbar_css = TEST_REPO_ROOT / "app" / "static" / "css" / "md3" / "components" / "snackbar.css"
+
+    assert not legacy_module.exists()
+    css = snackbar_css.read_text(encoding="utf-8")
+    assert "md3-snackbar--auth-expired" not in css
+    assert "material-symbols-outlined" not in css
 
 
 def test_admin_users_static_js_uses_semantic_action_button_classes(auth_app: Flask) -> None:
@@ -936,6 +1343,8 @@ def test_admin_users_static_js_uses_semantic_action_button_classes(auth_app: Fla
     assert 'pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-toast__action' in js
     assert 'pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn' in js
     assert 'pm-action-button__label' in js
+    assert 'element.innerHTML ||' not in js
+    assert 'element.textContent ||' in js
 
 
 def test_last_admin_cannot_be_deactivated_or_demoted(auth_app: Flask) -> None:

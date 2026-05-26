@@ -24,6 +24,7 @@ from .runtime_paths import get_public_root
 logger = logging.getLogger(__name__)
 
 _TOPIC_MEDIA_TYPES = frozenset({"audio", "downloads", "images", "video"})
+_DATAWRAPPER_EMBED_HOST = "datawrapper.dwcdn.net"
 
 
 def _discover_default_teaching_content_root(module_path: Path | None = None) -> Path:
@@ -548,9 +549,32 @@ def _embed_height(value: Any, *, default: int = 540) -> int:
     return default
 
 
+def _normalize_datawrapper_src(value: Any) -> str | None:
+    raw_value = _as_text(value)
+    if not raw_value:
+        return None
+
+    parsed = urlparse(raw_value)
+    if parsed.scheme != "https":
+        return None
+    if parsed.hostname != _DATAWRAPPER_EMBED_HOST:
+        return None
+    if parsed.port is not None or parsed.username or parsed.password:
+        return None
+    if parsed.query or parsed.fragment or parsed.params:
+        return None
+
+    segments = [segment for segment in parsed.path.split("/") if segment]
+    if len(segments) < 2 or any(segment in {".", ".."} for segment in segments):
+        return None
+
+    normalized_path = "/" + "/".join(segments) + "/"
+    return f"https://{_DATAWRAPPER_EMBED_HOST}{normalized_path}"
+
+
 def _embed_payload(raw_block: dict[str, Any]) -> dict[str, Any] | None:
     provider = _as_text(raw_block.get("provider")).lower()
-    src = _as_text(raw_block.get("src"))
+    src = _normalize_datawrapper_src(raw_block.get("src"))
     if provider != "datawrapper" or not src:
         return None
     payload = _set_inline_markdown_fields({
@@ -995,13 +1019,23 @@ def _topic_blocks(
                     }
                 )
             elif _as_text(raw_block.get("provider")):
-                logger.warning(
-                    "Ignoring unsupported teaching embed provider '%s' in %s/%s/%s.",
-                    _as_text(raw_block.get("provider")),
-                    teaching_lang,
-                    ui_lang,
-                    topic_slug,
-                )
+                raw_provider = _as_text(raw_block.get("provider")).lower()
+                if raw_provider == "datawrapper" and _as_text(raw_block.get("src")):
+                    logger.warning(
+                        "Ignoring invalid teaching datawrapper src '%s' in %s/%s/%s.",
+                        _as_text(raw_block.get("src")),
+                        teaching_lang,
+                        ui_lang,
+                        topic_slug,
+                    )
+                else:
+                    logger.warning(
+                        "Ignoring unsupported teaching embed provider '%s' in %s/%s/%s.",
+                        _as_text(raw_block.get("provider")),
+                        teaching_lang,
+                        ui_lang,
+                        topic_slug,
+                    )
             continue
         if block_type in {"info_box", "tip_box", "warning_box"}:
             variant_map = {

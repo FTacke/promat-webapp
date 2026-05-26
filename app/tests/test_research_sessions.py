@@ -1032,7 +1032,7 @@ def test_speakers_page_card_shows_compact_stays_summary(runtime_env: Path, url_a
         page = build_speakers_page("de", "spanish", {})
 
     card = next(entry for entry in page["cards"] if entry["person_id"] == "ES-L-0008")
-    stays_row = next(row for row in card["meta_rows"] if row["label"] == "Aufenthalte")
+    stays_row = next(row for row in card["meta_rows"] if row["label"] == "Sprachaufenthalte")
     assert stays_row["value"] == "Ja · 3,5 Monate"
     assert card["table_stays"] == "Ja · 3,5 Monate"
 
@@ -1060,7 +1060,7 @@ def test_speakers_page_card_shows_none_without_exposure(runtime_env: Path, url_a
         page = build_speakers_page("de", "spanish", {})
 
     card = next(entry for entry in page["cards"] if entry["person_id"] == "ES-L-0009")
-    stays_row = next(row for row in card["meta_rows"] if row["label"] == "Aufenthalte")
+    stays_row = next(row for row in card["meta_rows"] if row["label"] == "Sprachaufenthalte")
     assert stays_row["value"] == "Keine"
 
 
@@ -2409,7 +2409,7 @@ def test_team_page_uses_structured_credits_cards_without_legacy_text(
     assert 'Ariane Wenz' in html
     assert 'Dr. Pedro Alonso' in html
     assert 'Ana Goás Pérez' in html
-    assert 'Marcela Gualotuña' in html
+    assert 'Aoife Holmes-Rein, M.A.' in html
     assert 'Aoife Holmes-Rein, M.A.' in html
     assert 'Sprachenzentrum' in html or 'Language Center' in html
     assert 'Dank' in html or 'Acknowledgements' in html
@@ -3446,9 +3446,8 @@ def test_player_page_preserves_renderable_text_tokens_in_existing_client_state(r
     assert first_item["item_id"] == "d_01"
     assert [token["token_id"] for token in first_item["tokens"]] == ["d_01_tok_01", "d_01_tok_02"]
     assert [segment["kind"] for segment in first_item["text_segments"]] == ["token", "text", "token", "text"]
-    speaker_item = page["player"]["client_state"]["speakers"][0]["items"][0]
-    assert speaker_item["itemId"] == "d_01"
-    assert [token["tokenId"] for token in speaker_item["tokens"]] == ["d_01_tok_01", "d_01_tok_02"]
+    assert page["player"]["client_state"]["syncFromDom"] is True
+    assert "items" not in page["player"]["client_state"]["speakers"][0]
 
 
 def test_player_route_renders_text_token_spans_when_alignment_tokens_exist(runtime_env: Path, url_app: Flask) -> None:
@@ -3705,8 +3704,8 @@ def test_player_route_renders_wordlist_runtime_and_profile_back_link(runtime_env
     assert 'data-player-root' in html
     assert f'/de/research/spanish/player/{session_id}/wordlist/audio.mp3' in html
     assert f'/de/research/spanish/player/{session_id}/wordlist/items/wl_001.mp3' in html
-    assert '>Zurück<' in html
     assert '>Profil<' in html
+    assert '>Zurück<' not in html
     assert 'Zurück zum Profil' not in html
     assert 'Aufnahmejahr' in html
     assert 'Explorator:in' not in html

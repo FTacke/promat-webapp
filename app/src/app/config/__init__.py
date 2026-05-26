@@ -29,6 +29,32 @@ def _default_database_url(env_name: str) -> str:
     return ""
 
 
+def _default_rate_limit_storage_uri(env_name: str) -> str:
+    if env_name in {"development", "dev", "testing", "test"}:
+        return "memory://"
+    return ""
+
+
+def _default_access_request_mail_enabled(env_name: str) -> bool:
+    return env_name not in {"development", "dev", "testing", "test"}
+
+
+def _parse_bool_env(name: str, default: bool) -> bool:
+    raw_value = _normalize_value(os.getenv(name))
+    if not raw_value:
+        return default
+    return raw_value.lower() in {"1", "true", "yes", "on"}
+
+
+def _resolve_rate_limit_storage_uri(env_name: str) -> str:
+    configured = _normalize_value(
+        os.getenv("RATE_LIMIT_STORAGE_URI") or os.getenv("RATELIMIT_STORAGE_URI")
+    )
+    if configured:
+        return configured
+    return _default_rate_limit_storage_uri(env_name)
+
+
 class BaseConfig:
     PROJECT_ROOT = Path(__file__).resolve().parents[3]
     APP_ENV = _normalize_value(os.getenv("APP_ENV") or os.getenv("FLASK_ENV") or "production").lower()
@@ -60,6 +86,30 @@ class BaseConfig:
     AUTH_ACCESS_REQUEST_EMAIL = _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_EMAIL") or "")
     AUTH_ACCESS_REQUEST_SUBJECT = _normalize_value(
         os.getenv("AUTH_ACCESS_REQUEST_SUBJECT") or 'Zugangsanfrage "Pronunciation Matters"'
+    )
+    AUTH_ACCESS_REQUEST_MAIL_ENABLED = _parse_bool_env(
+        "AUTH_ACCESS_REQUEST_MAIL_ENABLED",
+        _default_access_request_mail_enabled(APP_ENV),
+    )
+    AUTH_ACCESS_REQUEST_FROM_EMAIL = _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_FROM_EMAIL") or "")
+    AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED = _parse_bool_env(
+        "AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED",
+        True,
+    )
+    AUTH_ACCESS_REQUEST_SMTP_HOST = _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_SMTP_HOST") or "")
+    AUTH_ACCESS_REQUEST_SMTP_PORT = int(_normalize_value(os.getenv("AUTH_ACCESS_REQUEST_SMTP_PORT") or "587"))
+    AUTH_ACCESS_REQUEST_SMTP_USERNAME = _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_SMTP_USERNAME") or "")
+    AUTH_ACCESS_REQUEST_SMTP_PASSWORD = _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_SMTP_PASSWORD") or "")
+    AUTH_ACCESS_REQUEST_SMTP_USE_TLS = _parse_bool_env("AUTH_ACCESS_REQUEST_SMTP_USE_TLS", True)
+    AUTH_ACCESS_REQUEST_SMTP_USE_SSL = _parse_bool_env("AUTH_ACCESS_REQUEST_SMTP_USE_SSL", False)
+    AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS = int(
+        _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS") or "10")
+    )
+    AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS = int(
+        _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS") or "43200")
+    )
+    AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS = float(
+        _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS") or "0.5")
     )
     RESEARCH_SET_DRAFT_TTL_DAYS = int(_normalize_value(os.getenv("RESEARCH_SET_DRAFT_TTL_DAYS") or "14"))
 
@@ -113,7 +163,18 @@ def load_config(app, env_name: str | None = None) -> None:
     app.config.from_object(config_class)
     app.config["FLASK_ENV"] = resolved_env
 
+    rate_limit_storage_uri = _resolve_rate_limit_storage_uri(resolved_env)
+    app.config["RATE_LIMIT_STORAGE_URI"] = rate_limit_storage_uri
+    app.config["RATELIMIT_STORAGE_URI"] = rate_limit_storage_uri
+
     if not app.config.get("AUTH_DATABASE_URL"):
         raise RuntimeError("AUTH_DATABASE_URL is required for PROMAT.")
     if app.config.get("SECRET_KEY") == DEFAULT_SECRET_SENTINEL and resolved_env not in {"development", "dev", "testing", "test"}:
         raise RuntimeError("FLASK_SECRET_KEY must be configured for non-development environments.")
+    if resolved_env not in {"development", "dev", "testing", "test"}:
+        if not rate_limit_storage_uri:
+            raise RuntimeError("RATE_LIMIT_STORAGE_URI must be configured for non-development environments.")
+        if rate_limit_storage_uri.lower() == "memory://":
+            raise RuntimeError("RATE_LIMIT_STORAGE_URI must not use memory:// for non-development environments.")
+    if app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_TLS") and app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_SSL"):
+        raise RuntimeError("AUTH_ACCESS_REQUEST_SMTP_USE_TLS and AUTH_ACCESS_REQUEST_SMTP_USE_SSL are mutually exclusive.")

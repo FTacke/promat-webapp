@@ -5273,7 +5273,10 @@ body[data-page="login"] .pm-auth-secondary--card {
 .pm-embed-block__frame--datawrapper {
   position: static;
   display: block;
+  width: 0;
+  min-width: 100% !important;
   min-height: 0;
+  border: 0;
   background: transparent;
   opacity: 1;
   filter: none;

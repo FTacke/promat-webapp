@@ -1,4 +1,9 @@
 const DATAWRAPPER_FLAG = "__promatDatawrapperResizeInit";
+const DATAWRAPPER_ORIGIN = "https://datawrapper.dwcdn.net";
+
+export function isAllowedDatawrapperOrigin(origin) {
+  return origin === DATAWRAPPER_ORIGIN;
+}
 
 function isDatawrapperPayload(value) {
   return Boolean(value) && typeof value === "object" && typeof value["datawrapper-height"] === "object";
@@ -25,6 +30,9 @@ function updateMatchingIframe(sourceWindow, heights) {
 }
 
 function handleDatawrapperMessage(event) {
+  if (!isAllowedDatawrapperOrigin(event.origin)) {
+    return;
+  }
   if (!isDatawrapperPayload(event.data)) {
     return;
   }

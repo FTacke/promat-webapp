@@ -2,7 +2,11 @@
 
 PROMAT verarbeitet potenziell geschützte Forschungsdaten und personenbezogene Metadaten. Schwachstellen bitte nicht öffentlich über GitHub Issues oder Pull Requests melden.
 
-Security contact: TODO before public deployment
+## Pre-Publication Status
+
+This repository is not configured as a public vulnerability intake channel yet. Until a concrete public security contact is named, vulnerability reports must use the private maintainer or operator channel already used for deployment coordination.
+
+Do not enable required public security reporting, public issue triage for vulnerabilities, or required CODEOWNERS security review enforcement from this file alone before that contact path is explicitly configured.
 
 ## Supported Versions
 

@@ -34,7 +34,6 @@ export class NavigationDrawer {
     this.previousBodyOverflow = "";
 
     if (!this.modalDrawer || !this.standardDrawer) {
-      console.error("Navigation drawers not found");
       return;
     }
 

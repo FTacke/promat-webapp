@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return {};
     }
     try {
-      const raw = (element.content && element.content.textContent) || element.innerHTML || '{}';
+      const raw = (element.content && element.content.textContent) || element.textContent || '{}';
       return JSON.parse(raw);
     } catch (error) {
       console.error('Failed to parse admin users config.', error);

@@ -611,7 +611,7 @@ def _speaker_result_meta_rows(person: PersonRecord, selected_session: SessionRec
         },
         {"label": "L1", "value": person.l1 or "-"},
         {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang)},
-        {"label": _t(ui_lang, "research.speakers.table.stays"), "value": _compact_session_stay_summary(selected_session, ui_lang)},
+        {"label": _target_country_stay_label(ui_lang), "value": _compact_session_stay_summary(selected_session, ui_lang)},
     ]
 
 
@@ -2205,7 +2205,7 @@ def _build_player_summary_rows(session: SessionRecord, ui_lang: str) -> list[dic
         {"label": "Person-ID", "value": session.person_id},
         {"label": _recording_date_label(ui_lang), "value": _format_recording_date(session)},
         {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, session.gender or "unknown", ui_lang)},
-        {"label": _t(ui_lang, "research.speakers.table.stays"), "value": exposure_value},
+        {"label": _target_country_stay_label(ui_lang), "value": exposure_value},
         {"label": _recorded_by_label(ui_lang), "value": session.recorded_by or "-"},
     ]
 

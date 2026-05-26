@@ -40,6 +40,13 @@ blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 RETURN_URL_SESSION_KEY = "_return_url_after_login"
 
 
+def _recipient_domain(recipient: str) -> str:
+    value = (recipient or "").strip()
+    if "@" not in value:
+        return "unknown"
+    return value.rsplit("@", 1)[-1].lower() or "unknown"
+
+
 def save_return_url(url: str | None = None) -> None:
     """Remember a target URL for the next successful login."""
     current_url = url or request.url
@@ -208,11 +215,11 @@ def _log_prepared_auth_message(
     *, recipient: str, subject: str, body: str, purpose: str
 ) -> None:
     current_app.logger.info(
-        "Prepared %s message for %s | subject=%s | body=%s",
+        "Prepared %s message metadata | recipient_domain=%s | subject_length=%s | body_length=%s",
         purpose,
-        recipient,
-        subject,
-        body.replace("\n", " | "),
+        _recipient_domain(recipient),
+        len(subject or ""),
+        len(body or ""),
     )
 
 

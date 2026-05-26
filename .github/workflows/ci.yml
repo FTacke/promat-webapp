@@ -66,5 +66,7 @@ jobs:
       - name: Pytest regression suite
         run: |
           python -m pytest tests/test_auth_phase1.py -q
+          python -m pytest tests/test_runtime_config.py -q
           python -m pytest tests/test_research_sessions.py -q
           python -m pytest tests/test_research_phenomena.py -q
+          python -m pytest tests -q -k "security_headers or csp or access_request or runtime_config or governance"

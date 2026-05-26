@@ -14,7 +14,6 @@ jwt = JWTManager()
 limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["1000 per day", "200 per hour"],
-    storage_uri="memory://",
     strategy="fixed-window",
 )
 cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})

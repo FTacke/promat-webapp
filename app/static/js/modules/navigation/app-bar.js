@@ -298,7 +298,6 @@ export class TopAppBar {
     this.appBar = document.querySelector('[data-element="top-app-bar"]');
 
     if (!this.appBar) {
-      console.warn("[TopAppBar] App Bar not found");
       return;
     }
 

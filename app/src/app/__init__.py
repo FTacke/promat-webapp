@@ -396,13 +396,16 @@ def register_security_headers(app: Flask) -> None:
 
         csp = (
             "default-src 'self'; "
-            "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "img-src 'self' data: https: blob:; "
-            "font-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
             "connect-src 'self'; "
-            "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://datawrapper.dwcdn.net; "
-            "frame-ancestors 'none';"
+            "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net; "
+            "frame-ancestors 'none'; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self';"
         )
         response.headers["Content-Security-Policy"] = csp
 

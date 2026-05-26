@@ -463,11 +463,13 @@ def create_access_request(
     )
     with get_session() as session:
         session.add(access_request)
+
+    email_domain = normalize_email(access_request.email).partition("@")[2] or "unknown"
     current_app.logger.info(
-        "Recorded access request %s for %s (%s)",
+        "Recorded access request | request_id=%s | status=%s | email_domain=%s",
         access_request.id,
-        access_request.email,
-        access_request.institution,
+        access_request.status,
+        email_domain,
     )
     return access_request
 

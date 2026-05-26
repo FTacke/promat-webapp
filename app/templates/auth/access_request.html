@@ -157,8 +157,13 @@
         <p id="access-request-confirmation-error" class="pm-auth-field__error">{{ access_request_errors.consent_confirmed }}</p>
       {% endif %}
 
+      <div hidden aria-hidden="true">
+        <label for="access-request-website">Website</label>
+        <input id="access-request-website" name="website" type="text" tabindex="-1" autocomplete="off">
+      </div>
       <input type="hidden" name="next" value="{{ next }}">
       <input type="hidden" name="ui_lang" value="{{ auth_ui_lang }}">
+      <input type="hidden" name="access_request_form_token" value="{{ access_request_form_token }}">
 
       <div class="pm-auth-actions pm-access-request-page__actions">
         <button type="submit" class="pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit" data-access-request-submit data-pending-label="{{ t('auth.access_request.submit_pending') }}">

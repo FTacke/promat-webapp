@@ -533,7 +533,7 @@ def test_build_teaching_topic_page_handles_datawrapper_embeds_and_skips_invalid_
     )
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
-        "title: Thema eins\nblocks:\n  - type: embed\n    title: Karte\n    provider: datawrapper\n    src: https://datawrapper.dwcdn.net/Uza2n/1/\n    height: 831\n    caption: Kartenbild\n  - type: embed\n    title: Ohne Quelle\n    provider: datawrapper\n  - type: embed\n    title: Unbekannt\n    provider: generic\n    src: https://example.test/embed\n  - type: text\n    body: Wer `caza` wie `casa` ausspricht, sieht keine rohen <script>-Tags aus YAML.\n",
+        "title: Thema eins\nblocks:\n  - type: embed\n    title: Karte\n    provider: datawrapper\n    src: https://datawrapper.dwcdn.net/Uza2n/1/\n    height: 831\n    caption: Kartenbild\n  - type: embed\n    title: Ohne Quelle\n    provider: datawrapper\n  - type: embed\n    title: Boese Quelle\n    provider: datawrapper\n    src: https://evil.example/embed\n  - type: embed\n    title: Unsicheres Schema\n    provider: datawrapper\n    src: http://datawrapper.dwcdn.net/Uza2n/1/\n  - type: embed\n    title: Unbekannt\n    provider: generic\n    src: https://example.test/embed\n  - type: text\n    body: Wer `caza` wie `casa` ausspricht, sieht keine rohen <script>-Tags aus YAML.\n",
     )
 
     with teaching_app.test_request_context():
@@ -546,6 +546,8 @@ def test_build_teaching_topic_page_handles_datawrapper_embeds_and_skips_invalid_
     assert embed_block["src"] == "https://datawrapper.dwcdn.net/Uza2n/1/"
     assert embed_block["height"] == 831
     assert embed_block["caption"] == "Kartenbild"
+    assert "Ignoring invalid teaching datawrapper src 'https://evil.example/embed'" in caplog.text
+    assert "Ignoring invalid teaching datawrapper src 'http://datawrapper.dwcdn.net/Uza2n/1/'" in caplog.text
     assert "unsupported teaching embed provider 'generic'" in caplog.text
     assert "<script>" not in page["blocks"][1]["body_html_blocks"][0]
 
@@ -570,6 +572,22 @@ def test_build_teaching_topic_page_applies_default_embed_height(teaching_app: Fl
     assert page is not None
     assert page["blocks"][0]["type"] == "embed"
     assert page["blocks"][0]["height"] == 540
+
+
+@pytest.mark.parametrize(
+    ("src", "expected"),
+    [
+        ("https://datawrapper.dwcdn.net/Uza2n/1/", "https://datawrapper.dwcdn.net/Uza2n/1/"),
+        ("https://datawrapper.dwcdn.net/Uza2n/1", "https://datawrapper.dwcdn.net/Uza2n/1/"),
+        ("http://datawrapper.dwcdn.net/Uza2n/1/", None),
+        ("https://evil.example/Uza2n/1/", None),
+        ("javascript:alert(1)", None),
+        ("data:text/html,boom", None),
+        ("//datawrapper.dwcdn.net/Uza2n/1/", None),
+    ],
+)
+def test_normalize_datawrapper_src_accepts_only_allowed_origin(src: str, expected: str | None) -> None:
+    assert teaching_content._normalize_datawrapper_src(src) == expected
 
 
 def test_build_teaching_topic_page_keeps_only_valid_further_reading_links(teaching_app: Flask, tmp_path: Path) -> None:

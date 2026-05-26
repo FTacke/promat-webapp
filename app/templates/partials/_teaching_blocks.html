@@ -253,12 +253,12 @@
             class="pm-embed-block__frame pm-embed-block__frame--datawrapper"
             title="{{ block.title_plain or block.title or 'Datawrapper embed' }}"
             src="{{ block.src }}"
+            height="{{ block.height }}"
             scrolling="no"
             frameborder="0"
             data-external="1"
             data-provider="datawrapper"
             loading="lazy"
-            style="width: 0; min-width: 100% !important; border: none; height: {{ block.height }}px;"
           ></iframe>
         </div>
         {% if block.caption %}

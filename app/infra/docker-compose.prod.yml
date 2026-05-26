@@ -16,6 +16,20 @@ services:
       start_period: 10s
     restart: always
 
+  rate_limit:
+    image: redis:7-alpine
+    container_name: promat-rate-limit-prod
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - promat_redis_prod:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: always
+
   web:
     build:
       context: ../..
@@ -23,6 +37,8 @@ services:
     container_name: promat-web-prod
     depends_on:
       db:
+        condition: service_healthy
+      rate_limit:
         condition: service_healthy
     ports:
       - "127.0.0.1:6000:5000"
@@ -32,6 +48,21 @@ services:
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?FLASK_SECRET_KEY is required}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
       AUTH_DATABASE_URL: postgresql+psycopg2://promat_app:${POSTGRES_PASSWORD}@db:5432/promat_auth
+      RATE_LIMIT_STORAGE_URI: ${RATE_LIMIT_STORAGE_URI:?RATE_LIMIT_STORAGE_URI is required}
+      AUTH_ACCESS_REQUEST_MAIL_ENABLED: ${AUTH_ACCESS_REQUEST_MAIL_ENABLED:-true}
+      AUTH_ACCESS_REQUEST_EMAIL: ${AUTH_ACCESS_REQUEST_EMAIL:?AUTH_ACCESS_REQUEST_EMAIL is required}
+      AUTH_ACCESS_REQUEST_SUBJECT: ${AUTH_ACCESS_REQUEST_SUBJECT:-Zugangsanfrage "Pronunciation Matters"}
+      AUTH_ACCESS_REQUEST_FROM_EMAIL: ${AUTH_ACCESS_REQUEST_FROM_EMAIL:?AUTH_ACCESS_REQUEST_FROM_EMAIL is required}
+      AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED: ${AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED:-true}
+      AUTH_ACCESS_REQUEST_SMTP_HOST: ${AUTH_ACCESS_REQUEST_SMTP_HOST:?AUTH_ACCESS_REQUEST_SMTP_HOST is required}
+      AUTH_ACCESS_REQUEST_SMTP_PORT: ${AUTH_ACCESS_REQUEST_SMTP_PORT:-587}
+      AUTH_ACCESS_REQUEST_SMTP_USERNAME: ${AUTH_ACCESS_REQUEST_SMTP_USERNAME:-}
+      AUTH_ACCESS_REQUEST_SMTP_PASSWORD: ${AUTH_ACCESS_REQUEST_SMTP_PASSWORD:-}
+      AUTH_ACCESS_REQUEST_SMTP_USE_TLS: ${AUTH_ACCESS_REQUEST_SMTP_USE_TLS:-true}
+      AUTH_ACCESS_REQUEST_SMTP_USE_SSL: ${AUTH_ACCESS_REQUEST_SMTP_USE_SSL:-false}
+      AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS: ${AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS:-10}
+      AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS: ${AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS:-43200}
+      AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS: ${AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS:-0.5}
       PROMAT_RUNTIME_ROOT: ${PROMAT_RUNTIME_ROOT:-/app}
       PROMAT_PUBLIC_ROOT: ${PROMAT_PUBLIC_ROOT:-/app/public}
       PROMAT_TEACHING_CONTENT_ROOT: ${PROMAT_TEACHING_CONTENT_ROOT:-/app/content/teaching}
@@ -39,12 +70,14 @@ services:
       APP_RELEASE_TAG: ${APP_RELEASE_TAG:-}
       APP_RELEASE_URL: ${APP_RELEASE_URL:-}
       AUTH_HASH_ALGO: argon2
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
     volumes:
       - /srv/webapps/promat/data:/app/data
       - /srv/webapps/promat/public:/app/public
       - /srv/webapps/promat/logs:/app/logs
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5).getcode() == 200 else 1)"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -54,3 +87,5 @@ services:
 volumes:
   promat_postgres_prod:
     name: promat_postgres_prod
+  promat_redis_prod:
+    name: promat_redis_prod

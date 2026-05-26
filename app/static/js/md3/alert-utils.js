@@ -54,7 +54,7 @@ export function createAlertHTML(type, title, message, inline = true) {
     <div class="md3-alert md3-alert--${type} ${inlineClass}" role="alert" aria-live="assertive">
       <span class="material-symbols-rounded md3-alert__icon" aria-hidden="true">${icon}</span>
       <div class="md3-alert__content">
-        <p class="md3-alert__title">${displayTitle}</p>
+        <p class="md3-alert__title">${escapeHTML(displayTitle)}</p>
         <p class="md3-alert__text">${escapeHTML(message)}</p>
       </div>
     </div>
@@ -138,10 +138,13 @@ export function clearAlert(container) {
  * @param {string} str - The string to escape
  * @returns {string} The escaped string
  */
-function escapeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+export function escapeHTML(str) {
+  return String(str ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 // Also expose as window global for non-module scripts

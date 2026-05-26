@@ -16,6 +16,7 @@ python-dotenv
 PyYAML
 requests
 gunicorn
+redis
 psycopg2-binary
 argon2-cffi
 openpyxl

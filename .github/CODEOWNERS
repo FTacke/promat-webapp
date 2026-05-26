@@ -1,6 +1,8 @@
 # PROMAT code ownership scaffold
-# Replace the TODO owner markers below with concrete GitHub handles or team slugs
-# before enabling required CODEOWNERS review enforcement.
+# No concrete GitHub handles or team slugs are configured yet.
+# This file is documentation-only and must not be used for required
+# CODEOWNERS review enforcement until real owners are added as active,
+# uncommented patterns.
 #
 # Suggested ownership map:
 # * @org/promat-maintainers

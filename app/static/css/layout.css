@@ -3,6 +3,12 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+  background: var(--app-background, Canvas);
+  color: var(--md-sys-color-on-background, CanvasText);
+  color-scheme: light dark;
+  transition: none !important;
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 * {
@@ -67,6 +73,21 @@ body.app-shell--inner {
 body.app-shell.login-open,
 body.overflow-hidden {
   overflow: hidden;
+}
+
+body[data-hydrating] :focus,
+body[data-hydrating] :focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator {
+  display: block;
 }
 
 main.site-main:focus,

@@ -13,11 +13,19 @@ from ..auth import Role
 from ..auth import services as auth_services
 from ..auth.decorators import require_role
 from ..branding import BRANDING
+from ..extensions import limiter
 from ..i18n import resolve_ui_language, translate
 from ..protected_navigation import build_admin_panel, build_protected_content_header
 from .public_content import get_language, get_language_label
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+def _recipient_domain(recipient: str) -> str:
+    value = (recipient or "").strip()
+    if "@" not in value:
+        return "unknown"
+    return value.rsplit("@", 1)[-1].lower() or "unknown"
 
 
 def _resolve_admin_ui_lang() -> str:
@@ -116,11 +124,12 @@ def _mail_preview_payload(
         admin_note=admin_note,
     )
     current_app.logger.info(
-        "Prepared admin %s message for %s | subject=%s | body=%s",
+        "Prepared admin %s message metadata | user_id=%s | recipient_domain=%s | subject_length=%s | body_length=%s",
         purpose,
-        preview["recipient"],
-        preview["subject"],
-        preview["body"].replace("\n", " | "),
+        getattr(user, "id", "unknown"),
+        _recipient_domain(preview["recipient"]),
+        len(preview["subject"] or ""),
+        len(preview["body"] or ""),
     )
     return {
         "inviteLink": preview["reset_link"],
@@ -211,6 +220,7 @@ def users_list():
 @blueprint.post("/users")
 @jwt_required()
 @require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
 def users_create():
     ui_lang = _resolve_admin_ui_lang()
     payload = request.get_json(silent=True) or {}
@@ -260,6 +270,7 @@ def users_detail(user_id: str):
 @blueprint.patch("/users/<user_id>")
 @jwt_required()
 @require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
 def users_update(user_id: str):
     ui_lang = _resolve_admin_ui_lang()
     payload = request.get_json(silent=True) or {}
@@ -293,6 +304,7 @@ def users_update(user_id: str):
 @blueprint.post("/users/<user_id>/reset-password")
 @jwt_required()
 @require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
 def users_reset_password(user_id: str):
     ui_lang = _resolve_admin_ui_lang()
     user = auth_services.get_user_by_id(user_id)
