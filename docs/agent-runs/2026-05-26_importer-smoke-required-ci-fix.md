@@ -33,6 +33,8 @@ Einsehbare Run-Summaries:
 | `26460490934` | `b9cc303` | `python-smokes` | Node-ID-basierter Importer-Smoke wiederhergestellt | Failure, Exitcode `4` |
 | `26460904158` | `9e02f8b` | `python-smokes` | Full-File-Importer-Smoke | Failure, Exitcode `2` |
 | `26461218435` | `b95a9c1` | `python-smokes` | Dediziertes Pytest-Smoke-File | Failure, Exitcode `2` |
+| `26461584202` | `2c86b40` | `python-smokes` | Skriptbasierter Importer-Smoke mit relativem Pfad | Failure, Exitcode `1` |
+| `26461679635` | `ded5aca` | `python-smokes` | Skriptbasierter Importer-Smoke mit Failure-Annotation | Failure, Exitcode `1` |
 
 Git-History-Befund der alten Importer-Smoke-Varianten:
 
@@ -82,7 +84,7 @@ Neu in `.github/workflows/ci.yml`:
 ```yaml
 - name: Importer smoke tests
   run: |
-    python scripts/ci_importer_smoke.py
+    python "${{ github.workspace }}/scripts/ci_importer_smoke.py"
 ```
 
 Warum ein kleines CI-Skript:
@@ -172,8 +174,10 @@ Status nach erstem Push:
 - Commit `b9cc303` / Run `26460490934` / `CI #94` scheiterte erneut im Step `Importer smoke tests` mit Exitcode `4`.
 - Commit `9e02f8b` / Run `26460904158` / `CI #95` scheiterte erneut im Step `Importer smoke tests`, diesmal mit Exitcode `2`.
 - Commit `b95a9c1` / Run `26461218435` / `CI #96` scheiterte mit dediziertem Pytest-Smoke-File erneut mit Exitcode `2`.
+- Commit `2c86b40` / Run `26461584202` / `CI #98` scheiterte mit skriptbasiertem Smoke und relativem Pfad mit Exitcode `1`.
+- Commit `ded5aca` / Run `26461679635` / `CI #99` scheiterte weiter mit Exitcode `1`; die zusätzlich eingebaute Failure-Annotation erschien nicht in der öffentlichen Summary, was auf einen Start-/Pfadfehler vor der Skriptausführung hindeutet.
 - Vollständige Logs waren ohne Sign-in nicht abrufbar; die öffentliche Summary benennt aber den Step eindeutig.
-- Der Workflow wurde danach auf `scripts/ci_importer_smoke.py` umgestellt und wird erneut gepusht.
+- Der Workflow wurde danach auf einen absoluten `${{ github.workspace }}`-Pfad gehärtet und wird erneut gepusht.
 
 ## 8. Bestätigungen
 
