@@ -1,0 +1,88 @@
+name: Full Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/full-test.yml"
+      - ".github/workflows/ci.yml"
+      - "app/tests/test_research_sessions.py"
+      - "app/tests/test_research_production_importer.py"
+      - "scripts/research_data_intake/**"
+      - "content/**"
+      - "data/**"
+
+permissions:
+  contents: read
+
+env:
+  APP_ENV: testing
+  FLASK_ENV: testing
+  FLASK_SECRET_KEY: test-secret
+  JWT_SECRET_KEY: test-secret
+  AUTH_DATABASE_URL: sqlite:////tmp/promat/test-full.sqlite3
+  PROMAT_RUNTIME_ROOT: /tmp/promat
+  PROMAT_PUBLIC_ROOT: /tmp/promat/public
+  POSTGRES_PASSWORD: test-postgres-password
+  RATE_LIMIT_STORAGE_URI: redis://rate_limit:6379/0
+  AUTH_ACCESS_REQUEST_EMAIL: ci-access@example.test
+  AUTH_ACCESS_REQUEST_FROM_EMAIL: ci-noreply@example.test
+  AUTH_ACCESS_REQUEST_SMTP_HOST: smtp.example.test
+
+jobs:
+  full-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            app/requirements.txt
+            app/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt -r app/requirements-dev.txt
+
+      - name: Prepare runtime layout
+        run: |
+          mkdir -p /tmp/promat/data/config
+          mkdir -p /tmp/promat/data/db/postgres_dev
+          mkdir -p /tmp/promat/data/sessions
+          mkdir -p /tmp/promat/public
+          mkdir -p /tmp/promat/logs
+
+      - name: Ruff check
+        run: |
+          python -m ruff check .
+
+      - name: Python compile check
+        run: |
+          python -m compileall app
+
+      - name: Governance regression checks
+        run: |
+          python scripts/ci_governance_checks.py
+
+      - name: Full pytest suite
+        working-directory: app
+        run: |
+          python -m pytest tests -q
+
+      - name: JavaScript tests
+        run: |
+          node --test app/tests/js/*.test.mjs
+
+      - name: Production compose config
+        run: |
+          docker compose -f app/infra/docker-compose.prod.yml config > /tmp/promat/full-compose-config.txt

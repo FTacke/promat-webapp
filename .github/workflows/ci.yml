@@ -2,29 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+env:
+  APP_ENV: testing
+  FLASK_ENV: testing
+  FLASK_SECRET_KEY: test-secret
+  JWT_SECRET_KEY: test-secret
+  AUTH_DATABASE_URL: sqlite:////tmp/promat/test-ci.sqlite3
+  PROMAT_RUNTIME_ROOT: /tmp/promat
+  PROMAT_PUBLIC_ROOT: /tmp/promat/public
+  POSTGRES_PASSWORD: test-postgres-password
+  RATE_LIMIT_STORAGE_URI: redis://rate_limit:6379/0
+  AUTH_ACCESS_REQUEST_EMAIL: ci-access@example.test
+  AUTH_ACCESS_REQUEST_FROM_EMAIL: ci-noreply@example.test
+  AUTH_ACCESS_REQUEST_SMTP_HOST: smtp.example.test
+
 jobs:
-  basic-checks:
+  quality-and-config:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: app
-    env:
-      APP_ENV: testing
-      FLASK_ENV: testing
-      FLASK_SECRET_KEY: test-secret
-      JWT_SECRET_KEY: test-secret
-      AUTH_DATABASE_URL: sqlite:////tmp/promat/test-ci.sqlite3
-      PROMAT_RUNTIME_ROOT: /tmp/promat
-      PROMAT_PUBLIC_ROOT: /tmp/promat/public
 
     steps:
       - uses: actions/checkout@v6
@@ -32,8 +35,8 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: pip
           cache-dependency-path: |
             app/requirements.txt
             app/requirements-dev.txt
@@ -41,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -r app/requirements.txt -r app/requirements-dev.txt
 
       - name: Prepare runtime layout
         run: |
@@ -53,20 +56,92 @@ jobs:
 
       - name: Ruff check
         run: |
-          ruff check src/app
+          python -m ruff check .
 
       - name: Python compile check
         run: |
-          python -m compileall src/app
+          python -m compileall app
 
       - name: Governance regression checks
         run: |
-          python ../scripts/ci_governance_checks.py
+          python scripts/ci_governance_checks.py
 
-      - name: Pytest regression suite
+      - name: Production compose config
         run: |
-          python -m pytest tests/test_auth_phase1.py -q
+          docker compose -f app/infra/docker-compose.prod.yml config > /tmp/promat/compose-config.txt
+
+  python-smokes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: quality-and-config
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            app/requirements.txt
+            app/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt -r app/requirements-dev.txt
+
+      - name: Prepare runtime layout
+        run: |
+          mkdir -p /tmp/promat/data/config
+          mkdir -p /tmp/promat/data/db/postgres_dev
+          mkdir -p /tmp/promat/data/sessions
+          mkdir -p /tmp/promat/public
+          mkdir -p /tmp/promat/logs
+
+      - name: Runtime and auth smoke tests
+        working-directory: app
+        run: |
           python -m pytest tests/test_runtime_config.py -q
-          python -m pytest tests/test_research_sessions.py -q
-          python -m pytest tests/test_research_phenomena.py -q
-          python -m pytest tests -q -k "security_headers or csp or access_request or runtime_config or governance"
+          python -m pytest \
+            tests/test_auth_phase1.py::test_access_request_submit_persists_request_and_shows_success \
+            tests/test_auth_phase1.py::test_access_request_submit_keeps_rate_limit \
+            tests/test_auth_phase1.py::test_protected_html_route_without_auth_redirects_to_login \
+            tests/test_auth_phase1.py::test_protected_api_route_without_auth_returns_json_401 \
+            tests/test_auth_phase1.py::test_security_headers_allow_project_youtube_embed \
+            -q
+
+      - name: Research and teaching smoke tests
+        working-directory: app
+        run: |
+          python -m pytest \
+            tests/test_research_sessions.py::test_research_design_page_stays_public \
+            tests/test_research_sessions.py::test_research_detail_routes_require_auth_before_lookup \
+            tests/test_research_sessions.py::test_authenticated_research_workbench_pages_render_after_access_gate \
+            tests/test_research_sessions.py::test_research_player_prewarm_request_warms_route_without_rendering_body \
+            tests/test_research_sessions.py::test_teaching_topic_media_route_serves_released_media \
+            tests/test_research_sessions.py::test_teaching_topic_media_route_blocks_parent_traversal \
+            tests/test_research_sessions.py::test_teaching_missing_topic_redirects_cleanly_to_hub \
+            -q
+
+      - name: Importer smoke tests
+        working-directory: app
+        run: |
+          python -m pytest \
+            tests/test_research_production_importer.py::test_load_intake_workbook_derives_session_id_and_ignores_out_of_scope_rows \
+            tests/test_research_production_importer.py::test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode \
+            tests/test_research_production_importer.py::test_run_text_pipeline_dry_run_does_not_require_written_manifest \
+            -q
+
+  js-smokes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality-and-config
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: JavaScript smoke tests
+        run: |
+          node --test app/tests/js/*.test.mjs

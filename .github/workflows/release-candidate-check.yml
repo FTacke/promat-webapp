@@ -1,0 +1,105 @@
+name: Release Candidate Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_responsive_smoke:
+        description: "Run responsive smoke against a provided base URL when QA credentials are available"
+        required: false
+        default: false
+        type: boolean
+      responsive_smoke_base_url:
+        description: "Base URL for optional responsive smoke (for example https://qa.example.org)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  APP_ENV: testing
+  FLASK_ENV: testing
+  FLASK_SECRET_KEY: test-secret
+  JWT_SECRET_KEY: test-secret
+  AUTH_DATABASE_URL: sqlite:////tmp/promat/test-rc.sqlite3
+  PROMAT_RUNTIME_ROOT: /tmp/promat
+  PROMAT_PUBLIC_ROOT: /tmp/promat/public
+  POSTGRES_PASSWORD: test-postgres-password
+  RATE_LIMIT_STORAGE_URI: redis://rate_limit:6379/0
+  AUTH_ACCESS_REQUEST_EMAIL: ci-access@example.test
+  AUTH_ACCESS_REQUEST_FROM_EMAIL: ci-noreply@example.test
+  AUTH_ACCESS_REQUEST_SMTP_HOST: smtp.example.test
+
+jobs:
+  release-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            app/requirements.txt
+            app/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt -r app/requirements-dev.txt
+
+      - name: Prepare runtime layout
+        run: |
+          mkdir -p /tmp/promat/data/config
+          mkdir -p /tmp/promat/data/db/postgres_dev
+          mkdir -p /tmp/promat/data/sessions
+          mkdir -p /tmp/promat/public
+          mkdir -p /tmp/promat/logs
+
+      - name: Ruff check
+        run: |
+          python -m ruff check .
+
+      - name: Python compile check
+        run: |
+          python -m compileall app
+
+      - name: Governance regression checks
+        run: |
+          python scripts/ci_governance_checks.py
+
+      - name: Full pytest suite
+        working-directory: app
+        run: |
+          python -m pytest tests -q
+
+      - name: JavaScript tests
+        run: |
+          node --test app/tests/js/*.test.mjs
+
+      - name: Production compose config
+        run: |
+          docker compose -f app/infra/docker-compose.prod.yml config > /tmp/promat/rc-compose-config.txt
+
+      - name: Docker build
+        run: |
+          docker build -f app/Dockerfile -t promat-release-candidate-check .
+
+      - name: Install Playwright for optional responsive smoke
+        if: ${{ inputs.run_responsive_smoke && inputs.responsive_smoke_base_url != '' && secrets.PROMAT_QA_EMAIL != '' && secrets.PROMAT_QA_PASSWORD != '' }}
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Optional responsive smoke
+        if: ${{ inputs.run_responsive_smoke && inputs.responsive_smoke_base_url != '' && secrets.PROMAT_QA_EMAIL != '' && secrets.PROMAT_QA_PASSWORD != '' }}
+        env:
+          PROMAT_QA_EMAIL: ${{ secrets.PROMAT_QA_EMAIL }}
+          PROMAT_QA_PASSWORD: ${{ secrets.PROMAT_QA_PASSWORD }}
+        run: |
+          python scripts/qa/responsive_smoke.py --run-id github-release-candidate --base-url "${{ inputs.responsive_smoke_base_url }}"
