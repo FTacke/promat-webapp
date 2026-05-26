@@ -322,6 +322,16 @@ def _run_text_pipeline(
     text_catalog_path = _text_task_catalog_path(target_language)
     if not text_catalog_path.exists():
         raise ProductionImportError(f"Missing text task catalog for MFA prep: {text_catalog_path}")
+    source_wav = batch_dir / "working" / person_id / "text" / "source" / "text.wav"
+    source_textgrid = batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid"
+    if not source_wav.exists() or source_wav.stat().st_size == 0 or not source_textgrid.exists() or source_textgrid.stat().st_size == 0:
+        if dry_run:
+            return [
+                f"Planned text MFA skip for {person_id}: working text inputs are not present; task would remain missing unless existing runtime artifacts are available."
+            ]
+        return [
+            f"Skipped text MFA for {person_id}: working text inputs are not present; task will remain missing unless existing runtime artifacts are available."
+        ]
     prepare_result = prepare_text_mfa_for_person(
         batch_dir=batch_dir,
         person_id=person_id,
@@ -330,6 +340,16 @@ def _run_text_pipeline(
         dry_run=dry_run,
         replace_existing=True,
     )
+    notes = [f"Prepared text MFA corpus for {person_id}: segments={prepare_result['segments']}"]
+    prepare_warnings = prepare_result.get("warnings")
+    if isinstance(prepare_warnings, list):
+        for warning in prepare_warnings:
+            if isinstance(warning, str) and warning.strip():
+                notes.append(f"Text MFA prep warning for {person_id}: {warning}")
+    if dry_run:
+        notes.append(f"Planned MFA for {person_id}: executable={mfa_executable}")
+        notes.append(f"Planned working text alignment import for {person_id} after MFA outputs are available.")
+        return notes
     mfa_result = run_text_mfa_for_person(
         batch_dir=batch_dir,
         person_id=person_id,
@@ -347,11 +367,9 @@ def _run_text_pipeline(
     )
     if import_result.skipped_reason is not None:
         raise ProductionImportError(f"text MFA import skipped unexpectedly for {person_id}: {import_result.skipped_reason}")
-    return [
-        f"Prepared text MFA corpus for {person_id}: segments={prepare_result['segments']}",
-        f"Ran MFA for {person_id}: executable={mfa_result['mfa_executable']} version={mfa_result['mfa_version']}",
-        f"Imported working text alignment for {person_id}: items={import_result.item_count} tokens={import_result.token_count}",
-    ]
+    notes.append(f"Ran MFA for {person_id}: executable={mfa_result['mfa_executable']} version={mfa_result['mfa_version']}")
+    notes.append(f"Imported working text alignment for {person_id}: items={import_result.item_count} tokens={import_result.token_count}")
+    return notes
 
 
 def _cleanup_working_people(batch_dir: Path, person_ids: Sequence[str]) -> str:
