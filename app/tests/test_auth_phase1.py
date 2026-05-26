@@ -21,7 +21,7 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 from app import register_auth_context, register_context_processors, register_error_handlers, register_security_headers
 from app.auth.models import AccessRequest, AnalyticsDaily, AnalyticsLanguageAreaDaily, Base, ResetToken, User
 from app.auth import services as auth_services
-from app.extensions import limiter, register_extensions
+from app.extensions import register_extensions
 from app.extensions.sqlalchemy_ext import get_engine, get_session, init_engine
 from app.routes.admin import blueprint as admin_blueprint
 from app.routes.auth import blueprint as auth_blueprint

@@ -20,7 +20,7 @@ from .research_sets import (
     get_visible_set,
     list_visible_sets_for_user,
 )
-from .routes.public_content import get_language, get_language_label, get_research_corpus_title, get_research_page_label, get_section_label
+from .routes.public_content import get_language, get_research_corpus_title, get_research_page_label, get_section_label
 
 
 PHENOMENA_TASKS: tuple[str, ...] = phenomena_task_keys()
@@ -133,7 +133,6 @@ def _editor_intro(ui_lang: str) -> str:
 
 def _base_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any]:
     language = get_language(language_slug)
-    language_label = get_language_label(language, ui_lang) if language else language_slug
     corpus_title = get_research_corpus_title(language, ui_lang) if language else language_slug
     return {
         "title": title,
@@ -154,7 +153,6 @@ def _base_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any
 
 def _editor_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, Any]:
     language = get_language(language_slug)
-    language_label = get_language_label(language, ui_lang) if language else language_slug
     corpus_title = get_research_corpus_title(language, ui_lang) if language else language_slug
     overview_href = url_for(
         "public.research_language_page",

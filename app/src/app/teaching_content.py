@@ -18,7 +18,6 @@ from markdown_it import MarkdownIt
 
 from .content_navigation import build_content_header
 from .i18n import SUPPORTED_UI_LANGUAGES, translate
-from .runtime_paths import get_public_root
 
 
 logger = logging.getLogger(__name__)

@@ -46,10 +46,7 @@ from alignment_export.prepare_text_mfa_corpus import prepare_text_mfa_for_person
 from alignment_export.run_text_mfa import check_mfa_available, run_text_mfa_for_person  # noqa: E402
 from audio_conversion.ffmpeg_audio import create_full_task_mp3, ensure_media_tools  # noqa: E402
 from intake_batch_common import (  # noqa: E402
-    build_batch_inventory,
-    choose_unique_candidate,
     collect_batch_files,
-    files_match,
     is_native_speaker_person_id,
     resolve_batch_dir,
     scan_import_batch,
@@ -602,7 +599,6 @@ def _build_import_plans(
     db_session: Session,
 ) -> tuple[list[SessionImportPlan], list[str]]:
     parsed_batch_files, batch_warnings = collect_batch_files(batch_dir)
-    batch_inventory = build_batch_inventory(parsed_batch_files)
     sessions = db_session.scalars(
         select(ResearchSession).options(selectinload(ResearchSession.exposures)).where(
             ResearchSession.target_language == workbook_data.target_language

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -13,7 +12,6 @@ from intake_batch_common import ParsedBatchFile  # noqa: E402
 from intake_storage import (  # noqa: E402
     ARCHIVE_SESSION_SUBDIRS,
     build_prod_upload_package,
-    validate_archive_tree,
     validate_prod_package,
     validate_runtime_tree,
     write_secure_person_export,

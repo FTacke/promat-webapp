@@ -15,7 +15,6 @@ from ..teaching_content import (
     resolve_teaching_edition_ui_lang,
 )
 from .public_page_content_data import (
-    LEGACY_PROJECT_PAGE_REDIRECTS,
     PROJECT_PAGES_CONTENT,
     SPANISH_DESIGN_PAGE_CONTENT,
 )

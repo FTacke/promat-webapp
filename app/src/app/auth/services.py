@@ -10,7 +10,6 @@ import hashlib
 import secrets
 import uuid
 from dataclasses import dataclass
-from datetime import date
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Tuple
 from urllib.parse import quote

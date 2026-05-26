@@ -130,8 +130,8 @@ def apply_postgres_migration(reset: bool = False) -> None:
     except psycopg2.Error as e:
         migration_label = current_migration_path.name if current_migration_path is not None else "unknown"
         message_parts = [
-            f"ERROR: PostgreSQL migration failed",
-            f"engine=postgres",
+            "ERROR: PostgreSQL migration failed",
+            "engine=postgres",
             f"migration={migration_label}",
         ]
         if getattr(e, "diag", None) is not None and getattr(e.diag, "message_primary", None):

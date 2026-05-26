@@ -16,7 +16,6 @@ from .research_capabilities import (
     comparison_default_view_task,
     comparison_view_task_keys,
     get_research_task_label,
-    phenomena_task_keys,
     player_productive_task_keys,
     set_filter_task_keys,
     task_is_productive_in_player,
@@ -24,15 +23,9 @@ from .research_capabilities import (
 )
 from .research_player_runtime import (
     NormalizedPlayerSource,
-    build_player_compare_rows as _build_player_compare_rows,
-    build_player_items as _build_player_items,
-    build_player_set_notice as _build_player_set_notice,
     build_running_text_blocks as _build_running_text_blocks,
-    is_playable_audio_artifact as _is_playable_audio_artifact,
+    is_playable_audio_artifact as _runtime_is_playable_audio_artifact,
     load_task_bundle as _load_task_bundle,
-    load_task_ready_sessions as _load_task_ready_sessions,
-    normalized_render_mode_query as _normalized_render_mode_query,
-    normalize_compare_mode as _normalize_compare_mode,
     resolve_player_audio_artifact as _resolve_player_audio_artifact_runtime,
     resolve_player_item_download as _resolve_player_item_download_runtime,
     resolve_player_runtime_state,
@@ -59,10 +52,12 @@ from .research_sessions import (
     matching_sessions_for_person,
     resolve_selected_session,
     session_has_task,
-    session_matches_filters,
     sort_sessions_by_recency,
 )
 from .routes.public_content import get_language, get_language_label, get_research_page_label, get_section_label
+
+
+_is_playable_audio_artifact = _runtime_is_playable_audio_artifact
 
 
 SPEAKER_TYPE_LABEL_KEYS = {

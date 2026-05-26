@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 import re
 import shutil
-from typing import Any
 
 from language_config import resolve_language_config
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 import re
@@ -18,7 +17,7 @@ from ..auth import Role
 from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
 from ..extensions import limiter
-from ..i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, resolve_request_ui_language, resolve_ui_language
+from ..i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, resolve_request_ui_language
 from ..research_capabilities import get_research_page_surface_mode
 from ..research_access import requires_research_auth
 from ..research_phenomena_views import (
@@ -34,14 +33,12 @@ from ..research_views import (
     resolve_player_audio_artifact,
     resolve_player_item_download,
 )
-from ..runtime_paths import get_public_root
 from ..services.access_request_notifications import deliver_access_request_notification
-from ..teaching_content import resolve_teaching_switch_path, resolve_teaching_topic_media_artifact, resolve_topic_route_target
+from ..teaching_content import resolve_teaching_topic_media_artifact, resolve_topic_route_target
 from ..extensions.sqlalchemy_ext import get_engine
 from .public_content import (
     DEFAULT_UI_LANGUAGE,
     LEGAL_PAGES,
-    LEGACY_PROJECT_PAGE_REDIRECTS,
     PROJECT_PAGE_ORDER,
     RESEARCH_PAGE_ORDER,
     build_project_page,
@@ -65,6 +62,7 @@ from .public_content import (
     get_text,
     get_top_navigation,
 )
+from .public_page_content_data import LEGACY_PROJECT_PAGE_REDIRECTS
 
 blueprint = Blueprint("public", __name__)
 
@@ -1054,7 +1052,7 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
                 [
                     f"access;dur={access_ms:.3f}",
                     f"build;dur={build_ms:.3f}",
-                    f"render;dur=0.000",
+                    "render;dur=0.000",
                     f"route;dur={route_ms:.3f}",
                     f"db;dur={db_metrics['duration_ms']:.3f};desc=queries:{db_metrics['count']}",
                     *(f"runtime-{key.removesuffix('_ms')};dur={value:.3f}" for key, value in player_profile.items()),
