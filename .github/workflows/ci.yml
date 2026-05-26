@@ -104,35 +104,17 @@ jobs:
         working-directory: app
         run: |
           python -m pytest tests/test_runtime_config.py -q
-          python -m pytest \
-            tests/test_auth_phase1.py::test_access_request_submit_persists_request_and_shows_success \
-            tests/test_auth_phase1.py::test_access_request_submit_keeps_rate_limit \
-            tests/test_auth_phase1.py::test_protected_html_route_without_auth_redirects_to_login \
-            tests/test_auth_phase1.py::test_protected_api_route_without_auth_returns_json_401 \
-            tests/test_auth_phase1.py::test_security_headers_allow_project_youtube_embed \
-            -q
+          python -m pytest tests/test_auth_phase1.py::test_access_request_submit_persists_request_and_shows_success tests/test_auth_phase1.py::test_access_request_submit_keeps_rate_limit tests/test_auth_phase1.py::test_protected_html_route_without_auth_redirects_to_login tests/test_auth_phase1.py::test_protected_api_route_without_auth_returns_json_401 tests/test_auth_phase1.py::test_security_headers_allow_project_youtube_embed -q
 
       - name: Research and teaching smoke tests
         working-directory: app
         run: |
-          python -m pytest \
-            tests/test_research_sessions.py::test_research_design_page_stays_public \
-            tests/test_research_sessions.py::test_research_detail_routes_require_auth_before_lookup \
-            tests/test_research_sessions.py::test_authenticated_research_workbench_pages_render_after_access_gate \
-            tests/test_research_sessions.py::test_research_player_prewarm_request_warms_route_without_rendering_body \
-            tests/test_research_sessions.py::test_teaching_topic_media_route_serves_released_media \
-            tests/test_research_sessions.py::test_teaching_topic_media_route_blocks_parent_traversal \
-            tests/test_research_sessions.py::test_teaching_missing_topic_redirects_cleanly_to_hub \
-            -q
+          python -m pytest tests/test_research_sessions.py::test_research_design_page_stays_public tests/test_research_sessions.py::test_research_detail_routes_require_auth_before_lookup tests/test_research_sessions.py::test_authenticated_research_workbench_pages_render_after_access_gate tests/test_research_sessions.py::test_research_player_prewarm_request_warms_route_without_rendering_body tests/test_research_sessions.py::test_teaching_topic_media_route_serves_released_media tests/test_research_sessions.py::test_teaching_topic_media_route_blocks_parent_traversal tests/test_research_sessions.py::test_teaching_missing_topic_redirects_cleanly_to_hub -q
 
       - name: Importer smoke tests
         working-directory: app
         run: |
-          python -m pytest \
-            tests/test_research_production_importer.py::test_load_intake_workbook_derives_session_id_and_ignores_out_of_scope_rows \
-            tests/test_research_production_importer.py::test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode \
-            tests/test_research_production_importer.py::test_run_text_pipeline_dry_run_does_not_require_written_manifest \
-            -q
+          python -m pytest tests/test_research_production_importer.py::test_load_intake_workbook_derives_session_id_and_ignores_out_of_scope_rows tests/test_research_production_importer.py::test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode tests/test_research_production_importer.py::test_run_text_pipeline_dry_run_does_not_require_written_manifest -q
 
   js-smokes:
     runs-on: ubuntu-latest
