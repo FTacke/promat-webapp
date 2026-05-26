@@ -169,37 +169,6 @@ def _load_manifest_items(manifest_path: Path) -> list[ManifestItem]:
     return items
 
 
-def _load_omitted_items(manifest_payload: dict[str, Any], manifest_path: Path) -> list[dict[str, object]]:
-    raw_items = manifest_payload.get("omitted_items")
-    if raw_items is None:
-        return []
-    if not isinstance(raw_items, list):
-        raise ValueError(f"Manifest omitted_items must be a list: {manifest_path}")
-    omitted_items: list[dict[str, object]] = []
-    for index, raw_item in enumerate(raw_items, start=1):
-        if not isinstance(raw_item, dict):
-            raise ValueError(f"Manifest omitted item {index} must be an object: {manifest_path}")
-        item_id = _require_non_empty_string(raw_item, "item_id", manifest_path, index)
-        item_number = _require_non_empty_string(raw_item, "item_number", manifest_path, index)
-        text_value = _require_non_empty_string(raw_item, "text", manifest_path, index)
-        omit_reason = _require_non_empty_string(raw_item, "omit_reason", manifest_path, index)
-        if raw_item.get("omitted") is not True:
-            raise ValueError(f"Manifest omitted item {item_id} must set omitted=true: {manifest_path}")
-        for forbidden_key in ("start_ms", "end_ms", "split_mp3"):
-            if forbidden_key in raw_item:
-                raise ValueError(f"Manifest omitted item {item_id} must not include {forbidden_key}: {manifest_path}")
-        omitted_items.append(
-            {
-                "item_id": item_id,
-                "item_number": item_number,
-                "text": text_value,
-                "omitted": True,
-                "omit_reason": omit_reason,
-            }
-        )
-    return omitted_items
-
-
 def _require_non_empty_string(payload: dict[str, Any], key: str, path: Path, index: int) -> str:
     value = payload.get(key)
     if not isinstance(value, str) or not value.strip():
@@ -345,15 +314,8 @@ def _build_item_payloads(
     return item_payloads, warnings, token_count
 
 
-def _build_alignment_payload(
-    session_id: str | None,
-    person_id: str,
-    items: list[ItemPayload],
-    *,
-    omitted_items: list[dict[str, object]] | None = None,
-    warnings: list[str] | None = None,
-) -> dict[str, object]:
-    payload: dict[str, object] = {
+def _build_alignment_payload(session_id: str | None, person_id: str, items: list[ItemPayload]) -> dict[str, object]:
+    return {
         "session_id": session_id,
         "person_id": person_id,
         "task": "text",
@@ -362,11 +324,6 @@ def _build_alignment_payload(
         },
         "items": [item.to_json() for item in items],
     }
-    if omitted_items:
-        payload["omitted_items"] = omitted_items
-    if warnings:
-        payload["_import_warnings"] = warnings
-    return payload
 
 
 def _write_alignment_json(path: Path, payload: dict[str, object]) -> None:
@@ -414,10 +371,6 @@ def _import_person(
     manifest_payload = _load_manifest_payload(paths["manifest"])
     _resolve_language_config(manifest_payload, cli_language)
     manifest_items = _load_manifest_items(paths["manifest"])
-    omitted_items = _load_omitted_items(manifest_payload, paths["manifest"])
-    manifest_warnings = manifest_payload.get("warnings")
-    if isinstance(manifest_warnings, list):
-        warnings.extend(str(warning) for warning in manifest_warnings if isinstance(warning, str))
     source_textgrid_value = manifest_payload.get("source_textgrid")
     if isinstance(source_textgrid_value, str) and source_textgrid_value:
         source_textgrid_path = batch_dir / source_textgrid_value.replace("/", "\\")
@@ -455,8 +408,6 @@ def _import_person(
         session_id=_session_id_from_manifest(manifest_payload),
         person_id=person_id,
         items=item_payloads,
-        omitted_items=omitted_items,
-        warnings=warnings,
     )
 
     if payload.get("session_id") is None:

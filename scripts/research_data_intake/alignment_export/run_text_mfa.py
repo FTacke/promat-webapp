@@ -31,12 +31,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
+    return subprocess.run(command, capture_output=True, text=True, check=False)
 
 
 def _extract_output(process: subprocess.CompletedProcess[str]) -> str:
-    output_parts = [part.strip() for part in (process.stdout, process.stderr) if part and part.strip()]
-    return "\n".join(output_parts)
+    return (process.stdout or "").strip() or (process.stderr or "").strip()
 
 
 def _docker_cache_dir(batch_dir: Path) -> Path:
@@ -51,14 +50,6 @@ def _docker_volume(path: Path, container_path: str) -> str:
 
 def _docker_image() -> str:
     return os.getenv("PROMAT_MFA_DOCKER_IMAGE", DEFAULT_DOCKER_IMAGE)
-
-
-def _docker_model_download_guard(model_type: str, model_name: str) -> str:
-    if model_type == "dictionary":
-        cached_path = f"/mfa/pretrained_models/{model_type}/{model_name}.dict"
-    else:
-        cached_path = f"/mfa/pretrained_models/{model_type}/{model_name}.zip"
-    return f"if [ ! -f {cached_path} ]; then mfa model download {model_type} {model_name}; fi"
 
 
 def check_mfa_available(mfa_executable: str = "mfa") -> str:
@@ -101,8 +92,8 @@ def run_text_mfa_for_person(
         cache_dir = _docker_cache_dir(batch_dir)
         docker_shell_command = " && ".join(
             [
-                _docker_model_download_guard("acoustic", config.mfa_acoustic_model),
-                _docker_model_download_guard("dictionary", config.mfa_dictionary_model),
+                f"mfa model download acoustic {config.mfa_acoustic_model}",
+                f"mfa model download dictionary {config.mfa_dictionary_model}",
                 "mfa align --clean --single_speaker --num_jobs 1 /data/corpus "
                 f"{config.mfa_dictionary_model} {config.mfa_acoustic_model} /data/output",
             ]

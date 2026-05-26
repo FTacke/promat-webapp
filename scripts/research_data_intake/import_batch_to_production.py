@@ -319,16 +319,6 @@ def _run_text_pipeline(
     mfa_executable: str,
     dry_run: bool,
 ) -> list[str]:
-    source_wav = working_source_path(batch_dir, person_id, "text")
-    source_textgrid = working_alignment_path(batch_dir, person_id, "text")
-    if not source_wav.exists() or not source_textgrid.exists():
-        if dry_run:
-            return [
-                f"Planned text MFA for {person_id}: working text inputs are not present during dry-run; a write run with --run-working would create them before MFA when batch files exist.",
-            ]
-        return [
-            f"Skipped text MFA for {person_id}: working text inputs are not present; task will remain missing unless existing runtime artifacts are available.",
-        ]
     text_catalog_path = _text_task_catalog_path(target_language)
     if not text_catalog_path.exists():
         raise ProductionImportError(f"Missing text task catalog for MFA prep: {text_catalog_path}")
@@ -340,17 +330,6 @@ def _run_text_pipeline(
         dry_run=dry_run,
         replace_existing=True,
     )
-    if dry_run:
-        return [
-            f"Prepared text MFA corpus for {person_id}: segments={prepare_result['segments']}",
-            *[
-                f"Text MFA prep warning for {person_id}: {warning}"
-                for warning in prepare_result.get("warnings", [])
-                if isinstance(warning, str)
-            ],
-            f"Planned MFA for {person_id}: executable={mfa_executable}",
-            f"Planned working text alignment import for {person_id} after MFA outputs are available.",
-        ]
     mfa_result = run_text_mfa_for_person(
         batch_dir=batch_dir,
         person_id=person_id,
@@ -370,11 +349,6 @@ def _run_text_pipeline(
         raise ProductionImportError(f"text MFA import skipped unexpectedly for {person_id}: {import_result.skipped_reason}")
     return [
         f"Prepared text MFA corpus for {person_id}: segments={prepare_result['segments']}",
-        *[
-            f"Text MFA prep warning for {person_id}: {warning}"
-            for warning in prepare_result.get("warnings", [])
-            if isinstance(warning, str)
-        ],
         f"Ran MFA for {person_id}: executable={mfa_result['mfa_executable']} version={mfa_result['mfa_version']}",
         f"Imported working text alignment for {person_id}: items={import_result.item_count} tokens={import_result.token_count}",
     ]
@@ -391,7 +365,7 @@ def _cleanup_working_people(batch_dir: Path, person_ids: Sequence[str]) -> str:
 
     state_path = working_intake_state_path(batch_dir)
     if state_path.exists():
-        payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
+        payload = json.loads(state_path.read_text(encoding="utf-8"))
         persons_payload = payload.get("persons")
         if isinstance(persons_payload, dict):
             for person_id in person_ids:
@@ -1159,7 +1133,6 @@ def _apply_plan(
     workspace = SessionWorkspace(target_dir=plan.target_session_dir, seed_dir=plan.existing_session_dir)
     workspace.prepare()
     try:
-        runtime_warnings: list[str] = list(plan.warnings)
         skipped_or_missing_artifacts = [
             {
                 "task": task_plan.task_key,
@@ -1174,16 +1147,11 @@ def _apply_plan(
             if task_plan.action != "sync":
                 continue
             if task_plan.task_key == "wordlist":
-                task_result = _sync_wordlist_task(plan, task_plan, validate_wordlist_labels=validate_wordlist_labels)
+                _sync_wordlist_task(plan, task_plan, validate_wordlist_labels=validate_wordlist_labels)
             elif task_plan.task_key == "text":
-                task_result = _sync_text_task(plan, task_plan)
+                _sync_text_task(plan, task_plan)
             elif task_plan.task_key == "interview":
-                task_result = _sync_interview_task(plan, task_plan)
-            else:
-                task_result = {}
-            result_warnings = task_result.get("warnings") if isinstance(task_result, dict) else None
-            if isinstance(result_warnings, list):
-                runtime_warnings.extend(str(warning) for warning in result_warnings if isinstance(warning, str))
+                _sync_interview_task(plan, task_plan)
 
         for task_key in RESEARCH_TASK_KEYS:
             if _task_not_expected_status(task_key, plan.person.person_id, plan.person.speaker_type) is not None:
@@ -1204,7 +1172,7 @@ def _apply_plan(
                 person_id=plan.person.person_id,
                 source_batch=plan.source_batch,
                 input_files=plan.archive_inputs,
-                warnings=runtime_warnings,
+                warnings=plan.warnings,
                 skipped_or_missing_artifacts=skipped_or_missing_artifacts,
                 importer_version="import_batch_to_production",
                 archive_root=archive_root,
@@ -1283,7 +1251,7 @@ def _apply_plan(
                 }
                 for exposure in plan.exposures
             ],
-            "warnings": runtime_warnings,
+            "warnings": list(plan.warnings),
             "archive_input_count": len(plan.archive_inputs),
             "db_update": "applied" if write_db else "skipped_by_flag",
         }
@@ -1480,11 +1448,6 @@ def main() -> int:
             if summary.conflict_count:
                 return 1
             if args.dry_run:
-                if run_notes:
-                    print()
-                    print("[run-notes]")
-                    for note in run_notes:
-                        print(f"- {note}")
                 return 0
             if args.sync_tasks and summary.task_sync_count:
                 ensure_media_tools()
