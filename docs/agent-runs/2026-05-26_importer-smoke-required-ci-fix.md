@@ -65,7 +65,7 @@ ERROR: file or directory not found: app/tests/test_research_production_importer.
 LASTEXITCODE=4
 ```
 
-Der erste Wiederherstellungsversuch mit zwei expliziten Node-IDs lief lokal grün, scheiterte in GitHub Actions aber erneut im Step `Importer smoke tests` mit Exitcode `4`. Der zweite Versuch mit der kompletten Importer-Testdatei lief lokal und in einem Linux-Container grün, scheiterte in Actions aber mit Exitcode `2`. Da die vollständigen Logs ohne Sign-in nicht abrufbar waren, wurde auf die robusteste Required-Gate-Form umgestellt: ein dediziertes kleines Smoke-Testfile, das die zwei Kernverträge direkt ausführt und als Datei aufgerufen wird.
+Der erste Wiederherstellungsversuch mit zwei expliziten Node-IDs lief lokal grün, scheiterte in GitHub Actions aber erneut im Step `Importer smoke tests` mit Exitcode `4`. Der zweite Versuch mit der kompletten Importer-Testdatei lief lokal und in einem Linux-Container grün, scheiterte in Actions aber mit Exitcode `2`. Da die vollständigen Logs ohne Sign-in nicht abrufbar waren, wurde auf die robusteste Required-Gate-Form umgestellt: ein dediziertes kleines Smoke-Testfile, das die zwei Kernverträge standalone ausführt und als Datei aufgerufen wird.
 
 Der finale CI-Step vermeidet die zuvor beobachteten Fragilitätsquellen:
 
@@ -73,7 +73,7 @@ Der finale CI-Step vermeidet die zuvor beobachteten Fragilitätsquellen:
 - Testpfade sind relativ zu `app`.
 - Es gibt keine Node-IDs im CI-Befehl.
 - Es gibt keine `-k`-Expression.
-- Der Smoke umfasst nur zwei Tests und importiert die bestehenden geprüften Regressionen.
+- Der Smoke umfasst nur zwei Tests und hängt nicht von der Collection der großen Importer-Testdatei ab.
 
 ## 5. CI-Änderung
 
@@ -90,7 +90,7 @@ Warum ein dediziertes Smoke-Testfile:
 
 - Der Node-ID-basierte Required-Smoke blieb in Actions fragil, obwohl er lokal grün war.
 - Der Full-File-Smoke blieb in Actions ebenfalls rot, obwohl er lokal und in einem Linux-Container grün war.
-- Das neue Smoke-Testfile vermeidet `-k`, Node-IDs und die breite Importer-Datei im Required Gate.
+- Das neue Smoke-Testfile vermeidet `-k`, Node-IDs, die breite Importer-Datei im Required Gate und Imports aus der großen Testdatei.
 - Es deckt die beiden zuletzt relevanten Importer-Verträge weiterhin ab:
   - `test_run_text_pipeline_dry_run_does_not_require_written_manifest`
   - `test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode`
@@ -154,7 +154,7 @@ ok .github/workflows/full-test.yml
 ok .github/workflows/release-candidate-check.yml
 ```
 
-Additional CI-parity checks after adding the dedicated smoke file:
+Additional CI-parity checks after adding the dedicated standalone smoke file:
 
 ```text
 python -m pytest app/tests/test_research_production_importer.py app/tests/test_research_production_importer_smoke.py -q
@@ -164,6 +164,11 @@ python -m pytest app/tests/test_research_production_importer.py app/tests/test_r
 ```text
 docker run python:3.12-slim ... cd app && python -m pytest tests/test_research_production_importer_smoke.py -q
 2 passed, 1 warning
+```
+
+```text
+python -m ruff check app/tests/test_research_production_importer_smoke.py
+All checks passed.
 ```
 
 ## 7. GitHub-Actions-Status
