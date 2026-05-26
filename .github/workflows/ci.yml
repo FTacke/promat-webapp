@@ -113,7 +113,7 @@ jobs:
 
       - name: Importer smoke tests
         run: |
-          python "${{ github.workspace }}/scripts/ci_importer_smoke.py"
+          python scripts/ci_importer_smoke.py
 
 
   js-smokes:
