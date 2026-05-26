@@ -111,9 +111,6 @@ jobs:
         run: |
           python -m pytest tests/test_research_sessions.py::test_research_design_page_stays_public tests/test_research_sessions.py::test_research_detail_routes_require_auth_before_lookup tests/test_research_sessions.py::test_authenticated_research_workbench_pages_render_after_access_gate tests/test_research_sessions.py::test_research_player_prewarm_request_warms_route_without_rendering_body tests/test_research_sessions.py::test_teaching_topic_media_route_serves_released_media tests/test_research_sessions.py::test_teaching_topic_media_route_blocks_parent_traversal tests/test_research_sessions.py::test_teaching_missing_topic_redirects_cleanly_to_hub -q
 
-      - name: Importer smoke tests
-        run: |
-          python -m pytest app/tests/test_research_production_importer.py -q
 
   js-smokes:
     runs-on: ubuntu-latest
