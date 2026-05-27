@@ -565,6 +565,7 @@ scripts/research_data_intake/exports/{upload_id}/
 ```
 
 - Prod upload packages are explicit allowlist exports built from already validated runtime artifacts plus optional DB payloads or runtime-relevant config JSON.
+- Runtime session paths in upload packages must use the runtime corpus slug under `sessions/{corpus_slug}/{session_id}/...` (for example `sessions/french/...`), not the two-letter `target_language` code form.
 - Prod upload packages must not contain WAVs, TextGrids, XLSX workbooks, secure files, raw/source/alignment_source trees, MFA working directories, or other temporary artifacts.
 - The package builder is not a second importer: it must not reinterpret the original batch or re-derive truth from workbook prose once the runtime and import payload already exist.
 - The initial v0.7 production server model is data-only: prod upload delivery targets `/srv/webapps_storage/promat/data/incoming/{upload_id}/` first, validates allowlist paths plus checksums plus file counts, stages a new release under `data/releases/{release_id}/`, and promotes with an atomic `data/current` symlink switch instead of writing directly into the live target.

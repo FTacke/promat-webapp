@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -62,9 +63,10 @@ def test_build_prod_upload_package_copies_only_allowed_runtime_artifacts(tmp_pat
         upload_id="promat_upload_test",
     )
 
-    assert (output_dir / "sessions" / "es" / session_dir.name / "metadata.json").exists()
-    assert (output_dir / "sessions" / "es" / session_dir.name / "alignment" / "wordlist.json").exists()
-    assert (output_dir / "sessions" / "es" / session_dir.name / "derived" / "wordlist.mp3").exists()
+    assert (output_dir / "sessions" / "spanish" / session_dir.name / "metadata.json").exists()
+    assert (output_dir / "sessions" / "spanish" / session_dir.name / "alignment" / "wordlist.json").exists()
+    assert (output_dir / "sessions" / "spanish" / session_dir.name / "derived" / "wordlist.mp3").exists()
+    assert not (output_dir / "sessions" / "es").exists()
     assert (output_dir / "db" / "import_payload.json").exists()
     assert result.manifest_path.exists()
     assert result.checksums_path.exists()
@@ -111,12 +113,87 @@ def test_validate_prod_package_blocks_forbidden_wav_and_source_paths(tmp_path: P
     _write_text(package_dir / "manifest.json", "{}\n")
     _write_text(package_dir / "reports" / "upload_report.md", "# report\n")
     _write_text(package_dir / "db" / "import_payload.json", "{}\n")
-    _write_bytes(package_dir / "sessions" / "es" / "ES-L-0001-2026-S01" / "source" / "wordlist.wav", b"RIFF")
+    _write_bytes(package_dir / "sessions" / "spanish" / "ES-L-0001-2026-S01" / "source" / "wordlist.wav", b"RIFF")
 
     errors = validate_prod_package(package_dir)
 
     assert any("forbidden prod package path part 'source'" in error for error in errors)
     assert any("forbidden prod package file type .wav" in error for error in errors)
+
+
+def test_validate_prod_package_rejects_language_code_session_directory(tmp_path: Path) -> None:
+    package_dir = tmp_path / "package"
+    _write_text(package_dir / "sessions" / "fr" / "FR-L-0001-2026-S01" / "metadata.json", "{}\n")
+    _write_text(package_dir / "manifest.json", json.dumps({"files": ["manifest.json", "checksums.sha256", "sessions/fr/FR-L-0001-2026-S01/metadata.json"]}) + "\n")
+    _write_text(
+        package_dir / "checksums.sha256",
+        "\n".join(
+            [
+                f"{hashlib.sha256((package_dir / 'manifest.json').read_bytes()).hexdigest()}  manifest.json",
+                f"{hashlib.sha256((package_dir / 'sessions' / 'fr' / 'FR-L-0001-2026-S01' / 'metadata.json').read_bytes()).hexdigest()}  sessions/fr/FR-L-0001-2026-S01/metadata.json",
+            ]
+        )
+        + "\n",
+    )
+
+    errors = validate_prod_package(package_dir)
+
+    assert any("must use corpus slug 'french', got 'fr'" in error for error in errors)
+
+
+def test_build_prod_upload_package_writes_lf_checksums_and_linux_sha256_format(tmp_path: Path) -> None:
+    session_dir = _minimal_runtime_session(tmp_path)
+    output_dir = tmp_path / "exports" / "promat_upload_test"
+
+    build_prod_upload_package(
+        output_dir=output_dir,
+        session_roots=[("fr", session_dir)],
+        upload_id="promat_upload_test",
+    )
+
+    checksums_path = output_dir / "checksums.sha256"
+    payload = checksums_path.read_bytes()
+    assert b"\r" not in payload
+    text_payload = payload.decode("utf-8")
+    assert text_payload.endswith("\n")
+    for line in text_payload.splitlines(keepends=True):
+        assert line.endswith("\n")
+        digest, relative_path = line[:-1].split("  ", 1)
+        assert len(digest) == 64
+        assert all(char in "0123456789abcdef" for char in digest)
+        assert "\\" not in relative_path
+        assert not relative_path.startswith("/")
+
+
+def test_validate_prod_package_detects_crlf_checksums(tmp_path: Path) -> None:
+    package_dir = tmp_path / "package"
+    _write_text(package_dir / "sessions" / "french" / "FR-L-0001-2026-S01" / "metadata.json", "{}\n")
+    _write_text(
+        package_dir / "manifest.json",
+        json.dumps(
+            {
+                "files": [
+                    "checksums.sha256",
+                    "manifest.json",
+                    "sessions/french/FR-L-0001-2026-S01/metadata.json",
+                ]
+            }
+        )
+        + "\n",
+    )
+    manifest_digest = hashlib.sha256((package_dir / "manifest.json").read_bytes()).hexdigest()
+    metadata_digest = hashlib.sha256(
+        (package_dir / "sessions" / "french" / "FR-L-0001-2026-S01" / "metadata.json").read_bytes()
+    ).hexdigest()
+    (package_dir / "checksums.sha256").write_bytes(
+        (f"{manifest_digest}  manifest.json\r\n{metadata_digest}  sessions/french/FR-L-0001-2026-S01/metadata.json\r\n").encode(
+            "utf-8"
+        )
+    )
+
+    errors = validate_prod_package(package_dir)
+
+    assert any("contains CR characters" in error for error in errors)
 
 
 def test_write_session_archive_marks_raw_wav_as_derivation_source_in_manifest(tmp_path: Path) -> None:

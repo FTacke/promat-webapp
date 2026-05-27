@@ -16,6 +16,7 @@ Teaching gehört nicht zu dieser Pipeline. `content/`, `public/teaching/` und Te
 - Das lokale Langzeitarchiv liegt außerhalb des Repo-Workspaces unter `PROMAT_LOCAL_ARCHIVE_ROOT`, standardmäßig lokal zum Beispiel `C:\dev\promat_data_archive`.
 - Das Archiv ist session-zentriert unter `sessions/{language_code}/{session_id}/...`.
 - Prod-Uploads entstehen als explizite Allowlist-Pakete unter `scripts/research_data_intake/exports/{upload_id}/` aus bereits validierten Runtime-Artefakten und optionalem `db/import_payload.json`.
+- In Prod-Upload-Paketen liegen Runtime-Sessions immer unter `sessions/{corpus_slug}/{session_id}/` (z. B. `sessions/french/...`), nicht unter Sprachcodes wie `sessions/fr/...`.
 
 ## Batch-Scan und Klassifizierung
 
@@ -126,6 +127,7 @@ Erlaubt:
 - `sessions/.../alignment/*.json`
 - `sessions/.../derived/*.mp3`
 - `sessions/.../items/**/*.mp3`
+- `sessions/{corpus_slug}/...` verwendet denselben Corpus-Slug wie die Runtime (`spanish`, `german`, `french`, `english`).
 - `db/import_payload.json`
 - `config/research_player/**/*.json` nur wenn explizit runtime-relevant
 - `manifest.json`

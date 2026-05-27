@@ -131,6 +131,7 @@ Regeln:
 Regeln:
 
 - Das Upload-Paket ist eine explizite Allowlist-Auswahl aus validierten Runtime-Artefakten plus optionalem `db/import_payload.json`.
+- Sessionpfade im Upload-Paket folgen immer dem Runtime-Corpus-Slug unter `sessions/{corpus_slug}/{session_id}/` (z. B. `sessions/french/...`), nicht Kurzcodes wie `sessions/fr/...`.
 - Das Paket ist kein zweiter Importer und liest keine Batch-Rohdateien neu als Wahrheit ein.
 - Auslassung im Paket löscht niemals implizit bestehende Prod-Dateien.
 

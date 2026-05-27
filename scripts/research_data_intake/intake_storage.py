@@ -11,6 +11,7 @@ import shutil
 from typing import Any, Iterable, Sequence
 
 from intake_batch_common import ParsedBatchFile
+from language_config import maybe_resolve_language_config, resolve_language_config
 
 
 DEFAULT_LOCAL_ARCHIVE_ROOT = Path(r"C:\dev\promat_data_archive")
@@ -32,10 +33,10 @@ ALLOWED_RUNTIME_PATTERNS = (
     re.compile(r"^items/[^/]+/[^/]+\.mp3$"),
 )
 ALLOWED_PROD_PACKAGE_PATTERNS = (
-    re.compile(r"^sessions/[a-z]{2}/[^/]+/metadata\.json$"),
-    re.compile(r"^sessions/[a-z]{2}/[^/]+/alignment/[^/]+\.json$"),
-    re.compile(r"^sessions/[a-z]{2}/[^/]+/derived/[^/]+\.mp3$"),
-    re.compile(r"^sessions/[a-z]{2}/[^/]+/items/[^/]+/[^/]+\.mp3$"),
+    re.compile(r"^sessions/[a-z]+/[^/]+/metadata\.json$"),
+    re.compile(r"^sessions/[a-z]+/[^/]+/alignment/[^/]+\.json$"),
+    re.compile(r"^sessions/[a-z]+/[^/]+/derived/[^/]+\.mp3$"),
+    re.compile(r"^sessions/[a-z]+/[^/]+/items/[^/]+/[^/]+\.mp3$"),
     re.compile(r"^db/import_payload\.json$"),
     re.compile(r"^config/research_player/.+\.json$"),
     re.compile(r"^manifest\.json$"),
@@ -181,8 +182,10 @@ def validate_prod_package(package_dir: Path) -> list[str]:
     if not package_dir.exists():
         return [f"missing prod package directory: {package_dir}"]
 
+    package_files: set[str] = set()
     for file_path in _sorted_files(package_dir):
         relative_path = relative_posix_path(file_path, package_dir)
+        package_files.add(relative_path)
         suffix = file_path.suffix.lower()
         forbidden_part = _has_forbidden_path_part(relative_path)
         has_error = False
@@ -196,6 +199,22 @@ def validate_prod_package(package_dir: Path) -> list[str]:
             continue
         if not _matches_any(relative_path, ALLOWED_PROD_PACKAGE_PATTERNS):
             errors.append(f"unsupported prod package file path: {relative_path}")
+            continue
+
+        if relative_path.startswith("sessions/"):
+            parts = Path(relative_path).parts
+            if len(parts) >= 2:
+                language_segment = parts[1]
+                language = maybe_resolve_language_config(language_segment)
+                if language is None:
+                    errors.append(f"unsupported package session language segment: {language_segment}")
+                elif language.corpus_slug != language_segment:
+                    errors.append(
+                        f"package session language segment must use corpus slug '{language.corpus_slug}', got '{language_segment}'"
+                    )
+
+    _validate_manifest_payload(package_dir, package_files, errors)
+    _validate_checksum_file(package_dir, package_files, errors)
     return errors
 
 
@@ -232,7 +251,99 @@ def write_sha256_checksums(root: Path, relative_paths: Iterable[str], *, output_
     for relative_path in sorted(relative_paths):
         file_path = root / relative_path.replace("/", os.sep)
         lines.append(f"{sha256_file(file_path)}  {relative_path}")
-    output_path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write("\n".join(lines) + ("\n" if lines else ""))
+
+
+def _validate_manifest_payload(package_dir: Path, package_files: set[str], errors: list[str]) -> None:
+    manifest_path = package_dir / "manifest.json"
+    if not manifest_path.exists():
+        errors.append("missing required prod package file: manifest.json")
+        return
+    try:
+        manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:  # pragma: no cover - defensive guard
+        errors.append(f"invalid manifest.json: {exc}")
+        return
+    if not isinstance(manifest_payload, dict):
+        errors.append("manifest.json payload must be a JSON object")
+        return
+
+    files_value = manifest_payload.get("files")
+    if not isinstance(files_value, list) or not all(isinstance(item, str) for item in files_value):
+        errors.append("manifest.json files must be a list of relative paths")
+        return
+
+    manifest_files = set(files_value)
+    if manifest_files != package_files:
+        missing = sorted(package_files - manifest_files)
+        unexpected = sorted(manifest_files - package_files)
+        if missing:
+            errors.append(f"manifest.json missing files: {', '.join(missing[:5])}")
+        if unexpected:
+            errors.append(f"manifest.json contains unknown files: {', '.join(unexpected[:5])}")
+
+    for relative_path in files_value:
+        if "\\" in relative_path:
+            errors.append(f"manifest.json path uses backslashes: {relative_path}")
+        if relative_path.startswith("/"):
+            errors.append(f"manifest.json path must be relative: {relative_path}")
+
+
+def _validate_checksum_file(package_dir: Path, package_files: set[str], errors: list[str]) -> None:
+    checksums_path = package_dir / "checksums.sha256"
+    if not checksums_path.exists():
+        errors.append("missing required prod package file: checksums.sha256")
+        return
+
+    payload = checksums_path.read_bytes()
+    if b"\r" in payload:
+        errors.append("checksums.sha256 contains CR characters; expected LF-only line endings")
+
+    try:
+        text_payload = payload.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        errors.append(f"checksums.sha256 is not valid UTF-8: {exc}")
+        return
+
+    if text_payload and not text_payload.endswith("\n"):
+        errors.append("checksums.sha256 must end with a trailing LF")
+
+    listed_paths: set[str] = set()
+    checksum_line_pattern = re.compile(r"^([0-9a-f]{64})  (.+)$")
+    for line_number, line in enumerate(text_payload.splitlines(keepends=True), start=1):
+        if not line.endswith("\n"):
+            errors.append(f"checksums.sha256 line {line_number} does not end with LF")
+            continue
+        content = line[:-1]
+        match = checksum_line_pattern.match(content)
+        if match is None:
+            errors.append(f"checksums.sha256 line {line_number} has invalid format")
+            continue
+        digest, relative_path = match.groups()
+        if "\\" in relative_path:
+            errors.append(f"checksums.sha256 line {line_number} uses backslashes: {relative_path}")
+            continue
+        if relative_path.startswith("/"):
+            errors.append(f"checksums.sha256 line {line_number} path must be relative: {relative_path}")
+            continue
+        if relative_path not in package_files:
+            errors.append(f"checksums.sha256 line {line_number} references unknown file: {relative_path}")
+            continue
+        target_path = package_dir / relative_path.replace("/", os.sep)
+        if sha256_file(target_path) != digest:
+            errors.append(f"checksums.sha256 mismatch for {relative_path}")
+            continue
+        listed_paths.add(relative_path)
+
+    expected_checksum_targets = package_files - {"checksums.sha256"}
+    missing = sorted(expected_checksum_targets - listed_paths)
+    unexpected = sorted(listed_paths - expected_checksum_targets)
+    if missing:
+        errors.append(f"checksums.sha256 missing entries: {', '.join(missing[:5])}")
+    if unexpected:
+        errors.append(f"checksums.sha256 has extra entries: {', '.join(unexpected[:5])}")
 
 
 def write_session_archive(
@@ -365,7 +476,8 @@ def build_prod_upload_package(
         raise IntakeStorageError(f"refusing to overwrite existing prod package directory: {output_dir}")
 
     relative_files: list[str] = []
-    for language_code, session_dir in session_roots:
+    for language_value, session_dir in session_roots:
+        language_slug = resolve_language_config(language_value).corpus_slug
         runtime_errors = validate_runtime_tree(session_dir)
         if runtime_errors:
             raise IntakeStorageError(
@@ -373,14 +485,15 @@ def build_prod_upload_package(
             )
         for runtime_file in _runtime_output_files(session_dir):
             runtime_relative = relative_posix_path(runtime_file, session_dir)
-            package_relative = f"sessions/{language_code.lower()}/{session_dir.name}/{runtime_relative}"
+            package_relative = f"sessions/{language_slug}/{session_dir.name}/{runtime_relative}"
             _copy_file(runtime_file, output_dir / package_relative.replace("/", os.sep))
             relative_files.append(package_relative)
 
     if db_payload is not None:
         db_payload_path = output_dir / "db" / "import_payload.json"
         db_payload_path.parent.mkdir(parents=True, exist_ok=True)
-        db_payload_path.write_text(json.dumps(db_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        with db_payload_path.open("w", encoding="utf-8", newline="\n") as handle:
+            handle.write(json.dumps(db_payload, ensure_ascii=False, indent=2) + "\n")
         relative_files.append("db/import_payload.json")
 
     for config_root in config_roots:
@@ -391,18 +504,18 @@ def build_prod_upload_package(
 
     report_path = output_dir / "reports" / "upload_report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(
-        "\n".join(
-            [
-                f"# PROMAT Upload Package {upload_id}",
-                "",
-                f"Sessions: {', '.join(session_dir.name for _, session_dir in session_roots) or 'none'}",
-                f"Files: {len(relative_files)}",
-            ]
+    with report_path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(
+            "\n".join(
+                [
+                    f"# PROMAT Upload Package {upload_id}",
+                    "",
+                    f"Sessions: {', '.join(session_dir.name for _, session_dir in session_roots) or 'none'}",
+                    f"Files: {len(relative_files)}",
+                ]
+            )
+            + "\n"
         )
-        + "\n",
-        encoding="utf-8",
-    )
     relative_files.append("reports/upload_report.md")
 
     manifest_path = output_dir / "manifest.json"
@@ -414,7 +527,8 @@ def build_prod_upload_package(
         "sessions": [session_dir.name for _, session_dir in session_roots],
         "files": final_package_files,
     }
-    manifest_path.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    with manifest_path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n")
     relative_files.append("manifest.json")
 
     checksums_path = output_dir / "checksums.sha256"
