@@ -22,13 +22,15 @@
    1. Alert Base Container
    ============================================ */
 .md3-alert {
-  display: flex;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
   padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-4);
   border-radius: var(--radius-md);
   border-left: 4px solid transparent;
-  align-items: flex-start;
+  align-items: start;
   animation: alert-slide-down 300ms cubic-bezier(0.4, 0, 0.2, 1);
   /* Default: neutral surface */
   background-color: var(--md-sys-color-surface-container);
@@ -80,6 +82,9 @@
    3. Alert Icon
    ============================================ */
 .md3-alert__icon {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
   font-size: 1.5rem;
   width: 1.5rem;
   height: 1.5rem;
@@ -87,8 +92,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Align with first line of text */
-  margin-top: 1px;
+  margin-top: 0;
 }
 
 .md3-alert--inline .md3-alert__icon {
@@ -101,9 +105,7 @@
    4. Alert Content
    ============================================ */
 .md3-alert__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  display: contents;
   flex-grow: 1;
   min-width: 0; /* Allow text wrapping */
 }
@@ -114,6 +116,9 @@
 
 /* Alert Title - md3-title-small */
 .md3-alert__title {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
   font-family: var(--md-sys-typescale-title-small-font-family, inherit);
   font-size: var(--md-sys-typescale-title-small-font-size, 0.875rem);
   font-weight: var(--md-sys-typescale-title-small-font-weight, 500);
@@ -124,6 +129,8 @@
 
 /* Alert Text - md3-body-medium */
 .md3-alert__text {
+  grid-column: 1 / -1;
+  grid-row: 2;
   font-family: var(--md-sys-typescale-body-medium-font-family, inherit);
   font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
   font-weight: var(--md-sys-typescale-body-medium-font-weight, 400);
@@ -134,6 +141,8 @@
 
 /* Alert Message (legacy alias for text) */
 .md3-alert__message {
+  grid-column: 1 / -1;
+  grid-row: 2;
   font-family: var(--md-sys-typescale-body-medium-font-family, inherit);
   font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
   font-weight: var(--md-sys-typescale-body-medium-font-weight, 400);

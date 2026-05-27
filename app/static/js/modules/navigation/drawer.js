@@ -226,13 +226,15 @@ export class NavigationDrawer {
 
       this.setScrollLocked(true);
 
-      // Optional: Ersten Fokus setzen
-      const firstFocusable =
-        this.modalDrawer.querySelector("[data-drawer-initial-focus]") ||
+      // Focus the drawer shell, not the first link, to avoid a pointer-open focus ring.
+      const drawerShell =
+        this.modalDrawer.querySelector('[data-element="mobile-drawer-shell"]') ||
         this.modalDrawer.querySelector(focusableSelectors);
-      if (firstFocusable) {
-        // preventScroll: true verhindert Jump bei Fokus
-        setTimeout(() => firstFocusable.focus({ preventScroll: true }), 100);
+      if (drawerShell instanceof HTMLElement) {
+        if (!drawerShell.hasAttribute("tabindex")) {
+          drawerShell.setAttribute("tabindex", "-1");
+        }
+        setTimeout(() => drawerShell.focus({ preventScroll: true }), 100);
       }
     }
 

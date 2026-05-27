@@ -147,7 +147,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-content-header__back + .pm-content-header__title {
-  margin-top: var(--pm-content-header-breadcrumb-title-gap);
+  margin-top: var(--pm-content-header-back-title-gap);
 }
 
 @media (min-width: 980px) {
