@@ -19,7 +19,7 @@ Die aktive Source of Truth liegt ausschließlich unter `docs/spec/`:
 - `docs/spec/research-capabilities.md`
 - `docs/spec/intake-workbook.md`
 
-Für Änderungen an Architektur, Routing, Datenpfaden, Governance oder Repo-Struktur gelten zusätzlich die jeweils relevanten scoped `AGENTS.md` sowie das Runtime-Wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml` und `app/infra/docker-compose.prod.yml`.
+Für Änderungen an Architektur, Routing, Datenpfaden, Governance oder Repo-Struktur gelten zusätzlich die jeweils relevanten scoped `AGENTS.md` sowie das Runtime-Wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml` und `infra/docker-compose.prod.yml`.
 
 ## Weitere Doku-Bereiche
 

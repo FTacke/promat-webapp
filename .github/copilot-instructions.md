@@ -12,7 +12,7 @@ Before changing architecture, routing, data paths, governance files, or repo str
 4. `docs/spec/intake-workbook.md`
 5. root `AGENTS.md`
 6. the relevant scoped `AGENTS.md` in `app/`, `docs/`, or `scripts/`
-7. active runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `app/infra/docker-compose.prod.yml`
+7. active runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `infra/docker-compose.prod.yml`
 
 ## Working Rules
 

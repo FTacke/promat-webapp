@@ -49,7 +49,7 @@ def register_jwt_handlers() -> None:
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
-        if request.path.startswith(("/static/", "/favicon", "/robots.txt", "/health")):
+        if request.path.startswith(("/static/", "/favicon", "/robots.txt", "/health", "/ready")):
             return jsonify({"authenticated": False}), 200
 
         token_type = jwt_payload.get("type", "access")

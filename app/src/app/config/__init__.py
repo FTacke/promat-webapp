@@ -57,7 +57,9 @@ def _resolve_rate_limit_storage_uri(env_name: str) -> str:
 
 class BaseConfig:
     PROJECT_ROOT = Path(__file__).resolve().parents[3]
-    APP_ENV = _normalize_value(os.getenv("APP_ENV") or os.getenv("FLASK_ENV") or "production").lower()
+    APP_ENV = _normalize_value(os.getenv("PROMAT_ENV") or os.getenv("APP_ENV") or os.getenv("FLASK_ENV") or "production").lower()
+    PROMAT_ENV = APP_ENV
+    PROMAT_PUBLIC_BASE_URL = _normalize_value(os.getenv("PROMAT_PUBLIC_BASE_URL") or "")
 
     SECRET_KEY = _normalize_value(os.getenv("FLASK_SECRET_KEY")) or DEFAULT_SECRET_SENTINEL
     JWT_SECRET_KEY = _normalize_value(os.getenv("JWT_SECRET_KEY") or os.getenv("JWT_SECRET") or SECRET_KEY)
@@ -158,7 +160,9 @@ CONFIG_MAP = {
 
 def load_config(app, env_name: str | None = None) -> None:
     """Load environment-specific config into the Flask app."""
-    resolved_env = _normalize_value(env_name or os.getenv("FLASK_ENV") or os.getenv("APP_ENV") or "production").lower()
+    resolved_env = _normalize_value(
+        env_name or os.getenv("PROMAT_ENV") or os.getenv("FLASK_ENV") or os.getenv("APP_ENV") or "production"
+    ).lower()
     config_class = CONFIG_MAP.get(resolved_env, ProductionConfig)
     app.config.from_object(config_class)
     app.config["FLASK_ENV"] = resolved_env

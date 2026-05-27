@@ -31,6 +31,7 @@ def _reload_config_module(
     public_root.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setenv("FLASK_ENV", env_name)
+    monkeypatch.delenv("PROMAT_ENV", raising=False)
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(runtime_root))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(public_root))
     monkeypatch.setenv("AUTH_DATABASE_URL", f"sqlite:///{(tmp_path / 'auth.sqlite3').as_posix()}")
@@ -98,3 +99,21 @@ def test_production_load_config_accepts_redis_rate_limit_store(tmp_path: Path, m
 
     assert app.config["RATE_LIMIT_STORAGE_URI"] == "redis://rate_limit:6379/0"
     assert app.config["RATELIMIT_STORAGE_URI"] == "redis://rate_limit:6379/0"
+
+
+def test_promat_env_selects_production_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROMAT_ENV", "production")
+    reloaded = _reload_config_module(
+        tmp_path,
+        monkeypatch,
+        env_name="development",
+        rate_limit_storage_uri="redis://rate_limit:6379/0",
+    )
+    monkeypatch.setenv("PROMAT_ENV", "production")
+    reloaded = importlib.reload(config_module)
+    app = Flask(__name__)
+
+    reloaded.load_config(app)
+
+    assert app.config["FLASK_ENV"] == "production"
+    assert app.config["PROMAT_ENV"] == "production"

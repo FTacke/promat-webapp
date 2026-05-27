@@ -1323,6 +1323,65 @@ def test_access_request_page_does_not_load_removed_icon_cdns(auth_app: Flask) ->
     assert "cdn.jsdelivr.net/npm/bootstrap-icons" not in html
 
 
+def test_health_is_liveness_only(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"service": "promat-web", "status": "healthy"}
+
+
+def test_ready_checks_db_data_logs_and_rate_limit(auth_app: Flask, tmp_path: Path) -> None:
+    data_root = tmp_path / "runtime" / "data"
+    logs_dir = tmp_path / "runtime" / "logs"
+    data_root.mkdir(parents=True)
+    logs_dir.mkdir(parents=True)
+    auth_app.config.update(
+        DATA_ROOT=data_root,
+        LOGS_DIR=logs_dir,
+        CONFIG_ROOT=data_root / "config",
+        RATE_LIMIT_STORAGE_URI="redis://rate_limit:6379/0",
+        FLASK_ENV="production",
+    )
+    client = auth_app.test_client()
+
+    response = client.get("/ready")
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["status"] == "ready"
+    assert payload["checks"]["auth_db"]["ok"] is True
+    assert payload["checks"]["data_root"]["ok"] is True
+    assert payload["checks"]["logs_dir"]["ok"] is True
+    assert payload["checks"]["rate_limit_backend"]["ok"] is True
+
+
+def test_ready_rejects_production_memory_rate_limit(auth_app: Flask, tmp_path: Path) -> None:
+    data_root = tmp_path / "runtime" / "data"
+    logs_dir = tmp_path / "runtime" / "logs"
+    data_root.mkdir(parents=True)
+    logs_dir.mkdir(parents=True)
+    auth_app.config.update(
+        DATA_ROOT=data_root,
+        LOGS_DIR=logs_dir,
+        CONFIG_ROOT=data_root / "config",
+        RATE_LIMIT_STORAGE_URI="memory://",
+        FLASK_ENV="production",
+    )
+    client = auth_app.test_client()
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    payload = response.get_json()
+    assert payload["status"] == "not_ready"
+    assert payload["checks"]["rate_limit_backend"] == {
+        "ok": False,
+        "error": "RATE_LIMIT_STORAGE_URI must not be memory:// in production",
+    }
+
+
 def test_legacy_auth_snackbar_icon_path_is_removed() -> None:
     legacy_module = TEST_REPO_ROOT / "app" / "static" / "js" / "modules" / "auth" / "snackbar.js"
     snackbar_css = TEST_REPO_ROOT / "app" / "static" / "css" / "md3" / "components" / "snackbar.css"

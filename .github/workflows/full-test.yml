@@ -75,4 +75,4 @@ jobs:
 
       - name: Production compose config
         run: |
-          docker compose -f app/infra/docker-compose.prod.yml config > /tmp/promat/full-compose-config.txt
+          docker compose --env-file app/passwords.env.template -f infra/docker-compose.prod.yml config > /tmp/promat/full-compose-config.txt

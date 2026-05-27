@@ -9,7 +9,7 @@ For active PROMAT rules, consult these files first:
 3. `docs/spec/research-capabilities.md`
 4. `docs/spec/intake-workbook.md`
 5. relevant scoped `AGENTS.md`
-6. runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `app/infra/docker-compose.prod.yml`
+6. runtime wiring in `app/src/app/runtime_paths.py`, `app/src/app/config/__init__.py`, `docker-compose.dev-postgres.yml`, and `infra/docker-compose.prod.yml`
 
 `docs/spec/` is the only active source of truth for current factual rules.
 

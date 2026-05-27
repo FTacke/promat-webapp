@@ -95,7 +95,7 @@ def _is_trackable_response() -> bool:
         return False
     if request.path.startswith("/api/"):
         return False
-    if request.path in {"/favicon.ico", "/robots.txt", "/health"}:
+    if request.path in {"/favicon.ico", "/robots.txt", "/health", "/ready"}:
         return False
     if request.headers.get("HX-Request"):
         return False

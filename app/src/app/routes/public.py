@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 from typing import Any
 
 import re
@@ -11,7 +13,7 @@ from urllib.parse import unquote, urlparse
 
 from flask import Blueprint, abort, current_app, flash, g, jsonify, make_response, redirect, render_template, request, send_file, url_for
 from itsdangerous import BadSignature, URLSafeSerializer
-from sqlalchemy import event, text
+from sqlalchemy import event, inspect, text
 
 from ..auth import Role
 from ..auth import services as auth_services
@@ -664,20 +666,76 @@ def access_request_submit():
 
 @blueprint.get("/health")
 def health_check():
-    from ..extensions.sqlalchemy_ext import get_engine
+    return jsonify({"status": "healthy", "service": "promat-web"}), 200
 
-    checks = {"flask": {"ok": True}, "auth_db": {"ok": False, "error": None}}
+
+def _readiness_check_path(path: Path, *, mode: str) -> dict[str, Any]:
+    try:
+        if not path.exists():
+            return {"ok": False, "error": "missing"}
+        if not path.is_dir():
+            return {"ok": False, "error": "not_a_directory"}
+        if mode == "read":
+            try:
+                next(path.iterdir(), None)
+            except StopIteration:
+                pass
+            return {"ok": True, "error": None}
+        if mode == "write":
+            probe = path / ".promat-ready-probe"
+            probe.write_text("ok", encoding="utf-8")
+            probe.unlink(missing_ok=True)
+            return {"ok": True, "error": None}
+        return {"ok": False, "error": f"unknown_mode:{mode}"}
+    except OSError as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc.strerror or exc}"}
+
+
+def _readiness_payload(status: str, checks: dict[str, dict[str, Any]], status_code: int):
+    return jsonify({"status": status, "service": "promat-web", "checks": checks}), status_code
+
+
+@blueprint.get("/ready")
+def readiness_check():
+    checks: dict[str, dict[str, Any]] = {
+        "flask": {"ok": True, "error": None},
+        "auth_db": {"ok": False, "error": None},
+        "data_root": {"ok": False, "error": None},
+        "logs_dir": {"ok": False, "error": None},
+        "rate_limit_backend": {"ok": False, "error": None},
+    }
+
     try:
         engine = get_engine()
         if engine is None:
             raise RuntimeError("Auth engine not initialized")
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
+        inspector = inspect(engine)
+        if not inspector.has_table("users"):
+            raise RuntimeError("required table 'users' is missing")
         checks["auth_db"] = {"ok": True, "error": None}
-        return jsonify({"status": "healthy", "service": "promat-web", "checks": checks}), 200
     except Exception as exc:  # noqa: BLE001
         checks["auth_db"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
-        return jsonify({"status": "unhealthy", "service": "promat-web", "checks": checks}), 503
+
+    checks["data_root"] = _readiness_check_path(Path(current_app.config["DATA_ROOT"]), mode="read")
+    checks["logs_dir"] = _readiness_check_path(Path(current_app.config["LOGS_DIR"]), mode="write")
+
+    rate_limit_uri = str(current_app.config.get("RATE_LIMIT_STORAGE_URI") or "")
+    if not rate_limit_uri:
+        checks["rate_limit_backend"] = {"ok": False, "error": "RATE_LIMIT_STORAGE_URI is not configured"}
+    elif rate_limit_uri.lower() == "memory://" and current_app.config.get("FLASK_ENV") not in {"development", "dev", "testing", "test"}:
+        checks["rate_limit_backend"] = {"ok": False, "error": "RATE_LIMIT_STORAGE_URI must not be memory:// in production"}
+    else:
+        checks["rate_limit_backend"] = {"ok": True, "error": None}
+
+    if os.getenv("PROMAT_REQUIRE_RUNTIME_CONFIG", "").lower() in {"1", "true", "yes", "on"}:
+        config_root = Path(current_app.config["CONFIG_ROOT"])
+        checks["config_root"] = _readiness_check_path(config_root, mode="read")
+
+    if all(check["ok"] for check in checks.values()):
+        return _readiness_payload("ready", checks, 200)
+    return _readiness_payload("not_ready", checks, 503)
 
 
 @blueprint.get("/<ui_lang>/project")

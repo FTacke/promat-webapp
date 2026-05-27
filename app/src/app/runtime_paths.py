@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def is_dev_environment() -> bool:
-    env_name = (os.getenv("FLASK_ENV") or os.getenv("APP_ENV") or "production").lower()
+    env_name = (os.getenv("PROMAT_ENV") or os.getenv("FLASK_ENV") or os.getenv("APP_ENV") or "production").lower()
     return env_name in ("development", "dev")
 
 

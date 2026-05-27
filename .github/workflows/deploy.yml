@@ -1,0 +1,22 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, promat-prod]
+    steps:
+      - name: Deploy on server
+        run: |
+          set -euo pipefail
+          cd /srv/webapps/promat/app
+          git fetch --prune origin
+          git checkout --force "$GITHUB_SHA"
+          git reset --hard "$GITHUB_SHA"
+          bash scripts/deploy_prod.sh

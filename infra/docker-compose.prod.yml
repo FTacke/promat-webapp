@@ -1,19 +1,23 @@
+name: promat-prod
+
 services:
   db:
     image: postgres:15
     container_name: promat-db-prod
     environment:
-      POSTGRES_USER: promat_app
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
-      POSTGRES_DB: promat_auth
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
     volumes:
       - promat_postgres_prod:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "promat_app", "-d", "promat_auth"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
       timeout: 5s
       retries: 30
       start_period: 10s
+    networks:
+      - promat-network-prod
     restart: always
 
   rate_limit:
@@ -28,11 +32,13 @@ services:
       timeout: 5s
       retries: 30
       start_period: 10s
+    networks:
+      - promat-network-prod
     restart: always
 
   web:
     build:
-      context: ../..
+      context: ..
       dockerfile: app/Dockerfile
     container_name: promat-web-prod
     depends_on:
@@ -41,14 +47,21 @@ services:
       rate_limit:
         condition: service_healthy
     ports:
-      - "127.0.0.1:6000:5000"
+      - "127.0.0.1:8000:5000"
     environment:
-      FLASK_ENV: production
-      FLASK_DEBUG: "false"
+      PROMAT_ENV: ${PROMAT_ENV:-production}
+      FLASK_ENV: ${PROMAT_ENV:-production}
+      FLASK_DEBUG: ${FLASK_DEBUG:-false}
+      FLASK_SESSION_SECURE: ${FLASK_SESSION_SECURE:-true}
+      FLASK_SESSION_SAMESITE: ${FLASK_SESSION_SAMESITE:-lax}
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?FLASK_SECRET_KEY is required}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY is required}
-      AUTH_DATABASE_URL: postgresql+psycopg2://promat_app:${POSTGRES_PASSWORD}@db:5432/promat_auth
+      AUTH_DATABASE_URL: ${AUTH_DATABASE_URL:?AUTH_DATABASE_URL is required}
       RATE_LIMIT_STORAGE_URI: ${RATE_LIMIT_STORAGE_URI:?RATE_LIMIT_STORAGE_URI is required}
+      PROMAT_PUBLIC_BASE_URL: ${PROMAT_PUBLIC_BASE_URL:?PROMAT_PUBLIC_BASE_URL is required}
+      PROMAT_RUNTIME_ROOT: ${PROMAT_RUNTIME_ROOT:-/app}
+      PROMAT_PUBLIC_ROOT: ${PROMAT_PUBLIC_ROOT:-/app/data/public}
+      PROMAT_TEACHING_CONTENT_ROOT: ${PROMAT_TEACHING_CONTENT_ROOT:-/app/content/teaching}
       AUTH_ACCESS_REQUEST_MAIL_ENABLED: ${AUTH_ACCESS_REQUEST_MAIL_ENABLED:-true}
       AUTH_ACCESS_REQUEST_EMAIL: ${AUTH_ACCESS_REQUEST_EMAIL:?AUTH_ACCESS_REQUEST_EMAIL is required}
       AUTH_ACCESS_REQUEST_SUBJECT: ${AUTH_ACCESS_REQUEST_SUBJECT:-Zugangsanfrage "Pronunciation Matters"}
@@ -63,9 +76,6 @@ services:
       AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS: ${AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS:-10}
       AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS: ${AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS:-43200}
       AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS: ${AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS:-0.5}
-      PROMAT_RUNTIME_ROOT: ${PROMAT_RUNTIME_ROOT:-/app}
-      PROMAT_PUBLIC_ROOT: ${PROMAT_PUBLIC_ROOT:-/app/public}
-      PROMAT_TEACHING_CONTENT_ROOT: ${PROMAT_TEACHING_CONTENT_ROOT:-/app/content/teaching}
       APP_REPOSITORY_URL: ${APP_REPOSITORY_URL:-}
       APP_RELEASE_TAG: ${APP_RELEASE_TAG:-}
       APP_RELEASE_URL: ${APP_RELEASE_URL:-}
@@ -73,8 +83,7 @@ services:
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
     volumes:
-      - /srv/webapps/promat/data:/app/data
-      - /srv/webapps/promat/public:/app/public
+      - /srv/webapps/promat/data:/app/data:ro
       - /srv/webapps/promat/logs:/app/logs
     healthcheck:
       test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5).getcode() == 200 else 1)"]
@@ -82,6 +91,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+    networks:
+      - promat-network-prod
     restart: always
 
 volumes:
@@ -89,3 +100,7 @@ volumes:
     name: promat_postgres_prod
   promat_redis_prod:
     name: promat_redis_prod
+
+networks:
+  promat-network-prod:
+    name: promat-network-prod

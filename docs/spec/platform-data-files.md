@@ -560,8 +560,9 @@ scripts/research_data_intake/exports/{upload_id}/
 - Prod upload packages are explicit allowlist exports built from already validated runtime artifacts plus optional DB payloads or runtime-relevant config JSON.
 - Prod upload packages must not contain WAVs, TextGrids, XLSX workbooks, secure files, raw/source/alignment_source trees, MFA working directories, or other temporary artifacts.
 - The package builder is not a second importer: it must not reinterpret the original batch or re-derive truth from workbook prose once the runtime and import payload already exist.
-- Future server-side upload delivery targets `/srv/webapps_storage/promat/data/incoming/{upload_id}/` first, validates allowlist paths plus checksums, previews overwrites, merges into `/srv/webapps_storage/promat/data/production/`, performs optional DB upserts from `db/import_payload.json`, and moves failed uploads to quarantine rather than deleting productive files by omission.
-- Upload omission must never delete existing production files implicitly; deletion is always a separate explicit mechanism.
+- The initial v0.7 production server model is data-only: prod upload delivery targets `/srv/webapps_storage/promat/data/incoming/{upload_id}/` first, validates allowlist paths plus checksums plus file counts, stages a new release under `data/releases/{release_id}/`, and promotes with an atomic `data/current` symlink switch instead of writing directly into the live target.
+- The initial v0.7 production deployment has no separate `/srv/webapps/promat/media` or `/app/media` bind mount. A separate media root may be added later only if application code gains a real runtime need for it and the platform spec is updated first.
+- Upload omission must never delete existing production files implicitly; deletion is always a separate explicit mechanism, and failed incoming or staging trees stay in place until explicit cleanup approval.
 
 ## Active Metadata Semantics
 

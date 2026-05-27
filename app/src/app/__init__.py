@@ -317,6 +317,7 @@ def register_auth_context(app: Flask) -> None:
             "/favicon",
             "/robots.txt",
             "/health",
+            "/ready",
         )
 
         path = request.path
@@ -351,6 +352,7 @@ def register_auth_context(app: Flask) -> None:
             "/favicon",
             "/robots.txt",
             "/health",
+            "/ready",
             "/auth/account/password",
             "/auth/password/reset",
             "/auth/password/forgot",
