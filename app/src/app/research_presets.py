@@ -484,8 +484,8 @@ def load_phenomena_presets(language_slug: str) -> tuple[PhenomenaPreset, ...]:
         )
 
     raw_presets = payload.get("presets")
-    if not isinstance(raw_presets, list) or not raw_presets:
-        raise ResearchConfigError(f"Phenomena preset file must contain a non-empty 'presets' list: {path}")
+    if not isinstance(raw_presets, list):
+        raise ResearchConfigError(f"Phenomena preset file must contain a 'presets' list: {path}")
 
     presets: list[PhenomenaPreset] = []
     preset_ids: set[str] = set()

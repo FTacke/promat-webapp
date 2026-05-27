@@ -5,6 +5,7 @@ import os
 import sys
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -26,6 +27,8 @@ from app.auth.models import Base  # noqa: E402
 from app.research_metadata import ResearchPerson, ResearchSession, ResearchSessionExposure  # noqa: E402
 import import_batch_to_production as production_importer  # noqa: E402
 from intake_workbook_reader import load_intake_workbook  # noqa: E402
+from intake_batch_common import working_text_mfa_state_path  # noqa: E402
+from textgrid_support import TextGridInterval, spoken_intervals  # noqa: E402
 
 
 def _set_runtime_env(tmp_path: Path, monkeypatch) -> Path:
@@ -388,6 +391,26 @@ def test_load_intake_workbook_derives_session_id_and_ignores_out_of_scope_rows(t
     assert workbook_data.warnings == (
         "Research_Session_Intake row 2 contains session_id='SHOULD-BE-IGNORED'; ignored because session_id is derived.",
     )
+
+
+def test_load_intake_workbook_accepts_full_l1_vocabulary(tmp_path: Path) -> None:
+    workbook_path = _write_workbook(tmp_path)
+    workbook = load_workbook(workbook_path)
+    person_sheet = workbook["Research_Person"]
+    person_sheet["C2"] = "AR"
+    person_sheet["D2"] = "PL; CZ; ZH; unknown"
+    person_sheet["E2"] = "PL"
+    person_sheet["F2"] = "unknown"
+    workbook.save(workbook_path)
+    workbook.close()
+
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+
+    person = workbook_data.persons["ES-L-0001"]
+    assert person.l1 == "AR"
+    assert person.l1_additional == ("PL", "CZ", "ZH", "unknown")
+    assert person.mother_l1 == "PL"
+    assert person.father_l1 == "unknown"
 
 
 def test_load_intake_workbook_accepts_deprecated_consent_column_with_warning(tmp_path: Path) -> None:
@@ -776,3 +799,245 @@ def test_run_text_pipeline_dry_run_does_not_require_written_manifest(tmp_path: P
         "Planned MFA for EN-L-0008: executable=docker",
         "Planned working text alignment import for EN-L-0008 after MFA outputs are available.",
     ]
+
+
+def test_run_text_pipeline_reuses_current_text_alignment_outputs(tmp_path: Path, monkeypatch) -> None:
+    batch_dir = tmp_path / "english_batch_20260525"
+    person_id = "EN-L-0008"
+    source_wav = batch_dir / "working" / person_id / "text" / "source" / "text.wav"
+    source_textgrid = batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid"
+    alignment_json = batch_dir / "working" / person_id / "text" / "alignment" / "text.json"
+    manifest_path = batch_dir / "working" / person_id / "text" / "mfa_manifest.json"
+    state_path = working_text_mfa_state_path(batch_dir, person_id)
+    text_catalog_path = tmp_path / "text.json"
+
+    source_wav.parent.mkdir(parents=True, exist_ok=True)
+    source_textgrid.parent.mkdir(parents=True, exist_ok=True)
+    source_wav.write_bytes(b"wav")
+    source_textgrid.write_text("textgrid", encoding="utf-8")
+    alignment_json.write_text('{"person_id": "EN-L-0008", "task": "text", "items": []}\n', encoding="utf-8")
+    text_catalog_path.write_text('{"task": "text", "language": "en", "items": []}\n', encoding="utf-8")
+
+    signatures = {
+        "source_wav": production_importer._file_signature(source_wav),
+        "source_textgrid": production_importer._file_signature(source_textgrid),
+        "text_source_json": production_importer._file_signature(text_catalog_path),
+    }
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "person_id": person_id,
+                "task": "text",
+                "language_code": "en",
+                "language": "english",
+                "preparation_version": "2026-05-27-text-mfa-v2",
+                "source_signatures": signatures,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    state_path.write_text(
+        json.dumps(
+            {
+                "person_id": person_id,
+                "task": "text",
+                "language_code": "en",
+                "language": "english",
+                "preparation_version": "2026-05-27-text-mfa-v2",
+                "source_signatures": signatures,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(production_importer, "_text_task_catalog_path", lambda target_language: text_catalog_path)
+    monkeypatch.setattr(production_importer, "prepare_text_mfa_for_person", lambda **kwargs: (_ for _ in ()).throw(AssertionError("prepare should not run for a current cache")))
+    monkeypatch.setattr(production_importer, "run_text_mfa_for_person", lambda **kwargs: (_ for _ in ()).throw(AssertionError("run MFA should not run for a current cache")))
+    monkeypatch.setattr(production_importer, "import_text_mfa_alignment_for_person", lambda **kwargs: (_ for _ in ()).throw(AssertionError("import should not run for a current cache")))
+
+    notes = production_importer._run_text_pipeline(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        target_language="en",
+        mfa_executable="docker",
+        dry_run=False,
+    )
+
+    assert notes == ["Reused text MFA outputs for EN-L-0008: working alignment JSON is current."]
+
+
+def test_run_text_pipeline_imports_cached_mfa_outputs_without_rerun(tmp_path: Path, monkeypatch) -> None:
+    batch_dir = tmp_path / "english_batch_20260525"
+    person_id = "EN-L-0009"
+    source_wav = batch_dir / "working" / person_id / "text" / "source" / "text.wav"
+    source_textgrid = batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid"
+    mfa_output_dir = batch_dir / "working" / person_id / "text" / "mfa_output"
+    manifest_path = batch_dir / "working" / person_id / "text" / "mfa_manifest.json"
+    state_path = working_text_mfa_state_path(batch_dir, person_id)
+    text_catalog_path = tmp_path / "text.json"
+
+    source_wav.parent.mkdir(parents=True, exist_ok=True)
+    source_textgrid.parent.mkdir(parents=True, exist_ok=True)
+    mfa_output_dir.mkdir(parents=True, exist_ok=True)
+    source_wav.write_bytes(b"wav")
+    source_textgrid.write_text("textgrid", encoding="utf-8")
+    (mfa_output_dir / "segment.TextGrid").write_text("aligned", encoding="utf-8")
+    text_catalog_path.write_text('{"task": "text", "language": "en", "items": []}\n', encoding="utf-8")
+
+    signatures = {
+        "source_wav": production_importer._file_signature(source_wav),
+        "source_textgrid": production_importer._file_signature(source_textgrid),
+        "text_source_json": production_importer._file_signature(text_catalog_path),
+    }
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "person_id": person_id,
+                "task": "text",
+                "language_code": "en",
+                "language": "english",
+                "preparation_version": "2026-05-27-text-mfa-v2",
+                "source_signatures": signatures,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    state_path.write_text(
+        json.dumps(
+            {
+                "person_id": person_id,
+                "task": "text",
+                "language_code": "en",
+                "language": "english",
+                "preparation_version": "2026-05-27-text-mfa-v2",
+                "source_signatures": signatures,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(production_importer, "_text_task_catalog_path", lambda target_language: text_catalog_path)
+    monkeypatch.setattr(production_importer, "prepare_text_mfa_for_person", lambda **kwargs: (_ for _ in ()).throw(AssertionError("prepare should not run when cached MFA outputs are available")))
+    monkeypatch.setattr(production_importer, "run_text_mfa_for_person", lambda **kwargs: (_ for _ in ()).throw(AssertionError("run MFA should not run when cached MFA outputs are available")))
+
+    import_calls: list[str] = []
+
+    def fake_import_text_mfa_alignment_for_person(**kwargs):
+        import_calls.append(kwargs["person_id"])
+        return SimpleNamespace(imported=True, skipped_reason=None, item_count=4, token_count=11)
+
+    monkeypatch.setattr(production_importer, "import_text_mfa_alignment_for_person", fake_import_text_mfa_alignment_for_person)
+
+    notes = production_importer._run_text_pipeline(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        target_language="en",
+        mfa_executable="docker",
+        dry_run=False,
+    )
+
+    assert import_calls == [person_id]
+    assert notes == ["Imported cached text alignment for EN-L-0009: items=4 tokens=11"]
+
+
+def test_run_text_pipeline_falls_back_to_docker_when_host_mfa_missing(tmp_path: Path, monkeypatch) -> None:
+    batch_dir = tmp_path / "spanish_batch_20260525"
+    person_id = "ES-L-0010"
+    source_wav = batch_dir / "working" / person_id / "text" / "source" / "text.wav"
+    source_textgrid = batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid"
+    text_catalog_path = tmp_path / "text.json"
+
+    source_wav.parent.mkdir(parents=True, exist_ok=True)
+    source_textgrid.parent.mkdir(parents=True, exist_ok=True)
+    source_wav.write_bytes(b"wav")
+    source_textgrid.write_text("textgrid", encoding="utf-8")
+    text_catalog_path.write_text('{"task": "text", "language": "es", "items": []}\n', encoding="utf-8")
+
+    monkeypatch.setattr(production_importer, "_text_task_catalog_path", lambda target_language: text_catalog_path)
+    monkeypatch.setattr(production_importer, "check_mfa_available", lambda mfa_executable="mfa": "docker-version" if mfa_executable == "docker" else (_ for _ in ()).throw(RuntimeError("mfa missing")))
+
+    prepare_calls: list[str] = []
+    run_calls: list[str] = []
+
+    def fake_prepare_text_mfa_for_person(**kwargs):
+        prepare_calls.append(kwargs["person_id"])
+        return {"segments": 3, "warnings": []}
+
+    def fake_run_text_mfa_for_person(**kwargs):
+        run_calls.append(kwargs["mfa_executable"])
+        return {
+            "person_id": kwargs["person_id"],
+            "language_code": "es",
+            "language_slug": "spanish",
+            "mfa_executable": kwargs["mfa_executable"],
+            "mfa_version": "docker-version",
+            "command": ["docker"],
+            "mode": "write",
+            "output": "ok",
+        }
+
+    def fake_import_text_mfa_alignment_for_person(**kwargs):
+        return SimpleNamespace(imported=True, skipped_reason=None, item_count=3, token_count=9)
+
+    monkeypatch.setattr(production_importer, "prepare_text_mfa_for_person", fake_prepare_text_mfa_for_person)
+    monkeypatch.setattr(production_importer, "run_text_mfa_for_person", fake_run_text_mfa_for_person)
+    monkeypatch.setattr(production_importer, "import_text_mfa_alignment_for_person", fake_import_text_mfa_alignment_for_person)
+
+    notes = production_importer._run_text_pipeline(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        target_language="es",
+        mfa_executable="mfa",
+        dry_run=False,
+    )
+
+    assert prepare_calls == [person_id]
+    assert run_calls == ["docker"]
+    assert any(note.startswith("Falling back to Docker-backed MFA for ES-L-0010") for note in notes)
+    assert notes[-1] == "Imported working text alignment for ES-L-0010: items=3 tokens=9"
+
+
+def test_detect_working_text_requires_preparation_when_alignment_json_missing(tmp_path: Path) -> None:
+    batch_dir = tmp_path / "english_batch_20260525"
+    person_id = "EN-L-0011"
+    (batch_dir / "working" / person_id / "text" / "source").mkdir(parents=True, exist_ok=True)
+    (batch_dir / "working" / person_id / "text" / "alignment").mkdir(parents=True, exist_ok=True)
+    (batch_dir / "working" / person_id / "text" / "source" / "text.wav").write_bytes(b"wav")
+    (batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid").write_text("textgrid", encoding="utf-8")
+
+    plan = production_importer._detect_working_task(
+        batch_dir=batch_dir,
+        person_id=person_id,
+        task_key="text",
+        target_language="en",
+        sync_tasks=True,
+        speaker_type="learner",
+    )
+
+    assert plan.action == "available"
+    assert plan.status == "needs_preparation"
+    assert plan.reason == "text source/TextGrid are present but alignment/text.json is missing or stale"
+
+
+def test_spoken_intervals_ignores_numbered_silence_labels() -> None:
+    intervals = [
+        TextGridInterval(start_seconds=0.0, end_seconds=1.0, text="Hallo"),
+        TextGridInterval(start_seconds=1.0, end_seconds=2.0, text="silent1"),
+        TextGridInterval(start_seconds=2.0, end_seconds=3.0, text="Welt"),
+    ]
+
+    spoken = spoken_intervals(intervals)
+
+    assert [interval.text for interval in spoken] == ["Hallo", "Welt"]

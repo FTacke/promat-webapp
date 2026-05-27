@@ -389,17 +389,6 @@ def build_prod_upload_package(
             _copy_file(config_file, output_dir / package_relative.replace("/", os.sep))
             relative_files.append(package_relative)
 
-    manifest_payload = {
-        "upload_id": upload_id,
-        "built_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "sessions": [session_dir.name for _, session_dir in session_roots],
-        "files": sorted(relative_files),
-    }
-    manifest_path = output_dir / "manifest.json"
-    manifest_path.parent.mkdir(parents=True, exist_ok=True)
-    manifest_path.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    relative_files.append("manifest.json")
-
     report_path = output_dir / "reports" / "upload_report.md"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
@@ -415,6 +404,18 @@ def build_prod_upload_package(
         encoding="utf-8",
     )
     relative_files.append("reports/upload_report.md")
+
+    manifest_path = output_dir / "manifest.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    final_package_files = sorted([*relative_files, "manifest.json", "checksums.sha256"])
+    manifest_payload = {
+        "upload_id": upload_id,
+        "built_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "sessions": [session_dir.name for _, session_dir in session_roots],
+        "files": final_package_files,
+    }
+    manifest_path.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    relative_files.append("manifest.json")
 
     checksums_path = output_dir / "checksums.sha256"
     write_sha256_checksums(output_dir, sorted(relative_files), output_path=checksums_path)

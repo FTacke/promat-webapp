@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -11,7 +13,13 @@ SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from intake_batch_common import resolve_batch_dir, working_text_manifest_path, working_text_mfa_corpus_dir, working_text_mfa_output_dir  # noqa: E402
+from intake_batch_common import (  # noqa: E402
+    resolve_batch_dir,
+    working_text_manifest_path,
+    working_text_mfa_corpus_dir,
+    working_text_mfa_output_dir,
+    working_text_mfa_state_path,
+)
 from language_config import resolve_language_config  # noqa: E402
 
 
@@ -31,17 +39,30 @@ def parse_args() -> argparse.Namespace:
 
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, capture_output=True, text=True, check=False)
+    return subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
 
 
 def _extract_output(process: subprocess.CompletedProcess[str]) -> str:
     return (process.stdout or "").strip() or (process.stderr or "").strip()
 
 
-def _docker_cache_dir(batch_dir: Path) -> Path:
-    cache_dir = batch_dir / ".mfa_cache"
+def _load_json_object(path: Path) -> dict[str, object] | None:
+    if not path.exists():
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict):
+        return payload
+    return None
+
+
+def _docker_cache_dir(batch_dir: Path, person_id: str, cache_key: str) -> Path:
+    cache_dir = batch_dir / ".mfa_cache" / person_id / cache_key
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
+
+
+def _manifest_cache_key(manifest_path: Path) -> str:
+    return hashlib.sha256(manifest_path.read_bytes()).hexdigest()[:16]
 
 
 def _docker_volume(path: Path, container_path: str) -> str:
@@ -87,9 +108,10 @@ def run_text_mfa_for_person(
     mfa_output_dir.mkdir(parents=True, exist_ok=True)
 
     version = check_mfa_available(mfa_executable)
+    cache_key = _manifest_cache_key(manifest_path)
     if mfa_executable == "docker":
         docker_image = _docker_image()
-        cache_dir = _docker_cache_dir(batch_dir)
+        cache_dir = _docker_cache_dir(batch_dir, normalized_person_id, cache_key)
         docker_shell_command = " && ".join(
             [
                 f"mfa model download acoustic {config.mfa_acoustic_model}",
@@ -145,12 +167,30 @@ def run_text_mfa_for_person(
         raise RuntimeError(
             f"MFA alignment failed for {normalized_person_id}: {output or 'no output'}"
         )
+    state_path = working_text_mfa_state_path(batch_dir, normalized_person_id)
+    manifest_payload = _load_json_object(manifest_path) or {}
+    state_payload = {
+        "person_id": normalized_person_id,
+        "language_code": config.code,
+        "language_slug": config.corpus_slug,
+        "language": config.corpus_slug,
+        "mfa_executable": mfa_executable,
+        "mfa_version": version,
+        "cache_key": cache_key,
+        "state_version": "2026-05-27-text-mfa-run-v1",
+        "manifest_path": str(manifest_path.relative_to(batch_dir)).replace("\\", "/"),
+        "mfa_output_dir": str(mfa_output_dir.relative_to(batch_dir)).replace("\\", "/"),
+        "preparation_version": manifest_payload.get("preparation_version"),
+        "source_signatures": manifest_payload.get("source_signatures"),
+    }
+    state_path.write_text(json.dumps(state_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return {
         "person_id": normalized_person_id,
         "language_code": config.code,
         "language_slug": config.corpus_slug,
         "mfa_executable": mfa_executable,
         "mfa_version": version,
+        "cache_key": cache_key,
         "command": command,
         "mode": "write",
         "output": output,

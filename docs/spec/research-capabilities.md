@@ -115,6 +115,7 @@ This file is the binding source of truth for the active research capability mode
 - In that empty-runtime case, `speakers` must render its normal final page with a plain empty state instead of protected planning copy or dummy cards.
 - In that empty-runtime case, `comparison` must render its normal final workbench with plain empty result areas instead of protected planning copy or dummy rows.
 - `phenomena` is productive for a corpus when the canonical task catalogs and `phenomena_presets.json` load successfully through the shared research-player config layer.
+- A canonical `phenomena_presets.json` may contain an empty `presets` list for corpora that currently have no curated preset items yet; that is a valid config state and should yield an empty productive overview rather than a config failure.
 - When a corpus has no runtime sessions, `phenomena` overview entries must collapse to a plain empty state rather than showing planning placeholders or set lists detached from runtime availability.
 - Protected planning placeholders for `speakers`, `comparison`, and `phenomena` are retired; headings such as `Geplante Übersicht`, `Geplante Filter`, `Struktureller Stand`, or `Geplante Oberfläche` are not part of the active protected research contract.
 - Corpus-specific productive readiness must be expressed through the capability layer, not through corpus-specific access exceptions or ad hoc router branches.

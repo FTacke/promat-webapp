@@ -45,6 +45,7 @@ Batch-lokale Zielstruktur:
 - `working/{person_id}/text/mfa_corpus/`
 - `working/{person_id}/text/mfa_output/`
 - `working/{person_id}/text/mfa_manifest.json`
+- `working/{person_id}/text/mfa_state.json`
 - `working/{person_id}/interview/source/interview.wav`
 - `working/{person_id}/interview/alignment/interview.json`
 
@@ -54,6 +55,7 @@ Regeln:
 - Der Organizer arbeitet inkrementell pro `person_id` und Task.
 - Für `wordlist` und `text` braucht der Organizer klassifizierte `source`-WAVs plus alignment source TextGrid.
 - Für `interview` braucht der Organizer eine klassifizierte `source`-WAV plus eine klassifizierte alignment-source JSON-Datei.
+- Die Text-MFA schreibt zusätzlich eine task-lokale `mfa_state.json`, damit unveränderte Inputs die aktuelle Textausgabe wiederverwenden können, statt MFA erneut auszuführen.
 - `raw` kann als Fallback genutzt werden wenn kein `source`-WAV vorhanden ist; das Archiv dokumentiert dies in `task_audio_roles`.
 - Native Speaker mit `-N-` bleiben für `interview` neutral `not_expected_for_native_speaker`.
 
@@ -178,6 +180,10 @@ Archiv-Session validieren:
 Prod-Upload-Paket bauen:
 
 `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/build_prod_upload_package.py --language spanish --session-id ES-L-0001-2026-S01 --db-payload C:/dev/promat_data_archive/batches/spanish_batch_20260421/import_payload.json`
+
+Initiales Prod-Upload-Paket fuer alle vorhandenen Runtime-Sessions plus Research-Player-Config bauen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/build_prod_upload_package.py --all-runtime-sessions --include-research-player-config --db-payload C:/dev/promat_data_archive/batches/french_batch_20260527/import_payload.json --upload-id promat_upload_YYYYMMDDTHHMMSSZ_initial_runtime`
 
 Prod-Upload-Paket validieren:
 

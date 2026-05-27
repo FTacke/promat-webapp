@@ -54,6 +54,7 @@ from intake_batch_common import (  # noqa: E402
     working_intake_state_path,
     working_source_path,
     working_task_root,
+    working_text_mfa_state_path,
 )
 from intake_storage import validate_runtime_tree, write_batch_archive_reports, write_secure_person_export, write_session_archive  # noqa: E402
 from intake_workbook_reader import IntakeExposureRow, IntakePersonRow, IntakeSessionRow, SecurePersonIntakeRow, SessionLinkKey, load_intake_workbook  # noqa: E402
@@ -276,6 +277,83 @@ def _text_task_catalog_path(target_language: str) -> Path:
     return REPO_ROOT / "data" / "config" / "research_player" / language_slug / "task_catalogs" / "text.json"
 
 
+def _file_signature(path: Path) -> dict[str, object]:
+    stat_result = path.stat()
+    return {
+        "path": str(path),
+        "size": stat_result.st_size,
+        "mtime_ns": stat_result.st_mtime_ns,
+    }
+
+
+def _load_json_object(path: Path) -> dict[str, object] | None:
+    if not path.exists():
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict):
+        return payload
+    return None
+
+
+def _normalize_signature_value(value: object) -> object:
+    if isinstance(value, dict):
+        normalized: dict[str, object] = {}
+        for key, nested_value in value.items():
+            if key == "path" and isinstance(nested_value, str):
+                normalized[key] = nested_value.lower()
+            else:
+                normalized[key] = _normalize_signature_value(nested_value)
+        return normalized
+    if isinstance(value, list):
+        return [_normalize_signature_value(item) for item in value]
+    return value
+
+
+def _text_task_input_signatures(batch_dir: Path, person_id: str, target_language: str) -> dict[str, object] | None:
+    text_catalog_path = _text_task_catalog_path(target_language)
+    if not text_catalog_path.exists():
+        return None
+    source_wav = working_source_path(batch_dir, person_id, "text")
+    source_textgrid = working_alignment_path(batch_dir, person_id, "text")
+    if not source_wav.exists() or not source_textgrid.exists():
+        return None
+    return {
+        "language_code": resolve_language_config(target_language).code,
+        "language_slug": resolve_language_config(target_language).corpus_slug,
+        "source_signatures": {
+            "source_wav": _file_signature(source_wav),
+            "source_textgrid": _file_signature(source_textgrid),
+            "text_source_json": _file_signature(text_catalog_path),
+        },
+    }
+
+
+def _text_task_state_matches(batch_dir: Path, person_id: str, target_language: str, *, require_alignment_json: bool) -> bool:
+    signatures = _text_task_input_signatures(batch_dir, person_id, target_language)
+    if signatures is None:
+        return False
+    task_root = working_task_root(batch_dir, person_id, "text")
+    manifest_path = task_root / "mfa_manifest.json"
+    state_path = working_text_mfa_state_path(batch_dir, person_id)
+    alignment_json = task_root / "alignment" / "text.json"
+    if require_alignment_json and not alignment_json.exists():
+        return False
+    manifest_payload = _load_json_object(manifest_path)
+    state_payload = _load_json_object(state_path)
+    if manifest_payload is None or state_payload is None:
+        return False
+    expected_signatures = _normalize_signature_value(signatures["source_signatures"])
+    return (
+        _normalize_signature_value(manifest_payload.get("source_signatures")) == expected_signatures
+        and _normalize_signature_value(state_payload.get("source_signatures")) == expected_signatures
+        and manifest_payload.get("preparation_version") == state_payload.get("preparation_version")
+        and manifest_payload.get("language_code") == signatures["language_code"]
+        and manifest_payload.get("language") == signatures["language_slug"]
+        and state_payload.get("language_code") == signatures["language_code"]
+        and state_payload.get("language") == signatures["language_slug"]
+    )
+
+
 def _ensure_db_schema(database_url: str, *, should_write_db: bool, dry_run: bool) -> str | None:
     if not should_write_db or dry_run:
         return None
@@ -321,6 +399,8 @@ def _run_text_pipeline(
         raise ProductionImportError(f"Missing text task catalog for MFA prep: {text_catalog_path}")
     source_wav = batch_dir / "working" / person_id / "text" / "source" / "text.wav"
     source_textgrid = batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid"
+    alignment_json = batch_dir / "working" / person_id / "text" / "alignment" / "text.json"
+    mfa_output_dir = batch_dir / "working" / person_id / "text" / "mfa_output"
     if not source_wav.exists() or source_wav.stat().st_size == 0 or not source_textgrid.exists() or source_textgrid.stat().st_size == 0:
         if dry_run:
             return [
@@ -329,6 +409,42 @@ def _run_text_pipeline(
         return [
             f"Skipped text MFA for {person_id}: working text inputs are not present; task will remain missing unless existing runtime artifacts are available."
         ]
+
+    if _text_task_state_matches(batch_dir, person_id, target_language, require_alignment_json=True):
+        return [f"Reused text MFA outputs for {person_id}: working alignment JSON is current."]
+
+    if _text_task_state_matches(batch_dir, person_id, target_language, require_alignment_json=False) and mfa_output_dir.exists() and any(mfa_output_dir.iterdir()):
+        if dry_run:
+            return [f"Planned text alignment import for {person_id}: cached MFA outputs are current."]
+        try:
+            import_result = import_text_mfa_alignment_for_person(
+                batch_dir=batch_dir,
+                person_id=person_id,
+                cli_language=target_language,
+                dry_run=dry_run,
+                fail_on_missing_output=True,
+                replace_existing=True,
+            )
+        except ValueError as exc:
+            notes = [f"Text MFA cached import fallback for {person_id}: {exc}"]
+            import_result = import_text_mfa_alignment_for_person(
+                batch_dir=batch_dir,
+                person_id=person_id,
+                cli_language=target_language,
+                dry_run=dry_run,
+                fail_on_missing_output=False,
+                replace_existing=True,
+            )
+            for warning in import_result.warnings:
+                notes.append(f"Text MFA import warning for {person_id}: {warning}")
+            notes.append(
+                f"Imported cached text alignment for {person_id} with warnings: items={import_result.item_count} tokens={import_result.token_count}"
+            )
+            return notes
+        if import_result.skipped_reason is not None:
+            raise ProductionImportError(f"text MFA import skipped unexpectedly for {person_id}: {import_result.skipped_reason}")
+        return [f"Imported cached text alignment for {person_id}: items={import_result.item_count} tokens={import_result.token_count}"]
+
     prepare_result = prepare_text_mfa_for_person(
         batch_dir=batch_dir,
         person_id=person_id,
@@ -347,21 +463,49 @@ def _run_text_pipeline(
         notes.append(f"Planned MFA for {person_id}: executable={mfa_executable}")
         notes.append(f"Planned working text alignment import for {person_id} after MFA outputs are available.")
         return notes
+
+    resolved_mfa_executable = mfa_executable
+    try:
+        mfa_version = check_mfa_available(resolved_mfa_executable)
+    except RuntimeError as exc:
+        if resolved_mfa_executable != "docker":
+            try:
+                mfa_version = check_mfa_available("docker")
+                resolved_mfa_executable = "docker"
+                notes.append(f"Falling back to Docker-backed MFA for {person_id}: {exc}")
+            except RuntimeError:
+                raise
+        else:
+            raise
+
     mfa_result = run_text_mfa_for_person(
         batch_dir=batch_dir,
         person_id=person_id,
         language=target_language,
-        mfa_executable=mfa_executable,
+        mfa_executable=resolved_mfa_executable,
         dry_run=dry_run,
     )
-    import_result = import_text_mfa_alignment_for_person(
-        batch_dir=batch_dir,
-        person_id=person_id,
-        cli_language=target_language,
-        dry_run=dry_run,
-        fail_on_missing_output=True,
-        replace_existing=True,
-    )
+    try:
+        import_result = import_text_mfa_alignment_for_person(
+            batch_dir=batch_dir,
+            person_id=person_id,
+            cli_language=target_language,
+            dry_run=dry_run,
+            fail_on_missing_output=True,
+            replace_existing=True,
+        )
+    except ValueError as exc:
+        notes.append(f"Text MFA import fallback for {person_id}: {exc}")
+        import_result = import_text_mfa_alignment_for_person(
+            batch_dir=batch_dir,
+            person_id=person_id,
+            cli_language=target_language,
+            dry_run=dry_run,
+            fail_on_missing_output=False,
+            replace_existing=True,
+        )
+        for warning in import_result.warnings:
+            notes.append(f"Text MFA import warning for {person_id}: {warning}")
     if import_result.skipped_reason is not None:
         raise ProductionImportError(f"text MFA import skipped unexpectedly for {person_id}: {import_result.skipped_reason}")
     notes.append(f"Ran MFA for {person_id}: executable={mfa_result['mfa_executable']} version={mfa_result['mfa_version']}")
@@ -465,6 +609,7 @@ def _detect_working_task(
     batch_dir: Path,
     person_id: str,
     task_key: str,
+    target_language: str,
     sync_tasks: bool,
     speaker_type: str | None,
 ) -> TaskSyncPlan:
@@ -523,26 +668,37 @@ def _detect_working_task(
         )
 
     if task_key == "text":
-        if not source_wav.exists() or not working_alignment_json.exists():
+        if not source_wav.exists() or not alignment_textgrid.exists():
             return TaskSyncPlan(
                 task_key=task_key,
                 action="skip",
                 status="incomplete",
-                reason="text source/alignment JSON missing",
+                reason="text source/TextGrid missing",
                 working_root=task_root,
                 source_wav=source_wav if source_wav.exists() else None,
                 alignment_textgrid=alignment_textgrid if alignment_textgrid.exists() else None,
                 working_alignment_json=working_alignment_json if working_alignment_json.exists() else None,
             )
+        if working_alignment_json.exists() and _text_task_state_matches(batch_dir, person_id, target_language, require_alignment_json=True):
+            return TaskSyncPlan(
+                task_key=task_key,
+                action="sync" if sync_tasks else "available",
+                status="ready",
+                reason=None,
+                working_root=task_root,
+                source_wav=source_wav,
+                alignment_textgrid=alignment_textgrid,
+                working_alignment_json=working_alignment_json,
+            )
         return TaskSyncPlan(
             task_key=task_key,
-            action="sync" if sync_tasks else "available",
-            status="ready",
-            reason=None,
+            action="available",
+            status="needs_preparation",
+            reason="text source/TextGrid are present but alignment/text.json is missing or stale",
             working_root=task_root,
             source_wav=source_wav,
             alignment_textgrid=alignment_textgrid if alignment_textgrid.exists() else None,
-            working_alignment_json=working_alignment_json,
+            working_alignment_json=working_alignment_json if working_alignment_json.exists() else None,
         )
 
     interview_source = source_wav.exists()
@@ -680,6 +836,7 @@ def _build_import_plans(
                 batch_dir=batch_dir,
                 person_id=workbook_session.person_id,
                 task_key=task_key,
+                target_language=workbook_session.target_language,
                 sync_tasks=sync_tasks,
                 speaker_type=person.speaker_type,
             )

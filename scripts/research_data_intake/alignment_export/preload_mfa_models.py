@@ -41,7 +41,7 @@ def _selected_configs(args: argparse.Namespace) -> list[object]:
 
 
 def _run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, capture_output=True, text=True, check=False)
+    return subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
 
 
 def _extract_output(process: subprocess.CompletedProcess[str]) -> str:

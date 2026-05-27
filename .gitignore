@@ -44,6 +44,7 @@ public/*
 !public/.gitkeep
 !public/README.md
 scripts/research_data_intake/import/*
+scripts/research_data_intake/exports/*
 
 # Temporary QA/debug artifacts that must not live in repo root
 /desktop_screenshot*.png

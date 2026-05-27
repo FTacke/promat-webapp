@@ -227,17 +227,70 @@ native_speaker
 
 ### `l1_code`
 
-Examples:
-
 ```text
 DE
-ES
 EN
 FR
+ES
 IT
 PT
+NL
 RU
+UK
+PL
+CZ
+SK
+HU
+RO
+BG
+EL
+TR
+KU
+AR
+FA
+HE
+HY
+KA
+SQ
+BS
+HR
+SR
+SL
+MK
+LT
+LV
+ET
+SV
+NO
+DA
+FI
+IS
+GA
+CY
+MT
+ZH
+JA
+KO
+HI
+UR
+BN
+PA
+TA
+TE
+VI
+TH
+ID
+MS
+SW
+AM
+TI
+SO
+unknown
 ```
+
+Rule:
+
+- `unknown` remains lowercase and is accepted for `l1`, `l1_additional`, `mother_l1`, and `father_l1` when a relevant L1 value is not known.
 
 ### `target_language`
 

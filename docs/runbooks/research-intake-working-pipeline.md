@@ -62,6 +62,7 @@ Regeln:
 
 - Nur geänderte `text`-Tasks müssen nach einem inkrementellen Organizer-Lauf erneut vorbereitet werden.
 - Der MFA-Zwischenschritt bleibt batch-lokal und schreibt nicht nach `data/sessions/`.
+- Der Text-MFA-Zwischenschritt schreibt eine task-lokale `mfa_state.json` und darf unveränderte Text-Inputs samt gültigem `text.json` wiederverwenden, statt MFA erneut anzustoßen.
 - Kleinste TextGrid-Grenzüberschreitungen gegenüber der WAV-Dauer durch Rundung werden auf die WAV-Dauer geklemmt und im Manifest reportet; echte Zähl- oder Timingkonflikte bleiben Blocker.
 
 ## Schritt 4: Optionale MFA-Modellprüfung oder Downloads
@@ -74,6 +75,7 @@ Regeln:
 ## Schritt 5: Externer MFA-Lauf
 
 - Die eigentliche MFA-Ausführung bleibt außerhalb dieses Repo-Skripts und schreibt in `working/{person_id}/text/mfa_output/`.
+- Wenn der Host-`mfa`-CLI nicht verfügbar ist, darf der zentrale Importer auf Docker-backed MFA ausweichen, statt den Textlauf stillschweigend zu überspringen.
 - OOVs, Dysfluencies und Selbstreparaturen sind Qualitätswarnungen, aber im Working-Pfad nicht automatisch Abbruchgründe.
 
 ## Schritt 6: MFA in Working-JSON zurückimportieren
@@ -94,6 +96,8 @@ Regeln:
 
 Regeln:
 
+- Wenn die task-lokalen Signaturen noch passen und `working/{person_id}/text/alignment/text.json` bereits existiert, darf der Importer die vorhandene Textausgabe wiederverwenden.
+- Wenn die task-lokalen Signaturen noch passen, aber `working/{person_id}/text/alignment/text.json` fehlt, darf der Importer die vorhandenen MFA-Outputs importieren, ohne MFA erneut auszuführen.
 - Der Import liest Workbook-Steuerdaten aus dem rekursiv gefundenen Batch-Workbook und technische Inputs aus `working/{person_id}/{task}/`.
 - `--run-mfa --dry-run` plant die MFA-Schritte ohne MFA-Outputs zu verlangen, weil ein Dry-run keine batch-lokalen MFA-Dateien schreibt.
 - Er schreibt person-, session- und exposure-bezogene Metadaten nach PostgreSQL und projiziert den Runtime-Baum nach `data/sessions/{language}/{session_id}/`.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import UTC, datetime
+import os
 from pathlib import Path
 import sys
 
@@ -9,6 +10,8 @@ import sys
 REPO_ROOT = Path(__file__).resolve().parents[2]
 APP_SRC = REPO_ROOT / "app" / "src"
 SCRIPT_ROOT = Path(__file__).resolve().parent
+os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(REPO_ROOT))
+os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(REPO_ROOT / "public"))
 if str(APP_SRC) not in sys.path:
     sys.path.insert(0, str(APP_SRC))
 if str(SCRIPT_ROOT) not in sys.path:
@@ -16,15 +19,20 @@ if str(SCRIPT_ROOT) not in sys.path:
 
 from app.runtime_paths import get_sessions_root  # noqa: E402
 from intake_storage import IntakeStorageError, build_prod_upload_package  # noqa: E402
-from language_config import resolve_language_config  # noqa: E402
+from language_config import maybe_resolve_language_config, resolve_language_config  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build an explicit allowlist-based PROMAT prod upload package from validated runtime artifacts."
     )
-    parser.add_argument("--language", required=True, help="Corpus language slug or code for the runtime session lookup, for example spanish or es.")
-    parser.add_argument("--session-id", action="append", required=True, help="Session to include. Repeat for multiple sessions.")
+    parser.add_argument("--language", help="Corpus language slug or code for the runtime session lookup, for example spanish or es.")
+    parser.add_argument("--session-id", action="append", help="Session to include. Repeat for multiple sessions.")
+    parser.add_argument(
+        "--all-runtime-sessions",
+        action="store_true",
+        help="Include every existing data/sessions/{language}/{session_id}/ runtime session with a metadata.json file.",
+    )
     parser.add_argument("--db-payload", help="Optional path to a prebuilt import_payload.json.")
     parser.add_argument(
         "--include-research-player-config",
@@ -36,18 +44,47 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _discover_all_runtime_sessions() -> list[tuple[str, Path]]:
+    sessions_root = get_sessions_root()
+    session_roots: list[tuple[str, Path]] = []
+    for language_dir in sorted(path for path in sessions_root.iterdir() if path.is_dir()):
+        language = maybe_resolve_language_config(language_dir.name)
+        session_dirs = sorted(path for path in language_dir.iterdir() if path.is_dir())
+        if language is None:
+            if session_dirs:
+                raise IntakeStorageError(f"unsupported runtime language directory with sessions: {language_dir}")
+            continue
+        for session_dir in session_dirs:
+            if (session_dir / "metadata.json").exists():
+                session_roots.append((language.code, session_dir))
+    return session_roots
+
+
 def main() -> int:
     args = parse_args()
-    language = resolve_language_config(args.language)
+    if args.all_runtime_sessions:
+        if args.language or args.session_id:
+            print("ERROR: --all-runtime-sessions cannot be combined with --language or --session-id")
+            return 1
+        session_roots = _discover_all_runtime_sessions()
+        if not session_roots:
+            print(f"ERROR: no runtime sessions found under {get_sessions_root()}")
+            return 1
+    else:
+        if not args.language or not args.session_id:
+            print("ERROR: --language and at least one --session-id are required unless --all-runtime-sessions is used")
+            return 1
+        language = resolve_language_config(args.language)
+        session_roots = []
+        for session_id in args.session_id:
+            session_dir = get_sessions_root() / language.corpus_slug / session_id
+            if not session_dir.exists():
+                print(f"ERROR: unknown runtime session directory: {session_dir}")
+                return 1
+            session_roots.append((language.code, session_dir))
+
     upload_id = args.upload_id or f"promat_upload_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
     output_dir = Path(args.output_dir) if args.output_dir else (SCRIPT_ROOT / "exports" / upload_id)
-    session_roots = []
-    for session_id in args.session_id:
-        session_dir = get_sessions_root() / language.corpus_slug / session_id
-        if not session_dir.exists():
-            print(f"ERROR: unknown runtime session directory: {session_dir}")
-            return 1
-        session_roots.append((language.code, session_dir))
 
     db_payload = None
     if args.db_payload:

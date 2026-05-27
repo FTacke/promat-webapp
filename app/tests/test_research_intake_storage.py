@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
 
 TEST_REPO_ROOT = Path(__file__).resolve().parents[2]
+os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
+os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 sys.path.insert(0, str(TEST_REPO_ROOT / "scripts" / "research_data_intake"))
 
 from intake_batch_common import ParsedBatchFile  # noqa: E402
@@ -17,6 +20,7 @@ from intake_storage import (  # noqa: E402
     write_secure_person_export,
     write_session_archive,
 )
+from build_prod_upload_package import _discover_all_runtime_sessions  # noqa: E402
 
 
 def _write_bytes(path: Path, payload: bytes) -> None:
@@ -65,6 +69,41 @@ def test_build_prod_upload_package_copies_only_allowed_runtime_artifacts(tmp_pat
     assert result.manifest_path.exists()
     assert result.checksums_path.exists()
     assert result.report_path.exists()
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert "manifest.json" in manifest["files"]
+    assert "checksums.sha256" in manifest["files"]
+    assert "reports/upload_report.md" in manifest["files"]
+
+
+def test_build_prod_upload_package_copies_research_player_config(tmp_path: Path) -> None:
+    session_dir = _minimal_runtime_session(tmp_path)
+    config_root = tmp_path / "data" / "config" / "research_player"
+    _write_text(config_root / "english" / "player_config.json", '{"language": "english"}\n')
+    _write_text(config_root / "english" / "phenomena_presets.json", '{"language": "english", "presets": []}\n')
+    output_dir = tmp_path / "exports" / "promat_upload_test"
+
+    build_prod_upload_package(
+        output_dir=output_dir,
+        session_roots=[("es", session_dir)],
+        config_roots=[config_root],
+        upload_id="promat_upload_test",
+    )
+
+    assert (output_dir / "config" / "research_player" / "english" / "player_config.json").exists()
+    assert (output_dir / "config" / "research_player" / "english" / "phenomena_presets.json").exists()
+    assert validate_prod_package(output_dir) == []
+
+
+def test_discover_all_runtime_sessions_uses_canonical_language_codes(tmp_path: Path, monkeypatch) -> None:
+    session_dir = _minimal_runtime_session(tmp_path, session_id="ES-L-0002-2026-S01")
+    english_dir = tmp_path / "data" / "sessions" / "english" / "EN-L-0001-2026-S01"
+    _write_text(english_dir / "metadata.json", "{}\n")
+    monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(tmp_path))
+
+    discovered = _discover_all_runtime_sessions()
+
+    assert ("en", english_dir) in discovered
+    assert ("es", session_dir) in discovered
 
 
 def test_validate_prod_package_blocks_forbidden_wav_and_source_paths(tmp_path: Path) -> None:

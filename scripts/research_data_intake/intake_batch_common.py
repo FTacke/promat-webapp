@@ -452,6 +452,10 @@ def working_text_manifest_path(batch_dir: Path, person_id: str) -> Path:
     return working_task_root(batch_dir, person_id, "text") / "mfa_manifest.json"
 
 
+def working_text_mfa_state_path(batch_dir: Path, person_id: str) -> Path:
+    return working_task_root(batch_dir, person_id, "text") / "mfa_state.json"
+
+
 def working_intake_state_path(batch_dir: Path) -> Path:
     return batch_dir / "working" / ".intake_state.json"
 

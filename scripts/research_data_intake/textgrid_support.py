@@ -74,7 +74,12 @@ def get_textgrid_tier(path: Path, tier_name: str) -> TextGridTier:
 
 
 def spoken_intervals(intervals: list[TextGridInterval]) -> list[TextGridInterval]:
-    spoken = [interval for interval in intervals if interval.text.strip().lower() not in SILENCE_MARKERS]
+    spoken = []
+    for interval in intervals:
+        normalized_text = interval.text.strip().lower()
+        if normalized_text in SILENCE_MARKERS or normalized_text.startswith("silent"):
+            continue
+        spoken.append(interval)
     if not spoken:
         raise ValueError("TextGrid does not contain any spoken intervals.")
     return spoken

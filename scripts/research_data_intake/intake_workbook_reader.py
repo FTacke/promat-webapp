@@ -233,11 +233,11 @@ def _normalize_multivalue_text(value: Any) -> tuple[str, ...]:
     return tuple(part.strip() for part in text.split(";") if part and part.strip())
 
 
-def _normalize_l1_field(value: Any, *, row_number: int, field_name: str, allow_unknown: bool = False) -> str | None:
+def _normalize_l1_field(value: Any, *, row_number: int, field_name: str) -> str | None:
     text = _normalize_optional_text(value)
     if text is None:
         return None
-    if allow_unknown and text.lower() == "unknown":
+    if text.lower() == "unknown":
         return "unknown"
     normalized = text.upper()
     if normalized not in L1_CODES:
@@ -252,7 +252,7 @@ def _normalize_l1_additional(value: Any, *, row_number: int) -> tuple[str, ...]:
     normalized_values: list[str] = []
     seen: set[str] = set()
     for entry in values:
-        normalized = entry.upper()
+        normalized = "unknown" if entry.lower() == "unknown" else entry.upper()
         if normalized not in L1_CODES:
             raise IntakeWorkbookError(
                 f"Invalid l1_additional value at row {row_number}: expected one of {', '.join(L1_CODES)}, got {entry!r}"
@@ -473,8 +473,8 @@ def _normalize_person_row(row: dict[str, Any], row_number: int) -> IntakePersonR
         speaker_type=speaker_type,
         l1=_normalize_l1_field(row.get("l1"), row_number=row_number, field_name="l1"),
         l1_additional=_normalize_l1_additional(row.get("l1_additional"), row_number=row_number),
-        mother_l1=_normalize_l1_field(row.get("mother_l1"), row_number=row_number, field_name="mother_l1", allow_unknown=True),
-        father_l1=_normalize_l1_field(row.get("father_l1"), row_number=row_number, field_name="father_l1", allow_unknown=True),
+        mother_l1=_normalize_l1_field(row.get("mother_l1"), row_number=row_number, field_name="mother_l1"),
+        father_l1=_normalize_l1_field(row.get("father_l1"), row_number=row_number, field_name="father_l1"),
         additional_languages=_normalize_multivalue_text(row.get("additional_languages")),
         gender=(_normalize_optional_text(row.get("gender")) or "").lower() or None,
         birth_year=_normalize_int(row.get("birth_year"), field_name="birth_year", row_number=row_number),

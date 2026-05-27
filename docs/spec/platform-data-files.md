@@ -512,6 +512,7 @@ working/{person_id}/text/alignment/text.json
 working/{person_id}/text/mfa_corpus/
 working/{person_id}/text/mfa_output/
 working/{person_id}/text/mfa_manifest.json
+working/{person_id}/text/mfa_state.json
 working/{person_id}/interview/source/interview.wav
 working/{person_id}/interview/alignment/interview.json
 ```
@@ -528,9 +529,11 @@ working/{person_id}/interview/alignment/interview.json
 - When a task changes, replacement stays task-local: the organizer may replace only `working/{person_id}/{task}/` and must not delete the whole person subtree or the whole batch `working/` directory.
 - In the current preparatory `text` path, the TextGrid is only the segment-boundary source.
 - The preparatory `text` MFA step may create only segmented WAVs, matching `.lab` transcripts, `mfa_output/` target directories, and a batch-local manifest for reverse mapping.
+- The preparatory `text` MFA step also writes a task-local `mfa_state.json` that records the input signatures, preparation version, and MFA run identity so unchanged text inputs can reuse the existing working alignment instead of rerunning MFA.
 - The preparatory `text` MFA step may clamp tiny TextGrid-to-WAV frame-boundary overruns caused by rounding to the source WAV duration and must record a warning; larger timing mismatches remain hard errors.
 - For connected text catalogs with a first item marked `spoken_title_item: true`, the preparatory `text` MFA step may omit that first title item only when the catalog contains exactly one more item than the spoken TextGrid intervals and every spoken interval matches the following catalog items in order. The omitted item must be recorded as `omitted_items[]` with `omitted: true` and `omit_reason: "unspoken_title"` and must not receive timings or split audio. Any count mismatch, missing title marker, or later text mismatch remains a hard conflict.
 - The batch-local `text` import step may derive `working/{person_id}/text/alignment/text.json` from the preparatory manifest plus MFA `mfa_output/` TextGrids, while still staying inside the batch-local working tree.
+- If the task-local signatures still match and `working/{person_id}/text/alignment/text.json` already exists, the importer may reuse the current text alignment instead of rerunning MFA; if `text.json` is missing but the cached MFA outputs still match, the importer may import the cached alignment without repeating MFA.
 - In this working-tree-only `text` JSON step, `audio.full_mp3` may already point to the canonical future relative artifact path `derived/text.mp3` even though the MP3 artifact is not produced yet in that same step.
 - In this working-tree-only `text` JSON step, `session_id` may remain `null` until later metadata integration resolves the final production session identity.
 - The preparatory `text` MFA step must obtain canonical item texts from an explicit external source such as a task catalog or mapping JSON and must not guess final texts from TextGrid labels.

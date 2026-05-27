@@ -172,6 +172,31 @@ def test_load_english_repo_catalogs_define_connected_text_and_wordlist(monkeypat
     assert player_config.text.display_label == "Text"
 
 
+def test_load_french_repo_catalogs_define_connected_text_and_wordlist(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
+    monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
+    clear_research_preset_caches()
+
+    text_catalog = load_task_catalog("french", "text")
+    wordlist_catalog = load_task_catalog("french", "wordlist")
+    player_config = load_player_config("french")
+
+    assert text_catalog.display_label == "Text"
+    assert text_catalog.player_source.source_kind == "text"
+    assert text_catalog.player_source.content_mode == "connected_text"
+    assert text_catalog.player_source.default_view == "text"
+    assert text_catalog.player_source.allowed_views == ("text", "list")
+    assert len(text_catalog.items_by_id) == 67
+    assert text_catalog.items_by_id["t_01"].text == "Il était une fois le Petit Chaperon rouge, étudiante à l’université de Marbourg."
+    assert text_catalog.items_by_id["t_67"].text == "Bien joué, chat non botté, quelle bonne idée !"
+    assert len(wordlist_catalog.items_by_id) == 95
+    assert wordlist_catalog.items_by_id["wl_014"].text == "théatre"
+    assert wordlist_catalog.items_by_id["wl_095"].text == "huit cours – oui, cours !"
+    assert player_config.language == "french"
+    assert player_config.text.default_render_mode == "running_text"
+    assert player_config.text.display_label == "Text"
+
+
 def test_load_english_repo_presets_are_catalog_valid(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
@@ -181,6 +206,14 @@ def test_load_english_repo_presets_are_catalog_valid(monkeypatch: pytest.MonkeyP
 
     assert len(presets) == 1
     assert [reference.task for reference in presets[0].items] == ["wordlist", "text", "text"]
+
+
+def test_load_phenomena_presets_accepts_empty_preset_list(runtime_env: Path) -> None:
+    _write_minimal_language_config(runtime_env, presets=[])
+
+    presets = load_phenomena_presets("spanish")
+
+    assert presets == ()
 
 
 def test_load_task_catalog_accepts_explicit_connected_text_metadata(runtime_env: Path) -> None:

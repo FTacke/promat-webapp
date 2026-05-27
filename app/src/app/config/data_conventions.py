@@ -15,7 +15,66 @@ SPEAKER_TYPES: tuple[str, ...] = (
 
 TARGET_LANGUAGES: tuple[str, ...] = ("es", "fr", "en", "de")
 
-L1_CODES: tuple[str, ...] = ("DE", "ES", "EN", "FR", "IT", "PT", "RU")
+L1_CODES: tuple[str, ...] = (
+    "DE",
+    "EN",
+    "FR",
+    "ES",
+    "IT",
+    "PT",
+    "NL",
+    "RU",
+    "UK",
+    "PL",
+    "CZ",
+    "SK",
+    "HU",
+    "RO",
+    "BG",
+    "EL",
+    "TR",
+    "KU",
+    "AR",
+    "FA",
+    "HE",
+    "HY",
+    "KA",
+    "SQ",
+    "BS",
+    "HR",
+    "SR",
+    "SL",
+    "MK",
+    "LT",
+    "LV",
+    "ET",
+    "SV",
+    "NO",
+    "DA",
+    "FI",
+    "IS",
+    "GA",
+    "CY",
+    "MT",
+    "ZH",
+    "JA",
+    "KO",
+    "HI",
+    "UR",
+    "BN",
+    "PA",
+    "TA",
+    "TE",
+    "VI",
+    "TH",
+    "ID",
+    "MS",
+    "SW",
+    "AM",
+    "TI",
+    "SO",
+    "unknown",
+)
 
 TASK_TYPES: tuple[str, ...] = RESEARCH_TASK_KEYS
 
@@ -115,6 +174,8 @@ def normalize_l1_code(value: object) -> str | None:
     normalized = value.strip().upper()
     if not normalized:
         return None
+    if normalized == "UNKNOWN":
+        return "unknown"
     return normalized if normalized in L1_CODES else None
 
 

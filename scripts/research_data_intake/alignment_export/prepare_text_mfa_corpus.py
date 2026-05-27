@@ -16,11 +16,15 @@ from intake_batch_common import (  # noqa: E402
     ensure_directory,
     resolve_batch_dir,
     working_text_manifest_path,
+    working_text_mfa_state_path,
     working_text_mfa_corpus_dir,
     working_text_mfa_output_dir,
 )
 from language_config import describe_language_config, maybe_resolve_language_config  # noqa: E402
 from textgrid_support import parse_textgrid_intervals, round_textgrid_seconds, spoken_intervals  # noqa: E402
+
+
+TEXT_MFA_PREPARATION_VERSION = "2026-05-27-text-mfa-v2"
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +51,15 @@ class Summary:
     written_segments: int = 0
     warnings: int = 0
     errors: int = 0
+
+
+def _file_signature(path: Path) -> dict[str, object]:
+    stat_result = path.stat()
+    return {
+        "path": str(path),
+        "size": stat_result.st_size,
+        "mtime_ns": stat_result.st_mtime_ns,
+    }
 
 
 def parse_args() -> argparse.Namespace:
@@ -207,6 +220,7 @@ def _process_person(
     *,
     batch_dir: Path,
     person_id: str,
+    text_source_json: Path,
     text_items: list[TextSourceItem],
     language_code: str | None,
     language_slug: str | None,
@@ -276,11 +290,30 @@ def _process_person(
         "task": "text",
         "language_code": language_code,
         "language": language_slug,
+        "preparation_version": TEXT_MFA_PREPARATION_VERSION,
         "source_wav": str(source_wav.relative_to(batch_dir)).replace("\\", "/"),
         "source_textgrid": str(source_textgrid.relative_to(batch_dir)).replace("\\", "/"),
+        "source_signatures": {
+            "source_wav": _file_signature(source_wav),
+            "source_textgrid": _file_signature(source_textgrid),
+            "text_source_json": _file_signature(text_source_json),
+        },
         "items": [asdict(item) for item in manifest_items],
     }
     manifest_path.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    state_path = working_text_mfa_state_path(batch_dir, person_id)
+    state_payload = {
+        "person_id": person_id,
+        "task": "text",
+        "language_code": language_code,
+        "language": language_slug,
+        "preparation_version": TEXT_MFA_PREPARATION_VERSION,
+        "manifest_path": str(manifest_path.relative_to(batch_dir)).replace("\\", "/"),
+        "mfa_corpus_dir": str(mfa_corpus_dir.relative_to(batch_dir)).replace("\\", "/"),
+        "mfa_output_dir": str(mfa_output_dir.relative_to(batch_dir)).replace("\\", "/"),
+        "source_signatures": manifest_payload["source_signatures"],
+    }
+    state_path.write_text(json.dumps(state_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return len(manifest_items), {
         "person_id": person_id,
         "segments": len(manifest_items),
@@ -304,6 +337,7 @@ def prepare_text_mfa_for_person(
     segment_count, result = _process_person(
         batch_dir=batch_dir,
         person_id=_normalize_person_id(person_id),
+        text_source_json=text_source_json,
         text_items=text_items,
         language_code=None if language_config is None else language_config.code,
         language_slug=None if language_config is None else language_config.corpus_slug,
@@ -337,6 +371,7 @@ def _run() -> int:
             segment_count, result = _process_person(
                 batch_dir=batch_dir,
                 person_id=person_id,
+                text_source_json=text_source_path,
                 text_items=text_items,
                 language_code=None if language_config is None else language_config.code,
                 language_slug=None if language_config is None else language_config.corpus_slug,
