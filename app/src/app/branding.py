@@ -26,8 +26,6 @@ BRANDING: dict[str, str] = {
     "footer_meta_year": "2026",
     "footer_partner_label": "Hispanistica @ Marburg",
     "footer_partner_url": "https://hispanistica.com",
-    "footer_release_label": "v0.0",
-    "footer_release_url": "https://github.com/FTacke/promat-webapp/releases/latest",
     "project_url": "https://example.invalid/promat",
     "contact_email": "felix.tacke@uni-marburg.de",
     "footer_copyright_holder": "Felix Tacke",

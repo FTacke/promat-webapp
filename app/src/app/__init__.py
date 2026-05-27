@@ -274,6 +274,7 @@ def register_context_processors(app: Flask) -> None:
             "app_version": app.config.get("APP_VERSION", ""),
             "app_release_tag": app.config.get("APP_RELEASE_TAG", ""),
             "app_release_url": app.config.get("APP_RELEASE_URL", ""),
+            "goatcounter_url": app.config.get("GOATCOUNTER_URL", ""),
             "format_page_title": format_page_title,
             "static_asset": static_asset,
             "current_ui_lang": current_ui_lang,
@@ -400,11 +401,11 @@ def register_security_headers(app: Flask) -> None:
 
         csp = (
             "default-src 'self'; "
-            "script-src 'self'; "
+            "script-src 'self' https://gc.zgo.at; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "img-src 'self' data: https: blob:; "
             "font-src 'self' https://fonts.gstatic.com; "
-            "connect-src 'self'; "
+            "connect-src 'self' https://pronunciation-matters.goatcounter.com; "
             "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net; "
             "frame-ancestors 'none'; "
             "object-src 'none'; "

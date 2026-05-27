@@ -633,6 +633,14 @@ LEGAL_PAGES: dict[str, dict[str, Any]] = {
                     "Die Plattform ist strukturell auf getrennte Datenzonen vorbereitet. Finale Restricted-Logik und öffentliche Freigabeprozesse werden später sauber ergänzt.",
                 ],
             },
+            {
+                "heading": "Cookieless Webanalyse mit GoatCounter",
+                "paragraphs": [
+                    "Zur aggregierten Nutzungsstatistik der öffentlichen Website kann PROMAT GoatCounter einsetzen. Die Einbindung erfolgt über die Instanz pronunciation-matters.goatcounter.com und wird nur in der produktiven Umgebung geladen.",
+                    "GoatCounter arbeitet ohne Tracking-Cookies. Erfasst werden technische Abrufdaten wie aufgerufene Seite, Referrer, Bildschirmbreite und Zeitpunkt, damit die Nutzung der öffentlichen Seiten statistisch ausgewertet und die Website verbessert werden kann.",
+                    "Die Analyse dient nicht dazu, einzelne Nutzerinnen oder Nutzer über mehrere Dienste hinweg wiederzuerkennen oder personenbezogene Profile für Werbung zu erstellen.",
+                ],
+            },
         ],
     },
 }

@@ -405,6 +405,8 @@ AUTH_ACCESS_REQUEST_SMTP_USE_SSL
 AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS
 AUTH_ACCESS_REQUEST_FORM_MAX_AGE_SECONDS
 AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS
+VITE_APP_VERSION
+VITE_GOATCOUNTER_URL
 ```
 
 Secret-Werte, Zugangsdaten und vollständige Secret-Dateien werden nicht in Repo-Doku, Logs oder Reports dokumentiert.
@@ -415,6 +417,8 @@ Secret-Werte, Zugangsdaten und vollständige Secret-Dateien werden nicht in Repo
 - `AUTH_MAIL_FROM_EMAIL` muss eine serverseitig erlaubte Absenderadresse sein, `AUTH_MAIL_FROM_NAME` steuert den sichtbaren Anzeigenamen.
 - Access-Request-Benachrichtigungen nutzen die Antragstelleradresse als `Reply-To`; Admin-Einladungen nutzen die E-Mail-Adresse des auslösenden Admins als `Reply-To`.
 - Wenn direkter Versand deaktiviert ist oder fehlschlägt, bleibt die manuelle Kopie von Link, Betreff und Nachrichtentext als Fallback erhalten.
+- Der Deploy-Workflow setzt `VITE_APP_VERSION` automatisch auf den neuesten GitHub-Release-Tag; lokale oder fehlende Metadaten fallen auf `dev` zurück.
+- GoatCounter wird nur in Production geladen, wenn `VITE_GOATCOUNTER_URL` gesetzt ist. Für `pronunciation-matters.de` ist der Endpoint `https://pronunciation-matters.goatcounter.com/count`.
 - App-seitige Implementierung und Serverkonfiguration müssen vor Go-Live verdrahtet und smoke-getestet sein.
 - CSRF-Schutz muss aktiv sein.
 - Rate Limiting muss aktiv sein.

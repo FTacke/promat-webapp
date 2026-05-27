@@ -58,6 +58,10 @@
     <script src="{{ url_for('static', filename='js/drawer-logo.js') }}" defer></script>
     <!-- htmx for progressive enhancement -->
     <script src="{{ url_for('static', filename='vendor/htmx.min.js') }}" defer></script>
+    {% if goatcounter_url %}
+    {# Server-rendered navigation triggers GoatCounter's built-in initial page-load count; workbench replaceState updates are UI state, not separate page views. #}
+    <script data-goatcounter="{{ goatcounter_url }}" async src="https://gc.zgo.at/count.js"></script>
+    {% endif %}
     
     {% block extra_head %}{% endblock %}
   </head>

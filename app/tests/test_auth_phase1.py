@@ -119,6 +119,9 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS=0,
         AUTH_ACCESS_REQUEST_MAIL_SENDER=fake_access_request_mail_sender,
         TEST_ACCESS_REQUEST_MESSAGES=sent_access_request_messages,
+        APP_RELEASE_TAG="dev",
+        APP_RELEASE_URL="https://github.com/FTacke/promat-webapp/releases/latest",
+        GOATCOUNTER_URL="",
     )
 
     register_context_processors(app)
@@ -519,6 +522,56 @@ def test_shared_footer_localizes_legal_links(
     assert f'aria-label="{expected_nav_label}"' in html
     assert f'>{expected_imprint_label}<' in html
     assert f'>{expected_privacy_label}<' in html
+
+
+def test_shared_footer_uses_configured_release_tag(auth_app: Flask) -> None:
+    auth_app.config["APP_RELEASE_TAG"] = "v0.7"
+    auth_app.config["APP_RELEASE_URL"] = "https://github.com/FTacke/promat-webapp/releases/tag/v0.7"
+    client = auth_app.test_client()
+
+    response = client.get("/login?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'href="https://github.com/FTacke/promat-webapp/releases/tag/v0.7"' in html
+    assert ">v0.7</a>" in html
+    assert ">v0.0</a>" not in html
+
+
+def test_goatcounter_script_is_not_rendered_without_production_config(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/login?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "gc.zgo.at/count.js" not in html
+    assert "pronunciation-matters.goatcounter.com/count" not in html
+
+
+def test_goatcounter_script_renders_from_single_central_config(auth_app: Flask) -> None:
+    auth_app.config["GOATCOUNTER_URL"] = "https://pronunciation-matters.goatcounter.com/count"
+    client = auth_app.test_client()
+
+    response = client.get("/login?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count("gc.zgo.at/count.js") == 1
+    assert 'data-goatcounter="https://pronunciation-matters.goatcounter.com/count"' in html
+    assert 'src="https://gc.zgo.at/count.js"' in html
+
+
+def test_privacy_page_documents_goatcounter_usage(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/privacy")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Cookieless Webanalyse mit GoatCounter" in html
+    assert "pronunciation-matters.goatcounter.com" in html
+    assert "ohne Tracking-Cookies" in html
 
 
 def test_access_request_page_renders_form_and_login_link_with_return_target(auth_app: Flask) -> None:
@@ -1823,9 +1876,10 @@ def test_security_headers_allow_project_youtube_embed() -> None:
 
     assert response.status_code == 200
     csp = response.headers["Content-Security-Policy"]
-    assert "script-src 'self';" in csp
+    assert "script-src 'self' https://gc.zgo.at;" in csp
     assert "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;" in csp
     assert "font-src 'self' https://fonts.gstatic.com;" in csp
+    assert "connect-src 'self' https://pronunciation-matters.goatcounter.com;" in csp
     assert "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net;" in csp
     assert "object-src 'none';" in csp
     assert "base-uri 'self';" in csp

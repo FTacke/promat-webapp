@@ -12,6 +12,31 @@ jobs:
   deploy:
     runs-on: [self-hosted, promat-prod]
     steps:
+      - name: Resolve public deploy metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GOATCOUNTER_URL: https://pronunciation-matters.goatcounter.com/count
+        run: |
+          set -euo pipefail
+          release_json="$(
+            curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/latest" || true
+          )"
+          release_tag="$(printf '%s' "${release_json}" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+          release_url="$(printf '%s' "${release_json}" | sed -n 's/.*"html_url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+          if [[ -z "${release_tag}" ]]; then
+            release_tag="dev"
+            release_url="https://github.com/${GITHUB_REPOSITORY}/releases/latest"
+          fi
+          {
+            echo "VITE_APP_VERSION=${release_tag}"
+            echo "APP_RELEASE_TAG=${release_tag}"
+            echo "APP_RELEASE_URL=${release_url}"
+            echo "VITE_GOATCOUNTER_URL=${GOATCOUNTER_URL}"
+          } >> "${GITHUB_ENV}"
+
       - name: Deploy on server
         run: |
           set -euo pipefail

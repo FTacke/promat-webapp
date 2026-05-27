@@ -17,6 +17,7 @@ from ..runtime_paths import (
 
 DEFAULT_SECRET_SENTINEL = "__CHANGE_ME__"
 DEFAULT_DEV_DATABASE_URL = "postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth"
+GOATCOUNTER_ENDPOINT = "https://pronunciation-matters.goatcounter.com/count"
 
 
 def _normalize_value(value: str | None) -> str:
@@ -43,6 +44,10 @@ def _default_mail_backend(env_name: str) -> str:
     if env_name in {"development", "dev", "testing", "test"}:
         return "disabled"
     return "smtp"
+
+
+def _is_production_env(env_name: str) -> bool:
+    return env_name in {"production", "prod"}
 
 
 def _parse_bool_env(name: str, default: bool) -> bool:
@@ -136,10 +141,15 @@ class BaseConfig:
     )
     RESEARCH_SET_DRAFT_TTL_DAYS = int(_normalize_value(os.getenv("RESEARCH_SET_DRAFT_TTL_DAYS") or "14"))
 
-    APP_REPOSITORY_URL = _normalize_value(os.getenv("APP_REPOSITORY_URL") or "")
-    APP_VERSION = _normalize_value(os.getenv("APP_VERSION") or "")
-    APP_RELEASE_TAG = _normalize_value(os.getenv("APP_RELEASE_TAG") or APP_VERSION)
-    APP_RELEASE_URL = _normalize_value(os.getenv("APP_RELEASE_URL") or "")
+    APP_REPOSITORY_URL = _normalize_value(os.getenv("APP_REPOSITORY_URL") or "https://github.com/FTacke/promat-webapp")
+    APP_VERSION = _normalize_value(os.getenv("VITE_APP_VERSION") or os.getenv("APP_VERSION") or "dev")
+    APP_RELEASE_TAG = _normalize_value(os.getenv("APP_RELEASE_TAG") or APP_VERSION or "dev")
+    APP_RELEASE_URL = _normalize_value(
+        os.getenv("APP_RELEASE_URL")
+        or (f"{APP_REPOSITORY_URL}/releases/tag/{APP_RELEASE_TAG}" if APP_RELEASE_TAG != "dev" else f"{APP_REPOSITORY_URL}/releases/latest")
+    )
+    VITE_GOATCOUNTER_URL = _normalize_value(os.getenv("VITE_GOATCOUNTER_URL") or "")
+    GOATCOUNTER_URL = VITE_GOATCOUNTER_URL if _is_production_env(APP_ENV) and VITE_GOATCOUNTER_URL == GOATCOUNTER_ENDPOINT else ""
 
     RUNTIME_ROOT = get_runtime_root()
     DATA_ROOT = get_data_root()
