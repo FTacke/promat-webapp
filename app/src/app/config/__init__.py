@@ -39,6 +39,12 @@ def _default_access_request_mail_enabled(env_name: str) -> bool:
     return env_name not in {"development", "dev", "testing", "test"}
 
 
+def _default_mail_backend(env_name: str) -> str:
+    if env_name in {"development", "dev", "testing", "test"}:
+        return "disabled"
+    return "smtp"
+
+
 def _parse_bool_env(name: str, default: bool) -> bool:
     raw_value = _normalize_value(os.getenv(name))
     if not raw_value:
@@ -94,7 +100,21 @@ class BaseConfig:
         "AUTH_ACCESS_REQUEST_MAIL_ENABLED",
         _default_access_request_mail_enabled(APP_ENV),
     )
-    AUTH_ACCESS_REQUEST_FROM_EMAIL = _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_FROM_EMAIL") or "")
+    AUTH_MAIL_BACKEND = _normalize_value(os.getenv("AUTH_MAIL_BACKEND") or _default_mail_backend(APP_ENV)).lower()
+    AUTH_MAIL_FROM_EMAIL = _normalize_value(
+        os.getenv("AUTH_MAIL_FROM_EMAIL") or os.getenv("AUTH_ACCESS_REQUEST_FROM_EMAIL") or ""
+    )
+    AUTH_MAIL_FROM_NAME = _normalize_value(
+        os.getenv("AUTH_MAIL_FROM_NAME") or "Pronunciation Matters Administrator"
+    )
+    AUTH_MAIL_DEFAULT_REPLY_TO = _normalize_value(
+        os.getenv("AUTH_MAIL_DEFAULT_REPLY_TO") or os.getenv("AUTH_ACCESS_REQUEST_EMAIL") or ""
+    )
+    AUTH_MAIL_SENDMAIL_PATH = _normalize_value(os.getenv("AUTH_MAIL_SENDMAIL_PATH") or "/usr/sbin/sendmail")
+    AUTH_MAIL_TIMEOUT_SECONDS = int(_normalize_value(os.getenv("AUTH_MAIL_TIMEOUT_SECONDS") or "10"))
+    AUTH_ACCESS_REQUEST_FROM_EMAIL = _normalize_value(
+        os.getenv("AUTH_ACCESS_REQUEST_FROM_EMAIL") or AUTH_MAIL_FROM_EMAIL
+    )
     AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED = _parse_bool_env(
         "AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED",
         True,
@@ -183,3 +203,5 @@ def load_config(app, env_name: str | None = None) -> None:
             raise RuntimeError("RATE_LIMIT_STORAGE_URI must not use memory:// for non-development environments.")
     if app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_TLS") and app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_SSL"):
         raise RuntimeError("AUTH_ACCESS_REQUEST_SMTP_USE_TLS and AUTH_ACCESS_REQUEST_SMTP_USE_SSL are mutually exclusive.")
+    if app.config.get("AUTH_MAIL_BACKEND") not in {"disabled", "smtp", "sendmail"}:
+        raise RuntimeError("AUTH_MAIL_BACKEND must be one of disabled, smtp, or sendmail.")

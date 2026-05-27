@@ -48,6 +48,9 @@ ROOT_TEMP_PATTERNS = (
     "start.txt",
 )
 
+# start.txt is intentionally tracked at the repo root as an operator convenience entrypoint.
+ROOT_TEMP_ALLOWED_FILES = frozenset({"start.txt"})
+
 
 @dataclass(frozen=True)
 class Guard:
@@ -155,6 +158,8 @@ def run_root_temp_artifact_guard() -> list[str]:
     for pattern in ROOT_TEMP_PATTERNS:
         for path in sorted(REPO_ROOT.glob(pattern)):
             if path.is_file():
+                if path.relative_to(REPO_ROOT).as_posix() in ROOT_TEMP_ALLOWED_FILES:
+                    continue
                 findings.append(path.relative_to(REPO_ROOT).as_posix())
     return findings
 

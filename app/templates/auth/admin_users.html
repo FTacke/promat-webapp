@@ -166,11 +166,13 @@
             <textarea id="invite-mail-body" class="pm-phenomena-field__input pm-admin-field__textarea" rows="8" readonly aria-label="{{ t('auth.admin_users.invite_mail_body') }}"></textarea>
           </label>
         </div>
+        <p id="invite-send-status" class="pm-admin-dialog__section-text" role="status" aria-live="polite" hidden></p>
         <div id="invite-copy-status" class="sr-only" role="status" aria-live="polite"></div>
       </section>
     </div>
 
     <div class="pm-admin-dialog__actions">
+      <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" id="send-invite-mail"><span class="pm-action-button__label">{{ t('auth.admin_users.send_mail') }}</span></button>
       <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="copy-invite-mail"><span class="pm-action-button__label">{{ t('auth.admin_users.copy_mail') }}</span></button>
       <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="close-invite"><span class="pm-action-button__label">{{ t('auth.admin_users.close_invite') }}</span></button>
     </div>
@@ -289,6 +291,9 @@
     'saving': t('auth.admin_users.saving'),
     'resetPassword': t('auth.admin_users.reset_password'),
     'sending': t('auth.admin_users.sending'),
+    'sendMail': t('auth.admin_users.send_mail'),
+    'sendMailSending': t('auth.admin_users.send_mail_sending'),
+    'sendMailFailed': t('auth.admin_users.send_mail_failed'),
     'copyLink': t('auth.admin_users.copy_link'),
     'copyMail': t('auth.admin_users.copy_mail'),
     'copiedLink': t('auth.admin_users.copied_link'),

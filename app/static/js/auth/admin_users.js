@@ -75,8 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const inviteMailBody = document.getElementById('invite-mail-body');
   const inviteMeta = document.getElementById('invite-meta');
   const copyInviteBtn = document.getElementById('copy-invite');
+  const sendInviteMailBtn = document.getElementById('send-invite-mail');
   const copyInviteMailBtn = document.getElementById('copy-invite-mail');
   const closeInviteBtn = document.getElementById('close-invite');
+  const inviteSendStatus = document.getElementById('invite-send-status');
   const inviteCopyStatus = document.getElementById('invite-copy-status');
 
   const editDialog = document.getElementById('user-edit-dialog');
@@ -96,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let includeInactive = false;
   let searchDebounce = null;
   let toastTimer = null;
+  let inviteState = null;
 
   function t(key, fallback = '') {
     return text[key] || fallback;
@@ -279,6 +282,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function populateInviteDialog(payload) {
+    inviteState = {
+      userId: payload.user && payload.user.id ? payload.user.id : '',
+      recipient: payload.inviteMailRecipient || '',
+      replyTo: payload.inviteReplyTo || '',
+    };
     if (inviteLinkCode) {
       inviteLinkCode.textContent = payload.inviteLink || '';
     }
@@ -291,6 +299,62 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inviteMeta) {
       inviteMeta.textContent = payload.inviteExpiresAt ? `${t('expiresPrefix', 'Valid until')}: ${formatDateTime(payload.inviteExpiresAt)}` : '';
     }
+    if (inviteSendStatus) {
+      inviteSendStatus.hidden = true;
+      inviteSendStatus.textContent = '';
+    }
+  }
+
+  function showInviteSendStatus(message, type = 'success') {
+    if (!inviteSendStatus) {
+      showToast(message, type);
+      return;
+    }
+    inviteSendStatus.textContent = message;
+    inviteSendStatus.hidden = false;
+    inviteSendStatus.dataset.status = type;
+  }
+
+  function sendInviteMail() {
+    if (!inviteState || !inviteState.userId || !sendInviteMailBtn) {
+      return;
+    }
+    const originalLabel = sendInviteMailBtn.textContent;
+    sendInviteMailBtn.disabled = true;
+    sendInviteMailBtn.textContent = t('sendMailSending', 'Sending email ...');
+
+    fetch(buildAdminUrl(`/admin/users/${encodeURIComponent(inviteState.userId)}/send-invite`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        recipient: inviteState.recipient,
+        subject: inviteMailSubject ? inviteMailSubject.value : '',
+        body: inviteMailBody ? inviteMailBody.value : '',
+      }),
+    })
+      .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
+      .then(({ ok, payload }) => {
+        if (!ok || !payload.ok) {
+          throw new Error(payload.error || t('sendMailFailed', 'Email could not be sent. Please use the manual copy fallback.'));
+        }
+        const message = payload.message || t('sendMailSuccess', 'Email sent.');
+        showInviteSendStatus(message, 'success');
+        showToast(message, 'success');
+      })
+      .catch((error) => {
+        const message = error.message || t('sendMailFailed', 'Email could not be sent. Please use the manual copy fallback.');
+        showInviteSendStatus(message, 'error');
+        showToast(message, 'error');
+      })
+      .finally(() => {
+        sendInviteMailBtn.disabled = false;
+        sendInviteMailBtn.textContent = originalLabel || t('sendMail', 'Send email');
+      });
   }
 
   function copyText(value, successMessage) {
@@ -592,6 +656,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   if (copyInviteBtn) {
     copyInviteBtn.addEventListener('click', () => copyText(inviteLinkCode ? inviteLinkCode.textContent || '' : '', t('copiedLink', 'Link copied.')));
+  }
+  if (sendInviteMailBtn) {
+    sendInviteMailBtn.addEventListener('click', sendInviteMail);
   }
   if (copyInviteMailBtn) {
     copyInviteMailBtn.addEventListener('click', () => {

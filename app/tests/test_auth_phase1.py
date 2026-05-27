@@ -27,6 +27,7 @@ from app.routes.admin import blueprint as admin_blueprint
 from app.routes.auth import blueprint as auth_blueprint
 from app.routes import public as public_routes
 from app.routes.public import blueprint as public_blueprint
+from app.services import mail_delivery
 
 
 def _insert_user(
@@ -103,6 +104,12 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         AUTH_ACCESS_REQUEST_SUBJECT='Zugangsanfrage "Pronunciation Matters"',
         AUTH_ACCESS_REQUEST_FROM_EMAIL="noreply@promat.test",
         AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED=True,
+        AUTH_MAIL_BACKEND="smtp",
+        AUTH_MAIL_FROM_EMAIL="noreply@promat.test",
+        AUTH_MAIL_FROM_NAME="Pronunciation Matters Administrator",
+        AUTH_MAIL_DEFAULT_REPLY_TO="admin@example.org",
+        AUTH_MAIL_SENDMAIL_PATH="/usr/sbin/sendmail",
+        AUTH_MAIL_TIMEOUT_SECONDS=10,
         AUTH_ACCESS_REQUEST_SMTP_HOST="smtp.promat.test",
         AUTH_ACCESS_REQUEST_SMTP_PORT=587,
         AUTH_ACCESS_REQUEST_SMTP_USE_TLS=True,
@@ -239,6 +246,139 @@ def _build_access_request_payload(
     if overrides:
         payload.update(overrides)
     return payload
+
+
+def test_sendmail_backend_builds_utf8_message_without_shell(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run(args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+
+        class Result:
+            returncode = 0
+
+        return Result()
+
+    monkeypatch.setattr(mail_delivery.subprocess, "run", fake_run)
+
+    result = mail_delivery.send_mail(
+        mail_delivery.MailMessage(
+            to_address="new.user@example.org",
+            subject="Einladung zu Pronunciation Matters",
+            body="Guten Tag,\n\nWillkommen.",
+            reply_to="admin@example.org",
+        ),
+        config={
+            "AUTH_MAIL_BACKEND": "sendmail",
+            "AUTH_MAIL_FROM_EMAIL": "noreply@promat.test",
+            "AUTH_MAIL_FROM_NAME": "Pronunciation Matters Administrator",
+            "AUTH_MAIL_SENDMAIL_PATH": "/usr/sbin/sendmail",
+            "AUTH_MAIL_TIMEOUT_SECONDS": 10,
+        },
+    )
+
+    assert result.sent is True
+    assert captured["args"] == ["/usr/sbin/sendmail", "-i", "-t"]
+    kwargs = captured["kwargs"]
+    assert isinstance(kwargs, dict)
+    assert "shell" not in kwargs
+    assert kwargs["timeout"] == 10
+    message_bytes = kwargs["input"]
+    assert isinstance(message_bytes, bytes)
+    message_text = message_bytes.decode("utf-8")
+    assert "From: Pronunciation Matters Administrator <noreply@promat.test>" in message_text
+    assert "To: new.user@example.org" in message_text
+    assert "Reply-To: admin@example.org" in message_text
+    assert "Guten Tag," in message_text
+
+
+def test_mail_backend_rejects_header_injection() -> None:
+    with pytest.raises(mail_delivery.MailValidationError):
+        mail_delivery.send_mail(
+            mail_delivery.MailMessage(
+                to_address="new.user@example.org",
+                subject="Hello\r\nBcc: evil@example.org",
+                body="Body",
+            ),
+            config={
+                "AUTH_MAIL_BACKEND": "sendmail",
+                "AUTH_MAIL_FROM_EMAIL": "noreply@promat.test",
+                "AUTH_MAIL_FROM_NAME": "Pronunciation Matters Administrator",
+            },
+        )
+
+
+def test_disabled_mail_backend_does_not_send(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fail_run(*_args, **_kwargs):
+        raise AssertionError("sendmail must not be called when mail backend is disabled")
+
+    monkeypatch.setattr(mail_delivery.subprocess, "run", fail_run)
+
+    result = mail_delivery.send_mail(
+        mail_delivery.MailMessage(
+            to_address="new.user@example.org",
+            subject="Hello",
+            body="Body",
+        ),
+        config={"AUTH_MAIL_BACKEND": "disabled"},
+    )
+
+    assert result.sent is False
+    assert result.backend == "disabled"
+
+
+def test_smtp_backend_still_sends_mocked_message(monkeypatch: pytest.MonkeyPatch) -> None:
+    sent_messages: list[object] = []
+    events: list[str] = []
+
+    class FakeSMTP:
+        def __init__(self, host, port, timeout):
+            events.append(f"connect:{host}:{port}:{timeout}")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return None
+
+        def starttls(self, *, context):
+            assert context is not None
+            events.append("starttls")
+
+        def login(self, username, password):
+            events.append(f"login:{username}:{bool(password)}")
+
+        def send_message(self, message):
+            sent_messages.append(message)
+
+    monkeypatch.setattr(mail_delivery.smtplib, "SMTP", FakeSMTP)
+
+    result = mail_delivery.send_mail(
+        mail_delivery.MailMessage(
+            to_address="new.user@example.org",
+            subject="Hello",
+            body="Body",
+            reply_to="admin@example.org",
+        ),
+        config={
+            "AUTH_MAIL_BACKEND": "smtp",
+            "AUTH_MAIL_FROM_EMAIL": "noreply@promat.test",
+            "AUTH_MAIL_FROM_NAME": "Pronunciation Matters Administrator",
+            "AUTH_ACCESS_REQUEST_SMTP_HOST": "smtp.promat.test",
+            "AUTH_ACCESS_REQUEST_SMTP_PORT": 587,
+            "AUTH_ACCESS_REQUEST_SMTP_USERNAME": "smtp-user",
+            "AUTH_ACCESS_REQUEST_SMTP_PASSWORD": "smtp-password",
+            "AUTH_ACCESS_REQUEST_SMTP_USE_TLS": True,
+            "AUTH_ACCESS_REQUEST_SMTP_USE_SSL": False,
+            "AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS": 10,
+        },
+    )
+
+    assert result.sent is True
+    assert events == ["connect:smtp.promat.test:587:10", "starttls", "login:smtp-user:True"]
+    assert len(sent_messages) == 1
+    assert sent_messages[0]["Reply-To"] == "admin@example.org"
 
 
 def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None:
@@ -450,6 +590,32 @@ def test_access_request_submit_persists_request_and_shows_success(auth_app: Flas
     assert "Institution: Universität Marburg" in message.body
     assert "Role / function: Wissenschaftliche Mitarbeiterin" in message.body
     assert "Ich benötige Zugang für ein Seminar" in message.body
+
+
+def test_access_request_notification_uses_selected_mail_backend(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = auth_app.test_client()
+    captured: list[mail_delivery.MailMessage] = []
+
+    def fake_send_mail(message):
+        captured.append(message)
+        return mail_delivery.MailDeliveryResult(sent=True, backend="sendmail")
+
+    auth_app.config["AUTH_ACCESS_REQUEST_MAIL_SENDER"] = None
+    auth_app.config["AUTH_MAIL_BACKEND"] = "sendmail"
+    monkeypatch.setattr("app.services.access_request_notifications.send_mail", fake_send_mail)
+    payload = _build_access_request_payload(client)
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert len(captured) == 1
+    assert captured[0].to_address == "access-requests@example.org"
+    assert captured[0].from_email == "noreply@promat.test"
+    assert captured[0].from_name == "Pronunciation Matters Administrator"
+    assert captured[0].reply_to == "mara.fischer@uni-marburg.de"
 
 
 def test_access_request_submit_marks_notification_failure_without_losing_request(auth_app: Flask) -> None:
@@ -1197,6 +1363,8 @@ def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask, ca
     assert "/auth/password/reset?token=" in payload["inviteLink"]
     assert "ui_lang=en" in payload["inviteLink"]
     assert "Please review the shared corpus guidelines" in payload["inviteMailBody"]
+    assert "If you have questions, please contact admin@example.org." in payload["inviteMailBody"]
+    assert payload["inviteReplyTo"] == "admin@example.org"
     assert "Prepared admin invite message metadata" in caplog.text
     assert "recipient_domain=example.org" in caplog.text
     assert "new.user@example.org" not in caplog.text
@@ -1236,6 +1404,123 @@ def test_admin_reset_password_preview_keeps_secret_logging(auth_app: Flask, capl
     assert payload["inviteLink"] not in caplog.text
     assert "token=" not in caplog.text
     assert payload["inviteMailBody"] not in caplog.text
+
+
+def test_admin_invitation_send_uses_admin_reply_to_and_keeps_secret_logging(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+    sent_messages: list[mail_delivery.MailMessage] = []
+
+    assert login_response.status_code == 303
+
+    def fake_send_mail(message):
+        sent_messages.append(message)
+        return mail_delivery.MailDeliveryResult(sent=True, backend="sendmail")
+
+    monkeypatch.setattr("app.routes.admin.send_mail", fake_send_mail)
+    create_response = client.post(
+        "/admin/users",
+        json={
+            "first_name": "Nora",
+            "last_name": "New",
+            "email": "new.invite@example.org",
+            "role": "user",
+        },
+        headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
+    )
+    preview = create_response.get_json()
+    assert preview["ok"] is True
+
+    with caplog.at_level(logging.INFO):
+        send_response = client.post(
+            f"/admin/users/{preview['user']['id']}/send-invite?ui_lang=en",
+            json={
+                "recipient": preview["inviteMailRecipient"],
+                "subject": preview["inviteMailSubject"],
+                "body": preview["inviteMailBody"],
+            },
+        )
+
+    assert send_response.status_code == 200
+    payload = send_response.get_json()
+    assert payload["ok"] is True
+    assert payload["replyTo"] == "admin@example.org"
+    assert "Replies go to admin@example.org" in payload["message"]
+    assert len(sent_messages) == 1
+    message = sent_messages[0]
+    assert message.to_address == "new.invite@example.org"
+    assert message.reply_to == "admin@example.org"
+    assert message.subject == preview["inviteMailSubject"]
+    assert message.body == preview["inviteMailBody"]
+    assert "If you have questions, please contact admin@example.org." in message.body
+    assert "Admin invitation email sent" in caplog.text
+    assert "recipient_domain=example.org" in caplog.text
+    assert "new.invite@example.org" not in caplog.text
+    assert preview["inviteLink"] not in caplog.text
+    assert "token=" not in caplog.text
+    assert preview["inviteMailBody"] not in caplog.text
+
+
+def test_admin_invitation_send_requires_admin_auth(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.post(
+        "/admin/users/user-1/send-invite",
+        json={"recipient": "alice@example.org", "subject": "Hello", "body": "Body"},
+    )
+
+    assert response.status_code in {401, 302, 303}
+
+
+def test_admin_invitation_send_requires_jwt_csrf(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _enable_jwt_cookie_csrf(auth_app)
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+    monkeypatch.setattr(
+        "app.routes.admin.send_mail",
+        lambda _message: (_ for _ in ()).throw(AssertionError("send_mail must not run without CSRF")),
+    )
+
+    response = client.post(
+        "/admin/users/user-1/send-invite?ui_lang=en",
+        json={"recipient": "alice@example.org", "subject": "Hello", "body": "Body"},
+    )
+
+    assert response.status_code in {401, 422, 303}
+
+
+def test_admin_invitation_send_failure_preserves_manual_fallback(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    def fail_send_mail(_message):
+        raise mail_delivery.MailDeliveryError("sendmail failed")
+
+    monkeypatch.setattr("app.routes.admin.send_mail", fail_send_mail)
+    response = client.post(
+        "/admin/users/user-1/send-invite?ui_lang=en",
+        json={"recipient": "alice@example.org", "subject": "Hello", "body": "Body"},
+    )
+
+    assert response.status_code == 503
+    payload = response.get_json()
+    assert payload["ok"] is False
+    assert payload["manualFallback"] is True
+    assert "manual copy fallback" in payload["error"]
 
 
 def test_login_post_keeps_rate_limit(auth_app: Flask) -> None:
@@ -1395,6 +1680,7 @@ def test_admin_user_page_renders_in_english_after_admin_login(auth_app: Flask) -
     html = response.get_data(as_text=True)
     assert "User management" in html
     assert "Create user" in html
+    assert "Send email" in html
     assert "Last name" in html
     assert "First name" in html
     assert "Role" in html

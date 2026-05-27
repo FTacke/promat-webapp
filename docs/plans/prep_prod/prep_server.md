@@ -390,8 +390,16 @@ AUTH_ACCESS_REQUEST_EMAIL
 AUTH_ACCESS_REQUEST_SUBJECT
 AUTH_ACCESS_REQUEST_FROM_EMAIL
 AUTH_ACCESS_REQUEST_REPLY_TO_ENABLED
+AUTH_MAIL_BACKEND
+AUTH_MAIL_FROM_EMAIL
+AUTH_MAIL_FROM_NAME
+AUTH_MAIL_DEFAULT_REPLY_TO
+AUTH_MAIL_SENDMAIL_PATH
+AUTH_MAIL_TIMEOUT_SECONDS
 AUTH_ACCESS_REQUEST_SMTP_HOST
 AUTH_ACCESS_REQUEST_SMTP_PORT
+AUTH_ACCESS_REQUEST_SMTP_USERNAME
+AUTH_ACCESS_REQUEST_SMTP_PASSWORD
 AUTH_ACCESS_REQUEST_SMTP_USE_TLS
 AUTH_ACCESS_REQUEST_SMTP_USE_SSL
 AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS
@@ -403,6 +411,10 @@ Secret-Werte, Zugangsdaten und vollständige Secret-Dateien werden nicht in Repo
 
 ### 8.3 Produktionsanforderungen für das Formular
 
+- Für v0.7 ist `AUTH_MAIL_BACKEND=sendmail` mit lokalem sendmail-kompatiblem Transport der empfohlene Host-Pfad; SMTP bleibt als alternative Backend-Konfiguration erhalten.
+- `AUTH_MAIL_FROM_EMAIL` muss eine serverseitig erlaubte Absenderadresse sein, `AUTH_MAIL_FROM_NAME` steuert den sichtbaren Anzeigenamen.
+- Access-Request-Benachrichtigungen nutzen die Antragstelleradresse als `Reply-To`; Admin-Einladungen nutzen die E-Mail-Adresse des auslösenden Admins als `Reply-To`.
+- Wenn direkter Versand deaktiviert ist oder fehlschlägt, bleibt die manuelle Kopie von Link, Betreff und Nachrichtentext als Fallback erhalten.
 - App-seitige Implementierung und Serverkonfiguration müssen vor Go-Live verdrahtet und smoke-getestet sein.
 - CSRF-Schutz muss aktiv sein.
 - Rate Limiting muss aktiv sein.

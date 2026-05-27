@@ -16,16 +16,43 @@ from ..branding import BRANDING
 from ..extensions import limiter
 from ..i18n import resolve_ui_language, translate
 from ..protected_navigation import build_admin_panel, build_protected_content_header
+from ..services.mail_delivery import (
+    MailConfigurationError,
+    MailDeliveryError,
+    MailMessage,
+    MailValidationError,
+    configured_default_reply_to,
+    email_domain,
+    send_mail,
+    validate_email_address,
+)
 from .public_content import get_language, get_language_label
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 def _recipient_domain(recipient: str) -> str:
-    value = (recipient or "").strip()
-    if "@" not in value:
-        return "unknown"
-    return value.rsplit("@", 1)[-1].lower() or "unknown"
+    return email_domain(recipient)
+
+
+def _current_admin_reply_to() -> str:
+    admin_user_id = str(get_jwt_identity() or "")
+    admin = auth_services.get_user_by_id(admin_user_id) if admin_user_id else None
+    try:
+        return validate_email_address(getattr(admin, "email", None), "admin reply-to")
+    except MailValidationError:
+        try:
+            fallback = configured_default_reply_to(current_app.config)
+        except MailValidationError as exc:
+            raise MailConfigurationError("A valid AUTH_MAIL_DEFAULT_REPLY_TO is required.") from exc
+        if not fallback:
+            raise MailConfigurationError("A valid AUTH_MAIL_DEFAULT_REPLY_TO is required.")
+        current_app.logger.warning(
+            "Admin invitation reply-to fallback used | admin_user_id=%s | fallback_domain=%s",
+            admin_user_id or "unknown",
+            _recipient_domain(fallback),
+        )
+        return fallback
 
 
 def _resolve_admin_ui_lang() -> str:
@@ -75,6 +102,7 @@ def _build_mail_preview(
     raw_token: str,
     ui_lang: str,
     purpose: str,
+    contact_email: str,
     admin_note: str | None = None,
 ) -> dict[str, str]:
     reset_link = _build_password_link(raw_token, ui_lang)
@@ -96,7 +124,7 @@ def _build_mail_preview(
             _t(
                 ui_lang,
                 f"{key_prefix}.outro",
-                contact_email=auth_services.access_request_contact_email(),
+                contact_email=contact_email,
             ),
         ]
     )
@@ -116,11 +144,13 @@ def _mail_preview_payload(
     *, user, ui_lang: str, purpose: str, admin_note: str | None = None
 ) -> dict[str, str]:
     raw_token, reset_token = auth_services.create_reset_token_for_user(user)
+    reply_to = _current_admin_reply_to()
     preview = _build_mail_preview(
         user_email=user.email or "",
         raw_token=raw_token,
         ui_lang=ui_lang,
         purpose=purpose,
+        contact_email=reply_to,
         admin_note=admin_note,
     )
     current_app.logger.info(
@@ -137,6 +167,7 @@ def _mail_preview_payload(
         "inviteMailRecipient": preview["recipient"],
         "inviteMailSubject": preview["subject"],
         "inviteMailBody": preview["body"],
+        "inviteReplyTo": reply_to,
     }
 
 
@@ -320,6 +351,93 @@ def users_reset_password(user_id: str):
         purpose="reset",
     )
     return jsonify({"ok": True, **preview_payload, "user": auth_services.serialize_users_for_admin([user])[0]}), 200
+
+
+@blueprint.post("/users/<user_id>/send-invite")
+@jwt_required()
+@require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
+def users_send_invite(user_id: str):
+    ui_lang = _resolve_admin_ui_lang()
+    payload = request.get_json(silent=True) or {}
+    user = auth_services.get_user_by_id(user_id)
+    if not user:
+        return jsonify({"ok": False, "error": "user_not_found", "manualFallback": True}), 404
+    if not user.email:
+        return (
+            jsonify(
+                {
+                    "ok": False,
+                    "error": _t(ui_lang, "auth.admin_users.error.email_required"),
+                    "manualFallback": True,
+                }
+            ),
+            400,
+        )
+
+    recipient = auth_services.normalize_email(str(payload.get("recipient") or user.email or ""))
+    if recipient != auth_services.normalize_email(user.email or ""):
+        return (
+            jsonify(
+                {
+                    "ok": False,
+                    "error": _t(ui_lang, "auth.admin_users.error.recipient_mismatch"),
+                    "manualFallback": True,
+                }
+            ),
+            400,
+        )
+
+    subject = str(payload.get("subject") or "")
+    body = str(payload.get("body") or "")
+    try:
+        reply_to = _current_admin_reply_to()
+        result = send_mail(
+            MailMessage(
+                to_address=recipient,
+                subject=subject,
+                body=body,
+                reply_to=reply_to,
+            )
+        )
+        if not result.sent:
+            raise MailDeliveryError(result.detail or "mail backend disabled")
+    except (MailDeliveryError, MailValidationError, MailConfigurationError) as exc:
+        current_app.logger.warning(
+            "Admin invitation email failed | user_id=%s | recipient_domain=%s | error_type=%s",
+            user_id,
+            _recipient_domain(recipient),
+            type(exc).__name__,
+        )
+        return (
+            jsonify(
+                {
+                    "ok": False,
+                    "error": _t(ui_lang, "auth.admin_users.send_mail_failed"),
+                    "manualFallback": True,
+                }
+            ),
+            503,
+        )
+
+    current_app.logger.info(
+        "Admin invitation email sent | user_id=%s | recipient_domain=%s | reply_to_domain=%s | subject_length=%s | body_length=%s",
+        user_id,
+        _recipient_domain(recipient),
+        _recipient_domain(reply_to),
+        len(subject or ""),
+        len(body or ""),
+    )
+    return (
+        jsonify(
+            {
+                "ok": True,
+                "message": _t(ui_lang, "auth.admin_users.send_mail_success", reply_to=reply_to),
+                "replyTo": reply_to,
+            }
+        ),
+        200,
+    )
 
 
 @blueprint.get("/analytics/page")
