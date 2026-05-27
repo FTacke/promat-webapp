@@ -582,6 +582,7 @@
   --pm-content-header-breadcrumb-gap: var(--promat-space-2);
   --pm-content-header-breadcrumb-item-gap: var(--promat-space-2);
   --pm-content-header-back-link-gap: var(--pm-space-sm);
+  --pm-content-header-back-title-gap: var(--pm-space-container);
   --pm-content-header-breadcrumb-title-gap: var(--pm-space-sm);
   --pm-content-header-title-intro-gap: var(--promat-space-3);
   --pm-content-header-padding-bottom: var(--pm-space-container);
