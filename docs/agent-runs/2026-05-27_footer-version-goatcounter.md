@@ -25,6 +25,7 @@ Implemented repository-side production/deploy improvements for automatic footer 
 - `docker compose --env-file app/passwords.env.template -f infra/docker-compose.prod.yml config` -> passed.
 - `docker build -f app/Dockerfile -t promat-webapp-local-check .` -> passed.
 - `git diff --check` -> passed.
+- After the first push, GitHub `python-smokes` exposed that CI's global `APP_ENV=testing` was leaking into the runtime-config reload helper; the helper now sets `APP_ENV` alongside `FLASK_ENV`, and the exact CI smoke commands pass locally.
 
 ## Typecheck Note
 

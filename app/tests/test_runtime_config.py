@@ -30,8 +30,9 @@ def _reload_config_module(
     runtime_root.mkdir(parents=True, exist_ok=True)
     public_root.mkdir(parents=True, exist_ok=True)
 
-    monkeypatch.setenv("FLASK_ENV", env_name)
     monkeypatch.delenv("PROMAT_ENV", raising=False)
+    monkeypatch.setenv("APP_ENV", env_name)
+    monkeypatch.setenv("FLASK_ENV", env_name)
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(runtime_root))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(public_root))
     monkeypatch.setenv("AUTH_DATABASE_URL", f"sqlite:///{(tmp_path / 'auth.sqlite3').as_posix()}")
