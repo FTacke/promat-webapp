@@ -1118,7 +1118,10 @@ def test_detect_working_text_requires_preparation_when_alignment_json_missing(tm
 
     assert plan.action == "available"
     assert plan.status == "needs_preparation"
-    assert plan.reason == "text source/TextGrid are present but alignment/text.json is missing or stale"
+    assert plan.reason == (
+        "text source/TextGrid are present but alignment/text.json is missing or stale; "
+        "text requires preparation; rerun with --run-working --run-mfa"
+    )
 
 
 def test_detect_working_text_requires_preparation_when_state_is_stale(tmp_path: Path, monkeypatch) -> None:
@@ -1167,7 +1170,10 @@ def test_detect_working_text_requires_preparation_when_state_is_stale(tmp_path: 
 
     assert plan.action == "available"
     assert plan.status == "needs_preparation"
-    assert plan.reason == "text source/TextGrid are present but alignment/text.json is missing or stale"
+    assert plan.reason == (
+        "text source/TextGrid are present but alignment/text.json is missing or stale; "
+        "text requires preparation; rerun with --run-working --run-mfa"
+    )
 
 
 def test_text_task_state_matches_normalizes_windows_drive_letter_case(tmp_path: Path, monkeypatch) -> None:
@@ -1193,7 +1199,7 @@ def test_text_task_state_matches_normalizes_windows_drive_letter_case(tmp_path: 
     normalized = signatures["source_signatures"]
     lower_case = json.loads(json.dumps(normalized))
     for key in ("source_wav", "source_textgrid", "text_source_json"):
-        lower_case[key]["path"] = str(lower_case[key]["path"]).lower()
+        lower_case[key]["path"] = str(lower_case[key]["path"]).replace("\\", "/").lower()
 
     payload = {
         "person_id": person_id,

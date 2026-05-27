@@ -2,31 +2,38 @@
 
 ## Zweck
 
-Wiederholbarer Ablauf fuer den sicheren Transfer eines validierten Research-Prod-Pakets nach incoming und den serverseitigen Publish-Pfad mit klaren Gates, Stop-Bedingungen und Report.
+Wiederholbarer Ablauf für den sicheren Transfer eines validierten Research-Prod-Pakets nach incoming und den serverseitigen Publish-Pfad mit klaren Gates, Stop-Bedingungen und Report.
 
 ## Scope und Nicht-Scope
 
 - Scope: Upload nach `data/incoming/{upload_id}` plus Publish-Gates, Stage, Promote, Health, Smoke, Cleanup, Report.
 - Nicht-Scope: lokaler Intake-Reimport, erneute MFA-Ableitung, ungeplanter Direkt-Write in `data/current` oder `data/releases`.
 
+## Verifizierter Serverzustand (Stand nach French Promote)
+
+- Der aktive Daten-Mount liegt unter `/app/data`.
+- Der produktive Stand wird ausschließlich über den Marker `data/current` gesteuert.
+- Neue Uploads gehen immer zuerst nach `/srv/webapps_storage/promat/data/incoming/{upload_id}/`.
+- Direkte Writes in `data/current` oder `data/releases` sind nicht zulässig.
+
 ## Preflight
 
 1. Paketlokation und Upload-ID bestimmen.
-2. Serverpfade pruefen:
+2. Serverpfade prüfen:
 - incoming root: `/srv/webapps_storage/promat/data/incoming/`
 - releases root: `/srv/webapps_storage/promat/data/releases/`
 - current link: `/srv/webapps_storage/promat/data/current`
-3. Laufzeitziel pruefen (Container/App): nutzt Runtime aus `/app/data` oder `/app/data/current`.
-4. Health-Endpoints fuer spaetere Verifikation notieren.
+3. Laufzeitziel prüfen (Container/App): nutzt Runtime aus `/app/data` mit `current`-Marker.
+4. Health-Endpoints für spätere Verifikation notieren.
 5. Stop-Bedingung: Wenn Pfade unklar sind oder `current`-Ziel nicht eindeutig ist, nicht promoten.
 
 ## Incoming Transfer
 
-Primaerweg (wenn lokal `rsync` verfuegbar):
+Primärweg (wenn lokal und remote `rsync` verfügbar):
 
 `rsync -avh --progress <package>/ <ssh_user>@vhrz2184:/srv/webapps_storage/promat/data/incoming/<upload_id>/`
 
-Gepruefter Fallback (wenn lokal kein `rsync` verfuegbar und serverseitig scp/SFTP nicht verfuegbar):
+Geprüfter Fallback (wenn lokal oder remote kein `rsync` verfügbar und serverseitig scp/SFTP nicht verfügbar):
 
 1. Lokales Paket als binaeren tar-Stream ueber SSH uebertragen.
 2. Remote-Zielverzeichnis vorher anlegen.
@@ -36,22 +43,22 @@ Gepruefter Fallback (wenn lokal kein `rsync` verfuegbar und serverseitig scp/SFT
 
 Wiederholbarer Skriptweg (bevorzugt):
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/upload_prod_package.py --package-dir <local_package_dir> --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/<upload_id> --verify-checksums`
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/upload_prod_package.py --package-dir <local_package_dir> --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/<upload_id> --method auto`
 
 Skriptregeln:
 
 - erlaubt nur Remote-Ziele unter `/srv/webapps_storage/promat/data/incoming/`
 - kein `--delete`
-- kein Upload nach `current` oder `releases`
-- rsync zuerst, tar-over-SSH als Fallback
-- Root-Sanity und File-Count nach Upload
-- optionales Remote-Checksum-Gate
+- kein Upload nach `current`, `releases` oder `production`
+- `--method auto|rsync|tar-ssh`; `auto` nimmt `rsync` nur wenn lokal und remote verfügbar
+- Root-Sanity, File-Count und Linux-Checksum-Gate nach jedem Upload (kein optionaler Skip)
+- Session-Sprachordner unter `sessions/` müssen Slugs sein; code-ähnliche Ordner wie `fr`/`en` werden als Fehler behandelt
 
 ## Incoming Gates (vor Stage)
 
 1. Allowlist-Gate auf Paketpfade.
 2. Forbidden-Scan auf verbotene Artefaktfamilien (`*.wav`, `*.TextGrid`, `*.xlsx`, `secure/`, `raw/`, `source/`, `alignment_source/`, `working/`, MFA-Artefakte).
-3. JSON-Parse-Gate fuer `manifest.json`, Metadaten, Alignments, Config und optional DB-Payload.
+3. JSON-Parse-Gate für `manifest.json`, Metadaten, Alignments, Config und optionales DB-Payload.
 4. Rohes Linux-Checksum-Gate:
 - `cd /srv/webapps_storage/promat/data/incoming/<upload_id>`
 - `sha256sum -c checksums.sha256`
@@ -88,7 +95,8 @@ Stop-Bedingungen:
 1. `db/import_payload.json` vorhanden:
 - Import nur ueber freigegebenen, dokumentierten Importpfad/Tool.
 2. `db/import_payload.json` fehlt:
-- je nach freigegebenem Vertrag stoppen oder dokumentiert ueberspringen.
+- File-Publish darf fortgesetzt werden, wenn alle Dateigates grün sind.
+- DB-Upsert ist dann ein separater dokumentierter Folgeprozess.
 3. Kein Dummy-Payload und keine secure/PII-Leaks in Logs.
 
 Stop-Bedingungen:
@@ -142,10 +150,10 @@ Mindestinhalt:
 - Cleanup-Entscheidung
 - offene Folgepunkte
 
-## Aktueller offener Folgepunkt (French Fix)
+## Referenzlauf French Promote
 
-- Ziel-Upload-ID: `french_batch_20260527_initial_fix01`
+- Upload-ID: `french_batch_20260527_initial_fix01`
 - Incoming-Pfad: `/srv/webapps_storage/promat/data/incoming/french_batch_20260527_initial_fix01/`
-- Rohes Linux-Gate bereits nachgewiesen: `sha256sum -c checksums.sha256` mit `rc:0`
-- `db/import_payload.json` ist vorhanden
-- Offener Schritt: serverseitiger Publish nach diesem Runbook (in diesem Run bewusst nicht ausgefuehrt)
+- Linux-Checksum-Gate: `sha256sum -c checksums.sha256` erfolgreich
+- Release-Promote: durchgeführt; `current` zeigt auf den neuen Release-Stand
+- DB-Payload: vorhanden, aber DB-Workflow bleibt weiterhin eigener kontrollierter Schritt

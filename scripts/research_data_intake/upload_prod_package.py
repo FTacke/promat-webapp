@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import re
 import shlex
 import shutil
 import subprocess
@@ -16,7 +17,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--host", required=True, help="SSH host, for example vhrz2184.")
     parser.add_argument("--remote-dir", required=True, help="Remote target directory under incoming root.")
     parser.add_argument("--ssh-user", default="root", help="SSH user. Default: root.")
-    parser.add_argument("--verify-checksums", action="store_true", help="Run remote sha256sum -c checksums.sha256 after upload.")
+    parser.add_argument(
+        "--method",
+        choices=("auto", "rsync", "tar-ssh"),
+        default="auto",
+        help="Upload method: auto (default), rsync, or tar-ssh.",
+    )
+    parser.add_argument(
+        "--verify-checksums",
+        action="store_true",
+        help="Deprecated compatibility flag. Checksum verification always runs after upload.",
+    )
     return parser.parse_args()
 
 
@@ -25,15 +36,22 @@ def _run(command: list[str]) -> subprocess.CompletedProcess[str]:
 
 
 def _require_safe_remote_dir(remote_dir: str) -> None:
-    normalized = remote_dir.strip()
+    normalized = remote_dir.strip().rstrip("/")
     if not normalized.startswith(INCOMING_ROOT):
         raise ValueError(f"remote-dir must stay under {INCOMING_ROOT}")
-    if normalized in (INCOMING_ROOT, INCOMING_ROOT.rstrip("/")):
+    incoming_root = INCOMING_ROOT.rstrip("/")
+    if normalized in (INCOMING_ROOT, incoming_root):
         raise ValueError("remote-dir must include a concrete upload_id directory")
     if "/../" in normalized or normalized.endswith("/.."):
         raise ValueError("remote-dir must not contain parent traversal")
-    if "/current" in normalized or "/releases" in normalized:
-        raise ValueError("remote-dir must not target current or releases paths")
+    suffix = normalized[len(incoming_root) + 1 :] if normalized.startswith(incoming_root + "/") else ""
+    if not suffix:
+        raise ValueError("remote-dir must include an upload_id subdirectory under incoming root")
+    segments = [segment for segment in suffix.split("/") if segment]
+    forbidden = {"current", "releases", "production"}
+    blocked = next((segment for segment in segments if segment in forbidden), None)
+    if blocked is not None:
+        raise ValueError(f"remote-dir must not include forbidden segment: {blocked}")
 
 
 def _ssh_target(user: str, host: str) -> str:
@@ -47,6 +65,25 @@ def _rsync_upload(package_dir: Path, ssh_user: str, host: str, remote_dir: str) 
     process = _run(command)
     if process.returncode != 0:
         raise RuntimeError(process.stderr.strip() or process.stdout.strip() or "rsync upload failed")
+
+
+def _remote_supports_rsync(ssh_user: str, host: str) -> bool:
+    process = _run(["ssh", _ssh_target(ssh_user, host), "command -v rsync >/dev/null 2>&1"])
+    return process.returncode == 0
+
+
+def _choose_upload_method(method: str, *, rsync_available: bool, remote_rsync_available: bool) -> str:
+    if method == "tar-ssh":
+        return "tar-over-ssh"
+    if method == "rsync":
+        if not rsync_available:
+            raise RuntimeError("--method rsync requested but local rsync is not available")
+        if not remote_rsync_available:
+            raise RuntimeError("--method rsync requested but remote rsync is not available")
+        return "rsync"
+    if rsync_available and remote_rsync_available:
+        return "rsync"
+    return "tar-over-ssh"
 
 
 def _tar_stream_upload(package_dir: Path, ssh_user: str, host: str, remote_dir: str) -> None:
@@ -87,6 +124,21 @@ def _verify_remote_root(ssh_user: str, host: str, remote_dir: str) -> tuple[int,
     missing = sorted(required - set(root_entries))
     if missing:
         raise RuntimeError("remote root sanity check failed; missing entries: " + ", ".join(missing))
+
+    sessions_dir = f"{remote_dir.rstrip('/')}/sessions"
+    sessions_check = _run(["ssh", _ssh_target(ssh_user, host), f"test -d {shlex.quote(sessions_dir)}"])
+    if sessions_check.returncode == 0:
+        session_language_output = _remote_command(ssh_user, host, f"ls -1 {shlex.quote(sessions_dir)}")
+        code_like_languages = [
+            language.strip()
+            for language in session_language_output.splitlines()
+            if re.fullmatch(r"[a-z]{2,3}", language.strip() or "")
+        ]
+        if code_like_languages:
+            raise RuntimeError(
+                "remote sanity check failed; sessions must use corpus slugs, found code-like session dirs: "
+                + ", ".join(sorted(code_like_languages))
+            )
     return count, root_entries
 
 
@@ -103,23 +155,26 @@ def main() -> int:
 
     _require_safe_remote_dir(args.remote_dir)
 
-    strategy: str
-    if shutil.which("rsync"):
-        strategy = "rsync"
+    local_rsync_available = shutil.which("rsync") is not None
+    remote_rsync_available = _remote_supports_rsync(args.ssh_user, args.host) if local_rsync_available else False
+    strategy = _choose_upload_method(
+        args.method,
+        rsync_available=local_rsync_available,
+        remote_rsync_available=remote_rsync_available,
+    )
+    if strategy == "rsync":
         print("upload strategy: rsync")
         _rsync_upload(package_dir, args.ssh_user, args.host, args.remote_dir)
     else:
-        strategy = "tar-over-ssh"
-        print("upload strategy: tar-over-ssh (rsync not found)")
+        print("upload strategy: tar-over-ssh")
         _tar_stream_upload(package_dir, args.ssh_user, args.host, args.remote_dir)
 
     file_count, root_entries = _verify_remote_root(args.ssh_user, args.host, args.remote_dir)
     print(f"remote file count: {file_count}")
     print("remote root entries: " + ", ".join(root_entries))
 
-    if args.verify_checksums:
-        _verify_remote_checksums(args.ssh_user, args.host, args.remote_dir)
-        print("remote checksum gate: ok")
+    _verify_remote_checksums(args.ssh_user, args.host, args.remote_dir)
+    print("remote checksum gate: ok")
 
     print(f"upload completed: strategy={strategy}")
     return 0

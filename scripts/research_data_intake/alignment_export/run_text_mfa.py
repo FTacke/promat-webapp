@@ -24,6 +24,8 @@ from language_config import resolve_language_config  # noqa: E402
 
 
 DEFAULT_DOCKER_IMAGE = "mmcauliffe/montreal-forced-aligner:latest"
+DEFAULT_MFA_EXECUTABLE = "docker"
+MFA_EXECUTABLE_ENV = "PROMAT_MFA_EXECUTABLE"
 
 
 def parse_args() -> argparse.Namespace:
@@ -33,7 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-dir", required=True, help="Batch directory path or batch name under scripts/research_data_intake/import/.")
     parser.add_argument("--person-id", required=True, help="Canonical person_id such as EN-L-0001.")
     parser.add_argument("--language", required=True, help="Intake language code or corpus slug, for example en or english.")
-    parser.add_argument("--mfa-executable", default="mfa", help="MFA executable name or absolute path. Default: mfa.")
+    parser.add_argument("--mfa-executable", help="MFA executable name or absolute path. Default resolution: CLI value, then PROMAT_MFA_EXECUTABLE, then docker.")
     parser.add_argument("--dry-run", action="store_true", help="Validate the MFA inputs and command without executing MFA.")
     return parser.parse_args()
 
@@ -73,12 +75,22 @@ def _docker_image() -> str:
     return os.getenv("PROMAT_MFA_DOCKER_IMAGE", DEFAULT_DOCKER_IMAGE)
 
 
+def resolve_mfa_executable(cli_value: str | None) -> str:
+    explicit = (cli_value or "").strip()
+    if explicit:
+        return explicit
+    env_value = (os.getenv(MFA_EXECUTABLE_ENV) or "").strip()
+    if env_value:
+        return env_value
+    return DEFAULT_MFA_EXECUTABLE
+
+
 def check_mfa_available(mfa_executable: str = "mfa") -> str:
     if mfa_executable == "docker":
         process = _run_command(["docker", "--version"])
         output = _extract_output(process)
         if process.returncode != 0:
-            raise RuntimeError(f"Docker is not available for MFA container execution: {output or 'no output'}")
+            raise RuntimeError(f"Docker-MFA requested but docker is not available/running: {output or 'no output'}")
         return output.splitlines()[0] if output else "unknown"
     process = _run_command([mfa_executable, "version"])
     output = _extract_output(process)
@@ -199,12 +211,13 @@ def run_text_mfa_for_person(
 
 def _run() -> int:
     args = parse_args()
+    mfa_executable = resolve_mfa_executable(args.mfa_executable)
     batch_dir = resolve_batch_dir(args.batch_dir, require_processed=False)
     result = run_text_mfa_for_person(
         batch_dir=batch_dir,
         person_id=args.person_id,
         language=args.language,
-        mfa_executable=args.mfa_executable,
+        mfa_executable=mfa_executable,
         dry_run=args.dry_run,
     )
     print(f"person_id={result['person_id']}")

@@ -58,6 +58,7 @@ Regeln:
 - Für `wordlist` und `text` braucht der Organizer klassifizierte `source`-WAVs plus alignment source TextGrid.
 - Für `interview` braucht der Organizer eine klassifizierte `source`-WAV plus eine klassifizierte alignment-source JSON-Datei.
 - Die Text-MFA schreibt zusätzlich eine task-lokale `mfa_state.json`, damit unveränderte Inputs die aktuelle Textausgabe wiederverwenden können, statt MFA erneut auszuführen.
+- MFA-Executable-Auflösung folgt überall demselben Vertrag: CLI `--mfa-executable` > `PROMAT_MFA_EXECUTABLE` > `docker`.
 - `raw` kann als Fallback genutzt werden wenn kein `source`-WAV vorhanden ist; das Archiv dokumentiert dies in `task_audio_roles`.
 - Native Speaker mit `-N-` bleiben für `interview` neutral `not_expected_for_native_speaker`.
 
@@ -209,9 +210,9 @@ Prod-Upload-Paket validieren:
 
 `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py prod-package --package-dir C:/dev/promat/scripts/research_data_intake/exports/promat_upload_20260525T120000Z`
 
-Prod-Upload-Paket nach incoming uebertragen (rsync wenn verfuegbar, sonst tar-over-SSH Fallback):
+Prod-Upload-Paket nach incoming übertragen (`auto`: rsync nur wenn lokal und remote verfügbar, sonst tar-over-SSH):
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/upload_prod_package.py --package-dir C:/dev/promat/scripts/research_data_intake/exports/french_batch_20260527_initial_fix01 --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/french_batch_20260527_initial_fix01 --verify-checksums`
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/upload_prod_package.py --package-dir C:/dev/promat/scripts/research_data_intake/exports/french_batch_20260527_initial_fix01 --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/french_batch_20260527_initial_fix01 --method auto`
 
 Expliziten Dev-Research-File-Reset nur dry-run anzeigen:
 

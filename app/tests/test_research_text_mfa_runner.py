@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+import pytest
 
 
 TEST_REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -36,3 +37,34 @@ def test_run_command_uses_utf8_and_replace_error_mode(monkeypatch) -> None:
     assert calls[0]["encoding"] == "utf-8"
     assert calls[0]["errors"] == "replace"
     assert calls[0]["check"] is False
+
+
+def test_resolve_mfa_executable_prefers_cli_over_env(monkeypatch) -> None:
+    monkeypatch.setenv("PROMAT_MFA_EXECUTABLE", "docker")
+
+    assert run_text_mfa.resolve_mfa_executable("mfa") == "mfa"
+
+
+def test_resolve_mfa_executable_uses_env_when_cli_missing(monkeypatch) -> None:
+    monkeypatch.setenv("PROMAT_MFA_EXECUTABLE", "mfa")
+
+    assert run_text_mfa.resolve_mfa_executable(None) == "mfa"
+
+
+def test_resolve_mfa_executable_defaults_to_docker(monkeypatch) -> None:
+    monkeypatch.delenv("PROMAT_MFA_EXECUTABLE", raising=False)
+
+    assert run_text_mfa.resolve_mfa_executable(None) == "docker"
+
+
+def test_check_mfa_available_docker_error_message(monkeypatch) -> None:
+    monkeypatch.setattr(
+        run_text_mfa,
+        "_run_command",
+        lambda command: SimpleNamespace(returncode=1, stdout="", stderr="docker unavailable"),
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        run_text_mfa.check_mfa_available("docker")
+
+    assert "Docker-MFA requested but docker is not available/running" in str(exc_info.value)
