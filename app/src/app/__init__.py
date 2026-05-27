@@ -365,8 +365,10 @@ def register_auth_context(app: Flask) -> None:
             if not any(request.path.startswith(p) for p in allowed_prefixes):
                 if request.headers.get("HX-Request") or request.is_json:
                     return jsonify({"error": "password_reset_required"}), 403
+                next_target = request.full_path if request.query_string else request.path
                 return redirect(
-                    url_for("auth.account_password_page") + "?mustReset=1", 303
+                    url_for("auth.account_password_page", mustReset="1", next=next_target),
+                    303,
                 )
 
     @app.context_processor

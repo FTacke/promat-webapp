@@ -38,6 +38,7 @@ def _insert_user(
     last_name: str = "",
     role: str = "user",
     is_active: bool = True,
+    must_reset_password: bool = False,
     access_expires_at: datetime | None = None,
     created_by_user_id: str | None = None,
 ) -> None:
@@ -51,7 +52,7 @@ def _insert_user(
                 password_hash=auth_services.hash_password("ValidPass1"),
                 role=role,
                 is_active=is_active,
-                must_reset_password=False,
+                must_reset_password=must_reset_password,
                 created_at=now,
                 updated_at=now,
                 access_expires_at=access_expires_at,
@@ -177,6 +178,13 @@ def _login(client, *, email: str, password: str = "ValidPass1"):
         "/auth/login",
         data={"email": email, "password": password},
         follow_redirects=False,
+    )
+
+
+def _enable_jwt_cookie_csrf(app: Flask) -> None:
+    app.config.update(
+        JWT_COOKIE_CSRF_PROTECT=True,
+        JWT_CSRF_CHECK_FORM=True,
     )
 
 
@@ -959,6 +967,131 @@ def test_account_password_change_persists_and_preserves_admin_role(auth_app: Fla
     assert client.get("/auth/logout").status_code == 303
     assert _login(client, email="admin@example.org", password="ValidPass1").status_code == 401
     assert _login(client, email="admin@example.org", password="ChangedPass2").status_code == 303
+
+
+def test_forced_reset_form_uses_jwt_csrf_and_refreshes_access_cookie(auth_app: Flask) -> None:
+    _enable_jwt_cookie_csrf(auth_app)
+    with auth_app.app_context():
+        with get_session() as session:
+            admin = session.get(User, "admin-1")
+            assert admin is not None
+            admin.must_reset_password = True
+
+    client = auth_app.test_client()
+    login_response = client.post(
+        "/auth/login",
+        data={
+            "email": "admin@example.org",
+            "password": "ValidPass1",
+            "next": "/admin/users/page?ui_lang=en",
+        },
+        follow_redirects=False,
+    )
+    assert login_response.status_code == 303
+    assert login_response.headers["Location"] == "/admin/users/page?ui_lang=en"
+
+    trapped_response = client.get(login_response.headers["Location"], follow_redirects=False)
+    assert trapped_response.status_code == 303
+    assert trapped_response.headers["Location"].startswith("/auth/account/password?mustReset=1")
+
+    form_response = client.get(trapped_response.headers["Location"])
+    assert form_response.status_code == 200
+    html = form_response.get_data(as_text=True)
+    assert 'name="csrf_token"' in html
+    assert 'name="old_password"' not in html
+    assert _extract_hidden_input_value(html, "next") == "/admin/users/page?ui_lang=en"
+    csrf_token = _extract_hidden_input_value(html, "csrf_token")
+
+    change_response = client.post(
+        "/auth/account/password",
+        data={
+            "new_password": "ChangedPass2",
+            "confirm_password": "ChangedPass2",
+            "next": "/admin/users/page?ui_lang=en",
+            "csrf_token": csrf_token,
+        },
+        follow_redirects=False,
+    )
+
+    assert change_response.status_code == 303
+    assert change_response.headers["Location"] == "/admin/users/page?ui_lang=en"
+    assert "access_token_cookie=" in "\n".join(change_response.headers.getlist("Set-Cookie"))
+    with auth_app.app_context():
+        user = auth_services.find_user_by_email("admin@example.org")
+        assert user is not None
+        assert user.role == "admin"
+        assert user.must_reset_password is False
+        assert auth_services.verify_password("ChangedPass2", user.password_hash)
+        assert not auth_services.verify_password("ValidPass1", user.password_hash)
+
+    admin_page_response = client.get("/admin/users/page?ui_lang=en", follow_redirects=False)
+    assert admin_page_response.status_code == 200
+    assert "/auth/account/password" not in admin_page_response.request.path
+
+    assert client.get("/auth/logout").status_code == 303
+    assert _login(client, email="admin@example.org", password="ValidPass1").status_code == 401
+    assert _login(client, email="admin@example.org", password="ChangedPass2").status_code == 303
+
+
+def test_normal_account_password_change_still_works_with_jwt_cookie_csrf(auth_app: Flask) -> None:
+    _enable_jwt_cookie_csrf(auth_app)
+    client = auth_app.test_client()
+
+    assert _login(client, email="alice@example.org", password="ValidPass1").status_code == 303
+    page_response = client.get("/auth/account/password?ui_lang=en")
+    assert page_response.status_code == 200
+    csrf_token = _extract_hidden_input_value(page_response.get_data(as_text=True), "csrf_token")
+
+    response = client.post(
+        "/auth/account/password",
+        data={
+            "old_password": "ValidPass1",
+            "new_password": "ChangedPass2",
+            "confirm_password": "ChangedPass2",
+            "ui_lang": "en",
+            "csrf_token": csrf_token,
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    with auth_app.app_context():
+        user = auth_services.find_user_by_email("alice@example.org")
+        assert user is not None
+        assert auth_services.verify_password("ChangedPass2", user.password_hash)
+        assert not auth_services.verify_password("ValidPass1", user.password_hash)
+
+
+@pytest.mark.parametrize("csrf_override", [None, "invalid-csrf-token"])
+def test_account_password_change_rejects_missing_or_invalid_jwt_csrf(
+    auth_app: Flask,
+    csrf_override: str | None,
+) -> None:
+    _enable_jwt_cookie_csrf(auth_app)
+    client = auth_app.test_client()
+
+    assert _login(client, email="alice@example.org", password="ValidPass1").status_code == 303
+    payload = {
+        "old_password": "ValidPass1",
+        "new_password": "ChangedPass2",
+        "confirm_password": "ChangedPass2",
+        "ui_lang": "en",
+    }
+    if csrf_override is not None:
+        payload["csrf_token"] = csrf_override
+
+    response = client.post(
+        "/auth/account/password",
+        data=payload,
+        follow_redirects=False,
+    )
+
+    assert response.status_code in {302, 303, 401}
+    with auth_app.app_context():
+        user = auth_services.find_user_by_email("alice@example.org")
+        assert user is not None
+        assert auth_services.verify_password("ValidPass1", user.password_hash)
+        assert not auth_services.verify_password("ChangedPass2", user.password_hash)
 
 
 def test_account_password_change_rejects_wrong_current_password_without_update(auth_app: Flask) -> None:

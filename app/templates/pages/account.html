@@ -31,6 +31,9 @@
       {% endwith %}
 
       <form class="pm-account-form" method="post" action="{{ url_for('auth.account_update', ui_lang=auth_ui_lang) }}">
+        {% if jwt_access_csrf %}
+          <input type="hidden" name="{{ jwt_access_csrf.name }}" value="{{ jwt_access_csrf.value }}">
+        {% endif %}
         <div class="pm-account-form__grid">
           <label class="pm-admin-field" for="account-first-name">
             <span class="pm-admin-field__label">{{ t('auth.account.first_name_label') }}</span>

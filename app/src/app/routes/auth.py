@@ -239,6 +239,25 @@ def _password_validation_error(
     return _t(ui_lang, f"auth.password_rules.{error_key}")
 
 
+def _jwt_access_csrf_form_field() -> dict[str, str] | None:
+    """Return the JWT double-submit CSRF field for protected HTML forms."""
+    if not current_app.config.get("JWT_COOKIE_CSRF_PROTECT", True):
+        return None
+    cookie_name = current_app.config.get("JWT_ACCESS_CSRF_COOKIE_NAME", "csrf_access_token")
+    field_name = current_app.config.get("JWT_ACCESS_CSRF_FIELD_NAME", "csrf_token")
+    csrf_value = request.cookies.get(cookie_name, "")
+    if not csrf_value:
+        return None
+    return {"name": field_name, "value": csrf_value}
+
+
+def _refresh_access_cookie_response(response: Response, *, user_id: str) -> Response:
+    refreshed_user = auth_services.get_user_by_id(user_id)
+    if refreshed_user:
+        set_access_cookies(response, auth_services.create_access_token_for_user(refreshed_user))
+    return response
+
+
 def _forgot_password_response(email: str, ui_lang: str) -> None:
     user = auth_services.find_user_by_email(email)
     if user and user.deleted_at is None:
@@ -303,6 +322,7 @@ def _render_account_page(*, user, status_code: int = 200) -> Response:
             account_user=user,
             account_role=auth_services.normalize_role(user.role),
             account_status=auth_services.admin_status_code(user),
+            jwt_access_csrf=_jwt_access_csrf_form_field(),
             **_build_account_context(ui_lang, user=user, page_key="account"),
         ),
         status_code,
@@ -311,11 +331,14 @@ def _render_account_page(*, user, status_code: int = 200) -> Response:
 
 def _render_account_password_page(*, user, status_code: int = 200) -> Response:
     ui_lang = _resolve_auth_ui_lang(request.referrer)
+    next_url = _safe_next(request.values.get("next"))
     return (
         render_template(
             "auth/account_password.html",
             account_user=user,
             must_reset_mode=bool(user.must_reset_password or request.args.get("mustReset")),
+            next_url=next_url or "",
+            jwt_access_csrf=_jwt_access_csrf_form_field(),
             **_build_account_context(ui_lang, user=user, page_key="account_password"),
         ),
         status_code,
@@ -412,6 +435,7 @@ def account_password_submit() -> Response:
     old_password = request.form.get("old_password", "")
     new_password = request.form.get("new_password", "")
     confirm_password = request.form.get("confirm_password", "")
+    next_url = _safe_next(request.form.get("next") or request.args.get("next"))
 
     error_message = _password_validation_error(
         ui_lang,
@@ -435,7 +459,8 @@ def account_password_submit() -> Response:
             return _render_account_password_page(user=user, status_code=400)
         raise
     flash(_t(ui_lang, "auth.account_password.success"), "success")
-    return redirect(url_for("auth.account_page", ui_lang=ui_lang), 303)
+    response = make_response(redirect(next_url or url_for("auth.account_page", ui_lang=ui_lang), 303))
+    return _refresh_access_cookie_response(response, user_id=str(user.id))
 
 
 @blueprint.post("/change-password")
@@ -472,7 +497,8 @@ def change_password() -> Response:
         if str(exc) == "current_password":
             return jsonify({"ok": False, "message": _t(ui_lang, "auth.account_password.error.current_password")}), 400
         raise
-    return jsonify({"ok": True, "message": _t(ui_lang, "auth.account_password.success")}), 200
+    response = make_response(jsonify({"ok": True, "message": _t(ui_lang, "auth.account_password.success")}), 200)
+    return _refresh_access_cookie_response(response, user_id=str(user.id))
 
 
 @blueprint.get("/password/forgot")
