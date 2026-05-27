@@ -14,6 +14,9 @@ This script creates tables if missing and will either create a new admin user
 or update an existing user with the same username. When updating it will
 unlock the account, reset the password, clear failed/locked flags and mark the
 user active.
+
+Curated research test-set creation is intentionally opt-in via
+`--ensure-curated-test-set` and is not part of admin recovery.
 """
 
 from __future__ import annotations
@@ -50,6 +53,12 @@ def main():
         dest="allow_production",
         action="store_true",
         help="Allow running this script in production environments (use with care)",
+    )
+    parser.add_argument(
+        "--ensure-curated-test-set",
+        dest="ensure_curated_test_set",
+        action="store_true",
+        help="Optional dev helper: also create the curated research test set after admin recovery.",
     )
     args = parser.parse_args()
 
@@ -96,7 +105,6 @@ def main():
     from src.app.extensions.sqlalchemy_ext import init_engine, get_engine, get_session
     from src.app.auth.models import Base, User
     from src.app.auth import services
-    from src.app.research_sets import ensure_curated_test_set
 
     class AppLike:
         def __init__(self, cfg):
@@ -199,7 +207,9 @@ def main():
                 admin_user_id = u.id
                 print(f"Created admin user '{args.username}' (unlocked)")
 
-        if admin_user_id:
+        if admin_user_id and args.ensure_curated_test_set:
+            from src.app.research_sets import ensure_curated_test_set
+
             curated_set = ensure_curated_test_set(admin_user_id=admin_user_id)
             print(f"Ensured curated test set '{curated_set.label}' ({curated_set.set_id})")
 

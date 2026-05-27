@@ -413,10 +413,6 @@ def account_password_submit() -> Response:
     new_password = request.form.get("new_password", "")
     confirm_password = request.form.get("confirm_password", "")
 
-    if not user.must_reset_password and not auth_services.verify_password(old_password, user.password_hash):
-        flash(_t(ui_lang, "auth.account_password.error.current_password"), "error")
-        return _render_account_password_page(user=user, status_code=400)
-
     error_message = _password_validation_error(
         ui_lang,
         new_password=new_password,
@@ -426,7 +422,18 @@ def account_password_submit() -> Response:
         flash(error_message, "error")
         return _render_account_password_page(user=user, status_code=400)
 
-    auth_services.update_user_password(str(user.id), auth_services.hash_password(new_password))
+    try:
+        auth_services.change_user_password(
+            str(user.id),
+            current_password=old_password,
+            new_password=new_password,
+            require_current_password=not user.must_reset_password,
+        )
+    except ValueError as exc:
+        if str(exc) == "current_password":
+            flash(_t(ui_lang, "auth.account_password.error.current_password"), "error")
+            return _render_account_password_page(user=user, status_code=400)
+        raise
     flash(_t(ui_lang, "auth.account_password.success"), "success")
     return redirect(url_for("auth.account_page", ui_lang=ui_lang), 303)
 
@@ -446,9 +453,6 @@ def change_password() -> Response:
     if not user:
         return jsonify({"ok": False, "message": _t(ui_lang, "auth.flash.login_required")}), 401
 
-    if not user.must_reset_password and not auth_services.verify_password(old_password, user.password_hash):
-        return jsonify({"ok": False, "message": _t(ui_lang, "auth.account_password.error.current_password")}), 400
-
     error_message = _password_validation_error(
         ui_lang,
         new_password=new_password,
@@ -457,7 +461,17 @@ def change_password() -> Response:
     if error_message:
         return jsonify({"ok": False, "message": error_message}), 400
 
-    auth_services.update_user_password(str(user.id), auth_services.hash_password(new_password))
+    try:
+        auth_services.change_user_password(
+            str(user.id),
+            current_password=old_password,
+            new_password=new_password,
+            require_current_password=not user.must_reset_password,
+        )
+    except ValueError as exc:
+        if str(exc) == "current_password":
+            return jsonify({"ok": False, "message": _t(ui_lang, "auth.account_password.error.current_password")}), 400
+        raise
     return jsonify({"ok": True, "message": _t(ui_lang, "auth.account_password.success")}), 200
 
 

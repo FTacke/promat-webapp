@@ -931,6 +931,113 @@ def test_password_reset_updates_password_and_consumes_token(auth_app: Flask) -> 
         assert status == "used"
 
 
+def test_account_password_change_persists_and_preserves_admin_role(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    assert _login(client, email="admin@example.org", password="ValidPass1").status_code == 303
+    response = client.post(
+        "/auth/account/password",
+        data={
+            "old_password": "ValidPass1",
+            "new_password": "ChangedPass2",
+            "confirm_password": "ChangedPass2",
+            "ui_lang": "en",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["Location"] == "/auth/account?ui_lang=en"
+    with auth_app.app_context():
+        user = auth_services.find_user_by_email("admin@example.org")
+        assert user is not None
+        assert user.role == "admin"
+        assert user.must_reset_password is False
+        assert auth_services.verify_password("ChangedPass2", user.password_hash)
+        assert not auth_services.verify_password("ValidPass1", user.password_hash)
+
+    assert client.get("/auth/logout").status_code == 303
+    assert _login(client, email="admin@example.org", password="ValidPass1").status_code == 401
+    assert _login(client, email="admin@example.org", password="ChangedPass2").status_code == 303
+
+
+def test_account_password_change_rejects_wrong_current_password_without_update(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    assert _login(client, email="alice@example.org", password="ValidPass1").status_code == 303
+    response = client.post(
+        "/auth/account/password",
+        data={
+            "old_password": "WrongPass1",
+            "new_password": "ChangedPass2",
+            "confirm_password": "ChangedPass2",
+            "ui_lang": "en",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 400
+    with auth_app.app_context():
+        user = auth_services.find_user_by_email("alice@example.org")
+        assert user is not None
+        assert auth_services.verify_password("ValidPass1", user.password_hash)
+        assert not auth_services.verify_password("ChangedPass2", user.password_hash)
+
+
+def test_account_password_change_rejects_mismatched_confirmation_without_update(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    assert _login(client, email="alice@example.org", password="ValidPass1").status_code == 303
+    response = client.post(
+        "/auth/account/password",
+        data={
+            "old_password": "ValidPass1",
+            "new_password": "ChangedPass2",
+            "confirm_password": "DifferentPass2",
+            "ui_lang": "en",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 400
+    with auth_app.app_context():
+        user = auth_services.find_user_by_email("alice@example.org")
+        assert user is not None
+        assert auth_services.verify_password("ValidPass1", user.password_hash)
+        assert not auth_services.verify_password("ChangedPass2", user.password_hash)
+
+
+def test_login_status_guards_remain_for_inactive_locked_and_deleted_users(auth_app: Flask) -> None:
+    now = datetime.now(timezone.utc)
+    with auth_app.app_context():
+        _insert_user(user_id="inactive-1", username="inactive", email="inactive@example.org", is_active=False)
+        _insert_user(user_id="locked-1", username="locked", email="locked@example.org")
+        _insert_user(user_id="deleted-1", username="deleted", email="deleted@example.org")
+        with get_session() as session:
+            locked = session.get(User, "locked-1")
+            assert locked is not None
+            locked.locked_until = now + timedelta(minutes=10)
+            deleted = session.get(User, "deleted-1")
+            assert deleted is not None
+            deleted.deleted_at = now
+            deleted.deletion_requested_at = now
+
+    client = auth_app.test_client()
+
+    assert _login(client, email="inactive@example.org", password="ValidPass1").status_code == 403
+    assert _login(client, email="locked@example.org", password="ValidPass1").status_code == 403
+    assert _login(client, email="deleted@example.org", password="ValidPass1").status_code == 403
+
+
+def test_create_initial_admin_curated_test_set_is_explicit_opt_in() -> None:
+    script = (TEST_REPO_ROOT / "app" / "scripts" / "create_initial_admin.py").read_text(encoding="utf-8")
+
+    assert "--ensure-curated-test-set" in script
+    assert "args.ensure_curated_test_set" in script
+    assert "from src.app.research_sets import ensure_curated_test_set" in script
+    assert "if admin_user_id and args.ensure_curated_test_set" in script
+
+
 def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask, caplog: pytest.LogCaptureFixture) -> None:
     client = auth_app.test_client()
     login_response = _login(client, email="admin@example.org")

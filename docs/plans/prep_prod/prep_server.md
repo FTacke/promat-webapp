@@ -1,6 +1,6 @@
 ﻿# prep_server.md — ProMat / Pronunciation Matters v0.7 Production Preparation
 
-Stand: 2026-05-26
+Stand: 2026-05-27
 Basis: read-only reports `promat_v07_preflight_readonly_20260526_191204.md` und `promat_runner_deploy_pattern_readonly_20260526_191925.md`
 
 Diese Datei ist eine Repo-seitige Planungs- und Freigabegrundlage. Sie dokumentiert den geplanten ersten produktiven ProMat-Deploy für Pronunciation Matters v0.7, aber sie führt selbst keine Runtime-Änderungen aus. Aktive Upload-Package-Regeln bleiben in [docs/spec/platform-data-files.md](docs/spec/platform-data-files.md) maßgeblich; diese Datei verdichtet daraus die serverseitige Deployment-Reihenfolge.
@@ -83,51 +83,28 @@ Dabei gilt:
 - `promat-prod` ist sowohl Compose-Projektname als auch Runner-Label.
 - Der Runner-Service folgt dem Muster `actions.runner.<owner-repo>.promat-prod.service`.
 
-### 3.3 Aktueller read-only Preflight-Zustand
+### 3.3 Current Server State For This Repo Prep
 
-- `/srv/webapps_storage` ist von `/dev/sdb1` mit Label `media` gemountet.
-- `/srv/webapps_storage/pronunciation-matters/data` existiert bereits und ist laut Preflight im Wesentlichen leer.
-- `/srv/webapps_storage/promat` existiert aktuell noch nicht.
-- Unter `/srv/webapps/promat` existiert noch kein App-Root.
-- Unter `/srv/webapps/promat/runner` existiert noch kein ProMat-Runner.
+Diese Angaben stammen aus dem Aufgaben-Kontext vom 2026-05-27 und wurden in diesem repo-only Run nicht per SSH re-verifiziert:
 
-### 3.4 Einmalige Storage-Normalisierung vor erstem Deploy
+- `/srv/webapps/promat` existiert.
+- `/srv/webapps/promat/app`, `/srv/webapps/promat/config`, `/srv/webapps/promat/runner`, `/srv/webapps/promat/data` und `/srv/webapps/promat/logs` existieren.
+- `/srv/webapps_storage/promat/data` ist aktiv nach `/srv/webapps/promat/data` gebunden.
+- Es existiert kein app-lokaler Pfad `/srv/webapps/promat/media`.
+- Es existiert kein Media-Bind-Mount.
+- `/srv/webapps_storage/promat/media` darf höchstens als historisch vorbereiteter Storage-Pfad existieren, ist aber kein Bestandteil des initialen v0.7-Deployments.
+- Noch nicht vorhanden bzw. noch nicht ausgeführt: ProMat-Runner, Checkout, Docker-Stack, nginx-vHost, TLS-Zertifikat, Monitoring-Ziel, Datenbank und App-Deploy.
 
-Vor dem ersten produktiven ProMat-Deploy soll der vorbereitete Storage-Zweig einmalig von:
+### 3.4 Storage-Normalisierung
 
-```text
-/srv/webapps_storage/pronunciation-matters
-```
+Die früher geplanten Server-Phasen C bis E gelten laut aktuellem Aufgaben-Kontext als bereits erledigt: der interne Server-Namespace ist `promat`, die App-Pfade existieren, und der Daten-Bind-Mount ist aktiv.
 
-nach:
+Für den App-Deploy bleibt verbindlich:
 
-```text
-/srv/webapps_storage/promat
-```
-
-umbenannt werden.
-
-Diese Umbenennung ist kein automatischer Schritt. Sie ist nur zulässig nach expliziter Freigabe und nur wenn vorher read-only bestätigt wurde:
-
-- `/srv/webapps_storage/pronunciation-matters` existiert
-- `/srv/webapps_storage/promat` existiert nicht
-- es sind noch keine ProMat-Bind-Mounts aktiv
-
-Empfohlene read-only Vorprüfungen:
-
-```bash
-findmnt /srv/webapps_storage
-ls -lah /srv/webapps_storage
-ls -lah /srv/webapps_storage/pronunciation-matters
-test ! -e /srv/webapps_storage/promat
-findmnt /srv/webapps/promat/data
-```
-
-Genehmigungspflichtiger One-time-Step nach Freigabe:
-
-```bash
-sudo mv /srv/webapps_storage/pronunciation-matters /srv/webapps_storage/promat
-```
+- keine automatische Storage-Umbenennung durch Repo-Skripte
+- kein Media-Bind-Mount
+- kein `/app/media`
+- keine direkte Datenübertragung in `data/current`
 
 ---
 
@@ -176,7 +153,7 @@ Empfohlene spätere `/etc/fstab`-Zeilen:
 /srv/webapps_storage/promat/data  /srv/webapps/promat/data   none  bind  0  0
 ```
 
-Bind-Mounts dürfen erst gesetzt werden, nachdem `/srv/webapps/promat/data` bewusst erstellt und die One-time-Storage-Normalisierung freigegeben wurde.
+Der Daten-Bind-Mount ist laut Aufgaben-Kontext für den ersten Deploy bereits aktiv. Vor einem echten Deploy wird er read-only geprüft, aber nicht durch Repo-Skripte angelegt oder verändert.
 
 Für den initialen v0.7-Deploy gilt bewusst: kein separater `/srv/webapps/promat/media`-Bind-Mount und kein `/app/media`-Mount im Container. Topic-lokale Teaching-Medien bleiben Teil des versionierten `content/teaching/.../media`-Baums im Image; Research-Runtime-Artefakte liegen unter `/app/data`.
 
@@ -395,12 +372,12 @@ temporary files
 
 ## 8. Webapp Access Request Form In Production
 
-Die Produktionsverdrahtung für das Webapp-Access-/Request-Formular ist laut Preflight noch nicht verifizierbar, solange App-Tree und Serverkonfiguration nicht existieren.
+Die Produktionsverdrahtung für das Webapp-Access-/Request-Formular ist noch nicht verifizierbar, solange Checkout, produktive Env-Datei und Docker-Stack nicht bereitstehen.
 
 ### 8.1 Aktueller Stand laut Preflight
 
 - Host-Mail-Werkzeuge sind vorhanden: `mail`, `mailx`, `sendmail` und Exim.
-- Die ProMat-spezifische Formularintegration kann noch nicht geprüft werden, weil App-Checkout und produktive Config noch nicht existieren.
+- Die ProMat-spezifische Formularintegration kann noch nicht geprüft werden, weil App-Checkout, produktive Env-Datei und produktiver Docker-Stack noch nicht existieren.
 
 ### 8.2 Erwartete nicht-geheime Env-Key-Namen
 
@@ -495,7 +472,7 @@ Erwartete Fakten aus dem Preflight:
 
 - bestehende Apps gesund
 - `8000` frei, `5000`, `6000`, `7000`, `3100` belegt
-- kein ProMat-App-Root, kein ProMat-Runner, kein ProMat-nginx-vHost, kein TLS-Zertifikat
+- ProMat-App-Root und Daten-Bind-Mount laut Aufgaben-Kontext vorhanden; kein ProMat-Runner, kein ProMat-nginx-vHost, kein TLS-Zertifikat, kein Docker-Stack
 
 ### Phase B. Documentation update and approval
 
@@ -511,45 +488,27 @@ Umfang:
 
 ### Phase C. One-time storage rename
 
-Ziel:
+Status:
 
-- vorbereiteten Storage-Zweig einmalig von `pronunciation-matters` auf `promat` normalisieren.
+- laut Aufgaben-Kontext vom 2026-05-27 bereits abgeschlossen.
 
-Voraussetzungen:
-
-- `/srv/webapps_storage/pronunciation-matters` existiert
-- `/srv/webapps_storage/promat` existiert nicht
-- keine aktiven ProMat-Bind-Mounts
-- explizite Freigabe erteilt
-
-Genehmigungspflichtiger Schritt:
-
-```bash
-sudo mv /srv/webapps_storage/pronunciation-matters /srv/webapps_storage/promat
-```
+Keine Repo- oder Deploy-Skripte führen diesen Schritt aus. Vor dem ersten Deploy genügt ein read-only Recheck, dass `/srv/webapps_storage/promat/data` existiert und aktiv nach `/srv/webapps/promat/data` gebunden ist.
 
 ### Phase D. Create `/srv/webapps/promat/{app,config,runner,data,logs}`
 
-Ziel:
+Status:
 
-- ProMat-spezifischen App-Root schaffen, ohne bestehende Apps anzufassen.
+- laut Aufgaben-Kontext vom 2026-05-27 bereits abgeschlossen.
 
-Genehmigungspflichtiger Schritt:
-
-```bash
-sudo mkdir -p /srv/webapps/promat/{app,config,runner,data,logs}
-```
+Die Verzeichnisse werden von Repo-Skripten nicht angelegt, gelöscht oder permission-seitig verändert.
 
 ### Phase E. Bind mounts / fstab
 
-Ziel:
+Status:
 
-- Shared Storage kontrolliert nach `/srv/webapps/promat/data` binden.
+- laut Aufgaben-Kontext vom 2026-05-27 bereits abgeschlossen.
 
-Genehmigungspflichtige Änderungen:
-
-- `/etc/fstab` ergänzen
-- Mounts aktivieren
+Der Deploy prüft `/srv/webapps/promat/data` und `/srv/webapps/promat/logs`, verändert aber keine Mounts und keine `/etc/fstab`.
 
 ### Phase F. Runner / app checkout / config secrets
 
@@ -721,17 +680,14 @@ Zusätzlich:
 
 ## 13. Minimal Approved Runtime Actions Still Required After This Repo Update
 
-Nach diesem reinen Repo-Doku-Update bleiben für den echten Produktionspfad nur freigabepflichtige Runtime-Schritte offen:
+Nach diesem Repo-Update bleiben für den echten Produktionspfad nur freigabepflichtige Runtime-Schritte offen:
 
-1. read-only Server-Recheck der im Preflight festgehaltenen Ausgangslage
-2. explizite Freigabe der One-time-Storage-Umbenennung nach `/srv/webapps_storage/promat`
-3. Anlegen von `/srv/webapps/promat/{app,config,runner,data,logs}`
-4. Setzen und Verifizieren der Bind-Mounts bzw. `/etc/fstab`
-5. ProMat-eigenen Runner registrieren und App-Checkout plus Secrets bereitstellen
-6. ProMat-only Compose-Deploy auf `127.0.0.1:8000`
-7. lokale `/health`- und `/ready`-Prüfung
-8. certbot/TLS nur für `pronunciation-matters.de` und optional `www.pronunciation-matters.de`
-9. nginx-vHost plus Redirect für `www`, falls beide Zertifikate vorhanden sind
-10. öffentliche Checks, Formular-Smoke-Test und datensparsame Logprüfung
-11. Monitoring-Einbindung
-12. serverseitige Dokumentation und Initial-Deploy-Report aktualisieren
+1. read-only Server-Recheck der im Aufgaben-Kontext gemeldeten Ausgangslage
+2. ProMat-eigenen Runner registrieren und App-Checkout plus produktive Env-Datei bereitstellen
+3. ProMat-only Compose-Deploy auf `127.0.0.1:8000`
+4. lokale `/health`- und `/ready`-Prüfung
+5. certbot/TLS nur für `pronunciation-matters.de` und optional `www.pronunciation-matters.de`
+6. nginx-vHost plus Redirect für `www`, falls beide Zertifikate vorhanden sind
+7. öffentliche Checks, Formular-Smoke-Test und datensparsame Logprüfung
+8. Monitoring-Einbindung
+9. serverseitige Dokumentation und Initial-Deploy-Report aktualisieren

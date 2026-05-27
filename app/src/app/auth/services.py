@@ -854,6 +854,28 @@ def update_user_password(user_id: str, new_hashed: str) -> None:
         user.password_hash = new_hashed
         user.must_reset_password = False
         user.updated_at = datetime.now(timezone.utc)
+        session.flush()
+
+
+def change_user_password(
+    user_id: str,
+    *,
+    current_password: str,
+    new_password: str,
+    require_current_password: bool = True,
+) -> None:
+    """Atomically verify and update an authenticated user's password."""
+    with get_session() as session:
+        stmt = select(User).where(User.id == user_id)
+        user = session.execute(stmt).scalars().first()
+        if not user:
+            raise KeyError("user_not_found")
+        if require_current_password and not verify_password(current_password, user.password_hash):
+            raise ValueError("current_password")
+        user.password_hash = hash_password(new_password)
+        user.must_reset_password = False
+        user.updated_at = datetime.now(timezone.utc)
+        session.flush()
 
 
 def update_user_profile(

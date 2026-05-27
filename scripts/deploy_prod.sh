@@ -16,6 +16,13 @@ compose() {
   docker compose -p "${PROJECT_NAME}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" "$@"
 }
 
+print_diagnostics() {
+  echo "Compose service status:"
+  compose ps || true
+  echo "Container health/status:"
+  docker ps --filter "name=promat-" --format 'table {{.Names}}\t{{.Status}}' || true
+}
+
 if [[ ! -f "app/Dockerfile" || ! -f "${COMPOSE_FILE}" || ! -d ".git" ]]; then
   fail "scripts/deploy_prod.sh must be run from the PROMAT repository root."
 fi
@@ -61,8 +68,7 @@ for service in promat-db-prod promat-rate-limit-prod; do
       break
     fi
     if [[ "${attempt}" == "60" ]]; then
-      echo "Container status before failure:"
-      docker ps --filter "name=promat-" --format 'table {{.Names}}\t{{.Status}}'
+      print_diagnostics
       docker logs --tail 80 "${service}" || true
       fail "${service} did not become healthy."
     fi
@@ -87,8 +93,7 @@ for attempt in $(seq 1 60); do
     break
   fi
   if [[ "${attempt}" == "60" ]]; then
-    echo "Container status before failure:"
-    docker ps --filter "name=promat-" --format 'table {{.Names}}\t{{.Status}}'
+    print_diagnostics
     echo "Recent web logs:"
     docker logs --tail 120 "${WEB_CONTAINER}" || true
     fail "${WEB_CONTAINER} did not become healthy."
