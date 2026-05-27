@@ -43,7 +43,7 @@ from app.runtime_paths import get_sessions_root  # noqa: E402
 from apply_auth_migration import apply_postgres_migration  # noqa: E402
 from alignment_export.import_text_mfa_alignment import import_text_mfa_alignment_for_person  # noqa: E402
 from alignment_export.prepare_text_mfa_corpus import prepare_text_mfa_for_person  # noqa: E402
-from alignment_export.run_text_mfa import check_mfa_available, run_text_mfa_for_person  # noqa: E402
+from alignment_export.run_text_mfa import check_mfa_available, resolve_mfa_executable, run_text_mfa_for_person  # noqa: E402
 from audio_conversion.ffmpeg_audio import create_full_task_mp3, ensure_media_tools  # noqa: E402
 from intake_batch_common import (  # noqa: E402
     collect_batch_files,
@@ -186,7 +186,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--run-working", action="store_true", help="Build or refresh the batch-local working tree for the in-scope people before importing runtime artifacts.")
     parser.add_argument("--run-mfa", action="store_true", help="Prepare text MFA inputs, run MFA, and import working text alignment JSON before runtime sync.")
     parser.add_argument("--cleanup-working-on-success", action="store_true", help="Remove the in-scope batch-local working tree after a successful import run.")
-    parser.add_argument("--mfa-executable", default="mfa", help="MFA executable name or absolute path for --run-mfa. Default: mfa.")
+    parser.add_argument("--mfa-executable", help="MFA executable name or absolute path for --run-mfa. Default resolution: CLI value, then PROMAT_MFA_EXECUTABLE, then docker.")
     parser.add_argument(
         "--auth-database-url",
         help="Optional AUTH database URL; defaults to AUTH_DATABASE_URL or the active development default.",
@@ -300,7 +300,7 @@ def _normalize_signature_value(value: object) -> object:
         normalized: dict[str, object] = {}
         for key, nested_value in value.items():
             if key == "path" and isinstance(nested_value, str):
-                normalized[key] = nested_value.lower()
+                normalized[key] = nested_value.replace("\\", "/").lower()
             else:
                 normalized[key] = _normalize_signature_value(nested_value)
         return normalized
@@ -399,7 +399,6 @@ def _run_text_pipeline(
         raise ProductionImportError(f"Missing text task catalog for MFA prep: {text_catalog_path}")
     source_wav = batch_dir / "working" / person_id / "text" / "source" / "text.wav"
     source_textgrid = batch_dir / "working" / person_id / "text" / "alignment" / "text.TextGrid"
-    alignment_json = batch_dir / "working" / person_id / "text" / "alignment" / "text.json"
     mfa_output_dir = batch_dir / "working" / person_id / "text" / "mfa_output"
     if not source_wav.exists() or source_wav.stat().st_size == 0 or not source_textgrid.exists() or source_textgrid.stat().st_size == 0:
         if dry_run:
@@ -466,11 +465,11 @@ def _run_text_pipeline(
 
     resolved_mfa_executable = mfa_executable
     try:
-        mfa_version = check_mfa_available(resolved_mfa_executable)
+        check_mfa_available(resolved_mfa_executable)
     except RuntimeError as exc:
         if resolved_mfa_executable != "docker":
             try:
-                mfa_version = check_mfa_available("docker")
+                check_mfa_available("docker")
                 resolved_mfa_executable = "docker"
                 notes.append(f"Falling back to Docker-backed MFA for {person_id}: {exc}")
             except RuntimeError:
@@ -690,11 +689,14 @@ def _detect_working_task(
                 alignment_textgrid=alignment_textgrid,
                 working_alignment_json=working_alignment_json,
             )
+        reason = "text source/TextGrid are present but alignment/text.json is missing or stale"
+        if sync_tasks:
+            reason += "; text requires preparation; rerun with --run-working --run-mfa"
         return TaskSyncPlan(
             task_key=task_key,
             action="available",
             status="needs_preparation",
-            reason="text source/TextGrid are present but alignment/text.json is missing or stale",
+            reason=reason,
             working_root=task_root,
             source_wav=source_wav,
             alignment_textgrid=alignment_textgrid if alignment_textgrid.exists() else None,
@@ -1583,16 +1585,17 @@ def main() -> int:
             run_notes.append(
                 f"Working-tree orchestration completed for {', '.join(working_report.get('person_ids', [])) or 'all in-scope people'}."
             )
+        selected_mfa_executable = resolve_mfa_executable(args.mfa_executable)
         if args.run_mfa:
-            mfa_version = check_mfa_available(args.mfa_executable)
-            run_notes.append(f"Verified MFA executable {args.mfa_executable}: {mfa_version}")
+            mfa_version = check_mfa_available(selected_mfa_executable)
+            run_notes.append(f"Verified MFA executable {selected_mfa_executable}: {mfa_version}")
             for person_id in in_scope_people:
                 run_notes.extend(
                     _run_text_pipeline(
                         batch_dir=batch_dir,
                         person_id=person_id,
                         target_language=target_language,
-                        mfa_executable=args.mfa_executable,
+                        mfa_executable=selected_mfa_executable,
                         dry_run=args.dry_run,
                     )
                 )

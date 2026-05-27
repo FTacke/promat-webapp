@@ -91,6 +91,13 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 /admin/users
 ```
 
+### Operational probe routes
+
+```text
+/health
+/ready
+```
+
 ### Active research pages
 
 - `design`
@@ -131,6 +138,8 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Admin user management uses the canonical `/admin/users` route family for account creation, status updates, optional expiry dates, invitation/reset preparation, and explicit admin-triggered invitation/reset email sending. Opening the prepared invitation dialog must not send mail. The manual copy fallback for link, subject, and body remains available even when direct sending is disabled or fails.
 - Admin invitation/reset email uses the configured server-allowed sender address and uses the authenticated triggering admin's email address as `Reply-To`; if that address is unexpectedly invalid, the configured default reply-to may be used as a guarded fallback without logging tokens, full links, full message bodies, or secrets.
 - The canonical protected default targets after login are: safe requested target first, otherwise `/auth/account` for `user` and `/admin/users/page` for `admin`.
+- `/health` is a liveness probe endpoint and must stay unauthenticated and non-rate-limited so deploy gates, Docker health checks, and monitoring never receive HTTP 429 from normal application throttling.
+- `/ready` is a readiness probe endpoint and must stay unauthenticated and non-rate-limited; it may return HTTP 503 only for real dependency/readiness failures.
 - Research page order, page access metadata, task subsets, compare capability, set-filter capability, render-mode vocabulary, and corpus-specific workbench readiness are defined centrally through the active research capability contract.
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus_language}/design` is the only public corpus-scoped research page.
 - The corpus root `/{ui_lang}/research/{corpus_language}` is a public corpus landing page that orients users to `design`, `speakers`, `comparison`, and `phenomena` through their canonical routes.
@@ -569,10 +578,12 @@ scripts/research_data_intake/exports/{upload_id}/
 - Runtime filesystem and upload-package filesystem must stay aligned by corpus slug: local runtime under `data/sessions/{corpus_slug}/{session_id}/...` and package payload under `sessions/{corpus_slug}/{session_id}/...`.
 - `checksums.sha256` in prod upload packages is UTF-8 with LF-only line endings and strict line format `<sha256><two spaces><relative-posix-path>` so raw Linux verification via `sha256sum -c checksums.sha256` remains deterministic.
 - If a real DB payload exists for the batch, the package includes `db/import_payload.json`; upload packaging must not invent or synthesize dummy payloads.
+- Missing `db/import_payload.json` does not block file publish by itself: release stage and `current` switch may proceed for runtime files, while DB upsert remains a separate explicit follow-up workflow.
 - Package validation must preflight server gates locally before transfer: allowlist paths, corpus-slug session directories, manifest file list parity, checksum file format and encoding, LF-only, and file hash verification.
 - Prod upload packages must not contain WAVs, TextGrids, XLSX workbooks, secure files, raw/source/alignment_source trees, MFA working directories, or other temporary artifacts.
 - The package builder is not a second importer: it must not reinterpret the original batch or re-derive truth from workbook prose once the runtime and import payload already exist.
 - The initial v0.7 production server model is data-only: prod upload delivery targets `/srv/webapps_storage/promat/data/incoming/{upload_id}/` first, validates allowlist paths plus checksums plus file counts, stages a new release under `data/releases/{release_id}/`, and promotes with an atomic `data/current` symlink switch instead of writing directly into the live target.
+- In that v0.7 server model, application data is mounted from `/app/data`; the `current` marker inside that data root is the single authoritative active-release pointer for research runtime files.
 - The initial v0.7 production deployment has no separate `/srv/webapps/promat/media` or `/app/media` bind mount. A separate media root may be added later only if application code gains a real runtime need for it and the platform spec is updated first.
 - Upload omission must never delete existing production files implicitly; deletion is always a separate explicit mechanism, and failed incoming or staging trees stay in place until explicit cleanup approval.
 

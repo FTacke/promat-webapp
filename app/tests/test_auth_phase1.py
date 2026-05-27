@@ -1912,6 +1912,15 @@ def test_health_is_liveness_only(auth_app: Flask) -> None:
     assert response.get_json() == {"service": "promat-web", "status": "healthy"}
 
 
+def test_health_bypasses_rate_limit(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    statuses = [client.get("/health").status_code for _ in range(40)]
+
+    assert all(status != 429 for status in statuses)
+    assert all(status == 200 for status in statuses)
+
+
 def test_ready_checks_db_data_logs_and_rate_limit(auth_app: Flask, tmp_path: Path) -> None:
     data_root = tmp_path / "runtime" / "data"
     logs_dir = tmp_path / "runtime" / "logs"
@@ -1937,6 +1946,26 @@ def test_ready_checks_db_data_logs_and_rate_limit(auth_app: Flask, tmp_path: Pat
     assert payload["checks"]["rate_limit_backend"]["ok"] is True
 
 
+def test_ready_bypasses_rate_limit(auth_app: Flask, tmp_path: Path) -> None:
+    data_root = tmp_path / "runtime" / "data"
+    logs_dir = tmp_path / "runtime" / "logs"
+    data_root.mkdir(parents=True)
+    logs_dir.mkdir(parents=True)
+    auth_app.config.update(
+        DATA_ROOT=data_root,
+        LOGS_DIR=logs_dir,
+        CONFIG_ROOT=data_root / "config",
+        RATE_LIMIT_STORAGE_URI="redis://rate_limit:6379/0",
+        FLASK_ENV="production",
+    )
+    client = auth_app.test_client()
+
+    statuses = [client.get("/ready").status_code for _ in range(40)]
+
+    assert all(status != 429 for status in statuses)
+    assert all(status == 200 for status in statuses)
+
+
 def test_ready_rejects_production_memory_rate_limit(auth_app: Flask, tmp_path: Path) -> None:
     data_root = tmp_path / "runtime" / "data"
     logs_dir = tmp_path / "runtime" / "logs"
@@ -1960,6 +1989,25 @@ def test_ready_rejects_production_memory_rate_limit(auth_app: Flask, tmp_path: P
         "ok": False,
         "error": "RATE_LIMIT_STORAGE_URI must not be memory:// in production",
     }
+
+
+def test_rate_limit_still_applies_to_public_mutating_routes(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    for index in range(5):
+        payload = _build_access_request_payload(
+            client,
+            overrides={"email": f"mutating.rate.limit.{index}@uni-marburg.de"},
+        )
+        response = client.post("/access-request", data=payload, follow_redirects=False)
+        assert response.status_code == 303
+
+    blocked_payload = _build_access_request_payload(
+        client,
+        overrides={"email": "mutating.rate.limit.blocked@uni-marburg.de"},
+    )
+    blocked = client.post("/access-request", data=blocked_payload, follow_redirects=False)
+    assert blocked.status_code == 429
 
 
 def test_legacy_auth_snackbar_icon_path_is_removed() -> None:

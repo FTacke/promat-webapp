@@ -665,6 +665,7 @@ def access_request_submit():
 
 
 @blueprint.get("/health")
+@limiter.exempt
 def health_check():
     return jsonify({"status": "healthy", "service": "promat-web"}), 200
 
@@ -696,6 +697,7 @@ def _readiness_payload(status: str, checks: dict[str, dict[str, Any]], status_co
 
 
 @blueprint.get("/ready")
+@limiter.exempt
 def readiness_check():
     checks: dict[str, dict[str, Any]] = {
         "flask": {"ok": True, "error": None},

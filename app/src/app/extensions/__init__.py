@@ -19,6 +19,11 @@ limiter = Limiter(
 cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
 
 
+def _is_rate_limit_exempt_request_path(path: str | None) -> bool:
+    normalized_path = (path or "").rstrip("/") or "/"
+    return normalized_path in {"/health", "/ready"}
+
+
 def _resolve_auth_ui_language() -> str:
     return resolve_request_ui_language(
         path_ui_lang=(request.view_args or {}).get("ui_lang"),
@@ -36,6 +41,11 @@ def _resolve_auth_ui_language() -> str:
 
 def register_extensions(app: Flask) -> None:
     """Attach Flask extensions to the app."""
+
+    @limiter.request_filter
+    def _health_and_ready_bypass() -> bool:
+        return _is_rate_limit_exempt_request_path(request.path)
+
     jwt.init_app(app)
     limiter.init_app(app)
     cache.init_app(app)
