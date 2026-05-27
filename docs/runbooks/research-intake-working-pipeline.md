@@ -98,6 +98,7 @@ Regeln:
 
 - Wenn die task-lokalen Signaturen noch passen und `working/{person_id}/text/alignment/text.json` bereits existiert, darf der Importer die vorhandene Textausgabe wiederverwenden.
 - Wenn die task-lokalen Signaturen noch passen, aber `working/{person_id}/text/alignment/text.json` fehlt, darf der Importer die vorhandenen MFA-Outputs importieren, ohne MFA erneut auszuführen.
+- Der zentrale Aufruf mit `--run-working --run-mfa --sync-tasks` deckt den kompletten Pfad Working-Tree, MFA-Schritt, `alignment/text.json`-Import und Runtime-Sync in einem kontrollierten Ablauf ab.
 - Der Import liest Workbook-Steuerdaten aus dem rekursiv gefundenen Batch-Workbook und technische Inputs aus `working/{person_id}/{task}/`.
 - `--run-mfa --dry-run` plant die MFA-Schritte ohne MFA-Outputs zu verlangen, weil ein Dry-run keine batch-lokalen MFA-Dateien schreibt.
 - Er schreibt person-, session- und exposure-bezogene Metadaten nach PostgreSQL und projiziert den Runtime-Baum nach `data/sessions/{language}/{session_id}/`.
@@ -132,6 +133,10 @@ Regeln:
 
 - Das Upload-Paket ist eine explizite Allowlist-Auswahl aus validierten Runtime-Artefakten plus optionalem `db/import_payload.json`.
 - Sessionpfade im Upload-Paket folgen immer dem Runtime-Corpus-Slug unter `sessions/{corpus_slug}/{session_id}/` (z. B. `sessions/french/...`), nicht Kurzcodes wie `sessions/fr/...`.
+- Runtime-Pfade lokal und im Paket bleiben konsistent: lokal `data/sessions/{corpus_slug}/{session_id}/...`, im Paket `sessions/{corpus_slug}/{session_id}/...`.
+- `checksums.sha256` wird UTF-8 und LF-only geschrieben, nutzt strikt das Format `<sha256><two spaces><relative-posix-path>`, und muss unter Linux roh mit `sha256sum -c checksums.sha256` gruen sein.
+- Wenn ein reales DB-Import-Payload vorliegt, muss das Paket `db/import_payload.json` enthalten; es gibt keinen Dummy-Payload-Fallback.
+- Das lokale Paket-Validation-Gate prueft vor Upload bereits Allowlist, Corpus-Slug-Pfade, Manifest-Dateiliste, Checksum-Dateiformat, LF-only, UTF-8 und Dateihashes.
 - Das Paket ist kein zweiter Importer und liest keine Batch-Rohdateien neu als Wahrheit ein.
 - Auslassung im Paket löscht niemals implizit bestehende Prod-Dateien.
 

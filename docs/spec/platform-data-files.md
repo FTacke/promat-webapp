@@ -566,6 +566,10 @@ scripts/research_data_intake/exports/{upload_id}/
 
 - Prod upload packages are explicit allowlist exports built from already validated runtime artifacts plus optional DB payloads or runtime-relevant config JSON.
 - Runtime session paths in upload packages must use the runtime corpus slug under `sessions/{corpus_slug}/{session_id}/...` (for example `sessions/french/...`), not the two-letter `target_language` code form.
+- Runtime filesystem and upload-package filesystem must stay aligned by corpus slug: local runtime under `data/sessions/{corpus_slug}/{session_id}/...` and package payload under `sessions/{corpus_slug}/{session_id}/...`.
+- `checksums.sha256` in prod upload packages is UTF-8 with LF-only line endings and strict line format `<sha256><two spaces><relative-posix-path>` so raw Linux verification via `sha256sum -c checksums.sha256` remains deterministic.
+- If a real DB payload exists for the batch, the package includes `db/import_payload.json`; upload packaging must not invent or synthesize dummy payloads.
+- Package validation must preflight server gates locally before transfer: allowlist paths, corpus-slug session directories, manifest file list parity, checksum file format and encoding, LF-only, and file hash verification.
 - Prod upload packages must not contain WAVs, TextGrids, XLSX workbooks, secure files, raw/source/alignment_source trees, MFA working directories, or other temporary artifacts.
 - The package builder is not a second importer: it must not reinterpret the original batch or re-derive truth from workbook prose once the runtime and import payload already exist.
 - The initial v0.7 production server model is data-only: prod upload delivery targets `/srv/webapps_storage/promat/data/incoming/{upload_id}/` first, validates allowlist paths plus checksums plus file counts, stages a new release under `data/releases/{release_id}/`, and promotes with an atomic `data/current` symlink switch instead of writing directly into the live target.

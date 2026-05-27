@@ -17,6 +17,7 @@ Teaching gehört nicht zu dieser Pipeline. `content/`, `public/teaching/` und Te
 - Das Archiv ist session-zentriert unter `sessions/{language_code}/{session_id}/...`.
 - Prod-Uploads entstehen als explizite Allowlist-Pakete unter `scripts/research_data_intake/exports/{upload_id}/` aus bereits validierten Runtime-Artefakten und optionalem `db/import_payload.json`.
 - In Prod-Upload-Paketen liegen Runtime-Sessions immer unter `sessions/{corpus_slug}/{session_id}/` (z. B. `sessions/french/...`), nicht unter Sprachcodes wie `sessions/fr/...`.
+- Der lokale Runtime-Pfad bleibt `data/sessions/{corpus_slug}/{session_id}/...`; das Prod-Paket spiegelt denselben Slug unter `sessions/{corpus_slug}/{session_id}/...`.
 
 ## Batch-Scan und Klassifizierung
 
@@ -134,6 +135,23 @@ Erlaubt:
 - `checksums.sha256`
 - `reports/*.md|*.txt|*.json`
 
+Checksum-Vertrag:
+
+- Datei-Encoding: UTF-8
+- Zeilenenden: LF-only
+- Zeilenformat: `<sha256><two spaces><relative-posix-path>`
+- Linux-Gate: `sha256sum -c checksums.sha256`
+
+DB-Payload-Regel:
+
+- Wenn ein reales Import-Payload verfuegbar ist, wird es als `db/import_payload.json` ins Paket aufgenommen.
+- Kein Dummy-Payload.
+- Keine Secure- oder direkt personenbezogenen Felder in Upload-Payloads.
+
+Validator-Regel:
+
+- `validate_research_intake.py prod-package` nimmt die Server-Gates lokal vorweg: Allowlist, Manifest-Dateiliste, Slug-Sessionpfade, Checksum-Format, LF-only, UTF-8 und Dateihashes.
+
 Verboten:
 
 - `*.wav`
@@ -190,6 +208,10 @@ Initiales Prod-Upload-Paket fuer alle vorhandenen Runtime-Sessions plus Research
 Prod-Upload-Paket validieren:
 
 `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py prod-package --package-dir C:/dev/promat/scripts/research_data_intake/exports/promat_upload_20260525T120000Z`
+
+Prod-Upload-Paket nach incoming uebertragen (rsync wenn verfuegbar, sonst tar-over-SSH Fallback):
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/upload_prod_package.py --package-dir C:/dev/promat/scripts/research_data_intake/exports/french_batch_20260527_initial_fix01 --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/french_batch_20260527_initial_fix01 --verify-checksums`
 
 Expliziten Dev-Research-File-Reset nur dry-run anzeigen:
 
