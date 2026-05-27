@@ -1610,6 +1610,7 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
     assert f'href="/{ui_lang}/research/{language_slug}/comparison"' in html
     assert f'href="/{ui_lang}/research/{language_slug}/phenomena"' in html
     assert expected_title in html
+    assert "pm-content-header--has-back pm-content-header--has-breadcrumbs pm-content-header--mobile-breadcrumb" in html
     assert f'promat-panel__language-title">{expected_title}<' in html
     assert expected_subtitle in html
     assert expected_body in html
@@ -1699,6 +1700,7 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> Non
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert 'pm-teaching-page--overview' in html
+    assert 'pm-content-header pm-reading pm-content-header--no-breadcrumbs' in html
     assert 'Aussprache unterrichten' not in html
     assert 'class="promat-page__intro pm-content-header__intro">Themenseiten zur Aussprachevermittlung im Fremdsprachenunterricht.</p>' not in html
     assert 'Wählen Sie eine Sprache, um Themenseiten zur Aussprachevermittlung zu öffnen.' in html
@@ -1716,6 +1718,8 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> Non
     assert html.count('pm-teaching-language-row__status') == 4
     assert html.count('pm-teaching-language-row__action') == 1
     assert 'pm-teaching-language-row__primary' not in html
+    assert html.index('>Spanisch<') < html.index('2 Themenseiten') < html.index('pm-teaching-language-row__action')
+    assert html.index('>Englisch<') < html.index('In Vorbereitung')
     assert 'href="/de/teaching/spanish"' in html
     assert 'href="/de/teaching/english"' not in html
     assert 'href="/de/teaching/french"' not in html

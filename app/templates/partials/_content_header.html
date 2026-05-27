@@ -1,6 +1,12 @@
 {% from 'partials/_pm_interactions.html' import render_navigation_pill %}
+{% set has_back_link = content_header.back_link %}
+{% set has_breadcrumbs = content_header.breadcrumbs %}
+{% set breadcrumb_mode = content_header.get('breadcrumb_mode') %}
 
-<header class="pm-content-header pm-reading" aria-labelledby="{{ content_header.title_id | default('promat-page-title') }}">
+<header
+  class="pm-content-header pm-reading{% if has_back_link %} pm-content-header--has-back{% endif %}{% if has_breadcrumbs %} pm-content-header--has-breadcrumbs{% else %} pm-content-header--no-breadcrumbs{% endif %}{% if breadcrumb_mode == 'mobile-only' %} pm-content-header--mobile-breadcrumb{% endif %}"
+  aria-labelledby="{{ content_header.title_id | default('promat-page-title') }}"
+>
   {% if content_header.back_link %}
   <nav class="pm-back-link pm-content-header__back" aria-label="{{ content_header.back_link.label }}">
     {{ render_navigation_pill({ 'label': content_header.back_link.label, 'href': content_header.back_link.href, 'size': 'medium', 'direction': 'back' }, 'pm-back-link__pill') }}

@@ -1265,7 +1265,7 @@ a.promat-card:active .pm-cta-link {
 .pm-teaching-language-row .pm-card__body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.32rem 0.72rem;
+  gap: var(--pm-teaching-language-row-block-gap) var(--pm-teaching-language-row-column-gap);
   align-items: start;
   padding: 0.82rem 0.96rem 0.88rem;
   text-align: left;
@@ -2751,21 +2751,22 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
 
 @media (min-width: 760px) {
   .pm-teaching-language-row__body--available {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
     grid-template-areas: "title aside";
+    column-gap: var(--pm-teaching-language-row-desktop-column-gap);
     align-items: center;
   }
 
   .pm-teaching-language-row__body--pending {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
     grid-template-areas: "title aside";
-    column-gap: clamp(1rem, 1.8vw, 2rem);
+    column-gap: var(--pm-teaching-language-row-desktop-column-gap);
     align-items: center;
   }
 
   .pm-teaching-language-row__aside--available {
     grid-template-columns: max-content max-content;
-    column-gap: clamp(1.7rem, 3vw, 3.25rem);
+    column-gap: var(--pm-teaching-language-row-desktop-aside-gap);
     align-items: center;
     justify-content: end;
     justify-items: end;
@@ -2823,12 +2824,40 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
     white-space: normal;
   }
 
-  .pm-teaching-language-row__aside {
+  .pm-teaching-language-row__body--available {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas:
+      "title action"
+      "aside action";
+    align-items: center;
+    column-gap: clamp(0.85rem, 3vw, 1.1rem);
+    row-gap: 0.18rem;
+  }
+
+  .pm-teaching-language-row__body--pending {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "aside";
+    row-gap: 0.18rem;
+  }
+
+  .pm-teaching-language-row__body--available .pm-teaching-language-row__aside {
+    display: contents;
+  }
+
+  .pm-teaching-language-row__aside--pending {
     justify-items: start;
   }
 
-  .pm-teaching-language-row__action {
-    justify-self: start;
+  .pm-teaching-language-row__body--available .pm-teaching-language-row__status {
+    grid-area: aside;
+  }
+
+  .pm-teaching-language-row__body--available .pm-teaching-language-row__action {
+    grid-area: action;
+    align-self: center;
+    justify-self: end;
   }
 
   .pm-teaching-page--hub .pm-breadcrumb__list,
