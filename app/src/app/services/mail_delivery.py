@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import socket
 import smtplib
 import ssl
 import subprocess
@@ -145,19 +146,29 @@ def _send_smtp(email_message: EmailMessage, config: Any) -> None:
     )
 
     ssl_context = ssl.create_default_context()
-    if use_ssl:
-        with smtplib.SMTP_SSL(host, port, timeout=timeout, context=ssl_context) as smtp:
+    try:
+        if use_ssl:
+            with smtplib.SMTP_SSL(host, port, timeout=timeout, context=ssl_context) as smtp:
+                if username:
+                    smtp.login(username, password)
+                smtp.send_message(email_message)
+            return
+
+        with smtplib.SMTP(host, port, timeout=timeout) as smtp:
+            if use_tls:
+                smtp.starttls(context=ssl_context)
             if username:
                 smtp.login(username, password)
             smtp.send_message(email_message)
-        return
-
-    with smtplib.SMTP(host, port, timeout=timeout) as smtp:
-        if use_tls:
-            smtp.starttls(context=ssl_context)
-        if username:
-            smtp.login(username, password)
-        smtp.send_message(email_message)
+    except (
+        ConnectionRefusedError,
+        TimeoutError,
+        socket.timeout,
+        socket.gaierror,
+        smtplib.SMTPException,
+        OSError,
+    ) as exc:
+        raise MailDeliveryError("smtp delivery failed") from exc
 
 
 def _send_sendmail(email_message: EmailMessage, config: Any) -> None:

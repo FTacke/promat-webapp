@@ -5,6 +5,8 @@ import logging
 import os
 from pathlib import Path
 import re
+import socket
+import smtplib
 import sys
 
 from flask import Flask, abort, jsonify, render_template
@@ -382,6 +384,66 @@ def test_smtp_backend_still_sends_mocked_message(monkeypatch: pytest.MonkeyPatch
     assert events == ["connect:smtp.promat.test:587:10", "starttls", "login:smtp-user:True"]
     assert len(sent_messages) == 1
     assert sent_messages[0]["Reply-To"] == "admin@example.org"
+
+
+@pytest.mark.parametrize(
+    "smtp_error",
+    [
+        ConnectionRefusedError("connection refused"),
+        TimeoutError("timed out"),
+        socket.timeout("socket timed out"),
+        socket.gaierror(-2, "name or service not known"),
+        OSError("send failed"),
+        smtplib.SMTPException("smtp failure"),
+    ],
+)
+def test_smtp_backend_wraps_raw_network_errors_in_mail_delivery_error(
+    monkeypatch: pytest.MonkeyPatch,
+    smtp_error: BaseException,
+) -> None:
+    class FailingSMTP:
+        def __init__(self, _host, _port, timeout=None, **_kwargs):
+            assert timeout is not None
+            self._error = smtp_error
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return None
+
+        def starttls(self, *, context):
+            assert context is not None
+
+        def login(self, _username, _password):
+            return None
+
+        def send_message(self, _message):
+            raise self._error
+
+    monkeypatch.setattr(mail_delivery.smtplib, "SMTP", FailingSMTP)
+
+    with pytest.raises(mail_delivery.MailDeliveryError):
+        mail_delivery.send_mail(
+            mail_delivery.MailMessage(
+                to_address="new.user@example.org",
+                subject="Hello",
+                body="Body",
+                reply_to="admin@example.org",
+            ),
+            config={
+                "AUTH_MAIL_BACKEND": "smtp",
+                "AUTH_MAIL_FROM_EMAIL": "noreply@promat.test",
+                "AUTH_MAIL_FROM_NAME": "Pronunciation Matters Administrator",
+                "AUTH_ACCESS_REQUEST_SMTP_HOST": "smtp.promat.test",
+                "AUTH_ACCESS_REQUEST_SMTP_PORT": 587,
+                "AUTH_ACCESS_REQUEST_SMTP_USERNAME": "smtp-user",
+                "AUTH_ACCESS_REQUEST_SMTP_PASSWORD": "smtp-password",
+                "AUTH_ACCESS_REQUEST_SMTP_USE_TLS": True,
+                "AUTH_ACCESS_REQUEST_SMTP_USE_SSL": False,
+                "AUTH_ACCESS_REQUEST_SMTP_TIMEOUT_SECONDS": 10,
+            },
+        )
 
 
 def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None:
@@ -1574,6 +1636,96 @@ def test_admin_invitation_send_failure_preserves_manual_fallback(
     assert payload["ok"] is False
     assert payload["manualFallback"] is True
     assert "manual copy fallback" in payload["error"]
+
+
+def test_admin_invitation_send_connection_refused_returns_controlled_error(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    class FailingSMTP:
+        def __init__(self, _host, _port, timeout=None, **_kwargs):
+            assert timeout is not None
+            raise ConnectionRefusedError("smtp://smtp-user:smtp-password@smtp.promat.test:587")
+
+    monkeypatch.setattr(mail_delivery.smtplib, "SMTP", FailingSMTP)
+
+    response = client.post(
+        "/admin/users/user-1/send-invite?ui_lang=en",
+        json={
+            "recipient": "alice@example.org",
+            "subject": "Hello",
+            "body": "Body",
+        },
+    )
+
+    assert response.status_code == 503
+    payload = response.get_json()
+    assert payload["ok"] is False
+    assert payload["manualFallback"] is True
+    assert "manual copy fallback" in payload["error"]
+    response_text = response.get_data(as_text=True)
+    assert "smtp-password" not in response_text
+    assert "smtp-user" not in response_text
+    assert "smtp.promat.test" not in response_text
+
+
+@pytest.mark.parametrize(
+    "smtp_error",
+    [smtplib.SMTPException("smtp auth failed: smtp-password"), OSError("socket write failed: smtp-password")],
+)
+def test_admin_invitation_send_smtp_or_os_error_returns_controlled_error(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+    smtp_error: BaseException,
+) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    class FailingSMTP:
+        def __init__(self, _host, _port, timeout=None, **_kwargs):
+            assert timeout is not None
+            return None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return None
+
+        def starttls(self, *, context):
+            assert context is not None
+
+        def login(self, _username, _password):
+            return None
+
+        def send_message(self, _message):
+            raise smtp_error
+
+    monkeypatch.setattr(mail_delivery.smtplib, "SMTP", FailingSMTP)
+
+    response = client.post(
+        "/admin/users/user-1/send-invite?ui_lang=en",
+        json={
+            "recipient": "alice@example.org",
+            "subject": "Hello",
+            "body": "Body",
+        },
+    )
+
+    assert response.status_code == 503
+    payload = response.get_json()
+    assert payload["ok"] is False
+    assert payload["manualFallback"] is True
+    assert "manual copy fallback" in payload["error"]
+    response_text = response.get_data(as_text=True)
+    assert "smtp-password" not in response_text
 
 
 def test_login_post_keeps_rate_limit(auth_app: Flask) -> None:
