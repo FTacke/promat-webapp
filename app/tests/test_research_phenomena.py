@@ -1314,3 +1314,90 @@ def test_regression_item_selection_still_works_in_js() -> None:
     assert 'root.addEventListener("click"' in source
     assert 'data-toggle-selection' in source
     assert 'data-remove-selection' in source
+
+
+# --- Bug-fix: confirmSubmit pending-gate caused withPending to bail silently ---
+#
+# Root cause: confirmSubmit set pending=true before calling confirmAction().
+# When confirmAction wrapped withPending(fn), withPending saw pending===true
+# and returned immediately – the save never ran, but the dialog closed.
+# Fix: confirmAction callbacks are now direct async functions; confirmSubmit
+# gains syncStatus() in its finally block to re-enable buttons after the action.
+
+def test_editor_js_save_as_custom_confirm_action_is_direct_async_not_with_pending() -> None:
+    """Bug-fix: saveAsCustomButton confirmAction must be a direct async fn, not withPending wrapper.
+
+    Previously: () => withPending(persistSaveAsCopy, ...) — withPending bailed because
+    confirmSubmit already set pending=true before calling the action.
+    Fixed: async () => { await persistSaveAsCopy(); showSnackbar(...); }
+    """
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    handler_start = source.index("saveAsCustomButton?.addEventListener")
+    # End of the handler block (the next top-level listener assignment)
+    handler_end = source.index("saveAsCuratedButton?.addEventListener", handler_start)
+    handler = source[handler_start:handler_end]
+
+    # Must use a direct async confirmAction that awaits persistSaveAsCopy
+    assert "async () =>" in handler
+    assert "await persistSaveAsCopy()" in handler
+    assert "saveAsCustomSuccess" in handler
+    # Must NOT wrap persistSaveAsCopy in withPending (that was the bug)
+    assert "() => withPending(persistSaveAsCopy" not in handler
+
+
+def test_editor_js_admin_curated_save_confirm_action_is_direct_async_not_with_pending() -> None:
+    """Bug-fix: admin+curated save button confirmAction must not wrap withPending.
+
+    Previously: () => withPending(persistUpdateCurated) — silently did nothing.
+    Fixed: async () => { await persistUpdateCurated(); showSnackbar(...); }
+    """
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    # Find the saveButton click handler block
+    handler_start = source.index('saveButton?.addEventListener("click"')
+    handler_end = source.index("saveAsCuratedButton?.addEventListener", handler_start)
+    handler = source[handler_start:handler_end]
+
+    # Must not use withPending as a confirmAction wrapper for persistUpdateCurated
+    assert "() => withPending(persistUpdateCurated" not in handler
+    # Must await persistUpdateCurated directly inside an async confirmAction
+    assert "await persistUpdateCurated()" in handler
+
+
+def test_editor_js_user_curated_save_confirm_action_is_direct_async_not_with_pending() -> None:
+    """Bug-fix: user+curated save button confirmAction must not wrap withPending.
+
+    Previously: () => withPending(persistSaveAsCopy) — silently did nothing.
+    Fixed: async () => { await persistSaveAsCopy(); showSnackbar(...); }
+    """
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    handler_start = source.index('saveButton?.addEventListener("click"')
+    handler_end = source.index("saveAsCuratedButton?.addEventListener", handler_start)
+    handler = source[handler_start:handler_end]
+
+    # The user-curated branch must also use a direct async confirmAction
+    # (saveCopyTitle marks the specific openConfirm call for this branch)
+    copy_start = handler.index("saveCopyTitle")
+    copy_block = handler[copy_start:copy_start + 300]
+    assert "() => withPending(persistSaveAsCopy" not in copy_block
+    assert "async () =>" in copy_block
+
+
+def test_editor_js_confirm_submit_calls_sync_status_in_pending_block() -> None:
+    """Bug-fix: confirmSubmit must call syncStatus() when managing pending state.
+
+    Without syncStatus() in finally, buttons remain visually disabled after a
+    direct-async confirmAction calls renderAll() mid-flight with pending=true.
+    """
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    handler_start = source.index('confirmSubmit?.addEventListener("click"')
+    handler_end = source.index("\n  });", handler_start) + len("\n  });")
+    handler = source[handler_start:handler_end]
+
+    # syncStatus must appear at least twice: once after pending=true, once in finally
+    assert handler.count("syncStatus()") >= 2
+    assert "finally" in handler
+    # pending=false must be followed (within the finally) by syncStatus
+    finally_start = handler.index("finally")
+    finally_block = handler[finally_start:]
+    assert "pending = false" in finally_block
+    assert "syncStatus()" in finally_block

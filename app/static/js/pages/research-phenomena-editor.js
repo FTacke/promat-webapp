@@ -693,7 +693,10 @@ function init() {
         state.labels.updateCuratedTitle,
         state.labels.updateCuratedMessage,
         state.labels.updateCurated,
-        () => withPending(persistUpdateCurated),
+        async () => {
+          await persistUpdateCurated();
+          showSnackbar(state.labels.saveSuccess, "success");
+        },
       );
       return;
     }
@@ -704,7 +707,10 @@ function init() {
         state.labels.saveCopyTitle,
         state.labels.saveCopyMessage,
         state.labels.save,
-        () => withPending(persistSaveAsCopy),
+        async () => {
+          await persistSaveAsCopy();
+          showSnackbar(state.labels.saveSuccess, "success");
+        },
       );
       return;
     }
@@ -719,7 +725,10 @@ function init() {
       state.labels.saveAsCustomTitle,
       state.labels.saveAsCustomMessage,
       state.labels.saveAsCustom,
-      () => withPending(persistSaveAsCopy, state.labels.saveAsCustomSuccess),
+      async () => {
+        await persistSaveAsCopy();
+        showSnackbar(state.labels.saveAsCustomSuccess, "success");
+      },
     );
   });
 
@@ -802,6 +811,7 @@ function init() {
       return;
     }
     pending = true;
+    syncStatus();
     try {
       await confirmAction();
       closeDialog(confirmDialog);
@@ -809,6 +819,7 @@ function init() {
       showSnackbar(error.message || state.labels.delete, "error");
     } finally {
       pending = false;
+      syncStatus();
     }
   });
 
