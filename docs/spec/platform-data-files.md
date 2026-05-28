@@ -349,7 +349,8 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 
 - Runtime configuration files belong under `data/config/`.
 - Research-player corpus configuration belongs under `data/config/research_player/{language}/`.
-- The canonical corpus-level research-player config files include `data/config/research_player/{language}/player_config.json`, `data/config/research_player/{language}/phenomena_presets.json`, and `data/config/research_player/{language}/task_catalogs/{task}.json`.
+- The canonical corpus-level research-player config files include `data/config/research_player/{language}/player_config.json` and `data/config/research_player/{language}/task_catalogs/{task}.json`.
+- `data/config/research_player/{language}/phenomena_presets.json` is a **legacy/deprecated file**; it is no longer loaded at runtime and is not part of the productive phenomena capability. All active phenomena sets are stored in the PostgreSQL `research_sets` table.
 - Corpus-specific task catalogs under `data/config/research_player/{language}/task_catalogs/` are the canonical content source for task structure, ordering, stable IDs, and exact texts.
 - Task catalogs may also carry corpus-specific grouped content structure such as top-level `groups` arrays for sentence-list blocks; these are catalog groupings, not session `segments`.
 - Session-specific player artifacts such as `alignment/{task}.json` are derived from these task catalogs plus session alignment and audio data; task catalogs are not session outputs.

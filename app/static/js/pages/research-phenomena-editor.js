@@ -79,8 +79,8 @@ function init() {
   const saveButton = root.querySelector("[data-phenomena-save-action]");
   const saveButtonLabel = root.querySelector("[data-phenomena-save-label]");
   const discardButton = root.querySelector("[data-phenomena-discard-action]");
-  const curatedToggleButton = root.querySelector("[data-phenomena-curated-toggle-action]");
-  const curatedToggleLabel = root.querySelector("[data-phenomena-curated-toggle-label]");
+  const deleteCuratedButton = root.querySelector("[data-phenomena-delete-curated-action]");
+  const saveAsCuratedButton = root.querySelector("[data-phenomena-save-as-curated-action]");
   const typeBadge = root.querySelector("[data-phenomena-type-badge]");
   const stateBadge = root.querySelector("[data-phenomena-state-badge]");
   const statusText = root.querySelector("[data-phenomena-status-text]");
@@ -293,14 +293,15 @@ function init() {
     if (discardButton) {
       discardButton.textContent = isCuratedRecord() ? state.labels.discard : (record.state === "saved" ? state.labels.delete : state.labels.discard);
     }
-    if (curatedToggleButton) {
-      const showCuratedToggle = isCuratedAdminRecord();
-      curatedToggleButton.hidden = !showCuratedToggle;
-      curatedToggleButton.disabled = pending;
-      curatedToggleButton.classList.toggle("is-disabled", pending);
-      if (curatedToggleLabel) {
-        curatedToggleLabel.textContent = record.lifecycle === "archived" ? state.labels.reactivateCurated : state.labels.archiveCurated;
-      }
+    if (deleteCuratedButton) {
+      deleteCuratedButton.hidden = !isCuratedAdminRecord();
+      deleteCuratedButton.disabled = pending;
+      deleteCuratedButton.classList.toggle("is-disabled", pending);
+    }
+    if (saveAsCuratedButton) {
+      saveAsCuratedButton.hidden = !(state.isAdmin && !isCuratedRecord());
+      saveAsCuratedButton.disabled = pending;
+      saveAsCuratedButton.classList.toggle("is-disabled", pending);
     }
     syncHeadingTitle();
     syncSaveAction();
@@ -657,23 +658,61 @@ function init() {
     }, isSavedCustom ? "danger" : "standard");
   }
 
-  async function toggleCuratedLifecycle() {
-    const archived = record.lifecycle === "archived";
-    const title = archived ? state.labels.reactivateCuratedTitle : state.labels.archiveCuratedTitle;
-    const message = archived ? state.labels.reactivateCuratedMessage : state.labels.archiveCuratedMessage;
-    const confirmLabel = archived ? state.labels.reactivateCurated : state.labels.archiveCurated;
-    openConfirm(title, message, confirmLabel, async () => {
-      const response = await requestJson(
-        buildUrl(archived ? state.adminReactivateCuratedSetUrlTemplate : state.adminArchiveCuratedSetUrlTemplate, record.set_id),
-        { method: "POST" },
-      );
-      record = response.set;
-      selectedItems = (record.items || []).slice().sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0));
-      baseline = snapshot();
-      saveCompleted = true;
-      renderAll();
-      showSnackbar(archived ? state.labels.reactivateSuccess : state.labels.archiveSuccess, "success");
-    }, archived ? "standard" : "danger");
+  async function performDeleteCurated() {
+    const label = (titleInput?.value || record.label || "").trim();
+    const message = (state.labels.deleteCuratedMessage || "").replace("{label}", label);
+    openConfirm(state.labels.deleteCuratedTitle, message, state.labels.deleteCurated, async () => {
+      await requestJson(buildUrl(state.adminDeleteCuratedSetUrlTemplate, record.set_id), { method: "DELETE" });
+      showSnackbar(state.labels.deleteCuratedSuccess, "success");
+      navigateToOverview();
+    }, "danger");
+  }
+
+  async function performSaveAsCurated() {
+    const label = (titleInput?.value || record.label || "").trim();
+    const note = (noteInput?.value || "").trim();
+    openConfirm(state.labels.saveAsCuratedTitle, state.labels.saveAsCuratedMessage, state.labels.saveAsCurated, async () => {
+      const itemsPayload = selectedItems.map((item, index) => ({
+        task: item.task,
+        item_id: item.item_id,
+        sort_order: index + 1,
+        ...(item.segment_id ? { segment_id: item.segment_id } : {}),
+        ...(item.note ? { note: item.note } : {}),
+      }));
+
+      let newCuratedSet;
+      if (record.set_id && state.editorMode === "set") {
+        await requestJson(buildUrl(state.putItemsUrlTemplate, record.set_id), {
+          method: "PUT",
+          body: { items: itemsPayload },
+        });
+        await requestJson(buildUrl(state.patchSetUrlTemplate, record.set_id), {
+          method: "PATCH",
+          body: { label, note, state: "saved" },
+        });
+        const created = await requestJson(state.adminCreateCuratedFromCustomUrl, {
+          method: "POST",
+          body: { source_set_id: record.set_id, label, note },
+        });
+        newCuratedSet = created?.set;
+      } else {
+        const created = await requestJson(state.adminCreateCuratedFromCustomUrl || "/api/research/admin/curated-sets/from-custom", {
+          method: "POST",
+          body: {
+            source_set_id: record.set_id || null,
+            label,
+            note,
+          },
+        });
+        newCuratedSet = created?.set;
+      }
+
+      if (!newCuratedSet?.set_id) {
+        throw new Error(state.labels.saveError || "Could not save as curated set");
+      }
+      showSnackbar(state.labels.saveAsCuratedSuccess, "success");
+      navigateToHref(buildUrl(state.presetEditorHrefTemplate, newCuratedSet.set_id));
+    }, "standard");
   }
 
   titleInput.value = record.label || "";
@@ -823,12 +862,23 @@ function init() {
     }
   });
 
-  curatedToggleButton?.addEventListener("click", async () => {
+  deleteCuratedButton?.addEventListener("click", async () => {
     if (pending || !isCuratedAdminRecord()) {
       return;
     }
     try {
-      await toggleCuratedLifecycle();
+      await performDeleteCurated();
+    } catch (error) {
+      showSnackbar(error.message || state.labels.requestFailed, "error");
+    }
+  });
+
+  saveAsCuratedButton?.addEventListener("click", async () => {
+    if (pending || !state.isAdmin || isCuratedRecord()) {
+      return;
+    }
+    try {
+      await performSaveAsCurated();
     } catch (error) {
       showSnackbar(error.message || state.labels.requestFailed, "error");
     }

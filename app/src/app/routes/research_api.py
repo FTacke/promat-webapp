@@ -15,9 +15,11 @@ from ..research_sets import (
     ResearchSetValidationError,
     UNSET,
     archive_curated_set,
+    create_curated_from_custom,
     create_curated_set,
     create_draft_set,
     create_private_copy_from_curated,
+    delete_curated_set,
     delete_owned_set,
     get_visible_set,
     list_visible_sets_for_user,
@@ -356,6 +358,45 @@ def update_admin_curated_set(set_id: str) -> tuple[Response, int]:
     except ResearchSetStorageUnavailableError as exc:
         return _json_error(str(exc), HTTPStatus.SERVICE_UNAVAILABLE)
     return jsonify(_set_response_payload(record)), HTTPStatus.OK.value
+
+
+@blueprint.delete("/admin/curated-sets/<set_id>")
+@jwt_required()
+def delete_admin_curated_set(set_id: str) -> tuple[Response, int]:
+    try:
+        delete_curated_set(admin_user_id=_require_admin(), set_id=set_id)
+    except PermissionError as exc:
+        return _json_error(str(exc), HTTPStatus.FORBIDDEN)
+    except ResearchSetValidationError as exc:
+        return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
+    except ResearchSetNotFoundError as exc:
+        return _json_error(str(exc), HTTPStatus.NOT_FOUND)
+    except ResearchSetStorageUnavailableError as exc:
+        return _json_error(str(exc), HTTPStatus.SERVICE_UNAVAILABLE)
+    return jsonify({"deleted": True, "set_id": set_id}), HTTPStatus.OK.value
+
+
+@blueprint.post("/admin/curated-sets/from-custom")
+@jwt_required()
+def create_admin_curated_set_from_custom() -> tuple[Response, int]:
+    try:
+        admin_user_id = _require_admin()
+        payload = _json_object_payload()
+        record = create_curated_from_custom(
+            admin_user_id=admin_user_id,
+            source_set_id=payload.get("source_set_id", ""),
+            label=payload.get("label"),
+            note=payload.get("note"),
+        )
+    except PermissionError as exc:
+        return _json_error(str(exc), HTTPStatus.FORBIDDEN)
+    except ResearchSetValidationError as exc:
+        return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
+    except ResearchSetNotFoundError as exc:
+        return _json_error(str(exc), HTTPStatus.NOT_FOUND)
+    except ResearchSetStorageUnavailableError as exc:
+        return _json_error(str(exc), HTTPStatus.SERVICE_UNAVAILABLE)
+    return jsonify(_set_response_payload(record)), HTTPStatus.CREATED.value
 
 
 @blueprint.post("/admin/curated-sets/<set_id>/archive")

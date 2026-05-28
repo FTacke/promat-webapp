@@ -1337,6 +1337,95 @@ def save_set_as_new(*, owner_user_id: str, source_set_id: str, label: str) -> St
     return _run_storage_operation(operation)
 
 
+def delete_curated_set(*, admin_user_id: str, set_id: str) -> None:
+    from sqlalchemy import update as sa_update
+
+    admin_id = _normalize_owner_user_id(admin_user_id)
+    normalized_set_id = (set_id or "").strip()
+    if not normalized_set_id:
+        raise ResearchSetValidationError("set_id is required")
+
+    def operation() -> None:
+        with get_session() as session:
+            record = _get_visible_set_record(
+                session,
+                owner_user_id=admin_id,
+                set_id=normalized_set_id,
+                include_archived_curated=True,
+            )
+            if record.visibility != "curated":
+                raise ResearchSetValidationError(f"Research set '{normalized_set_id}' is not a curated set")
+            # Explicitly null provenance references on private copies so the
+            # behavior is consistent across PostgreSQL and SQLite test DBs.
+            session.execute(
+                sa_update(ResearchSet)
+                .where(ResearchSet.source_curated_set_id == normalized_set_id)
+                .values(source_curated_set_id=None)
+            )
+            session.delete(record)
+            session.flush()
+
+    _run_storage_operation(operation)
+
+
+def create_curated_from_custom(
+    *,
+    admin_user_id: str,
+    source_set_id: str,
+    label: str | None = None,
+    note: str | None = None,
+) -> StoredResearchSet:
+    admin_id = _normalize_owner_user_id(admin_user_id)
+    normalized_source_set_id = (source_set_id or "").strip()
+    if not normalized_source_set_id:
+        raise ResearchSetValidationError("source_set_id is required")
+    normalized_label = _normalize_optional_label(label)
+    normalized_note = _normalize_optional_note(note)
+    now = _utcnow()
+
+    def operation() -> StoredResearchSet:
+        with get_session() as session:
+            source_record = _get_owned_set_record(session, owner_user_id=admin_id, set_id=normalized_source_set_id)
+            effective_label = _normalize_required_label(
+                normalized_label or source_record.label,
+                field_name="label",
+            )
+            effective_note = normalized_note if note is not None else source_record.note
+            references = _references_from_stored_items(source_record.items)
+            source_workbench_state = _serialize_workbench_state(source_record)
+            record = ResearchSet(
+                set_id=str(uuid.uuid4()),
+                owner_user_id=None,
+                corpus_language=source_record.corpus_language,
+                label=effective_label,
+                note=effective_note,
+                visibility="curated",
+                lifecycle="saved",
+                source_curated_set_id=None,
+                created_by_user_id=admin_id,
+                updated_by_user_id=admin_id,
+                version=1,
+                created_at=now,
+                updated_at=now,
+                published_at=now,
+                archived_at=None,
+                last_accessed_at=now,
+                expires_at=None,
+            )
+            session.add(record)
+            _materialize_set_items(record, references)
+            _update_workbench_state(
+                record,
+                preferred_task=source_workbench_state.preferred_task,
+                comparison_view_task=source_workbench_state.comparison_view_task,
+                session_ids=tuple(entry.session_id for entry in source_workbench_state.sessions),
+            )
+            session.flush()
+            return _serialize_set(record)
+
+    return _run_storage_operation(operation)
+
+
 def delete_owned_set(*, owner_user_id: str, set_id: str) -> None:
     owner_id = _normalize_owner_user_id(owner_user_id)
     normalized_set_id = (set_id or "").strip()

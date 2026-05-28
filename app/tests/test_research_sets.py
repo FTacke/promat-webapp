@@ -19,6 +19,9 @@ os.environ.setdefault("FLASK_ENV", "development")
 os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
+from flask import g  # noqa: E402
+from flask_jwt_extended import get_jwt, verify_jwt_in_request  # noqa: E402
+from app.auth import coerce_role  # noqa: E402
 from app.auth.models import Base, User  # noqa: E402
 from app.extensions import register_extensions  # noqa: E402
 from app.extensions.sqlalchemy_ext import get_engine, init_engine, get_session  # noqa: E402
@@ -28,10 +31,13 @@ from app.research_sets import (  # noqa: E402
     ResearchSet,
     ResearchSetStorageUnavailableError,
     ResearchSetValidationError,
+    create_curated_from_custom,
     create_curated_set,
     create_draft_set,
+    delete_curated_set,
     delete_owned_set,
     delete_expired_drafts,
+    get_visible_set,
     list_owned_sets,
     list_selectable_owned_sets,
     load_owned_set,
@@ -229,6 +235,16 @@ def set_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
             preferred_task="text",
         )
         app.config["TEST_CURATED_SET_ID"] = curated_set.set_id
+
+    @app.before_request
+    def _set_role_from_jwt():
+        try:
+            verify_jwt_in_request(optional=True)
+            token = get_jwt() or {}
+            role_value = token.get("role")
+            g.role = coerce_role(role_value) if role_value else None
+        except Exception:
+            g.role = None
 
     app.register_blueprint(research_api_blueprint)
     _clear_runtime_caches()
@@ -696,3 +712,248 @@ def test_list_and_delete_helpers_work_for_owned_sets(set_app: Flask) -> None:
         delete_owned_set(owner_user_id="user-1", set_id=first.set_id)
         listed_after_delete = list_owned_sets(owner_user_id="user-1", corpus_language="spanish")
         assert [entry.label for entry in listed_after_delete] == ["B"]
+
+
+# --- Role enforcement: admin-only endpoints ---
+
+
+def test_user_cannot_create_curated_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    response = client.post(
+        "/api/research/admin/curated-sets",
+        json={"corpus_language": "spanish", "label": "Attempt", "items": []},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    assert response.status_code == 403
+
+
+def test_user_cannot_update_curated_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    curated_id = set_app.config["TEST_CURATED_SET_ID"]
+    response = client.put(
+        f"/api/research/admin/curated-sets/{curated_id}",
+        json={"label": "Takeover"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    assert response.status_code == 403
+
+
+def test_user_cannot_delete_curated_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    curated_id = set_app.config["TEST_CURATED_SET_ID"]
+    response = client.delete(
+        f"/api/research/admin/curated-sets/{curated_id}",
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    assert response.status_code == 403
+
+
+def test_user_cannot_archive_curated_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    curated_id = set_app.config["TEST_CURATED_SET_ID"]
+    response = client.post(
+        f"/api/research/admin/curated-sets/{curated_id}/archive",
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    assert response.status_code == 403
+
+
+def test_user_cannot_reactivate_curated_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    curated_id = set_app.config["TEST_CURATED_SET_ID"]
+    response = client.post(
+        f"/api/research/admin/curated-sets/{curated_id}/reactivate",
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    assert response.status_code == 403
+
+
+def test_user_cannot_create_curated_from_custom(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish", "label": "My Set"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    custom_id = create_response.get_json()["set"]["set_id"]
+    response = client.post(
+        "/api/research/admin/curated-sets/from-custom",
+        json={"source_set_id": custom_id, "label": "Attempt"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    assert response.status_code == 403
+
+
+def test_unauthenticated_cannot_call_admin_endpoints(set_app: Flask) -> None:
+    client = set_app.test_client()
+    curated_id = set_app.config["TEST_CURATED_SET_ID"]
+    for method, path in [
+        ("POST", "/api/research/admin/curated-sets"),
+        ("PUT", f"/api/research/admin/curated-sets/{curated_id}"),
+        ("DELETE", f"/api/research/admin/curated-sets/{curated_id}"),
+        ("POST", f"/api/research/admin/curated-sets/{curated_id}/archive"),
+        ("POST", f"/api/research/admin/curated-sets/{curated_id}/reactivate"),
+        ("POST", "/api/research/admin/curated-sets/from-custom"),
+    ]:
+        response = getattr(client, method.lower())(path, json={})
+        assert response.status_code in (401, 422), f"{method} {path} expected 401/422, got {response.status_code}"
+
+
+# --- Admin: delete curated set ---
+
+
+def test_admin_can_delete_curated_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/admin/curated-sets",
+        json={
+            "corpus_language": "spanish",
+            "label": "Zum Löschen",
+            "items": [{"task": "wordlist", "item_id": "wl_001"}],
+        },
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    assert create_response.status_code == 201
+    new_set_id = create_response.get_json()["set"]["set_id"]
+
+    delete_response = client.delete(
+        f"/api/research/admin/curated-sets/{new_set_id}",
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    assert delete_response.status_code == 200
+    assert delete_response.get_json()["deleted"] is True
+
+    get_response = client.get(
+        f"/api/research/sets/{new_set_id}",
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    assert get_response.status_code == 404
+
+
+def test_delete_curated_set_leaves_private_copies_intact(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/admin/curated-sets",
+        json={
+            "corpus_language": "spanish",
+            "label": "Wird gelöscht",
+            "items": [{"task": "wordlist", "item_id": "wl_001"}],
+        },
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    curated_id = create_response.get_json()["set"]["set_id"]
+
+    private_copy_response = client.post(
+        f"/api/research/sets/{curated_id}/private-copy",
+        json={"label": "Meine Kopie"},
+        headers=_auth_header(set_app, "user-1", "alice"),
+    )
+    copy_id = private_copy_response.get_json()["set"]["set_id"]
+
+    client.delete(
+        f"/api/research/admin/curated-sets/{curated_id}",
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+
+    with set_app.app_context():
+        copy = get_visible_set(owner_user_id="user-1", set_id=copy_id)
+    assert copy.set_id == copy_id
+    assert copy.source_curated_set_id is None
+
+
+def test_delete_curated_set_rejects_private_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish", "label": "Mein Set"},
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    private_id = create_response.get_json()["set"]["set_id"]
+
+    response = client.delete(
+        f"/api/research/admin/curated-sets/{private_id}",
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    assert response.status_code in (400, 404)
+
+
+def test_service_delete_curated_set_removes_items_and_workbench(set_app: Flask) -> None:
+    with set_app.app_context():
+        curated = create_curated_set(
+            admin_user_id="admin-1",
+            corpus_language="spanish",
+            label="Service-Löschtest",
+            items=[{"task": "wordlist", "item_id": "wl_001"}, {"task": "text", "item_id": "d_01"}],
+        )
+        delete_curated_set(admin_user_id="admin-1", set_id=curated.set_id)
+        with get_session() as session:
+            record = session.get(ResearchSet, curated.set_id)
+        assert record is None
+
+
+# --- Admin: save as curated set (create_curated_from_custom) ---
+
+
+def test_admin_can_create_curated_from_custom_set(set_app: Flask) -> None:
+    client = set_app.test_client()
+    create_response = client.post(
+        "/api/research/sets",
+        json={"corpus_language": "spanish", "label": "Eigenes Set"},
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    custom_id = create_response.get_json()["set"]["set_id"]
+
+    client.put(
+        f"/api/research/sets/{custom_id}/items",
+        json={"items": [{"task": "wordlist", "item_id": "wl_001"}]},
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    client.patch(
+        f"/api/research/sets/{custom_id}",
+        json={"label": "Eigenes Set", "state": "saved"},
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+
+    promote_response = client.post(
+        "/api/research/admin/curated-sets/from-custom",
+        json={"source_set_id": custom_id, "label": "Neues Kuratiertes"},
+        headers=_auth_header(set_app, "admin-1", "admin", role="admin"),
+    )
+    assert promote_response.status_code == 201
+    curated_set = promote_response.get_json()["set"]
+    assert curated_set["visibility"] == "curated"
+    assert curated_set["lifecycle"] == "saved"
+    assert curated_set["label"] == "Neues Kuratiertes"
+    assert curated_set["owner_user_id"] is None if "owner_user_id" in curated_set else True
+    assert len(curated_set["items"]) == 1
+    assert curated_set["published_at"] is not None
+
+
+def test_admin_create_curated_from_custom_copies_items(set_app: Flask) -> None:
+    with set_app.app_context():
+        draft = create_draft_set(
+            owner_user_id="admin-1",
+            corpus_language="spanish",
+            source_curated_set_id=set_app.config["TEST_CURATED_SET_ID"],
+        )
+        update_set_metadata(owner_user_id="admin-1", set_id=draft.set_id, state="saved", label="Admin Custom")
+        curated = create_curated_from_custom(
+            admin_user_id="admin-1",
+            source_set_id=draft.set_id,
+            label="Aus Admin Custom",
+        )
+    assert curated.visibility == "curated"
+    assert curated.lifecycle == "saved"
+    assert curated.label == "Aus Admin Custom"
+    assert len(curated.items) > 0
+    assert curated.published_at is not None
+
+
+def test_admin_create_curated_from_custom_preserves_original(set_app: Flask) -> None:
+    with set_app.app_context():
+        draft = create_draft_set(owner_user_id="admin-1", corpus_language="spanish", label="Bleibt erhalten")
+        update_set_metadata(owner_user_id="admin-1", set_id=draft.set_id, state="saved", label="Bleibt erhalten")
+        create_curated_from_custom(admin_user_id="admin-1", source_set_id=draft.set_id, label="Kuratiert")
+        original = load_owned_set(owner_user_id="admin-1", set_id=draft.set_id, touch_access=False)
+    assert original.visibility == "private"
+    assert original.label == "Bleibt erhalten"

@@ -132,12 +132,13 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - `phenomena` is a protected list-curation workbench with one overview route plus dedicated detail routes for curated presets and owner-bound custom sets.
 - The productive overview route stays linear after login: page header, one `1 Set wählen` block with `Set suchen` plus `Neues Set`, one unified list of curated and custom entries, and only functional list-end empty states.
 - The overview does not expose an active workspace, task/material configuration, save controls, player/comparison handoff, or other parallel work areas.
-- Curated entries are distinguished only by badge/status, expose `Ansehen` and `Modifizieren`, and are never deletable from the overview.
+- Curated entries are distinguished only by badge/status and expose `Ansehen` and `Als eigenes Set bearbeiten` for all authenticated users; admin users additionally see `Kuratiertes Set bearbeiten`; curated entries are never directly deletable from the overview.
 - Custom entries are distinguished only by badge/status, expose `Bearbeiten` as the primary action, and keep `Umbenennen` plus `Löschen` in a secondary overflow action family.
-- The curated preset editor route is an authenticated research-editor route; saving owner-bound work still requires authenticated owner context through the canonical `/api/research/sets` route family.
+- The curated preset editor route is an authenticated research-editor route; for regular users, saving work creates a new private custom set via the canonical `/api/research/sets` route family; for admins, the save action updates the curated original via `/api/research/admin/curated-sets/{set_id}`.
 - The owner-bound custom-set editor route requires authenticated owner context; loading or mutating one concrete stored set without owner context is not part of the public web surface.
 - The productive editor surface exposes one readable title field, one persisted `Notiz` field, a visible type/save-state status line, two stable source columns for the full `Wortliste` and `Satzliste`, and one lower `Ausgewählte Items` area with one explicit shared saved order across both task types.
-- The productive editor exposes one visible save action, not a visible `Speichern als`; owner-bound save semantics now use the canonical `/api/research/sets` create, patch, delete, and item-replacement flows.
+- For admin users editing a custom set, the editor exposes an additional `Als kuratiertes Set speichern` action that creates a new curated set from the custom set content via `/api/research/admin/curated-sets/from-custom`.
+- For admin users editing a curated set, the editor exposes `Kuratiertes Set löschen` as a permanent-delete action via `DELETE /api/research/admin/curated-sets/{set_id}`; deleting a curated set leaves all existing private copies intact (their `source_curated_set_id` is set to NULL by FK cascade).
 - If unsaved changes exist in the productive `phenomena` editor, normal in-app navigation uses the same app-level confirm dialog as discard flows; browser-native unload prompts remain only as fallback for reload, close, or comparable browser-level exits.
 - In the current productive `phenomena` phase, player and comparison handoff are intentionally absent from both overview and editor so the page stays a focused list-curation surface.
 

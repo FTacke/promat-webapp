@@ -537,12 +537,15 @@ def test_public_preset_editor_route_exposes_admin_curated_actions_for_admins(phe
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'data-phenomena-curated-toggle-action' in html
+    assert 'data-phenomena-delete-curated-action' in html
+    assert 'data-phenomena-save-as-curated-action' in html
     assert 'data-phenomena-save-label' in html
     assert '"isAdmin": true' in html
     assert 'Kuratiertes Set wirklich aktualisieren?' in html
     assert 'global am kuratierten Original gespeichert.' in html
-    assert '/api/research/admin/curated-sets/__SET_ID__/archive' in html
+    assert '/api/research/admin/curated-sets/__SET_ID__' in html
+    assert 'Kuratiertes Set löschen' in html
+    assert 'Als kuratiertes Set speichern' in html
 
 
 def test_public_set_editor_route_redirects_to_login_without_auth(phenomena_app: Flask) -> None:
