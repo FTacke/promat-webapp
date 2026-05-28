@@ -8447,12 +8447,21 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   }
 }
 
+.landing-more-inline {
+  display: none;
+}
+
 @media (max-width: 767px) {
-  .landing-more.pm-nav-pill--medium {
-    min-height: max(var(--pm-nav-pill-height-small), var(--pm-touch-target-min));
-    block-size: max(var(--pm-nav-pill-height-small), var(--pm-touch-target-min));
-    padding-inline: var(--pm-nav-pill-padding-inline-small);
-    font-size: var(--pm-nav-pill-font-size-small);
+  .landing-more {
+    display: none;
+  }
+
+  .landing-more-inline {
+    display: inline;
+    color: var(--book-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
   }
 }
 

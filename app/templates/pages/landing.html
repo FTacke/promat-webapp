@@ -21,7 +21,7 @@
       {% endif %}
     </h1>
 
-    <p class="landing-intro">{{ promat_page.intro }}</p>
+    <p class="landing-intro">{{ promat_page.intro }}{% if promat_page.more_link %} <a class="landing-more-inline" href="{{ promat_page.more_link.href }}">{{ promat_page.more_link.label }}</a>{% endif %}</p>
 
     {% if promat_page.more_link %}
     {{ render_navigation_pill({ 'label': promat_page.more_link.label, 'href': promat_page.more_link.href, 'size': 'medium', 'variant': 'secondary' }, 'landing-more') }}

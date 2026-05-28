@@ -760,7 +760,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   }
 
   .landing-grid {
-    gap: var(--pm-space-sm);
+    gap: var(--pm-space-lg);
   }
 
   .pm-card-grid,
