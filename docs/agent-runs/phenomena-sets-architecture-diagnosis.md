@@ -485,9 +485,9 @@ def test_archived_curated_set_shows_correct_status_label(phenomena_app):
 
 ---
 
-## 16. Präzisierung 2026-05-28 – Finale Button-/Action-Logik (USER + ADMIN)
+## 16. Präzisierung 2026-05-28 – Finale Button-/Action-Logik (USER + ADMIN, aktualisiert)
 
-Die Abschnitte 6 und 9 enthielten den historischen Ist-Zustand. Dieser Abschnitt beschreibt den finalen implementierten Stand nach zwei Runs (USER-Matrix + ADMIN-Matrix).
+Die Abschnitte 6 und 9 enthielten den historischen Ist-Zustand. Dieser Abschnitt beschreibt den finalen implementierten Stand nach drei Runs (USER-Matrix + ADMIN-Matrix + Editor-Finalisierung).
 
 ### Übersicht (USER)
 
@@ -550,6 +550,41 @@ Die Abschnitte 6 und 9 enthielten den historischen Ist-Zustand. Dieser Abschnitt
 - Alle Admin-Buttons starten `hidden`; JS zeigt/versteckt je nach Kontext.
 - Overflow-Container startet `hidden`; JS zeigt ihn, wenn mindestens eine Overflow-Aktion sichtbar.
 - `source_curated_set_id` ist Herkunfts-Metadatum, nicht aktuelle Sichtbarkeit.
+
+### Finale Hauptleiste vs Overflow (nach Editor-Finalisierung 2026-05-28)
+
+**Grundregel:**
+- Hauptleiste: nur Arbeits-Zustands-Aktionen (Speichern / Verwerfen).
+- Overflow: alternative Speicherziele + Löschaktionen.
+- Overflow nicht anzeigen, wenn keine Aktionen vorhanden sind.
+
+| Zustand | Hauptleiste | Overflow |
+|---|---|---|
+| ADMIN + curated clean | – | Als Custom Set speichern · Kuratiertes Set löschen |
+| ADMIN + curated dirty | Änderungen verwerfen · Änderungen speichern | Als Custom Set speichern · Kuratiertes Set löschen |
+| ADMIN + new custom | Speichern | Als kuratiertes Set speichern |
+| ADMIN + saved custom clean | – | Als kuratiertes Set speichern · Set löschen |
+| ADMIN + saved custom dirty | Änderungen verwerfen · Speichern | Als kuratiertes Set speichern · Set löschen |
+| USER + curated clean | – | – (kein Overflow) |
+| USER + curated dirty | Änderungen verwerfen · Speichern → Confirm Custom-Kopie | – (kein Overflow) |
+| USER + new custom | Speichern | – (kein Overflow) |
+| USER + saved custom clean | – | Set löschen |
+| USER + saved custom dirty | Änderungen verwerfen · Speichern | Set löschen |
+
+**Speichern-Sichtbarkeit:**
+`saveButton.hidden = !(isDraftCustom || dirty)` — d.h. neues Custom Set immer, sonst nur wenn dirty.
+
+**Discard-Sichtbarkeit:**
+`discardButton.hidden = !dirty` — immer nur wenn dirty.
+
+**Warnung nach Speichern:**
+`commitSave()` ruft `baseline = snapshot()` nach jeder Speicheroperation auf. `isDirty()` ist danach false → keine false Leave-Warnung.
+
+**Layout:**
+`pm-phenomena-editor__header` ist ein 1-spaltige Grid (`grid-template-columns: 1fr`). Titel/Status/Hint stehen auf voller Breite, Aktionsleiste darunter auf eigener Zeile.
+
+**Overflow-CSS:**
+Editor-Overflow nutzt `pm-comparison-more-filters pm-phenomena-overflow` (identisch mit Übersicht-Pattern). Kein nativer `<summary>`-Pfeil sichtbar.
 
 ### Nicht-Ziele
 

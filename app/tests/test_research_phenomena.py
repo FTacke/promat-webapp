@@ -246,7 +246,7 @@ def test_editor_static_js_keeps_single_sync_status_and_request_helpers() -> None
     assert "async function requestJson(url, options = {})" in source
     assert "function discardOrDelete" not in source
     assert "function discardOrNavigate()" in source
-    assert "async function performDeleteCustom()" in source
+    assert "persistSaveAsCopy" in source
     assert 'root.addEventListener("click"' in source
     assert 'selectedList?.addEventListener("dragstart"' in source
     assert "data-phenomena-curated-toggle-action" not in source
@@ -260,7 +260,7 @@ def test_editor_static_js_parse_state_has_no_merged_event_fragments() -> None:
 
     assert "addEventListener" not in parse_state
     assert "discardOrNavigate" not in parse_state
-    assert "performDeleteCustom" not in parse_state
+    assert "persistSaveAsCopy" not in parse_state
     assert "requestJson" not in parse_state
     assert "options.headers" not in parse_state
 
@@ -1085,7 +1085,7 @@ def test_editor_js_save_as_custom_button_logic_in_source() -> None:
     assert "data-phenomena-save-as-custom-action" in source
     assert "saveAsCustomTitle" in source
     assert "saveAsCustomMessage" in source
-    assert "persistCurrentRecordAsCopy" in source
+    assert "persistSaveAsCopy" in source
 
 
 def test_editor_js_overflow_visibility_logic_in_source() -> None:
@@ -1159,6 +1159,145 @@ def test_overflow_menu_utility_module_exists_and_exports_init() -> None:
     assert "export function initOverflowMenus" in content
     assert "data-overflow-menu" in content
     assert "Escape" in content
+
+
+# --- New matrix / finalization tests ---
+
+def test_editor_js_new_matrix_save_visible_logic_in_source() -> None:
+    """JS: save button visibility must be derived from isDraft || dirty, not just dirty."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "isDraft || dirty" in source or "isDraftCustom() || dirty" in source
+    assert "saveButton.hidden = !saveVisible" in source
+
+
+def test_editor_js_save_as_custom_and_curated_in_overflow_not_main_bar() -> None:
+    """JS: saveAsCustom and saveAsCurated must be in the overflow, not as top-level action buttons."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "data-phenomena-save-as-custom-action" in source
+    assert "data-phenomena-save-as-curated-action" in source
+
+
+def test_editor_template_save_as_custom_in_overflow_menu() -> None:
+    """Template: save-as-custom must be inside the overflow menu (not a main-bar button)."""
+    from pathlib import Path
+    template_path = Path(__file__).resolve().parents[1] / "templates" / "pages" / "research_phenomena_editor.html"
+    content = template_path.read_text(encoding="utf-8")
+    overflow_start = content.index("data-phenomena-editor-overflow")
+    assert "data-phenomena-save-as-custom-action" in content[overflow_start:]
+    assert "data-phenomena-save-as-curated-action" in content[overflow_start:]
+    assert "data-phenomena-delete-curated-action" in content[overflow_start:]
+    assert "data-phenomena-delete-action" in content[overflow_start:]
+
+
+def test_editor_template_uses_comparison_more_filters_for_overflow() -> None:
+    """Template: overflow must use pm-comparison-more-filters CSS pattern (no raw triangle)."""
+    from pathlib import Path
+    template_path = Path(__file__).resolve().parents[1] / "templates" / "pages" / "research_phenomena_editor.html"
+    content = template_path.read_text(encoding="utf-8")
+    assert "pm-comparison-more-filters" in content
+    assert "pm-comparison-more-filters__summary" in content
+    assert "pm-comparison-more-filters__body" in content
+
+
+def test_editor_js_overflow_includes_saveascustom_check_in_hasoverflowaction() -> None:
+    """JS: hasOverflowAction must check saveAsCustomButton and saveAsCuratedButton."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "saveAsCustomButton" in source
+    assert "saveAsCuratedButton" in source
+    assert "hasOverflowAction" in source
+
+
+def test_editor_js_commit_save_baseline_function_present() -> None:
+    """JS: commitSave() must update baseline = snapshot() to prevent false leave-warning."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "function commitSave" in source
+    assert "baseline = snapshot();" in source
+
+
+def test_editor_js_leave_warning_uses_isdirty_not_flag() -> None:
+    """JS: beforeunload handler must check isDirty(), not a saveCompleted flag."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    beforeunload_start = source.index("beforeunload")
+    # suppressBeforeUnload OR !isDirty() must be the gate
+    segment = source[beforeunload_start:beforeunload_start + 300]
+    assert "isDirty()" in segment
+    assert "suppressBeforeUnload" in segment
+
+
+def test_editor_js_discard_hidden_only_when_dirty() -> None:
+    """JS: discardButton.hidden = !dirty (clean state → hidden, dirty → visible)."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "discardButton.hidden = !dirty" in source
+
+
+def test_editor_template_save_button_starts_hidden() -> None:
+    """Template: save button must start with hidden attribute (JS controls visibility)."""
+    from pathlib import Path
+    template_path = Path(__file__).resolve().parents[1] / "templates" / "pages" / "research_phenomena_editor.html"
+    content = template_path.read_text(encoding="utf-8")
+    assert 'data-phenomena-save-action hidden' in content
+
+
+def test_editor_admin_curated_set_has_overflow_with_all_admin_actions(phenomena_app: Flask) -> None:
+    """ADMIN curated: template has save-as-custom, save-as-curated, delete-curated in overflow."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": true' in html
+    # All admin overflow actions must be in DOM
+    assert 'data-phenomena-save-as-custom-action' in html
+    assert 'data-phenomena-save-as-curated-action' in html
+    assert 'data-phenomena-delete-curated-action' in html
+    # Overflow structure
+    assert 'pm-comparison-more-filters' in html
+    assert 'data-phenomena-editor-overflow' in html
+
+
+def test_editor_user_curated_has_no_overflow_actions_for_user(phenomena_app: Flask) -> None:
+    """USER curated: no admin-only overflow actions in DOM."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": false' in html
+    # Admin-only buttons must be absent
+    assert 'data-phenomena-save-as-custom-action' not in html
+    assert 'data-phenomena-save-as-curated-action' not in html
+    assert 'data-phenomena-delete-curated-action' not in html
+    # Overflow itself is present (for delete-custom if user has saved custom sets)
+    assert 'data-phenomena-editor-overflow' in html
+
+
+def test_editor_user_saved_custom_has_delete_in_overflow_not_main_bar(phenomena_app: Flask) -> None:
+    """USER saved custom: delete action is in the overflow, not a top-level main-bar button."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Set", state="saved")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    # Delete must be in the overflow
+    assert 'data-phenomena-editor-overflow' in html
+    assert 'data-phenomena-delete-action' in html
+    # Delete must NOT be a standalone primary main-bar button
+    assert 'pm-action-button--danger' not in html.split('data-phenomena-editor-overflow')[0].split('data-phenomena-save-action')[-1]
 
 
 # --- Regression tests ---

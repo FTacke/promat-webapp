@@ -682,7 +682,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-phenomena-editor__header {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 1fr;
   align-items: start;
 }
 
