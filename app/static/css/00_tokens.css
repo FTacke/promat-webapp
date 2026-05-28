@@ -607,8 +607,8 @@
   --pm-landing-card-mobile-image-block: 10.5rem;
   --pm-landing-card-mobile-overlay-margin: var(--pm-space-xs);
   --pm-landing-card-mobile-body-padding: var(--pm-space-xs);
-  --pm-landing-card-mobile-body-bg: var(--pm-surface-paper);
-  --pm-landing-card-mobile-body-border-color: var(--pm-border-subtle);
+  --pm-landing-card-mobile-body-bg: var(--book-paper);
+  --pm-landing-card-mobile-body-border-color: color-mix(in srgb, var(--promat-wordmark-accent) 40%, var(--pm-border-default));
   --pm-landing-card-mobile-body-radius: var(--pm-radius-container);
   --pm-landing-card-mobile-body-shadow: var(--pm-shadow-card-subtle);
   --pm-landing-card-mobile-body-z-index: 2;
