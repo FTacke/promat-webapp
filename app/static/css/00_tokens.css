@@ -607,7 +607,14 @@
   --pm-landing-card-mobile-image-block: 10.5rem;
   --pm-landing-card-mobile-overlay-margin: var(--pm-space-xs);
   --pm-landing-card-mobile-body-padding: var(--pm-space-xs);
-  --pm-landing-card-mobile-body-bg: color-mix(in srgb, var(--pm-surface-paper) 96%, var(--book-bg) 4%);
+  --pm-landing-card-mobile-body-bg: var(--pm-surface-paper);
+  --pm-landing-card-mobile-body-border-color: var(--pm-border-subtle);
+  --pm-landing-card-mobile-body-radius: var(--pm-radius-container);
+  --pm-landing-card-mobile-body-shadow: var(--pm-shadow-card-subtle);
+  --pm-landing-card-mobile-body-z-index: 2;
+  --pm-research-language-root-mobile-actions-gap: var(--pm-space-container);
+  --pm-research-language-root-mobile-actions-divider-color: var(--pm-border-subtle);
+  --pm-research-language-root-mobile-actions-padding-top: var(--pm-space-sm);
   --pm-teaching-language-row-block-gap: 0.32rem;
   --pm-teaching-language-row-column-gap: 0.72rem;
   --pm-teaching-language-row-desktop-column-gap: clamp(1rem, 1.8vw, 2rem);

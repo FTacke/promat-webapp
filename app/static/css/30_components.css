@@ -8399,6 +8399,12 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
     gap: var(--pm-button-card-gap-block) var(--pm-button-card-gap-inline);
   }
 
+  .pm-research-language-root__actions {
+    margin-top: var(--pm-research-language-root-mobile-actions-gap);
+    padding-top: var(--pm-research-language-root-mobile-actions-padding-top);
+    border-top: 1px solid var(--pm-research-language-root-mobile-actions-divider-color);
+  }
+
   .pm-admin-table__scroll-hint {
     display: block;
   }

@@ -840,17 +840,19 @@ a.pm-card:focus-visible .pm-card__title,
 
   .landing-card.pm-card--entry .pm-card__body {
     position: absolute;
-    left: var(--pm-landing-card-mobile-overlay-margin);
-    right: var(--pm-landing-card-mobile-overlay-margin);
+    left: 50%;
+    width: calc(100% - (2 * var(--pm-landing-card-mobile-overlay-margin)));
     bottom: var(--pm-landing-card-mobile-overlay-margin);
+    transform: translateX(-50%);
     flex: 0 0 auto;
     height: auto;
     min-height: 0;
     padding: var(--pm-landing-card-mobile-body-padding);
-    border: 1px solid var(--pm-border-subtle);
-    border-radius: var(--pm-radius-container);
+    border: 1px solid var(--pm-landing-card-mobile-body-border-color);
+    border-radius: var(--pm-landing-card-mobile-body-radius);
     background: var(--pm-landing-card-mobile-body-bg);
-    box-shadow: var(--pm-shadow-card-subtle);
+    box-shadow: var(--pm-landing-card-mobile-body-shadow);
+    z-index: var(--pm-landing-card-mobile-body-z-index);
   }
 
   .landing-card.pm-card--entry .pm-card__title {
