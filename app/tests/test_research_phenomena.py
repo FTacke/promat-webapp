@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+from html.parser import HTMLParser
 import json
 import os
 import shutil
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,8 @@ from flask import Flask, g
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 TEST_REPO_ROOT = Path(__file__).resolve().parents[2]
+PHENOMENA_EDITOR_JS = TEST_REPO_ROOT / "app" / "static" / "js" / "pages" / "research-phenomena-editor.js"
+PHENOMENA_EDITOR_TEMPLATE = TEST_REPO_ROOT / "app" / "templates" / "pages" / "research_phenomena_editor.html"
 os.environ.setdefault("FLASK_ENV", "development")
 os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
 os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
@@ -50,6 +53,24 @@ def _write_session(runtime_root: Path, language_slug: str, session_id: str, payl
     session_dir = runtime_root / "data" / "sessions" / language_slug / session_id
     session_dir.mkdir(parents=True, exist_ok=True)
     (session_dir / "metadata.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+class _NestedButtonParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._button_depth = 0
+        self.nested_button_found = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag != "button":
+            return
+        if self._button_depth > 0:
+            self.nested_button_found = True
+        self._button_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "button" and self._button_depth > 0:
+            self._button_depth -= 1
 
 
 def _task(task_type: str) -> dict[str, str]:
@@ -215,6 +236,42 @@ def phenomena_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
     _clear_runtime_caches()
     yield app
     _clear_runtime_caches()
+
+
+def test_editor_static_js_keeps_single_sync_status_and_request_helpers() -> None:
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+
+    assert source.count("function syncStatus") == 1
+    assert "function parseState()" in source
+    assert "async function requestJson(url, options = {})" in source
+    assert "function discardOrDelete" not in source
+    assert "function discardOrNavigate()" in source
+    assert "async function performDeleteCustom()" in source
+    assert 'root.addEventListener("click"' in source
+    assert 'selectedList?.addEventListener("dragstart"' in source
+    assert "data-phenomena-curated-toggle-action" not in source
+
+
+def test_editor_static_js_parse_state_has_no_merged_event_fragments() -> None:
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    parse_start = source.index("function parseState()")
+    parse_end = source.index("function buildUrl", parse_start)
+    parse_state = source[parse_start:parse_end]
+
+    assert "addEventListener" not in parse_state
+    assert "discardOrNavigate" not in parse_state
+    assert "performDeleteCustom" not in parse_state
+    assert "requestJson" not in parse_state
+    assert "options.headers" not in parse_state
+
+
+def test_editor_template_has_no_nested_buttons_and_no_curated_toggle_action() -> None:
+    template = PHENOMENA_EDITOR_TEMPLATE.read_text(encoding="utf-8")
+    parser = _NestedButtonParser()
+    parser.feed(template)
+
+    assert not parser.nested_button_found
+    assert "data-phenomena-curated-toggle-action" not in template
 
 
 def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenomena_app: Flask) -> None:

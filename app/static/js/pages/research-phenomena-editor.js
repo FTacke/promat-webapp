@@ -15,23 +15,16 @@ function parseState() {
   } catch {
     return null;
   }
-  discardButton?.addEventListener("click", () => {
-    if (pending) {
-      return;
-    }
-    discardOrNavigate();
-  });
+}
 
-  deleteCustomButton?.addEventListener("click", async () => {
-    if (pending || isCuratedRecord()) {
-      return;
-    }
-    try {
-      await performDeleteCustom();
-    } catch (error) {
-      showSnackbar(error.message || state.labels.requestFailed, "error");
-    }
-  });
+function buildUrl(template, value) {
+  return template.replace("__SET_ID__", encodeURIComponent(value));
+}
+
+async function requestJson(url, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const headers = {
+    Accept: "application/json",
     ...(options.headers || {}),
   };
   let body = options.body;
@@ -267,6 +260,12 @@ function init() {
   function syncStatus() {
     const typeKey = currentTypeKey();
     const stateKey = currentStateKey();
+    const isAdmin = Boolean(state.isAdmin);
+    const isCurated = isCuratedRecord();
+    const isCustom = !isCurated;
+    const isSavedCustom = isCustom && record.state === "saved";
+    const isCuratedCopy = isCustom && Boolean(record.source_preset_id || record.source_curated_set_id);
+
     if (typeBadge) {
       typeBadge.textContent = state.statusLabels[typeKey] || typeKey;
       typeBadge.className = `pm-comparison-speaker-badge pm-phenomena-badge pm-phenomena-badge--${typeKey}`;
@@ -290,24 +289,40 @@ function init() {
       }
     }
     if (curatedHint) {
-      if (isCuratedAdminRecord()) {
+      if (isCurated && isAdmin) {
         curatedHint.textContent = state.labels.curatedAdminHint;
         curatedHint.hidden = false;
-      } else {
+      } else if (isCurated) {
         curatedHint.textContent = state.labels.curatedHint;
-        curatedHint.hidden = !(isCuratedRecord() || (record.source_preset_id && (state.editorMode === "preset" || record.state === "draft")));
+        curatedHint.hidden = false;
+      } else if (isCuratedCopy) {
+        curatedHint.textContent = state.labels.curatedCopyHint;
+        curatedHint.hidden = false;
+      } else {
+        curatedHint.hidden = true;
       }
     }
     if (discardButton) {
-      discardButton.textContent = isCuratedRecord() ? state.labels.discard : (record.state === "saved" ? state.labels.delete : state.labels.discard);
+      const discardLabel = isCurated ? state.labels.discardChanges : state.labels.discard;
+      const label = discardButton.querySelector(".pm-action-button__label");
+      if (label) {
+        label.textContent = discardLabel;
+      } else {
+        discardButton.textContent = discardLabel;
+      }
+    }
+    if (deleteCustomButton) {
+      deleteCustomButton.hidden = !isSavedCustom;
+      deleteCustomButton.disabled = pending;
+      deleteCustomButton.classList.toggle("is-disabled", pending);
     }
     if (deleteCuratedButton) {
-      deleteCuratedButton.hidden = !isCuratedAdminRecord();
+      deleteCuratedButton.hidden = !(isAdmin && isCurated);
       deleteCuratedButton.disabled = pending;
       deleteCuratedButton.classList.toggle("is-disabled", pending);
     }
     if (saveAsCuratedButton) {
-      saveAsCuratedButton.hidden = !(state.isAdmin && !isCuratedRecord());
+      saveAsCuratedButton.hidden = !(isAdmin && isCustom);
       saveAsCuratedButton.disabled = pending;
       saveAsCuratedButton.classList.toggle("is-disabled", pending);
     }
@@ -319,89 +334,56 @@ function init() {
     return new Map(selectedItems.map((item, index) => [itemKey(item.task, item.item_id), { item, index }]));
   }
 
-    function syncStatus() {
-      const typeKey = currentTypeKey();
-      const stateKey = currentStateKey();
-      const isAdmin = Boolean(state.isAdmin);
-      const isCurated = isCuratedRecord();
-      const isCustom = !isCurated;
-      const isSavedCustom = isCustom && (record.state === "saved" || record.lifecycle === "saved");
-      const isCuratedCopy = isCustom && Boolean(record.source_preset_id || record.source_curated_set_id);
+  function normalizeSelectedItems() {
+    selectedItems = selectedItems.map((item, index) => ({
+      ...item,
+      sort_order: index + 1,
+    }));
+  }
 
-      if (typeBadge) {
-        typeBadge.textContent = state.statusLabels[typeKey] || typeKey;
-        typeBadge.className = `pm-comparison-speaker-badge pm-phenomena-badge pm-phenomena-badge--${typeKey}`;
-      }
-      if (stateBadge) {
-        stateBadge.hidden = !stateKey;
-        if (stateKey) {
-          stateBadge.textContent = state.statusLabels[stateKey] || stateKey;
-          stateBadge.className = `pm-comparison-speaker-badge pm-phenomena-badge pm-phenomena-badge--${stateKey}`;
-        }
-      }
-      if (statusText) {
-        if (stateKey === "unsaved") {
-          statusText.textContent = state.labels.unsavedStateText;
-        } else if (stateKey === "archived") {
-          statusText.textContent = state.labels.archivedStateText;
-        } else if (stateKey === "saved") {
-          statusText.textContent = state.labels.savedStateText;
-        } else {
-          statusText.textContent = "";
-        }
-      }
-
-      // Curated hint: admin sees admin hint on curated; user sees copy hint on custom copies
-      if (curatedHint) {
-        if (isCurated && isAdmin) {
-          curatedHint.textContent = state.labels.curatedAdminHint;
-          curatedHint.hidden = false;
-        } else if (isCurated) {
-          curatedHint.textContent = state.labels.curatedHint;
-          curatedHint.hidden = false;
-        } else if (isCuratedCopy) {
-          curatedHint.textContent = state.labels.curatedCopyHint;
-          curatedHint.hidden = false;
-        } else {
-          curatedHint.hidden = true;
-        }
-      }
-
-      // Discard button: always visible; label "Änderungen verwerfen" for curated, "Entwurf verwerfen" for custom
-      if (discardButton) {
-        const discardSpan = discardButton.querySelector(".pm-action-button__label");
-        const discardLabel = isCurated ? state.labels.discardChanges : state.labels.discard;
-        if (discardSpan) {
-          discardSpan.textContent = discardLabel;
-        } else {
-          discardButton.textContent = discardLabel;
-        }
-      }
-
-      // Delete custom button: only for saved custom sets (any user who owns the set)
-      if (deleteCustomButton) {
-        deleteCustomButton.hidden = !isSavedCustom;
-        deleteCustomButton.disabled = pending;
-        deleteCustomButton.classList.toggle("is-disabled", pending);
-      }
-
-      // Delete curated button: admin only, only on curated sets
-      if (deleteCuratedButton) {
-        deleteCuratedButton.hidden = !(isAdmin && isCurated);
-        deleteCuratedButton.disabled = pending;
-        deleteCuratedButton.classList.toggle("is-disabled", pending);
-      }
-
-      // Save as curated button: admin only, only on custom sets
-      if (saveAsCuratedButton) {
-        saveAsCuratedButton.hidden = !(isAdmin && isCustom);
-        saveAsCuratedButton.disabled = pending;
-        saveAsCuratedButton.classList.toggle("is-disabled", pending);
-      }
-
-      syncHeadingTitle();
-      syncSaveAction();
+  function renderSourceList(taskKey) {
+    const list = sourceLists[taskKey];
+    if (!list) {
+      return;
     }
+    list.innerHTML = "";
+    const term = (searchInputs[taskKey]?.value || "").trim().toLowerCase();
+    const selectionMap = currentSelectionMap();
+
+    catalogs(taskKey)
+      .filter((item) => {
+        if (!term) {
+          return true;
+        }
+        return `${item.item_number || ""} ${item.text || ""}`.toLowerCase().includes(term);
+      })
+      .forEach((item) => {
+        const key = itemKey(taskKey, item.item_id);
+        const selected = selectionMap.has(key);
+        const li = document.createElement("li");
+        li.className = `pm-phenomena-source-item${selected ? " is-selected" : ""}`;
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "pm-phenomena-source-item__button";
+        button.dataset.toggleSelection = key;
+        button.dataset.task = taskKey;
+        button.dataset.itemId = item.item_id;
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+
+        const meta = document.createElement("span");
+        meta.className = "pm-player-list__number pm-phenomena-source-item__meta";
+        meta.textContent = item.item_number || item.item_id;
+
+        const body = document.createElement("span");
+        body.className = "pm-phenomena-source-item__body";
+
+        const text = document.createElement("span");
+        text.className = "pm-player-list__text pm-phenomena-source-item__text";
+        text.textContent = item.text || item.item_id;
+
+        const marker = document.createElement("span");
+        marker.className = "pm-phenomena-source-item__marker";
         marker.textContent = selected ? "✓" : "+";
 
         body.append(text);
@@ -664,39 +646,27 @@ function init() {
     window.location.href = href;
   }
 
-  async function discardOrDelete() {
+  function discardOrNavigate() {
     const dirty = isDirty();
-    if (isCuratedRecord()) {
-      if (!dirty) {
-        navigateToOverview();
-        return;
-      }
-      openConfirm(state.labels.discardTitle, state.labels.discardMessage, state.labels.confirmDiscard, () => {
-        navigateToOverview();
-      }, "standard");
+    if (!dirty) {
+      navigateToOverview();
       return;
     }
-    if (!record.set_id) {
-      if (!dirty) {
-        navigateToOverview();
-        return;
-      }
-      openConfirm(state.labels.discardTitle, state.labels.discardMessage, state.labels.confirmDiscard, () => {
-        navigateToOverview();
-      }, "standard");
-      return;
-    }
+    openConfirm(state.labels.discardTitle, state.labels.discardMessage, state.labels.confirmDiscard, () => {
+      navigateToOverview();
+    }, "standard");
+  }
 
-    const isSavedCustom = record.state === "saved";
-    const title = isSavedCustom ? state.labels.deleteTitle : state.labels.discardTitle;
-    const message = isSavedCustom
-      ? state.labels.deleteMessage.replace("{label}", (titleInput?.value || record.label || "").trim())
-      : state.labels.discardMessage;
-    const confirmLabel = isSavedCustom ? state.labels.confirmDelete : state.labels.confirmDiscard;
-    openConfirm(title, message, confirmLabel, async () => {
+  async function performDeleteCustom() {
+    if (!record.set_id || isCuratedRecord()) {
+      return;
+    }
+    const label = (titleInput?.value || record.label || "").trim();
+    const message = state.labels.deleteMessage.replace("{label}", label);
+    openConfirm(state.labels.deleteTitle, message, state.labels.confirmDelete, async () => {
       await requestJson(buildUrl(state.deleteSetUrlTemplate, record.set_id), { method: "DELETE" });
       navigateToOverview();
-    }, isSavedCustom ? "danger" : "standard");
+    }, "danger");
   }
 
   async function performDeleteCurated() {
@@ -768,28 +738,41 @@ function init() {
   noteInput.addEventListener("input", () => {
     saveCompleted = false;
     syncStatus();
-        function discardOrNavigate() {
-          const dirty = isDirty();
-          if (!dirty) {
-            navigateToOverview();
-            return;
-          }
-          openConfirm(state.labels.discardTitle, state.labels.discardMessage, state.labels.confirmDiscard, () => {
-            navigateToOverview();
-          }, "standard");
-        }
+  });
+
+  Object.entries(searchInputs).forEach(([taskKey, input]) => {
+    input?.addEventListener("input", () => renderSourceList(taskKey));
+  });
+
+  root.addEventListener("click", (event) => {
+    const toggleButton = event.target.closest("[data-toggle-selection]");
+    if (toggleButton) {
+      toggleSelection(toggleButton.dataset.task, toggleButton.dataset.itemId);
+      return;
+    }
+
+    const removeButton = event.target.closest("[data-remove-selection]");
+    if (removeButton) {
+      const [taskKey, itemId] = removeButton.dataset.removeSelection.split(":");
+      toggleSelection(taskKey, itemId);
+      return;
+    }
+
+    const selectAllButton = event.target.closest("[data-phenomena-select-all]");
+    if (selectAllButton) {
+      applySelectionBulk(selectAllButton.dataset.phenomenaSelectAll, "add");
+      return;
+    }
+
+    const clearAllButton = event.target.closest("[data-phenomena-clear-all]");
+    if (clearAllButton) {
+      applySelectionBulk(clearAllButton.dataset.phenomenaClearAll, "remove");
+    }
+  });
+
+  selectedList?.addEventListener("dragstart", (event) => {
+    const item = event.target.closest(".pm-phenomena-selected-item");
     if (!item) {
-        async function performDeleteCustom() {
-          if (!record.set_id) {
-            return;
-          }
-          const label = (titleInput?.value || record.label || "").trim();
-          const message = state.labels.deleteMessage.replace("{label}", label);
-          openConfirm(state.labels.deleteTitle, message, state.labels.confirmDelete, async () => {
-            await requestJson(buildUrl(state.deleteSetUrlTemplate, record.set_id), { method: "DELETE" });
-            navigateToOverview();
-          }, "danger");
-        }
       return;
     }
     draggedIndex = Number(item.dataset.index);
@@ -884,9 +867,20 @@ function init() {
       return;
     }
     try {
-      await discardOrDelete();
+      discardOrNavigate();
     } catch (error) {
       showSnackbar(error.message || state.labels.delete, "error");
+    }
+  });
+
+  deleteCustomButton?.addEventListener("click", async () => {
+    if (pending || isCuratedRecord()) {
+      return;
+    }
+    try {
+      await performDeleteCustom();
+    } catch (error) {
+      showSnackbar(error.message || state.labels.requestFailed, "error");
     }
   });
 
