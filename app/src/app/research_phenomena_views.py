@@ -451,6 +451,8 @@ def _editor_state(
                     "dragHandle": "research.phenomena.editor.drag_handle",
                     "curatedHint": "research.phenomena.editor.curated_hint",
                     "curatedAdminHint": "research.phenomena.editor.curated_admin_hint",
+                    "discardChanges": "research.phenomena.editor.discard_changes",
+                    "curatedCopyHint": "research.phenomena.editor.curated_copy_hint",
                     "saveSuccess": "research.phenomena.editor.save_success",
                     "saveError": "research.phenomena.editor.save_error",
                     "updateCurated": "research.phenomena.editor.update_curated",

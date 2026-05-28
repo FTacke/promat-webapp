@@ -527,6 +527,150 @@ def test_public_preset_editor_route_renders_editor_page(phenomena_app: Flask) ->
     assert "md3-button" not in html
 
 
+def test_editor_template_has_dedicated_delete_action_button(phenomena_app: Flask) -> None:
+    """Template must have a dedicated data-phenomena-delete-action button (hidden by default)."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-phenomena-delete-action' in html
+    assert 'data-phenomena-discard-action' in html
+    assert 'data-phenomena-curated-toggle-action' not in html
+
+
+def test_editor_user_preset_view_has_is_admin_false_in_client_state(phenomena_app: Flask) -> None:
+    """Regular user must see isAdmin=false in client state; template buttons exist but JS hides admin ones."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": false' in html
+    # Template buttons exist (JS matrix hides admin-only ones when isAdmin=false)
+    assert 'data-phenomena-delete-curated-action' in html
+    assert 'data-phenomena-save-as-curated-action' in html
+    assert 'data-phenomena-curated-toggle-action' not in html
+
+
+def test_editor_user_new_custom_set_has_is_admin_false_and_buttons_present(phenomena_app: Flask) -> None:
+    """New custom set for regular user: isAdmin=false in state; all buttons in template (JS hides admin ones)."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": false' in html
+    # All buttons exist in template; JS visibility matrix controls which are shown per role+state
+    assert 'data-phenomena-delete-curated-action' in html
+    assert 'data-phenomena-save-as-curated-action' in html
+    assert 'data-phenomena-delete-action' in html
+    assert 'data-phenomena-discard-action' in html
+
+
+def test_editor_admin_curated_set_state_has_all_curated_labels(phenomena_app: Flask) -> None:
+    """Admin editing a curated set must have all required curated management labels in client state."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": true' in html
+    # Must have dedicated delete-curated and save-as-curated buttons in template
+    assert 'data-phenomena-delete-curated-action' in html
+    assert 'data-phenomena-save-as-curated-action' in html
+    # Admin curated labels
+    assert 'Kuratiertes Set löschen' in html
+    assert 'Als kuratiertes Set speichern' in html
+    assert 'Kuratiertes Set wirklich aktualisieren?' in html
+    # No toggle action (removed)
+    assert 'data-phenomena-curated-toggle-action' not in html
+
+
+def test_editor_admin_custom_set_state_has_correct_labels(phenomena_app: Flask) -> None:
+    """Admin editing a custom set must have save-as-curated available and no delete-curated in wrong context."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="admin-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="admin-1", set_id=draft.set_id, label="Admin-Set", state="saved")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": true' in html
+    # Template must have both buttons (JS controls visibility)
+    assert 'data-phenomena-save-as-curated-action' in html
+    assert 'data-phenomena-delete-curated-action' in html
+    assert 'data-phenomena-delete-action' in html
+    # Save-as-curated labels must be present in state
+    assert 'Als kuratiertes Set speichern' in html
+
+
+def test_editor_new_i18n_labels_present_in_client_state(phenomena_app: Flask) -> None:
+    """discardChanges and curatedCopyHint labels must be present in client state."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/presets/{curated_set_id}"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page_de = build_phenomena_preset_editor_page("de", "spanish", curated_set_id)
+
+    with phenomena_app.test_request_context(f"/en/research/spanish/phenomena/presets/{curated_set_id}"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page_en = build_phenomena_preset_editor_page("en", "spanish", curated_set_id)
+
+    assert page_de is not None
+    assert page_en is not None
+    # DE labels
+    assert page_de["client_state"]["labels"]["discardChanges"] == "Änderungen verwerfen"
+    assert page_de["client_state"]["labels"]["curatedCopyHint"] == "Diese Kopie basiert auf einem kuratierten Set. Änderungen werden als eigenes Set gespeichert."
+    # EN labels
+    assert page_en["client_state"]["labels"]["discardChanges"] == "Discard changes"
+    assert page_en["client_state"]["labels"]["curatedCopyHint"] == "This copy is based on a curated set. Changes are saved as a custom set."
+
+
+def test_editor_regression_no_curated_toggle_in_template(phenomena_app: Flask) -> None:
+    """Regression: data-phenomena-curated-toggle-action must not exist in template."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-phenomena-curated-toggle-action' not in html
+    assert 'archivieren' not in html.lower() or 'archiviert' in html.lower()  # no visible archivieren action button
+
 def test_public_preset_editor_route_exposes_admin_curated_actions_for_admins(phenomena_app: Flask) -> None:
     curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
     phenomena_app.config["TEST_AUTH_USER"] = "admin"
