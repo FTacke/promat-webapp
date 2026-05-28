@@ -75,6 +75,10 @@ def _resolve_admin_ui_lang() -> str:
     return resolve_ui_language(raw_value)
 
 
+def _is_self_target(user_id: str) -> bool:
+    return str(get_jwt_identity() or "") == str(user_id)
+
+
 def _t(ui_lang: str, key: str, **kwargs: object) -> str:
     return translate(ui_lang, key, **kwargs)
 
@@ -297,6 +301,11 @@ def users_reset_password(user_id: str):
         return jsonify({"ok": False, "error": "user_not_found"}), 404
     if not user.email:
         return jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.email_required")}), 400
+    if _is_self_target(user_id):
+        return (
+            jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.self_password_mail_blocked")}),
+            400,
+        )
 
     user = auth_services.mark_user_for_password_reset(user_id)
     preview_payload = _mail_preview_payload(
@@ -320,6 +329,11 @@ def users_prepare_invite(user_id: str):
         return jsonify({"ok": False, "error": "user_not_found"}), 404
     if not user.email:
         return jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.email_required")}), 400
+    if _is_self_target(user_id):
+        return (
+            jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.self_password_mail_blocked")}),
+            400,
+        )
 
     user = auth_services.mark_user_for_password_reset(user_id)
     preview_payload = _mail_preview_payload(

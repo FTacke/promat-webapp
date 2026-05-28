@@ -1421,6 +1421,67 @@ def test_forced_reset_form_uses_jwt_csrf_and_refreshes_access_cookie(auth_app: F
     assert _login(client, email="admin@example.org", password="ChangedPass2").status_code == 303
 
 
+def test_forced_reset_hx_html_request_uses_hx_redirect_not_raw_json(auth_app: Flask) -> None:
+    with auth_app.app_context():
+        with get_session() as session:
+            admin = session.get(User, "admin-1")
+            assert admin is not None
+            admin.must_reset_password = True
+
+    client = auth_app.test_client()
+    login_response = client.post(
+        "/auth/login",
+        data={
+            "email": "admin@example.org",
+            "password": "ValidPass1",
+            "next": "/admin/users/page?ui_lang=en",
+        },
+        follow_redirects=False,
+    )
+    assert login_response.status_code == 303
+
+    trapped_response = client.get(
+        "/admin/users/page?ui_lang=en",
+        headers={"HX-Request": "true"},
+        follow_redirects=False,
+    )
+
+    assert trapped_response.status_code == 204
+    assert trapped_response.headers["HX-Redirect"].startswith("/auth/account/password?mustReset=1")
+    assert "password_reset_required" not in trapped_response.get_data(as_text=True)
+
+
+def test_forced_reset_api_request_returns_controlled_json(auth_app: Flask) -> None:
+    with auth_app.app_context():
+        with get_session() as session:
+            admin = session.get(User, "admin-1")
+            assert admin is not None
+            admin.must_reset_password = True
+
+    client = auth_app.test_client()
+    login_response = client.post(
+        "/auth/login",
+        data={
+            "email": "admin@example.org",
+            "password": "ValidPass1",
+            "next": "/admin/users/page?ui_lang=en",
+        },
+        follow_redirects=False,
+    )
+    assert login_response.status_code == 303
+
+    response = client.get(
+        "/admin/users?ui_lang=en",
+        headers={"Accept": "application/json"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 403
+    payload = response.get_json()
+    assert payload is not None
+    assert payload["error"] == "password_reset_required"
+
+
 def test_normal_account_password_change_still_works_with_jwt_cookie_csrf(auth_app: Flask) -> None:
     _enable_jwt_cookie_csrf(auth_app)
     client = auth_app.test_client()
@@ -1662,6 +1723,71 @@ def test_admin_can_prepare_existing_user_invite_in_english(auth_app: Flask) -> N
     with auth_app.app_context():
         user = auth_services.find_user_by_email("alice@example.org")
         assert user.must_reset_password is True
+
+
+def test_admin_invite_and_reset_do_not_flip_actor_admin_state(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+    with auth_app.app_context():
+        admin = auth_services.find_user_by_email("admin@example.org")
+        assert admin is not None
+        admin.must_reset_password = False
+
+    invite_response = client.post(
+        "/admin/users/user-1/invite?ui_lang=en",
+        json={"mail_ui_lang": "en"},
+    )
+    assert invite_response.status_code == 200
+
+    reset_response = client.post(
+        "/admin/users/user-1/reset-password?ui_lang=en",
+        json={"mail_ui_lang": "en"},
+    )
+    assert reset_response.status_code == 200
+
+    with auth_app.app_context():
+        admin = auth_services.find_user_by_email("admin@example.org")
+        assert admin is not None
+        assert admin.must_reset_password is False
+
+
+def test_admin_cannot_prepare_self_invite_or_self_reset(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+    with auth_app.app_context():
+        admin = auth_services.find_user_by_email("admin@example.org")
+        assert admin is not None
+        admin.must_reset_password = False
+        admin_id = str(admin.id)
+
+    invite_response = client.post(
+        f"/admin/users/{admin_id}/invite?ui_lang=en",
+        json={"mail_ui_lang": "en"},
+    )
+    assert invite_response.status_code == 400
+    invite_payload = invite_response.get_json()
+    assert invite_payload is not None
+    assert invite_payload["ok"] is False
+    assert "blocked" in invite_payload["error"].lower()
+
+    reset_response = client.post(
+        f"/admin/users/{admin_id}/reset-password?ui_lang=en",
+        json={"mail_ui_lang": "en"},
+    )
+    assert reset_response.status_code == 400
+    reset_payload = reset_response.get_json()
+    assert reset_payload is not None
+    assert reset_payload["ok"] is False
+    assert "blocked" in reset_payload["error"].lower()
+
+    with auth_app.app_context():
+        admin = auth_services.find_user_by_email("admin@example.org")
+        assert admin is not None
+        assert admin.must_reset_password is False
 
 
 def test_admin_invitation_send_uses_admin_reply_to_and_keeps_secret_logging(

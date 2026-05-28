@@ -9,7 +9,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, make_response, redirect, render_template, request, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .branding import BRANDING, format_page_title
@@ -364,11 +364,20 @@ def register_auth_context(app: Flask) -> None:
 
         if getattr(g, "user", None) and getattr(g, "must_reset_password", False):
             if not any(request.path.startswith(p) for p in allowed_prefixes):
-                if request.headers.get("HX-Request") or request.is_json:
-                    return jsonify({"error": "password_reset_required"}), 403
                 next_target = request.full_path if request.query_string else request.path
+                reset_target = url_for(
+                    "auth.account_password_page",
+                    mustReset="1",
+                    next=next_target,
+                )
+                if _request_prefers_json_errors():
+                    return jsonify({"error": "password_reset_required"}), 403
+                if request.headers.get("HX-Request"):
+                    response = make_response("", 204)
+                    response.headers["HX-Redirect"] = reset_target
+                    return response
                 return redirect(
-                    url_for("auth.account_password_page", mustReset="1", next=next_target),
+                    reset_target,
                     303,
                 )
 
