@@ -258,6 +258,7 @@ function init() {
   }
 
   function syncStatus() {
+    const dirty = isDirty();
     const typeKey = currentTypeKey();
     const stateKey = currentStateKey();
     const isAdmin = Boolean(state.isAdmin);

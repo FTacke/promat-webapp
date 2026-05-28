@@ -516,6 +516,7 @@ def build_phenomena_preset_editor_page(ui_lang: str, language_slug: str, preset_
         {
             "template": "pages/research_phenomena_editor.html",
             "editor_hint": _t(ui_lang, "research.phenomena.editor.hint_curated"),
+            "is_admin": _is_admin(),
             "client_state": _editor_state(ui_lang=ui_lang, language_slug=language_slug, record=record, editor_mode="preset"),
         }
     )
@@ -549,6 +550,7 @@ def build_phenomena_set_editor_page(ui_lang: str, language_slug: str, set_id: st
                 ui_lang,
                 "research.phenomena.editor.hint_curated" if stored_set.visibility == "curated" else "research.phenomena.editor.hint_custom",
             ),
+            "is_admin": _is_admin(),
             "client_state": _editor_state(
                 ui_lang=ui_lang,
                 language_slug=language_slug,

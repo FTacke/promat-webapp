@@ -33,15 +33,19 @@
           <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-discard-action hidden>
             <span class="pm-action-button__label">{{ t('research.phenomena.editor.discard') }}</span>
           </button>
+          {% if promat_page.is_admin %}
           <button type="button" class="pm-action-button pm-action-button--danger pm-action-button--medium" data-phenomena-delete-curated-action hidden>
             <span class="pm-action-button__label">{{ t('research.phenomena.editor.delete_curated') }}</span>
           </button>
+          {% endif %}
           <button type="button" class="pm-action-button pm-action-button--danger pm-action-button--medium" data-phenomena-delete-action hidden>
             <span class="pm-action-button__label">{{ t('research.phenomena.editor.delete') }}</span>
           </button>
+          {% if promat_page.is_admin %}
           <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-save-as-curated-action hidden>
             <span class="pm-action-button__label">{{ t('research.phenomena.editor.save_as_curated') }}</span>
           </button>
+          {% endif %}
           <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-save-action>
             <span class="pm-action-button__label" data-phenomena-save-label>{{ t('common.actions.save') }}</span>
           </button>

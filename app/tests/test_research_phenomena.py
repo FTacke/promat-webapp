@@ -603,7 +603,7 @@ def test_editor_template_has_dedicated_delete_action_button(phenomena_app: Flask
 
 
 def test_editor_user_preset_view_has_is_admin_false_in_client_state(phenomena_app: Flask) -> None:
-    """Regular user must see isAdmin=false in client state; template buttons exist but JS hides admin ones."""
+    """Regular user must see isAdmin=false in client state; admin-only buttons must not be in the DOM."""
     curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
     phenomena_app.config["TEST_AUTH_USER"] = "alice"
     phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
@@ -614,14 +614,14 @@ def test_editor_user_preset_view_has_is_admin_false_in_client_state(phenomena_ap
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '"isAdmin": false' in html
-    # Template buttons exist (JS matrix hides admin-only ones when isAdmin=false)
-    assert 'data-phenomena-delete-curated-action' in html
-    assert 'data-phenomena-save-as-curated-action' in html
+    # Admin-only buttons must not be rendered for USER (server-side exclusion)
+    assert 'data-phenomena-delete-curated-action' not in html
+    assert 'data-phenomena-save-as-curated-action' not in html
     assert 'data-phenomena-curated-toggle-action' not in html
 
 
 def test_editor_user_new_custom_set_has_is_admin_false_and_buttons_present(phenomena_app: Flask) -> None:
-    """New custom set for regular user: isAdmin=false in state; all buttons in template (JS hides admin ones)."""
+    """New custom set for regular user: isAdmin=false in state; admin-only buttons not in DOM."""
     with phenomena_app.app_context():
         draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
 
@@ -634,9 +634,10 @@ def test_editor_user_new_custom_set_has_is_admin_false_and_buttons_present(pheno
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '"isAdmin": false' in html
-    # All buttons exist in template; JS visibility matrix controls which are shown per role+state
-    assert 'data-phenomena-delete-curated-action' in html
-    assert 'data-phenomena-save-as-curated-action' in html
+    # Admin-only buttons must not be rendered server-side for USER
+    assert 'data-phenomena-delete-curated-action' not in html
+    assert 'data-phenomena-save-as-curated-action' not in html
+    # User-facing buttons must be present
     assert 'data-phenomena-delete-action' in html
     assert 'data-phenomena-discard-action' in html
 
@@ -827,7 +828,7 @@ def test_overview_admin_curated_entry_show_edit_as_own_true(phenomena_app: Flask
 
 
 def test_editor_user_new_set_has_save_button_and_no_curated_labels_in_html(phenomena_app: Flask) -> None:
-    """USER new set: Speichern-Button present; no curated-action buttons in visible state."""
+    """USER new set: Speichern-Button present; admin-only curated buttons not in DOM."""
     with phenomena_app.app_context():
         draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
 
@@ -841,11 +842,9 @@ def test_editor_user_new_set_has_save_button_and_no_curated_labels_in_html(pheno
     html = response.get_data(as_text=True)
     assert '"isAdmin": false' in html
     assert 'data-phenomena-save-action' in html
-    # Admin-only buttons must start hidden (JS keeps them hidden for USER)
-    assert 'data-phenomena-delete-curated-action hidden' in html
-    assert 'data-phenomena-save-as-curated-action hidden' in html
-    # No curated-label text for admin actions should reach the user
-    assert 'Kuratiertes Set löschen' not in html or 'data-phenomena-delete-curated-action hidden' in html
+    # Admin-only buttons must not be rendered server-side for USER
+    assert 'data-phenomena-delete-curated-action' not in html
+    assert 'data-phenomena-save-as-curated-action' not in html
 
 
 def test_editor_user_curated_set_initial_state_has_correct_client_data(phenomena_app: Flask) -> None:
@@ -896,8 +895,9 @@ def test_editor_user_saved_custom_set_has_delete_and_no_curated_admin_buttons(ph
     html = response.get_data(as_text=True)
     assert '"isAdmin": false' in html
     assert 'data-phenomena-delete-action' in html
-    assert 'data-phenomena-delete-curated-action hidden' in html
-    assert 'data-phenomena-save-as-curated-action hidden' in html
+    # Admin-only buttons must not be rendered server-side for USER
+    assert 'data-phenomena-delete-curated-action' not in html
+    assert 'data-phenomena-save-as-curated-action' not in html
 
 
 def test_editor_user_curated_copy_client_state_is_custom_set_mode(phenomena_app: Flask) -> None:
@@ -920,8 +920,24 @@ def test_editor_user_curated_copy_client_state_is_custom_set_mode(phenomena_app:
     html = response.get_data(as_text=True)
     assert '"isAdmin": false' in html
     assert '"editorMode": "set"' in html
-    assert 'data-phenomena-delete-curated-action hidden' in html
-    assert 'data-phenomena-save-as-curated-action hidden' in html
+    # Admin-only buttons must not be rendered server-side for USER
+    assert 'data-phenomena-delete-curated-action' not in html
+    assert 'data-phenomena-save-as-curated-action' not in html
+
+
+def test_editor_js_dirty_declared_before_use_in_sync_status() -> None:
+    """Regression: syncStatus() must declare dirty via isDirty() before any use of dirty."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    sync_start = source.index("function syncStatus()")
+    sync_end = source.index("\n  function ", sync_start + 1)
+    sync_body = source[sync_start:sync_end]
+
+    # dirty must be declared as a const at the top of syncStatus
+    assert "const dirty = isDirty();" in sync_body
+    # its first use must come after the declaration
+    decl_pos = sync_body.index("const dirty = isDirty();")
+    first_use = sync_body.index("dirty", decl_pos + len("const dirty = isDirty();"))
+    assert first_use > decl_pos, "dirty used before declaration in syncStatus"
 
 
 def test_editor_js_discard_hidden_logic_present_in_source() -> None:
