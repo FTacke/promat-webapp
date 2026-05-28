@@ -1,7 +1,7 @@
 # Phenomena Curated Set Architecture Diagnosis
 
 **Datum:** 2026-05-28  
-**Status:** Diagnose – keine Implementierung
+**Status:** Diagnose – ursprünglicher Stand; aktualisiert 2026-05-28 (USER-Aktionsmatrix implementiert)
 
 ---
 
@@ -482,3 +482,58 @@ def test_archived_curated_set_shows_correct_status_label(phenomena_app):
 3. **Gibt es in Produktion bereits DB-curated-Sets (außer dem Test-Set)?** Nicht aus dem Code-Artefakt erkennbar. Müsste per DB-Query auf dem Produktionssystem geprüft werden.
 
 4. **Wird `common.actions.modify` (i18n-Key) noch irgendwo verwendet?** Der Key ist vorhanden aber scheint nach der Umbenennung von „Modifizieren" zu „Als eigenes Set bearbeiten" nicht mehr referenziert. Sollte bereinigt werden.
+
+---
+
+## 16. Präzisierung 2026-05-28 – USER-Aktionsmatrix implementiert
+
+Die frühere Diagnose (Abschnitte 6 und 9) beschrieb den Ist-Zustand. Die folgenden Festlegungen wurden am 2026-05-28 implementiert und ersetzen die alten Beschreibungen für den USER-Bereich.
+
+### Übersicht (USER)
+
+- **Kuratierte Sets** zeigen für USER ausschließlich **„Ansehen"** (Navigation Pill).
+- **„Als eigenes Set bearbeiten"** ist für USER in der Übersicht **nicht sichtbar** – weder als Link noch als Copy-Button.
+- Technisch: `show_edit_as_own = False` für USER in `_overview_card_from_curated_set()`. Template prüft `{% if entry.show_edit_as_own %}`.
+- **Custom Sets** zeigen weiterhin „Bearbeiten" + Overflow-Menü (Umbenennen/Löschen).
+- ADMIN-Bereich bleibt unverändert.
+
+### Editor (USER)
+
+| Zustand | Speichern | Änderungen verwerfen | Set löschen | Admin-Curated-Buttons |
+|---|---|---|---|---|
+| Kuratiertes Set, clean | Deaktiviert | Versteckt | Versteckt | Nie sichtbar |
+| Kuratiertes Set, dirty | Aktiv | Sichtbar | Versteckt | Nie sichtbar |
+| Neues Set (draft), clean | Aktiv | Versteckt | Versteckt | Nie sichtbar |
+| Neues Set (draft), dirty | Aktiv | Sichtbar | Versteckt | Nie sichtbar |
+| Gespeichertes Custom Set, clean | Deaktiviert | Versteckt | Sichtbar | Nie sichtbar |
+| Gespeichertes Custom Set, dirty | Aktiv | Sichtbar | Sichtbar | Nie sichtbar |
+| Custom-Kopie aus curated | wie gespeichertes Custom Set | – | – | Nie sichtbar |
+
+**Speichern-Confirm-Dialog (USER + kuratiertes Set, dirty):**
+- USER klickt „Speichern" → Confirm-Dialog erscheint.
+- Dialog erklärt: Das kuratierte Set wird nicht verändert, Änderungen werden als eigenes Set gespeichert.
+- Nach Bestätigung: eigene Custom-Kopie wird erstellt (POST /api/research/sets mit `source_curated_set_id`).
+- Provenienz-Link (`source_curated_set_id`) wird jetzt korrekt übergeben.
+
+**Hinweistext (curatedHint):**
+- Zeigt für USER **nur wenn dirty** (war zuvor dauerhaft sichtbar).
+- Text wurde präzisiert: „Beim Speichern wird eine eigene Kopie angelegt – das kuratierte Original bleibt unverändert."
+- Der wichtigste Hinweis steht im Speichern-Confirm-Dialog.
+
+**Admin-Curated-Buttons im Editor:**
+- `data-phenomena-delete-curated-action` und `data-phenomena-save-as-curated-action` bleiben im Template (JS-Visibility-Ansatz).
+- Template setzt `hidden`-Attribut als Standard. JS-`syncStatus()` zeigt/versteckt nach `isAdmin`-Flag.
+- USER sieht diese Buttons nie (JS hält `hidden` aufrecht, da `isAdmin=false`).
+
+**Discard-Button:**
+- Template startet mit `hidden`-Attribut.
+- `syncStatus()` berechnet: `discardButton.hidden = !isAdmin && !dirty`.
+- Admin: immer sichtbar. USER: nur sichtbar wenn dirty.
+
+### Nicht-Ziele (diese Implementierung)
+
+- Admin-Bereich wurde nicht neu gestaltet.
+- Keine neuen Admin-Flows.
+- Keine Backend-Rechte geändert.
+- Keine DB-Migration erforderlich.
+- `phenomena_presets.json` Legacy-Status bleibt unverändert.

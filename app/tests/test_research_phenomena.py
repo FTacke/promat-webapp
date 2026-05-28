@@ -303,6 +303,7 @@ def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenome
     assert curated_entry["edit_curated_href"] is None
     assert curated_entry["edit_as_own_href"] is None
     assert curated_entry["copy_source_set_id"] == phenomena_app.config["TEST_CURATED_SET_ID"]
+    assert curated_entry["show_edit_as_own"] is False
     assert page["search_placeholder"] == "Set suchen"
     assert page["entries"][0]["preview"]
     assert all(entry["title"] != "Nur Draft" for entry in page["entries"])
@@ -320,6 +321,7 @@ def test_build_phenomena_overview_page_exposes_admin_curated_actions(phenomena_a
     assert curated_entry["edit_curated_href"].endswith(f"/de/research/spanish/phenomena/presets/{phenomena_app.config['TEST_CURATED_SET_ID']}")
     assert curated_entry["edit_as_own_href"] is None
     assert curated_entry["copy_source_set_id"] == phenomena_app.config["TEST_CURATED_SET_ID"]
+    assert curated_entry["show_edit_as_own"] is True
 
 
 def test_build_phenomena_overview_page_prefers_existing_private_copy_for_edit_as_own_set(phenomena_app: Flask) -> None:
@@ -362,7 +364,7 @@ def test_build_phenomena_preset_editor_page_exposes_curated_initial_record(pheno
     assert page["client_state"]["initialRecord"]["visibility"] == "curated"
     assert page["client_state"]["initialRecord"]["label"] == "Starter"
     assert page["client_state"]["labels"]["selectedItems"] == "Ausgewählte Items"
-    assert page["client_state"]["labels"]["curatedHint"] == "Änderungen an diesem kuratierten Set werden als neues eigenes Set gespeichert."
+    assert page["client_state"]["labels"]["curatedHint"] == "Beim Speichern wird eine eigene Kopie angelegt – das kuratierte Original bleibt unverändert."
     assert page["client_state"]["labels"]["typeWordlist"] == "Wortliste"
     assert page["client_state"]["labels"]["unsavedStateText"] == "Änderungen noch nicht gespeichert."
 
@@ -419,7 +421,7 @@ def test_phenomena_pages_expose_english_labels_for_migrated_surfaces(phenomena_a
     assert [item["label"] for item in editor_page["content_header"]["breadcrumbs"]][:2] == ["Research", "Spanish corpus"]
     assert editor_page["content_header"]["intro"] == "Edit set"
     assert editor_page["client_state"]["labels"]["selectedItems"] == "Selected items"
-    assert editor_page["client_state"]["labels"]["curatedHint"] == "Changes to this curated set are saved as a new custom set."
+    assert editor_page["client_state"]["labels"]["curatedHint"] == "Saving creates your own copy – the curated original stays unchanged."
     assert editor_page["client_state"]["labels"]["untitled"] == "Untitled"
 
 
@@ -445,7 +447,7 @@ def test_public_phenomena_overview_route_renders_split_overview(phenomena_app: F
     assert "Set suchen" in html
     assert "Neues Set" in html
     assert "Ansehen" in html
-    assert ">Als eigenes Set bearbeiten<" in html
+    assert ">Als eigenes Set bearbeiten<" not in html
     assert ">Kuratiertes Set bearbeiten<" not in html
     assert "Modifizieren" not in html
     assert "Öffnen" not in html
@@ -779,3 +781,203 @@ def test_public_set_editor_route_renders_for_authenticated_owner(phenomena_app: 
     assert 'class="pm-dialog pm-surface-density--compact" data-phenomena-editor-confirm' in confirm_slice
     assert 'pm-dialog__actions pm-action-row' in confirm_slice
     assert 'md3-dialog' not in confirm_slice
+
+
+# --- USER button visibility matrix tests ---
+
+def test_overview_user_curated_entry_shows_only_view_button(phenomena_app: Flask) -> None:
+    """USER overview: curated set must show 'Ansehen' only – no 'Als eigenes Set bearbeiten'."""
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get("/de/research/spanish/phenomena")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Ansehen" in html
+    assert ">Als eigenes Set bearbeiten<" not in html
+    assert "data-phenomena-copy-curated-set" not in html
+
+
+def test_overview_user_curated_entry_show_edit_as_own_false(phenomena_app: Flask) -> None:
+    """USER curated card: show_edit_as_own must be False in page data."""
+    with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_phenomena_overview_page("de", "spanish")
+
+    assert page is not None
+    curated_entry = next(e for e in page["entries"] if e["kind"] == "curated")
+    assert curated_entry["show_edit_as_own"] is False
+
+
+def test_overview_admin_curated_entry_show_edit_as_own_true(phenomena_app: Flask) -> None:
+    """ADMIN curated card: show_edit_as_own must be True in page data."""
+    with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
+        g.user = "admin"
+        g.user_id = "admin-1"
+        g.role = "admin"
+        page = build_phenomena_overview_page("de", "spanish")
+
+    assert page is not None
+    curated_entry = next(e for e in page["entries"] if e["kind"] == "curated")
+    assert curated_entry["show_edit_as_own"] is True
+
+
+def test_editor_user_new_set_has_save_button_and_no_curated_labels_in_html(phenomena_app: Flask) -> None:
+    """USER new set: Speichern-Button present; no curated-action buttons in visible state."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": false' in html
+    assert 'data-phenomena-save-action' in html
+    # Admin-only buttons must start hidden (JS keeps them hidden for USER)
+    assert 'data-phenomena-delete-curated-action hidden' in html
+    assert 'data-phenomena-save-as-curated-action hidden' in html
+    # No curated-label text for admin actions should reach the user
+    assert 'Kuratiertes Set löschen' not in html or 'data-phenomena-delete-curated-action hidden' in html
+
+
+def test_editor_user_curated_set_initial_state_has_correct_client_data(phenomena_app: Flask) -> None:
+    """USER curated set initial: isAdmin=false, editorMode=preset, save_copy labels present."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/presets/{curated_set_id}"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_phenomena_preset_editor_page("de", "spanish", curated_set_id)
+
+    assert page is not None
+    state = page["client_state"]
+    assert state["isAdmin"] is False
+    assert state["editorMode"] == "preset"
+    # Confirm-dialog labels for user saving curated-set-as-copy must be present
+    assert state["labels"]["saveCopyTitle"] == "Als eigenes Set speichern?"
+    assert state["labels"]["saveCopyMessage"] == "Das kuratierte Set wird nicht verändert. Ihre Änderungen werden als eigenes Set gespeichert."
+
+
+def test_editor_user_curated_set_initial_template_has_discard_hidden(phenomena_app: Flask) -> None:
+    """USER curated set: discard button starts hidden (JS un-hides on first change)."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-phenomena-discard-action hidden' in html
+
+
+def test_editor_user_saved_custom_set_has_delete_and_no_curated_admin_buttons(phenomena_app: Flask) -> None:
+    """USER saved custom set: delete-action present; admin curated buttons start hidden."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Set", state="saved")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": false' in html
+    assert 'data-phenomena-delete-action' in html
+    assert 'data-phenomena-delete-curated-action hidden' in html
+    assert 'data-phenomena-save-as-curated-action hidden' in html
+
+
+def test_editor_user_curated_copy_client_state_is_custom_set_mode(phenomena_app: Flask) -> None:
+    """USER custom copy from curated: editorMode=set, isAdmin=false, no curated admin buttons."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(
+            owner_user_id="user-1",
+            corpus_language="spanish",
+            source_curated_set_id=phenomena_app.config["TEST_CURATED_SET_ID"],
+        )
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Meine Kopie", state="saved")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = None
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '"isAdmin": false' in html
+    assert '"editorMode": "set"' in html
+    assert 'data-phenomena-delete-curated-action hidden' in html
+    assert 'data-phenomena-save-as-curated-action hidden' in html
+
+
+def test_editor_js_discard_hidden_logic_present_in_source() -> None:
+    """JS: syncStatus must include hidden control for discard button based on isAdmin+dirty."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "discardButton.hidden = !isAdmin && !dirty" in source
+
+
+def test_editor_js_user_curated_save_opens_confirm_in_source() -> None:
+    """JS: save button handler must check !state.isAdmin && isCuratedRecord() for confirm dialog."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "!state.isAdmin && isCuratedRecord() && isDirty()" in source
+    assert "saveCopyTitle" in source
+    assert "saveCopyMessage" in source
+
+
+def test_editor_js_preset_mode_uses_source_curated_set_id_in_source() -> None:
+    """JS: persistCurrentRecord must pass source_curated_set_id when copying from preset mode."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "source_curated_set_id: record.set_id" in source
+
+
+def test_editor_new_i18n_save_copy_labels_present_in_client_state(phenomena_app: Flask) -> None:
+    """DE + EN: saveCopyTitle and saveCopyMessage must be present in editor client state."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/presets/{curated_set_id}"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page_de = build_phenomena_preset_editor_page("de", "spanish", curated_set_id)
+
+    with phenomena_app.test_request_context(f"/en/research/spanish/phenomena/presets/{curated_set_id}"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page_en = build_phenomena_preset_editor_page("en", "spanish", curated_set_id)
+
+    assert page_de is not None
+    assert page_en is not None
+    assert page_de["client_state"]["labels"]["saveCopyTitle"] == "Als eigenes Set speichern?"
+    assert page_de["client_state"]["labels"]["saveCopyMessage"] == "Das kuratierte Set wird nicht verändert. Ihre Änderungen werden als eigenes Set gespeichert."
+    assert page_en["client_state"]["labels"]["saveCopyTitle"] == "Save as your own set?"
+    assert page_en["client_state"]["labels"]["saveCopyMessage"] == "The curated set will not be changed. Your changes will be saved as your own set."
+
+
+# --- Regression tests ---
+
+def test_regression_no_curated_toggle_action_in_js() -> None:
+    """Regression: data-phenomena-curated-toggle-action must not exist in editor JS."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "data-phenomena-curated-toggle-action" not in source
+
+
+def test_regression_item_selection_still_works_in_js() -> None:
+    """Regression: root click handler for item toggle must still exist in editor JS."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert 'root.addEventListener("click"' in source
+    assert 'data-toggle-selection' in source
+    assert 'data-remove-selection' in source

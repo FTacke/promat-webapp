@@ -47,12 +47,14 @@
             {% if entry.edit_curated_href %}
             {{ render_action_button({ 'label': t('common.actions.edit_curated'), 'href': entry.edit_curated_href, 'variant': 'secondary', 'size': 'small' }) }}
             {% endif %}
+            {% if entry.show_edit_as_own %}
             {% if entry.edit_as_own_href %}
             {{ render_action_button({ 'label': t('common.actions.edit_as_own_set'), 'href': entry.edit_as_own_href, 'variant': 'secondary', 'size': 'small' }) }}
             {% else %}
             <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--small" data-phenomena-copy-curated-set="{{ entry.copy_source_set_id }}">
               <span class="pm-action-button__label">{{ t('common.actions.edit_as_own_set') }}</span>
             </button>
+            {% endif %}
             {% endif %}
             {% else %}
             {{ render_navigation_pill({ 'label': t('common.actions.edit'), 'href': entry.open_href, 'size': 'small' }) }}

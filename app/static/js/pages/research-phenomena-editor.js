@@ -294,7 +294,7 @@ function init() {
         curatedHint.hidden = false;
       } else if (isCurated) {
         curatedHint.textContent = state.labels.curatedHint;
-        curatedHint.hidden = false;
+        curatedHint.hidden = !dirty;
       } else if (isCuratedCopy) {
         curatedHint.textContent = state.labels.curatedCopyHint;
         curatedHint.hidden = false;
@@ -310,6 +310,7 @@ function init() {
       } else {
         discardButton.textContent = discardLabel;
       }
+      discardButton.hidden = !isAdmin && !dirty;
     }
     if (deleteCustomButton) {
       deleteCustomButton.hidden = !isSavedCustom;
@@ -579,7 +580,7 @@ function init() {
         method: "POST",
         body: {
           corpus_language: state.languageSlug,
-          preset_id: record.source_preset_id,
+          source_curated_set_id: record.set_id || null,
           label,
           note,
         },
@@ -855,6 +856,15 @@ function init() {
         state.labels.updateCuratedTitle,
         state.labels.updateCuratedMessage,
         state.labels.updateCurated,
+        performSave,
+      );
+      return;
+    }
+    if (!state.isAdmin && isCuratedRecord() && isDirty()) {
+      openConfirm(
+        state.labels.saveCopyTitle,
+        state.labels.saveCopyMessage,
+        state.labels.save,
         performSave,
       );
       return;
