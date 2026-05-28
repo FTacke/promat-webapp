@@ -147,6 +147,24 @@ textarea {
   letter-spacing: 0.01em;
 }
 
+@media (max-width: 767px) {
+  .landing-wordmark {
+    font-size: var(--promat-text-2xl);
+    line-height: 1.02;
+    letter-spacing: 0;
+  }
+
+  .landing-intro {
+    width: min(100%, var(--pm-landing-intro-max-mobile));
+    font-size: var(--pm-landing-intro-size-mobile);
+    line-height: var(--pm-landing-intro-line-mobile);
+  }
+
+  .landing-more {
+    font-size: var(--pm-nav-pill-font-size-small);
+  }
+}
+
 .promat-topbar__link {
   font-family: var(--pm-type-nav-family);
   font-size: var(--pm-type-nav-size);

@@ -520,6 +520,7 @@ def _render_promat_page(
     page_context["landing_cards"] = _linkify(page_context.get("landing_cards", []), ui_lang)
     page_context["action_links"] = _linkify(page_context.get("action_links", []), ui_lang)
     page_context["research_entries"] = _linkify(page_context.get("research_entries", []), ui_lang)
+    page_context["panel_items"] = [dict(item) for item in panel.get("items", [])]
     if page_context.get("more_link"):
         page_context["more_link"] = _linkify([page_context["more_link"]], ui_lang)[0]
 

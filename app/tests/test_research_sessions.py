@@ -1418,8 +1418,8 @@ def test_research_overview_renders_structured_corpus_metadata_and_dynamic_counts
     assert 'pm-corpus-overview-card--shared-accent' in spanish_card
     assert 'pm-cta-link pm-cta-link--primary pm-corpus-overview-card__action' in spanish_card
     assert 'Aufnahmen von 1 Lernenden' in spanish_card
-    assert 'Referenzaufnahmen zu 2 Standardvarietäten' in spanish_card
-    assert spanish_card.index('Aufnahmen von 1 Lernenden') < spanish_card.index('Referenzaufnahmen zu 2 Standardvarietäten')
+    assert 'Aufnahmen von 2 Referenzsprecher:innen' in spanish_card
+    assert spanish_card.index('Aufnahmen von 1 Lernenden') < spanish_card.index('Aufnahmen von 2 Referenzsprecher:innen')
 
     french_card = _extract_corpus_card_by_title(html, 'Französisch-Korpus')
     assert 'Prof. Dr. Janina Reinhardt' in french_card
@@ -1441,7 +1441,7 @@ def test_research_overview_renders_structured_corpus_metadata_and_dynamic_counts
     assert 'Marlon Merte' in english_card
     assert 'Rolf Kreyer' in english_card
     assert 'Aufnahmen von 1 Lernenden' in english_card
-    assert 'Referenzaufnahmen' not in english_card
+    assert 'Aufnahmen von 1 Referenzsprecher:in' in english_card
 
     assert 'Learner-Sessions' not in html
     assert 'Kontrolliert angelegtes Korpus' not in html
@@ -1503,9 +1503,9 @@ def test_research_overview_localizes_structured_corpus_cards_in_english(runtime_
     assert 'pm-corpus-overview-card__section--secondary' in spanish_card
     assert 'pm-corpus-overview-card--shared-accent' in spanish_card
     assert 'Recordings from 1 learner' in spanish_card
-    assert 'Reference recordings for 2 standard varieties' in spanish_card
+    assert 'Recordings from 2 reference speakers' in spanish_card
     assert spanish_card.index('Project lead') < spanish_card.index('Material design') < spanish_card.index('Conducted by')
-    assert spanish_card.index('Recordings from 1 learner') < spanish_card.index('Reference recordings for 2 standard varieties')
+    assert spanish_card.index('Recordings from 1 learner') < spanish_card.index('Recordings from 2 reference speakers')
 
     french_card = _extract_corpus_card_by_title(html, 'French corpus')
     assert 'Corpus in progress' in french_card
@@ -1614,6 +1614,13 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
     assert f'promat-panel__language-title">{expected_title}<' in html
     assert expected_subtitle in html
     assert expected_body in html
+    assert 'pm-research-language-root__mobile-links' in html
+    assert 'pm-research-language-root__pill-nav' in html
+    mobile_nav_start = html.index('pm-research-language-root__pill-nav')
+    mobile_nav_end = html.index('</nav>', mobile_nav_start)
+    mobile_nav_html = html[mobile_nav_start:mobile_nav_end]
+    expected_nav_labels = ["Design", "Sprecher:innen", "Vergleich", "Phänomene"] if ui_lang == "de" else ["Design", "Speakers", "Comparison", "Phenomena"]
+    assert [mobile_nav_html.index(label) for label in expected_nav_labels] == sorted(mobile_nav_html.index(label) for label in expected_nav_labels)
     assert 'pm-research-language-root__list' not in html
     assert 'pm-research-language-root__item' not in html
     path = f"/{ui_lang}/research/{language_slug}"
@@ -1643,6 +1650,7 @@ def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(
     drawer_html = _extract_element_by_id(html, "aside", "navigation-drawer-standard")
     assert "pm-research-language-root__action is-muted" not in html
     assert 'pm-research-language-root__item is-muted' not in html
+    assert "pm-research-language-root__nav-pill pm-nav-pill--muted" in html
     assert "pm-nav__item--muted" in html
     assert "pm-icon-mask--lock" in html
     assert "Login erforderlich" not in html

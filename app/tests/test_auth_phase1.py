@@ -548,11 +548,11 @@ def test_landing_page_renders_english_copy_and_shared_language_switch(auth_app: 
     html = response.get_data(as_text=True)
     assert "Exploring and teaching foreign languages digitally." in html
     assert "Research pronunciation" in html
-    assert "Empirical speech data on learner pronunciation and analysis tools for research and university teaching." in html
-    assert "Go to research" in html
+    assert "Empirical speech data and analysis tools for research and university teaching." in html
+    assert "Go to research data" in html
     assert "Research setting with a discussion and audio analysis on a laptop" in html
     assert "Teach pronunciation" in html
-    assert "Teaching materials for practising and reflecting on pronunciation in foreign language education." in html
+    assert "Practical materials for practising and reflecting on pronunciation." in html
     assert "Go to teaching" in html
     assert "Classroom scene representing teaching materials and listening examples" in html
     assert 'class="promat-topbar__language-switch"' in html
@@ -1893,6 +1893,7 @@ def test_admin_user_page_renders_in_english_after_admin_login(auth_app: Flask) -
     assert "Created by" in html
     assert "Pronunciation Matters" in html
     assert "admin-users-config" in html
+    assert "editActionShort" in html
     assert "pm-admin-toolbar" in html
     assert "pm-admin-dialog" in html
     assert "pm-research-table pm-admin-table" in html
@@ -2182,6 +2183,9 @@ def test_admin_users_static_js_uses_semantic_action_button_classes(auth_app: Fla
     assert 'pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-toast__action' in js
     assert 'pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn' in js
     assert 'pm-action-button__label' in js
+    assert "t('editActionShort', 'Edit')" in js
+    assert 'aria-label="${escapeHtml(t(\'editTitle\', \'Edit user\'))}"' in js
+    assert 'title="${escapeHtml(user.email || \'\')}"' in js
     assert 'element.innerHTML ||' not in js
     assert 'element.textContent ||' in js
 

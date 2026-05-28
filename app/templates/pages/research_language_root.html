@@ -15,6 +15,26 @@
       {% endfor %}
     </div>
 
+    <div class="pm-research-language-root__mobile-links">
+      <p class="pm-research-language-root__paragraph pm-research-language-root__mobile-intro">{{ promat_page.mobile_intro }}</p>
+      {% if promat_page.panel_items %}
+      <nav class="pm-research-language-root__pill-nav" aria-label="{{ t('shell.panel.navigation') }}">
+        {% for item in promat_page.panel_items %}
+        <a href="{{ item.href }}"
+           class="pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium pm-research-language-root__nav-pill{{ ' pm-nav-pill--muted' if item.get('is_muted') else '' }}"
+           aria-current="{{ 'page' if item.get('page_slug') == promat_panel.active_slug else 'false' }}">
+          <span class="pm-nav-pill__label">{{ item.label }}</span>
+          {% if item.get('show_lock') %}
+          <span class="pm-icon-mask pm-icon-mask--lock pm-research-language-root__nav-lock" aria-hidden="true"></span>
+          {% else %}
+          <span class="pm-interaction__arrow" aria-hidden="true">→</span>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+    </div>
+
     {% if promat_page.action_links %}
     <nav class="promat-page__actions pm-stack--inline pm-research-language-root__actions" aria-label="{{ promat_page.title }}">
       {% for action in promat_page.action_links %}

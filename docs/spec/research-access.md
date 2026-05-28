@@ -18,7 +18,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 
 - The research section root is a corpus selection in the German UI (`Korpus wählen`), not a teaching-style language selection.
 - The research section root uses metadata-first corpus cards and does not render an extra intro or subtitle line below the page heading.
-- Those corpus cards always show project lead, material design, and execution in that order; they show learner-recordings counts or the status `Korpus im Aufbau`/`Corpus in progress` before any optional reference-recordings line, and they show reference recordings only from two distinct native-speaker standard varieties upward.
+- Those corpus cards always show project lead, material design, and execution in that order; they show learner-recordings counts or the status `Korpus im Aufbau`/`Corpus in progress` before any optional reference-recordings line, and that reference-recordings line counts distinct native-speaker/reference-speaker `person_id` values rather than standard-variety values.
 - Those corpus cards remain part of the shared card system of the app: speaker cards are the primary visual reference, the visible card structure stays title, primary block, secondary block, and footer CTA, and the secondary status block keeps the same minimum inset above and below the surrounding divider rhythm instead of visually touching the footer divider.
 - `design` documents corpus design.
 - `speakers` is the person-based access path.
@@ -40,8 +40,8 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 ### Corpus-scoped public boundary
 
 - For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page.
-- The corpus root `/{ui_lang}/research/{corpus}` is a public reduced orientation page. The canonical research paths remain visible in the left sidebar only, while the main column stays limited to title, short subtitle, and two short prose paragraphs; signed-out users additionally see the two actions `Zugang beantragen`/`Request access` and `Zum Login`/`Go to login`, while authenticated users do not.
-- The corpus-root main column does not rebuild the area navigation as a second list of `design`, `speakers`, `comparison`, or `phenomena` entries with separate body CTAs.
+- The corpus root `/{ui_lang}/research/{corpus}` is a public reduced orientation page. On desktop with the left sidebar visible, the main column stays limited to title, short subtitle, and two short prose paragraphs; signed-out users additionally see the two actions `Zugang beantragen`/`Request access` and `Zum Login`/`Go to login`, while authenticated users do not.
+- On breakpoints where the left sidebar is hidden, the corpus-root main column replaces the longer desktop prose with one short orientation sentence and a compact link-pill block for `design`, `speakers`, `comparison`, and `phenomena`. Those pills reuse the same generic research-navigation order and auth/lock metadata as the sidebar; protected destinations remain visibly muted and locked for signed-out users.
 - All other research pages and detail routes under one concrete corpus path are authenticated research-app surfaces.
 - Access clarification belongs at the route boundary: unauthenticated requests are redirected to login with a safe return target, and the protected workbench or media response must not already render in the background.
 - There are no corpus-specific access exceptions such as public comparison or public phenomena variants outside `design`.

@@ -220,7 +220,15 @@ def runtime_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     clear_research_preset_caches()
 
 
-def test_research_capability_layer_defines_canonical_page_order_access_and_surface_modes() -> None:
+def test_research_capability_layer_defines_canonical_page_order_access_and_surface_modes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(tmp_path))
+    monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(tmp_path / "public"))
+    clear_research_preset_caches()
+    load_language_sessions.cache_clear()
+    load_person_records.cache_clear()
+
     assert get_research_page_order() == (
         ("design", "research.design"),
         ("speakers", "research.speakers"),
@@ -232,6 +240,10 @@ def test_research_capability_layer_defines_canonical_page_order_access_and_surfa
     assert requires_research_auth(detail_route="player") is True
     assert get_research_page_surface_mode("english", "recordings") is None
     assert get_research_page_surface_mode("french", "comparison") == "placeholder"
+
+    clear_research_preset_caches()
+    load_language_sessions.cache_clear()
+    load_person_records.cache_clear()
 
 
 def test_surface_modes_become_productive_when_runtime_and_config_are_present(runtime_env: Path) -> None:

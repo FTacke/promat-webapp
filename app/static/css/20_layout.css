@@ -745,6 +745,24 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 @media (max-width: 767px) {
+  body.app-shell.page-landing .pm-content-wrapper,
+  body.app-shell.page-landing .md3-content-wrapper {
+    padding-block-start: calc(var(--pm-landing-shell-block-start-mobile) + env(safe-area-inset-top));
+    padding-block-end: var(--pm-landing-shell-block-end-mobile);
+  }
+
+  .landing-page {
+    gap: var(--pm-landing-stack-gap-mobile);
+  }
+
+  .landing-hero {
+    gap: var(--pm-landing-hero-gap-mobile);
+  }
+
+  .landing-grid {
+    gap: var(--pm-space-sm);
+  }
+
   .pm-card-grid,
   .pm-feature-band .pm-card-grid {
     grid-template-columns: minmax(0, 1fr);

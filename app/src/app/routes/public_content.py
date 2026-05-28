@@ -249,19 +249,25 @@ def _research_learner_recording_count(language_slug: str) -> int:
     return len(learner_person_ids)
 
 
-def _research_reference_variety_count(language_slug: str) -> int:
-    standard_varieties = {
-        session.standard_variety
+def _research_reference_speaker_count(language_slug: str) -> int:
+    native_speaker_ids = {
+        session.person_id
         for session in load_language_sessions(language_slug)
-        if session.speaker_type == "native_speaker" and session.standard_variety
+        if session.speaker_type == "native_speaker"
     }
-    return len(standard_varieties)
+    return len(native_speaker_ids)
 
 
 def _research_learner_recording_copy(count: int, ui_lang: str) -> str:
     if count == 1:
         return get_text(ui_lang, "research.overview.card.learner_recordings.one", count=count)
     return get_text(ui_lang, "research.overview.card.learner_recordings.other", count=count)
+
+
+def _research_reference_recording_copy(count: int, ui_lang: str) -> str:
+    if count == 1:
+        return get_text(ui_lang, "research.overview.card.reference_recordings.one", count=count)
+    return get_text(ui_lang, "research.overview.card.reference_recordings.other", count=count)
 
 
 def _research_corpus_card_metadata_rows(language: dict[str, Any], ui_lang: str) -> list[dict[str, str]]:
@@ -290,15 +296,11 @@ def _research_corpus_card_metadata_rows(language: dict[str, Any], ui_lang: str) 
     else:
         rows.append({"text": get_text(ui_lang, "research.overview.card.in_progress")})
 
-    reference_variety_count = _research_reference_variety_count(language["slug"])
-    if reference_variety_count >= 2:
+    reference_speaker_count = _research_reference_speaker_count(language["slug"])
+    if reference_speaker_count > 0:
         rows.append(
             {
-                "text": get_text(
-                    ui_lang,
-                    "research.overview.card.reference_recordings",
-                    count=reference_variety_count,
-                )
+                "text": _research_reference_recording_copy(reference_speaker_count, ui_lang)
             }
         )
 
@@ -497,6 +499,7 @@ def build_research_language_root_page(
             get_text(ui_lang, "research.root.body", corpus_title=title),
             get_text(ui_lang, "research.root.access_text"),
         ],
+        "mobile_intro": get_text(ui_lang, "research.root.mobile_intro", corpus_title=title),
         "action_links": []
         if is_authenticated
         else [

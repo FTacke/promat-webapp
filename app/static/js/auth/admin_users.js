@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const listBody = document.getElementById('list-body');
+  const tableWrap = document.querySelector('.pm-admin-table-wrap');
   const refreshBtn = document.getElementById('refresh');
   const searchInput = document.getElementById('admin-search');
   const filterInactiveBtn = document.getElementById('filter-inactive');
@@ -224,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     row.innerHTML = `
       <td><span class="pm-admin-table__primary">${escapeHtml(user.last_name || '–')}</span></td>
       <td><span class="pm-admin-table__primary">${escapeHtml(user.first_name || '–')}</span></td>
-      <td><div class="pm-admin-table__email"><span class="pm-admin-table__primary">${escapeHtml(user.email || '–')}</span></div></td>
+      <td><div class="pm-admin-table__email" title="${escapeHtml(user.email || '')}"><span class="pm-admin-table__primary">${escapeHtml(user.email || '–')}</span></div></td>
       <td>${renderRoleBadge(user.role)}</td>
       <td>${renderStatusBadge(user.status_code)}</td>
       <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(formatDate(user.access_expires_on))}</span></td>
@@ -234,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="pm-admin-table__actions">
           <button class="pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn" type="button" data-id="${escapeHtml(user.id)}" title="${escapeHtml(t('editTitle', 'Edit user'))}" aria-label="${escapeHtml(t('editTitle', 'Edit user'))}">
             <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">edit</span>
-            <span class="pm-action-button__label">${escapeHtml(t('editTitle', 'Edit user'))}</span>
+            <span class="pm-action-button__label">${escapeHtml(t('editActionShort', 'Edit'))}</span>
           </button>
         </div>
       </td>
@@ -247,6 +248,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     listBody.innerHTML = `<tr><td colspan="9" class="pm-admin-table__empty">${escapeHtml(t('loading', 'Loading...'))}</td></tr>`;
+    syncTableScrollState();
+  }
+
+  function syncTableScrollState() {
+    if (!tableWrap) {
+      return;
+    }
+    const hasOverflow = tableWrap.scrollWidth > tableWrap.clientWidth + 1;
+    const atStart = tableWrap.scrollLeft <= 1;
+    const atEnd = tableWrap.scrollLeft + tableWrap.clientWidth >= tableWrap.scrollWidth - 1;
+    tableWrap.dataset.overflowX = hasOverflow ? 'true' : 'false';
+    tableWrap.dataset.overflowStart = hasOverflow && !atStart ? 'true' : 'false';
+    tableWrap.dataset.overflowEnd = hasOverflow && !atEnd ? 'true' : 'false';
   }
 
   function showEditError(message) {
@@ -467,6 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         payload.items.forEach((user) => listBody.appendChild(renderRow(user)));
         bindEditButtons();
+        syncTableScrollState();
       })
       .catch((error) => {
         console.error(error);
@@ -687,6 +702,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (editResetPasswordBtn) {
     editResetPasswordBtn.addEventListener('click', prepareReset);
   }
+  if (tableWrap) {
+    tableWrap.addEventListener('scroll', syncTableScrollState, { passive: true });
+    window.addEventListener('resize', syncTableScrollState);
+  }
 
   reload();
+  syncTableScrollState();
 });
