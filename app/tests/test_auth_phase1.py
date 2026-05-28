@@ -1122,8 +1122,19 @@ def test_login_blocks_expired_account_with_localized_message(auth_app: Flask) ->
     assert "Access for this account has expired." in response.get_data(as_text=True)
 
 
-def test_password_forgot_creates_reset_token_without_leaking_account(auth_app: Flask, caplog: pytest.LogCaptureFixture) -> None:
+def test_password_forgot_creates_reset_token_without_leaking_account(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     client = auth_app.test_client()
+    sent_messages: list[mail_delivery.MailMessage] = []
+
+    def fake_send_mail(message):
+        sent_messages.append(message)
+        return mail_delivery.MailDeliveryResult(sent=True, backend="smtp")
+
+    monkeypatch.setattr("app.routes.auth.send_mail", fake_send_mail)
 
     with caplog.at_level(logging.INFO):
         response = client.post(
@@ -1139,7 +1150,16 @@ def test_password_forgot_creates_reset_token_without_leaking_account(auth_app: F
     assert "alice@example.org" not in caplog.text
     assert "/auth/password/reset?token=" not in caplog.text
     assert "token=" not in caplog.text
-    assert "Use this link to choose a new password" not in caplog.text
+    assert "Use the following link to set a new password" not in caplog.text
+    assert len(sent_messages) == 1
+    message = sent_messages[0]
+    assert message.to_address == "alice@example.org"
+    assert message.subject == "Set a new password for Pronunciation Matters"
+    assert "Hello Alice Example," in message.body
+    assert "a link has been created for your Pronunciation Matters user account" in message.body
+    assert "Use the following link to set a new password:" in message.body
+    assert "ui_lang=en" in message.body
+    assert "The link is valid for 14 days." in message.body
     with auth_app.app_context():
         with get_session() as session:
             tokens = session.query(ResetToken).filter(ResetToken.user_id == "user-1").all()
@@ -1149,6 +1169,91 @@ def test_password_forgot_creates_reset_token_without_leaking_account(auth_app: F
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         expires_in = expires_at - datetime.now(timezone.utc)
         assert 13 <= expires_in.days <= 14
+
+
+def test_password_forgot_request_does_not_enumerate_missing_accounts(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = auth_app.test_client()
+    sent_messages: list[mail_delivery.MailMessage] = []
+
+    def fake_send_mail(message):
+        sent_messages.append(message)
+        return mail_delivery.MailDeliveryResult(sent=True, backend="smtp")
+
+    monkeypatch.setattr("app.routes.auth.send_mail", fake_send_mail)
+
+    existing = client.post(
+        "/auth/password/reset/request",
+        json={"email": "alice@example.org", "ui_lang": "de"},
+    )
+    missing = client.post(
+        "/auth/password/reset/request",
+        json={"email": "missing@example.org", "ui_lang": "de"},
+    )
+
+    assert existing.status_code == 200
+    assert missing.status_code == 200
+    assert existing.get_json()["message"] == missing.get_json()["message"]
+    assert len(sent_messages) == 1
+    assert sent_messages[0].subject == "Neues Passwort für Pronunciation Matters festlegen"
+    assert "Hallo Alice Example," in sent_messages[0].body
+    assert "ui_lang=de" in sent_messages[0].body
+    with auth_app.app_context():
+        with get_session() as session:
+            tokens = session.query(ResetToken).filter(ResetToken.user_id == "user-1").all()
+        assert len(tokens) == 1
+
+
+def test_password_forgot_mail_failure_keeps_neutral_public_response(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    client = auth_app.test_client()
+
+    def fail_send_mail(_message):
+        raise mail_delivery.MailDeliveryError("smtp failed: smtp-password")
+
+    monkeypatch.setattr("app.routes.auth.send_mail", fail_send_mail)
+    with caplog.at_level(logging.WARNING):
+        response = client.post(
+            "/auth/password/reset/request",
+            json={"email": "alice@example.org", "ui_lang": "en"},
+        )
+
+    assert response.status_code == 200
+    assert response.get_json()["ok"] is True
+    assert "If an account exists for this address" in response.get_json()["message"]
+    assert "Password reset email failed" in caplog.text
+    assert "recipient_domain=example.org" in caplog.text
+    assert "smtp-password" not in response.get_data(as_text=True)
+    assert "smtp-password" not in caplog.text
+
+
+def test_password_forgot_request_invalid_language_falls_back_to_german(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = auth_app.test_client()
+    sent_messages: list[mail_delivery.MailMessage] = []
+
+    def fake_send_mail(message):
+        sent_messages.append(message)
+        return mail_delivery.MailDeliveryResult(sent=True, backend="smtp")
+
+    monkeypatch.setattr("app.routes.auth.send_mail", fake_send_mail)
+
+    response = client.post(
+        "/auth/password/reset/request",
+        json={"email": "alice@example.org", "ui_lang": "fr"},
+    )
+
+    assert response.status_code == 200
+    assert len(sent_messages) == 1
+    assert sent_messages[0].subject == "Neues Passwort für Pronunciation Matters festlegen"
+    assert "ui_lang=de" in sent_messages[0].body
 
 
 def test_password_forgot_page_uses_user_facing_copy_in_english(auth_app: Flask) -> None:
@@ -1163,6 +1268,8 @@ def test_password_forgot_page_uses_user_facing_copy_in_english(auth_app: Flask) 
     assert "No access yet?" in html
     assert "pm-auth-surface" in html
     assert "pm-auth-secondary" in html
+    assert 'data-password-reset-request-endpoint="/auth/password/reset/request"' in html
+    assert 'js/auth/password_forgot.js' in html
     assert 'pm-action-button pm-action-button--primary pm-action-button--medium pm-auth-submit' in html
     assert html.count('pm-nav-pill pm-nav-pill--secondary pm-nav-pill--medium') >= 2
     assert 'pm-nav-pill--back' in html
@@ -1468,6 +1575,7 @@ def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask, ca
                 "role": "user",
                 "access_expires_on": "2030-01-31",
                 "invite_note": "Please review the shared corpus guidelines before your first login.",
+                "mail_ui_lang": "en",
             },
             headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
         )
@@ -1477,7 +1585,12 @@ def test_admin_create_user_returns_invite_preview_and_expiry(auth_app: Flask, ca
     assert payload["ok"] is True
     assert "/auth/password/reset?token=" in payload["inviteLink"]
     assert "ui_lang=en" in payload["inviteLink"]
+    assert payload["inviteMailSubject"] == "Your Pronunciation Matters user account"
+    assert "Hello Nora New," in payload["inviteMailBody"]
+    assert "a user account for Pronunciation Matters has been created for you." in payload["inviteMailBody"]
+    assert "activate your account and set a password" in payload["inviteMailBody"]
     assert "Please review the shared corpus guidelines" in payload["inviteMailBody"]
+    assert "Personal note:" in payload["inviteMailBody"]
     assert "If you have questions, please contact admin@example.org." in payload["inviteMailBody"]
     assert payload["inviteReplyTo"] == "admin@example.org"
     assert "Prepared admin invite message metadata" in caplog.text
@@ -1507,18 +1620,48 @@ def test_admin_reset_password_preview_keeps_secret_logging(auth_app: Flask, capl
     with caplog.at_level(logging.INFO):
         response = client.post(
             "/admin/users/user-1/reset-password",
+            json={"mail_ui_lang": "de"},
             headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
         )
 
     assert response.status_code == 200
     payload = response.get_json()
     assert payload["ok"] is True
+    assert payload["inviteMailSubject"] == "Neues Passwort für Pronunciation Matters festlegen"
+    assert "Hallo Alice Example," in payload["inviteMailBody"]
+    assert "Über den folgenden Link können Sie ein neues Passwort festlegen:" in payload["inviteMailBody"]
+    assert "Der Link ist 14 Tage gültig." in payload["inviteMailBody"]
+    assert "ui_lang=de" in payload["inviteLink"]
     assert "Prepared admin reset message metadata" in caplog.text
     assert "recipient_domain=example.org" in caplog.text
     assert "alice@example.org" not in caplog.text
     assert payload["inviteLink"] not in caplog.text
     assert "token=" not in caplog.text
     assert payload["inviteMailBody"] not in caplog.text
+
+
+def test_admin_can_prepare_existing_user_invite_in_english(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    login_response = _login(client, email="admin@example.org")
+
+    assert login_response.status_code == 303
+
+    response = client.post(
+        "/admin/users/user-1/invite?ui_lang=de",
+        json={"mail_ui_lang": "en"},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["ok"] is True
+    assert payload["inviteMailSubject"] == "Your Pronunciation Matters user account"
+    assert "Hello Alice Example," in payload["inviteMailBody"]
+    assert "activate your account and set a password" in payload["inviteMailBody"]
+    assert "Personal note:" not in payload["inviteMailBody"]
+    assert "ui_lang=en" in payload["inviteLink"]
+    with auth_app.app_context():
+        user = auth_services.find_user_by_email("alice@example.org")
+        assert user.must_reset_password is True
 
 
 def test_admin_invitation_send_uses_admin_reply_to_and_keeps_secret_logging(
@@ -1544,6 +1687,7 @@ def test_admin_invitation_send_uses_admin_reply_to_and_keeps_secret_logging(
             "last_name": "New",
             "email": "new.invite@example.org",
             "role": "user",
+            "mail_ui_lang": "en",
         },
         headers={"Referer": "http://promat.test/admin/users/page?ui_lang=en"},
     )
@@ -1571,6 +1715,8 @@ def test_admin_invitation_send_uses_admin_reply_to_and_keeps_secret_logging(
     assert message.reply_to == "admin@example.org"
     assert message.subject == preview["inviteMailSubject"]
     assert message.body == preview["inviteMailBody"]
+    assert "Hello Nora New," in message.body
+    assert "activate your account and set a password" in message.body
     assert "If you have questions, please contact admin@example.org." in message.body
     assert "Admin invitation email sent" in caplog.text
     assert "recipient_domain=example.org" in caplog.text
@@ -1748,8 +1894,13 @@ def test_login_post_keeps_rate_limit(auth_app: Flask) -> None:
     assert blocked.status_code == 429
 
 
-def test_password_forgot_submit_keeps_rate_limit(auth_app: Flask) -> None:
+def test_password_forgot_submit_keeps_rate_limit(auth_app: Flask, monkeypatch: pytest.MonkeyPatch) -> None:
     client = auth_app.test_client()
+
+    monkeypatch.setattr(
+        "app.routes.auth.send_mail",
+        lambda _message: mail_delivery.MailDeliveryResult(sent=True, backend="smtp"),
+    )
 
     for _ in range(5):
         response = client.post(
@@ -2184,6 +2335,9 @@ def test_admin_users_static_js_uses_semantic_action_button_classes(auth_app: Fla
     assert 'pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn' in js
     assert 'pm-action-button__label' in js
     assert "t('editActionShort', 'Edit')" in js
+    assert "prepareMail('invite')" in js
+    assert "prepareMail('reset')" in js
+    assert "mail_ui_lang: selectedEditMailLanguage()" in js
     assert 'aria-label="${escapeHtml(t(\'editTitle\', \'Edit user\'))}"' in js
     assert 'title="${escapeHtml(user.email || \'\')}"' in js
     assert 'element.innerHTML ||' not in js

@@ -8635,6 +8635,12 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   grid-column: 1 / -1;
 }
 
+.pm-admin-dialog__inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--promat-space-2);
+}
+
 .pm-admin-field__textarea {
   min-height: 9rem;
   resize: vertical;

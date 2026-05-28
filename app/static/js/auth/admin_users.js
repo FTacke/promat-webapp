@@ -71,6 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const cancelCreateBtn = document.getElementById('cancel-create');
 
   const inviteDialog = document.getElementById('invite-dialog');
+  const inviteTitle = document.getElementById('invite-title');
+  const inviteIntro = document.getElementById('invite-intro');
   const inviteLinkCode = document.getElementById('invite-link');
   const inviteMailSubject = document.getElementById('invite-mail-subject');
   const inviteMailBody = document.getElementById('invite-mail-body');
@@ -93,6 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const editAccessExpiresOn = document.getElementById('edit-access-expires-on');
   const editRole = document.getElementById('edit-role');
   const editIsActive = document.getElementById('edit-is-active');
+  const editMailLanguage = document.getElementById('edit-mail-language');
+  const editSendInviteBtn = document.getElementById('edit-send-invite');
   const editResetPasswordBtn = document.getElementById('edit-reset-password');
   const editError = document.getElementById('user-edit-error');
 
@@ -300,7 +304,15 @@ document.addEventListener('DOMContentLoaded', () => {
       userId: payload.user && payload.user.id ? payload.user.id : '',
       recipient: payload.inviteMailRecipient || '',
       replyTo: payload.inviteReplyTo || '',
+      mailLanguage: payload.inviteMailLanguage || uiLang || 'de',
+      mailPurpose: payload.inviteMailPurpose || 'invite',
     };
+    if (inviteTitle && payload.mailPreviewTitle) {
+      inviteTitle.textContent = payload.mailPreviewTitle;
+    }
+    if (inviteIntro && payload.mailPreviewIntro) {
+      inviteIntro.textContent = payload.mailPreviewIntro;
+    }
     if (inviteLinkCode) {
       inviteLinkCode.textContent = payload.inviteLink || '';
     }
@@ -349,6 +361,8 @@ document.addEventListener('DOMContentLoaded', () => {
         recipient: inviteState.recipient,
         subject: inviteMailSubject ? inviteMailSubject.value : '',
         body: inviteMailBody ? inviteMailBody.value : '',
+        mail_ui_lang: inviteState.mailLanguage,
+        purpose: inviteState.mailPurpose,
       }),
     })
       .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
@@ -553,23 +567,32 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  function prepareReset() {
+  function selectedEditMailLanguage() {
+    return editMailLanguage && editMailLanguage.value ? editMailLanguage.value : uiLang || 'de';
+  }
+
+  function prepareMail(purpose) {
     if (!editUserId || !editUserId.value) {
       return;
     }
-    const originalLabel = editResetPasswordBtn ? editResetPasswordBtn.textContent : '';
-    if (editResetPasswordBtn) {
-      editResetPasswordBtn.disabled = true;
-      editResetPasswordBtn.textContent = t('sending', 'Preparing...');
+    const actionButton = purpose === 'invite' ? editSendInviteBtn : editResetPasswordBtn;
+    const originalLabel = actionButton ? actionButton.textContent : '';
+    if (actionButton) {
+      actionButton.disabled = true;
+      actionButton.textContent = t('sending', 'Preparing...');
     }
 
-    fetch(buildAdminUrl(`/admin/users/${encodeURIComponent(editUserId.value)}/reset-password`), {
+    fetch(buildAdminUrl(`/admin/users/${encodeURIComponent(editUserId.value)}/${purpose === 'invite' ? 'invite' : 'reset-password'}`), {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Accept: 'application/json',
         'X-CSRF-TOKEN': getCsrfToken(),
       },
       credentials: 'same-origin',
+      body: JSON.stringify({
+        mail_ui_lang: selectedEditMailLanguage(),
+      }),
     })
       .then((response) => response.json())
       .then((payload) => {
@@ -579,16 +602,16 @@ document.addEventListener('DOMContentLoaded', () => {
         populateInviteDialog(payload);
         setDialogOpen(editDialog, false);
         setDialogOpen(inviteDialog, true);
-        showToast(t('resetPrepared', 'Password link prepared.'), 'success');
+        showToast(purpose === 'invite' ? t('invitePrepared', 'Invitation prepared.') : t('resetPrepared', 'Password link prepared.'), 'success');
       })
       .catch((error) => {
         console.error(error);
         showToast(error.message || t('networkError', 'Network error. Please try again.'), 'error');
       })
       .finally(() => {
-        if (editResetPasswordBtn) {
-          editResetPasswordBtn.disabled = false;
-          editResetPasswordBtn.textContent = originalLabel || t('resetPassword', 'Prepare new link');
+        if (actionButton) {
+          actionButton.disabled = false;
+          actionButton.textContent = originalLabel || (purpose === 'invite' ? t('sendInvite', 'Send invitation') : t('resetPassword', 'Prepare new link'));
         }
       });
   }
@@ -699,8 +722,11 @@ document.addEventListener('DOMContentLoaded', () => {
     createRole.addEventListener('change', () => syncExpiryFieldForRole(createRole, createExpiry));
     syncExpiryFieldForRole(createRole, createExpiry);
   }
+  if (editSendInviteBtn) {
+    editSendInviteBtn.addEventListener('click', () => prepareMail('invite'));
+  }
   if (editResetPasswordBtn) {
-    editResetPasswordBtn.addEventListener('click', prepareReset);
+    editResetPasswordBtn.addEventListener('click', () => prepareMail('reset'));
   }
   if (tableWrap) {
     tableWrap.addEventListener('scroll', syncTableScrollState, { passive: true });

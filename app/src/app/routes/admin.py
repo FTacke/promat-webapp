@@ -12,10 +12,10 @@ from ..analytics import summarize_analytics
 from ..auth import Role
 from ..auth import services as auth_services
 from ..auth.decorators import require_role
-from ..branding import BRANDING
 from ..extensions import limiter
 from ..i18n import resolve_ui_language, translate
 from ..protected_navigation import build_admin_panel, build_protected_content_header
+from ..services.auth_mail_messages import build_auth_mail_preview, resolve_mail_ui_language
 from ..services.mail_delivery import (
     MailConfigurationError,
     MailDeliveryError,
@@ -87,66 +87,13 @@ def _parse_access_expires_on(raw_value: str | None):
     return datetime.combine(parsed, time(23, 59, 59), tzinfo=timezone.utc)
 
 
-def _build_password_link(raw_token: str, ui_lang: str) -> str:
-    return url_for(
-        "auth.password_reset_page",
-        token=raw_token,
-        ui_lang=ui_lang,
-        _external=True,
-    )
-
-
-def _build_mail_preview(
-    *,
-    user_email: str,
-    raw_token: str,
-    ui_lang: str,
-    purpose: str,
-    contact_email: str,
-    admin_note: str | None = None,
-) -> dict[str, str]:
-    reset_link = _build_password_link(raw_token, ui_lang)
-    expiry_days = int(current_app.config.get("AUTH_RESET_TOKEN_EXP_DAYS", 14))
-    key_prefix = "auth.mail.invite" if purpose == "invite" else "auth.mail.reset"
-    lines = [
-        _t(ui_lang, f"{key_prefix}.greeting", app_name=BRANDING["app_display_name"]),
-        "",
-        _t(ui_lang, f"{key_prefix}.intro"),
-        _t(ui_lang, f"{key_prefix}.link", reset_link=reset_link),
-        _t(ui_lang, f"{key_prefix}.expiry", expiry_days=expiry_days),
-    ]
-    normalized_note = (admin_note or "").strip()
-    if normalized_note:
-        lines.extend(["", _t(ui_lang, "auth.mail.invite.note_label"), normalized_note])
-    lines.extend(
-        [
-            "",
-            _t(
-                ui_lang,
-                f"{key_prefix}.outro",
-                contact_email=contact_email,
-            ),
-        ]
-    )
-    return {
-        "recipient": user_email,
-        "subject": _t(
-            ui_lang,
-            f"{key_prefix}.subject",
-            app_name=BRANDING["app_display_name"],
-        ),
-        "body": "\n".join(lines),
-        "reset_link": reset_link,
-    }
-
-
 def _mail_preview_payload(
     *, user, ui_lang: str, purpose: str, admin_note: str | None = None
 ) -> dict[str, str]:
     raw_token, reset_token = auth_services.create_reset_token_for_user(user)
     reply_to = _current_admin_reply_to()
-    preview = _build_mail_preview(
-        user_email=user.email or "",
+    preview = build_auth_mail_preview(
+        user=user,
         raw_token=raw_token,
         ui_lang=ui_lang,
         purpose=purpose,
@@ -157,16 +104,20 @@ def _mail_preview_payload(
         "Prepared admin %s message metadata | user_id=%s | recipient_domain=%s | subject_length=%s | body_length=%s",
         purpose,
         getattr(user, "id", "unknown"),
-        _recipient_domain(preview["recipient"]),
-        len(preview["subject"] or ""),
-        len(preview["body"] or ""),
+        _recipient_domain(preview.recipient),
+        len(preview.subject or ""),
+        len(preview.body or ""),
     )
     return {
-        "inviteLink": preview["reset_link"],
+        "inviteLink": preview.reset_link,
         "inviteExpiresAt": reset_token.expires_at.isoformat(),
-        "inviteMailRecipient": preview["recipient"],
-        "inviteMailSubject": preview["subject"],
-        "inviteMailBody": preview["body"],
+        "inviteMailRecipient": preview.recipient,
+        "inviteMailSubject": preview.subject,
+        "inviteMailBody": preview.body,
+        "inviteMailLanguage": preview.ui_lang,
+        "inviteMailPurpose": preview.purpose,
+        "mailPreviewTitle": _t(ui_lang, f"auth.admin_users.mail_dialog_title.{purpose}"),
+        "mailPreviewIntro": _t(ui_lang, f"auth.admin_users.mail_dialog_intro.{purpose}"),
         "inviteReplyTo": reply_to,
     }
 
@@ -261,6 +212,7 @@ def users_create():
     role = str(payload.get("role") or Role.USER.value)
     access_expires_on = str(payload.get("access_expires_on") or "")
     invite_note = str(payload.get("invite_note") or "").strip()
+    mail_ui_lang = resolve_mail_ui_language(payload.get("mail_ui_lang"))
 
     if role not in {member.value for member in Role}:
         return jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.role_invalid")}), 400
@@ -281,7 +233,7 @@ def users_create():
 
     preview_payload = _mail_preview_payload(
         user=user,
-        ui_lang=ui_lang,
+        ui_lang=mail_ui_lang,
         purpose="invite",
         admin_note=invite_note,
     )
@@ -338,6 +290,8 @@ def users_update(user_id: str):
 @limiter.limit("10 per minute")
 def users_reset_password(user_id: str):
     ui_lang = _resolve_admin_ui_lang()
+    payload = request.get_json(silent=True) or {}
+    mail_ui_lang = resolve_mail_ui_language(payload.get("mail_ui_lang"))
     user = auth_services.get_user_by_id(user_id)
     if not user:
         return jsonify({"ok": False, "error": "user_not_found"}), 404
@@ -347,8 +301,31 @@ def users_reset_password(user_id: str):
     user = auth_services.mark_user_for_password_reset(user_id)
     preview_payload = _mail_preview_payload(
         user=user,
-        ui_lang=ui_lang,
+        ui_lang=mail_ui_lang,
         purpose="reset",
+    )
+    return jsonify({"ok": True, **preview_payload, "user": auth_services.serialize_users_for_admin([user])[0]}), 200
+
+
+@blueprint.post("/users/<user_id>/invite")
+@jwt_required()
+@require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
+def users_prepare_invite(user_id: str):
+    ui_lang = _resolve_admin_ui_lang()
+    payload = request.get_json(silent=True) or {}
+    mail_ui_lang = resolve_mail_ui_language(payload.get("mail_ui_lang"))
+    user = auth_services.get_user_by_id(user_id)
+    if not user:
+        return jsonify({"ok": False, "error": "user_not_found"}), 404
+    if not user.email:
+        return jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.email_required")}), 400
+
+    user = auth_services.mark_user_for_password_reset(user_id)
+    preview_payload = _mail_preview_payload(
+        user=user,
+        ui_lang=mail_ui_lang,
+        purpose="invite",
     )
     return jsonify({"ok": True, **preview_payload, "user": auth_services.serialize_users_for_admin([user])[0]}), 200
 
@@ -390,6 +367,7 @@ def users_send_invite(user_id: str):
 
     subject = str(payload.get("subject") or "")
     body = str(payload.get("body") or "")
+    resolve_mail_ui_language(payload.get("mail_ui_lang"))
     try:
         reply_to = _current_admin_reply_to()
         result = send_mail(

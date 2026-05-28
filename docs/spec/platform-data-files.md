@@ -85,6 +85,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 /auth/account
 /auth/account/password
 /auth/password/forgot
+/auth/password/reset/request
 /auth/password/reset
 /admin/users/page
 /admin/analytics/page
@@ -132,11 +133,13 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Routine server logging for public access requests must stay metadata-only. Full applicant email addresses, institution and purpose text, or complete notification bodies are not part of the normal log contract.
 - Production may load GoatCounter only when the public deploy environment provides `VITE_GOATCOUNTER_URL`; the active endpoint is `https://pronunciation-matters.goatcounter.com/count` and the script source is `https://gc.zgo.at/count.js`. Development, testing, and non-production app environments must not render the GoatCounter script even if that variable is accidentally set.
 - Public auth-entry pages `/login` and `/access-request` redirect already authenticated users to the safe requested target first, otherwise to the canonical protected default target for their role.
-- Accounts are created administratively and use one password-setup/reset token flow that is valid for 14 days unless an active environment setting shortens or extends it.
+- Accounts are created administratively and use one password-setup/reset token flow that is valid for 14 days unless an active environment setting shortens or extends it. Creating a new token invalidates older unused reset/setup tokens for the same account.
+- Public password-reset requests use `/auth/password/forgot` for the HTML fallback and `/auth/password/reset/request` for the JSON request endpoint. Both paths must keep account existence private: the visible response stays neutral whether or not an account exists, routine mail failures are logged without tokens or message bodies, and the request route remains rate-limited.
 - The productive protected-area role model contains only `user` and `admin`; `editor` is not part of the active PROMAT product contract.
 - Account access must be blocked before session issuance when the account is inactive, not yet valid, expired, deleted, or temporarily locked.
 - Admin user management uses the canonical `/admin/users` route family for account creation, status updates, optional expiry dates, invitation/reset preparation, and explicit admin-triggered invitation/reset email sending. Opening the prepared invitation dialog must not send mail. The manual copy fallback for link, subject, and body remains available even when direct sending is disabled or fails.
 - Admin invitation/reset email uses the configured server-allowed sender address and uses the authenticated triggering admin's email address as `Reply-To`; if that address is unexpectedly invalid, the configured default reply-to may be used as a guarded fallback without logging tokens, full links, full message bodies, or secrets.
+- Admin invitation and password-reset mail previews must be generated server-side in `de` or `en`; unsupported mail-language input falls back to `de`. The selected mail language determines the visible subject/body and the `ui_lang` value embedded in the password setup/reset link.
 - The canonical protected default targets after login are: safe requested target first, otherwise `/auth/account` for `user` and `/admin/users/page` for `admin`.
 - `/health` is a liveness probe endpoint and must stay unauthenticated and non-rate-limited so deploy gates, Docker health checks, and monitoring never receive HTTP 429 from normal application throttling.
 - `/ready` is a readiness probe endpoint and must stay unauthenticated and non-rate-limited; it may return HTTP 503 only for real dependency/readiness failures.

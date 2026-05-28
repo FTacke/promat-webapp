@@ -115,6 +115,14 @@
             <input type="date" id="new-access-expires-on" name="access_expires_on" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.expires_on_label') }}">
           </label>
 
+          <label class="pm-admin-field" for="new-mail-language">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.mail_language_label') }}</span>
+            <select id="new-mail-language" name="mail_ui_lang" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.mail_language_label') }}">
+              <option value="de"{% if auth_ui_lang == 'de' %} selected{% endif %}>{{ t('auth.admin_users.mail_language_de') }}</option>
+              <option value="en"{% if auth_ui_lang == 'en' %} selected{% endif %}>{{ t('auth.admin_users.mail_language_en') }}</option>
+            </select>
+          </label>
+
           <label class="pm-admin-field pm-admin-field--full" for="new-invite-note">
             <span class="pm-admin-field__label">{{ t('auth.admin_users.invite_note_label') }}</span>
             <textarea id="new-invite-note" name="invite_note" class="pm-phenomena-field__input pm-admin-field__textarea" rows="5" aria-label="{{ t('auth.admin_users.invite_note_label') }}"></textarea>
@@ -135,8 +143,8 @@
     <div class="pm-admin-dialog__content">
       <header class="pm-admin-dialog__section-header">
         <p class="pm-admin-dialog__section-eyebrow">{{ t('auth.admin_users.eyebrow') }}</p>
-        <h2 id="invite-title" class="pm-admin-dialog__title">{{ t('auth.admin_users.invite_dialog_title') }}</h2>
-        <p class="pm-admin-dialog__intro">{{ t('auth.admin_users.invite_dialog_intro') }}</p>
+        <h2 id="invite-title" class="pm-admin-dialog__title">{{ t('auth.admin_users.mail_dialog_title.invite') }}</h2>
+        <p id="invite-intro" class="pm-admin-dialog__intro">{{ t('auth.admin_users.mail_dialog_intro.invite') }}</p>
       </header>
 
       <section class="pm-admin-dialog__section">
@@ -252,11 +260,27 @@
             <h3 class="pm-admin-dialog__section-title">{{ t('auth.admin_users.password_section') }}</h3>
             <p class="pm-admin-dialog__section-text">{{ t('auth.admin_users.password_help') }}</p>
           </div>
-          <div>
-            <button type="button" id="edit-reset-password" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
-              <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">mail</span>
-              <span class="pm-action-button__label">{{ t('auth.admin_users.reset_password') }}</span>
-            </button>
+          <div class="pm-admin-dialog__grid">
+            <label class="pm-admin-field" for="edit-mail-language">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.mail_language_label') }}</span>
+              <select id="edit-mail-language" name="mail_ui_lang" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.mail_language_label') }}">
+                <option value="de"{% if auth_ui_lang == 'de' %} selected{% endif %}>{{ t('auth.admin_users.mail_language_de') }}</option>
+                <option value="en"{% if auth_ui_lang == 'en' %} selected{% endif %}>{{ t('auth.admin_users.mail_language_en') }}</option>
+              </select>
+            </label>
+            <div class="pm-admin-field pm-admin-field--full">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.mail_action_label') }}</span>
+              <div class="pm-admin-dialog__inline-actions">
+                <button type="button" id="edit-send-invite" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+                  <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">outgoing_mail</span>
+                  <span class="pm-action-button__label">{{ t('auth.admin_users.send_invite') }}</span>
+                </button>
+                <button type="button" id="edit-reset-password" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+                  <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">mail</span>
+                  <span class="pm-action-button__label">{{ t('auth.admin_users.reset_password') }}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -291,6 +315,7 @@
     'save': t('common.actions.save'),
     'saving': t('auth.admin_users.saving'),
     'resetPassword': t('auth.admin_users.reset_password'),
+    'sendInvite': t('auth.admin_users.send_invite'),
     'sending': t('auth.admin_users.sending'),
     'sendMail': t('auth.admin_users.send_mail'),
     'sendMailSending': t('auth.admin_users.send_mail_sending'),
@@ -302,6 +327,7 @@
     'copyFailed': t('auth.admin_users.copy_failed'),
     'updated': t('auth.admin_users.updated'),
     'created': t('auth.admin_users.created'),
+    'invitePrepared': t('auth.admin_users.invite_prepared'),
     'resetPrepared': t('auth.admin_users.reset_prepared'),
     'networkError': t('auth.admin_users.network_error'),
     'invalidEmail': t('auth.admin_users.invalid_email'),

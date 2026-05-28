@@ -28,12 +28,19 @@ from flask_jwt_extended import (
 
 from ..auth import Role
 from ..auth import services as auth_services
-from ..branding import BRANDING
 from ..extensions import limiter
 from ..i18n import resolve_ui_language, translate
 from ..protected_navigation import (
     build_admin_panel,
     build_protected_content_header,
+)
+from ..services.auth_mail_messages import build_auth_mail_preview
+from ..services.mail_delivery import (
+    MailConfigurationError,
+    MailDeliveryError,
+    MailMessage,
+    MailValidationError,
+    send_mail,
 )
 
 blueprint = Blueprint("auth", __name__, url_prefix="/auth")
@@ -159,58 +166,6 @@ def _render_password_reset_page(
     )
 
 
-def _build_password_link(raw_token: str, ui_lang: str) -> str:
-    return url_for(
-        "auth.password_reset_page",
-        token=raw_token,
-        ui_lang=ui_lang,
-        _external=True,
-    )
-
-
-def _build_password_message(
-    *,
-    user_email: str,
-    raw_token: str,
-    ui_lang: str,
-    purpose: str,
-    admin_note: str | None = None,
-) -> dict[str, str]:
-    reset_link = _build_password_link(raw_token, ui_lang)
-    expiry_days = int(current_app.config.get("AUTH_RESET_TOKEN_EXP_DAYS", 14))
-    key_prefix = "auth.mail.invite" if purpose == "invite" else "auth.mail.reset"
-    lines = [
-        _t(ui_lang, f"{key_prefix}.greeting", app_name=BRANDING["app_display_name"]),
-        "",
-        _t(ui_lang, f"{key_prefix}.intro"),
-        _t(ui_lang, f"{key_prefix}.link", reset_link=reset_link),
-        _t(ui_lang, f"{key_prefix}.expiry", expiry_days=expiry_days),
-    ]
-    normalized_note = (admin_note or "").strip()
-    if normalized_note:
-        lines.extend(["", _t(ui_lang, "auth.mail.invite.note_label"), normalized_note])
-    lines.extend(
-        [
-            "",
-            _t(
-                ui_lang,
-                f"{key_prefix}.outro",
-                contact_email=auth_services.access_request_contact_email(),
-            ),
-        ]
-    )
-    return {
-        "recipient": user_email,
-        "subject": _t(
-            ui_lang,
-            f"{key_prefix}.subject",
-            app_name=BRANDING["app_display_name"],
-        ),
-        "body": "\n".join(lines),
-        "reset_link": reset_link,
-    }
-
-
 def _log_prepared_auth_message(
     *, recipient: str, subject: str, body: str, purpose: str
 ) -> None:
@@ -258,22 +213,47 @@ def _refresh_access_cookie_response(response: Response, *, user_id: str) -> Resp
     return response
 
 
-def _forgot_password_response(email: str, ui_lang: str) -> None:
+def _forgot_password_response(email: str, ui_lang: str) -> bool:
     user = auth_services.find_user_by_email(email)
     if user and user.deleted_at is None:
         raw_token, _ = auth_services.create_reset_token_for_user(user)
-        message = _build_password_message(
-            user_email=user.email or email,
+        message = build_auth_mail_preview(
+            user=user,
             raw_token=raw_token,
             ui_lang=ui_lang,
             purpose="reset",
         )
         _log_prepared_auth_message(
-            recipient=message["recipient"],
-            subject=message["subject"],
-            body=message["body"],
+            recipient=message.recipient,
+            subject=message.subject,
+            body=message.body,
             purpose="password-reset",
         )
+        try:
+            result = send_mail(
+                MailMessage(
+                    to_address=message.recipient,
+                    subject=message.subject,
+                    body=message.body,
+                )
+            )
+            if not result.sent:
+                raise MailDeliveryError(result.detail or "mail backend disabled")
+        except (MailDeliveryError, MailValidationError, MailConfigurationError) as exc:
+            current_app.logger.warning(
+                "Password reset email failed | recipient_domain=%s | error_type=%s",
+                _recipient_domain(message.recipient),
+                type(exc).__name__,
+            )
+            return False
+        current_app.logger.info(
+            "Password reset email sent | recipient_domain=%s | subject_length=%s | body_length=%s",
+            _recipient_domain(message.recipient),
+            len(message.subject or ""),
+            len(message.body or ""),
+        )
+        return True
+    return False
 
 
 def _json_ok(payload: dict[str, object] | None = None, *, status_code: int = 200) -> Response:
@@ -521,11 +501,12 @@ def password_forgot_submit() -> Response:
 
 
 @blueprint.post("/reset-password/request")
+@blueprint.post("/password/reset/request")
 @limiter.limit("5 per minute")
 def password_forgot_api() -> Response:
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True) or request.form or {}
     email = auth_services.normalize_email(str(payload.get("email") or ""))
-    ui_lang = _resolve_auth_ui_lang(request.referrer)
+    ui_lang = resolve_ui_language(str(payload.get("ui_lang") or "") or None)
     if not email:
         return jsonify({"ok": False, "message": _t(ui_lang, "auth.password_forgot.error.email_required")}), 400
     _forgot_password_response(email, ui_lang)
