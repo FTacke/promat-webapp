@@ -217,7 +217,6 @@ def _overview_card_from_curated_set(
             else None
         ),
         "copy_source_set_id": stored_set.set_id,
-        "show_edit_as_own": is_admin,
         "preset_id": stored_set.set_id,
         "set_id": stored_set.set_id,
     }
@@ -468,6 +467,10 @@ def _editor_state(
                     "saveAsCuratedSuccess": "research.phenomena.editor.save_as_curated_success",
                     "saveCopyTitle": "research.phenomena.editor.save_copy_title",
                     "saveCopyMessage": "research.phenomena.editor.save_copy_message",
+                    "saveAsCustom": "research.phenomena.editor.save_as_custom",
+                    "saveAsCustomTitle": "research.phenomena.editor.save_as_custom_title",
+                    "saveAsCustomMessage": "research.phenomena.editor.save_as_custom_message",
+                    "saveAsCustomSuccess": "research.phenomena.editor.save_as_custom_success",
                     "archiveCurated": "research.phenomena.editor.archive_curated",
                     "reactivateCurated": "research.phenomena.editor.reactivate_curated",
                     "archiveCuratedTitle": "research.phenomena.editor.archive_curated_title",

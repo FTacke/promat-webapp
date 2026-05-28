@@ -1,6 +1,7 @@
 import { getCsrfToken } from "../api.js";
 import { fetchWithAuth } from "../modules/auth/fetch.js";
 import { showSnackbar } from "../modules/core/snackbar.js";
+import { initOverflowMenus } from "../modules/core/overflow-menu.js";
 
 let requestFailedLabel = "";
 
@@ -124,7 +125,7 @@ function init() {
   }
 
   function closeDetailsMenus() {
-    root.querySelectorAll("details[data-phenomena-overflow]").forEach((element) => {
+    root.querySelectorAll("details[data-overflow-menu]").forEach((element) => {
       element.open = false;
     });
   }
@@ -354,6 +355,7 @@ function init() {
   window.addEventListener("pagehide", closePhenomenaDialogs);
   window.addEventListener("beforeunload", closePhenomenaDialogs);
 
+  initOverflowMenus();
   applyFilter();
 }
 

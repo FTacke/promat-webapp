@@ -303,7 +303,6 @@ def test_build_phenomena_overview_page_merges_curated_and_custom_entries(phenome
     assert curated_entry["edit_curated_href"] is None
     assert curated_entry["edit_as_own_href"] is None
     assert curated_entry["copy_source_set_id"] == phenomena_app.config["TEST_CURATED_SET_ID"]
-    assert curated_entry["show_edit_as_own"] is False
     assert page["search_placeholder"] == "Set suchen"
     assert page["entries"][0]["preview"]
     assert all(entry["title"] != "Nur Draft" for entry in page["entries"])
@@ -321,7 +320,6 @@ def test_build_phenomena_overview_page_exposes_admin_curated_actions(phenomena_a
     assert curated_entry["edit_curated_href"].endswith(f"/de/research/spanish/phenomena/presets/{phenomena_app.config['TEST_CURATED_SET_ID']}")
     assert curated_entry["edit_as_own_href"] is None
     assert curated_entry["copy_source_set_id"] == phenomena_app.config["TEST_CURATED_SET_ID"]
-    assert curated_entry["show_edit_as_own"] is True
 
 
 def test_build_phenomena_overview_page_prefers_existing_private_copy_for_edit_as_own_set(phenomena_app: Flask) -> None:
@@ -508,10 +506,10 @@ def test_public_phenomena_overview_route_renders_all_curated_actions_for_admins(
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "Ansehen" in html
-    assert ">Kuratiertes Set bearbeiten<" in html
-    assert ">Als eigenes Set bearbeiten<" in html
+    assert ">Kuratiertes Set bearbeiten<" not in html
+    assert ">Als eigenes Set bearbeiten<" not in html
     assert f'href="/de/research/spanish/phenomena/presets/{curated_set_id}"' in html
-    assert f'data-phenomena-copy-curated-set="{curated_set_id}"' in html
+    assert f'data-phenomena-copy-curated-set="{curated_set_id}"' not in html
 
 
 @pytest.mark.parametrize(
@@ -645,23 +643,38 @@ def test_editor_user_new_custom_set_has_is_admin_false_and_buttons_present(pheno
 def test_editor_admin_curated_set_state_has_all_curated_labels(phenomena_app: Flask) -> None:
     """Admin editing a curated set must have all required curated management labels in client state."""
     curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    # Check via Python dict (avoids JSON encoding ambiguity for non-ASCII)
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/presets/{curated_set_id}"):
+        from flask import g as _g
+        _g.user = "admin"
+        _g.user_id = "admin-1"
+        _g.role = "admin"
+        page = build_phenomena_preset_editor_page("de", "spanish", curated_set_id)
+
+    assert page is not None
+    labels = page["client_state"]["labels"]
+    assert labels["updateCuratedTitle"] == "Änderungen am kuratierten Set speichern?"
+    assert labels["updateCuratedMessage"] == "Die Änderungen werden global am kuratierten Original gespeichert."
+    assert labels["saveAsCustom"] == "Als Custom Set speichern"
+    assert labels["saveAsCustomTitle"] == "Als Custom Set speichern?"
+    assert labels["deleteCurated"] == "Kuratiertes Set löschen"
+    assert labels["saveAsCurated"] == "Als kuratiertes Set speichern"
+
+    # Also verify rendered HTML has correct structure
     phenomena_app.config["TEST_AUTH_USER"] = "admin"
     phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
     phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
     client = phenomena_app.test_client()
     response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
-
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '"isAdmin": true' in html
-    # Must have dedicated delete-curated and save-as-curated buttons in template
     assert 'data-phenomena-delete-curated-action' in html
     assert 'data-phenomena-save-as-curated-action' in html
-    # Admin curated labels
+    assert 'data-phenomena-save-as-custom-action' in html
     assert 'Kuratiertes Set löschen' in html
     assert 'Als kuratiertes Set speichern' in html
-    assert 'Kuratiertes Set wirklich aktualisieren?' in html
-    # No toggle action (removed)
+    assert 'Als Custom Set speichern' in html
     assert 'data-phenomena-curated-toggle-action' not in html
 
 
@@ -745,7 +758,7 @@ def test_public_preset_editor_route_exposes_admin_curated_actions_for_admins(phe
     assert 'data-phenomena-save-as-curated-action' in html
     assert 'data-phenomena-save-label' in html
     assert '"isAdmin": true' in html
-    assert 'Kuratiertes Set wirklich aktualisieren?' in html
+    assert '"updateCuratedTitle"' in html
     assert 'global am kuratierten Original gespeichert.' in html
     assert '/api/research/admin/curated-sets/__SET_ID__' in html
     assert 'Kuratiertes Set löschen' in html
@@ -801,8 +814,8 @@ def test_overview_user_curated_entry_shows_only_view_button(phenomena_app: Flask
     assert "data-phenomena-copy-curated-set" not in html
 
 
-def test_overview_user_curated_entry_show_edit_as_own_false(phenomena_app: Flask) -> None:
-    """USER curated card: show_edit_as_own must be False in page data."""
+def test_overview_user_curated_entry_has_no_edit_hrefs(phenomena_app: Flask) -> None:
+    """USER curated card: edit_curated_href and edit_as_own_href must be None."""
     with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
         g.user = "alice"
         g.user_id = "user-1"
@@ -811,11 +824,12 @@ def test_overview_user_curated_entry_show_edit_as_own_false(phenomena_app: Flask
 
     assert page is not None
     curated_entry = next(e for e in page["entries"] if e["kind"] == "curated")
-    assert curated_entry["show_edit_as_own"] is False
+    assert curated_entry["edit_curated_href"] is None
+    assert curated_entry["edit_as_own_href"] is None
 
 
-def test_overview_admin_curated_entry_show_edit_as_own_true(phenomena_app: Flask) -> None:
-    """ADMIN curated card: show_edit_as_own must be True in page data."""
+def test_overview_admin_curated_entry_has_edit_curated_href(phenomena_app: Flask) -> None:
+    """ADMIN curated card: edit_curated_href must point to preset editor (used as Bearbeiten link)."""
     with phenomena_app.test_request_context("/de/research/spanish/phenomena"):
         g.user = "admin"
         g.user_id = "admin-1"
@@ -824,7 +838,10 @@ def test_overview_admin_curated_entry_show_edit_as_own_true(phenomena_app: Flask
 
     assert page is not None
     curated_entry = next(e for e in page["entries"] if e["kind"] == "curated")
-    assert curated_entry["show_edit_as_own"] is True
+    assert curated_entry["edit_curated_href"] is not None
+    assert curated_entry["edit_curated_href"].endswith(
+        f"/de/research/spanish/phenomena/presets/{phenomena_app.config['TEST_CURATED_SET_ID']}"
+    )
 
 
 def test_editor_user_new_set_has_save_button_and_no_curated_labels_in_html(phenomena_app: Flask) -> None:
@@ -941,9 +958,9 @@ def test_editor_js_dirty_declared_before_use_in_sync_status() -> None:
 
 
 def test_editor_js_discard_hidden_logic_present_in_source() -> None:
-    """JS: syncStatus must include hidden control for discard button based on isAdmin+dirty."""
+    """JS: syncStatus must hide discard button when not dirty."""
     source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
-    assert "discardButton.hidden = !isAdmin && !dirty" in source
+    assert "discardButton.hidden = !dirty" in source
 
 
 def test_editor_js_user_curated_save_opens_confirm_in_source() -> None:
@@ -981,6 +998,167 @@ def test_editor_new_i18n_save_copy_labels_present_in_client_state(phenomena_app:
     assert page_de["client_state"]["labels"]["saveCopyMessage"] == "Das kuratierte Set wird nicht verändert. Ihre Änderungen werden als eigenes Set gespeichert."
     assert page_en["client_state"]["labels"]["saveCopyTitle"] == "Save as your own set?"
     assert page_en["client_state"]["labels"]["saveCopyMessage"] == "The curated set will not be changed. Your changes will be saved as your own set."
+
+
+# --- ADMIN button matrix tests ---
+
+def test_overview_admin_curated_shows_ansehen_and_bearbeiten(phenomena_app: Flask) -> None:
+    """ADMIN overview: curated entry shows Ansehen + Bearbeiten only."""
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get("/de/research/spanish/phenomena")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Ansehen" in html
+    assert ">Bearbeiten<" in html
+    assert ">Kuratiertes Set bearbeiten<" not in html
+    assert ">Als eigenes Set bearbeiten<" not in html
+
+
+def test_editor_admin_curated_has_save_as_custom_button(phenomena_app: Flask) -> None:
+    """ADMIN curated editor: data-phenomena-save-as-custom-action must be in DOM."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/presets/{curated_set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-phenomena-save-as-custom-action' in html
+    assert 'Als Custom Set speichern' in html
+    assert '"isAdmin": true' in html
+
+
+def test_editor_admin_custom_set_has_save_as_curated_and_overflow(phenomena_app: Flask) -> None:
+    """ADMIN custom set editor: save-as-curated and overflow buttons present in DOM."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="admin-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="admin-1", set_id=draft.set_id, label="Admin-Set", state="saved")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-phenomena-save-as-curated-action' in html
+    # delete-curated is in DOM for all admins (JS hides it for non-curated context)
+    assert 'data-phenomena-delete-curated-action' in html
+    # save-as-custom is in DOM for all admins (JS hides it for non-curated context)
+    assert 'data-phenomena-save-as-custom-action' in html
+    # Overflow container must be present
+    assert 'data-phenomena-editor-overflow' in html
+    assert '"isAdmin": true' in html
+    # isAdmin=true means editorMode=set for custom set
+    assert '"editorMode": "set"' in html
+
+
+def test_editor_admin_new_set_has_save_and_overflow_present(phenomena_app: Flask) -> None:
+    """ADMIN new set: save, save-as-curated, overflow present in DOM (JS controls visibility)."""
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="admin-1", corpus_language="spanish")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "admin"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "admin-1"
+    phenomena_app.config["TEST_AUTH_ROLE"] = "admin"
+    client = phenomena_app.test_client()
+    response = client.get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'data-phenomena-save-action' in html
+    assert 'data-phenomena-save-as-curated-action' in html
+    assert 'data-phenomena-editor-overflow' in html
+    assert '"isAdmin": true' in html
+
+
+def test_editor_js_save_as_custom_button_logic_in_source() -> None:
+    """JS: save-as-custom button handler must check isAdmin+isCuratedRecord."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "data-phenomena-save-as-custom-action" in source
+    assert "saveAsCustomTitle" in source
+    assert "saveAsCustomMessage" in source
+    assert "persistCurrentRecordAsCopy" in source
+
+
+def test_editor_js_overflow_visibility_logic_in_source() -> None:
+    """JS: syncStatus must compute overflow menu visibility based on overflow action state."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert "data-phenomena-editor-overflow" in source
+    assert "hasOverflowAction" in source
+    assert "overflowMenu.hidden" in source
+
+
+def test_editor_js_overflow_utility_imported_in_editor() -> None:
+    """JS: overflow-menu utility must be imported in editor JS."""
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    assert 'overflow-menu.js' in source
+    assert 'initOverflowMenus' in source
+
+
+def test_editor_admin_save_as_custom_labels_present(phenomena_app: Flask) -> None:
+    """DE + EN: saveAsCustom labels must be in editor client state."""
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/presets/{curated_set_id}"):
+        from flask import g as _g
+        _g.user = "admin"
+        _g.user_id = "admin-1"
+        _g.role = "admin"
+        page_de = build_phenomena_preset_editor_page("de", "spanish", curated_set_id)
+
+    with phenomena_app.test_request_context(f"/en/research/spanish/phenomena/presets/{curated_set_id}"):
+        from flask import g as _g
+        _g.user = "admin"
+        _g.user_id = "admin-1"
+        _g.role = "admin"
+        page_en = build_phenomena_preset_editor_page("en", "spanish", curated_set_id)
+
+    assert page_de is not None
+    assert page_en is not None
+    assert page_de["client_state"]["labels"]["saveAsCustom"] == "Als Custom Set speichern"
+    assert page_de["client_state"]["labels"]["saveAsCustomTitle"] == "Als Custom Set speichern?"
+    assert page_de["client_state"]["labels"]["updateCurated"] == "Änderungen speichern"
+    assert page_en["client_state"]["labels"]["saveAsCustom"] == "Save as custom set"
+    assert page_en["client_state"]["labels"]["saveAsCustomTitle"] == "Save as custom set?"
+    assert page_en["client_state"]["labels"]["updateCurated"] == "Save changes"
+
+
+# --- Overflow behavior tests ---
+
+def test_overview_template_uses_data_overflow_menu_attribute() -> None:
+    """Regression: overview custom set overflow must use data-overflow-menu attribute."""
+    from pathlib import Path
+    template = Path(__file__).resolve().parents[1] / "templates" / "pages" / "research_phenomena_overview.html"
+    content = template.read_text(encoding="utf-8")
+    assert "data-overflow-menu" in content
+    assert "data-phenomena-overflow" in content
+
+
+def test_editor_template_uses_data_overflow_menu_attribute() -> None:
+    """Regression: editor overflow must use data-overflow-menu attribute."""
+    from pathlib import Path
+    template = Path(__file__).resolve().parents[1] / "templates" / "pages" / "research_phenomena_editor.html"
+    content = template.read_text(encoding="utf-8")
+    assert "data-overflow-menu" in content
+    assert "data-phenomena-editor-overflow" in content
+
+
+def test_overflow_menu_utility_module_exists_and_exports_init() -> None:
+    """Regression: overflow-menu.js must exist and export initOverflowMenus."""
+    from pathlib import Path
+    module = Path(__file__).resolve().parents[1] / "static" / "js" / "modules" / "core" / "overflow-menu.js"
+    assert module.exists()
+    content = module.read_text(encoding="utf-8")
+    assert "export function initOverflowMenus" in content
+    assert "data-overflow-menu" in content
+    assert "Escape" in content
 
 
 # --- Regression tests ---

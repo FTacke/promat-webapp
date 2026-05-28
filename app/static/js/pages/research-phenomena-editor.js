@@ -1,6 +1,7 @@
 import { getCsrfToken } from "../api.js";
 import { fetchWithAuth } from "../modules/auth/fetch.js";
 import { showSnackbar } from "../modules/core/snackbar.js";
+import { initOverflowMenus } from "../modules/core/overflow-menu.js";
 
 let requestFailedLabel = "";
 
@@ -82,6 +83,8 @@ function init() {
   const deleteCustomButton = root.querySelector("[data-phenomena-delete-action]");
   const deleteCuratedButton = root.querySelector("[data-phenomena-delete-curated-action]");
   const saveAsCuratedButton = root.querySelector("[data-phenomena-save-as-curated-action]");
+  const saveAsCustomButton = root.querySelector("[data-phenomena-save-as-custom-action]");
+  const overflowMenu = root.querySelector("[data-phenomena-editor-overflow]");
   const typeBadge = root.querySelector("[data-phenomena-type-badge]");
   const stateBadge = root.querySelector("[data-phenomena-state-badge]");
   const statusText = root.querySelector("[data-phenomena-status-text]");
@@ -181,7 +184,7 @@ function init() {
   }
 
   function isCuratedAdminRecord() {
-    return state.isAdmin && isCuratedRecord();
+    return Boolean(state.isAdmin) && isCuratedRecord();
   }
 
   function currentTypeKey() {
@@ -189,7 +192,8 @@ function init() {
   }
 
   function currentStateKey() {
-    if (isDirty()) {
+    const dirty = isDirty();
+    if (dirty) {
       return "unsaved";
     }
     if (isCuratedRecord() && record.lifecycle === "archived") {
@@ -226,35 +230,34 @@ function init() {
     if (!saveButton) {
       return;
     }
-    const allowWithoutDirty = state.editorMode === "set" && record.state !== "saved";
-    const disabled = pending || (!isDirty() && !allowWithoutDirty);
+    const dirty = isDirty();
+    const isAdmin = Boolean(state.isAdmin);
+    const isCurated = isCuratedRecord();
+
+    // Admin+curated: hide save button when clean (saveAsCustom covers that case).
+    if (isAdmin && isCurated) {
+      saveButton.hidden = !dirty;
+    } else {
+      saveButton.hidden = false;
+    }
+
+    // Label: "Änderungen speichern" for admin+curated, "Speichern" otherwise.
+    if (saveButtonLabel) {
+      saveButtonLabel.textContent = (isAdmin && isCurated) ? state.labels.updateCurated : state.labels.save;
+    }
+
+    // Disabled state.
+    let disabled;
+    if (saveButton.hidden) {
+      disabled = true;
+    } else if (isAdmin) {
+      disabled = pending;
+    } else {
+      const allowWithoutDirty = state.editorMode === "set" && record.state !== "saved";
+      disabled = pending || (!dirty && !allowWithoutDirty);
+    }
     saveButton.disabled = disabled;
     saveButton.classList.toggle("is-disabled", disabled);
-    if (saveButtonLabel) {
-      saveButtonLabel.textContent = isCuratedAdminRecord() ? state.labels.updateCurated : state.labels.save;
-    }
-  }
-
-  async function performSave() {
-    if (pending) {
-      return;
-    }
-    if (!state.isAuthenticated) {
-      window.location.href = state.loginHref;
-      return;
-    }
-    pending = true;
-    syncStatus();
-    try {
-      await persistCurrentRecord();
-      showSnackbar(state.labels.saveSuccess, "success");
-      closeDialog(confirmDialog);
-    } catch (error) {
-      showSnackbar(error.message || state.labels.saveError, "error");
-    } finally {
-      pending = false;
-      syncStatus();
-    }
   }
 
   function syncStatus() {
@@ -303,7 +306,10 @@ function init() {
         curatedHint.hidden = true;
       }
     }
+
+    // Discard button: visible when dirty (both admin and user).
     if (discardButton) {
+      discardButton.hidden = !dirty;
       const discardLabel = isCurated ? state.labels.discardChanges : state.labels.discard;
       const label = discardButton.querySelector(".pm-action-button__label");
       if (label) {
@@ -311,23 +317,47 @@ function init() {
       } else {
         discardButton.textContent = discardLabel;
       }
-      discardButton.hidden = !isAdmin && !dirty;
     }
-    if (deleteCustomButton) {
-      deleteCustomButton.hidden = !isSavedCustom;
-      deleteCustomButton.disabled = pending;
-      deleteCustomButton.classList.toggle("is-disabled", pending);
+
+    // "Als Custom Set speichern" (admin+curated only, always visible for admin+curated).
+    if (saveAsCustomButton) {
+      saveAsCustomButton.hidden = !(isAdmin && isCurated);
+      saveAsCustomButton.disabled = pending;
+      saveAsCustomButton.classList.toggle("is-disabled", pending);
     }
-    if (deleteCuratedButton) {
-      deleteCuratedButton.hidden = !(isAdmin && isCurated);
-      deleteCuratedButton.disabled = pending;
-      deleteCuratedButton.classList.toggle("is-disabled", pending);
-    }
+
+    // "Als kuratiertes Set speichern" (admin+custom only).
     if (saveAsCuratedButton) {
       saveAsCuratedButton.hidden = !(isAdmin && isCustom);
       saveAsCuratedButton.disabled = pending;
       saveAsCuratedButton.classList.toggle("is-disabled", pending);
     }
+
+    // Overflow: "Kuratiertes Set löschen" (admin+curated).
+    if (deleteCuratedButton) {
+      deleteCuratedButton.hidden = !(isAdmin && isCurated);
+      deleteCuratedButton.disabled = pending;
+      deleteCuratedButton.classList.toggle("is-disabled", pending);
+    }
+
+    // Overflow: "Set löschen" (saved custom set – admin or user).
+    if (deleteCustomButton) {
+      deleteCustomButton.hidden = !isSavedCustom;
+      deleteCustomButton.disabled = pending;
+      deleteCustomButton.classList.toggle("is-disabled", pending);
+    }
+
+    // Show overflow menu only when at least one overflow action is visible.
+    if (overflowMenu) {
+      const hasOverflowAction =
+        (deleteCuratedButton && !deleteCuratedButton.hidden) ||
+        (deleteCustomButton && !deleteCustomButton.hidden);
+      overflowMenu.hidden = !hasOverflowAction;
+      if (hasOverflowAction && pending) {
+        overflowMenu.open = false;
+      }
+    }
+
     syncHeadingTitle();
     syncSaveAction();
   }
@@ -548,66 +578,91 @@ function init() {
     renderAll();
   }
 
-  async function persistCurrentRecord() {
-    const label = (titleInput?.value || "").trim();
-    const note = (noteInput?.value || "").trim();
-    const itemsPayload = selectedItems.map((item, index) => ({
+  function buildItemsPayload() {
+    return selectedItems.map((item, index) => ({
       task: item.task,
       item_id: item.item_id,
       sort_order: index + 1,
       ...(item.segment_id ? { segment_id: item.segment_id } : {}),
       ...(item.note ? { note: item.note } : {}),
     }));
+  }
 
-    let setId = record.set_id;
+  // Creates a private copy of the current curated set with current changes.
+  // Used for: user saving curated set, admin "Als Custom Set speichern".
+  async function persistCurrentRecordAsCopy() {
+    const label = (titleInput?.value || "").trim();
+    const note = (noteInput?.value || "").trim();
+
+    const created = await requestJson(state.createSetUrl, {
+      method: "POST",
+      body: {
+        corpus_language: state.languageSlug,
+        source_curated_set_id: record.set_id || null,
+        label,
+        note,
+      },
+    });
+    const setId = created?.set?.set_id;
+    if (!setId) {
+      throw new Error(state.labels.saveError);
+    }
+
+    await requestJson(buildUrl(state.putItemsUrlTemplate, setId), {
+      method: "PUT",
+      body: { items: buildItemsPayload() },
+    });
+
+    const patched = await requestJson(buildUrl(state.patchSetUrlTemplate, setId), {
+      method: "PATCH",
+      body: { label, note, state: "saved" },
+    });
+    record = patched.set;
+    selectedItems = (record.items || []).slice().sort((l, r) => (l.sort_order || 0) - (r.sort_order || 0));
+    baseline = snapshot();
+    saveCompleted = true;
+    state.editorMode = "set";
+    if (record.set_id) {
+      window.history.replaceState({}, "", buildUrl(state.setEditorHrefTemplate, record.set_id));
+    }
+    renderAll();
+  }
+
+  // Updates the curated set in-place (admin only) or saves a custom set.
+  async function persistCurrentRecord() {
+    const label = (titleInput?.value || "").trim();
+    const note = (noteInput?.value || "").trim();
+
     if (isCuratedAdminRecord()) {
       const updated = await requestJson(buildUrl(state.adminUpdateCuratedSetUrlTemplate, record.set_id), {
         method: "PUT",
         body: {
           label,
           note,
-          items: itemsPayload,
+          items: buildItemsPayload(),
         },
       });
       record = updated.set;
-      selectedItems = (record.items || []).slice().sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0));
+      selectedItems = (record.items || []).slice().sort((l, r) => (l.sort_order || 0) - (r.sort_order || 0));
       baseline = snapshot();
       saveCompleted = true;
       renderAll();
       return;
     }
-    if (state.editorMode === "preset") {
-      const created = await requestJson(state.createSetUrl, {
-        method: "POST",
-        body: {
-          corpus_language: state.languageSlug,
-          source_curated_set_id: record.set_id || null,
-          label,
-          note,
-        },
-      });
-      setId = created?.set?.set_id;
-      if (!setId) {
-        throw new Error(state.labels.saveError);
-      }
-      state.editorMode = "set";
-    }
 
+    // Custom set: save in-place.
+    const setId = record.set_id;
     await requestJson(buildUrl(state.putItemsUrlTemplate, setId), {
       method: "PUT",
-      body: { items: itemsPayload },
+      body: { items: buildItemsPayload() },
     });
 
     const patched = await requestJson(buildUrl(state.patchSetUrlTemplate, setId), {
       method: "PATCH",
-      body: {
-        label,
-        note,
-        state: "saved",
-      },
+      body: { label, note, state: "saved" },
     });
     record = patched.set;
-    selectedItems = (record.items || []).slice().sort((left, right) => (left.sort_order || 0) - (right.sort_order || 0));
+    selectedItems = (record.items || []).slice().sort((l, r) => (l.sort_order || 0) - (r.sort_order || 0));
     baseline = snapshot();
     saveCompleted = true;
     if (record.set_id) {
@@ -659,6 +714,72 @@ function init() {
     }, "standard");
   }
 
+  async function performSave() {
+    if (pending) {
+      return;
+    }
+    if (!state.isAuthenticated) {
+      window.location.href = state.loginHref;
+      return;
+    }
+    pending = true;
+    syncStatus();
+    try {
+      await persistCurrentRecord();
+      showSnackbar(state.labels.saveSuccess, "success");
+      closeDialog(confirmDialog);
+    } catch (error) {
+      showSnackbar(error.message || state.labels.saveError, "error");
+    } finally {
+      pending = false;
+      syncStatus();
+    }
+  }
+
+  async function performSaveAsCopy() {
+    if (pending) {
+      return;
+    }
+    if (!state.isAuthenticated) {
+      window.location.href = state.loginHref;
+      return;
+    }
+    pending = true;
+    syncStatus();
+    try {
+      await persistCurrentRecordAsCopy();
+      showSnackbar(state.labels.saveSuccess, "success");
+      closeDialog(confirmDialog);
+    } catch (error) {
+      showSnackbar(error.message || state.labels.saveError, "error");
+    } finally {
+      pending = false;
+      syncStatus();
+    }
+  }
+
+  async function performSaveAsCopySilent() {
+    if (pending) {
+      return;
+    }
+    if (!state.isAuthenticated) {
+      window.location.href = state.loginHref;
+      return;
+    }
+    pending = true;
+    syncStatus();
+    try {
+      await persistCurrentRecordAsCopy();
+      showSnackbar(state.labels.saveAsCustomSuccess, "success");
+      closeDialog(confirmDialog);
+    } catch (error) {
+      showSnackbar(error.message || state.labels.saveError, "error");
+    } finally {
+      pending = false;
+      syncStatus();
+    }
+  }
+
   async function performDeleteCustom() {
     if (!record.set_id || isCuratedRecord()) {
       return;
@@ -685,13 +806,7 @@ function init() {
     const label = (titleInput?.value || record.label || "").trim();
     const note = (noteInput?.value || "").trim();
     openConfirm(state.labels.saveAsCuratedTitle, state.labels.saveAsCuratedMessage, state.labels.saveAsCurated, async () => {
-      const itemsPayload = selectedItems.map((item, index) => ({
-        task: item.task,
-        item_id: item.item_id,
-        sort_order: index + 1,
-        ...(item.segment_id ? { segment_id: item.segment_id } : {}),
-        ...(item.note ? { note: item.note } : {}),
-      }));
+      const itemsPayload = buildItemsPayload();
 
       let newCuratedSet;
       if (record.set_id && state.editorMode === "set") {
@@ -732,6 +847,7 @@ function init() {
   noteInput.value = record.note || "";
   baseline = snapshot();
   renderAll();
+  initOverflowMenus();
 
   titleInput.addEventListener("input", () => {
     saveCompleted = false;
@@ -866,11 +982,23 @@ function init() {
         state.labels.saveCopyTitle,
         state.labels.saveCopyMessage,
         state.labels.save,
-        performSave,
+        performSaveAsCopy,
       );
       return;
     }
     await performSave();
+  });
+
+  saveAsCustomButton?.addEventListener("click", async () => {
+    if (pending || !state.isAdmin || !isCuratedRecord()) {
+      return;
+    }
+    openConfirm(
+      state.labels.saveAsCustomTitle,
+      state.labels.saveAsCustomMessage,
+      state.labels.saveAsCustom,
+      performSaveAsCopySilent,
+    );
   });
 
   discardButton?.addEventListener("click", async () => {

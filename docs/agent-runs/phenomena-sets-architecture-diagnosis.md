@@ -485,55 +485,75 @@ def test_archived_curated_set_shows_correct_status_label(phenomena_app):
 
 ---
 
-## 16. Präzisierung 2026-05-28 – USER-Aktionsmatrix implementiert
+## 16. Präzisierung 2026-05-28 – Finale Button-/Action-Logik (USER + ADMIN)
 
-Die frühere Diagnose (Abschnitte 6 und 9) beschrieb den Ist-Zustand. Die folgenden Festlegungen wurden am 2026-05-28 implementiert und ersetzen die alten Beschreibungen für den USER-Bereich.
+Die Abschnitte 6 und 9 enthielten den historischen Ist-Zustand. Dieser Abschnitt beschreibt den finalen implementierten Stand nach zwei Runs (USER-Matrix + ADMIN-Matrix).
 
 ### Übersicht (USER)
 
 - **Kuratierte Sets** zeigen für USER ausschließlich **„Ansehen"** (Navigation Pill).
-- **„Als eigenes Set bearbeiten"** ist für USER in der Übersicht **nicht sichtbar** – weder als Link noch als Copy-Button.
-- Technisch: `show_edit_as_own = False` für USER in `_overview_card_from_curated_set()`. Template prüft `{% if entry.show_edit_as_own %}`.
-- **Custom Sets** zeigen weiterhin „Bearbeiten" + Overflow-Menü (Umbenennen/Löschen).
-- ADMIN-Bereich bleibt unverändert.
+- **„Als eigenes Set bearbeiten"** ist für USER nicht sichtbar.
+- Technisch: Template prüft `{% if entry.edit_curated_href %}` (nur für ADMIN gesetzt).
+- **Custom Sets** zeigen „Bearbeiten" + Overflow-Menü (Umbenennen/Löschen).
+
+### Übersicht (ADMIN)
+
+- **Kuratierte Sets** zeigen: **„Ansehen"** + **„Bearbeiten"** (kein „Kuratiertes Set bearbeiten", kein „Als eigenes Set bearbeiten").
+- Technisch: Template nutzt `edit_curated_href` (nur für ADMIN gesetzt) und zeigt es mit Label `common.actions.edit`.
+- **Custom Sets**: Bearbeiten + Overflow.
 
 ### Editor (USER)
 
-| Zustand | Speichern | Änderungen verwerfen | Set löschen | Admin-Curated-Buttons |
-|---|---|---|---|---|
-| Kuratiertes Set, clean | Deaktiviert | Versteckt | Versteckt | Nie sichtbar |
-| Kuratiertes Set, dirty | Aktiv | Sichtbar | Versteckt | Nie sichtbar |
-| Neues Set (draft), clean | Aktiv | Versteckt | Versteckt | Nie sichtbar |
-| Neues Set (draft), dirty | Aktiv | Sichtbar | Versteckt | Nie sichtbar |
-| Gespeichertes Custom Set, clean | Deaktiviert | Versteckt | Sichtbar | Nie sichtbar |
-| Gespeichertes Custom Set, dirty | Aktiv | Sichtbar | Sichtbar | Nie sichtbar |
-| Custom-Kopie aus curated | wie gespeichertes Custom Set | – | – | Nie sichtbar |
+| Zustand | Hauptleiste | Overflow |
+|---|---|---|
+| Kuratiertes Set, clean | Speichern (disabled) | – |
+| Kuratiertes Set, dirty | Änderungen verwerfen, Speichern → Confirm-Dialog für Custom-Kopie | – |
+| Neues Set (draft) | Speichern | – |
+| Gespeichertes Custom Set, dirty | Änderungen verwerfen, Speichern | Set löschen |
+| Gespeichertes Custom Set, clean | Speichern (disabled) | Set löschen |
 
-**Speichern-Confirm-Dialog (USER + kuratiertes Set, dirty):**
-- USER klickt „Speichern" → Confirm-Dialog erscheint.
-- Dialog erklärt: Das kuratierte Set wird nicht verändert, Änderungen werden als eigenes Set gespeichert.
-- Nach Bestätigung: eigene Custom-Kopie wird erstellt (POST /api/research/sets mit `source_curated_set_id`).
-- Provenienz-Link (`source_curated_set_id`) wird jetzt korrekt übergeben.
+- USER sieht keine Admin-/Curated-Aktionsbuttons (serverseitig nicht gerendert).
+- Discard-Button: `discardButton.hidden = !dirty` (nur wenn dirty).
+- curatedHint: nur sichtbar wenn dirty.
+- Speichern von kuratiertem Set → Confirm-Dialog → eigene Custom-Kopie (POST /sets mit `source_curated_set_id`).
 
-**Hinweistext (curatedHint):**
-- Zeigt für USER **nur wenn dirty** (war zuvor dauerhaft sichtbar).
-- Text wurde präzisiert: „Beim Speichern wird eine eigene Kopie angelegt – das kuratierte Original bleibt unverändert."
-- Der wichtigste Hinweis steht im Speichern-Confirm-Dialog.
+### Editor (ADMIN)
 
-**Admin-Curated-Buttons im Editor:**
-- `data-phenomena-delete-curated-action` und `data-phenomena-save-as-curated-action` bleiben im Template (JS-Visibility-Ansatz).
-- Template setzt `hidden`-Attribut als Standard. JS-`syncStatus()` zeigt/versteckt nach `isAdmin`-Flag.
-- USER sieht diese Buttons nie (JS hält `hidden` aufrecht, da `isAdmin=false`).
+| Zustand | Hauptleiste | Overflow |
+|---|---|---|
+| Kuratiertes Set, clean | Als Custom Set speichern | Kuratiertes Set löschen |
+| Kuratiertes Set, dirty | Änderungen verwerfen, Als Custom Set speichern, Änderungen speichern | Kuratiertes Set löschen |
+| Neues Custom Set | Speichern, Als kuratiertes Set speichern | – |
+| Gespeichertes Custom Set, dirty | Änderungen verwerfen, Speichern, Als kuratiertes Set speichern | Set löschen |
+| Gespeichertes Custom Set, clean | Als kuratiertes Set speichern | Set löschen |
 
-**Discard-Button:**
-- Template startet mit `hidden`-Attribut.
-- `syncStatus()` berechnet: `discardButton.hidden = !isAdmin && !dirty`.
-- Admin: immer sichtbar. USER: nur sichtbar wenn dirty.
+- „Änderungen speichern" (war: „Kuratiertes Set aktualisieren") → aktualisiert kuratiertes Set in-place.
+- „Als Custom Set speichern" → erstellt private Kopie mit aktuellem Stand; eigene Custom-Route.
+- „Als kuratiertes Set speichern" → publiziert Custom-Set als neues kuratiertes Set.
+- Delete-Aktionen nur im Overflow, mit Confirm-Dialog.
 
-### Nicht-Ziele (diese Implementierung)
+### Overflow-Menü
 
-- Admin-Bereich wurde nicht neu gestaltet.
-- Keine neuen Admin-Flows.
+- Beide Pages (Overview, Editor) nutzen `<details data-overflow-menu>`.
+- Utility `app/static/js/modules/core/overflow-menu.js` steuert:
+  - Klick außerhalb → schließt alle offenen Menus.
+  - Escape → schließt, Fokus zurück zu Summary.
+  - Nur ein Menu gleichzeitig offen.
+  - Klick auf Menü-Aktion → schließt Menu.
+- `aria-expanded` wird automatisch vom Browser für `<details>/<summary>` verwaltet.
+
+### Technische Architektur (final)
+
+- Admin-only Buttons (`delete-curated`, `save-as-custom`, `save-as-curated`) werden serverseitig NUR für ADMIN gerendert (`{% if promat_page.is_admin %}`).
+- `is_admin` wird von Python-View-Buildern ins Page-Dict gesetzt.
+- `syncStatus()` deklariert `const dirty = isDirty()` als erste Zeile (Regression-Schutz).
+- Alle Admin-Buttons starten `hidden`; JS zeigt/versteckt je nach Kontext.
+- Overflow-Container startet `hidden`; JS zeigt ihn, wenn mindestens eine Overflow-Aktion sichtbar.
+- `source_curated_set_id` ist Herkunfts-Metadatum, nicht aktuelle Sichtbarkeit.
+
+### Nicht-Ziele
+
+- Keine neuen Admin-Flows außer dem Beschriebenen.
 - Keine Backend-Rechte geändert.
 - Keine DB-Migration erforderlich.
 - `phenomena_presets.json` Legacy-Status bleibt unverändert.

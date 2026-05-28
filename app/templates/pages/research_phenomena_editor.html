@@ -34,14 +34,9 @@
             <span class="pm-action-button__label">{{ t('research.phenomena.editor.discard') }}</span>
           </button>
           {% if promat_page.is_admin %}
-          <button type="button" class="pm-action-button pm-action-button--danger pm-action-button--medium" data-phenomena-delete-curated-action hidden>
-            <span class="pm-action-button__label">{{ t('research.phenomena.editor.delete_curated') }}</span>
+          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-save-as-custom-action hidden>
+            <span class="pm-action-button__label">{{ t('research.phenomena.editor.save_as_custom') }}</span>
           </button>
-          {% endif %}
-          <button type="button" class="pm-action-button pm-action-button--danger pm-action-button--medium" data-phenomena-delete-action hidden>
-            <span class="pm-action-button__label">{{ t('research.phenomena.editor.delete') }}</span>
-          </button>
-          {% if promat_page.is_admin %}
           <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-save-as-curated-action hidden>
             <span class="pm-action-button__label">{{ t('research.phenomena.editor.save_as_curated') }}</span>
           </button>
@@ -49,6 +44,19 @@
           <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-save-action>
             <span class="pm-action-button__label" data-phenomena-save-label>{{ t('common.actions.save') }}</span>
           </button>
+          <details class="pm-phenomena-overflow" data-overflow-menu data-phenomena-editor-overflow hidden>
+            <summary class="pm-phenomena-overflow__toggle" aria-label="{{ t('common.actions.more') }}">⋯</summary>
+            <div class="pm-phenomena-overflow__menu">
+              {% if promat_page.is_admin %}
+              <button type="button" class="pm-phenomena-overflow__action pm-phenomena-overflow__action--danger" data-phenomena-delete-curated-action hidden>
+                {{ t('research.phenomena.editor.delete_curated') }}
+              </button>
+              {% endif %}
+              <button type="button" class="pm-phenomena-overflow__action pm-phenomena-overflow__action--danger" data-phenomena-delete-action hidden>
+                {{ t('research.phenomena.editor.delete') }}
+              </button>
+            </div>
+          </details>
         </div>
       </div>
 
