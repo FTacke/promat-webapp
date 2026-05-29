@@ -262,6 +262,8 @@ textarea:focus-visible {
 
 .pm-icon-mask--menu {
   --pm-icon-mask-source: var(--pm-icon-menu);
+  width: 20px;
+  height: 20px;
 }
 
 .pm-icon-mask--theme[data-mode="light"] {
@@ -9478,7 +9480,6 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   .promat-topbar__language-link {
     min-width: 1.72rem;
     padding-inline: 0.04rem;
-    font-size: 0.72rem;
   }
 
   .promat-topbar__language-separator {
