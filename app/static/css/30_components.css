@@ -4755,7 +4755,6 @@ body[data-page="login"] .pm-auth-secondary--card {
 
 .pm-phenomena-editor__title-row {
   gap: 0.46rem;
-  max-width: min(46rem, 100%);
   padding: 0.22rem 0.4rem 0.22rem 0.55rem;
   border-radius: 0.82rem;
   box-shadow: 0 0 0 1px var(--pm-border-subtle);
@@ -4806,15 +4805,6 @@ body[data-page="login"] .pm-auth-secondary--card {
   gap: 0.94rem;
 }
 
-.pm-phenomena-editor__header {
-  gap: 0.95rem 1.2rem;
-}
-
-.pm-phenomena-editor__header-main {
-  gap: 0.46rem;
-  max-width: min(44rem, 100%);
-}
-
 .pm-phenomena-editor__status-row {
   gap: 0.46rem;
 }
@@ -4837,31 +4827,6 @@ body[data-page="login"] .pm-auth-secondary--card {
   color: var(--book-muted);
   font-size: 0.9rem;
   max-width: 44rem;
-}
-
-.pm-phenomena-editor__header-actions {
-  justify-content: end;
-  gap: 0.55rem;
-}
-
-.pm-phenomena-editor__header-actions > * {
-  min-height: 2.35rem;
-}
-
-.pm-phenomena-editor__header-actions > button:disabled,
-.pm-phenomena-editor__header-actions > .is-disabled {
-  border-color: var(--pm-state-muted-border);
-  background: var(--pm-state-muted-surface);
-  color: var(--pm-state-muted-text-strong);
-  cursor: default;
-  pointer-events: none;
-}
-
-.pm-phenomena-editor__note-card {
-  gap: 0.42rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--pm-border-subtle);
-  max-width: min(44rem, 100%);
 }
 
 .pm-phenomena-editor__note-field .pm-phenomena-field__label {

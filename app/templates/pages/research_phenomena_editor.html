@@ -10,59 +10,51 @@
 
   <section class="pm-feature-band pm-phenomena-editor" data-phenomena-editor-root>
     <div class="pm-container pm-container--tinted pm-phenomena-editor__workspace-head">
-      <div class="pm-phenomena-editor__header">
-        <div class="pm-phenomena-editor__header-main">
-          <label class="pm-phenomena-editor__title-field">
-            <span class="sr-only">{{ t('common.title') }}</span>
-            <span class="pm-phenomena-editor__title-row">
-              <input class="pm-phenomena-editor__title-input" type="text" data-phenomena-title-input>
-              <span class="pm-phenomena-editor__title-affordance" aria-hidden="true" title="{{ t('research.phenomena.editor.edit_name') }}">
-                <span class="pm-icon-mask pm-icon-mask--edit"></span>
-              </span>
-            </span>
-          </label>
-          <div class="pm-phenomena-editor__status-row">
-            <span class="pm-comparison-speaker-badge pm-phenomena-badge" data-phenomena-type-badge></span>
-            <span class="pm-comparison-speaker-badge pm-phenomena-badge" data-phenomena-state-badge hidden></span>
-            <span class="pm-phenomena-editor__status-text" data-phenomena-status-text></span>
-          </div>
-          <p class="pm-phenomena-editor__hint" data-phenomena-curated-hint hidden>{{ t('research.phenomena.editor.curated_hint') }}</p>
-        </div>
-
-        <div class="pm-phenomena-editor__header-actions">
-          <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-discard-action hidden>
-            <span class="pm-action-button__label">{{ t('research.phenomena.editor.discard') }}</span>
-          </button>
-          <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-save-action hidden>
-            <span class="pm-action-button__label" data-phenomena-save-label>{{ t('common.actions.save') }}</span>
-          </button>
-          <details class="pm-comparison-more-filters pm-phenomena-overflow" data-overflow-menu data-phenomena-editor-overflow hidden>
-            <summary class="pm-comparison-more-filters__summary pm-phenomena-overflow__toggle" aria-label="{{ t('common.actions.more') }}">⋯</summary>
-            <div class="pm-comparison-more-filters__body pm-phenomena-overflow__menu">
-              {% if promat_page.is_admin %}
-              <button type="button" class="pm-phenomena-overflow__action" data-phenomena-save-as-custom-action hidden>
-                {{ t('research.phenomena.editor.save_as_custom') }}
-              </button>
-              <button type="button" class="pm-phenomena-overflow__action" data-phenomena-save-as-curated-action hidden>
-                {{ t('research.phenomena.editor.save_as_curated') }}
-              </button>
-              <button type="button" class="pm-phenomena-overflow__action pm-phenomena-overflow__action--danger" data-phenomena-delete-curated-action hidden>
-                {{ t('research.phenomena.editor.delete_curated') }}
-              </button>
-              {% endif %}
-              <button type="button" class="pm-phenomena-overflow__action pm-phenomena-overflow__action--danger" data-phenomena-delete-action hidden>
-                {{ t('research.phenomena.editor.delete') }}
-              </button>
-            </div>
-          </details>
-        </div>
+      <label class="pm-phenomena-editor__title-field">
+        <span class="sr-only">{{ t('common.title') }}</span>
+        <span class="pm-phenomena-editor__title-row">
+          <input class="pm-phenomena-editor__title-input" type="text" data-phenomena-title-input>
+          <span class="pm-phenomena-editor__title-affordance" aria-hidden="true" title="{{ t('research.phenomena.editor.edit_name') }}">
+            <span class="pm-icon-mask pm-icon-mask--edit"></span>
+          </span>
+        </span>
+      </label>
+      <div class="pm-phenomena-editor__status-row">
+        <span class="pm-comparison-speaker-badge pm-phenomena-badge" data-phenomena-type-badge></span>
+        <span class="pm-comparison-speaker-badge pm-phenomena-badge" data-phenomena-state-badge hidden></span>
+        <span class="pm-phenomena-editor__status-text" data-phenomena-status-text></span>
       </div>
-
-      <div class="pm-phenomena-editor__note-card">
-        <label class="pm-phenomena-editor__note-field">
-          <span class="pm-phenomena-field__label">{{ t('common.note') }}</span>
-          <textarea class="pm-phenomena-editor__note-input" rows="3" placeholder="{{ t('research.phenomena.editor.note_placeholder') }}" data-phenomena-note-input></textarea>
-        </label>
+      <p class="pm-phenomena-editor__hint" data-phenomena-curated-hint hidden>{{ t('research.phenomena.editor.curated_hint') }}</p>
+      <label class="pm-phenomena-editor__note-field">
+        <span class="pm-phenomena-field__label">{{ t('research.phenomena.editor.description') }}</span>
+        <textarea class="pm-phenomena-editor__note-input" rows="3" placeholder="{{ t('research.phenomena.editor.description_placeholder') }}" data-phenomena-note-input></textarea>
+      </label>
+      <div class="pm-phenomena-editor__action-bar pm-action-row pm-action-row--end">
+        <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" data-phenomena-discard-action hidden>
+          <span class="pm-action-button__label">{{ t('research.phenomena.editor.discard') }}</span>
+        </button>
+        <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" data-phenomena-save-action hidden>
+          <span class="pm-action-button__label" data-phenomena-save-label>{{ t('common.actions.save') }}</span>
+        </button>
+        <details class="pm-comparison-more-filters pm-phenomena-overflow" data-overflow-menu data-phenomena-editor-overflow hidden>
+          <summary class="pm-comparison-more-filters__summary pm-phenomena-overflow__toggle" aria-label="{{ t('common.actions.more') }}">⋯</summary>
+          <div class="pm-comparison-more-filters__body pm-phenomena-overflow__menu">
+            {% if promat_page.is_admin %}
+            <button type="button" class="pm-phenomena-overflow__action" data-phenomena-save-as-custom-action hidden>
+              {{ t('research.phenomena.editor.save_as_custom') }}
+            </button>
+            <button type="button" class="pm-phenomena-overflow__action" data-phenomena-save-as-curated-action hidden>
+              {{ t('research.phenomena.editor.save_as_curated') }}
+            </button>
+            <button type="button" class="pm-phenomena-overflow__action pm-phenomena-overflow__action--danger" data-phenomena-delete-curated-action hidden>
+              {{ t('research.phenomena.editor.delete_curated') }}
+            </button>
+            {% endif %}
+            <button type="button" class="pm-phenomena-overflow__action pm-phenomena-overflow__action--danger" data-phenomena-delete-action hidden>
+              {{ t('research.phenomena.editor.delete') }}
+            </button>
+          </div>
+        </details>
       </div>
     </div>
 
