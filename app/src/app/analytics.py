@@ -19,6 +19,29 @@ TRACKED_MATRIX_SECTIONS = {"research", "teaching"}
 TRACKED_UI_LANGS = {"de", "en"}
 TRACKED_CORPORA = {"spanish", "french", "german", "english"}
 
+# Substrings that identify automated clients. Checked case-insensitively against
+# the User-Agent header so that we don't inflate unique-visitor counts with bots
+# that don't persist cookies.
+_BOT_UA_KEYWORDS = (
+    "bot",
+    "crawler",
+    "spider",
+    "slurp",
+    "facebookexternalhit",
+    "preview",
+    "fetcher",
+    "scan",
+    "monitor",
+    "python-requests",
+    "go-http-client",
+    "curl/",
+    "wget/",
+    "axios/",
+    "node-fetch",
+    "libwww",
+    "okhttp",
+)
+
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
@@ -98,6 +121,9 @@ def _is_trackable_response() -> bool:
     if request.path in {"/favicon.ico", "/robots.txt", "/health", "/ready"}:
         return False
     if request.headers.get("HX-Request"):
+        return False
+    ua = (request.headers.get("User-Agent") or "").lower()
+    if any(kw in ua for kw in _BOT_UA_KEYWORDS):
         return False
     return True
 
@@ -240,8 +266,11 @@ def summarize_analytics(period: str) -> dict[str, object]:
         daily_rows = list(session.execute(daily_stmt).scalars().all())
         area_rows = list(session.execute(area_stmt).scalars().all())
 
+    # unique_visitors per daily row are genuine per-day uniques, but summing them
+    # across multiple days double-counts visitors who return on different days.
+    # We store this sum as visitor_day_sum so the UI can label it accurately.
     totals = {
-        "unique_visitors": sum(row.unique_visitors for row in daily_rows),
+        "visitor_day_sum": sum(row.unique_visitors for row in daily_rows),
         "page_views": sum(row.page_views for row in daily_rows),
         "days_with_activity": len(daily_rows),
     }

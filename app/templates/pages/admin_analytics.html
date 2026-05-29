@@ -19,8 +19,9 @@
 
     <section class="pm-admin-analytics__metrics" aria-label="{{ t('auth.admin_analytics.metrics_label') }}">
       <article class="pm-account-card">
-        <p class="pm-admin-field__label">{{ t('auth.admin_analytics.unique_visitors') }}</p>
-        <p class="pm-admin-analytics__metric-value">{{ analytics.totals.unique_visitors }}</p>
+        <p class="pm-admin-field__label">{{ t('auth.admin_analytics.visitor_day_sum') }}</p>
+        <p class="pm-admin-analytics__metric-value">{{ analytics.totals.visitor_day_sum }}</p>
+        <p class="pm-admin-field__meta">{{ t('auth.admin_analytics.visitor_day_sum_note') }}</p>
       </article>
       <article class="pm-account-card">
         <p class="pm-admin-field__label">{{ t('auth.admin_analytics.page_views') }}</p>

@@ -6620,6 +6620,7 @@ dialog.pm-dialog .pm-dialog__surface {
 
 .pm-action-row--end {
   justify-content: flex-end;
+  gap: 0.52rem;
 }
 
 .pm-object-summary {
