@@ -611,7 +611,20 @@ def test_goatcounter_script_is_not_rendered_without_production_config(auth_app: 
     assert "pronunciation-matters.goatcounter.com/count" not in html
 
 
-def test_goatcounter_script_renders_from_single_central_config(auth_app: Flask) -> None:
+def test_goatcounter_script_renders_on_public_page_with_production_config(auth_app: Flask) -> None:
+    auth_app.config["GOATCOUNTER_URL"] = "https://pronunciation-matters.goatcounter.com/count"
+    client = auth_app.test_client()
+
+    response = client.get("/privacy?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count("gc.zgo.at/count.js") == 1
+    assert 'data-goatcounter="https://pronunciation-matters.goatcounter.com/count"' in html
+    assert 'src="https://gc.zgo.at/count.js"' in html
+
+
+def test_goatcounter_script_not_rendered_on_login_page_with_production_config(auth_app: Flask) -> None:
     auth_app.config["GOATCOUNTER_URL"] = "https://pronunciation-matters.goatcounter.com/count"
     client = auth_app.test_client()
 
@@ -619,9 +632,34 @@ def test_goatcounter_script_renders_from_single_central_config(auth_app: Flask) 
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert html.count("gc.zgo.at/count.js") == 1
-    assert 'data-goatcounter="https://pronunciation-matters.goatcounter.com/count"' in html
-    assert 'src="https://gc.zgo.at/count.js"' in html
+    assert "gc.zgo.at/count.js" not in html
+    assert "pronunciation-matters.goatcounter.com/count" not in html
+
+
+def test_goatcounter_script_not_rendered_on_auth_account_with_production_config(auth_app: Flask) -> None:
+    auth_app.config["GOATCOUNTER_URL"] = "https://pronunciation-matters.goatcounter.com/count"
+    client = auth_app.test_client()
+
+    _login(client, email="alice@example.org")
+    response = client.get("/auth/account?ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "gc.zgo.at/count.js" not in html
+    assert "pronunciation-matters.goatcounter.com/count" not in html
+
+
+def test_goatcounter_script_not_rendered_on_admin_analytics_page(auth_app: Flask) -> None:
+    auth_app.config["GOATCOUNTER_URL"] = "https://pronunciation-matters.goatcounter.com/count"
+    client = auth_app.test_client()
+
+    _login(client, email="admin@example.org")
+    response = client.get("/admin/analytics/page?ui_lang=de")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "gc.zgo.at/count.js" not in html
+    assert "pronunciation-matters.goatcounter.com/count" not in html
 
 
 def test_privacy_page_documents_goatcounter_usage(auth_app: Flask) -> None:

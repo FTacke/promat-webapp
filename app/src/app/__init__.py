@@ -269,12 +269,24 @@ def register_context_processors(app: Flask) -> None:
     @app.context_processor
     def inject_utilities():  # pragma: no cover - thin wrapper
         current_ui_lang = _resolve_request_ui_language()
+        _gc_url = app.config.get("GOATCOUNTER_URL", "")
+        _gc_path = request.path
+        _goatcounter_url = (
+            _gc_url
+            if _gc_url
+            and not (
+                _gc_path.startswith("/admin")
+                or _gc_path.startswith("/auth")
+                or _gc_path == "/login"
+            )
+            else ""
+        )
         return {
             "now": lambda: datetime.now(timezone.utc),
             "app_version": app.config.get("APP_VERSION", ""),
             "app_release_tag": app.config.get("APP_RELEASE_TAG", ""),
             "app_release_url": app.config.get("APP_RELEASE_URL", ""),
-            "goatcounter_url": app.config.get("GOATCOUNTER_URL", ""),
+            "goatcounter_url": _goatcounter_url,
             "format_page_title": format_page_title,
             "static_asset": static_asset,
             "current_ui_lang": current_ui_lang,
