@@ -174,6 +174,7 @@ def _editor_page(title: str, *, ui_lang: str, language_slug: str) -> dict[str, A
             context_title=corpus_title,
             context_root_href=url_for("public.research_language_root", ui_lang=ui_lang, language_slug=language_slug),
             ancestors=[{"label": get_research_page_label("phenomena", ui_lang), "href": overview_href}],
+            back_link={"label": get_research_page_label("phenomena", ui_lang), "href": overview_href},
         ),
     }
 

@@ -391,6 +391,53 @@ def test_build_phenomena_set_editor_page_loads_owned_set(phenomena_app: Flask) -
     assert page["client_state"]["initialRecord"]["note"] == "Merken"
 
 
+def test_build_phenomena_preset_editor_page_has_back_link_to_overview(phenomena_app: Flask) -> None:
+    curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/presets/{curated_set_id}"):
+        g.user = None
+        g.user_id = None
+        g.role = None
+        page = build_phenomena_preset_editor_page("de", "spanish", curated_set_id)
+
+    assert page is not None
+    back_link = page["content_header"]["back_link"]
+    assert back_link is not None
+    assert back_link["label"] == "Phänomene"
+    assert back_link["href"].endswith("/de/research/spanish/phenomena")
+
+
+def test_build_phenomena_set_editor_page_has_back_link_to_overview(phenomena_app: Flask) -> None:
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish", label="Mein Set 2")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label="Mein Set 2", state="saved")
+
+    with phenomena_app.test_request_context(f"/de/research/spanish/phenomena/sets/{draft.set_id}"):
+        g.user = "alice"
+        g.user_id = "user-1"
+        g.role = None
+        page = build_phenomena_set_editor_page("de", "spanish", draft.set_id)
+
+    assert page is not None
+    back_link = page["content_header"]["back_link"]
+    assert back_link is not None
+    assert back_link["label"] == "Phänomene"
+    assert back_link["href"].endswith("/de/research/spanish/phenomena")
+
+
+def test_editor_static_js_persist_save_as_copy_appends_modified_suffix() -> None:
+    source = PHENOMENA_EDITOR_JS.read_text(encoding="utf-8")
+    copy_start = source.index("async function persistSaveAsCopy()")
+    copy_end = source.index("async function withPending", copy_start)
+    copy_fn = source[copy_start:copy_end]
+
+    assert "MODIFIED_SUFFIX" in copy_fn
+    assert "(modifiziert)" in copy_fn
+    assert "isCuratedRecord()" in copy_fn
+    assert "endsWith(MODIFIED_SUFFIX)" in copy_fn
+    assert "titleInput.value = label" in copy_fn
+    assert "label === originalLabel" in copy_fn
+
+
 def test_phenomena_pages_expose_english_labels_for_migrated_surfaces(phenomena_app: Flask) -> None:
     curated_set_id = phenomena_app.config["TEST_CURATED_SET_ID"]
     with phenomena_app.test_request_context("/en/research/spanish/phenomena"):

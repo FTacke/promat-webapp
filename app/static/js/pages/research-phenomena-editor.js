@@ -595,8 +595,16 @@ function init() {
   // Create a private copy of the current (curated) set with current edits.
   // Used for: user saving curated set, admin "Als Custom Set speichern".
   async function persistSaveAsCopy() {
-    const label = (titleInput?.value || "").trim();
+    const originalLabel = (record.label || "").trim();
+    let label = (titleInput?.value || "").trim();
     const note = (noteInput?.value || "").trim();
+
+    // Auto-append the modified suffix when the user hasn't renamed the set.
+    const MODIFIED_SUFFIX = " (modifiziert)";
+    if (label && label === originalLabel && isCuratedRecord() && !label.endsWith(MODIFIED_SUFFIX)) {
+      label = label + MODIFIED_SUFFIX;
+      if (titleInput) titleInput.value = label;
+    }
 
     const created = await requestJson(state.createSetUrl, {
       method: "POST",

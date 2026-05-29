@@ -4748,6 +4748,7 @@ body[data-page="login"] .pm-auth-secondary--card {
 }
 
 .pm-phenomena-editor__title-input:focus-visible {
+  outline: none;
   border: 0;
   box-shadow: none;
 }
@@ -4755,14 +4756,20 @@ body[data-page="login"] .pm-auth-secondary--card {
 .pm-phenomena-editor__title-row {
   gap: 0.46rem;
   max-width: min(46rem, 100%);
-  padding: 0.18rem 0.2rem 0.18rem 0;
+  padding: 0.22rem 0.4rem 0.22rem 0.55rem;
   border-radius: 0.82rem;
-  transition: background var(--promat-transition-fast);
+  box-shadow: 0 0 0 1px var(--pm-border-subtle);
+  transition: background var(--promat-transition-fast), box-shadow var(--promat-transition-fast);
 }
 
-.pm-phenomena-editor__title-field:hover .pm-phenomena-editor__title-row,
+.pm-phenomena-editor__title-field:hover .pm-phenomena-editor__title-row {
+  background: color-mix(in srgb, var(--pm-surface-hover) 70%, transparent);
+  box-shadow: 0 0 0 1.5px var(--pm-border-default);
+}
+
 .pm-phenomena-editor__title-field:focus-within .pm-phenomena-editor__title-row {
   background: color-mix(in srgb, var(--pm-surface-hover) 70%, transparent);
+  box-shadow: 0 0 0 2px var(--book-accent), 0 0 0 5px color-mix(in srgb, var(--pm-surface-accent-soft) 60%, transparent);
 }
 
 .pm-phenomena-editor__title-affordance {
