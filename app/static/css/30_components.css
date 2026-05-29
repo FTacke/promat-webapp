@@ -8458,10 +8458,13 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
 
   .landing-more-inline {
     display: inline;
-    color: var(--book-accent);
+    font-family: var(--pm-type-reading-family);
+    font-size: var(--pm-landing-intro-size-mobile);
+    line-height: var(--pm-landing-intro-line-mobile);
+    font-weight: 400;
+    letter-spacing: 0;
+    color: currentColor;
     text-decoration: underline;
-    text-underline-offset: 0.2em;
-    text-decoration-thickness: 1px;
   }
 }
 
