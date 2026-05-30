@@ -275,11 +275,8 @@ function bindUserMenu(userMenuRoot) {
 function initUserMenu() {
   const userMenuRoot = document.querySelector("[data-user-menu-root]");
   if (!bindUserMenu(userMenuRoot)) {
-    console.log("[TopAppBar] User menu not found on this page");
     return;
   }
-
-  console.log("[TopAppBar] User menu initialized");
 }
 
 /**

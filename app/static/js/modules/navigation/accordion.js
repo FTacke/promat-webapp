@@ -34,5 +34,4 @@ export function initAccordion() {
     );
   });
 
-  console.log("[accordion] Initialized", allDetails.length, "details elements");
 }

@@ -14,7 +14,6 @@ const pageInits = {
       const mod = await import('../../pages/atlas.js');
       if (mod?.init) {
         await mod.init();
-        console.log('[page-router] Atlas initialized');
       }
     } catch (err) {
       console.error('[page-router] Failed to initialize atlas:', err);
@@ -29,7 +28,6 @@ export function initPageRouter() {
   
   const init = pageInits[page];
   if (init) {
-    console.log('[page-router] Initializing page:', page);
     init();
   }
 }
