@@ -1,9 +1,9 @@
 /**
- * MD3 Alert Utilities
- * 
- * Provides helper functions to create MD3-compliant alert banners
+ * Alert Utilities
+ *
+ * Provides helper functions to create pm-alert banners
  * for use in forms and other interactive components.
- * 
+ *
  * Usage:
  *   import { showAlert, clearAlert } from '/static/js/md3/alert-utils.js';
  *   showAlert(container, 'error', 'Fehler', 'Nachricht hier');
@@ -48,16 +48,14 @@ const ALERT_TITLES = {
 export function createAlertHTML(type, title, message, inline = true) {
   const icon = ALERT_ICONS[type] || 'info';
   const displayTitle = title || ALERT_TITLES[type] || '';
-  const inlineClass = inline
-    ? 'pm-alert--inline md3-alert--inline'
-    : 'pm-alert--banner md3-alert--banner';
-  
+  const inlineClass = inline ? 'pm-alert--inline' : 'pm-alert--banner';
+
   return `
-    <div class="pm-alert md3-alert pm-alert--${type} md3-alert--${type} ${inlineClass}" role="alert" aria-live="assertive">
-      <span class="material-symbols-rounded pm-alert__icon md3-alert__icon" aria-hidden="true">${icon}</span>
-      <div class="pm-alert__content md3-alert__content">
-        <p class="pm-alert__title md3-alert__title">${escapeHTML(displayTitle)}</p>
-        <p class="pm-alert__text md3-alert__text">${escapeHTML(message)}</p>
+    <div class="pm-alert pm-alert--${type} ${inlineClass}" role="alert" aria-live="assertive">
+      <span class="material-symbols-rounded pm-alert__icon" aria-hidden="true">${icon}</span>
+      <div class="pm-alert__content">
+        <p class="pm-alert__title">${escapeHTML(displayTitle)}</p>
+        <p class="pm-alert__text">${escapeHTML(message)}</p>
       </div>
     </div>
   `.trim();
@@ -151,7 +149,7 @@ export function escapeHTML(str) {
 
 // Also expose as window global for non-module scripts
 if (typeof window !== 'undefined') {
-  window.md3AlertUtils = {
+  window.pmAlertUtils = {
     createAlertHTML,
     showAlert,
     showError,

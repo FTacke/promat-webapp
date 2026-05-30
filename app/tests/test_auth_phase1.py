@@ -2380,8 +2380,8 @@ def test_access_request_page_does_not_load_removed_icon_cdns(auth_app: Flask) ->
     html = response.get_data(as_text=True)
     assert "fonts.googleapis.com" not in html
     assert "fonts.gstatic.com" not in html
-    assert "css/md3/components/typefaces.css" in html
-    assert "css/md3/components/material-symbols-fallback.css" in html
+    assert "css/typefaces.css" in html
+    assert "css/material-symbols.css" in html
     assert "cdnjs.cloudflare.com/ajax/libs/font-awesome" not in html
     assert "cdn.jsdelivr.net/npm/bootstrap-icons" not in html
 

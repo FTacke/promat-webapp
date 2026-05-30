@@ -1,0 +1,572 @@
+/* ============================================
+   Feedback Components — Alerts & Snackbars
+   ============================================
+   Migrated from app/static/css/md3/components/alerts.css
+   and app/static/css/md3/components/snackbar.css.
+   Class prefix changed from md3- to pm-; visual output unchanged.
+   Token references stay as-is (token bridge in 00_tokens.css covers them).
+   ============================================ */
+
+/* ============================================
+   1. Alert Base Container
+   ============================================ */
+.pm-alert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  border-left: 4px solid transparent;
+  align-items: start;
+  animation: alert-slide-down 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* Default: neutral surface */
+  background-color: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+}
+
+.pm-alert[hidden] {
+  display: none !important;
+}
+
+/* ============================================
+   2. Alert Layout Variants
+   ============================================ */
+
+/* Banner variant: Full-width for page/section alerts */
+.pm-alert--banner {
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
+  border-left-width: 6px;
+}
+
+/* Inline variant: Compact for form contexts */
+.pm-alert--inline {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+  border-left-width: 4px;
+}
+
+/* Field/message surface: inline alerts that should read like a deliberate
+   form-adjacent surface instead of a loose banner. */
+.pm-alert--field {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-inline-start-width: 4px;
+  border-inline-start-style: solid;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.pm-alert--field.pm-alert--error {
+  background-color: color-mix(
+    in srgb,
+    var(--md-sys-color-error-container) 96%,
+    var(--md-sys-color-surface) 4%
+  ) !important;
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 45%, var(--md-sys-color-outline-variant) 55%) !important;
+}
+
+/* ============================================
+   3. Alert Icon
+   ============================================ */
+.pm-alert__icon {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  font-size: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.pm-alert--inline .pm-alert__icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ============================================
+   4. Alert Content
+   ============================================ */
+.pm-alert__content {
+  display: contents;
+  flex-grow: 1;
+  min-width: 0; /* Allow text wrapping */
+}
+
+.pm-alert__content > * {
+  margin: 0;
+}
+
+/* Alert Title */
+.pm-alert__title {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  font-family: var(--md-sys-typescale-title-small-font-family, inherit);
+  font-size: var(--md-sys-typescale-title-small-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-title-small-font-weight, 500);
+  line-height: var(--md-sys-typescale-title-small-line-height, 1.25rem);
+  letter-spacing: var(--md-sys-typescale-title-small-letter-spacing, 0.1px);
+  margin: 0;
+}
+
+/* Alert Text */
+.pm-alert__text {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-family: var(--md-sys-typescale-body-medium-font-family, inherit);
+  font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-body-medium-font-weight, 400);
+  line-height: var(--md-sys-typescale-body-medium-line-height, 1.25rem);
+  letter-spacing: var(--md-sys-typescale-body-medium-letter-spacing, 0.25px);
+  margin: 0;
+}
+
+/* Alert Message (legacy alias for text) */
+.pm-alert__message {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-family: var(--md-sys-typescale-body-medium-font-family, inherit);
+  font-size: var(--md-sys-typescale-body-medium-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-body-medium-font-weight, 400);
+  line-height: var(--md-sys-typescale-body-medium-line-height, 1.25rem);
+  letter-spacing: var(--md-sys-typescale-body-medium-letter-spacing, 0.25px);
+  margin: 0;
+}
+
+/* Inline variant: tighter typography */
+.pm-alert--inline .pm-alert__title {
+  font-size: var(--md-sys-typescale-label-large-font-size, 0.875rem);
+  font-weight: var(--md-sys-typescale-label-large-font-weight, 500);
+  line-height: var(--md-sys-typescale-label-large-line-height, 1.25rem);
+}
+
+.pm-alert--inline .pm-alert__text,
+.pm-alert--inline .pm-alert__message {
+  font-size: var(--md-sys-typescale-body-small-font-size, 0.75rem);
+  line-height: var(--md-sys-typescale-body-small-line-height, 1rem);
+}
+
+.pm-alert--field .pm-alert__content {
+  gap: var(--space-1);
+}
+
+/* ============================================
+   5. Color Variants
+   ============================================ */
+
+/* Error Variant */
+.pm-alert--error {
+  background-color: var(--md-sys-color-error-container) !important;
+  border-left-color: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.pm-alert--error .pm-alert__icon {
+  color: var(--md-sys-color-error);
+}
+
+.pm-alert--error .pm-alert__title {
+  color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+.pm-alert--error .pm-alert__text,
+.pm-alert--error .pm-alert__message {
+  color: var(--md-sys-color-on-error-container, #410e0b);
+}
+
+/* Warning Variant */
+.pm-alert--warning {
+  background-color: var(--md-sys-color-warning-container);
+  border-left-color: var(--md-sys-color-warning);
+  color: var(--md-sys-color-on-warning-container);
+}
+
+.pm-alert--warning .pm-alert__icon {
+  color: var(--md-sys-color-warning);
+}
+
+.pm-alert--warning .pm-alert__title {
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+.pm-alert--warning .pm-alert__text,
+.pm-alert--warning .pm-alert__message {
+  color: var(--md-sys-color-on-warning-container, #4e2c00);
+}
+
+/* Info Variant */
+.pm-alert--info {
+  background-color: var(--md-sys-color-primary-container);
+  border-left-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.pm-alert--info .pm-alert__icon {
+  color: var(--md-sys-color-primary);
+}
+
+.pm-alert--info .pm-alert__title {
+  color: var(--md-sys-color-on-primary-container, #0d3c61);
+}
+
+.pm-alert--info .pm-alert__text,
+.pm-alert--info .pm-alert__message {
+  color: var(--md-sys-color-on-primary-container, #0d3c61);
+}
+
+/* Success Variant */
+.pm-alert--success {
+  background-color: color-mix(in srgb,
+    var(--md-sys-color-surface) 70%,
+    var(--md-sys-color-success-container, #e6f4ea) 30%
+  );
+  border-left-color: color-mix(in srgb,
+    var(--md-sys-color-outline) 40%,
+    var(--md-sys-color-success, #34a853) 60%
+  );
+  color: var(--md-sys-color-on-surface);
+}
+
+.pm-alert--success .pm-alert__icon {
+  color: color-mix(in srgb,
+    var(--md-sys-color-on-surface-variant) 30%,
+    var(--md-sys-color-success, #34a853) 70%
+  );
+}
+
+.pm-alert--success .pm-alert__title {
+  color: var(--md-sys-color-on-surface);
+}
+
+.pm-alert--success .pm-alert__text,
+.pm-alert--success .pm-alert__message {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ============================================
+   6. Field Support Text
+   ============================================ */
+.pm-field-support {
+  margin-top: var(--space-1);
+  padding-left: var(--space-4);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pm-field-support p {
+  margin: 0;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-letter-spacing);
+}
+
+/* ============================================
+   7. Field Error Messages
+   ============================================ */
+.pm-field-error {
+  margin-top: var(--space-1);
+  padding-left: var(--space-4);
+  color: var(--md-sys-color-error);
+  min-height: 0;
+  overflow: hidden;
+  transition: opacity 150ms ease-out, max-height 150ms ease-out;
+}
+
+.pm-field-error:empty {
+  display: none;
+}
+
+.pm-field-error p {
+  margin: 0;
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-letter-spacing);
+}
+
+/* pm-error-text: inline error styling */
+.pm-error-text {
+  color: var(--md-sys-color-error);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  font-weight: var(--md-sys-typescale-body-small-font-weight);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-letter-spacing);
+}
+
+/* ============================================
+   8. Animation
+   ============================================ */
+@keyframes alert-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   9. Responsive
+   ============================================ */
+@media (max-width: 480px) {
+  .pm-alert {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-3);
+  }
+
+  .pm-alert--banner {
+    padding: var(--space-3) var(--space-4);
+    border-left-width: 4px;
+  }
+
+  .pm-alert--inline {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .pm-alert__icon {
+    font-size: 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .pm-alert__title {
+    font-size: var(--md-sys-typescale-label-large-font-size);
+    font-weight: var(--md-sys-typescale-label-large-font-weight);
+    line-height: var(--md-sys-typescale-label-large-line-height);
+  }
+
+  .pm-alert__text,
+  .pm-alert__message {
+    font-size: var(--md-sys-typescale-body-small-font-size);
+    line-height: var(--md-sys-typescale-body-small-line-height);
+  }
+
+  .pm-field-support,
+  .pm-field-error {
+    padding-left: var(--space-3);
+  }
+}
+
+/* ============================================
+   10. Form Status Container
+   ============================================ */
+.pm-form-status {
+  margin-top: var(--space-3);
+}
+
+.pm-form-status:empty {
+  display: none;
+}
+
+/* Ensure alerts inside status container have no extra margin */
+.pm-form-status > .pm-alert:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   11. Alert Positioning Utilities
+   ============================================ */
+
+/* Alert above form (default behavior) */
+.pm-alert--above {
+  margin-bottom: var(--space-4);
+  margin-top: 0;
+}
+
+/* Alert below content */
+.pm-alert--below {
+  margin-top: var(--space-4);
+  margin-bottom: 0;
+}
+
+/* Alert inside card (uses card's internal spacing) */
+.pm-card__content > .pm-alert:first-child {
+  margin-top: 0;
+}
+
+.pm-card__content > .pm-alert:last-child {
+  margin-bottom: 0;
+}
+
+/* Dismissible alert (with close button) */
+.pm-alert--dismissible {
+  padding-right: var(--space-10);
+  position: relative;
+}
+
+.pm-alert__close {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  padding: var(--space-2);
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.pm-alert__close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.pm-alert__close .material-symbols-rounded {
+  font-size: 1.25rem;
+}
+
+/* ============================================
+   12. Screen Reader Only Status
+   ============================================ */
+.pm-sr-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================
+   Snackbar
+   ============================================ */
+
+.pm-snackbar {
+  position: fixed;
+  bottom: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: 2147483647;
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+
+  min-width: 288px;
+  max-width: min(560px, calc(100vw - var(--space-8)));
+
+  background: var(--md-sys-color-inverse-surface);
+  color: var(--md-sys-color-inverse-on-surface);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--elev-3);
+
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 200ms ease,
+              visibility 200ms ease;
+}
+
+.pm-snackbar.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.pm-snackbar__icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.pm-snackbar__message {
+  flex: 1;
+  font-size: var(--md-sys-typescale-body-medium-font-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+
+.pm-snackbar__action {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-inverse-primary);
+  font-size: var(--md-sys-typescale-label-large-font-size);
+  font-weight: var(--md-sys-typescale-label-large-font-weight);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color 150ms ease;
+}
+
+.pm-snackbar__action:hover {
+  background: color-mix(in srgb, var(--md-sys-color-inverse-on-surface) 8%, transparent);
+}
+
+/* Success Variant */
+.pm-snackbar--success {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.pm-snackbar--success .pm-snackbar__icon {
+  color: var(--md-sys-color-on-primary);
+}
+
+.pm-snackbar--success .pm-snackbar__action {
+  color: var(--md-sys-color-on-primary);
+}
+
+/* Error Variant */
+.pm-snackbar--error {
+  background: var(--md-sys-color-error);
+  color: var(--md-sys-color-on-error);
+}
+
+.pm-snackbar--error .pm-snackbar__icon {
+  color: var(--md-sys-color-on-error);
+}
+
+.pm-snackbar--error .pm-snackbar__action {
+  color: var(--md-sys-color-on-error);
+}
+
+/* Info Variant */
+.pm-snackbar--info {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+/* Warning Variant */
+.pm-snackbar--warning {
+  background: var(--md-sys-color-warning-container);
+  color: var(--md-sys-color-on-warning-container);
+}
+
+.pm-snackbar--warning .pm-snackbar__icon {
+  color: var(--md-sys-color-warning);
+}
+
+.pm-snackbar--warning .pm-snackbar__action {
+  color: var(--md-sys-color-on-warning-container);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .pm-snackbar {
+    left: var(--space-4);
+    right: var(--space-4);
+    transform: translateX(0) translateY(100px);
+    min-width: auto;
+  }
+
+  .pm-snackbar.visible {
+    transform: translateX(0) translateY(0);
+  }
+}

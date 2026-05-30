@@ -525,6 +525,87 @@ Phase 1 der MD3-Migration: Nicht-MD3-Dateien aus md3/ herauslösen.
 
 ---
 
+## Phase 1–2 Follow-up 2026-05-30
+
+**Commit zum Zeitpunkt der Ausführung:** `8bc98b562e29c5d301ff4a612625d5d0c2d48a6d`  
+**Arbeitsbaum vorher:** sauber (keine uncommitted Änderungen)  
+**Änderungen nicht committet** — Arbeitsbaum mit Änderungen hinterlassen für lokale Sichtprüfung.
+
+### Umgesetzt
+
+**Phase 1 — Nicht-MD3-Dateien herauslösen:**
+- `app/static/css/md3/components/typefaces.css` → `app/static/css/typefaces.css` (via `git mv`)
+- `app/static/css/md3/components/material-symbols-fallback.css` → `app/static/css/material-symbols.css` (via `git mv`)
+- `app/templates/base.html` angepasst: neue Pfade für beide Dateien eingebunden
+- Lade-Reihenfolge beibehalten: `typefaces.css` früh, `material-symbols.css` vor App-Komponenten
+
+**Phase 2 — Alerts/Snackbars nach App-CSS migrieren:**
+- `app/static/css/50_feedback.css` neu erstellt: 1:1-Migration aller Selektoren von `md3-*` auf `pm-*`
+- `app/templates/base.html`: `50_feedback.css` nach `40_cards.css` eingebunden
+- `app/templates/base.html`: Links auf `md3/components/alerts.css` und `md3/components/snackbar.css` entfernt
+- `app/static/js/md3/alert-utils.js`: Generierte Klassen von `pm-alert md3-alert ...` auf reine `pm-alert ...` umgestellt; `window.md3AlertUtils` → `window.pmAlertUtils`
+- `app/static/js/modules/core/snackbar.js`: Generierte Klassen von `pm-snackbar md3-snackbar ...` auf reine `pm-snackbar ...` umgestellt; Dismiss-Button-Selektor bereinigt; `window.MD3Snackbar` → `window.PMSnackbar`
+- `app/static/js/modules/auth/login.js`: Selektor und generierte Klassen auf reine `pm-*` umgestellt
+
+### Geänderte Dateien
+
+| Datei | Art der Änderung |
+|---|---|
+| `app/static/css/md3/components/typefaces.css` | Verschoben nach `app/static/css/typefaces.css` |
+| `app/static/css/md3/components/material-symbols-fallback.css` | Verschoben nach `app/static/css/material-symbols.css` |
+| `app/static/css/50_feedback.css` | Neu angelegt (migrated from alerts.css + snackbar.css) |
+| `app/templates/base.html` | 2× Pfad aktualisiert, 1× neuer Link, 2× Links entfernt |
+| `app/static/js/md3/alert-utils.js` | md3-* Klassen aus generiertem HTML entfernt |
+| `app/static/js/modules/core/snackbar.js` | md3-* Klassen aus generiertem HTML entfernt |
+| `app/static/js/modules/auth/login.js` | md3-* Klassen aus Selektor und generiertem HTML entfernt |
+| `app/tests/test_auth_phase1.py` | Test-Pfadassertionen auf neue CSS-Pfade aktualisiert |
+
+### Klassenmigration (vollständig)
+
+Alert: `md3-alert` → `pm-alert`, inkl. alle Varianten (`--error`, `--warning`, `--info`, `--success`, `--inline`, `--banner`, `--field`, `--above`, `--below`, `--dismissible`) und alle BEM-Elemente (`__icon`, `__content`, `__title`, `__text`, `__message`, `__close`).
+
+Weitere Alert-nahe Klassen: `md3-field-support` → `pm-field-support`, `md3-field-error` → `pm-field-error`, `md3-error-text` → `pm-error-text`, `md3-form-status` → `pm-form-status`, `md3-sr-status` → `pm-sr-status`.
+
+Snackbar: `md3-snackbar` → `pm-snackbar`, inkl. alle Varianten (`--success`, `--error`, `--info`, `--warning`) und alle BEM-Elemente (`__icon`, `__message`, `__action`).
+
+`.material-symbols-rounded` in beiden Komponenten: **unverändert**.
+
+### Referenzprüfung
+
+- Aktive md3-alert/md3-snackbar Referenzen in Templates, JS, App-CSS: **keine mehr**
+- Verbleibende md3-snackbar Referenzen: nur noch in den noch-auf-Disk-liegenden MD3-Quelldateien (`alerts.css`, `snackbar.css`) sowie in `motion.css:296` und `mobile-responsive.css:335` (beide noch geladen, Phase 5 Scope; betreffen aber keine aktiv erzeugten DOM-Elemente mehr)
+- CSS-Links für alle 4 migrierten Dateien auf neue Pfade aktualisiert
+- pm-* Zielklassen korrekt in JS und CSS vorhanden
+
+### Testergebnisse
+
+```
+667 passed, 0 failed, 120 warnings — 78s
+```
+
+Ruff: `All checks passed!`  
+CI Governance: `All governance checks passed.`
+
+### UI-Prüfung
+
+Lokale Browserprüfung steht aus — Änderungen im Arbeitsbaum hinterlassen für manuelle Sichtprüfung durch den Entwickler. Zu prüfen: Alerts, Snackbars, Login-Fehler, Material Symbols Icons, keine 404-Fehler für CSS/Fonts.
+
+### Bewusst nicht umgesetzt
+
+- **Phase 3**: Entfernung weiterer toter MD3-Dateien — nicht in diesem Run
+- **`app/static/js/auth/password_reset.js`**: Erzeugt keine Alert-Klassen direkt (nutzt `showError`/`showSuccess` aus `alert-utils.js`); verbleibende Referenz `.md3-outlined-textfield__icon--trailing` ist ein Textfield-Concern (Phase 5)
+- **`md3/tokens.css`**: Nicht entfernt — noch nicht sicher, ob alle Abhängigkeiten vollständig durch `00_tokens.css` abgedeckt
+- **`md3/components/motion.css`**, **`md3/components/mobile-responsive.css`**: Noch global geladen — globale Regeln aktiv (Phase 5)
+- **`md3/components/footer.css`**: Hat aktive `.pm-footer-shell` Regel — Phase 5
+- **Dateiumzug von `alert-utils.js`**: Datei verbleibt unter `app/static/js/md3/alert-utils.js` — Import-Pfade in Phase 4/5 bereinigen
+
+### Offene Risiken
+
+- `motion.css:296` und `mobile-responsive.css:335` referenzieren `.md3-snackbar` — inaktive Selektoren, kein DOM-Match mehr, aber technisch totes CSS in noch-geladenen Dateien
+- `window.pmAlertUtils` und `window.PMSnackbar` sind neue globale Namen — falls externe Skripte `window.md3AlertUtils` oder `window.MD3Snackbar` nutzen, brechen diese. In der Codebase nicht gefunden.
+
+---
+
 ## Abschluss
 
 | Metrik | Wert |
