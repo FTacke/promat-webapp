@@ -323,6 +323,56 @@ Risiko: Kein Code-Risiko; reine CI-Ergänzung.
 
 ---
 
+## Follow-up Cleanup 2026-05-30
+
+Zweiter Run im Anschluss an den initialen Audit. Umsetzung der drei als Low-Risk empfohlenen Punkte aus Abschnitt 11.
+
+### Umgesetzte Punkte
+
+#### 1. `auth-setup.js` — Console-Logs bereinigt
+- **Datei:** `app/static/js/auth-setup.js`
+- **Entfernt:** 12 `console.log`-Statements (Initialisierungs-Logs, Auth-Fetch-Log, Turbo-Event-Logs, Session-Status-Logs inkl. `[Auth] ✅ Authenticated as: ${data.user}`)
+- **Beibehalten:** `console.warn("[Auth] Error checking session:", error)` — legitime Fehlerwarnung
+- **Beibehalten:** Gesamte funktionale Logik (Fetch-Interceptor, Turbo-Handler, CSRF-Helper, `verifyAuth`, Export)
+- **Methode:** Datei vollständig neu geschrieben (nur Logging-Zeilen entfernt, kein Verhaltenseinfluss)
+
+#### 2. `test-adaptive-title.js` — aus Static-Verzeichnis entfernt
+- **Ursprung:** `app/static/js/modules/navigation/test-adaptive-title.js`
+- **Ziel:** `scripts/qa/test-adaptive-title.js`
+- **Methode:** `git mv` (Git verfolgt die Umbenennung)
+- **Referenzprüfung vor Aktion:** Keine Referenz in Templates, Python-Quellcode oder anderen JS-Dateien gefunden — sicher zu verschieben.
+
+#### 3. `router.js` — Dead-Code `atlas`-Eintrag entfernt
+- **Datei:** `app/static/js/modules/core/router.js`
+- **Entfernt:** `atlas: async () => { ... }` Eintrag in `pageInits` (referenzierte nicht existierende `pages/atlas.js`, kein `data-page="atlas"` in Templates)
+- **Beibehalten:** Allgemeine Router-Logik (`initPageRouter`), `console.error` im Catch-Block (entfiel mit dem Atlas-Eintrag), kommentierte Anleitung für künftige Einträge
+- **Referenzprüfung vor Aktion:** Kein `data-page="atlas"` und keine `atlas.js`-Datei gefunden — sicher zu entfernen.
+
+### Nicht umgesetzte Punkte
+
+Keine. Alle drei empfohlenen Low-Risk-Punkte wurden umgesetzt.
+
+### Verifikation
+
+| Kommando | Ergebnis |
+|----------|----------|
+| `python -m ruff check src/` | ✅ All checks passed |
+| `python -m pytest tests/ -x -q` | ✅ 644/644 passed, 120 warnings |
+| `python scripts/ci_governance_checks.py` | ✅ All governance checks passed |
+| `python -m mypy src/ --ignore-missing-imports` | ❌ Found 66 errors in 11 files — **unverändert pre-existing**, keine neuen Fehler durch diesen Run |
+
+### Offene Risiken
+
+Alle verbleibenden Findings aus dem initialen Audit bleiben offen und unverändert:
+- **Medium M-1:** 66 mypy-Typfehler (pre-existing, unverändert)
+- **Info I-1:** Google Fonts CDN (DSGVO-Aspekt, Produktentscheidung)
+- **Info I-2:** `passwords.env.template` reale E-Mail-Adresse als Default (minimal, Produktentscheidung)
+- **Info I-3:** CSS-Dual-Track (laufende Migration, kein akuter Bug)
+- **Info I-4:** `style-src 'unsafe-inline'` in CSP (Architektur-Abhängigkeit)
+- **Info I-5:** mypy `method-assign` für ProxyFix (bekanntes False Positive)
+
+---
+
 ## Anhang: Ausgeführte Kommandos (Zusammenfassung)
 
 ```

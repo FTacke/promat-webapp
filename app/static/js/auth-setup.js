@@ -7,8 +7,6 @@
  * This script MUST load before other app scripts.
  */
 
-console.log("[Auth Setup] Initializing...");
-
 // =============================================================================
 // 1. Intercept all fetch() calls to include credentials
 // =============================================================================
@@ -22,20 +20,8 @@ window.fetch = function (resource, config = {}) {
     config.credentials = "same-origin";
   }
 
-  // Log auth-related requests
-  if (typeof resource === "string" && resource.includes("/auth/")) {
-    console.log(
-      "[Auth Fetch]",
-      resource,
-      "with credentials:",
-      config.credentials,
-    );
-  }
-
   return originalFetch(resource, config);
 };
-
-console.log("[Auth Setup] ✅ Fetch interceptor installed");
 
 // =============================================================================
 // 2. Disable Turbo for authentication-related forms
@@ -49,7 +35,6 @@ document.addEventListener("turbo:before-fetch-request", (event) => {
     // Force full page reload for login (don't use Turbo cache)
     event.detail.fetchOptions.headers = event.detail.fetchOptions.headers || {};
     event.detail.fetchOptions.headers["Turbo-Force-Full-Page-Load"] = "true";
-    console.log("[Auth] Disabling Turbo caching for login");
   }
 });
 
@@ -58,7 +43,6 @@ document.addEventListener("turbo:submit-start", (event) => {
   const form = event.detail.formSubmission.form;
   if (form && form.action && (form.action.includes("/auth/login") || form.action.includes("/login"))) {
     form.setAttribute("data-turbo", "false");
-    console.log("[Auth] Turbo disabled for login form");
   }
 });
 
@@ -67,11 +51,8 @@ document.addEventListener("turbo:load", () => {
   const loginForms = document.querySelectorAll('form[action*="/auth/login"], form[action*="/login"]');
   loginForms.forEach((form) => {
     form.setAttribute("data-turbo", "false");
-    console.log("[Auth] Marked login form with data-turbo=false");
   });
 });
-
-console.log("[Auth Setup] ✅ Turbo authentication handlers installed");
 
 // =============================================================================
 // 3. Helper: Get CSRF token for mutating requests
@@ -93,8 +74,6 @@ window.getCSRFToken = function (tokenName = "csrf_access_token") {
   return null;
 };
 
-console.log("[Auth Setup] ✅ CSRF token helper available");
-
 // =============================================================================
 // 4. Verify authentication on page load
 // =============================================================================
@@ -107,7 +86,6 @@ async function verifyAuth() {
     const data = await response.json();
 
     if (data.authenticated) {
-      console.log(`[Auth] ✅ Authenticated as: ${data.user}`);
       document.body.classList.add("authenticated");
       document.body.classList.remove("not-authenticated");
       // Update global flag so other modules observe current auth state
@@ -117,7 +95,6 @@ async function verifyAuth() {
         /* ignore */
       }
     } else {
-      console.log("[Auth] ℹ️  Not authenticated");
       document.body.classList.add("not-authenticated");
       document.body.classList.remove("authenticated");
       try {
@@ -157,8 +134,6 @@ try {
 // Re-verify after each Turbo navigation
 document.addEventListener("turbo:load", verifyAuth);
 
-console.log("[Auth Setup] ✅ Session verification installed");
-
 // =============================================================================
 // Export for use in other scripts
 // =============================================================================
@@ -180,5 +155,3 @@ window.authSetup = {
   getCSRFToken: window.getCSRFToken,
   verifyAuth: verifyAuth,
 };
-
-console.log("[Auth Setup] ✅ Complete - all auth features enabled");
