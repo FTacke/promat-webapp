@@ -3,6 +3,7 @@
 {% set is_authenticated = user_name is not none %}
 {% set role_value = user_role.value if user_role else '' %}
 {% set drawer_account_kind = g.account_kind if g.account_kind is defined else 'personal' %}
+{% set drawer_display_name = g.display_name if g.display_name is defined and g.display_name else user_name %}
 {% set current_ui_lang = ui_lang | default('de') %}
 {% set drawer_login_next = request.args.get('next') or (request.full_path[:-1] if request.full_path and request.full_path.endswith('?') else request.full_path) or request.path %}
 {% set drawer_top_nav_items = [
@@ -86,6 +87,17 @@
           <p class="promat-panel__section-label promat-panel__section-label--utility">{{ t('shell.panel.account_section') }}</p>
           <div class="promat-panel__utility-list promat-panel__utility-list--account">
             {% if is_authenticated %}
+            <div class="promat-user-menu__identity" aria-hidden="true">
+              <div class="promat-user-menu__identity-text">
+                <span class="promat-user-menu__identity-primary">{{ drawer_display_name }}</span>
+                <span class="promat-user-menu__identity-secondary">{{ user_name }}</span>
+              </div>
+              {% if drawer_account_kind == 'group' %}
+              <span class="promat-user-menu__identity-badge">{{ t('shell.user_menu.account_kind_group_badge') }}</span>
+              {% else %}
+              <span class="promat-user-menu__identity-badge">{{ t('auth.admin_users.role_admin') if role_value == 'admin' else t('auth.admin_users.role_user') }}</span>
+              {% endif %}
+            </div>
             {% if drawer_account_kind != 'group' %}
             <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-panel__utility-link">{{ t('shell.panel.account_area') }}</a>
             {% endif %}

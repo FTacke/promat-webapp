@@ -74,18 +74,18 @@
                 <span class="sr-only">{{ t('shell.topbar.account') }}</span>
               </button>
               <div class="promat-user-menu__dropdown" id="user-menu-dropdown" role="menu" aria-label="{{ t('shell.topbar.account_menu') }}" data-user-menu hidden>
-                {% if user_account_kind == 'group' %}
-                <p class="promat-user-menu__identity" aria-hidden="true">
-                  <span class="promat-user-menu__identity-name">{{ user_display_name }}</span>
-                  <span class="promat-user-menu__identity-sub">{{ g.user }}</span>
-                  <span class="promat-user-menu__identity-kind">{{ t('shell.user_menu.account_kind_group') }}</span>
-                </p>
-                {% else %}
-                <p class="promat-user-menu__identity" aria-hidden="true">
-                  <span class="promat-user-menu__identity-name">{{ user_display_name }}</span>
-                  <span class="promat-user-menu__identity-kind">{{ t('auth.admin_users.role_admin') if role_value == 'admin' else t('auth.admin_users.role_user') }}</span>
-                </p>
-                {% endif %}
+                <div class="promat-user-menu__identity" aria-hidden="true">
+                  <div class="promat-user-menu__identity-text">
+                    <span class="promat-user-menu__identity-primary">{{ user_display_name }}</span>
+                    <span class="promat-user-menu__identity-secondary">{{ user_name }}</span>
+                  </div>
+                  {% if user_account_kind == 'group' %}
+                  <span class="promat-user-menu__identity-badge">{{ t('shell.user_menu.account_kind_group_badge') }}</span>
+                  {% else %}
+                  <span class="promat-user-menu__identity-badge">{{ t('auth.admin_users.role_admin') if role_value == 'admin' else t('auth.admin_users.role_user') }}</span>
+                  {% endif %}
+                </div>
+                <div class="promat-user-menu__divider" role="separator" aria-hidden="true"></div>
                 {% if user_account_kind != 'group' %}
                 <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.account_area') }}</a>
                 {% endif %}
