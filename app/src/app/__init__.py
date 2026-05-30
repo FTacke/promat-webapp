@@ -429,9 +429,9 @@ def register_security_headers(app: Flask) -> None:
         csp = (
             "default-src 'self'; "
             "script-src 'self' https://gc.zgo.at; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data: https: blob:; "
-            "font-src 'self' https://fonts.gstatic.com; "
+            "font-src 'self'; "
             "connect-src 'self' https://pronunciation-matters.goatcounter.com; "
             "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net; "
             "frame-ancestors 'none'; "

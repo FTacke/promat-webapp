@@ -201,13 +201,23 @@ def _enable_jwt_cookie_csrf(app: Flask) -> None:
 
 
 def _extract_element_by_id(html: str, tag: str, element_id: str) -> str:
-    match = re.search(
-        rf'<{tag}[^>]*id="{re.escape(element_id)}".*?</{tag}>',
+    start_m = re.search(
+        rf'<{re.escape(tag)}[^>]*\bid="{re.escape(element_id)}"[^>]*>',
         html,
         re.DOTALL,
     )
-    assert match is not None
-    return match.group(0)
+    assert start_m is not None, f"Element <{tag} id='{element_id}'> not found"
+    pos = start_m.start()
+    depth = 0
+    tag_re = re.compile(rf'<(/?)({re.escape(tag)})(?:\s[^>]*)?>',re.IGNORECASE | re.DOTALL)
+    for m in tag_re.finditer(html, pos):
+        if m.group(1):
+            depth -= 1
+            if depth == 0:
+                return html[pos : m.end()]
+        else:
+            depth += 1
+    raise AssertionError(f"No closing tag for <{tag} id='{element_id}'>")
 
 
 def _render_auth_template(app: Flask, template_name: str, *, ui_lang: str) -> str:
@@ -2347,13 +2357,15 @@ def test_security_headers_allow_project_youtube_embed() -> None:
     assert response.status_code == 200
     csp = response.headers["Content-Security-Policy"]
     assert "script-src 'self' https://gc.zgo.at;" in csp
-    assert "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;" in csp
-    assert "font-src 'self' https://fonts.gstatic.com;" in csp
+    assert "style-src 'self' 'unsafe-inline';" in csp
+    assert "font-src 'self';" in csp
     assert "connect-src 'self' https://pronunciation-matters.goatcounter.com;" in csp
     assert "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net;" in csp
     assert "object-src 'none';" in csp
     assert "base-uri 'self';" in csp
     assert "form-action 'self';" in csp
+    assert "fonts.googleapis.com" not in csp
+    assert "fonts.gstatic.com" not in csp
     assert "cdnjs.cloudflare.com" not in csp
     assert "cdn.jsdelivr.net" not in csp
     assert "youtube-nocookie.com" not in csp
@@ -2366,8 +2378,9 @@ def test_access_request_page_does_not_load_removed_icon_cdns(auth_app: Flask) ->
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "fonts.googleapis.com/css2?family=Inter" in html
-    assert "fonts.gstatic.com" in html
+    assert "fonts.googleapis.com" not in html
+    assert "fonts.gstatic.com" not in html
+    assert "css/md3/components/typefaces.css" in html
     assert "css/md3/components/material-symbols-fallback.css" in html
     assert "cdnjs.cloudflare.com/ajax/libs/font-awesome" not in html
     assert "cdn.jsdelivr.net/npm/bootstrap-icons" not in html
