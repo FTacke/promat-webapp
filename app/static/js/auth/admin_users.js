@@ -37,14 +37,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const text = config.i18n || {};
   const uiLang = config.uiLang || 'de';
   const locale = uiLang === 'en' ? 'en-GB' : 'de-DE';
-  const roleLabels = {
-    user: text.roleUser || 'User',
-    admin: text.roleAdmin || 'Admin',
+
+  // Role labels: group accounts get their own type label
+  const typeLabelForUser = (user) => {
+    if (user.account_kind === 'group') {
+      return text.roleGroup || 'Gruppe';
+    }
+    return user.role === 'admin' ? (text.roleAdmin || 'Admin') : (text.roleUser || 'User');
   };
-  const roleIcons = {
-    user: 'person',
-    admin: 'verified_user',
+  const typeIconForUser = (user) => {
+    if (user.account_kind === 'group') return 'group';
+    return user.role === 'admin' ? 'verified_user' : 'person';
   };
+  const typeCssForUser = (user) => {
+    if (user.account_kind === 'group') return 'group';
+    return user.role === 'admin' ? 'admin' : 'user';
+  };
+
   const statusLabels = {
     active: text.statusActive || 'Active',
     invited: text.statusInvited || 'Invited',
@@ -65,11 +74,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const filterInactiveBtn = document.getElementById('filter-inactive');
   const sortSelect = document.getElementById('admin-sort');
 
+  // Personal account creation
   const createBtn = document.getElementById('create');
   const createDialog = document.getElementById('create-user-dialog');
   const createForm = document.getElementById('create-user-form');
   const cancelCreateBtn = document.getElementById('cancel-create');
 
+  // Group account creation
+  const createGroupBtn = document.getElementById('create-group');
+  const createGroupDialog = document.getElementById('create-group-dialog');
+  const createGroupForm = document.getElementById('create-group-form');
+  const cancelCreateGroupBtn = document.getElementById('cancel-create-group');
+  const submitCreateGroupBtn = document.getElementById('submit-create-group');
+  const createGroupError = document.getElementById('create-group-error');
+  const groupResponsibleAdminSelect = document.getElementById('new-group-responsible-admin');
+
+  // Invite dialog (personal accounts)
   const inviteDialog = document.getElementById('invite-dialog');
   const inviteTitle = document.getElementById('invite-title');
   const inviteIntro = document.getElementById('invite-intro');
@@ -84,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inviteSendStatus = document.getElementById('invite-send-status');
   const inviteCopyStatus = document.getElementById('invite-copy-status');
 
+  // Personal account edit dialog
   const editDialog = document.getElementById('user-edit-dialog');
   const saveEditBtn = document.getElementById('save-edit');
   const cancelEditBtn = document.getElementById('cancel-edit');
@@ -99,6 +120,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const editSendInviteBtn = document.getElementById('edit-send-invite');
   const editResetPasswordBtn = document.getElementById('edit-reset-password');
   const editError = document.getElementById('user-edit-error');
+
+  // Group account edit dialog
+  const groupEditDialog = document.getElementById('group-edit-dialog');
+  const saveGroupEditBtn = document.getElementById('save-group-edit');
+  const cancelGroupEditBtn = document.getElementById('cancel-group-edit');
+  const groupEditUserId = document.getElementById('group-edit-user-id');
+  const groupEditDisplayName = document.getElementById('group-edit-display-name');
+  const groupEditResponsibleAdmin = document.getElementById('group-edit-responsible-admin');
+  const groupEditAccessExpiresOn = document.getElementById('group-edit-access-expires-on');
+  const groupEditIsActive = document.getElementById('group-edit-is-active');
+  const groupEditNewPassword = document.getElementById('group-edit-new-password');
+  const groupEditSetPasswordBtn = document.getElementById('group-edit-set-password');
+  const groupEditError = document.getElementById('group-edit-error');
 
   let includeInactive = false;
   let searchDebounce = null;
@@ -204,11 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
     return Boolean((firstName || '').trim() && (lastName || '').trim());
   }
 
-  function renderRoleBadge(role) {
+  function renderTypeBadge(user) {
+    const typeLabel = typeLabelForUser(user);
+    const typeIcon = typeIconForUser(user);
+    const typeCss = typeCssForUser(user);
     return `
-      <span class="pm-admin-badge pm-admin-badge--role-${escapeHtml(role)}">
-        <span class="material-symbols-rounded pm-admin-badge__icon" aria-hidden="true">${roleIcons[role] || 'person'}</span>
-        <span>${escapeHtml(roleLabels[role] || role)}</span>
+      <span class="pm-admin-badge pm-admin-badge--role-${escapeHtml(typeCss)}">
+        <span class="material-symbols-rounded pm-admin-badge__icon" aria-hidden="true">${typeIcon}</span>
+        <span>${escapeHtml(typeLabel)}</span>
       </span>
     `;
   }
@@ -224,20 +261,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderRow(user) {
     const row = document.createElement('tr');
-    const createdBy = user.created_by_name || (user.created_by_is_system ? t('createdBySystem', 'System') : '–');
     row.dataset.userId = user.id;
+    row.dataset.accountKind = user.account_kind || 'personal';
+
+    // Account column: groups show display_name; personal show "Last, First"
+    let accountLabel;
+    if (user.account_kind === 'group') {
+      accountLabel = user.display_name || user.username || '–';
+    } else {
+      const last = user.last_name || '';
+      const first = user.first_name || '';
+      accountLabel = last && first ? `${last}, ${first}` : last || first || user.display_name || '–';
+    }
+
+    // Login column: personal = email, group = username
+    const loginLabel = user.account_kind === 'group'
+      ? (user.username || '–')
+      : (user.email || '–');
+
+    // Erstellt column: shown_creator_name (already resolved server-side to responsible admin for groups)
+    const createdByLabel = user.shown_creator_name || (user.created_by_is_system ? t('createdBySystem', 'System') : '–');
+
+    // Date: two-line with date and time
+    const createdDate = user.created_at ? new Date(user.created_at) : null;
+    const dateStr = createdDate && !Number.isNaN(createdDate.getTime())
+      ? createdDate.toLocaleDateString(locale)
+      : '–';
+    const timeStr = createdDate && !Number.isNaN(createdDate.getTime())
+      ? createdDate.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+      : '';
+
     row.innerHTML = `
-      <td><span class="pm-admin-table__primary">${escapeHtml(user.last_name || '–')}</span></td>
-      <td><span class="pm-admin-table__primary">${escapeHtml(user.first_name || '–')}</span></td>
-      <td><div class="pm-admin-table__email" title="${escapeHtml(user.email || '')}"><span class="pm-admin-table__primary">${escapeHtml(user.email || '–')}</span></div></td>
-      <td>${renderRoleBadge(user.role)}</td>
+      <td><span class="pm-admin-table__primary">${escapeHtml(accountLabel)}</span></td>
+      <td>${renderTypeBadge(user)}</td>
+      <td><div class="pm-admin-table__email" title="${escapeHtml(loginLabel)}"><span class="pm-admin-table__primary">${escapeHtml(loginLabel)}</span></div></td>
       <td>${renderStatusBadge(user.status_code)}</td>
       <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(formatDate(user.access_expires_on))}</span></td>
-      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(formatDateTime(user.created_at))}</span></td>
-      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(createdBy)}</span></td>
+      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(dateStr)}<br><span class="pm-admin-table__meta-sub">${escapeHtml(timeStr)}</span></span></td>
+      <td class="pm-admin-table__desktop"><span class="pm-admin-table__meta">${escapeHtml(createdByLabel)}</span></td>
       <td>
         <div class="pm-admin-table__actions">
-          <button class="pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn" type="button" data-id="${escapeHtml(user.id)}" title="${escapeHtml(t('editTitle', 'Edit user'))}" aria-label="${escapeHtml(t('editTitle', 'Edit user'))}">
+          <button class="pm-action-button pm-action-button--secondary pm-action-button--small pm-admin-table__action edit-user-btn" type="button" data-id="${escapeHtml(user.id)}" data-kind="${escapeHtml(user.account_kind || 'personal')}" title="${escapeHtml(t('editTitle', 'Edit user'))}" aria-label="${escapeHtml(t('editTitle', 'Edit user'))}">
             <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">edit</span>
             <span class="pm-action-button__label">${escapeHtml(t('editActionShort', 'Edit'))}</span>
           </button>
@@ -251,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!listBody) {
       return;
     }
-    listBody.innerHTML = `<tr><td colspan="9" class="pm-admin-table__empty">${escapeHtml(t('loading', 'Loading...'))}</td></tr>`;
+    listBody.innerHTML = `<tr><td colspan="8" class="pm-admin-table__empty">${escapeHtml(t('loading', 'Loading...'))}</td></tr>`;
     syncTableScrollState();
   }
 
@@ -286,6 +350,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editEmailError) {
       editEmailError.textContent = '';
     }
+  }
+
+  function showGroupEditError(message) {
+    if (!groupEditError) {
+      showToast(message, 'error');
+      return;
+    }
+    const el = groupEditError.querySelector('.pm-admin-alert__text');
+    if (el) el.textContent = message;
+    groupEditError.hidden = false;
+  }
+
+  function clearGroupEditError() {
+    if (groupEditError) groupEditError.hidden = true;
+  }
+
+  function showCreateGroupError(message) {
+    if (!createGroupError) {
+      showToast(message, 'error');
+      return;
+    }
+    const el = createGroupError.querySelector('.pm-admin-alert__text');
+    if (el) el.textContent = message;
+    createGroupError.hidden = false;
+  }
+
+  function clearCreateGroupError() {
+    if (createGroupError) createGroupError.hidden = true;
   }
 
   function syncExpiryFieldForRole(roleField, expiryField) {
@@ -408,6 +500,32 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // ── Load admins list for responsible-admin dropdowns ─────────────────────
+
+  function loadAdminsIntoSelect(selectEl, selectedId) {
+    if (!selectEl) return;
+    fetch(buildAdminUrl('/admin/admins'), {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+      .then((r) => r.json())
+      .then((payload) => {
+        const currentVal = selectedId || payload.current_admin_id || '';
+        const placeholder = text.responsibleAdminPlaceholder || '–';
+        selectEl.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`;
+        (payload.admins || []).forEach((admin) => {
+          const opt = document.createElement('option');
+          opt.value = admin.id;
+          opt.textContent = admin.display_name || admin.id;
+          if (admin.id === currentVal) opt.selected = true;
+          selectEl.appendChild(opt);
+        });
+      })
+      .catch((err) => console.error('Failed to load admins:', err));
+  }
+
+  // ── Personal account edit dialog ─────────────────────────────────────────
+
   function openEditDialog(userId) {
     if (!userId) {
       return;
@@ -424,28 +542,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return response.json();
       })
       .then((user) => {
-        if (editUserId) {
-          editUserId.value = user.id;
-        }
-        if (editFirstName) {
-          editFirstName.value = user.first_name || '';
-        }
-        if (editLastName) {
-          editLastName.value = user.last_name || '';
-        }
-        if (editEmail) {
-          editEmail.value = user.email || '';
-        }
-        if (editAccessExpiresOn) {
-          editAccessExpiresOn.value = user.access_expires_on || '';
-        }
-        if (editRole) {
-          editRole.value = user.role;
-        }
+        if (editUserId) editUserId.value = user.id;
+        if (editFirstName) editFirstName.value = user.first_name || '';
+        if (editLastName) editLastName.value = user.last_name || '';
+        if (editEmail) editEmail.value = user.email || '';
+        if (editAccessExpiresOn) editAccessExpiresOn.value = user.access_expires_on || '';
+        if (editRole) editRole.value = user.role;
         syncExpiryFieldForRole(editRole, editAccessExpiresOn);
-        if (editIsActive) {
-          editIsActive.checked = Boolean(user.is_active);
-        }
+        if (editIsActive) editIsActive.checked = Boolean(user.is_active);
         setDialogOpen(editDialog, true);
       })
       .catch((error) => {
@@ -454,9 +558,43 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // ── Group account edit dialog ─────────────────────────────────────────────
+
+  function openGroupEditDialog(userId) {
+    if (!userId) return;
+    clearGroupEditError();
+    fetch(buildAdminUrl(`/admin/users/${encodeURIComponent(userId)}`), {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(t('loadError', 'Could not load users.'));
+        return r.json();
+      })
+      .then((user) => {
+        if (groupEditUserId) groupEditUserId.value = user.id;
+        if (groupEditDisplayName) groupEditDisplayName.value = user.display_name || '';
+        if (groupEditAccessExpiresOn) groupEditAccessExpiresOn.value = user.access_expires_on || '';
+        if (groupEditIsActive) groupEditIsActive.checked = Boolean(user.is_active);
+        if (groupEditNewPassword) groupEditNewPassword.value = '';
+        loadAdminsIntoSelect(groupEditResponsibleAdmin, user.responsible_admin_user_id || '');
+        setDialogOpen(groupEditDialog, true);
+      })
+      .catch((err) => {
+        showToast(err.message || t('loadError', 'Could not load users.'), 'error');
+      });
+  }
+
   function bindEditButtons() {
     document.querySelectorAll('.edit-user-btn').forEach((button) => {
-      button.addEventListener('click', () => openEditDialog(button.dataset.id));
+      button.addEventListener('click', () => {
+        const kind = button.dataset.kind || 'personal';
+        if (kind === 'group') {
+          openGroupEditDialog(button.dataset.id);
+        } else {
+          openEditDialog(button.dataset.id);
+        }
+      });
     });
   }
 
@@ -490,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then((payload) => {
         listBody.innerHTML = '';
         if (!payload.items || payload.items.length === 0) {
-          listBody.innerHTML = `<tr><td colspan="9" class="pm-admin-table__empty">${escapeHtml(t('noUsers', 'No users found.'))}</td></tr>`;
+          listBody.innerHTML = `<tr><td colspan="8" class="pm-admin-table__empty">${escapeHtml(t('noUsers', 'No users found.'))}</td></tr>`;
           return;
         }
         payload.items.forEach((user) => listBody.appendChild(renderRow(user)));
@@ -499,9 +637,11 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch((error) => {
         console.error(error);
-        listBody.innerHTML = `<tr><td colspan="6" class="pm-admin-table__empty">${escapeHtml(error.message || t('loadError', 'Could not load users.'))}</td></tr>`;
+        listBody.innerHTML = `<tr><td colspan="8" class="pm-admin-table__empty">${escapeHtml(error.message || t('loadError', 'Could not load users.'))}</td></tr>`;
       });
   }
+
+  // ── Save personal account edit ────────────────────────────────────────────
 
   function saveEdit() {
     if (!editUserId || !editUserId.value) {
@@ -567,6 +707,93 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // ── Save group account edit ───────────────────────────────────────────────
+
+  function saveGroupEdit() {
+    if (!groupEditUserId || !groupEditUserId.value) return;
+    clearGroupEditError();
+    const displayName = groupEditDisplayName ? groupEditDisplayName.value.trim() : '';
+    if (!displayName) {
+      showGroupEditError(t('requiredNames', 'A group name is required.'));
+      return;
+    }
+    const originalLabel = saveGroupEditBtn ? saveGroupEditBtn.textContent : '';
+    if (saveGroupEditBtn) {
+      saveGroupEditBtn.disabled = true;
+      saveGroupEditBtn.textContent = t('saving', 'Saving...');
+    }
+    fetch(buildAdminUrl(`/admin/groups/${encodeURIComponent(groupEditUserId.value)}`), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        display_name: displayName,
+        is_active: groupEditIsActive ? groupEditIsActive.checked : true,
+        access_expires_on: groupEditAccessExpiresOn ? groupEditAccessExpiresOn.value : '',
+        responsible_admin_user_id: groupEditResponsibleAdmin ? groupEditResponsibleAdmin.value : '',
+      }),
+    })
+      .then((r) => r.json())
+      .then((payload) => {
+        if (!payload.ok) throw new Error(payload.error || t('networkError', 'Network error.'));
+        setDialogOpen(groupEditDialog, false);
+        reload();
+        showToast(t('updated', 'Updated.'), 'success');
+      })
+      .catch((err) => {
+        showGroupEditError(err.message || t('networkError', 'Network error.'));
+      })
+      .finally(() => {
+        if (saveGroupEditBtn) {
+          saveGroupEditBtn.disabled = false;
+          saveGroupEditBtn.textContent = originalLabel || t('save', 'Save');
+        }
+      });
+  }
+
+  function setGroupPassword() {
+    if (!groupEditUserId || !groupEditUserId.value) return;
+    const pw = groupEditNewPassword ? groupEditNewPassword.value : '';
+    if (!pw) {
+      showGroupEditError(t('groupPasswordRequired', 'Please enter a password.'));
+      return;
+    }
+    const originalLabel = groupEditSetPasswordBtn ? groupEditSetPasswordBtn.textContent : '';
+    if (groupEditSetPasswordBtn) {
+      groupEditSetPasswordBtn.disabled = true;
+      groupEditSetPasswordBtn.textContent = t('saving', 'Saving...');
+    }
+    fetch(buildAdminUrl(`/admin/groups/${encodeURIComponent(groupEditUserId.value)}/set-password`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': getCsrfToken(),
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ password: pw }),
+    })
+      .then((r) => r.json())
+      .then((payload) => {
+        if (!payload.ok) throw new Error(payload.error || t('networkError', 'Network error.'));
+        if (groupEditNewPassword) groupEditNewPassword.value = '';
+        showToast(t('groupPasswordSet', 'Password set.'), 'success');
+      })
+      .catch((err) => {
+        showGroupEditError(err.message || t('networkError', 'Network error.'));
+      })
+      .finally(() => {
+        if (groupEditSetPasswordBtn) {
+          groupEditSetPasswordBtn.disabled = false;
+          groupEditSetPasswordBtn.textContent = originalLabel || t('setPassword', 'Set password');
+        }
+      });
+  }
+
   function selectedEditMailLanguage() {
     return editMailLanguage && editMailLanguage.value ? editMailLanguage.value : uiLang || 'de';
   }
@@ -616,42 +843,39 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  if (refreshBtn) {
-    refreshBtn.addEventListener('click', reload);
-  }
+  // ── Event bindings ────────────────────────────────────────────────────────
+
+  if (refreshBtn) refreshBtn.addEventListener('click', reload);
+
   if (filterInactiveBtn) {
     filterInactiveBtn.addEventListener('click', () => {
       includeInactive = !includeInactive;
       filterInactiveBtn.classList.toggle('is-active', includeInactive);
       filterInactiveBtn.setAttribute('aria-pressed', includeInactive ? 'true' : 'false');
       const icon = filterInactiveBtn.querySelector('.material-symbols-rounded');
-      if (icon) {
-        icon.textContent = includeInactive ? 'visibility' : 'visibility_off';
-      }
+      if (icon) icon.textContent = includeInactive ? 'visibility' : 'visibility_off';
       reload();
     });
   }
+
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       window.clearTimeout(searchDebounce);
       searchDebounce = window.setTimeout(reload, 250);
     });
   }
-  if (sortSelect) {
-    sortSelect.addEventListener('change', reload);
-  }
+
+  if (sortSelect) sortSelect.addEventListener('change', reload);
+
+  // Personal account creation
   if (createBtn) {
     createBtn.addEventListener('click', () => {
-      if (createForm) {
-        createForm.reset();
-      }
+      if (createForm) createForm.reset();
       syncExpiryFieldForRole(document.getElementById('new-role'), document.getElementById('new-access-expires-on'));
       setDialogOpen(createDialog, true);
     });
   }
-  if (cancelCreateBtn) {
-    cancelCreateBtn.addEventListener('click', () => setDialogOpen(createDialog, false));
-  }
+  if (cancelCreateBtn) cancelCreateBtn.addEventListener('click', () => setDialogOpen(createDialog, false));
   if (createForm) {
     createForm.addEventListener('submit', (event) => {
       event.preventDefault();
@@ -692,42 +916,114 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
   }
-  if (copyInviteBtn) {
-    copyInviteBtn.addEventListener('click', () => copyText(inviteLinkCode ? inviteLinkCode.textContent || '' : '', t('copiedLink', 'Link copied.')));
+
+  // Group account creation
+  if (createGroupBtn) {
+    createGroupBtn.addEventListener('click', () => {
+      if (createGroupForm) createGroupForm.reset();
+      clearCreateGroupError();
+      loadAdminsIntoSelect(groupResponsibleAdminSelect, '');
+      setDialogOpen(createGroupDialog, true);
+    });
   }
-  if (sendInviteMailBtn) {
-    sendInviteMailBtn.addEventListener('click', sendInviteMail);
+  if (cancelCreateGroupBtn) cancelCreateGroupBtn.addEventListener('click', () => setDialogOpen(createGroupDialog, false));
+  if (submitCreateGroupBtn) {
+    submitCreateGroupBtn.addEventListener('click', () => {
+      clearCreateGroupError();
+      if (!createGroupForm) return;
+      const formData = new FormData(createGroupForm);
+      const displayName = (formData.get('display_name') || '').trim();
+      const loginName = (formData.get('login_name') || '').trim();
+      const password = formData.get('password') || '';
+      const passwordConfirm = formData.get('password_confirm') || '';
+      const responsibleAdminId = formData.get('responsible_admin_user_id') || '';
+      const accessExpiresOn = formData.get('access_expires_on') || '';
+
+      if (!displayName) {
+        showCreateGroupError(t('requiredNames', 'Group name is required.'));
+        return;
+      }
+      if (!loginName) {
+        showCreateGroupError(t('requiredNames', 'Login name is required.'));
+        return;
+      }
+      if (!password) {
+        showCreateGroupError(t('requiredNames', 'Password is required.'));
+        return;
+      }
+      if (password !== passwordConfirm) {
+        showCreateGroupError(t('passwordMismatch', 'Passwords do not match.'));
+        return;
+      }
+
+      const originalLabel = submitCreateGroupBtn.textContent;
+      submitCreateGroupBtn.disabled = true;
+      submitCreateGroupBtn.textContent = t('saving', 'Saving...');
+
+      fetch(buildAdminUrl('/admin/groups'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-CSRF-TOKEN': getCsrfToken(),
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          display_name: displayName,
+          login_name: loginName,
+          password,
+          responsible_admin_user_id: responsibleAdminId,
+          access_expires_on: accessExpiresOn,
+        }),
+      })
+        .then((r) => r.json())
+        .then((payload) => {
+          if (!payload.ok) throw new Error(payload.error || t('networkError', 'Network error.'));
+          setDialogOpen(createGroupDialog, false);
+          reload();
+          showToast(t('groupCreated', 'Group account created.'), 'success');
+        })
+        .catch((err) => {
+          showCreateGroupError(err.message || t('networkError', 'Network error.'));
+        })
+        .finally(() => {
+          submitCreateGroupBtn.disabled = false;
+          submitCreateGroupBtn.textContent = originalLabel;
+        });
+    });
   }
+
+  // Invite dialog buttons
+  if (copyInviteBtn) copyInviteBtn.addEventListener('click', () => copyText(inviteLinkCode ? inviteLinkCode.textContent || '' : '', t('copiedLink', 'Link copied.')));
+  if (sendInviteMailBtn) sendInviteMailBtn.addEventListener('click', sendInviteMail);
   if (copyInviteMailBtn) {
     copyInviteMailBtn.addEventListener('click', () => {
       const mailText = `${inviteMailSubject ? inviteMailSubject.value : ''}\n\n${inviteMailBody ? inviteMailBody.value : ''}`.trim();
       copyText(mailText, t('copiedMail', 'Email copied.'));
     });
   }
-  if (closeInviteBtn) {
-    closeInviteBtn.addEventListener('click', () => setDialogOpen(inviteDialog, false));
-  }
-  if (cancelEditBtn) {
-    cancelEditBtn.addEventListener('click', () => setDialogOpen(editDialog, false));
-  }
-  if (saveEditBtn) {
-    saveEditBtn.addEventListener('click', saveEdit);
-  }
-  if (editRole) {
-    editRole.addEventListener('change', () => syncExpiryFieldForRole(editRole, editAccessExpiresOn));
-  }
+  if (closeInviteBtn) closeInviteBtn.addEventListener('click', () => setDialogOpen(inviteDialog, false));
+
+  // Personal account edit buttons
+  if (cancelEditBtn) cancelEditBtn.addEventListener('click', () => setDialogOpen(editDialog, false));
+  if (saveEditBtn) saveEditBtn.addEventListener('click', saveEdit);
+  if (editRole) editRole.addEventListener('change', () => syncExpiryFieldForRole(editRole, editAccessExpiresOn));
+  if (editSendInviteBtn) editSendInviteBtn.addEventListener('click', () => prepareMail('invite'));
+  if (editResetPasswordBtn) editResetPasswordBtn.addEventListener('click', () => prepareMail('reset'));
+
+  // Personal create role/expiry sync
   const createRole = document.getElementById('new-role');
   const createExpiry = document.getElementById('new-access-expires-on');
   if (createRole) {
     createRole.addEventListener('change', () => syncExpiryFieldForRole(createRole, createExpiry));
     syncExpiryFieldForRole(createRole, createExpiry);
   }
-  if (editSendInviteBtn) {
-    editSendInviteBtn.addEventListener('click', () => prepareMail('invite'));
-  }
-  if (editResetPasswordBtn) {
-    editResetPasswordBtn.addEventListener('click', () => prepareMail('reset'));
-  }
+
+  // Group account edit buttons
+  if (cancelGroupEditBtn) cancelGroupEditBtn.addEventListener('click', () => setDialogOpen(groupEditDialog, false));
+  if (saveGroupEditBtn) saveGroupEditBtn.addEventListener('click', saveGroupEdit);
+  if (groupEditSetPasswordBtn) groupEditSetPasswordBtn.addEventListener('click', setGroupPassword);
+
   if (tableWrap) {
     tableWrap.addEventListener('scroll', syncTableScrollState, { passive: true });
     window.addEventListener('resize', syncTableScrollState);

@@ -215,7 +215,7 @@ def _refresh_access_cookie_response(response: Response, *, user_id: str) -> Resp
 
 def _forgot_password_response(email: str, ui_lang: str) -> bool:
     user = auth_services.find_user_by_email(email)
-    if user and user.deleted_at is None:
+    if user and user.deleted_at is None and (getattr(user, "account_kind", "personal") or "personal") != "group":
         raw_token, _ = auth_services.create_reset_token_for_user(user)
         message = build_auth_mail_preview(
             user=user,
@@ -328,6 +328,9 @@ def _render_account_password_page(*, user, status_code: int = 200) -> Response:
 def _default_post_login_target(ui_lang: str, *, user) -> str:
     if auth_services.normalize_role(user.role) == Role.ADMIN.value:
         return url_for("admin.users_page", ui_lang=ui_lang)
+    account_kind = getattr(user, "account_kind", "personal") or "personal"
+    if account_kind == "group":
+        return url_for("public.research_home", ui_lang=ui_lang)
     return url_for("auth.account_page", ui_lang=ui_lang)
 
 
@@ -360,9 +363,13 @@ def account_page_legacy() -> Response:
 def account_page() -> Response:
     identity = get_jwt_identity()
     user = auth_services.get_user_by_id(identity) if identity else None
+    ui_lang = _resolve_auth_ui_lang(request.referrer)
     if not user:
-        flash(_t(_resolve_auth_ui_lang(request.referrer), "auth.flash.login_required"), "error")
-        return redirect(url_for("public.login", ui_lang=_resolve_auth_ui_lang(request.referrer)), 303)
+        flash(_t(ui_lang, "auth.flash.login_required"), "error")
+        return redirect(url_for("public.login", ui_lang=ui_lang), 303)
+    account_kind = getattr(user, "account_kind", "personal") or "personal"
+    if account_kind == "group":
+        return redirect(url_for("public.research_home", ui_lang=ui_lang), 303)
     return _render_account_page(user=user)
 
 
@@ -375,6 +382,8 @@ def account_update() -> Response:
     if not user:
         flash(_t(ui_lang, "auth.flash.login_required"), "error")
         return redirect(url_for("public.login", ui_lang=ui_lang), 303)
+    if (getattr(user, "account_kind", "personal") or "personal") == "group":
+        return redirect(url_for("public.research_home", ui_lang=ui_lang), 303)
 
     try:
         auth_services.update_user_profile(
@@ -397,9 +406,12 @@ def account_update() -> Response:
 def account_password_page() -> Response:
     identity = get_jwt_identity()
     user = auth_services.get_user_by_id(identity) if identity else None
+    ui_lang = _resolve_auth_ui_lang(request.referrer)
     if not user:
-        flash(_t(_resolve_auth_ui_lang(request.referrer), "auth.flash.login_required"), "error")
-        return redirect(url_for("public.login", ui_lang=_resolve_auth_ui_lang(request.referrer)), 303)
+        flash(_t(ui_lang, "auth.flash.login_required"), "error")
+        return redirect(url_for("public.login", ui_lang=ui_lang), 303)
+    if (getattr(user, "account_kind", "personal") or "personal") == "group":
+        return redirect(url_for("public.research_home", ui_lang=ui_lang), 303)
     return _render_account_password_page(user=user)
 
 
@@ -411,6 +423,8 @@ def account_password_submit() -> Response:
     if not user:
         flash(_t(ui_lang, "auth.flash.login_required"), "error")
         return redirect(url_for("public.login", ui_lang=ui_lang), 303)
+    if (getattr(user, "account_kind", "personal") or "personal") == "group":
+        return redirect(url_for("public.research_home", ui_lang=ui_lang), 303)
 
     old_password = request.form.get("old_password", "")
     new_password = request.form.get("new_password", "")
@@ -457,6 +471,8 @@ def change_password() -> Response:
     user = auth_services.get_user_by_id(get_jwt_identity())
     if not user:
         return jsonify({"ok": False, "message": _t(ui_lang, "auth.flash.login_required")}), 401
+    if (getattr(user, "account_kind", "personal") or "personal") == "group":
+        return jsonify({"ok": False, "message": _t(ui_lang, "auth.account.group_self_service_blocked")}), 403
 
     error_message = _password_validation_error(
         ui_lang,
@@ -607,10 +623,10 @@ def login_post() -> Response:
     ui_lang = _resolve_auth_ui_lang(next_url, request.referrer)
 
     if not email:
-        flash(_t(ui_lang, "auth.login.error.email_required"), "error")
+        flash(_t(ui_lang, "auth.login.error.identifier_required"), "error")
         return _render_login_page(status_code=400, next_url=next_url, email=email)
 
-    user = auth_services.find_user_by_email(email)
+    user = auth_services.find_user_by_username_or_email(email)
     if not user or not auth_services.verify_password(password, user.password_hash):
         auth_services.on_failed_login(user)
         flash(_t(ui_lang, "auth.login.error.invalid_credentials"), "error")

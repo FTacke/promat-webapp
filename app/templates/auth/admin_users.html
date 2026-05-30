@@ -18,6 +18,10 @@
             <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">refresh</span>
             <span class="pm-action-button__label">{{ t('auth.admin_users.refresh') }}</span>
           </button>
+          <button id="create-group" type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+            <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">group_add</span>
+            <span class="pm-action-button__label">{{ t('auth.admin_users.create_group_button') }}</span>
+          </button>
           <button id="create" type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium">
             <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">add</span>
             <span class="pm-action-button__label">{{ t('auth.admin_users.create_button') }}</span>
@@ -52,10 +56,9 @@
         <table class="pm-research-table pm-admin-table" id="users-table">
           <thead>
             <tr>
-              <th>{{ t('auth.admin_users.table_last_name') }}</th>
-              <th>{{ t('auth.admin_users.table_first_name') }}</th>
-              <th>{{ t('auth.admin_users.table_email') }}</th>
-              <th>{{ t('auth.admin_users.table_role') }}</th>
+              <th>{{ t('auth.admin_users.table_account_label') }}</th>
+              <th>{{ t('auth.admin_users.table_type_label') }}</th>
+              <th>{{ t('auth.admin_users.table_login_label') }}</th>
               <th>{{ t('auth.admin_users.table_status') }}</th>
               <th class="pm-admin-table__desktop">{{ t('auth.admin_users.table_expires') }}</th>
               <th class="pm-admin-table__desktop">{{ t('auth.admin_users.created_at') }}</th>
@@ -65,7 +68,7 @@
           </thead>
           <tbody id="list-body">
             <tr>
-              <td colspan="9" class="pm-admin-table__empty">{{ t('auth.admin_users.loading') }}</td>
+              <td colspan="8" class="pm-admin-table__empty">{{ t('auth.admin_users.loading') }}</td>
             </tr>
           </tbody>
         </table>
@@ -76,6 +79,7 @@
 {% endblock %}
 
 {% block extra_scripts %}
+{# ── Personal account creation dialog ────────────────────────────────────── #}
 <dialog id="create-user-dialog" class="pm-admin-dialog" role="dialog" aria-modal="true" aria-labelledby="create-user-title">
   <div class="pm-admin-dialog__surface">
     <div class="pm-admin-dialog__content">
@@ -122,11 +126,6 @@
               <option value="en"{% if auth_ui_lang == 'en' %} selected{% endif %}>{{ t('auth.admin_users.mail_language_en') }}</option>
             </select>
           </label>
-
-          <label class="pm-admin-field pm-admin-field--full" for="new-invite-note">
-            <span class="pm-admin-field__label">{{ t('auth.admin_users.invite_note_label') }}</span>
-            <textarea id="new-invite-note" name="invite_note" class="pm-phenomena-field__input pm-admin-field__textarea" rows="5" aria-label="{{ t('auth.admin_users.invite_note_label') }}"></textarea>
-          </label>
         </div>
       </form>
     </div>
@@ -138,6 +137,65 @@
   </div>
 </dialog>
 
+{# ── Group account creation dialog ───────────────────────────────────────── #}
+<dialog id="create-group-dialog" class="pm-admin-dialog" role="dialog" aria-modal="true" aria-labelledby="create-group-title">
+  <div class="pm-admin-dialog__surface">
+    <div class="pm-admin-dialog__content">
+      <header class="pm-admin-dialog__section-header">
+        <p class="pm-admin-dialog__section-eyebrow">{{ t('auth.admin_users.eyebrow') }}</p>
+        <h2 id="create-group-title" class="pm-admin-dialog__title">{{ t('auth.admin_users.create_group_dialog_title') }}</h2>
+        <p class="pm-admin-dialog__intro">{{ t('auth.admin_users.create_group_dialog_intro') }}</p>
+      </header>
+
+      <form id="create-group-form" method="post" class="pm-admin-dialog__form">
+        <div id="create-group-error" class="pm-admin-alert" role="alert" hidden>
+          <p class="pm-admin-alert__title">{{ t('auth.common.notice') }}</p>
+          <p class="pm-admin-alert__text"></p>
+        </div>
+        <div class="pm-admin-dialog__grid">
+          <label class="pm-admin-field pm-admin-field--full" for="new-group-display-name">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.group_name_label') }}</span>
+            <input type="text" id="new-group-display-name" name="display_name" class="pm-phenomena-field__input" required autofocus aria-label="{{ t('auth.admin_users.group_name_label') }}">
+          </label>
+
+          <label class="pm-admin-field" for="new-group-login-name">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.login_name_label') }}</span>
+            <input type="text" id="new-group-login-name" name="login_name" class="pm-phenomena-field__input" required autocomplete="off" aria-label="{{ t('auth.admin_users.login_name_label') }}">
+          </label>
+
+          <label class="pm-admin-field" for="new-group-responsible-admin">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.responsible_admin_label') }}</span>
+            <select id="new-group-responsible-admin" name="responsible_admin_user_id" class="pm-phenomena-field__input" required aria-label="{{ t('auth.admin_users.responsible_admin_label') }}">
+              <option value="">{{ t('auth.admin_users.responsible_admin_placeholder') }}</option>
+            </select>
+          </label>
+
+          <label class="pm-admin-field" for="new-group-access-expires-on">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.expires_on_label') }}</span>
+            <input type="date" id="new-group-access-expires-on" name="access_expires_on" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.expires_on_label') }}">
+          </label>
+
+          <label class="pm-admin-field" for="new-group-password">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.group_password_label') }}</span>
+            <input type="password" id="new-group-password" name="password" class="pm-phenomena-field__input" required autocomplete="new-password" aria-label="{{ t('auth.admin_users.group_password_label') }}">
+          </label>
+
+          <label class="pm-admin-field" for="new-group-password-confirm">
+            <span class="pm-admin-field__label">{{ t('auth.admin_users.group_password_confirm_label') }}</span>
+            <input type="password" id="new-group-password-confirm" name="password_confirm" class="pm-phenomena-field__input" required autocomplete="new-password" aria-label="{{ t('auth.admin_users.group_password_confirm_label') }}">
+          </label>
+        </div>
+      </form>
+    </div>
+
+    <div class="pm-admin-dialog__actions">
+      <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="cancel-create-group"><span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span></button>
+      <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" id="submit-create-group"><span class="pm-action-button__label">{{ t('auth.admin_users.create_group_submit') }}</span></button>
+    </div>
+  </div>
+</dialog>
+
+{# ── Invite / password-reset mail preview dialog ─────────────────────────── #}
 <dialog id="invite-dialog" class="pm-admin-dialog pm-admin-dialog--wide" role="dialog" aria-modal="true" aria-labelledby="invite-title">
   <div class="pm-admin-dialog__surface">
     <div class="pm-admin-dialog__content">
@@ -187,6 +245,7 @@
   </div>
 </dialog>
 
+{# ── Personal account edit dialog ─────────────────────────────────────────── #}
 <dialog id="user-edit-dialog" class="pm-admin-dialog pm-admin-dialog--wide" role="dialog" aria-modal="true" aria-labelledby="user-edit-title">
   <div class="pm-admin-dialog__surface">
     <div class="pm-admin-dialog__content">
@@ -295,6 +354,89 @@
   </div>
 </dialog>
 
+{# ── Group account edit dialog ─────────────────────────────────────────────── #}
+<dialog id="group-edit-dialog" class="pm-admin-dialog pm-admin-dialog--wide" role="dialog" aria-modal="true" aria-labelledby="group-edit-title">
+  <div class="pm-admin-dialog__surface">
+    <div class="pm-admin-dialog__content">
+      <header class="pm-admin-dialog__section-header">
+        <p class="pm-admin-dialog__section-eyebrow">{{ t('auth.admin_users.eyebrow') }}</p>
+        <h2 class="pm-admin-dialog__title" id="group-edit-title">{{ t('auth.admin_users.edit_group_dialog_title') }}</h2>
+      </header>
+
+      <form id="group-edit-form" class="pm-admin-dialog__form">
+        <div id="group-edit-error" class="pm-admin-alert" role="alert" hidden>
+          <p class="pm-admin-alert__title">{{ t('auth.common.notice') }}</p>
+          <p class="pm-admin-alert__text"></p>
+        </div>
+
+        <section class="pm-admin-dialog__section">
+          <div class="pm-admin-dialog__section-header">
+            <h3 class="pm-admin-dialog__section-title">{{ t('auth.admin_users.account_section') }}</h3>
+          </div>
+          <div class="pm-admin-dialog__grid">
+            <label class="pm-admin-field pm-admin-field--full" for="group-edit-display-name">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.group_name_label') }}</span>
+              <input type="text" id="group-edit-display-name" name="display_name" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.group_name_label') }}">
+            </label>
+            <label class="pm-admin-field" for="group-edit-responsible-admin">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.responsible_admin_label') }}</span>
+              <select id="group-edit-responsible-admin" name="responsible_admin_user_id" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.responsible_admin_label') }}">
+                <option value="">{{ t('auth.admin_users.responsible_admin_placeholder') }}</option>
+              </select>
+            </label>
+            <label class="pm-admin-field" for="group-edit-access-expires-on">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.expires_on_label') }}</span>
+              <input type="date" id="group-edit-access-expires-on" name="access_expires_on" class="pm-phenomena-field__input" aria-label="{{ t('auth.admin_users.expires_on_label') }}">
+            </label>
+          </div>
+        </section>
+
+        <section class="pm-admin-dialog__section">
+          <div class="pm-admin-dialog__section-header">
+            <h3 class="pm-admin-dialog__section-title">{{ t('auth.admin_users.status_section') }}</h3>
+          </div>
+          <label class="pm-admin-switch" for="group-edit-is-active">
+            <span class="pm-admin-switch__copy">
+              <span class="pm-admin-switch__label">{{ t('auth.admin_users.active_toggle') }}</span>
+              <span class="pm-admin-switch__hint">{{ t('auth.admin_users.active_help') }}</span>
+            </span>
+            <input type="checkbox" id="group-edit-is-active" name="is_active" class="pm-admin-switch__control" checked>
+          </label>
+        </section>
+
+        <section class="pm-admin-dialog__section">
+          <div class="pm-admin-dialog__section-header">
+            <h3 class="pm-admin-dialog__section-title">{{ t('auth.admin_users.group_password_section') }}</h3>
+            <p class="pm-admin-dialog__section-text">{{ t('auth.admin_users.group_password_help') }}</p>
+          </div>
+          <div class="pm-admin-dialog__grid">
+            <label class="pm-admin-field" for="group-edit-new-password">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.group_password_label') }}</span>
+              <input type="password" id="group-edit-new-password" name="password" class="pm-phenomena-field__input" autocomplete="new-password" aria-label="{{ t('auth.admin_users.group_password_label') }}">
+            </label>
+            <div class="pm-admin-field">
+              <span class="pm-admin-field__label">{{ t('auth.admin_users.group_set_password_action') }}</span>
+              <div class="pm-admin-dialog__inline-actions">
+                <button type="button" id="group-edit-set-password" class="pm-action-button pm-action-button--secondary pm-action-button--medium">
+                  <span class="material-symbols-rounded pm-interaction__icon pm-interaction__icon--leading" aria-hidden="true">lock_reset</span>
+                  <span class="pm-action-button__label">{{ t('auth.admin_users.group_set_password_button') }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <input type="hidden" id="group-edit-user-id" name="user_id">
+      </form>
+    </div>
+
+    <div class="pm-admin-dialog__actions">
+      <button type="button" class="pm-action-button pm-action-button--secondary pm-action-button--medium" id="cancel-group-edit"><span class="pm-action-button__label">{{ t('common.actions.cancel') }}</span></button>
+      <button type="button" class="pm-action-button pm-action-button--primary pm-action-button--medium" id="save-group-edit"><span class="pm-action-button__label">{{ t('common.actions.save') }}</span></button>
+    </div>
+  </div>
+</dialog>
+
 <template id="admin-users-config">{{ {
   'uiLang': auth_ui_lang,
   'i18n': {
@@ -312,6 +454,7 @@
     'createdAtLabel': t('auth.admin_users.created_at'),
     'roleUser': t('auth.admin_users.role_user'),
     'roleAdmin': t('auth.admin_users.role_admin'),
+    'roleGroup': t('auth.admin_users.role_group'),
     'save': t('common.actions.save'),
     'saving': t('auth.admin_users.saving'),
     'resetPassword': t('auth.admin_users.reset_password'),
@@ -327,14 +470,19 @@
     'copyFailed': t('auth.admin_users.copy_failed'),
     'updated': t('auth.admin_users.updated'),
     'created': t('auth.admin_users.created'),
+    'groupCreated': t('auth.admin_users.group_created'),
     'invitePrepared': t('auth.admin_users.invite_prepared'),
     'resetPrepared': t('auth.admin_users.reset_prepared'),
     'networkError': t('auth.admin_users.network_error'),
     'invalidEmail': t('auth.admin_users.invalid_email'),
     'requiredNames': t('auth.admin_users.error.names_required'),
+    'passwordMismatch': t('auth.admin_users.error.password_mismatch'),
     'expiresPrefix': t('auth.admin_users.expires_prefix'),
     'notice': t('auth.common.notice'),
-    'close': t('auth.admin_users.close_invite')
+    'close': t('auth.admin_users.close_invite'),
+    'responsibleAdminPlaceholder': t('auth.admin_users.responsible_admin_placeholder'),
+    'groupPasswordSet': t('auth.admin_users.group_password_set'),
+    'setPassword': t('auth.admin_users.group_set_password_button')
   }
 } | tojson }}</template>
 <script src="{{ static_asset('js/auth/admin_users.js') }}" defer></script>

@@ -80,6 +80,12 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Account kind: 'personal' (default) or 'group'
+    account_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="personal")
+    responsible_admin_user_id: Mapped[Optional[str]] = mapped_column(
+        ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+
     # relationships
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         "RefreshToken", back_populates="user", cascade="all, delete-orphan"
@@ -91,6 +97,11 @@ class User(Base):
         "User",
         remote_side="User.id",
         foreign_keys=[created_by_user_id],
+    )
+    responsible_admin: Mapped[Optional["User"]] = relationship(
+        "User",
+        remote_side="User.id",
+        foreign_keys=[responsible_admin_user_id],
     )
 
 

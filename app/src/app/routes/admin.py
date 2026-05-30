@@ -432,6 +432,132 @@ def users_send_invite(user_id: str):
     )
 
 
+@blueprint.get("/admins")
+@jwt_required()
+@require_role(Role.ADMIN)
+def admins_list():
+    """Return all active admins for the 'responsible admin' dropdown."""
+    admins = auth_services.list_active_admins()
+    current_admin_id = str(get_jwt_identity() or "")
+    result = []
+    for a in admins:
+        display = auth_services.build_display_name(
+            first_name=a.first_name,
+            last_name=a.last_name,
+            display_name=a.display_name,
+            email=a.email,
+            username=a.username,
+        ) or str(a.email or a.username or a.id)
+        result.append({
+            "id": str(a.id),
+            "display_name": display,
+            "is_self": str(a.id) == current_admin_id,
+        })
+    return jsonify({"admins": result, "current_admin_id": current_admin_id}), 200
+
+
+@blueprint.post("/groups")
+@jwt_required()
+@require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
+def groups_create():
+    ui_lang = _resolve_admin_ui_lang()
+    payload = request.get_json(silent=True) or {}
+    login_name = str(payload.get("login_name") or "")
+    display_name = str(payload.get("display_name") or "")
+    password = str(payload.get("password") or "")
+    responsible_admin_user_id = str(payload.get("responsible_admin_user_id") or "")
+    access_expires_on = str(payload.get("access_expires_on") or "")
+
+    try:
+        user = auth_services.create_group_account(
+            login_name=login_name,
+            display_name=display_name,
+            password=password,
+            responsible_admin_user_id=responsible_admin_user_id,
+            created_by_user_id=get_jwt_identity(),
+            access_expires_at=_parse_access_expires_on(access_expires_on),
+        )
+    except ValueError as exc:
+        code = str(exc)
+        return jsonify({"ok": False, "error": _t(ui_lang, f"auth.admin_users.error.{code}")}), 400
+
+    return jsonify({"ok": True, "user": auth_services.serialize_users_for_admin([user])[0]}), 201
+
+
+@blueprint.patch("/groups/<user_id>")
+@jwt_required()
+@require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
+def groups_update(user_id: str):
+    """Update display_name, active status, expiry, or responsible_admin for a group account."""
+    ui_lang = _resolve_admin_ui_lang()
+    payload = request.get_json(silent=True) or {}
+
+    from ..extensions.sqlalchemy_ext import get_session
+    from ..auth.models import User as UserModel
+    from sqlalchemy import select
+
+    with get_session() as session:
+        user = session.execute(select(UserModel).where(UserModel.id == user_id)).scalars().first()
+        if not user:
+            return jsonify({"ok": False, "error": "user_not_found"}), 404
+        if getattr(user, "account_kind", "personal") != "group":
+            return jsonify({"ok": False, "error": "not_a_group_account"}), 400
+
+        if "display_name" in payload:
+            dn = str(payload["display_name"] or "").strip()
+            if not dn:
+                return jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.display_name_required")}), 400
+            user.display_name = dn
+
+        if "is_active" in payload:
+            user.is_active = bool(payload["is_active"])
+
+        if "access_expires_on" in payload:
+            user.access_expires_at = _parse_access_expires_on(str(payload.get("access_expires_on") or ""))
+
+        if "responsible_admin_user_id" in payload:
+            rid = str(payload["responsible_admin_user_id"] or "").strip() or None
+            user.responsible_admin_user_id = rid
+
+        from datetime import datetime, timezone
+        user.updated_at = datetime.now(timezone.utc)
+        session.flush()
+        refreshed = auth_services.serialize_users_for_admin([user])[0]
+
+    return jsonify({"ok": True, "user": refreshed}), 200
+
+
+@blueprint.post("/groups/<user_id>/set-password")
+@jwt_required()
+@require_role(Role.ADMIN)
+@limiter.limit("10 per minute")
+def groups_set_password(user_id: str):
+    """Directly set a new password for a group account (no email, no token)."""
+    ui_lang = _resolve_admin_ui_lang()
+    payload = request.get_json(silent=True) or {}
+    new_password = str(payload.get("password") or "")
+
+    from ..extensions.sqlalchemy_ext import get_session
+    from ..auth.models import User as UserModel
+    from sqlalchemy import select
+
+    with get_session() as session:
+        user = session.execute(select(UserModel).where(UserModel.id == user_id)).scalars().first()
+        if not user:
+            return jsonify({"ok": False, "error": "user_not_found"}), 404
+        if getattr(user, "account_kind", "personal") != "group":
+            return jsonify({"ok": False, "error": "not_a_group_account"}), 400
+
+    valid, pw_err = auth_services.validate_password_strength(new_password)
+    if not valid:
+        return jsonify({"ok": False, "error": _t(ui_lang, f"auth.admin_users.error.{pw_err}")}), 400
+
+    auth_services.update_user_password(user_id, auth_services.hash_password(new_password))
+    return jsonify({"ok": True}), 200
+
+
 @blueprint.get("/analytics/page")
 @jwt_required()
 @require_role(Role.ADMIN)

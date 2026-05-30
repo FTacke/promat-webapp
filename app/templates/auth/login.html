@@ -29,16 +29,16 @@
 
     <form id="login-form" class="pm-auth-form" method="post" action="{{ url_for('auth.login_post') }}" novalidate>
       <label class="pm-auth-field" for="login-email">
-        <span class="pm-auth-field__label">{{ t('auth.login.email_label') }}</span>
+        <span class="pm-auth-field__label">{{ t('auth.login.identifier_label') }}</span>
         <input
-          type="email"
+          type="text"
           class="pm-phenomena-field__input pm-auth-field__input"
           name="email"
           id="login-email"
-          autocomplete="email"
+          autocomplete="username"
           value="{{ login_email }}"
           required
-          aria-label="{{ t('auth.login.email_label') }}">
+          aria-label="{{ t('auth.login.identifier_label') }}">
       </label>
 
       <label class="pm-auth-field" for="login-password">

@@ -154,6 +154,8 @@ def create_access_token_for_user(user: User) -> str:
         "role": normalize_role_value(user.role),
         "is_active": bool(user.is_active),
         "must_reset_password": bool(user.must_reset_password),
+        "account_kind": getattr(user, "account_kind", "personal") or "personal",
+        "display_name": user.display_name or "",
     }
     token = create_access_token(
         identity=str(user.id), additional_claims=claims, expires_delta=expires_delta
@@ -388,6 +390,33 @@ def normalize_email(email: str) -> str:
     return (email or "").strip().lower()
 
 
+import re as _re
+
+_LOGIN_NAME_RE = _re.compile(r'^[a-z0-9][a-z0-9\-_]{0,62}[a-z0-9]$|^[a-z0-9]$')
+
+
+def normalize_login_name(raw: str) -> str:
+    return (raw or "").strip().lower()
+
+
+def validate_login_name(login_name: str) -> tuple[bool, str | None]:
+    """Validate a group account login name.
+
+    Allowed: 1–64 lowercase chars, digits, hyphens, underscores.
+    Must start and end with an alphanumeric character.
+    Must not look like an email address.
+    """
+    if not login_name:
+        return False, "login_name_required"
+    if "@" in login_name:
+        return False, "login_name_no_at"
+    if len(login_name) > 64:
+        return False, "login_name_too_long"
+    if not _LOGIN_NAME_RE.match(login_name):
+        return False, "login_name_invalid_chars"
+    return True, None
+
+
 def normalize_role(role: str | Role | None) -> str:
     try:
         return normalize_role_value(role)
@@ -518,6 +547,29 @@ def _creator_name_lookup(users: list[User]) -> dict[str, str]:
         )
         or str(creator.email or creator.username or creator.id)
         for creator in creators
+    }
+
+
+def _responsible_admin_lookup(users: list[User]) -> dict[str, str]:
+    admin_ids = {
+        str(user.responsible_admin_user_id)
+        for user in users
+        if getattr(user, "responsible_admin_user_id", None)
+    }
+    if not admin_ids:
+        return {}
+    with get_session() as session:
+        admins = session.execute(select(User).where(User.id.in_(admin_ids))).scalars().all()
+    return {
+        str(a.id): build_display_name(
+            first_name=a.first_name,
+            last_name=a.last_name,
+            display_name=a.display_name,
+            email=a.email,
+            username=a.username,
+        )
+        or str(a.email or a.username or a.id)
+        for a in admins
     }
 
 
@@ -714,6 +766,73 @@ def create_user(
         return user
 
 
+def create_group_account(
+    *,
+    login_name: str,
+    display_name: str,
+    password: str,
+    responsible_admin_user_id: str,
+    created_by_user_id: str | None = None,
+    access_expires_at: datetime | None = None,
+) -> User:
+    normalized_login = normalize_login_name(login_name)
+    ok, err = validate_login_name(normalized_login)
+    if not ok:
+        raise ValueError(err)
+
+    normalized_display = (display_name or "").strip()
+    if not normalized_display:
+        raise ValueError("display_name_required")
+
+    if not responsible_admin_user_id:
+        raise ValueError("responsible_admin_required")
+
+    valid, pw_err = validate_password_strength(password)
+    if not valid:
+        raise ValueError(pw_err)
+
+    now = datetime.now(timezone.utc)
+    with get_session() as session:
+        existing = session.execute(select(User).where(User.username == normalized_login)).scalars().first()
+        if existing:
+            raise ValueError("login_name_exists")
+
+        user = User(
+            id=str(uuid.uuid4()),
+            username=normalized_login,
+            email=None,
+            password_hash=hash_password(password),
+            role=Role.USER.value,
+            account_kind="group",
+            is_active=True,
+            must_reset_password=False,
+            created_at=now,
+            updated_at=now,
+            access_expires_at=access_expires_at,
+            first_name=None,
+            last_name=None,
+            display_name=normalized_display,
+            created_by_user_id=created_by_user_id,
+            responsible_admin_user_id=responsible_admin_user_id,
+        )
+        session.add(user)
+        session.flush()
+        return user
+
+
+def list_active_admins() -> list[User]:
+    with get_session() as session:
+        users = session.execute(select(User)).scalars().all()
+    now = datetime.now(timezone.utc)
+    return [
+        u for u in users
+        if normalize_role_value(u.role) == Role.ADMIN.value
+        and u.deleted_at is None
+        and bool(u.is_active)
+        and not (u.access_expires_at and _ensure_utc(u.access_expires_at) < now)
+    ]
+
+
 def update_user_admin(
     user_id: str,
     *,
@@ -811,8 +930,18 @@ def serialize_user_for_admin(
     user: User,
     *,
     creator_lookup: dict[str, str] | None = None,
+    responsible_admin_lookup: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     creator_id = str(user.created_by_user_id) if user.created_by_user_id else ""
+    account_kind = getattr(user, "account_kind", "personal") or "personal"
+    responsible_id = str(user.responsible_admin_user_id) if getattr(user, "responsible_admin_user_id", None) else ""
+    # For "Erstellt" column: group accounts show responsible admin, personal accounts show creator
+    if account_kind == "group" and responsible_id:
+        shown_creator_name = (responsible_admin_lookup or {}).get(responsible_id, "") or (creator_lookup or {}).get(creator_id, "")
+        shown_creator_id = responsible_id
+    else:
+        shown_creator_name = (creator_lookup or {}).get(creator_id, "")
+        shown_creator_id = creator_id
     return {
         "id": str(user.id),
         "username": user.username,
@@ -827,6 +956,9 @@ def serialize_user_for_admin(
         "first_name": user.first_name or "",
         "last_name": user.last_name or "",
         "role": normalize_role_value(user.role),
+        "account_kind": account_kind,
+        "responsible_admin_user_id": responsible_id,
+        "responsible_admin_name": (responsible_admin_lookup or {}).get(responsible_id, ""),
         "is_active": bool(user.is_active),
         "must_reset_password": bool(user.must_reset_password),
         "created_at": user.created_at.isoformat() if user.created_at else None,
@@ -836,13 +968,16 @@ def serialize_user_for_admin(
         "created_by_user_id": creator_id,
         "created_by_name": (creator_lookup or {}).get(creator_id, ""),
         "created_by_is_system": not bool(creator_id),
+        "shown_creator_name": shown_creator_name,
+        "shown_creator_id": shown_creator_id,
         "status_code": admin_status_code(user),
     }
 
 
 def serialize_users_for_admin(users: list[User]) -> list[dict[str, Any]]:
     creator_lookup = _creator_name_lookup(users)
-    return [serialize_user_for_admin(user, creator_lookup=creator_lookup) for user in users]
+    responsible_lookup = _responsible_admin_lookup(users)
+    return [serialize_user_for_admin(user, creator_lookup=creator_lookup, responsible_admin_lookup=responsible_lookup) for user in users]
 
 
 def update_user_password(user_id: str, new_hashed: str) -> None:

@@ -1,5 +1,7 @@
 {% set user_name = g.user %}
 {% set user_role = g.role %}
+{% set user_account_kind = g.account_kind if g.account_kind is defined else 'personal' %}
+{% set user_display_name = g.display_name if g.display_name is defined and g.display_name else g.user %}
 {% set is_authenticated = user_name is not none %}
 {% set role_value = user_role.value if user_role else '' %}
 
@@ -72,7 +74,21 @@
                 <span class="sr-only">{{ t('shell.topbar.account') }}</span>
               </button>
               <div class="promat-user-menu__dropdown" id="user-menu-dropdown" role="menu" aria-label="{{ t('shell.topbar.account_menu') }}" data-user-menu hidden>
+                {% if user_account_kind == 'group' %}
+                <p class="promat-user-menu__identity" aria-hidden="true">
+                  <span class="promat-user-menu__identity-name">{{ user_display_name }}</span>
+                  <span class="promat-user-menu__identity-sub">{{ g.user }}</span>
+                  <span class="promat-user-menu__identity-kind">{{ t('shell.user_menu.account_kind_group') }}</span>
+                </p>
+                {% else %}
+                <p class="promat-user-menu__identity" aria-hidden="true">
+                  <span class="promat-user-menu__identity-name">{{ user_display_name }}</span>
+                  <span class="promat-user-menu__identity-kind">{{ t('auth.admin_users.role_admin') if role_value == 'admin' else t('auth.admin_users.role_user') }}</span>
+                </p>
+                {% endif %}
+                {% if user_account_kind != 'group' %}
                 <a href="{{ url_for('auth.account_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem">{{ t('shell.panel.account_area') }}</a>
+                {% endif %}
                 {% if role_value == 'admin' %}
                 <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-user-menu__item" role="menuitem"><span class="pm-icon-mask pm-icon-mask--settings" aria-hidden="true"></span>{{ t('shell.panel.admin') }}</a>
                 {% endif %}

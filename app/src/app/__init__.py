@@ -340,6 +340,8 @@ def register_auth_context(app: Flask) -> None:
             g.user_id = None
             g.role = None
             g.must_reset_password = False
+            g.account_kind = "personal"
+            g.display_name = None
             return
 
         try:
@@ -354,11 +356,15 @@ def register_auth_context(app: Flask) -> None:
             except (ValueError, KeyError):
                 g.role = None
             g.must_reset_password = bool(token.get("must_reset_password", False))
+            g.account_kind = token.get("account_kind") or "personal"
+            g.display_name = token.get("display_name") or None
         except Exception:  # noqa: BLE001
             g.user = None
             g.user_id = None
             g.role = None
             g.must_reset_password = False
+            g.account_kind = "personal"
+            g.display_name = None
 
         allowed_prefixes = (
             "/static/",

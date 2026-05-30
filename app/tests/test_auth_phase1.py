@@ -453,7 +453,7 @@ def test_login_page_renders_english_copy_from_next_path(auth_app: Flask) -> None
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "Email address" in html
+    assert "Email or login name" in html
     assert "Pronunciation Matters" in html
     assert "pseudonymized data from learners" in html
     assert "Open request form" in html
@@ -960,7 +960,8 @@ def test_login_from_corpus_root_returns_to_same_corpus_root(auth_app: Flask) -> 
     assert login_response.headers["Location"] == "/de/research/spanish"
 
 
-def test_login_accepts_email_only_and_rejects_username(auth_app: Flask) -> None:
+def test_login_accepts_email_and_rejects_nonexistent_identifier(auth_app: Flask) -> None:
+    # Login via email works (personal accounts); non-existent identifier is rejected
     client = auth_app.test_client()
 
     success = client.post(
@@ -972,9 +973,10 @@ def test_login_accepts_email_only_and_rejects_username(auth_app: Flask) -> None:
         },
         follow_redirects=False,
     )
+    # "nosuchuser" does not match any username or email in the test DB
     failure = client.post(
         "/auth/login",
-        data={"email": "alice", "password": "ValidPass1", "ui_lang": "en"},
+        data={"email": "nosuchuser", "password": "ValidPass1", "ui_lang": "en"},
         follow_redirects=False,
     )
 
@@ -2503,7 +2505,7 @@ def test_admin_users_static_js_uses_semantic_action_button_classes(auth_app: Fla
     assert "prepareMail('reset')" in js
     assert "mail_ui_lang: selectedEditMailLanguage()" in js
     assert 'aria-label="${escapeHtml(t(\'editTitle\', \'Edit user\'))}"' in js
-    assert 'title="${escapeHtml(user.email || \'\')}"' in js
+    assert 'title="${escapeHtml(loginLabel)}"' in js
     assert 'element.innerHTML ||' not in js
     assert 'element.textContent ||' in js
 
