@@ -7,6 +7,7 @@ from extensions.sqlalchemy_ext.get_session.
 from __future__ import annotations
 
 import hashlib
+import re as _re
 import secrets
 import uuid
 from dataclasses import dataclass
@@ -42,6 +43,8 @@ class AccountStatus:
 
 
 _UNSET = object()
+
+_LOGIN_NAME_RE = _re.compile(r'^[a-z0-9][a-z0-9\-_]{0,62}[a-z0-9]$|^[a-z0-9]$')
 
 
 # Password hashing
@@ -388,11 +391,6 @@ def find_user_by_username_or_email(identifier: str) -> Optional[User]:
 
 def normalize_email(email: str) -> str:
     return (email or "").strip().lower()
-
-
-import re as _re
-
-_LOGIN_NAME_RE = _re.compile(r'^[a-z0-9][a-z0-9\-_]{0,62}[a-z0-9]$|^[a-z0-9]$')
 
 
 def normalize_login_name(raw: str) -> str:
