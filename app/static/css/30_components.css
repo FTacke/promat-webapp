@@ -8232,7 +8232,6 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   position: relative;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
   padding-bottom: var(--promat-space-1);
 }
 
@@ -9587,5 +9586,131 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
   .promat-panel-dialog::backdrop,
   .promat-panel--modal {
     transition-duration: 1ms;
+  }
+}
+
+/* Copy-button success state */
+.pm-button--success {
+  background: var(--md-sys-color-tertiary-container) !important;
+  color: var(--md-sys-color-on-tertiary-container) !important;
+}
+
+/* ============================================================
+   Z-index rules for dialogs and dropdowns
+   Migrated from app/static/css/md3/components/mobile-responsive.css.
+   dialog[open] uses browser top-layer; explicit z-index is a
+   fallback for older browsers and non-dialog overlays.
+   ============================================================ */
+dialog[open] {
+  z-index: var(--z-index-dialog, 30);
+}
+
+.select2-container--open .select2-dropdown {
+  z-index: var(--z-index-dropdown, 10);
+}
+
+/* ============================================================
+   Table overflow and DataTables
+   Migrated from app/static/css/md3/components/mobile-responsive.css.
+   ============================================================ */
+table {
+  max-width: 100%;
+}
+
+.dataTables_wrapper {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
+}
+
+@media (max-width: 839px) {
+  .dataTables_wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+#corpus-table,
+#advanced-table,
+#token-results-table {
+  min-width: 1200px;
+  width: max-content;
+  table-layout: auto;
+}
+
+#users-table {
+  min-width: 800px;
+  width: max-content;
+  table-layout: auto;
+}
+
+#corpus-table td,
+#advanced-table td,
+#token-results-table td,
+#users-table td {
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+td.wrap-text {
+  white-space: normal !important;
+  word-break: break-word !important;
+  min-width: 150px;
+  max-width: 300px;
+}
+
+/* ============================================================
+   Research scrollable result containers
+   Migrated from app/static/css/md3/components/mobile-responsive.css.
+   ============================================================ */
+@media (max-width: 1199px) {
+  #panel-resultados,
+  #token-results,
+  #token-panel-resultados,
+  #tab-panel-paises,
+  #tab-panel-resumen {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    }
+}
+
+@media (max-width: 839px) {
+  #panel-resultados {
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+      max-width: 100%;
+    height: auto;
+    max-height: none;
+  }
+
+  #token-results,
+  #token-panel-resultados {
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+    }
+
+  #tab-panel-paises,
+  #tab-panel-resumen {
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+      height: auto !important;
+    max-height: none !important;
+  }
+}
+
+@media (min-width: 840px) {
+  #panel-resultados,
+  #token-results,
+  #token-panel-resultados,
+  #tab-panel-paises,
+  #tab-panel-resumen {
+    overflow-x: visible;
+    overflow-y: visible;
+    height: auto;
+    max-height: none;
   }
 }

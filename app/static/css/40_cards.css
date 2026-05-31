@@ -3,7 +3,6 @@
 .pm-container,
 .pm-card,
 .promat-card,
-.md3-card,
 .pm-admonition,
 .pm-admonition.admonition {
   /* Card family tokens adopt the global spacing, radius, border, and surface primitives.
@@ -108,27 +107,6 @@ a.pm-card:focus-visible .pm-card__title,
   background: var(--pm-card-background);
 }
 
-.md3-card,
-.md3-card--tonal,
-.md3-card.md3-card--tonal,
-.md3-card--outlined,
-.md3-card.md3-card--outlined,
-.md3-card--elevated,
-.md3-card.md3-card--elevated,
-.md3-card--landing,
-.md3-card.md3-card--landing {
-  background: var(--pm-card-background);
-  border: 1px solid var(--pm-card-border-color);
-  box-shadow: var(--pm-card-shadow);
-}
-
-.md3-card:hover,
-.md3-card--elevated:hover,
-.md3-card--landing:hover {
-  background: var(--pm-card-background);
-  border-color: var(--pm-card-border-color);
-  box-shadow: var(--pm-card-shadow);
-}
 
 .pm-card__eyebrow,
 .pm-card__text,
@@ -1247,19 +1225,4 @@ a.pm-card:focus-visible .pm-card__title,
   --pm-admonition-title-color: var(--pm-admonition-weiterlesen-title-color);
 }
 
-.md3-card__header {
-  padding: 0 0 var(--space-4);
-}
-
-.md3-card__content {
-  padding: 0;
-}
-
-.md3-card__actions,
-.md3-card__footer {
-  padding: var(--space-4) 0 0;
-  background: transparent;
-  border-top: 1px solid var(--book-border);
-  margin-top: var(--space-4);
-}
 

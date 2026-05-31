@@ -606,6 +606,109 @@ Lokale Browserprüfung steht aus — Änderungen im Arbeitsbaum hinterlassen fü
 
 ---
 
+## Final MD3 Cleanup Follow-up 2026-05-30
+
+**Commit zum Zeitpunkt der Ausführung:** `b73b4ed3e0e7949ecbe817b1e29cb7c3c7772a44`  
+**Änderungen nicht committet** — Arbeitsbaum offen für lokale Sichtprüfung.
+
+### Ziel
+
+Vollständige Entfernung von `app/static/css/md3/` — alle aktiven Reste zuerst in App-CSS überführen, dann Ordner per `git rm -r` löschen.
+
+### Umgesetzt
+
+**Extraktionen vor Löschung:**
+- `app/static/css/layout.css`: `html { overflow-x: hidden }` ergänzt (global viewport-Schutz)
+- `app/static/css/00_tokens.css`: `--z-index-*` Tokens hinzugefügt (promat-Skala: 2–40; map: 200–800)
+- `app/static/css/footer.css` (neu): `.pm-footer-shell` Regeln extrahiert aus `footer.css`; `.md3-footer` Alias gestrichen
+- `app/static/css/30_components.css` (Anhang): `dialog[open]` und `.select2-container--open` z-index, `table/DataTables`-Regeln, Forschungs-Scroll-Container (#panel-resultados, #token-results, usw.), Copy-Button-Erfolg `.pm-button--success`
+
+**md3-Klassen aus App-CSS entfernt:**
+- `app/static/css/40_cards.css`: `.md3-card` aus kombiniertem Selektor, `.md3-card--*` Hover/Varianten-Block, `.md3-card__header/content/actions/footer` Blöcke gelöscht
+
+**Templates bereinigt:**
+- `app/templates/partials/_admonition.html`: `md3-status-live` aus class-Attribut entfernt
+- `app/templates/base.html`: Alle MD3-CSS-Links entfernt, preload auf `md3/tokens.css` entfernt, `footer.css` und vorhandenes `50_feedback.css` eingebunden
+
+**JS-Bereinigung:**
+- `app/static/js/logout.js`: `.md3-user-menu__item--logout` Fallback-Selektor entfernt
+- `app/static/js/modules/navigation/material-symbols-loader.js`: Staler parent-Selektor `.md3-navigation-drawer__item, .md3-icon-button` entfernt
+- `app/static/js/modules/navigation/drawer.js`: `initInertState` und `initCollapsibles` Methoden entfernt (keine Submenüs in aktueller Navigationsstruktur)
+- `app/static/js/modules/navigation/turbo-integration.js`: `ensureAccordionFor` auf Stub reduziert, `highlightNavigationFromURL` auf reine aria-current-Logik bereinigt, tote `saveDrawerState`/`restoreDrawerState` Funktionen entfernt, staler `.md3-navigation-drawer--modal` Selektor aus `setNoAnim` entfernt
+- `app/static/js/auth/password_reset.js`: Toten `.md3-outlined-textfield__icon--trailing` Block entfernt
+- `app/static/js/pages/corpus-guia.js`: `md3-code-block__copy--success` durch `pm-button--success` ersetzt
+
+**Ordner gelöscht:**
+- `git rm -r app/static/css/md3/` — **25 Dateien, 7.887 CSS-Zeilen entfernt**
+
+### Entfernte MD3-Dateien (alle 25)
+
+`tokens.css`, `typography.css`, `layout.css`, `components/alerts.css`, `components/buttons.css`, `components/cards.css`, `components/como-citar.css`, `components/dialog.css`, `components/footer.css`, `components/hero.css`, `components/layout-helpers.css`, `components/login.css`, `components/mobile-responsive.css`, `components/motion.css`, `components/navbar.css`, `components/navigation-drawer.css`, `components/page-navigation.css`, `components/snackbar.css`, `components/text-pages.css`, `components/textfields.css`, `components/top-app-bar.css`
+
+*(Hinweis: `typefaces.css` und `material-symbols-fallback.css` wurden bereits in Phase 1 per `git mv` verschoben.)*
+
+### Neue App-CSS-Dateien
+
+| Datei | Inhalt |
+|---|---|
+| `app/static/css/footer.css` | `.pm-footer-shell` Regeln (aus `footer.css` extrahiert) |
+
+### Überführte Regeln
+
+| Quelle | Ziel | Inhalt |
+|---|---|---|
+| `mobile-responsive.css` | `layout.css` | `html { overflow-x: hidden }` |
+| `mobile-responsive.css` | `00_tokens.css` | `--z-index-*` Custom Properties |
+| `mobile-responsive.css` | `30_components.css` | `dialog[open]`, `.select2-container--open`, Tabellen, Research-Scroll-Container |
+| `footer.css` | `footer.css` (new) | `.pm-footer-shell` |
+| `motion.css` | bereits nicht geladen, kein Handlungsbedarf | (war nicht in `base.html`) |
+
+### Referenzprüfung
+
+- Aktive `md3-*` Klassen in Templates: **0**
+- Aktive `md3-*` Klassen in JS: **0**
+- Aktive `css/md3/` Pfade in Templates: **0**
+- `md3-` Selektoren in App-CSS (dead): noch in `layout.css`, `20_layout.css`, `10_typography.css` als Legacy-Aliase (`.md3-content-wrapper`, `.md3-page__header` etc.) — no DOM match, risikolos, Token-Bridge-Cleanup-Run vorbehalten
+- `--md-sys-*` Token-Referenzen in App-CSS: noch in `50_feedback.css`, `30_components.css` (footer/feedback Regeln), `layout.css:7` — lösen alle über `00_tokens.css` Bridge auf, kein Risiko
+
+### Testergebnisse
+
+```
+667 passed, 0 failed, 120 warnings — 70s
+```
+
+Ruff: `All checks passed!`  
+CI Governance: `All governance checks passed.`
+
+### UI-Prüfung
+
+Lokale Browserprüfung steht aus — Änderungen im Arbeitsbaum hinterlassen. Empfohlene Prüfrouten: `/de`, `/login`, `/de/research`, `/de/research/spanish/phenomena/overview`, `/account`, `/admin/users`. Fokus: Alerts/Snackbars, Navigation, Footer, Material Symbols, keine 404-Fehler für CSS.
+
+### Verbleibende MD3-Reste
+
+| Kategorie | Wo | Details |
+|---|---|---|
+| Dead Selektoren | `layout.css`, `20_layout.css`, `10_typography.css` | `.md3-content-wrapper`, `.md3-card`, `.md3-page__header` usw. — kein DOM-Match, kein Risiko |
+| Token-Bridge | `00_tokens.css` | `--md-sys-*` → promat-Tokens bleibt aktiv; Token-Cleanup ist separater Run |
+| Historische Kommentare | `50_feedback.css`, `30_components.css` | Migrations-Herkunftskommentare, keine aktiven Referenzen |
+| Import-Pfad | `app/static/js/md3/alert-utils.js` | Datei existiert noch unter `md3/`-Pfad; Import in `password_reset.js` bleibt bis Umbenennung |
+
+### Offene Risiken
+
+- `--md-sys-*` Token-Bridge in `00_tokens.css`: Muss bleiben bis alle Dead-Selektoren bereinigt — separater Cleanup-Run
+- `alert-utils.js` verbleibt unter `app/static/js/md3/` — inhaltlich migriert, Pfad noch nicht bereinigt
+
+### Empfehlung
+
+**Ziel erreicht: `app/static/css/md3/` vollständig entfernt.**
+
+Nächste optionale Schritte (eigener Run):
+1. Dead `md3-*` Selektoren aus `layout.css`, `20_layout.css`, `10_typography.css` entfernen
+2. `00_tokens.css` Token-Bridge-Blöcke (`--md-sys-*`) bereinigen, wenn keine aktiven Referenzen mehr
+3. `app/static/js/md3/alert-utils.js` nach `app/static/js/modules/core/alert-utils.js` verschieben
+
+---
+
 ## Abschluss
 
 | Metrik | Wert |

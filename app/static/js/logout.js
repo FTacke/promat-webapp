@@ -66,7 +66,7 @@
   }
 
   function onClick(e) {
-    const el = e.target.closest && e.target.closest('[data-logout="fetch"], .md3-user-menu__item--logout');
+    const el = e.target.closest && e.target.closest('[data-logout="fetch"]');
     if (!el) return;
 
     // If it's a GET-only logout anchor, prefer to POST via fetch for safety, but respect data attributes

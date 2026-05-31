@@ -4,22 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('reset');
   if (!form) return;
 
-  // Toggle visibility logic
-  document.querySelectorAll('.md3-outlined-textfield__icon--trailing').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const inputId = btn.dataset.toggle;
-      const input = document.getElementById(inputId);
-      const icon = btn.querySelector('.material-symbols-rounded');
-      if (input.type === 'password') {
-        input.type = 'text';
-        icon.textContent = 'visibility_off';
-      } else {
-        input.type = 'password';
-        icon.textContent = 'visibility';
-      }
-    });
-  });
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('status');

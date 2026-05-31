@@ -11,40 +11,19 @@
     <!-- no-js removal moved to static/js/theme.js (externalized for CSP) -->
     <!-- Preload critical resources to prevent FOUC -->
     <link rel="preload" href="{{ url_for('static', filename='css/layout.css') }}" as="style">
-    <link rel="preload" href="{{ url_for('static', filename='css/md3/tokens.css') }}" as="style">
     <link rel="preload" href="{{ url_for('static', filename='css/00_tokens.css') }}" as="style">
     <!-- Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/typefaces.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename=favicon_asset) }}">
-    <!-- MD3 Design System Foundation -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/tokens.css') }}">
+    <!-- App Tokens -->
         <link rel="stylesheet" href="{{ url_for('static', filename='css/00_tokens.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/typography.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/layout.css') }}">
-    <!-- MD3 Components for Navigation/Footer -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/buttons.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/navbar.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/navigation-drawer.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/top-app-bar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/material-symbols.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/footer.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/page-navigation.css') }}">
-    <!-- MD3 Common Components -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/hero.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/text-pages.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/cards.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/dialog.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/textfields.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/login.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/layout-helpers.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/como-citar.css') }}">
-    <!-- Mobile Responsive Overrides (muss nach allen Komponenten kommen) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/md3/components/mobile-responsive.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/10_typography.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/20_layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/30_components.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/40_cards.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/50_feedback.css') }}">
     
     <!-- Global Theme Controller - muss vor allen anderen Scripts laden -->

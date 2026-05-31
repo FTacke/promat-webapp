@@ -1,0 +1,27 @@
+/* ============================================================
+   Footer shell
+   Migrated from app/static/css/md3/components/footer.css.
+   .md3-footer alias dropped.
+   ============================================================ */
+.pm-footer-shell {
+  border-top: 0;
+  background: var(--app-background);
+  color: var(--md-sys-color-on-surface-variant);
+  padding-block: var(--space-4);
+}
+
+@media (min-width: 600px) {
+  .pm-footer-shell {
+    padding-block: var(--space-5);
+  }
+}
+
+@media (min-width: 840px) {
+  .pm-footer-shell {
+    padding-block: var(--space-6);
+  }
+}
+
+.app-has-sticky .pm-footer-shell {
+  padding-bottom: 0;
+}

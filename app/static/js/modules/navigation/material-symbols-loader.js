@@ -115,19 +115,9 @@ function hideFailedIcons() {
   const icons = document.querySelectorAll(".material-symbols-rounded");
 
   icons.forEach((icon) => {
-    const parent = icon.closest(
-      ".md3-navigation-drawer__item, .md3-icon-button",
-    );
-
     // Check if icon is actually rendering (has specific width)
     if (icon.offsetWidth === 0 || icon.offsetWidth > 30) {
-      // Icon not rendering properly, hide it
       icon.style.display = "none";
-
-      // Adjust parent spacing
-      if (parent) {
-        parent.classList.add("no-icon");
-      }
     }
   });
 }

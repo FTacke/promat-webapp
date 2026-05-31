@@ -20,10 +20,10 @@
       navigator.clipboard.writeText(textToCopy).then(function() {
         const icon = copyBtn.querySelector('.material-symbols-rounded');
         if (icon) icon.textContent = 'check';
-        copyBtn.classList.add('md3-code-block__copy--success', 'is-success');
+        copyBtn.classList.add('pm-button--success', 'is-success');
         setTimeout(function() {
           if (icon) icon.textContent = 'content_copy';
-          copyBtn.classList.remove('md3-code-block__copy--success', 'is-success');
+          copyBtn.classList.remove('pm-button--success', 'is-success');
         }, 2000);
       }).catch(function(err) {
         const icon = copyBtn.querySelector('.material-symbols-rounded');

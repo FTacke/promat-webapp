@@ -2495,10 +2495,12 @@ def test_rate_limit_still_applies_to_public_mutating_routes(auth_app: Flask) -> 
 
 def test_legacy_auth_snackbar_icon_path_is_removed() -> None:
     legacy_module = TEST_REPO_ROOT / "app" / "static" / "js" / "modules" / "auth" / "snackbar.js"
-    snackbar_css = TEST_REPO_ROOT / "app" / "static" / "css" / "md3" / "components" / "snackbar.css"
+    legacy_snackbar_css = TEST_REPO_ROOT / "app" / "static" / "css" / "md3" / "components" / "snackbar.css"
+    feedback_css = TEST_REPO_ROOT / "app" / "static" / "css" / "50_feedback.css"
 
     assert not legacy_module.exists()
-    css = snackbar_css.read_text(encoding="utf-8")
+    assert not legacy_snackbar_css.exists()
+    css = feedback_css.read_text(encoding="utf-8")
     assert "md3-snackbar--auth-expired" not in css
     assert "material-symbols-outlined" not in css
 

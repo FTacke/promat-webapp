@@ -788,6 +788,18 @@
   --promat-topbar-height: var(--promat-topbar-height-desktop);
   --promat-topbar-blur: 0.4rem;
   --promat-topbar-z-index: 4;
+  /* Z-index hierarchy (scoped within body.app-shell isolation context) */
+  --z-index-sticky: 2;
+  --z-index-top-app-bar: 4;
+  --z-index-dropdown: 10;
+  --z-index-drawer-modal: 20;
+  --z-index-dialog: 30;
+  --z-index-snackbar: 40;
+  /* Leaflet map layers (Leaflet-internal stacking context) */
+  --z-index-map-tiles: 200;
+  --z-index-map-controls: 400;
+  --z-index-map-markers: 600;
+  --z-index-map-popups: 800;
   --promat-panel-width: 14.5rem;
   --promat-content-width: 60rem;
   --promat-reading-width: var(--pm-layout-reading-width);

@@ -73,17 +73,13 @@ function isActiveLink(link, currentPath) {
  */
 function setNoAnim(fn) {
   const drawer = document.getElementById("navigation-drawer");
-  const modalDrawer = document.querySelector(".md3-navigation-drawer--modal");
 
   if (drawer) drawer.classList.add("no-anim");
-  if (modalDrawer) modalDrawer.classList.add("no-anim");
 
   fn();
 
-  // Animation nach nächstem Frame wieder aktivieren
   requestAnimationFrame(() => {
     if (drawer) drawer.classList.remove("no-anim");
-    if (modalDrawer) modalDrawer.classList.remove("no-anim");
   });
 }
 
@@ -93,97 +89,7 @@ function setNoAnim(fn) {
  * @param {string} section - Section name (z.B. 'proyecto') oder null
  */
 function ensureAccordionFor(section) {
-  console.log("[Turbo Accordion] ensureAccordionFor called:", {
-    section,
-    currentSection,
-  });
-
-  const drawer = document.getElementById("navigation-drawer");
-  if (!drawer) {
-    console.log("[Turbo Accordion] No drawer, skipping");
-    return;
-  }
-
-  // Finde aktuell geöffnetes Panel
-  const openBtn = drawer.querySelector(
-    '.md3-navigation-drawer__trigger[aria-expanded="true"]',
-  );
-  const openSection = openBtn ? openBtn.getAttribute("data-section") : null;
-
-  console.log(
-    "[Turbo Accordion] Current open section:",
-    openSection,
-    "→ Target section:",
-    section,
-  );
-
-  // Diff: Nur ändern wenn State unterschiedlich
-  if (openSection === section) {
-    console.log("[Turbo Accordion] Already in correct state, skipping");
-    currentSection = section;
-    return;
-  }
-
-  // State-Change nötig
-
-  // 1) Altes Panel schließen (falls vorhanden)
-  if (openBtn && openSection !== section) {
-    console.log("[Turbo Accordion] Closing section:", openSection);
-    const panelId = openBtn.getAttribute("aria-controls");
-    const panel = panelId ? document.getElementById(panelId) : null;
-
-    if (panel) {
-      openBtn.setAttribute("aria-expanded", "false");
-      panel.removeAttribute("data-open");
-      panel.setAttribute("aria-hidden", "true");
-      if (panel.inert !== undefined) {
-        panel.inert = true;
-      }
-    }
-  }
-
-  // 2) Neues Panel öffnen (falls section angegeben)
-  if (section) {
-    const btn = drawer.querySelector(
-      `.md3-navigation-drawer__trigger[data-section="${section}"]`,
-    );
-    if (!btn) {
-      // No accordion for this section - it's a direct link (e.g., corpus, atlas)
-      // This is expected behavior, not an error
-      currentSection = section;
-      return;
-    }
-
-    const panelId = btn.getAttribute("aria-controls");
-    const panel = panelId ? document.getElementById(panelId) : null;
-    if (!panel) {
-      console.warn(
-        "[Turbo Accordion] Panel element not found for button:",
-        btn,
-      );
-      currentSection = section;
-      return;
-    }
-
-    // Öffnen (data-hydrating ist aktiv, keine Animation)
-    console.log("[Turbo Accordion] Opening section:", section);
-    btn.setAttribute("aria-expanded", "true");
-    panel.setAttribute("data-open", "");
-    panel.setAttribute("aria-hidden", "false");
-    if (panel.inert !== undefined) {
-      panel.inert = false;
-    }
-
-    // Dispatch event for DataTable adjustment (if corpus section)
-    if (section === "corpus") {
-      requestAnimationFrame(() => {
-        document.dispatchEvent(new Event("corpus:accordion-open"));
-      });
-    }
-  }
-
   currentSection = section;
-  console.log("[Turbo Accordion] Updated currentSection to:", currentSection);
 }
 
 /**
@@ -191,60 +97,22 @@ function ensureAccordionFor(section) {
  * Saubere ARIA-Implementierung: aria-current nur bei aktiven Links
  */
 function highlightNavigationFromURL(pathname) {
-  console.log("[Turbo Highlight] Highlighting navigation for:", pathname);
-
   const drawer = document.getElementById("navigation-drawer");
   if (!drawer) return;
 
   const currentPath = normalizePath(pathname);
-  console.log("[Turbo Highlight] Normalized path:", currentPath);
 
-  // 1) Reset: Attribute ENTFERNEN statt auf "false" setzen
-  // Sowohl Links als auch Trigger-Buttons
-  drawer
-    .querySelectorAll("a[aria-current], .md3-navigation-drawer__trigger")
-    .forEach((el) => {
-      el.removeAttribute("aria-current");
-      el.classList.remove(
-        "md3-navigation-drawer__item--active",
-        "md3-navigation-drawer__subitem--active",
-      );
-    });
-
-  // 2) Aktive Links finden und markieren
-  let activeCount = 0;
-  let hasActiveSubitem = false;
-  let activeSubmenu = null;
-
-  drawer.querySelectorAll("a[href]").forEach((link) => {
-    if (isActiveLink(link, currentPath)) {
-      activeCount++;
-      link.setAttribute("aria-current", "page");
-
-      // CSS-Klassen für Styling
-      if (link.classList.contains("md3-navigation-drawer__subitem")) {
-        link.classList.add("md3-navigation-drawer__subitem--active");
-        hasActiveSubitem = true;
-
-        // Merke das aktive Submenu
-        activeSubmenu = link.closest(".md3-navigation-drawer__submenu");
-      } else if (link.classList.contains("md3-navigation-drawer__item")) {
-        link.classList.add("md3-navigation-drawer__item--active");
-      }
-    }
+  // Reset aria-current on all links
+  drawer.querySelectorAll("a[aria-current]").forEach((el) => {
+    el.removeAttribute("aria-current");
   });
 
-  // 3) Parent-Trigger als aktiv markieren, wenn Subitem aktiv ist
-  if (hasActiveSubitem && activeSubmenu) {
-    const triggerId = activeSubmenu.getAttribute("aria-labelledby");
-    const trigger = document.getElementById(triggerId);
-    if (trigger) {
-      trigger.classList.add("md3-navigation-drawer__item--active");
-      console.log("[Turbo Highlight] Marked parent trigger as active");
+  // Mark active links
+  drawer.querySelectorAll("a[href]").forEach((link) => {
+    if (isActiveLink(link, currentPath)) {
+      link.setAttribute("aria-current", "page");
     }
-  }
-
-  console.log("[Turbo Highlight] Marked", activeCount, "links as active");
+  });
 }
 
 /**
@@ -254,59 +122,6 @@ function closeMobileDrawer() {
   const modalDrawer = document.getElementById("navigation-drawer-modal");
   if (modalDrawer && modalDrawer.open) {
     modalDrawer.close();
-  }
-}
-
-/**
- * Drawer-State in localStorage speichern
- */
-function saveDrawerState() {
-  const openSubmenu = document.querySelector(
-    ".md3-navigation-drawer__submenu[data-open]",
-  );
-  if (openSubmenu) {
-    localStorage.setItem("drawerOpenGroup", openSubmenu.id);
-  } else {
-    localStorage.removeItem("drawerOpenGroup");
-  }
-
-  // Scroll-Position des Drawers speichern (optional)
-  const drawer = document.querySelector(".md3-navigation-drawer__content");
-  if (drawer) {
-    localStorage.setItem("drawerScrollTop", drawer.scrollTop);
-  }
-}
-
-/**
- * Drawer-State aus localStorage wiederherstellen
- */
-function restoreDrawerState() {
-  // Geöffnetes Submenü wiederherstellen
-  const openGroupId = localStorage.getItem("drawerOpenGroup");
-  if (openGroupId) {
-    const submenu = document.getElementById(openGroupId);
-    if (submenu && !submenu.hasAttribute("data-open")) {
-      const triggerId = submenu.getAttribute("aria-labelledby");
-      const trigger = document.getElementById(triggerId);
-      if (trigger) {
-        // Submenü öffnen ohne Animation (da Restore)
-        trigger.setAttribute("aria-expanded", "true");
-        submenu.setAttribute("data-open", "");
-        submenu.setAttribute("aria-hidden", "false");
-        if (submenu.inert !== undefined) {
-          submenu.inert = false;
-        }
-      }
-    }
-  }
-
-  // Scroll-Position wiederherstellen
-  const scrollTop = localStorage.getItem("drawerScrollTop");
-  if (scrollTop) {
-    const drawer = document.querySelector(".md3-navigation-drawer__content");
-    if (drawer) {
-      drawer.scrollTop = parseInt(scrollTop, 10);
-    }
   }
 }
 
