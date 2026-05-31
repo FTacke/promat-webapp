@@ -1,9 +1,9 @@
 name: Full Test
 
 on:
+  # Scheduled runs are disabled intentionally.
+  # This workflow remains available via manual workflow_dispatch.
   workflow_dispatch:
-  schedule:
-    - cron: "17 2 * * *"
 
 permissions:
   contents: read
