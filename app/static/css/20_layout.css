@@ -737,8 +737,13 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 @media (max-width: 767px) {
+  body.app-shell.page-landing {
+    grid-template-rows: auto auto;
+  }
+
   body.app-shell.page-landing .pm-content-wrapper,
   body.app-shell.page-landing .md3-content-wrapper {
+    min-height: 0;
     padding-block-start: calc(var(--pm-landing-shell-block-start-mobile) + env(safe-area-inset-top));
     padding-block-end: var(--pm-landing-shell-block-end-mobile);
   }

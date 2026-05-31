@@ -597,7 +597,7 @@
   --pm-landing-shell-block-start: clamp(2.5rem, 5.5vh, 4.4rem);
   --pm-landing-shell-block-start-mobile: clamp(0.6rem, 2.5svh, 1.25rem);
   --pm-landing-shell-block-end: var(--pm-space-xxl);
-  --pm-landing-shell-block-end-mobile: var(--pm-space-xl);
+  --pm-landing-shell-block-end-mobile: var(--pm-space-sm);
   --pm-landing-stack-gap: clamp(2.5rem, 4.6vw, 4.2rem);
   --pm-landing-stack-gap-mobile: clamp(1.6rem, 5vw, 2.45rem);
   --pm-landing-hero-gap-mobile: var(--pm-space-xs);
