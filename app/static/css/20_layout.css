@@ -749,6 +749,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 
   .landing-hero {
     gap: var(--pm-landing-hero-gap-mobile);
+    margin-top: var(--pm-landing-grid-margin-top-mobile);
   }
 
   .landing-grid {

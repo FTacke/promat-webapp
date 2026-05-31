@@ -601,7 +601,7 @@
   --pm-landing-stack-gap: clamp(2.5rem, 4.6vw, 4.2rem);
   --pm-landing-stack-gap-mobile: clamp(1.6rem, 5vw, 2.45rem);
   --pm-landing-hero-gap-mobile: var(--pm-space-xs);
-  --pm-landing-grid-margin-top-mobile: var(--pm-space-container);
+  --pm-landing-grid-margin-top-mobile: 20px;
   --pm-landing-intro-size-mobile: var(--promat-text-md);
   --pm-landing-intro-line-mobile: 1.45;
   --pm-landing-intro-max-mobile: 22rem;
