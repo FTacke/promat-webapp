@@ -8495,6 +8495,37 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
     display: none;
   }
 
+  .landing-hero__language {
+    margin-top: 0.1rem;
+    color: var(--book-muted);
+  }
+
+  .landing-hero__language .promat-topbar__language-switch {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    gap: 0.16rem;
+  }
+
+  .landing-hero__language .promat-topbar__language-link {
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    font-size: var(--pm-type-meta-size);
+    line-height: var(--pm-type-meta-line);
+    color: var(--book-muted);
+  }
+
+  .landing-hero__language .promat-topbar__language-link.is-active {
+    color: var(--book-fg);
+    font-weight: 600;
+  }
+
+  .landing-hero__language .promat-topbar__language-separator {
+    color: var(--book-muted);
+  }
+
   .landing-more-inline {
     display: inline;
     font-family: var(--pm-type-reading-family);

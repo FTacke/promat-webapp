@@ -23,6 +23,10 @@
 
     <p class="landing-intro">{{ promat_page.intro }}</p>
 
+    <div class="landing-hero__language" aria-label="{{ t('shell.topbar.language_switch') }}">
+      {% include 'partials/_ui_lang_switch.html' %}
+    </div>
+
     {% if promat_page.more_link %}
     <a class="landing-more-inline" href="{{ promat_page.more_link.href }}">{{ promat_page.more_link.label }}</a>
     {% endif %}

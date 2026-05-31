@@ -65,6 +65,10 @@ body.app-shell.page-landing .md3-content-wrapper {
   width: 100%;
 }
 
+.landing-hero__language {
+  display: none;
+}
+
 .landing-hero {
   display: grid;
   justify-items: center;
@@ -750,6 +754,14 @@ body.app-shell.page-landing .md3-content-wrapper {
   .landing-grid {
     gap: var(--pm-space-xl);
     margin-top: var(--pm-landing-grid-margin-top-mobile);
+  }
+
+  .landing-page__utility {
+    display: none;
+  }
+
+  .landing-hero__language {
+    display: block;
   }
 
   .pm-card-grid,
