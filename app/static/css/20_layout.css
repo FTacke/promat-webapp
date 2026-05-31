@@ -748,7 +748,8 @@ body.app-shell.page-landing .md3-content-wrapper {
   }
 
   .landing-grid {
-    gap: var(--pm-space-lg);
+    gap: var(--pm-space-xl);
+    margin-top: var(--pm-landing-grid-margin-top-mobile);
   }
 
   .pm-card-grid,

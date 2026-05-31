@@ -601,12 +601,13 @@
   --pm-landing-stack-gap: clamp(2.5rem, 4.6vw, 4.2rem);
   --pm-landing-stack-gap-mobile: clamp(1.6rem, 5vw, 2.45rem);
   --pm-landing-hero-gap-mobile: var(--pm-space-xs);
+  --pm-landing-grid-margin-top-mobile: var(--pm-space-container);
   --pm-landing-intro-size-mobile: var(--promat-text-md);
   --pm-landing-intro-line-mobile: 1.45;
   --pm-landing-intro-max-mobile: 22rem;
   --pm-landing-card-body-border-color: color-mix(in srgb, var(--promat-wordmark-accent) 40%, var(--pm-border-default));
   --pm-landing-card-mobile-min-block: 14.5rem;
-  --pm-landing-card-mobile-image-block: 10.5rem;
+  --pm-landing-card-mobile-image-block: 6.3rem;
   --pm-landing-card-mobile-overlay-margin: var(--pm-space-xs);
   --pm-landing-card-mobile-body-padding: var(--pm-space-xs);
   --pm-landing-card-mobile-body-bg: var(--book-paper);
