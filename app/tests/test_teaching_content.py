@@ -347,7 +347,7 @@ def test_build_teaching_topic_page_derives_metadata_and_appends_top_level_citati
             "value": "Marlon Merte, Felix Tacke",
         },
         "details": [
-            {"key": "peer_review", "label": "Peer Review", "value": "Gloria Gabriel"},
+            {"key": "peer_review", "label": "Peer Review", "value": ""},
             {"key": "created", "label": "Erstellt", "value": "06.07.2025"},
             {"key": "updated", "label": "Geändert", "value": "05.03.2026"},
         ],
