@@ -79,7 +79,7 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
         },
         "project_lead": "Prof. Dr. Kathrin Siebold",
         "conducted_by": "Theresa Fischer",
-        "material_conception": ("Kathrin Siebold",),
+        "material_conception": ("Kathrin Siebold, Theresa Fischer",),
         "summary": {
             "de": "Vorbereiteter Korpusbereich für deutsche Ausspracheprofile in Lern- und Vergleichskontexten.",
             "en": "Prepared corpus area for German pronunciation profiles in learning and comparison contexts.",
