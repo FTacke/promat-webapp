@@ -332,7 +332,7 @@ def test_build_teaching_topic_page_derives_metadata_and_appends_top_level_citati
     )
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
-        "title: Thema eins\ndescription: Kurzbeschreibung\npeer_review:\n  - Gloria Gabriel\ncreated: 2025-07-06\nupdated: 2026-03-05\ncredits:\n  authors:\n    - name: Marlon Merte\n    - name: Felix Tacke\ncitation:\n  text: 'Merte, Marlon / Tacke, Felix (2026): Thema eins.'\n  url: https://example.test/topic-one\nblocks:\n  - type: text\n    body: Testabsatz\n",
+        "title: Thema eins\ndescription: Kurzbeschreibung\npeer_review:\n  - \ncreated: 2025-07-06\nupdated: 2026-03-05\ncredits:\n  authors:\n    - name: Marlon Merte\n    - name: Felix Tacke\ncitation:\n  text: 'Merte, Marlon / Tacke, Felix (2026): Thema eins.'\n  url: https://example.test/topic-one\nblocks:\n  - type: text\n    body: Testabsatz\n",
     )
 
     with teaching_app.test_request_context():
