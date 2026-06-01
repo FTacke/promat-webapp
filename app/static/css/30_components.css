@@ -4457,8 +4457,8 @@ body[data-page="login"] .pm-auth-secondary--card {
 }
 
 .pm-comparison-icon-button svg {
-  inline-size: 0.88rem;
-  block-size: 0.88rem;
+  inline-size: 1rem;
+  block-size: 1rem;
 }
 
 .pm-comparison-icon-button--primary {
