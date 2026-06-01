@@ -38,6 +38,7 @@ export function parseComparisonUrlState(urlLike, baseOrigin = null) {
 export function shouldExposeComparisonSetId({
   activeSetId = null,
   requestedSetId = null,
+  isExplicitMaterialSelection = false,
   isImplicitDraft = false,
   isDefaultCompleteSet = false,
   selectedSessionIds = [],
@@ -47,6 +48,9 @@ export function shouldExposeComparisonSetId({
   }
   if (requestedSetId) {
     return true;
+  }
+  if (!isExplicitMaterialSelection) {
+    return false;
   }
   if (!isImplicitDraft) {
     return true;

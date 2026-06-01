@@ -53,6 +53,9 @@ function iconSvg(kind) {
   if (kind === "play") {
     return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 6l10 6-10 6z" fill="currentColor"></path></svg>';
   }
+  if (kind === "stop") {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 7h10v10H7z" fill="currentColor"></path></svg>';
+  }
   if (kind === "download") {
     return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path><path d="M8.5 11.5L12 15l3.5-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path><path d="M6 18h12" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"></path></svg>';
   }
@@ -175,10 +178,14 @@ function init() {
   let activeSet = null;
   let visibleViewTask = state.defaultViewTask || "wordlist";
   let playbackToken = 0;
+  let activePlaybackCancel = null;
+  let playbackState = "idle";
+  let activeRowKey = null;
   let transientMessage = null;
   let feedbackState = null;
   let isSaving = false;
   let isImplicitDraft = false;
+  let isExplicitMaterialSelection = Boolean(state.requestedSetId);
   let isBootstrappingWorkspace = Boolean(state.isAuthenticated && !state.requestedSetId);
   const levelOptions = ["A1", "A2", "B1", "B2"];
   const filterState = {
@@ -362,10 +369,50 @@ function init() {
     }
   }
 
+  function rowKeyForItem(taskKey, itemId) {
+    return `${taskKey}:${itemId}`;
+  }
+
+  function syncRowPlaybackButtons() {
+    if (!matrixBody) {
+      return;
+    }
+    const playLabel = labels.playRowLabel || "";
+    const stopLabel = labels.stopLabel || playLabel;
+    for (const button of matrixBody.querySelectorAll("[data-comparison-play-row]")) {
+      const rowKey = button.dataset.comparisonPlayRow || "";
+      const isActiveRow = playbackState === "playing" && rowKey && rowKey === activeRowKey;
+      const nextLabel = isActiveRow ? stopLabel : playLabel;
+      button.setAttribute("aria-label", nextLabel);
+      button.setAttribute("title", nextLabel);
+      button.setAttribute("aria-pressed", isActiveRow ? "true" : "false");
+      button.dataset.playbackState = isActiveRow ? "playing" : "idle";
+      button.innerHTML = iconSvg(isActiveRow ? "stop" : "play");
+    }
+  }
+
+  function setRowPlaybackState(nextState, rowKey = null) {
+    playbackState = nextState === "playing" ? "playing" : "idle";
+    activeRowKey = playbackState === "playing" ? rowKey : null;
+    syncRowPlaybackButtons();
+  }
+
   function stopPlayback() {
     playbackToken += 1;
+    const cancelCurrent = activePlaybackCancel;
+    activePlaybackCancel = null;
+    if (typeof cancelCurrent === "function") {
+      cancelCurrent();
+    }
     audio.pause();
-    audio.currentTime = 0;
+    try {
+      audio.currentTime = 0;
+    } catch {
+      // Some browsers reject currentTime changes before metadata is available.
+    }
+    audio.removeAttribute("src");
+    audio.load();
+    setRowPlaybackState("idle");
     clearActiveMatrixCell();
   }
 
@@ -397,7 +444,7 @@ function init() {
     return href;
   }
 
-  async function playEntrySequence(entries) {
+  async function playEntrySequence(entries, { rowKey = null } = {}) {
     if (!entries.length) {
       setFeedback(labels.workspaceNoMatches || requestFailedLabel, "error");
       return;
@@ -405,6 +452,7 @@ function init() {
 
     stopPlayback();
     const token = playbackToken;
+    setRowPlaybackState("playing", rowKey);
     applyPlaybackSettings();
     for (const entry of entries) {
       if (token !== playbackToken) {
@@ -417,40 +465,63 @@ function init() {
       setActiveMatrixCell(entry.sessionId, entry.taskKey, entry.itemId);
 
       await new Promise((resolve, reject) => {
+        let settled = false;
         const cleanup = () => {
-          audio.onended = null;
-          audio.onerror = null;
-          audio.onpause = null;
-        };
-
-        audio.onended = () => {
-          cleanup();
-          resolve();
-        };
-        audio.onerror = () => {
-          cleanup();
-          clipCache.delete(entry.href);
-          clearActiveMatrixCell();
-          reject(new Error(labels.clipUnavailable || requestFailedLabel));
-        };
-        audio.onpause = () => {
-          if (token !== playbackToken || audio.currentTime === 0) {
-            cleanup();
-            resolve();
+          audio.removeEventListener("ended", onEnded);
+          audio.removeEventListener("error", onError);
+          audio.removeEventListener("pause", onPause);
+          if (activePlaybackCancel === cancel) {
+            activePlaybackCancel = null;
           }
         };
 
+        const finish = (error = null) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          cleanup();
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        };
+
+        const cancel = () => finish();
+        const onEnded = () => finish();
+        const onError = () => {
+          clipCache.delete(entry.href);
+          clearActiveMatrixCell();
+          finish(new Error(labels.clipUnavailable || requestFailedLabel));
+        };
+        const onPause = () => {
+          if (token !== playbackToken || audio.currentTime === 0) {
+            finish();
+          }
+        };
+
+        activePlaybackCancel = cancel;
+        audio.addEventListener("ended", onEnded);
+        audio.addEventListener("error", onError);
+        audio.addEventListener("pause", onPause);
         audio.src = clipHref;
         audio.load();
         audio.currentTime = 0;
         audio.play().catch((error) => {
-          cleanup();
-          reject(error);
+          finish(error);
         });
       });
     }
 
     if (token === playbackToken) {
+      audio.pause();
+      try {
+        audio.currentTime = 0;
+      } catch {
+        // Some browsers reject currentTime changes before metadata is available.
+      }
+      setRowPlaybackState("idle");
       clearActiveMatrixCell();
     }
   }
@@ -501,6 +572,9 @@ function init() {
   }
 
   function applySet(record, options = {}) {
+    if (Object.prototype.hasOwnProperty.call(options, "explicitMaterial")) {
+      isExplicitMaterialSelection = Boolean(options.explicitMaterial);
+    }
     activeSet = enrichSet(record);
     visibleViewTask = activeSet.workbench_state.comparison_view_task || visibleViewTask || "all";
     if (visibleViewTask === "all") {
@@ -521,6 +595,7 @@ function init() {
     const nextSetId = shouldExposeComparisonSetId({
       activeSetId,
       requestedSetId: state.requestedSetId || null,
+      isExplicitMaterialSelection,
       isImplicitDraft,
       isDefaultCompleteSet: isDefaultCompleteSet(),
       selectedSessionIds: selectedSessionIds(),
@@ -588,7 +663,7 @@ function init() {
   }
 
   function currentSetDisplayName() {
-    if (!activeSet || isImplicitDraft || isDefaultCompleteSet()) {
+    if (!activeSet || (!isExplicitMaterialSelection && (isImplicitDraft || isDefaultCompleteSet()))) {
       const requestedId = requestedPresetId();
       if (requestedId) {
         return materialPresetLookup.get(requestedId)?.optionLabel || defaultMaterialScopeLabel();
@@ -625,7 +700,7 @@ function init() {
   }
 
   function currentMaterialOptionValue() {
-    if (!activeSet || isImplicitDraft || isDefaultCompleteSet()) {
+    if (!activeSet || (!isExplicitMaterialSelection && (isImplicitDraft || isDefaultCompleteSet()))) {
       const requestedId = requestedPresetId();
       if (requestedId) {
         return requestedId;
@@ -663,10 +738,12 @@ function init() {
           lifecycle: "draft",
         },
       });
-      applySet(payload.set, { implicit: false });
+      applySet(payload.set, { implicit: false, explicitMaterial: isExplicitMaterialSelection });
       return activeSet;
     }
 
+    const shouldPreserveDefaultMaterial = !isExplicitMaterialSelection && (!activeSet || isImplicitDraft || isDefaultCompleteSet());
+    const defaultItems = defaultSetItems();
     const payload = await requestJson(state.createSetHref, {
       method: "POST",
       body: {
@@ -676,7 +753,15 @@ function init() {
         },
       },
     });
-    applySet(payload.set);
+    let nextSet = payload.set;
+    if (shouldPreserveDefaultMaterial && defaultItems.length && !itemsMatch(nextSet.items || [], defaultItems)) {
+      const itemsPayload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(nextSet.set_id)}/items`, {
+        method: "PUT",
+        body: { items: defaultItems },
+      });
+      nextSet = itemsPayload.set;
+    }
+    applySet(nextSet, { implicit: shouldPreserveDefaultMaterial, explicitMaterial: !shouldPreserveDefaultMaterial });
     return activeSet;
   }
 
@@ -686,7 +771,7 @@ function init() {
     }
     try {
       const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(state.requestedSetId)}`);
-      applySet(payload.set, { implicit: false });
+      applySet(payload.set, { implicit: false, explicitMaterial: true });
     } catch (error) {
       isBootstrappingWorkspace = false;
       transientMessage = error.message || saveErrorFallbackLabel;
@@ -1224,8 +1309,9 @@ function init() {
       nextSet = metadataPayload.set;
     }
 
-    const shouldUseImplicitDraft = !state.requestedSetId && nextSet.state !== "saved" && itemsMatch(nextItems, defaultSetItems());
-    applySet(nextSet, { implicit: shouldUseImplicitDraft });
+    const isDefaultMaterialSelection = !presetId && itemsMatch(nextItems, defaultSetItems());
+    const shouldUseImplicitDraft = !state.requestedSetId && nextSet.state !== "saved" && isDefaultMaterialSelection;
+    applySet(nextSet, { implicit: shouldUseImplicitDraft, explicitMaterial: !isDefaultMaterialSelection });
   }
 
   function renderSessionList(target, sessions, { isSelectedList = false, actionLabel, emptyText } = {}) {
@@ -1284,6 +1370,9 @@ function init() {
   function renderMatrix() {
     if (!matrixSummary || !matrixEmpty || !matrixWrap || !matrixHead || !matrixBody) {
       return;
+    }
+    if (playbackState === "playing") {
+      stopPlayback();
     }
 
     const items = visibleItems();
@@ -1347,7 +1436,7 @@ function init() {
                   </div>
                   <p class="pm-comparison-item__text pm-item-content-text pm-item-content-text--compare">${escapeHtml(item.text)}</p>
                 </div>
-                  ${rowEntries.length ? `<button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary pm-comparison-matrix__row-play" data-comparison-play-row="${escapeHtml(item.task)}:${escapeHtml(item.item_id)}" aria-label="${escapeHtml(labels.playRowLabel || "")}" title="${escapeHtml(labels.playRowLabel || "")}">${iconSvg("play")}</button>` : ""}
+                  ${rowEntries.length ? `<button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary pm-comparison-matrix__row-play" data-comparison-play-row="${escapeHtml(rowKeyForItem(item.task, item.item_id))}" aria-label="${escapeHtml(labels.playRowLabel || "")}" title="${escapeHtml(labels.playRowLabel || "")}" aria-pressed="false" data-playback-state="idle">${iconSvg("play")}</button>` : ""}
                 </div>
               </div>
             </th>
@@ -1371,6 +1460,7 @@ function init() {
       })
       .join("");
 
+    syncRowPlaybackButtons();
     window.requestAnimationFrame(() => {
       syncMatrixStubLineState();
     });
@@ -1539,6 +1629,10 @@ function init() {
     if (playRowButton) {
       event.preventDefault();
       const rawValue = playRowButton.dataset.comparisonPlayRow || "";
+      if (playbackState === "playing" && activeRowKey === rawValue) {
+        stopPlayback();
+        return;
+      }
       const [taskKey, itemId] = rawValue.split(":");
       const item = activeSet && activeSet.enrichedItems.find((entry) => entry.task === taskKey && entry.item_id === itemId);
       if (!item) {
@@ -1554,7 +1648,7 @@ function init() {
           itemId,
         }));
       try {
-        await playEntrySequence(entries);
+        await playEntrySequence(entries, { rowKey: rawValue });
       } catch (error) {
         stopPlayback();
         setFeedback(error.message || saveErrorFallbackLabel, "error");
@@ -1652,7 +1746,11 @@ function init() {
   }
 
   window.addEventListener("beforeunload", () => {
+    stopPlayback();
     clipCache.clear();
+  });
+  window.addEventListener("pagehide", () => {
+    stopPlayback();
   });
 }
 

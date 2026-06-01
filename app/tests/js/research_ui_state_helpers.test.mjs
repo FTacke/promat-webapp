@@ -73,11 +73,12 @@ test('comparison URL helpers preserve stable filter and set state', () => {
   );
 });
 
-test('shouldExposeComparisonSetId keeps implicit drafts addressable once sessions are selected', () => {
+test('shouldExposeComparisonSetId keeps default all-items drafts out of the URL during normal selection work', () => {
   assert.equal(
     shouldExposeComparisonSetId({
       activeSetId: 'draft-empty',
       requestedSetId: null,
+      isExplicitMaterialSelection: false,
       isImplicitDraft: true,
       isDefaultCompleteSet: true,
       selectedSessionIds: [],
@@ -89,7 +90,20 @@ test('shouldExposeComparisonSetId keeps implicit drafts addressable once session
     shouldExposeComparisonSetId({
       activeSetId: 'draft-with-selection',
       requestedSetId: null,
+      isExplicitMaterialSelection: false,
       isImplicitDraft: true,
+      isDefaultCompleteSet: true,
+      selectedSessionIds: ['ES-L-0001-2026-S01'],
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldExposeComparisonSetId({
+      activeSetId: 'explicit-set',
+      requestedSetId: null,
+      isExplicitMaterialSelection: true,
+      isImplicitDraft: false,
       isDefaultCompleteSet: true,
       selectedSessionIds: ['ES-L-0001-2026-S01'],
     }),
