@@ -681,6 +681,16 @@ def _topic_metadata(ui_lang: str, raw_topic: dict[str, Any]) -> dict[str, Any]:
             "value": ", ".join(authors),
         }
 
+    status = _text_entries(metadata_source.get("status"))
+    if status:
+        metadata["details"].append(
+            {
+                "key": "status",
+                "label": translate(ui_lang, "teaching.topic.status"),
+                "value": ", ".join(status),
+            }
+        )
+
     peer_review = _text_entries(metadata_source.get("peer_review"))
     if peer_review:
         metadata["details"].append(
@@ -931,6 +941,38 @@ def _topic_blocks(
                         "title": title,
                         "lead": _as_text(raw_block.get("lead")),
                     }, "title", "lead")
+                )
+            continue
+
+        if block_type == "status_box":
+            body_html_blocks = _markdown_blocks(raw_block.get("body"))
+            if body_html_blocks:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "status_box",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "body_html_blocks": body_html_blocks,
+                    }, "title")
+                )
+            continue
+
+        if block_type == "placeholder":
+            body_html_blocks = _markdown_blocks(raw_block.get("body"))
+            note = _as_text(raw_block.get("note"))
+            if body_html_blocks:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "placeholder",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "label": _as_text(raw_block.get("label")),
+                        "kind": _as_text(raw_block.get("kind")),
+                        "title": _as_text(raw_block.get("title")),
+                        "body_html_blocks": body_html_blocks,
+                        "note": note,
+                    }, "label", "kind", "title", "note")
                 )
             continue
 

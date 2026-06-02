@@ -347,7 +347,6 @@ def test_build_teaching_topic_page_derives_metadata_and_appends_top_level_citati
             "value": "Marlon Merte, Felix Tacke",
         },
         "details": [
-            {"key": "peer_review", "label": "Peer Review", "value": ""},
             {"key": "created", "label": "Erstellt", "value": "06.07.2025"},
             {"key": "updated", "label": "Geändert", "value": "05.03.2026"},
         ],
@@ -403,6 +402,40 @@ def test_build_teaching_topic_page_moves_metadata_into_explicit_topic_meta_block
     assert page["blocks"][0]["type"] == "text"
     assert "<code>caza</code>" in page["blocks"][0]["body_html_blocks"][0]
     assert "<code>casa</code>" in page["blocks"][0]["body_html_blocks"][0]
+
+
+def test_build_teaching_topic_page_parses_preparation_status_and_placeholder_blocks(
+    teaching_app: Flask,
+    tmp_path: Path,
+) -> None:
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - final-r\n")
+    _write_teaching_topic(
+        tmp_path,
+        "spanish",
+        "final-r",
+        "de",
+        "title: R am Silbenende\nmetadata:\n  authors:\n    - NN\n  status:\n    - In Vorbereitung\n  created: 2025-07-06\nblocks:\n  - type: hero\n    lead: Seite im Aufbau\n  - type: status_box\n    title: In Vorbereitung\n    body: Diese Themenseite ist angelegt.\n  - type: placeholder\n    label: Baustein möglich\n    kind: Material / Download\n    title: Material\n    body: Hier kann später Material verlinkt werden.\n    note: Material noch nicht hinterlegt\n",
+    )
+
+    with teaching_app.test_request_context():
+        page = teaching_content.build_teaching_topic_page("de", "spanish", "final-r")
+
+    assert page is not None
+    assert page["topic_metadata"]["authors"]["value"] == "NN"
+    assert page["topic_metadata"]["details"] == [
+        {"key": "status", "label": "Status", "value": "In Vorbereitung"},
+        {"key": "created", "label": "Erstellt", "value": "06.07.2025"},
+    ]
+    assert [block["type"] for block in page["blocks"]] == ["status_box", "placeholder"]
+    assert page["blocks"][0]["title"] == "In Vorbereitung"
+    assert page["blocks"][0]["body_html_blocks"] == ["<p>Diese Themenseite ist angelegt.</p>"]
+    placeholder = page["blocks"][1]
+    assert placeholder["label"] == "Baustein möglich"
+    assert placeholder["kind"] == "Material / Download"
+    assert placeholder["title"] == "Material"
+    assert placeholder["body_html_blocks"] == ["<p>Hier kann später Material verlinkt werden.</p>"]
+    assert placeholder["note"] == "Material noch nicht hinterlegt"
 
 
 def test_build_teaching_topic_page_handles_audio_examples_and_contrast_transcript_inheritance(

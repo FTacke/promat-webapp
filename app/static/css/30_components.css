@@ -1565,11 +1565,56 @@ a.promat-card:active .pm-cta-link {
 }
 
 .pm-teaching-topic-card {
+  position: relative;
   width: 100%;
   max-width: none;
-  border-top: var(--pm-card-accent-bar-thickness) solid color-mix(in srgb, var(--promat-secondary) 72%, var(--pm-border-subtle) 28%);
-  background: var(--pm-surface-paper);
   transition: transform var(--promat-transition-fast), background var(--promat-transition-fast), border-color var(--promat-transition-fast), box-shadow var(--promat-transition-fast), color var(--promat-transition-fast);
+}
+
+.pm-teaching-topic-card__body {
+  gap: 0.72rem;
+}
+
+.pm-teaching-topic-card--available .pm-card__text {
+  color: color-mix(in srgb, var(--book-fg) 86%, var(--book-muted) 14%);
+}
+
+a.pm-teaching-topic-card--available:hover,
+a.pm-teaching-topic-card--available:focus-visible {
+  transform: translateY(-1px);
+}
+
+a.pm-teaching-topic-card--available:active {
+  transform: translateY(0);
+}
+
+.pm-teaching-topic-card--pending {
+  color: var(--pm-teaching-topic-card-pending-text);
+  cursor: default;
+}
+
+.pm-teaching-topic-card--pending .pm-card__title {
+  color: color-mix(in srgb, var(--book-fg) 58%, var(--book-muted) 42%);
+}
+
+.pm-teaching-topic-card--pending .pm-card__text {
+  color: var(--pm-teaching-topic-card-pending-text);
+}
+
+.pm-teaching-topic-card__action {
+  padding-top: 0.9rem;
+}
+
+.pm-teaching-topic-card--available .pm-teaching-topic-card__action {
+  color: var(--pm-teaching-topic-card-action);
+}
+
+.pm-teaching-topic-card__status {
+  color: var(--pm-teaching-topic-card-pending-status);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-cta-link-font-size);
+  font-weight: var(--pm-cta-link-font-weight);
+  line-height: var(--pm-cta-link-line-height);
 }
 
 .pm-teaching-block--topic-grid {
@@ -1746,6 +1791,7 @@ a.promat-card:active .pm-cta-link {
   --pm-teaching-topic-icon-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Crect width='8' height='4' x='8' y='2' rx='1' ry='1'/%3E%3Cpath d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/%3E%3C/svg%3E");
   --pm-teaching-topic-icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 10v6'/%3E%3Cpath d='M12 7h.01'/%3E%3C/svg%3E");
   --pm-teaching-topic-icon-compass: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m15.5 8.5-2.2 6.2-6.2 2.2 2.2-6.2 6.2-2.2Z'/%3E%3Cpath d='m10.7 13.3 2.6-2.6'/%3E%3C/svg%3E");
+  --pm-teaching-topic-icon-eye: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.35' viewBox='0 0 24 24'%3E%3Cpath d='M2.75 12s3.25-5.75 9.25-5.75S21.25 12 21.25 12 18 17.75 12 17.75 2.75 12 2.75 12Z'/%3E%3Ccircle cx='12' cy='12' r='3.05'/%3E%3C/svg%3E");
   --pm-teaching-topic-icon-quote: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z'/%3E%3Cpath d='M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z'/%3E%3C/svg%3E");
   --pm-teaching-topic-icon-book: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M12 6.5c-1.5-1.17-3.52-1.75-6-1.75-1.1 0-2 .9-2 2V19a2 2 0 0 0 2 2c2.48 0 4.5.58 6 1.75'/%3E%3Cpath d='M12 6.5c1.5-1.17 3.52-1.75 6-1.75 1.1 0 2 .9 2 2V19a2 2 0 0 1-2 2c-2.48 0-4.5.58-6 1.75'/%3E%3Cpath d='M12 6.5V22'/%3E%3C/svg%3E");
   --pm-teaching-topic-icon-warning: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M10.29 3.86 1.82 18A2 2 0 0 0 3.53 21h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z'/%3E%3Cpath d='M12 9v4'/%3E%3Cpath d='M12 17h.01'/%3E%3C/svg%3E");
@@ -1755,6 +1801,7 @@ a.promat-card:active .pm-cta-link {
   --pm-icon-admonition-clipboard: var(--pm-teaching-topic-icon-copy);
   --pm-icon-admonition-info: var(--pm-teaching-topic-icon-info);
   --pm-icon-admonition-compass: var(--pm-teaching-topic-icon-compass);
+  --pm-icon-admonition-eye: var(--pm-teaching-topic-icon-eye);
   --pm-icon-admonition-quote: var(--pm-teaching-topic-icon-quote);
   --pm-icon-admonition-book-open: var(--pm-teaching-topic-icon-book);
   --pm-admonition-hoermal-icon: var(--pm-teaching-topic-icon-audio);
@@ -1780,6 +1827,48 @@ a.promat-card:active .pm-cta-link {
   line-height: 1.65;
 }
 
+.pm-teaching-page--topic .pm-admonition--overview,
+.pm-teaching-page--topic .pm-admonition--context,
+.pm-teaching-page--topic .pm-admonition--tip {
+  --pm-admonition-title-size: clamp(1rem, 0.98rem + 0.09vw, 1.12rem);
+  --pm-admonition-title-weight: 600;
+  --pm-admonition-title-line-height: 1.22;
+  --pm-admonition-body-size: clamp(0.96rem, 0.94rem + 0.08vw, 1.02rem);
+  --pm-admonition-body-line-height: 1.58;
+  --pm-admonition-body-gap: 0.62rem;
+  --pm-admonition-header-gap: 0.66rem;
+  --pm-admonition-icon-size: 1.36rem;
+  --pm-admonition-icon-box-size: 1.45rem;
+  --pm-admonition-padding-inline: clamp(1rem, 0.96rem + 0.16vw, 1.18rem);
+  --pm-admonition-padding-block-start: clamp(0.88rem, 0.86rem + 0.1vw, 1rem);
+  --pm-admonition-padding-block-end: clamp(0.9rem, 0.88rem + 0.1vw, 1.04rem);
+}
+
+.pm-teaching-page--topic .pm-admonition--overview .pm-admonition__header,
+.pm-teaching-page--topic .pm-admonition--context .pm-admonition__header,
+.pm-teaching-page--topic .pm-admonition--tip .pm-admonition__header {
+  align-items: center;
+}
+
+.pm-teaching-page--topic .pm-admonition--overview .pm-admonition__text,
+.pm-teaching-page--topic .pm-admonition--context .pm-admonition__text,
+.pm-teaching-page--topic .pm-admonition--tip .pm-admonition__text,
+.pm-teaching-page--topic .pm-admonition--citation .pm-admonition__text {
+  font-size: var(--pm-admonition-body-size);
+  line-height: var(--pm-admonition-body-line-height);
+}
+
+.pm-teaching-page--topic .pm-admonition--overview .pm-admonition__text ul {
+  display: grid;
+  gap: 0.48rem;
+  margin: 0;
+  padding-inline-start: 1.12rem;
+}
+
+.pm-teaching-page--topic .pm-admonition--overview .pm-admonition__text li {
+  padding-inline-start: 0.08rem;
+}
+
 .pm-teaching-page--topic .pm-teaching-audio-example__text {
   font-size: clamp(1.04rem, 1rem + 0.14vw, 1.12rem);
   line-height: 1.68;
@@ -1792,7 +1881,107 @@ a.promat-card:active .pm-cta-link {
 }
 
 .pm-teaching-page--topic .pm-teaching-topic-metadata {
-  margin-top: 0.05rem;
+  margin-top: 0;
+}
+
+.pm-teaching-status-box {
+  display: grid;
+  gap: 0.54rem;
+  width: 100%;
+  padding: clamp(0.86rem, 0.78rem + 0.22vw, 1.04rem) clamp(0.98rem, 0.9rem + 0.28vw, 1.18rem);
+  border: 1px solid var(--pm-teaching-status-border);
+  border-radius: var(--pm-radius-card);
+  background: var(--pm-teaching-status-surface);
+  color: color-mix(in srgb, var(--book-fg) 88%, var(--book-muted) 12%);
+  box-shadow: none;
+}
+
+.pm-teaching-status-box__header {
+  display: flex;
+  align-items: center;
+  gap: 0.54rem;
+}
+
+.pm-teaching-status-box__icon {
+  color: var(--pm-teaching-status-icon);
+  font-size: 1.18rem;
+  line-height: 1;
+}
+
+.pm-teaching-status-box__title {
+  margin: 0;
+  color: var(--book-fg);
+  font-family: var(--book-font-ui);
+  font-size: clamp(1rem, 0.98rem + 0.08vw, 1.08rem);
+  font-weight: 650;
+  line-height: 1.22;
+}
+
+.pm-teaching-status-box__text {
+  margin: 0;
+  max-width: min(100%, 76ch);
+  color: color-mix(in srgb, var(--book-fg) 76%, var(--book-muted) 24%);
+  font-family: var(--book-font-ui);
+  font-size: clamp(0.94rem, 0.92rem + 0.07vw, 1rem);
+  line-height: 1.52;
+}
+
+.pm-teaching-status-box__text > :first-child,
+.pm-teaching-status-box__text > :last-child {
+  margin-block: 0;
+}
+
+.pm-teaching-placeholder {
+  display: grid;
+  gap: 0.42rem;
+  width: 100%;
+  padding: clamp(0.82rem, 0.76rem + 0.18vw, 0.98rem) clamp(0.94rem, 0.88rem + 0.22vw, 1.1rem);
+  border: 1px dashed var(--pm-teaching-placeholder-border);
+  border-radius: var(--pm-radius-card);
+  background: var(--pm-teaching-placeholder-surface);
+  box-shadow: none;
+}
+
+.pm-teaching-placeholder__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem 0.38rem;
+  margin: 0;
+  color: var(--pm-teaching-placeholder-label);
+  font-family: var(--book-font-ui);
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.pm-teaching-placeholder__title {
+  margin: 0;
+  color: color-mix(in srgb, var(--book-fg) 86%, var(--book-muted) 14%);
+  font-family: var(--book-font-ui);
+  font-size: clamp(1rem, 0.98rem + 0.08vw, 1.08rem);
+  font-weight: 650;
+  line-height: 1.24;
+}
+
+.pm-teaching-placeholder__text,
+.pm-teaching-placeholder__note {
+  margin: 0;
+  color: color-mix(in srgb, var(--book-muted) 82%, var(--book-fg) 18%);
+  font-family: var(--book-font-ui);
+  font-size: clamp(0.93rem, 0.91rem + 0.07vw, 0.99rem);
+  line-height: 1.5;
+}
+
+.pm-teaching-placeholder__text > :first-child,
+.pm-teaching-placeholder__text > :last-child {
+  margin-block: 0;
+}
+
+.pm-teaching-placeholder__note {
+  margin-top: 0.06rem;
+  color: color-mix(in srgb, var(--book-muted) 88%, var(--pm-surface-paper) 12%);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .pm-teaching-page--topic .pm-teaching-topic-meta__details {
@@ -1826,45 +2015,49 @@ a.promat-card:active .pm-cta-link {
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close {
-  padding: 1.2rem 1.3rem 1.28rem;
+  padding: 1rem 1.08rem 1.06rem;
   border-color: var(--pm-border-subtle);
   border-inline-start: 0;
-  background: color-mix(in srgb, var(--pm-surface-paper) 90%, var(--pm-surface-neutral) 10%);
+  background: color-mix(in srgb, var(--promat-wordmark-accent) 8%, var(--pm-surface-paper) 92%);
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body ul {
   counter-reset: impulse-card;
   display: grid;
   align-items: start;
-  gap: 0.82rem;
+  gap: 0.5rem;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li {
   position: relative;
-  padding: 0.82rem 0.92rem 0.9rem;
-  border: 1px solid var(--pm-border-subtle);
-  border-inline-start: 4px solid var(--promat-wordmark-accent);
-  border-radius: var(--pm-radius-container);
-  background: var(--pm-surface-paper);
+  padding: 0.42rem 0 0.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   counter-increment: impulse-card;
   display: block;
-  padding-top: 0.82rem;
-  border-top: 0;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li::before {
   content: counter(impulse-card, decimal-leading-zero);
-  display: block;
-  margin-bottom: 0.34rem;
-  color: var(--promat-wordmark-accent);
-  font-size: 0.75rem;
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 2.1rem;
+  block-size: 1.22rem;
+  margin: 0 0 0.26rem;
+  padding-inline: 0.28rem;
+  border: 1px solid color-mix(in srgb, var(--promat-wordmark-accent) 16%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pm-surface-paper) 88%, var(--promat-wordmark-accent) 12%);
+  color: color-mix(in srgb, var(--promat-wordmark-accent) 68%, var(--book-fg) 32%);
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   line-height: 1;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li:first-child {
-  padding-top: 0.82rem;
+  padding-top: 0.34rem;
   border-top: 0;
 }
 
@@ -1875,7 +2068,64 @@ a.promat-card:active .pm-cta-link {
 
 @media (min-width: 760px) {
   .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body ul {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 759px) {
+  .pm-teaching-page--topic .pm-teaching-topic-header {
+    gap: 0.55rem;
+  }
+
+  .pm-teaching-page--topic .pm-teaching-topic-metadata {
+    width: min(100%, 28rem);
+    margin-top: 0;
+  }
+
+  .pm-teaching-page--topic .pm-teaching-topic-meta {
+    gap: 0.18rem;
+    font-size: 0.92rem;
+    line-height: 1.32;
+  }
+
+  .pm-teaching-page--topic .pm-teaching-topic-meta__authors,
+  .pm-teaching-page--topic .pm-teaching-topic-meta__details {
+    gap: 0.16rem 0.34rem;
+  }
+
+  .pm-teaching-page--topic .pm-teaching-topic-meta__detail {
+    gap: 0.16rem;
+  }
+
+  .pm-teaching-page--topic .pm-teaching-topic-meta__label,
+  .pm-teaching-page--topic .pm-teaching-topic-meta__value {
+    color: color-mix(in srgb, var(--book-muted) 86%, var(--book-fg) 14%);
+    font-weight: 400;
+    line-height: 1.32;
+  }
+
+  .pm-teaching-page--topic .pm-teaching-topic-meta__separator {
+    color: color-mix(in srgb, var(--book-muted) 62%, transparent);
+  }
+
+  .pm-teaching-page--topic .pm-admonition--overview,
+  .pm-teaching-page--topic .pm-admonition--context,
+  .pm-teaching-page--topic .pm-admonition--tip,
+  .pm-teaching-page--topic .pm-admonition--citation {
+    --pm-admonition-title-size: 1rem;
+    --pm-admonition-body-size: 0.96rem;
+    --pm-admonition-body-line-height: 1.54;
+    --pm-admonition-body-gap: 0.54rem;
+    --pm-admonition-header-gap: 0.58rem;
+    --pm-admonition-icon-size: 1.28rem;
+    --pm-admonition-icon-box-size: 1.34rem;
+    --pm-admonition-padding-inline: 1rem;
+    --pm-admonition-padding-block-start: 0.86rem;
+    --pm-admonition-padding-block-end: 0.9rem;
+  }
+
+  .pm-teaching-page--topic .pm-admonition--overview .pm-admonition__text ul {
+    gap: 0.42rem;
   }
 }
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-topic-section--topic-citation {
@@ -1923,47 +2173,59 @@ a.promat-card:active .pm-cta-link {
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close {
-  width: min(85%, 1120px);
+  width: min(100%, 820px);
   justify-self: center;
-  padding: 1.38rem 1.5rem 1.48rem;
-  background: color-mix(in srgb, var(--promat-wordmark-accent) 10%, var(--pm-surface-paper) 90%);
+  padding: clamp(0.92rem, 0.86rem + 0.18vw, 1.06rem);
+  background: color-mix(in srgb, var(--promat-wordmark-accent) 7%, var(--pm-surface-paper) 93%);
+}
+
+.pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body {
+  width: 100%;
+  max-width: none;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body ul {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   width: 100%;
-  margin: 1rem auto 0;
-  gap: 0.78rem;
+  margin: 0.58rem auto 0;
+  gap: 0.46rem;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li {
-  padding: 0.88rem 1rem 0.94rem;
-  border-top: 0;
-  font-size: 0.98rem;
-  line-height: 1.58;
+  display: block;
+  padding: 0.42rem 0 0.5rem;
+  border: 0;
+  background: transparent;
+  font-size: 0.94rem;
+  line-height: 1.48;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li::before {
-  position: absolute;
-  inset-inline-start: 1rem;
-  inset-block-start: 1rem;
-  margin-bottom: 0;
+  position: static;
+  justify-self: start;
+  margin: 0 0 0.24rem;
   line-height: 1.1;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li strong {
   display: block;
   min-block-size: 1.15rem;
-  margin: 0 0 0.42rem;
-  padding-inline-start: 2.25rem;
-  font-size: 0.99rem;
+  margin: 0 0 0.18rem;
+  padding-inline-start: 0;
+  font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.25;
 }
 
 .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li br {
   display: none;
+}
+
+@media (min-width: 760px) {
+  .pm-teaching-page--topic[data-topic-slug="which-pronunciation"] .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 759px) {
@@ -1993,6 +2255,14 @@ a.promat-card:active .pm-cta-link {
   padding: 1.75rem 2rem 1.75rem;
   background: var(--pm-teaching-audio-surface);
   box-shadow: var(--book-shadow);
+}
+
+.pm-teaching-page--topic .audio-section {
+  --pm-audio-section-title-size: clamp(1rem, 0.98rem + 0.09vw, 1.12rem);
+  --pm-audio-section-title-weight: 600;
+  --pm-audio-section-title-line-height: 1.22;
+  --pm-audio-section-title-gap: 0.66rem;
+  --pm-audio-section-icon-size: 1.38rem;
 }
 
 .audio-section-header {
@@ -2461,6 +2731,13 @@ a.promat-card:active .pm-cta-link {
 }
 
 .pm-teaching-block-grid .pm-teaching-download-card {
+  --pm-card-background: color-mix(in srgb, var(--pm-surface-paper) 92%, var(--book-paper) 8%);
+  --pm-card-border-color: color-mix(in srgb, var(--pm-border-default) 84%, var(--book-paper) 16%);
+  --pm-card-padding-inline: clamp(1rem, 0.96rem + 0.16vw, 1.2rem);
+  --pm-card-padding-block-start: clamp(0.92rem, 0.88rem + 0.12vw, 1.04rem);
+  --pm-card-padding-block-end: clamp(0.94rem, 0.9rem + 0.12vw, 1.08rem);
+  --pm-cta-link-primary: color-mix(in srgb, var(--promat-wordmark-accent) 70%, var(--book-fg) 30%);
+  --pm-cta-link-hover: color-mix(in srgb, var(--promat-wordmark-accent) 84%, var(--book-fg) 16%);
   width: 100%;
   max-width: none;
 }
@@ -2469,6 +2746,55 @@ a.promat-card:active .pm-cta-link {
 .pm-teaching-download-card__body {
   display: grid;
   gap: 0.74rem;
+}
+
+.pm-teaching-download-card__body {
+  gap: 0.56rem;
+}
+
+.pm-teaching-download-card__header {
+  display: grid;
+  grid-template-columns: 1.45rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.66rem;
+}
+
+.pm-teaching-download-card__icon {
+  inline-size: 1.34rem;
+  block-size: 1.34rem;
+  color: color-mix(in srgb, var(--promat-wordmark-accent) 58%, var(--book-fg) 42%);
+}
+
+.pm-teaching-page--topic .pm-teaching-download-card__title {
+  margin: 0;
+  font-size: clamp(1rem, 0.98rem + 0.08vw, 1.1rem);
+  font-weight: 600;
+  line-height: 1.22;
+}
+
+.pm-teaching-page--topic .pm-teaching-download-card .pm-card__text {
+  margin: 0;
+  color: color-mix(in srgb, var(--book-muted) 84%, var(--book-fg) 16%);
+  font-size: clamp(0.94rem, 0.92rem + 0.08vw, 1rem);
+  line-height: 1.5;
+}
+
+.pm-teaching-download-card .pm-card__body > .pm-card__action {
+  margin-top: 0.12rem;
+  padding-top: 0;
+}
+
+.pm-teaching-download-card .pm-cta-link {
+  font-weight: 650;
+}
+
+.pm-teaching-download-card__status {
+  align-self: end;
+  margin: 0.1rem 0 0;
+  color: color-mix(in srgb, var(--book-muted) 82%, var(--book-fg) 18%);
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .pm-teaching-topic-card--compact {
@@ -2684,8 +3010,8 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
 
 .pm-teaching-further-reading {
   display: grid;
-  gap: clamp(0.96rem, 0.84rem + 0.36vw, 1.24rem);
-  padding: clamp(1rem, 0.94rem + 0.24vw, 1.24rem);
+  gap: clamp(0.58rem, 0.54rem + 0.14vw, 0.72rem);
+  padding: clamp(0.82rem, 0.76rem + 0.18vw, 1rem);
   border: 1px solid var(--pm-teaching-further-reading-border);
   border-radius: calc(var(--pm-radius-container) + 2px);
   background: var(--pm-teaching-further-reading-surface);
@@ -2694,42 +3020,44 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
 
 .pm-teaching-further-reading__header {
   display: grid;
-  gap: calc(var(--pm-admonition-body-gap) * 0.5);
-  padding-block-end: calc(var(--pm-divider-space-after) * 0.75);
-  margin-block-end: calc(var(--pm-divider-space-before) * 0.2);
-  border-bottom: 1px solid var(--pm-teaching-further-reading-divider-color);
+  gap: 0.3rem;
+  padding-block-end: 0;
+  margin-block-end: 0;
+  border-bottom: 0;
 }
 
 .pm-teaching-further-reading__title-row {
   display: grid;
-  grid-template-columns: var(--pm-admonition-icon-box-size) minmax(0, 1fr);
+  grid-template-columns: 1.45rem minmax(0, 1fr);
   align-items: center;
-  column-gap: var(--pm-admonition-header-gap);
+  column-gap: 0.66rem;
 }
 
 .pm-teaching-further-reading__icon {
   display: grid;
   place-items: center;
   flex: none;
-  inline-size: var(--pm-admonition-icon-box-size);
-  block-size: var(--pm-admonition-icon-box-size);
+  inline-size: 1.45rem;
+  block-size: 1.45rem;
   color: var(--pm-teaching-further-reading-icon-color);
-  font-size: var(--pm-admonition-icon-size);
+  font-size: 1.36rem;
   line-height: 1;
 }
 
 .pm-teaching-further-reading__title,
 .pm-teaching-further-reading__description,
-.pm-teaching-further-reading-card__text {
+.pm-teaching-further-reading__item-title,
+.pm-teaching-further-reading__item-text,
+.pm-teaching-further-reading__item-action {
   margin: 0;
 }
 
 .pm-teaching-further-reading__title {
   color: var(--pm-teaching-further-reading-title-color);
   font-family: var(--pm-admonition-title-font);
-  font-size: var(--pm-admonition-title-size);
-  font-weight: var(--pm-admonition-title-weight);
-  line-height: var(--pm-admonition-title-line-height);
+  font-size: clamp(1rem, 0.98rem + 0.09vw, 1.12rem);
+  font-weight: 600;
+  line-height: 1.22;
   letter-spacing: 0;
 }
 
@@ -2737,36 +3065,66 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   max-width: min(100%, 68ch);
   color: var(--pm-teaching-further-reading-description-color);
   font-family: var(--pm-admonition-body-font);
-  font-size: var(--pm-admonition-body-size);
-  line-height: var(--pm-admonition-body-line-height);
+  font-size: clamp(0.93rem, 0.91rem + 0.06vw, 0.98rem);
+  line-height: 1.5;
 }
 
-.pm-teaching-further-reading__grid {
-  gap: 0.82rem;
-  align-items: start;
+.pm-teaching-further-reading__list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.pm-teaching-further-reading-card {
-  border-color: var(--pm-teaching-further-reading-card-border);
-  border-top-color: var(--pm-teaching-further-reading-card-accent);
-  background: var(--pm-teaching-further-reading-card-surface);
+.pm-teaching-further-reading__item {
+  display: grid;
+  gap: 0.26rem;
+  padding-block: 0.54rem 0.62rem;
+  border-top: 0;
 }
 
-.pm-teaching-further-reading-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.72rem;
-  height: 100%;
+.pm-teaching-further-reading__item:first-child {
+  padding-block-start: 0.32rem;
 }
 
-.pm-teaching-further-reading-card__text {
-  color: var(--book-muted);
+.pm-teaching-further-reading__item + .pm-teaching-further-reading__item {
+  margin-top: 0.08rem;
+  padding-top: 0.68rem;
+  border-top: 1px solid color-mix(in srgb, var(--pm-teaching-further-reading-divider-color) 42%, transparent);
+}
+
+.pm-teaching-further-reading__item-title {
+  color: var(--pm-teaching-further-reading-title-color);
+  font-family: var(--pm-admonition-title-font);
+  font-size: clamp(0.95rem, 0.93rem + 0.06vw, 1rem);
+  font-weight: 570;
+  line-height: 1.28;
+}
+
+.pm-teaching-further-reading__item-text {
+  max-width: min(100%, 70ch);
+  color: color-mix(in srgb, var(--book-fg) 72%, var(--book-muted) 28%);
   font-family: var(--pm-admonition-body-font);
-  line-height: 1.58;
+  font-size: 0.93rem;
+  line-height: 1.48;
 }
 
-.pm-teaching-further-reading-card__action {
-  margin-top: auto;
+.pm-teaching-further-reading__item-action {
+  margin-top: 0;
+}
+
+.pm-teaching-further-reading__item-action .pm-cta-link {
+  --pm-cta-link-font-size: 0.88rem;
+  --pm-cta-link-font-weight: 520;
+  --pm-cta-link-line-height: 1.32;
+  --pm-cta-link-gap: 0.22rem;
+  --pm-cta-link-primary: color-mix(in srgb, var(--promat-wordmark-accent) 62%, var(--book-muted) 38%);
+  --pm-cta-link-hover: color-mix(in srgb, var(--promat-wordmark-accent) 74%, var(--book-fg) 26%);
+}
+
+.pm-teaching-further-reading__item-action .pm-interaction__arrow {
+  opacity: 0.78;
 }
 
 .pm-teaching-citation__meta {
@@ -2994,7 +3352,18 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   align-items: start;
 }
 
-.pm-teaching-download-card.is-unavailable,
+.pm-teaching-download-card.is-unavailable {
+  --pm-card-background: color-mix(in srgb, var(--pm-surface-paper) 97%, var(--book-paper) 3%);
+  --pm-card-border-color: color-mix(in srgb, var(--pm-border-subtle) 90%, var(--book-paper) 10%);
+  box-shadow: none;
+}
+
+.pm-teaching-download-card.is-unavailable .pm-teaching-download-card__icon,
+.pm-teaching-download-card.is-unavailable .pm-card__title,
+.pm-teaching-download-card.is-unavailable .pm-card__text {
+  color: color-mix(in srgb, var(--book-muted) 78%, var(--pm-surface-paper) 22%);
+}
+
 .pm-teaching-audio-card.is-unavailable {
   opacity: 0.9;
 }
@@ -5425,13 +5794,6 @@ body[data-page="login"] .pm-auth-secondary--card {
 :root[data-theme="auto"][data-system-dark="true"] .pm-teaching-embed-card[data-provider="datawrapper"] iframe {
   color-scheme: dark;
   background: var(--pm-surface-paper);
-}
-
-@media (min-width: 760px) {
-  .pm-teaching-page--topic .pm-teaching-block--span-1 .pm-admonition[data-admonition-variant="context"] {
-    width: 82%;
-    margin-inline: auto;
-  }
 }
 
 .pm-research-table {

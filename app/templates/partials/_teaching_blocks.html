@@ -154,9 +154,6 @@
       {% if card.summary %}
       <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
       {% endif %}
-      {% if card.byline %}
-      <p class="pm-teaching-topic-card__byline">{{ (card.byline_html or card.byline) | safe }}</p>
-      {% endif %}
       {% if not compact and card.metadata %}
       <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
         {% for item in card.metadata %}
@@ -174,9 +171,6 @@
       {% if card.summary %}
       <p class="pm-card__text">{{ (card.summary_html or card.summary) | safe }}</p>
       {% endif %}
-      {% if card.byline %}
-      <p class="pm-teaching-topic-card__byline">{{ (card.byline_html or card.byline) | safe }}</p>
-      {% endif %}
       {% if not compact and card.metadata %}
       <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
         {% for item in card.metadata %}
@@ -191,13 +185,11 @@
 {%- endmacro %}
 
 {% macro render_further_reading_item(item) -%}
-  <article class="pm-card pm-card--material pm-teaching-further-reading-card">
-    <div class="pm-card__body pm-teaching-further-reading-card__body">
-      <h3 class="pm-card__title pm-teaching-further-reading-card__title">{{ (item.title_html or item.title) | safe }}</h3>
-      <p class="pm-card__text pm-teaching-further-reading-card__text">{{ (item.text_html or item.text) | safe }}</p>
-      <p class="pm-card__action pm-teaching-further-reading-card__action"><a href="{{ item.href }}" class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ (item.cta_html or item.cta) | safe }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a></p>
-    </div>
-  </article>
+  <li class="pm-teaching-further-reading__item">
+    <h3 class="pm-teaching-further-reading__item-title">{{ (item.title_html or item.title) | safe }}</h3>
+    <p class="pm-teaching-further-reading__item-text">{{ (item.text_html or item.text) | safe }}</p>
+    <p class="pm-teaching-further-reading__item-action"><a href="{{ item.href }}" class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ (item.cta_html or item.cta) | safe }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a></p>
+  </li>
 {%- endmacro %}
 
 {% macro render_block(block, labels) -%}
@@ -228,6 +220,41 @@
     {% for block_html in block.body_html_blocks %}
     <div class="promat-content-block__text pm-teaching-copy-block">{{ block_html | safe }}</div>
     {% endfor %}
+  </section>
+  {% elif block.type == 'status_box' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--status-box">
+    <aside class="pm-teaching-status-box pm-reading">
+      <div class="pm-teaching-status-box__header">
+        <span class="material-symbols-rounded pm-teaching-status-box__icon" aria-hidden="true">pending</span>
+        {% if block.title %}
+        <h2 class="pm-teaching-status-box__title">{{ (block.title_html or block.title) | safe }}</h2>
+        {% endif %}
+      </div>
+      {% for block_html in block.body_html_blocks %}
+      <div class="pm-teaching-status-box__text">{{ block_html | safe }}</div>
+      {% endfor %}
+    </aside>
+  </section>
+  {% elif block.type == 'placeholder' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--placeholder">
+    <article class="pm-teaching-placeholder pm-reading">
+      {% if block.label or block.kind %}
+      <p class="pm-teaching-placeholder__meta">
+        {% if block.label %}<span>{{ (block.label_html or block.label) | safe }}</span>{% endif %}
+        {% if block.label and block.kind %}<span aria-hidden="true">·</span>{% endif %}
+        {% if block.kind %}<span>{{ (block.kind_html or block.kind) | safe }}</span>{% endif %}
+      </p>
+      {% endif %}
+      {% if block.title %}
+      <h3 class="pm-teaching-placeholder__title">{{ (block.title_html or block.title) | safe }}</h3>
+      {% endif %}
+      {% for block_html in block.body_html_blocks %}
+      <div class="pm-teaching-placeholder__text">{{ block_html | safe }}</div>
+      {% endfor %}
+      {% if block.note %}
+      <p class="pm-teaching-placeholder__note">{{ (block.note_html or block.note) | safe }}</p>
+      {% endif %}
+    </article>
   </section>
   {% elif block.type == 'rich_text' %}
   <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text{{ ' pm-teaching-rich-text--' ~ block.variant if block.variant }}"{% if block.variant %} data-block-variant="{{ block.variant }}"{% endif %}>
@@ -318,7 +345,10 @@
     <article class="pm-card pm-card--material pm-teaching-download-card{{ ' is-unavailable' if not block.download.is_available else '' }}">
       <div class="pm-card__body pm-teaching-download-card__body">
         {% if block.download.title %}
-        <h3 class="pm-card__title pm-teaching-block__title">{{ (block.download.title_html or block.download.title) | safe }}</h3>
+        <div class="pm-teaching-download-card__header">
+          <span class="pm-icon-mask pm-icon-mask--download pm-teaching-download-card__icon" aria-hidden="true"></span>
+          <h3 class="pm-card__title pm-teaching-block__title pm-teaching-download-card__title">{{ (block.download.title_html or block.download.title) | safe }}</h3>
+        </div>
         {% endif %}
         {% if block.download.description %}
         <p class="pm-card__text">{{ (block.download.description_html or block.download.description) | safe }}</p>
@@ -394,11 +424,11 @@
         <p class="pm-teaching-further-reading__description">{{ (block.description_html or block.description) | safe }}</p>
         {% endif %}
       </header>
-      <div class="pm-card-grid pm-card-grid--compact pm-teaching-further-reading__grid">
+      <ul class="pm-teaching-further-reading__list">
         {% for item in block['items'] %}
         {{ render_further_reading_item(item) }}
         {% endfor %}
-      </div>
+      </ul>
     </div>
     {% else %}
     <h2 class="promat-content-block__title pm-panel__title">{{ (block.title_html or block.title) | safe }}</h2>

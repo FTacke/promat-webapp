@@ -1772,9 +1772,10 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Laute und Artikulation' in html
     assert 'Konkrete Aussprachethemen mit Beispielen und Unterrichtsimpulsen.' in html
     assert 'Welche Aussprache unterrichten?' in html
-    assert 'Orientierung zu Aussprachmodellen und Variation im Spanischunterricht: Warum <em>seseo</em> und <em>distinción</em> gleichberechtigte Aussprachenormen sind und was das für den Unterricht bedeutet.' in html
-    assert 'Von Felix Tacke' in html
-    assert 'Finales r' in html
+    assert 'Warum <em>seseo</em> und <em>distinción</em> gleichwertige Aussprachen sind – und was das für den Unterricht bedeutet.' in html
+    assert 'Von Felix Tacke' not in html
+    assert 'pm-teaching-topic-card__byline' not in html
+    assert 'R am Silbenende' in html
     assert html.count('pm-teaching-topic-card--available') == 2
     assert html.count('pm-teaching-topic-card--pending') == 2
     assert html.count('pm-teaching-topic-card--compact') == 4
@@ -1786,18 +1787,18 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'pm-teaching-topic-card__meta' not in html
     assert 'pm-teaching-topic-card__pill' not in html
     assert 'Themenmetadaten' not in html
-    assert 'Finales r wird im Unterricht besser über Hörziele' in html
+    assert 'In Vorbereitung: Hörbeispiele und Unterrichtsimpulse zum r am Silben- und Wortende im Spanischen.' in html
     first_group_html = _extract_section_by_labelledby(html, 'teaching-group-1')
     assert 'Welche Aussprache unterrichten?' in first_group_html
     assert 'Weiches Spanisch, hartes Deutsch' in first_group_html
     assert 'Beschreibung folgt.' in first_group_html
     assert 'Das spanische r' not in first_group_html
-    assert 'Finales r' not in first_group_html
+    assert 'R am Silbenende' not in first_group_html
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
     assert 'Das spanische r' in second_group_html
-    assert 'Finales r' in second_group_html
+    assert 'R am Silbenende' in second_group_html
     assert 'Überblick über die wichtigsten Realisierungen des spanischen r' in second_group_html
-    assert 'Finales r wird im Unterricht besser über Hörziele' in second_group_html
+    assert 'In Vorbereitung: Hörbeispiele und Unterrichtsimpulse zum r am Silben- und Wortende im Spanischen.' in second_group_html
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html
     assert 'Editionen' not in html
     assert 'pm-teaching-locale-switch' not in html
@@ -1816,13 +1817,14 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'Teaching Spanish pronunciation' not in html
     assert 'Topic pages for Spanish pronunciation in foreign language teaching.' not in html
     assert 'pm-nav-pill__label">Language selection</span>' in html
-    assert 'Orientation to pronunciation models, variation, and classroom pragmatics.' in html
+    assert 'Why <em>seseo</em> and <em>distinción</em> are equally valid pronunciations — and what that means for teaching.' in html
     assert 'Which pronunciation should you teach?' in html
-    assert 'By Felix Tacke' in html
+    assert 'By Felix Tacke' not in html
+    assert 'pm-teaching-topic-card__byline' not in html
     assert 'Soft Spanish, hard German' in html
     assert 'Spanish r' in html
     assert 'Concrete pronunciation topics with examples and classroom prompts.' in html
-    assert 'Final r' in html
+    assert 'R at the end of syllables' in html
     assert html.count('pm-teaching-topic-card--available') == 2
     assert html.count('pm-teaching-topic-card--pending') == 2
     assert 'In preparation' in html
@@ -1858,10 +1860,10 @@ def test_teaching_missing_topic_redirects_cleanly_to_hub(url_app: Flask) -> None
 
 def test_teaching_topic_media_route_serves_released_media(url_app: Flask) -> None:
     client = url_app.test_client()
-    response = client.get("/teaching-media/spanish/final-r/downloads/final-r-handout.txt")
+    response = client.get("/teaching-media/spanish/which-pronunciation/audio/variation/seseo-casa-caza.mp3")
 
     assert response.status_code == 200
-    assert response.data.replace(b"\r\n", b"\n") == b"PROMAT Teaching placeholder export for the public final-r worksheet.\n"
+    assert response.data
 
 
 def test_teaching_topic_media_route_blocks_parent_traversal(url_app: Flask) -> None:
@@ -1892,27 +1894,47 @@ def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
     assert 'pm-teaching-block-grid' in html
     assert 'pm-teaching-block--span-3' not in html
     assert 'pm-teaching-block--span-2' in html
-    assert 'pm-teaching-block--span-1' in html
-    assert 'Finales r' in html
+    assert 'pm-teaching-block--span-1' not in html
+    assert 'R am Silbenende' in html
+    assert 'Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zum r am Silben- und Wortende im Spanischen.' in html
     assert html.count('class="pm-back-link') == 2
     assert html.count('pm-back-link__pill') == 2
     assert 'class="pm-teaching-topic-metadata"' in html
     assert 'class="pm-teaching-topic-meta__authors"' in html
     assert 'class="pm-teaching-topic-meta__details"' in html
     assert 'Autor:innen:' in html
-    assert 'Peer Review:' in html
+    assert 'NN' in html
+    assert 'Status:' in html
+    assert 'In Vorbereitung' in html
+    assert 'Peer Review:' not in html
     assert 'pm-teaching-block--topic-meta' not in html
-    assert 'Diese Themenseite zitieren' in html
-    assert 'pm-teaching-block--citation' in html
-    assert 'pm-admonition pm-admonition--citation' in html
-    assert 'aria-label="Zitat kopieren"' in html
+    assert 'Diese Themenseite zitieren' not in html
+    assert 'pm-teaching-block--citation' not in html
+    assert 'pm-admonition pm-admonition--citation' not in html
+    assert 'aria-label="Zitat kopieren"' not in html
     assert 'pm-teaching-hero__title' not in html
-    assert 'pm-teaching-block__section-heading' in html
-    assert 'Weiter im Hub' in html
-    assert 'Arbeitsblatt herunterladen' in html
-    assert html.count('pm-teaching-topic-card--available') == 1
+    assert 'pm-teaching-block__section-heading' not in html
+    assert 'Weiter im Hub' not in html
+    assert 'Arbeitsblatt herunterladen' not in html
+    assert 'pm-teaching-download-card__header' not in html
+    assert 'pm-icon-mask pm-icon-mask--download pm-teaching-download-card__icon' not in html
+    assert 'pm-teaching-block--audio' not in html
+    assert 'Audio-Datei wird ergänzt' not in html
+    assert html.count('pm-teaching-block--status-box') == 1
+    assert 'pm-teaching-status-box' in html
+    assert html.count('pm-teaching-block--placeholder') == 5
+    assert html.count('pm-teaching-placeholder__meta') == 5
+    assert 'Baustein möglich' in html
+    assert 'Haupttext' in html
+    assert 'Ausgangspunkt' in html
+    assert 'Hier kann später ein kurzer erklärender Einstieg stehen' in html
+    assert 'Unterrichtsperspektive' in html
+    assert 'Hörvergleich' in html
+    assert 'Didaktische Folgerung' in html
+    assert 'Material noch nicht hinterlegt' in html
+    assert html.count('pm-teaching-topic-card--available') == 0
     assert 'href="/en/teaching/spanish/final-r?lang=en"' in html
-    assert 'href="/teaching-media/spanish/final-r/downloads/final-r-handout.txt"' in html
+    assert 'href="/teaching-media/spanish/final-r/downloads/' not in html
 
 
 def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app: Flask) -> None:
@@ -1941,6 +1963,13 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert '<em>Seseo</em> und <em>distinción</em>' in html
     assert 'Impulse für den Unterricht' in html
     assert 'class="pm-teaching-block pm-teaching-block--span-2 pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text pm-teaching-rich-text--didactic_close" data-block-variant="didactic_close"' in html
+    assert 'Erst hören lassen' in html
+    assert 'Vor der Erklärung die Hörbeispiele abspielen: Hören die Lernenden einen Unterschied zwischen <em>casa</em> und <em>caza</em>?' in html
+    assert 'Variation sichtbar machen' in html
+    assert 'Mit den Karten zeigen: <em>distinción</em> ist regional begrenzt, <em>seseo</em> ist in großen Teilen der spanischsprachigen Welt normal.' in html
+    assert 'Normen klären' in html
+    assert 'Festhalten: <em>seseo</em> und <em>distinción</em> sind keine Fehlerhierarchie, sondern gleichwertige Aussprachevarianten.' in html
+    assert 'Eigene Ausspracheentscheidung bewusst treffen' not in html
     assert 'Aus den Vergleichen ergeben sich konkrete Entscheidungen für den Unterricht:' in html
     assert '>Vertiefung im Lehrbuch<' not in html
     assert 'Wer mehr wissen will' not in html
@@ -1949,13 +1978,19 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert html.count('data-admonition-variant="context"') == 1
     assert 'class="pm-teaching-block pm-teaching-block--span-1 pm-teaching-block--overview"' in html
     assert 'class="pm-admonition pm-admonition--overview"' in html
-    assert 'Variation hörbar machen' in html
-    assert 'Normen transparent machen' in html
     assert '<h3 class="promat-content-block__title pm-panel__title">Mit und ohne Unterscheidung: <em>casa</em> vs. <em>caza</em></h3>' in html
     assert '<code>ll</code> und <code>y</code>' in html
     assert 'class="pm-teaching-further-reading__title">Vertiefung</h2>' in html
-    assert 'Hörbeispiele zur Vertiefung öffnen' in html
-    assert html.count('Hörbeispiele zur Vertiefung öffnen') == 2
+    assert 'class="pm-teaching-further-reading__list"' in html
+    assert html.count('class="pm-teaching-further-reading__item"') == 2
+    assert 'pm-teaching-further-reading-card' not in html
+    assert 'pm-card-grid pm-card-grid--compact pm-teaching-further-reading__grid' not in html
+    assert 'Der <em>yeísmo</em> ist heute die Norm' in html
+    assert 'In vielen Regionen wird /s/ am Silben- oder Wortende abgeschwächt oder getilgt.' in html
+    assert 'Hier mehr erfahren' in html
+    assert html.count('Hier mehr erfahren') == 2
+    assert 'Hörbeispiele öffnen' not in html
+    assert 'Hörbeispiele zur Vertiefung öffnen' not in html
     assert 'Ausblick: Weitere Aussprachemerkmale' not in html
     assert 'class="pm-teaching-section-heading__title"><p>' not in html
     assert '<h3 class="promat-content-block__title pm-panel__title"><p>' not in html
@@ -2110,10 +2145,25 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav"' in html
     assert 'Classroom prompts' in html
     assert 'class="pm-teaching-block pm-teaching-block--span-2 pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text pm-teaching-rich-text--didactic_close" data-block-variant="didactic_close"' in html
+    assert 'Listen first' in html
+    assert 'Before explaining, play the audio examples: do learners hear a difference between <em>casa</em> and <em>caza</em>?' in html
+    assert 'Make variation visible' in html
+    assert 'Use the maps to show that <em>distinción</em> is regionally limited, while <em>seseo</em> is normal across large parts of the Spanish-speaking world.' in html
+    assert 'Clarify norms' in html
+    assert 'Make explicit that <em>seseo</em> and <em>distinción</em> are not a hierarchy of mistakes, but equally valid pronunciation variants.' in html
+    assert 'Choose your own target consciously' not in html
     assert 'At a glance' in html
     assert 'data-admonition-variant="overview"' in html
     assert 'Further exploration' in html
-    assert 'Open audio examples for further exploration' in html
+    assert 'class="pm-teaching-further-reading__list"' in html
+    assert html.count('class="pm-teaching-further-reading__item"') == 2
+    assert 'pm-teaching-further-reading-card' not in html
+    assert '*Yeísmo* is now the norm' not in html
+    assert '<em>Yeísmo</em> is now the norm' in html
+    assert 'Learn more here' in html
+    assert html.count('Learn more here') == 2
+    assert 'Open listening examples' not in html
+    assert 'Open audio examples for further exploration' not in html
     assert 'Outlook: More pronunciation features' not in html
     assert 'For those who want to know more' not in html
     assert 'Continue in this hub' not in html
@@ -2124,6 +2174,50 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'pm-admonition__chevron' not in html
     assert '*Pronunciation Matters*' not in html
     assert '[pronunciation-matters.de]' not in html
+
+
+def test_teaching_topic_box_css_uses_eye_overview_and_structured_context_box() -> None:
+    css_root = Path(__file__).resolve().parents[1] / "static" / "css"
+    tokens_css = (css_root / "00_tokens.css").read_text(encoding="utf-8")
+    components_css = (css_root / "30_components.css").read_text(encoding="utf-8")
+    cards_css = (css_root / "40_cards.css").read_text(encoding="utf-8")
+
+    assert "--pm-icon-admonition-eye:" in tokens_css
+    assert "--pm-admonition-overview-icon: var(--pm-icon-admonition-eye);" in tokens_css
+    assert "--pm-teaching-topic-icon-eye:" in components_css
+    assert "--pm-icon-admonition-eye: var(--pm-teaching-topic-icon-eye);" in components_css
+    assert "--pm-admonition-border-left-width: 1px;" in cards_css
+    assert "--pm-admonition-header-divider-width: 1px;" in cards_css
+    assert ".pm-admonition--tip" in cards_css
+    assert "--pm-admonition-tip-bg: color-mix(in srgb, var(--pm-surface-paper) 90%, var(--book-adm-tip) 10%);" in tokens_css
+    assert "--pm-admonition-tip-accent: var(--pm-admonition-tip-border);" in tokens_css
+    assert "--pm-admonition-action-icon-size: 1.32rem;" in cards_css
+    assert "--pm-admonition-body-line-height: 1.55;" in cards_css
+    assert ".pm-teaching-page--topic .pm-admonition--overview" in components_css
+    assert ".pm-teaching-page--topic .pm-admonition--context" in components_css
+    assert ".pm-teaching-page--topic .pm-admonition--tip" in components_css
+    assert ".pm-teaching-page--topic .pm-admonition--citation .pm-admonition__text" in components_css
+    assert 'width: 82%;' not in components_css
+    assert ".pm-teaching-page--topic .audio-section" in components_css
+    assert "--pm-audio-section-title-size: clamp(1rem" in components_css
+    assert 'width: min(100%, 820px);' in components_css
+    assert 'grid-template-columns: minmax(0, 1fr);' in components_css
+    assert 'border: 0;' in components_css
+    assert ".pm-teaching-further-reading__header" in components_css
+    assert "border-bottom: 0;" in components_css
+    assert ".pm-teaching-further-reading__list" in components_css
+    assert ".pm-teaching-further-reading__item" in components_css
+    assert ".pm-teaching-further-reading__item + .pm-teaching-further-reading__item" in components_css
+    assert ".pm-teaching-further-reading__item-action" in components_css
+    assert "--pm-cta-link-font-weight: 520;" in components_css
+    assert "--pm-cta-link-font-size: 0.88rem;" in components_css
+    assert ".pm-teaching-further-reading-card" not in components_css
+    assert ".pm-teaching-download-card__header" in components_css
+    assert ".pm-teaching-download-card__icon" in components_css
+    assert ".pm-teaching-download-card .pm-card__body > .pm-card__action" in components_css
+    assert ".pm-teaching-download-card.is-unavailable" in components_css
+    assert "padding-top: 0;" in components_css
+    assert "--pm-teaching-further-reading-divider-color: color-mix(in srgb, var(--pm-teaching-further-reading-border) 74%, transparent);" in tokens_css
 
 
 @pytest.mark.parametrize("ui_lang", ["de", "en"])

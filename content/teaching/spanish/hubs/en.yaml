@@ -7,7 +7,7 @@ groups:
       - which-pronunciation
       - soft-spanish-hard-german
   - title: Sounds and articulation
-    description: Concrete pronunciation topics with examples and classroom prompts.
+    description: Pronunciation topics with examples and classroom prompts.
     topics:
       - r
       - final-r

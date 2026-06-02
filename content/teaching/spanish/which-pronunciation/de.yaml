@@ -1,5 +1,5 @@
 title: Welche Aussprache unterrichten?
-summary: "Orientierung zu Aussprachmodellen und Variation im Spanischunterricht: Warum *seseo* und *distinción* gleichberechtigte Aussprachenormen sind und was das für den Unterricht bedeutet."
+summary: "Warum *seseo* und *distinción* gleichwertige Aussprachen sind – und was das für den Unterricht bedeutet."
 description: Gibt es die eine richtige Aussprache im Spanischen? Und was heißt das für den Unterricht?
 equivalents:
   en: which-pronunciation
@@ -166,14 +166,12 @@ blocks:
       span: 2
     variant: didactic_close
     body: |
-      - **Variation hörbar machen**  
-        Die Karte und die Sprecherzahlen können bei Lernenden einen Aha-Moment auslösen: Die Aussprache, die viele Schulbücher als Standard vermitteln, ist nur in einem kleinen Teil der spanischsprachigen Welt die Norm.
-      - **Erst hören, dann erklären**  
-        Hörbeispiele abspielen und Kontraste benennen lassen, bevor Fachbegriffe eingeführt werden.
-      - **Normen transparent machen**  
-        Lernende sollen verstehen: *distinción* und *seseo* sind keine Fehlerhierarchie, sondern regionale Aussprachevarianten.
-      - **Eigene Ausspracheentscheidung bewusst treffen**  
-        Lehrkräfte sollten die eigene Aussprachewahl offenlegen und begründen.
+      - **Erst hören lassen**  
+        Vor der Erklärung die Hörbeispiele abspielen: Hören die Lernenden einen Unterschied zwischen *casa* und *caza*?
+      - **Variation sichtbar machen**  
+        Mit den Karten zeigen: *distinción* ist regional begrenzt, *seseo* ist in großen Teilen der spanischsprachigen Welt normal.
+      - **Normen klären**  
+        Festhalten: *seseo* und *distinción* sind keine Fehlerhierarchie, sondern gleichwertige Aussprachevarianten.
   - type: further_reading
     layout:
       span: 2
@@ -181,10 +179,10 @@ blocks:
     description: Weitere Aussprachemerkmale werden im begleitenden Material mit Hörbeispielen aufgegriffen.
     items:
       - title: "`ll` und `y`"
-        text: Die traditionelle Unterscheidung von `ll` und `y` wird heute fast nirgends mehr gemacht – der *yeísmo*, also die gleiche Aussprache beider als `[ʝ]`, ist die Norm. In Argentinien und Uruguay klingt der Laut dabei auffällig anders, nämlich wie `sch`. Auch das ist kein Fehler, sondern gehört dort zur nationalen Aussprachenorm.
-        cta: Hörbeispiele zur Vertiefung öffnen
+        text: 'Der *yeísmo* ist heute die Norm: `ll` und `y` werden meist gleich ausgesprochen. In Argentinien und Uruguay klingt der Laut oft wie `sch`.'
+        cta: Hier mehr erfahren
         href: https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo
       - title: /s/-Abschwächung
-        text: In vielen Ländern wird /s/ am Silben- oder Wortende abgeschwächt oder ganz getilgt. Das ist kein Zeichen nachlässiger Aussprache, sondern entspricht je nach Region und Land der Aussprachenorm. Für den Unterricht ist das Phänomen vor allem beim Hörverstehen relevant.
-        cta: Hörbeispiele zur Vertiefung öffnen
+        text: In vielen Regionen wird /s/ am Silben- oder Wortende abgeschwächt oder getilgt. Für den Unterricht ist das vor allem beim Hörverstehen relevant.
+        cta: Hier mehr erfahren
         href: https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund

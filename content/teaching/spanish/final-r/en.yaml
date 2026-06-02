@@ -1,79 +1,50 @@
-title: Final r
-summary: Final r works better as a listening-and-context topic than as a page of isolated articulation commands.
-description: Final r works better as a listening-and-context topic than as a page of isolated articulation commands.
+title: R at the end of syllables
+summary: "In preparation: audio examples and classroom prompts on *r* at the end of syllables and words in Spanish."
+description: This topic page has been created and is still being developed. It is planned as a compact classroom page on r at the end of syllables and words in Spanish.
 equivalents:
   de: final-r
-peer_review:
-  - 
-created: 2025-07-06
-updated: 2026-03-05
-citation:
-  text: "Tacke, Felix / PROMAT Teaching (2026): Final r."
-  url: /en/teaching/spanish/final-r
-credits:
-  coordinator:
-    - name: PROMAT Teaching
-      role: Coordination
-      affiliation: PROMAT
+metadata:
   authors:
-    - name: Felix Tacke
-      role: Draft architecture
-      affiliation: PROMAT
+    - NN
+  status:
+    - In preparation
+  created: 2025-07-06
+  updated: 2026-03-05
 blocks:
   - type: hero
-    layout:
-      span: 2
-    title: Final r
-    lead: Final r needs stable listening goals in context rather than isolated articulation commands.
-  - type: section_heading
-    layout:
-      span: 2
+    title: R at the end of syllables
+    lead: This topic page has been created and is still being developed. It is planned as a compact classroom page on r at the end of syllables and words in Spanish.
+  - type: status_box
+    title: In preparation
+    body: This topic page has been created, but has not yet been editorially developed. The areas below mark possible building blocks; selection, order, and content may still change.
+  - type: placeholder
+    label: Possible module
+    kind: Main text
     title: Starting point
-  - type: text
-    layout:
-      span: 1
     body: |
-      Learners often over-close, weaken, or otherwise reshape word-final r when German habits carry over into Spanish.
-
-      Short rhythmic contexts are usually more helpful than isolated sound descriptions.
-  - type: tip_box
-    layout:
-      span: 1
-    title: Teaching perspective
+      A short explanatory opening can be added here later: What makes r at the end of syllables or words relevant for teaching? Which listening goals matter?
+  - type: placeholder
+    label: Possible module
+    kind: Note box
+    title: Classroom perspective
     body: |
-      Start with listening: what remains audible at the end of the word, how short is the release, and when does the result drift into a clearly German-coloured pattern?
-
-      Brief articulation cues can follow once the auditory target is stable.
-  - type: audio_contrast
-    layout:
-      span: 2
-    title: Contrastive listening
-    examples:
-      - title: Close to Spanish
-        transcript: Final r stays audible and brief.
-      - title: German-coloured
-        transcript: Final r opens too much or fades too far.
-  - type: text
-    layout:
-      span: 1
-    title: Teaching consequence
+      A didactic focus can be added here later, for example why listening in context matters more than isolated sound description.
+  - type: placeholder
+    label: Possible module
+    kind: Listening comparison
+    title: Listening comparison
     body: |
-      Productive work should stay closely tied to listening: first discriminate, then repeat in short word and sentence frames, and only then stabilise the pattern in freer production.
-
-      That keeps the goal concrete without pushing learners toward an exaggerated trill.
-  - type: download
-    layout:
-      span: 1
-    title: Teaching material
-    label: Download worksheet
-    href: final-r-handout.txt
-    description: Short worksheet for keeping final `r` audible and controlled in classroom listening and repetition tasks.
-  - type: credits
-    layout:
-      span: 2
-  - type: next_topics
-    layout:
-      span: 2
-    title: Continue in this hub
-    topics:
-      - which-pronunciation
+      Audio examples can be added here later, for example contrastive word or sentence contexts.
+  - type: placeholder
+    label: Possible module
+    kind: Main text / subsection
+    title: Didactic implication
+    body: |
+      Consequences for pronunciation goals, listening comprehension, and exercise design can be summarized briefly here later.
+  - type: placeholder
+    label: Possible module
+    kind: Material / download
+    title: Material
+    body: |
+      A worksheet, handout, or further classroom material can be linked here later.
+    note: Material not linked yet
