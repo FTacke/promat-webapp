@@ -1,5 +1,5 @@
 title: "Spanisch: Themenseiten"
-overview_intro: Die Themenseiten bieten Orientierung zur Vermittlung der Aussprache des Spanischen und fokussieren jeweils ein spezifisches Phänomen, das im Unterricht in etwa 10–15 Minuten thematisiert werden kann. Sie sind für Lehrkräfte gedacht, die der Aussprache der Lernenden gezielt Aufmerksamkeit widmen möchten, und bieten Hörbeispiele, weiteres Anschauungsmaterial sowie konkrete Unterrichtsimpulse.
+overview_intro: Die Themenseiten bündeln fachliche Orientierung, Hörbeispiele und Unterrichtsimpulse zu einzelnen Aussprachephänomenen im Spanischunterricht.
 groups:
   - title: Grundlagen
     description: Orientierung zu Aussprachemodellen, Variation und didaktischen Entscheidungen im Unterricht.
@@ -10,4 +10,4 @@ groups:
     description: Aussprachethemen mit Beispielen und Unterrichtsimpulsen.
     topics:
       - r
-      - final-r
+      - r-am-silbenende

@@ -15,10 +15,13 @@
   {% endif %}
 {%- endmacro %}
 
-{% macro _render_admonition_header(resolved_title, resolved_title_html, header_action=None) -%}
+{% macro _render_admonition_header(resolved_title, resolved_title_html, eyebrow='', eyebrow_html='', header_action=None) -%}
   <div class="pm-admonition__header{{ ' pm-admonition__header--with-action' if header_action }}">
     <span class="pm-admonition__icon" aria-hidden="true"></span>
     <div class="pm-admonition__header-body">
+      {% if eyebrow %}
+      <p class="pm-card__eyebrow pm-admonition__eyebrow">{{ (eyebrow_html or eyebrow) | safe }}</p>
+      {% endif %}
       <h3 class="pm-admonition__title">{{ (resolved_title_html or resolved_title) | safe }}</h3>
     </div>
     {{ _render_admonition_header_action(header_action) }}
@@ -34,7 +37,7 @@
   {% set resolved_title = item.title or item.default_title %}
   {% set resolved_title_html = item.title_html or item.default_title_html %}
   <{{ root_tag }} class="{{ classes | join(' ') }}" data-admonition data-admonition-variant="{{ item.variant }}">
-    {{ _render_admonition_header(resolved_title, resolved_title_html, item.header_action) }}
+    {{ _render_admonition_header(resolved_title, resolved_title_html, item.eyebrow, item.eyebrow_html, item.header_action) }}
     <div class="pm-admonition__panel">
       <div class="pm-admonition__body">
         {% if item.body_html_blocks %}

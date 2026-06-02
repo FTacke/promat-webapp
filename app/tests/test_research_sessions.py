@@ -1711,7 +1711,7 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> Non
     assert 'pm-content-header pm-reading pm-content-header--no-breadcrumbs' in html
     assert 'Aussprache unterrichten' not in html
     assert 'class="promat-page__intro pm-content-header__intro">Themenseiten zur Aussprachevermittlung im Fremdsprachenunterricht.</p>' not in html
-    assert 'Wählen Sie eine Sprache, um Themenseiten zur Aussprachevermittlung zu öffnen.' in html
+    assert 'Themenseiten mit fachlicher Orientierung, Hörbeispielen und Unterrichtsimpulsen.' in html
     assert 'id="teaching-selection-title"' not in html
     assert 'pm-teaching-overview__prompt' not in html
     assert 'Welche Sprache unterrichten Sie?' in html
@@ -1721,12 +1721,15 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> Non
     assert html.count('pm-teaching-language-row__secondary') == 0
     assert html.count('pm-teaching-language-row__body--available') == 1
     assert html.count('pm-teaching-language-row__body--pending') == 3
-    assert html.count('pm-teaching-language-row__aside--available') == 1
-    assert html.count('pm-teaching-language-row__aside--pending') == 3
+    assert html.count('pm-teaching-language-row__copy') == 4
+    assert html.count('pm-teaching-language-row__badges') == 4
     assert html.count('pm-teaching-language-row__status') == 4
+    assert html.count('pm-teaching-language-row__badge--available') == 1
+    assert html.count('pm-teaching-language-row__badge--pending') == 3
     assert html.count('pm-teaching-language-row__action') == 1
     assert 'pm-teaching-language-row__primary' not in html
-    assert html.index('>Spanisch<') < html.index('2 Themenseiten') < html.index('pm-teaching-language-row__action')
+    assert html.index('>Spanisch<') < html.index('pm-teaching-language-row__badge--available') < html.index('pm-teaching-language-row__action')
+    assert html.index('pm-teaching-language-row__badge--available') < html.index('2 Themenseiten') < html.index('pm-teaching-language-row__action')
     assert html.index('>Englisch<') < html.index('In Vorbereitung')
     assert 'href="/de/teaching/spanish"' in html
     assert 'href="/de/teaching/english"' not in html
@@ -1782,12 +1785,12 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'href="/de/teaching/spanish/which-pronunciation"' in html
     assert 'href="/de/teaching/spanish/soft-spanish-hard-german"' not in html
     assert 'href="/de/teaching/spanish/r"' not in html
-    assert 'href="/de/teaching/spanish/final-r"' in html
+    assert 'href="/de/teaching/spanish/r-am-silbenende"' in html
     assert html.count('In Vorbereitung') >= 2
     assert 'pm-teaching-topic-card__meta' not in html
     assert 'pm-teaching-topic-card__pill' not in html
     assert 'Themenmetadaten' not in html
-    assert 'In Vorbereitung: Hörbeispiele und Unterrichtsimpulse zum r am Silben- und Wortende im Spanischen.' in html
+    assert 'In Vorbereitung: Aussprache und Hörverstehen rund um das r am Silben- und Wortende.' in html
     first_group_html = _extract_section_by_labelledby(html, 'teaching-group-1')
     assert 'Welche Aussprache unterrichten?' in first_group_html
     assert 'Weiches Spanisch, hartes Deutsch' in first_group_html
@@ -1798,7 +1801,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Das spanische r' in second_group_html
     assert 'R am Silbenende' in second_group_html
     assert 'Überblick über die wichtigsten Realisierungen des spanischen r' in second_group_html
-    assert 'In Vorbereitung: Hörbeispiele und Unterrichtsimpulse zum r am Silben- und Wortende im Spanischen.' in second_group_html
+    assert 'In Vorbereitung: Aussprache und Hörverstehen rund um das r am Silben- und Wortende.' in second_group_html
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html
     assert 'Editionen' not in html
     assert 'pm-teaching-locale-switch' not in html
@@ -1823,14 +1826,14 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'pm-teaching-topic-card__byline' not in html
     assert 'Soft Spanish, hard German' in html
     assert 'Spanish r' in html
-    assert 'Concrete pronunciation topics with examples and classroom prompts.' in html
-    assert 'R at the end of syllables' in html
+    assert 'Pronunciation topics with examples and classroom prompts.' in html
+    assert 'Syllable-final r' in html
     assert html.count('pm-teaching-topic-card--available') == 2
     assert html.count('pm-teaching-topic-card--pending') == 2
     assert 'In preparation' in html
     assert 'href="/en/teaching/spanish/soft-spanish-hard-german"' not in html
     assert 'href="/en/teaching/spanish/r"' not in html
-    assert 'href="/en/teaching/spanish/final-r"' in html
+    assert 'href="/en/teaching/spanish/r-am-silbenende"' in html
     assert 'Which pronunciation counts?' not in html
     assert 'Weiches Spanisch, hartes Deutsch' not in html
 
@@ -1869,7 +1872,7 @@ def test_teaching_topic_media_route_serves_released_media(url_app: Flask) -> Non
 def test_teaching_topic_media_route_blocks_parent_traversal(url_app: Flask) -> None:
     client = url_app.test_client()
 
-    response = client.get("/teaching-media/spanish/final-r/downloads/../secret.txt")
+    response = client.get("/teaching-media/spanish/r-am-silbenende/downloads/../secret.txt")
 
     assert response.status_code == 404
 
@@ -1886,7 +1889,7 @@ def test_teaching_topic_missing_target_edition_redirects_to_hub(url_app: Flask) 
 def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
     client = url_app.test_client()
 
-    response = client.get("/de/teaching/spanish/final-r")
+    response = client.get("/de/teaching/spanish/r-am-silbenende")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
@@ -1916,25 +1919,32 @@ def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
     assert 'pm-teaching-block__section-heading' not in html
     assert 'Weiter im Hub' not in html
     assert 'Arbeitsblatt herunterladen' not in html
-    assert 'pm-teaching-download-card__header' not in html
-    assert 'pm-icon-mask pm-icon-mask--download pm-teaching-download-card__icon' not in html
-    assert 'pm-teaching-block--audio' not in html
+    assert 'pm-teaching-download-card__header' in html
+    assert 'pm-icon-mask pm-icon-mask--download pm-teaching-download-card__icon' in html
+    assert 'pm-teaching-block--audio' in html
     assert 'Audio-Datei wird ergänzt' not in html
+    assert 'Download-Datei wird ergänzt' not in html
     assert html.count('pm-teaching-block--status-box') == 1
     assert 'pm-teaching-status-box' in html
-    assert html.count('pm-teaching-block--placeholder') == 5
-    assert html.count('pm-teaching-placeholder__meta') == 5
-    assert 'Baustein möglich' in html
-    assert 'Haupttext' in html
+    assert 'pm-teaching-block--placeholder' not in html
+    assert 'pm-teaching-placeholder__meta' not in html
+    assert html.count('pm-teaching-block--text-plain') == 2
+    assert html.count('pm-teaching-block--admonition') == 1
+    assert html.count('pm-teaching-block--download') == 1
+    assert '>Geplant<' not in html
     assert 'Ausgangspunkt' in html
     assert 'Hier kann später ein kurzer erklärender Einstieg stehen' in html
     assert 'Unterrichtsperspektive' in html
+    assert 'pm-admonition--tip' in html
     assert 'Hörvergleich' in html
+    assert 'pm-teaching-audio-empty-state' in html
+    assert 'Audio-Beispiele noch nicht hinterlegt' in html
     assert 'Didaktische Folgerung' in html
     assert 'Material noch nicht hinterlegt' in html
+    assert html.index('Ausgangspunkt') < html.index('Unterrichtsperspektive') < html.index('Hörvergleich') < html.index('Didaktische Folgerung') < html.index('Material noch nicht hinterlegt')
     assert html.count('pm-teaching-topic-card--available') == 0
-    assert 'href="/en/teaching/spanish/final-r?lang=en"' in html
-    assert 'href="/teaching-media/spanish/final-r/downloads/' not in html
+    assert 'href="/en/teaching/spanish/r-am-silbenende?lang=en"' in html
+    assert 'href="/teaching-media/spanish/r-am-silbenende/downloads/' not in html
 
 
 def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app: Flask) -> None:
@@ -2124,7 +2134,7 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
 def test_teaching_english_topic_uses_natural_hub_backlink(url_app: Flask) -> None:
     client = url_app.test_client()
 
-    response = client.get("/en/teaching/spanish/final-r")
+    response = client.get("/en/teaching/spanish/r-am-silbenende")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)

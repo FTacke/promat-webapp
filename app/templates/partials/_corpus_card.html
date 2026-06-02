@@ -7,27 +7,31 @@
 {% if is_available and card.href %}
 <a class="{{ row_classes }}" href="{{ card.href }}">
   <div class="pm-card__body pm-teaching-language-row__body pm-teaching-language-row__body--available">
-    <{{ heading_tag }} class="pm-card__title pm-teaching-language-row__title">{{ card.title }}</{{ heading_tag }}>
-    <div class="pm-teaching-language-row__aside pm-teaching-language-row__aside--available">
+    <div class="pm-teaching-language-row__copy">
+      <{{ heading_tag }} class="pm-card__title pm-teaching-language-row__title">{{ card.title }}</{{ heading_tag }}>
+      <div class="pm-teaching-language-row__badges">
       {% for row in card.metadata_rows %}
       {% if not row.label %}
-      <p class="pm-teaching-language-row__status">{{ row.text }}</p>
+      <span class="pm-teaching-language-row__status pm-teaching-language-row__badge pm-teaching-language-row__badge--available">{{ row.text }}</span>
       {% endif %}
       {% endfor %}
-      <div class="pm-teaching-language-row__action">{{ render_cta_link_visual({ 'label': card.action_label, 'tone': 'primary' }) }}</div>
+      </div>
     </div>
+    <div class="pm-teaching-language-row__action">{{ render_cta_link_visual({ 'label': card.action_label, 'tone': 'primary' }) }}</div>
   </div>
 </a>
 {% else %}
 <article class="{{ row_classes }}" aria-disabled="true">
   <div class="pm-card__body pm-teaching-language-row__body pm-teaching-language-row__body--pending">
-    <{{ heading_tag }} class="pm-card__title pm-teaching-language-row__title">{{ card.title }}</{{ heading_tag }}>
-    <div class="pm-teaching-language-row__aside pm-teaching-language-row__aside--pending">
+    <div class="pm-teaching-language-row__copy">
+      <{{ heading_tag }} class="pm-card__title pm-teaching-language-row__title">{{ card.title }}</{{ heading_tag }}>
+      <div class="pm-teaching-language-row__badges">
       {% for row in card.metadata_rows %}
       {% if not row.label %}
-      <p class="pm-teaching-language-row__status">{{ row.text }}</p>
+      <span class="pm-teaching-language-row__status pm-teaching-language-row__badge pm-teaching-language-row__badge--pending">{{ row.text }}</span>
       {% endif %}
       {% endfor %}
+      </div>
     </div>
   </div>
 </article>

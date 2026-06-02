@@ -121,7 +121,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 
 ### Routing rules
 
-- Technical slugs and route segments stay English.
+- Shared section and language route segments stay English. Teaching `topic_slug` values remain ASCII editorial content keys and may be language-specific when a deliberate content migration adopts them.
 - UI language and technical routing language must not be mixed.
 - The public login surface stays on `/login`, while mutating auth actions stay under `/auth/*`.
 - For routes without a `/{ui_lang}` path prefix such as `/`, `/login`, and `/access-request`, UI language resolution follows one shared priority order: explicit `lang` or `ui_lang` URL value first, then a stored user preference, then local route-context hints such as `next` or same-app referrer language, then `Accept-Language` with `de*` mapping to `de` and all other values falling back to `en`.

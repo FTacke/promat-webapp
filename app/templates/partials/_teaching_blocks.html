@@ -71,6 +71,9 @@
   <div class="pm-panel pm-reading audio-section audio-section--examples">
     {% if (show_title and block.title) or block.lead %}
     <header class="audio-section-header">
+      {% if block.eyebrow %}
+      <p class="pm-card__eyebrow pm-teaching-preview-label pm-teaching-block__eyebrow pm-teaching-block__eyebrow--panel">{{ (block.eyebrow_html or block.eyebrow) | safe }}</p>
+      {% endif %}
       {% if show_title and block.title %}
       <div class="audio-section-title">
         <span class="material-symbols-rounded audio-section-icon" aria-hidden="true">graphic_eq</span>
@@ -82,11 +85,17 @@
       {% endif %}
     </header>
     {% endif %}
+    {% if block.examples %}
     <div class="audio-grid audio-grid--examples">
       {% for example in block.examples %}
       {{ render_audio_examples_item(example, labels, block.id ~ '-audio-example-' ~ loop.index) }}
       {% endfor %}
     </div>
+    {% elif block.empty_state %}
+    <div class="pm-teaching-audio-empty-state" aria-live="polite">
+      <p class="pm-teaching-audio-empty-state__text">{{ (block.empty_state_html or block.empty_state) | safe }}</p>
+    </div>
+    {% endif %}
     {% if block.source.label %}
     <p class="audio-section-source">
       <span class="audio-section-source-prefix">{{ labels.audio_source_prefix }}</span>
@@ -133,7 +142,7 @@
     {% if details %}
     <p class="pm-teaching-topic-meta__details">
       {% for item in details %}
-      <span class="pm-teaching-topic-meta__detail">
+      <span class="pm-teaching-topic-meta__detail" data-key="{{ item.key }}">
         <span class="pm-teaching-topic-meta__label">{{ item.label }}:</span>
         <span class="pm-teaching-topic-meta__value">{{ item.value }}</span>
       </span>{% if not loop.last %}<span class="pm-teaching-topic-meta__separator" aria-hidden="true">·</span>{% endif %}
@@ -187,8 +196,7 @@
 {% macro render_further_reading_item(item) -%}
   <li class="pm-teaching-further-reading__item">
     <h3 class="pm-teaching-further-reading__item-title">{{ (item.title_html or item.title) | safe }}</h3>
-    <p class="pm-teaching-further-reading__item-text">{{ (item.text_html or item.text) | safe }}</p>
-    <p class="pm-teaching-further-reading__item-action"><a href="{{ item.href }}" class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ (item.cta_html or item.cta) | safe }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a></p>
+    <p class="pm-teaching-further-reading__item-text">{{ (item.text_html or item.text) | safe }}{% if item.href and item.cta %} <a href="{{ item.href }}" class="pm-teaching-further-reading__item-cta pm-teaching-inline-link">{{ (item.cta_html or item.cta) | safe }}&thinsp;→</a>{% endif %}</p>
   </li>
 {%- endmacro %}
 
@@ -213,48 +221,25 @@
     {{ render_topic_metadata_rows(block, 'pm-teaching-topic-meta--block') }}
   </section>
   {% elif block.type == 'text' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--text pm-panel pm-reading">
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--text{{ ' pm-teaching-block--text-plain' if block.variant == 'plain' else '' }}{{ '' if block.variant == 'plain' else ' pm-panel' }} pm-reading">
+    {% if block.variant == 'plain' %}
+    {% if block.title %}
+    <h2 class="pm-teaching-section-heading__title">{{ (block.title_html or block.title) | safe }}</h2>
+    {% endif %}
+    {% if block.eyebrow %}
+    <p class="pm-card__eyebrow pm-teaching-preview-label pm-teaching-block__eyebrow">{{ (block.eyebrow_html or block.eyebrow) | safe }}</p>
+    {% endif %}
+    {% else %}
+    {% if block.eyebrow %}
+    <p class="pm-card__eyebrow pm-teaching-preview-label pm-teaching-block__eyebrow">{{ (block.eyebrow_html or block.eyebrow) | safe }}</p>
+    {% endif %}
     {% if block.title %}
     <h3 class="promat-content-block__title pm-panel__title pm-teaching-block__title">{{ (block.title_html or block.title) | safe }}</h3>
     {% endif %}
+    {% endif %}
     {% for block_html in block.body_html_blocks %}
-    <div class="promat-content-block__text pm-teaching-copy-block">{{ block_html | safe }}</div>
+    <div class="promat-content-block__text pm-teaching-copy-block{{ ' pm-teaching-text-section__body' if block.variant == 'plain' else '' }}">{{ block_html | safe }}</div>
     {% endfor %}
-  </section>
-  {% elif block.type == 'status_box' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--status-box">
-    <aside class="pm-teaching-status-box pm-reading">
-      <div class="pm-teaching-status-box__header">
-        <span class="material-symbols-rounded pm-teaching-status-box__icon" aria-hidden="true">pending</span>
-        {% if block.title %}
-        <h2 class="pm-teaching-status-box__title">{{ (block.title_html or block.title) | safe }}</h2>
-        {% endif %}
-      </div>
-      {% for block_html in block.body_html_blocks %}
-      <div class="pm-teaching-status-box__text">{{ block_html | safe }}</div>
-      {% endfor %}
-    </aside>
-  </section>
-  {% elif block.type == 'placeholder' %}
-  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--placeholder">
-    <article class="pm-teaching-placeholder pm-reading">
-      {% if block.label or block.kind %}
-      <p class="pm-teaching-placeholder__meta">
-        {% if block.label %}<span>{{ (block.label_html or block.label) | safe }}</span>{% endif %}
-        {% if block.label and block.kind %}<span aria-hidden="true">·</span>{% endif %}
-        {% if block.kind %}<span>{{ (block.kind_html or block.kind) | safe }}</span>{% endif %}
-      </p>
-      {% endif %}
-      {% if block.title %}
-      <h3 class="pm-teaching-placeholder__title">{{ (block.title_html or block.title) | safe }}</h3>
-      {% endif %}
-      {% for block_html in block.body_html_blocks %}
-      <div class="pm-teaching-placeholder__text">{{ block_html | safe }}</div>
-      {% endfor %}
-      {% if block.note %}
-      <p class="pm-teaching-placeholder__note">{{ (block.note_html or block.note) | safe }}</p>
-      {% endif %}
-    </article>
   </section>
   {% elif block.type == 'rich_text' %}
   <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text{{ ' pm-teaching-rich-text--' ~ block.variant if block.variant }}"{% if block.variant %} data-block-variant="{{ block.variant }}"{% endif %}>
@@ -309,7 +294,11 @@
       'body_html_blocks': block.body_html_blocks,
     }) }}
   </section>
-  {% elif block.type == 'audio_example' or block.type == 'audio_examples' %}
+  {% elif block['type'] == 'audio_example' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--audio pm-teaching-block--audio-examples">
+    {{ render_audio_examples_block(block, labels) }}
+  </section>
+  {% elif block['type'] == 'audio_examples' %}
   <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--audio pm-teaching-block--audio-examples">
     {{ render_audio_examples_block(block, labels) }}
   </section>
@@ -344,6 +333,9 @@
   <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--download">
     <article class="pm-card pm-card--material pm-teaching-download-card{{ ' is-unavailable' if not block.download.is_available else '' }}">
       <div class="pm-card__body pm-teaching-download-card__body">
+        {% if block.download.eyebrow %}
+        <p class="pm-card__eyebrow pm-teaching-preview-label pm-teaching-block__eyebrow pm-teaching-download-card__eyebrow">{{ (block.download.eyebrow_html or block.download.eyebrow) | safe }}</p>
+        {% endif %}
         {% if block.download.title %}
         <div class="pm-teaching-download-card__header">
           <span class="pm-icon-mask pm-icon-mask--download pm-teaching-download-card__icon" aria-hidden="true"></span>
@@ -356,10 +348,28 @@
         {% if block.download.href and block.download.is_available %}
         <p class="pm-card__action"><a href="{{ block.download.href }}" class="pm-cta-link pm-cta-link--primary"><span class="pm-cta-link__label">{{ (block.download.label_html or block.download.label or labels.download) | safe }}</span><span class="pm-interaction__arrow" aria-hidden="true">→</span></a></p>
         {% else %}
-        <p class="pm-teaching-download-card__status">{{ labels.download_pending }}</p>
+        <p class="pm-teaching-download-card__status">{{ (block.download.status_html or block.download.status or labels.download_pending) | safe }}</p>
         {% endif %}
       </div>
     </article>
+  </section>
+  {% elif block.type == 'teaching_impulses' %}
+  <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--teaching-impulses pm-panel pm-reading">
+    {% if block.title %}
+    <h3 class="promat-content-block__title pm-panel__title pm-teaching-block__title">{{ (block.title_html or block.title) | safe }}</h3>
+    {% endif %}
+    <ol class="pm-teaching-impulses">
+      {% for item in block['items'] %}
+      <li class="pm-teaching-impulses__item">
+        {% if item.title %}
+        <strong class="pm-teaching-impulses__item-title">{{ (item.title_html or item.title) | safe }}</strong>
+        {% endif %}
+        {% if item.body %}
+        <p class="pm-teaching-impulses__item-body">{{ item.body_html | safe }}</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
   </section>
   {% elif block.type == 'credits' %}
   <section id="{{ block.id }}" class="pm-teaching-block pm-teaching-block--span-{{ block_span }} pm-teaching-block--credits pm-panel pm-reading pm-teaching-credits">

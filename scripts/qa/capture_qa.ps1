@@ -15,7 +15,7 @@ if (-not $edgePath) { throw "Edge not found" }
 
 $routes = @(
     "/de/teaching", "/de/teaching/spanish", "/de/teaching/english",
-    "/de/teaching/spanish/final-r", "/en/teaching", "/en/teaching/spanish"
+    "/de/teaching/spanish/r-am-silbenende", "/en/teaching", "/en/teaching/spanish"
 )
 $outputDir = "C:\dev\promat\tmp\ui-qa\2026-05-11-teaching-polish-followup"
 if (-not (Test-Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir -Force }

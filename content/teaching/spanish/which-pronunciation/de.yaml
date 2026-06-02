@@ -158,31 +158,30 @@ blocks:
     title: Impulse für den Unterricht
   - type: text
     layout:
-      span: 2
+      span: 1
     body: |
       Aus den Vergleichen ergeben sich konkrete Entscheidungen für den Unterricht:
-  - type: rich_text
+  - type: teaching_impulses
     layout:
-      span: 2
-    variant: didactic_close
-    body: |
-      - **Erst hören lassen**  
-        Vor der Erklärung die Hörbeispiele abspielen: Hören die Lernenden einen Unterschied zwischen *casa* und *caza*?
-      - **Variation sichtbar machen**  
-        Mit den Karten zeigen: *distinción* ist regional begrenzt, *seseo* ist in großen Teilen der spanischsprachigen Welt normal.
-      - **Normen klären**  
-        Festhalten: *seseo* und *distinción* sind keine Fehlerhierarchie, sondern gleichwertige Aussprachevarianten.
+      span: 1
+    items:
+      - title: Erst hören lassen
+        body: "Vor der Erklärung die Hörbeispiele abspielen: Hören die Lernenden einen Unterschied zwischen *casa* und *caza*?"
+      - title: Variation sichtbar machen
+        body: "Mit den Karten zeigen: *distinción* ist regional begrenzt, *seseo* ist in großen Teilen der spanischsprachigen Welt normal."
+      - title: Normen klären
+        body: "Festhalten: *seseo* und *distinción* sind keine Fehlerhierarchie, sondern gleichwertige Aussprachevarianten."
   - type: further_reading
     layout:
       span: 2
     title: Vertiefung
     description: Weitere Aussprachemerkmale werden im begleitenden Material mit Hörbeispielen aufgegriffen.
     items:
-      - title: "`ll` und `y`"
+      - title: Aussprache von ll und y
         text: 'Der *yeísmo* ist heute die Norm: `ll` und `y` werden meist gleich ausgesprochen. In Argentinien und Uruguay klingt der Laut oft wie `sch`.'
-        cta: Hier mehr erfahren
+        cta: Mehr erfahren
         href: https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo
       - title: /s/-Abschwächung
         text: In vielen Regionen wird /s/ am Silben- oder Wortende abgeschwächt oder getilgt. Für den Unterricht ist das vor allem beim Hörverstehen relevant.
-        cta: Hier mehr erfahren
+        cta: Mehr erfahren
         href: https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund

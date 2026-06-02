@@ -27,5 +27,5 @@ blocks:
   - type: topic_grid
     title: Vertiefen
     topics:
-      - final-r
+      - r-am-silbenende
   - type: credits

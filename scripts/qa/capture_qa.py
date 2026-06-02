@@ -5,7 +5,7 @@ routes = [
     '/de/teaching',
     '/de/teaching/spanish',
     '/de/teaching/english',
-    '/de/teaching/spanish/final-r',
+    '/de/teaching/spanish/r-am-silbenende',
     '/en/teaching',
     '/en/teaching/spanish'
 ]

@@ -1,5 +1,5 @@
 title: "Spanish: Topic pages"
-overview_intro: The topic pages offer orientation for teaching Spanish pronunciation and each focus on a specific phenomenon that can be addressed in class in about 10-15 minutes. They are designed for teachers who want to give learners' pronunciation targeted attention and provide audio examples, additional illustrative material, and concrete classroom prompts.
+overview_intro: The topic pages combine subject-specific guidance, audio examples, and teaching prompts on individual pronunciation phenomena in Spanish teaching.
 groups:
   - title: Basics
     description: Orientation to pronunciation models, variation, and classroom pragmatics.
@@ -10,4 +10,4 @@ groups:
     description: Pronunciation topics with examples and classroom prompts.
     topics:
       - r
-      - final-r
+      - r-am-silbenende

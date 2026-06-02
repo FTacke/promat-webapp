@@ -528,12 +528,14 @@ def _download_payload(teaching_lang: str, topic_slug: str, raw_block: dict[str, 
     raw_href = _as_text(raw_block.get("href") or raw_block.get("url") or raw_block.get("file"))
     href = _resolve_topic_media_url(teaching_lang, topic_slug, "downloads", raw_href)
     return _set_inline_markdown_fields({
+        "eyebrow": _as_text(raw_block.get("eyebrow")),
         "title": _as_text(raw_block.get("title")),
         "label": _as_text(raw_block.get("label")) or raw_href.rsplit("/", 1)[-1],
         "href": href,
         "description": _as_text(raw_block.get("description")),
+        "status": _as_text(raw_block.get("status")),
         "is_available": _topic_media_is_available(teaching_lang, topic_slug, "downloads", raw_href),
-    }, "title", "label", "description")
+    }, "eyebrow", "title", "label", "description", "status")
 
 
 def _embed_height(value: Any, *, default: int = 540) -> int:
@@ -592,6 +594,7 @@ _BLOCK_LAYOUT_SPAN_DEFAULTS: dict[str, int] = {
     "section_heading": 2,
     "text": 2,
     "rich_text": 2,
+    "admonition": 1,
     "image": 1,
     "topic_meta": 2,
     "overview": 1,
@@ -605,6 +608,7 @@ _BLOCK_LAYOUT_SPAN_DEFAULTS: dict[str, int] = {
     "embed": 2,
     "video": 2,
     "further_reading": 2,
+    "teaching_impulses": 1,
     "credits": 2,
     "next_topics": 2,
     "topic_grid": 2,
@@ -752,6 +756,24 @@ def _markdown_list_block(items: list[str]) -> str | None:
     if not items:
         return None
     return render_markdown_block("\n".join(f"- {item}" for item in items))
+
+
+def _teaching_impulse_item_entries(values: Any) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    if not isinstance(values, list):
+        return entries
+    for item in values:
+        if not isinstance(item, dict):
+            continue
+        title = _as_text(item.get("title"))
+        body = _as_text(item.get("body") or item.get("text"))
+        if title or body:
+            entries.append(_set_inline_markdown_fields({
+                "title": title,
+                "body": body,
+                "body_html": render_markdown_inline(body),
+            }, "title"))
+    return entries
 
 
 def _further_reading_item_entries(values: Any) -> list[dict[str, str]]:
@@ -944,38 +966,6 @@ def _topic_blocks(
                 )
             continue
 
-        if block_type == "status_box":
-            body_html_blocks = _markdown_blocks(raw_block.get("body"))
-            if body_html_blocks:
-                blocks.append(
-                    _set_inline_markdown_fields({
-                        "type": "status_box",
-                        "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
-                        "title": _as_text(raw_block.get("title")),
-                        "body_html_blocks": body_html_blocks,
-                    }, "title")
-                )
-            continue
-
-        if block_type == "placeholder":
-            body_html_blocks = _markdown_blocks(raw_block.get("body"))
-            note = _as_text(raw_block.get("note"))
-            if body_html_blocks:
-                blocks.append(
-                    _set_inline_markdown_fields({
-                        "type": "placeholder",
-                        "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
-                        "label": _as_text(raw_block.get("label")),
-                        "kind": _as_text(raw_block.get("kind")),
-                        "title": _as_text(raw_block.get("title")),
-                        "body_html_blocks": body_html_blocks,
-                        "note": note,
-                    }, "label", "kind", "title", "note")
-                )
-            continue
-
         if block_type == "overview":
             list_block = _markdown_list_block(_overview_item_entries(raw_block.get("items")))
             if list_block:
@@ -999,9 +989,11 @@ def _topic_blocks(
                         "type": "text",
                         "id": block_id,
                         "layout": _block_layout_payload(block_type, raw_block),
+                        "eyebrow": _as_text(raw_block.get("eyebrow")),
+                        "variant": _as_text(raw_block.get("variant") or raw_block.get("surface")),
                         "title": _as_text(raw_block.get("title")),
                         "body_html_blocks": body_html_blocks,
-                    }, "title")
+                    }, "eyebrow", "title")
                 )
             continue
         if block_type == "rich_text":
@@ -1078,6 +1070,38 @@ def _topic_blocks(
                         topic_slug,
                     )
             continue
+        if block_type == "admonition":
+            variant = _as_text(raw_block.get("variant")).lower() or "context"
+            if variant not in {"context", "tip", "regel", "praxis", "hoermal", "cite", "summary", "weiterlesen", "citation", "overview"}:
+                logger.warning(
+                    "Ignoring unsupported teaching admonition variant '%s' in %s/%s/%s.",
+                    variant,
+                    teaching_lang,
+                    ui_lang,
+                    topic_slug,
+                )
+                continue
+            body = _split_paragraphs(raw_block.get("body"))
+            body_html_blocks = _markdown_blocks(raw_block.get("body"))
+            if body or body_html_blocks:
+                blocks.append(
+                    {
+                        "type": "admonition",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "item": _set_inline_markdown_fields({
+                            "id": block_id,
+                            "variant": variant,
+                            "title": _as_text(raw_block.get("title")),
+                            "default_title": _as_text(raw_block.get("title")),
+                            "eyebrow": _as_text(raw_block.get("eyebrow")),
+                            "body_paragraphs": body,
+                            "body_html_blocks": body_html_blocks,
+                            "footer": _as_text(raw_block.get("footer")),
+                        }, "title", "default_title", "eyebrow", "footer"),
+                    }
+                )
+            continue
         if block_type in {"info_box", "tip_box", "warning_box"}:
             variant_map = {
                 "info_box": "context",
@@ -1097,9 +1121,11 @@ def _topic_blocks(
                             "variant": variant_map[block_type],
                             "title": _as_text(raw_block.get("title")),
                             "default_title": _as_text(raw_block.get("title")),
+                            "eyebrow": _as_text(raw_block.get("eyebrow")),
                             "body_paragraphs": body,
                             "body_html_blocks": body_html_blocks,
-                        }, "title", "default_title"),
+                            "footer": _as_text(raw_block.get("footer")),
+                        }, "title", "default_title", "eyebrow", "footer"),
                     }
                 )
             continue
@@ -1132,6 +1158,9 @@ def _topic_blocks(
         if block_type == "audio_examples":
             inherited_transcript = _as_text(raw_block.get("transcript"))
             block_source = _audio_source_payload(raw_block.get("source"))
+            title = _as_text(raw_block.get("title"))
+            lead = _as_text(raw_block.get("lead"))
+            empty_state = _as_text(raw_block.get("empty_state"))
             examples = [
                 _audio_example_payload(
                     teaching_lang,
@@ -1147,18 +1176,20 @@ def _topic_blocks(
                 for example in examples
                 if any((example["label"], example["title"], example["audio"], example["transcript"], example["note"], example["token_id"], example["segments"]))
             ]
-            if examples:
+            if examples or any((title, lead, empty_state, block_source.get("label"))):
                 blocks.append(
                     _set_inline_markdown_fields({
                         "type": "audio_examples",
                         "id": block_id,
                         "layout": _block_layout_payload(block_type, raw_block),
-                        "title": _as_text(raw_block.get("title")),
-                        "lead": _as_text(raw_block.get("lead")),
+                        "eyebrow": _as_text(raw_block.get("eyebrow")),
+                        "title": title,
+                        "lead": lead,
                         "lead_html": _markdown_inline(raw_block.get("lead")),
+                        "empty_state": empty_state,
                         "source": block_source,
                         "examples": examples,
-                    }, "title", "lead")
+                    }, "eyebrow", "title", "lead", "empty_state")
                 )
             continue
         if block_type == "audio_contrast":
@@ -1190,7 +1221,7 @@ def _topic_blocks(
             continue
         if block_type == "download":
             payload = _download_payload(teaching_lang, topic_slug, raw_block)
-            if payload["href"]:
+            if any((payload["href"], payload["title"], payload["description"], payload["status"])):
                 blocks.append(
                     {
                         "type": "download",
@@ -1198,6 +1229,19 @@ def _topic_blocks(
                         "layout": _block_layout_payload(block_type, raw_block),
                         "download": payload,
                     }
+                )
+            continue
+        if block_type == "teaching_impulses":
+            items = _teaching_impulse_item_entries(raw_block.get("items"))
+            if items:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "teaching_impulses",
+                        "id": block_id,
+                        "layout": _block_layout_payload(block_type, raw_block),
+                        "title": _as_text(raw_block.get("title")),
+                        "items": items,
+                    }, "title")
                 )
             continue
         if block_type == "credits":

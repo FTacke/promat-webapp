@@ -180,9 +180,6 @@
   --pm-teaching-status-surface: color-mix(in srgb, var(--pm-surface-paper) 90%, var(--book-adm-praxis) 10%);
   --pm-teaching-status-border: color-mix(in srgb, var(--pm-border-default) 82%, var(--book-adm-praxis) 18%);
   --pm-teaching-status-icon: color-mix(in srgb, var(--book-fg) 48%, var(--book-adm-praxis) 52%);
-  --pm-teaching-placeholder-surface: color-mix(in srgb, var(--pm-surface-paper) 97%, var(--book-adm-praxis) 3%);
-  --pm-teaching-placeholder-border: color-mix(in srgb, var(--pm-border-subtle) 86%, var(--book-adm-praxis) 14%);
-  --pm-teaching-placeholder-label: color-mix(in srgb, var(--book-muted) 72%, var(--book-fg) 28%);
   --pm-admonition-overview-bg: var(--pm-overview-bg);
   --pm-admonition-overview-border: transparent;
   --pm-admonition-overview-accent: var(--pm-overview-accent);

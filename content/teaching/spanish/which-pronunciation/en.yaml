@@ -158,31 +158,30 @@ blocks:
     title: Classroom prompts
   - type: text
     layout:
-      span: 2
+      span: 1
     body: |
       The contrast between *seseo* and *distinción* leads to practical classroom decisions:
-  - type: rich_text
+  - type: teaching_impulses
     layout:
-      span: 2
-    variant: didactic_close
-    body: |
-      - **Listen first**  
-        Before explaining, play the audio examples: do learners hear a difference between *casa* and *caza*?
-      - **Make variation visible**  
-        Use the maps to show that *distinción* is regionally limited, while *seseo* is normal across large parts of the Spanish-speaking world.
-      - **Clarify norms**  
-        Make explicit that *seseo* and *distinción* are not a hierarchy of mistakes, but equally valid pronunciation variants.
+      span: 1
+    items:
+      - title: Listen first
+        body: "Before explaining, play the audio examples: do learners hear a difference between *casa* and *caza*?"
+      - title: Make variation visible
+        body: Use the maps to show that *distinción* is regionally limited, while *seseo* is normal across large parts of the Spanish-speaking world.
+      - title: Clarify norms
+        body: Make explicit that *seseo* and *distinción* are not a hierarchy of mistakes, but equally valid pronunciation variants.
   - type: further_reading
     layout:
       span: 2
     title: Further exploration
     description: Additional pronunciation features are explored through accompanying audio examples.
     items:
-      - title: "`ll` and `y`"
+      - title: Pronunciation of ll and y
         text: '*Yeísmo* is now the norm: `ll` and `y` are usually pronounced alike. In Argentina and Uruguay, the sound often resembles `sh`.'
-        cta: Learn more here
+        cta: Learn more
         href: https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo
       - title: /s/ weakening
         text: In many regions, /s/ is weakened or deleted at the end of a syllable or word. For teaching, this matters most for listening comprehension.
-        cta: Learn more here
+        cta: Learn more
         href: https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund
