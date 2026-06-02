@@ -1,0 +1,125 @@
+teaching_lang: french
+topic_slug: liaison
+ui_lang: en
+status: draft
+
+title: Liaison
+summary: "In preparation: pronunciation and listening comprehension around liaison in French."
+description: This topic page has been created and is still being developed. It is planned as a compact teaching page on liaison in French.
+
+equivalents:
+  de: liaison
+
+card:
+  title: Liaison
+  description: "In preparation: pronunciation and listening comprehension around liaison in French."
+
+hub:
+  group: Word linking and connected speech
+  status: draft
+
+metadata:
+  authors:
+    - NN
+  status:
+    - In preparation
+  created: 2026-06-02
+  updated: 2026-06-02
+
+blocks:
+  - type: topic_meta
+    layout:
+      span: 2
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      A short explanatory introduction can be added here later: what is relevant for teaching about liaison in French? Which listening goals are central?
+
+  - type: overview
+    layout:
+      span: 1
+    title: At a glance
+    items:
+      - The key points of the topic page can later be summarized here briefly.
+      - This block can show what teachers should keep in mind for lesson planning.
+      - The points should later be phrased briefly, concretely, and with a listening focus.
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Listening comparison
+
+  - type: text
+    layout:
+      span: 2
+    body: |
+      Audio examples can later be added here, for example contrasting word or sentence contexts.
+
+  - type: audio_examples
+    layout:
+      span: 2
+    title: Listening comparison
+    lead: |
+      This can later make audible how liaison in French is realized in short contexts.
+    empty_state: Audio examples have not yet been added.
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Teaching context
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Consequences for pronunciation goals, listening comprehension, and exercise design can be summarized here later.
+
+  - type: tip_box
+    layout:
+      span: 1
+    title: Teaching perspective
+    body: |
+      A didactic focus can be added here later, for example why listening in context is more important than isolated sound description.
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Teaching impulses
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Concrete classroom impulses can be added here later.
+
+  - type: teaching_impulses
+    layout:
+      span: 1
+    items:
+      - title: Prepare for listening
+        body: A short classroom prompt can later be added here that describes how to start with listening examples.
+      - title: Secure observations
+        body: A prompt can later be added here for how learners collect or compare their listening impressions.
+      - title: Enable transfer
+        body: A prompt can later be added here for how the phenomenon is carried over into practice or reflection.
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Teaching material
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      A description can be added here later of what material will be included and how it can be used in teaching.
+
+  - type: download
+    layout:
+      span: 1
+    title: Material
+    description: |
+      A worksheet, handout, or further teaching material can be linked here later.
+    status: Material has not yet been added.

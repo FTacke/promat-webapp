@@ -1,3 +1,13 @@
-title: Teaching French pronunciation
+title: "French: Topic pages"
 lead: Topic pages for French pronunciation in foreign language teaching.
-groups: []
+overview_intro: The topic pages combine subject-specific guidance, audio examples, and teaching prompts on individual pronunciation phenomena in French teaching.
+groups:
+  - title: Sounds and articulation
+    description: Core sound phenomena of French with examples and teaching prompts.
+    topics:
+      - nasalvokale
+      - gleitlaute
+  - title: Word linking and connected speech
+    description: Pronunciation phenomena at word boundaries and in connected speech.
+    topics:
+      - liaison

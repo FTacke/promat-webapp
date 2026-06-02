@@ -1,3 +1,13 @@
-title: "Französisch: Aussprache unterrichten"
+title: "Französisch: Themenseiten"
 lead: Themenseiten zur französischen Aussprache im Fremdsprachenunterricht.
-groups: []
+overview_intro: Die Themenseiten bündeln fachliche Orientierung, Hörbeispiele und Unterrichtsimpulse zu einzelnen Aussprachephänomenen im Französischunterricht.
+groups:
+  - title: Laute und Artikulation
+    description: Zentrale Lautphänomene des Französischen mit Beispielen und Unterrichtsimpulsen.
+    topics:
+      - nasalvokale
+      - gleitlaute
+  - title: Wortverbindung und Redefluss
+    description: Aussprachephänomene an Wortgrenzen und im gesprochenen Zusammenhang.
+    topics:
+      - liaison

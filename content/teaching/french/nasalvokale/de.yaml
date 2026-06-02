@@ -1,0 +1,125 @@
+teaching_lang: french
+topic_slug: nasalvokale
+ui_lang: de
+status: draft
+
+title: Nasalvokale
+summary: "In Vorbereitung: Aussprache und Hörverstehen rund um französische Nasalvokale."
+description: Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zu französischen Nasalvokalen.
+
+equivalents:
+  en: nasalvokale
+
+card:
+  title: Nasalvokale
+  description: "In Vorbereitung: Aussprache und Hörverstehen rund um französische Nasalvokale."
+
+hub:
+  group: Laute und Artikulation
+  status: draft
+
+metadata:
+  authors:
+    - NN
+  status:
+    - In Vorbereitung
+  created: 2026-06-02
+  updated: 2026-06-02
+
+blocks:
+  - type: topic_meta
+    layout:
+      span: 2
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Hier kann später ein kurzer erklärender Einstieg stehen: Was ist an französischen Nasalvokalen für den Unterricht relevant? Welche Hörziele stehen im Mittelpunkt?
+
+  - type: overview
+    layout:
+      span: 1
+    title: Auf einen Blick
+    items:
+      - Hier können später die wichtigsten Punkte der Themenseite knapp zusammengefasst werden.
+      - Der Block kann zeigen, was Lehrkräfte für die Unterrichtsplanung beachten sollten.
+      - Die Punkte sollten später kurz, konkret und hörorientiert formuliert werden.
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Hörvergleich
+
+  - type: text
+    layout:
+      span: 2
+    body: |
+      Hier können später Audio-Beispiele eingebunden werden, etwa kontrastive Wort- oder Satzkontexte.
+
+  - type: audio_examples
+    layout:
+      span: 2
+    title: Hörvergleich
+    lead: |
+      Hier kann später hörbar gemacht werden, wie französische Nasalvokale in kurzen Kontexten realisiert werden.
+    empty_state: Audio-Beispiele noch nicht hinterlegt
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Einordnung für den Unterricht
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Hier können später Konsequenzen für Ausspracheziele, Hörverstehen und Übungsdesign knapp zusammengefasst werden.
+
+  - type: tip_box
+    layout:
+      span: 1
+    title: Unterrichtsperspektive
+    body: |
+      Hier kann später ein didaktischer Fokus stehen, z. B. warum das Hören im Kontext wichtiger ist als isolierte Lautbeschreibung.
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Impulse für den Unterricht
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Hier können später konkrete Unterrichtsimpulse ergänzt werden.
+
+  - type: teaching_impulses
+    layout:
+      span: 1
+    items:
+      - title: Hören vorbereiten
+        body: Hier kann später ein kurzer Unterrichtsimpuls stehen, der den Einstieg über Hörbeispiele beschreibt.
+      - title: Beobachtung sichern
+        body: Hier kann später ein Impuls stehen, wie Lernende ihre Höreindrücke sammeln oder vergleichen.
+      - title: Transfer ermöglichen
+        body: Hier kann später ein Impuls stehen, wie das Phänomen in Übung oder Reflexion überführt wird.
+
+  - type: section_heading
+    layout:
+      span: 2
+    title: Material für den Unterricht
+
+  - type: text
+    layout:
+      span: 1
+    body: |
+      Hier kann später beschrieben werden, welches Material ergänzt wird und wie es im Unterricht eingesetzt werden kann.
+
+  - type: download
+    layout:
+      span: 1
+    title: Material
+    description: |
+      Hier kann später ein Arbeitsblatt, Handout oder weiteres Unterrichtsmaterial verlinkt werden.
+    status: Material noch nicht hinterlegt
