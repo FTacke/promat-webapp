@@ -54,7 +54,7 @@
   <div class="promat-page__sections">
     {% for section in promat_page.sections | default([]) %}
     <section class="promat-content-section">
-      {% set has_block_body = section.paragraphs or section.paragraphs_html or section.bullets or section.bullets_html or section.table or section.media_embed %}
+      {% set has_block_body = section.paragraphs or section.paragraphs_html or section.body_html or section.bullets or section.bullets_html or section.table or section.media_embed %}
       {% if has_block_body %}
       <div class="promat-content-block pm-panel pm-reading">
         {% if section.heading %}
@@ -66,6 +66,9 @@
         {% for paragraph in section.paragraphs_html | default([]) %}
         <p class="promat-content-block__text">{{ paragraph | safe }}</p>
         {% endfor %}
+        {% if section.body_html %}
+        <div class="promat-content-block__body">{{ section.body_html | safe }}</div>
+        {% endif %}
         {% if section.bullets %}
         <ul class="promat-content-block__list{{ ' ' ~ section.list_class if section.list_class else '' }}">
           {% for bullet in section.bullets %}

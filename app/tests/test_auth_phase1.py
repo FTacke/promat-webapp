@@ -572,10 +572,17 @@ def test_landing_page_renders_english_copy_and_shared_language_switch(auth_app: 
 
 
 @pytest.mark.parametrize(
-    ("path", "expected_nav_label", "expected_imprint_label", "expected_privacy_label"),
+    (
+        "path",
+        "expected_nav_label",
+        "expected_imprint_label",
+        "expected_privacy_label",
+        "expected_imprint_href",
+        "expected_privacy_href",
+    ),
     [
-        ("/login?ui_lang=de", "Rechtliches", "Impressum", "Datenschutz"),
-        ("/login?next=/en/research/spanish/comparison", "Legal", "Imprint", "Privacy"),
+        ("/de", "Rechtliches", "Impressum", "Datenschutz", "/de/impressum", "/de/privacy"),
+        ("/en", "Legal", "Legal Notice", "Privacy", "/en/impressum", "/en/privacy"),
     ],
 )
 def test_shared_footer_localizes_legal_links(
@@ -584,6 +591,8 @@ def test_shared_footer_localizes_legal_links(
     expected_nav_label: str,
     expected_imprint_label: str,
     expected_privacy_label: str,
+    expected_imprint_href: str,
+    expected_privacy_href: str,
 ) -> None:
     client = auth_app.test_client()
 
@@ -592,7 +601,9 @@ def test_shared_footer_localizes_legal_links(
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert f'aria-label="{expected_nav_label}"' in html
+    assert f'href="{expected_imprint_href}"' in html
     assert f'>{expected_imprint_label}<' in html
+    assert f'href="{expected_privacy_href}"' in html
     assert f'>{expected_privacy_label}<' in html
 
 
@@ -675,13 +686,44 @@ def test_goatcounter_script_not_rendered_on_admin_analytics_page(auth_app: Flask
 def test_privacy_page_documents_goatcounter_usage(auth_app: Flask) -> None:
     client = auth_app.test_client()
 
-    response = client.get("/privacy")
+    response = client.get("/de/privacy")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "Cookieless Webanalyse mit GoatCounter" in html
-    assert "pronunciation-matters.goatcounter.com" in html
+    assert "Reichweitenmessung und Statistik" in html
+    assert "GoatCounter kann in der Produktionsumgebung eingesetzt werden" not in html
+    assert "in der Produktionsumgebung GoatCounter eingesetzt werden" in html
     assert "ohne Tracking-Cookies" in html
+
+
+@pytest.mark.parametrize(
+    ("path", "title", "expected_text"),
+    [
+        ("/de/impressum", "Impressum", "Anbieter dieser Internetpräsenz im Rechtssinne ist die:"),
+        ("/de/privacy", "Datenschutz", "Behördlicher Datenschutzbeauftragter"),
+        ("/en/impressum", "Legal Notice", "The provider of this website in the legal sense is:"),
+        ("/en/privacy", "Privacy Policy", "Data Protection Officer"),
+    ],
+)
+def test_legal_pages_render_source_markdown_without_dummy_content(
+    auth_app: Flask,
+    path: str,
+    title: str,
+    expected_text: str,
+) -> None:
+    client = auth_app.test_client()
+
+    response = client.get(path)
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f">{title}<" in html
+    assert expected_text in html
+    assert "Vorläufige Platzhalterseite" not in html
+    assert "strukturell auf getrennte Datenzonen vorbereitet" not in html
+    assert "MAR.ELE" not in html
+    assert "md3-card" not in html
+    assert "md3-button" not in html
 
 
 def test_access_request_page_renders_form_and_login_link_with_return_target(auth_app: Flask) -> None:

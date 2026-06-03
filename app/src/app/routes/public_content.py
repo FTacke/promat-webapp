@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import re
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
+
+from markdown_it import MarkdownIt
 
 from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
 from ..research_capabilities import get_research_page_capability, get_research_page_order
@@ -18,6 +23,18 @@ from .public_page_content_data import (
     PROJECT_PAGES_CONTENT,
     SPANISH_DESIGN_PAGE_CONTENT,
 )
+
+
+LEGAL_CONTENT_SOURCE = Path("docs/plans/impressum_datenschutz.md")
+_LEGAL_MARKDOWN_RENDERER = MarkdownIt(
+    "commonmark",
+    {"html": False, "linkify": True, "typographer": False, "breaks": True},
+)
+_LEGAL_HEADING_PATTERN = re.compile(r"^(#{1,2})\s+(.+?)\s*$", re.MULTILINE)
+
+
+class LegalContentError(RuntimeError):
+    """Raised when the legal Markdown source cannot be split safely."""
 
 
 LANGUAGES: tuple[dict[str, Any], ...] = (
@@ -611,39 +628,96 @@ def build_teaching_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
 
 LEGAL_PAGES: dict[str, dict[str, Any]] = {
     "impressum": {
-        "title": "Impressum",
-        "eyebrow": "Rechtliches",
-        "intro": "Vorläufige Platzhalterseite für Anbieterkennzeichnung und Projektverantwortung.",
+        "title": {"de": "Impressum", "en": "Legal Notice"},
+        "source_block": {"de": "impressum", "en": "legal_notice"},
         "page_kind": "reading",
-        "sections": [
-            {
-                "heading": "Projektkontext",
-                "paragraphs": [
-                    "PROMAT wird als Forschungs- und Lehrplattform an der Philipps-Universität Marburg entwickelt. Endgültige Anbieterangaben werden in der produktiven Fassung ergänzt.",
-                ],
-            },
-        ],
     },
     "privacy": {
-        "title": "Datenschutz",
-        "eyebrow": "Rechtliches",
-        "intro": "Vorläufige Platzhalterseite für Datenschutz- und Zugriffshinweise.",
+        "title": {"de": "Datenschutz", "en": "Privacy Policy"},
+        "source_block": {"de": "privacy", "en": "privacy_policy"},
         "page_kind": "reading",
-        "sections": [
-            {
-                "heading": "Aktueller Stand",
-                "paragraphs": [
-                    "Die Plattform ist strukturell auf getrennte Datenzonen vorbereitet. Finale Restricted-Logik und öffentliche Freigabeprozesse werden später sauber ergänzt.",
-                ],
-            },
-            {
-                "heading": "Cookieless Webanalyse mit GoatCounter",
-                "paragraphs": [
-                    "Zur aggregierten Nutzungsstatistik der öffentlichen Website kann PROMAT GoatCounter einsetzen. Die Einbindung erfolgt über die Instanz pronunciation-matters.goatcounter.com und wird nur in der produktiven Umgebung geladen.",
-                    "GoatCounter arbeitet ohne Tracking-Cookies. Erfasst werden technische Abrufdaten wie aufgerufene Seite, Referrer, Bildschirmbreite und Zeitpunkt, damit die Nutzung der öffentlichen Seiten statistisch ausgewertet und die Website verbessert werden kann.",
-                    "Die Analyse dient nicht dazu, einzelne Nutzerinnen oder Nutzer über mehrere Dienste hinweg wiederzuerkennen oder personenbezogene Profile für Werbung zu erstellen.",
-                ],
-            },
-        ],
     },
 }
+
+
+def _legal_source_path() -> Path:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / LEGAL_CONTENT_SOURCE
+        if candidate.exists():
+            return candidate
+    raise LegalContentError(
+        f"Legal content source not found: {LEGAL_CONTENT_SOURCE.as_posix()}"
+    )
+
+
+def _legal_heading_positions(markdown: str) -> dict[tuple[str, str], re.Match[str]]:
+    headings = {
+        (match.group(1), match.group(2)): match
+        for match in _LEGAL_HEADING_PATTERN.finditer(markdown)
+    }
+    required = [
+        ("#", "Deutsch"),
+        ("##", "Impressum"),
+        ("##", "Datenschutzerklärung"),
+        ("#", "English"),
+        ("##", "Legal Notice"),
+        ("##", "Privacy Policy"),
+    ]
+    missing = [f"{level} {title}" for level, title in required if (level, title) not in headings]
+    if missing:
+        raise LegalContentError(
+            "Legal content source is not clearly split; missing heading(s): "
+            + ", ".join(missing)
+        )
+    ordered = [headings[key].start() for key in required]
+    if ordered != sorted(ordered) or len(set(ordered)) != len(ordered):
+        raise LegalContentError(
+            "Legal content source is not clearly split; heading order is ambiguous."
+        )
+    return headings
+
+
+def _clean_legal_markdown(markdown: str) -> str:
+    lines = [
+        line.rstrip()
+        for line in markdown.strip().splitlines()
+        if line.strip() != "---"
+    ]
+    return "\n".join(lines).strip()
+
+
+@lru_cache(maxsize=1)
+def _load_legal_markdown_blocks() -> dict[str, str]:
+    markdown = _legal_source_path().read_text(encoding="utf-8").replace("\r\n", "\n")
+    headings = _legal_heading_positions(markdown)
+
+    de_impressum = headings[("##", "Impressum")]
+    de_privacy = headings[("##", "Datenschutzerklärung")]
+    english = headings[("#", "English")]
+    en_legal = headings[("##", "Legal Notice")]
+    en_privacy = headings[("##", "Privacy Policy")]
+
+    return {
+        "impressum": _clean_legal_markdown(markdown[de_impressum.end() : de_privacy.start()]),
+        "privacy": _clean_legal_markdown(markdown[de_privacy.end() : english.start()]),
+        "legal_notice": _clean_legal_markdown(markdown[en_legal.end() : en_privacy.start()]),
+        "privacy_policy": _clean_legal_markdown(markdown[en_privacy.end() :]),
+    }
+
+
+def build_legal_page(ui_lang: str, page_key: str) -> dict[str, Any] | None:
+    page = LEGAL_PAGES.get(page_key)
+    if page is None:
+        return None
+
+    source_block = _localized(page["source_block"], ui_lang)
+    markdown = _load_legal_markdown_blocks()[source_block]
+    return {
+        "title": _localized(page["title"], ui_lang),
+        "page_kind": page["page_kind"],
+        "sections": [
+            {
+                "body_html": _LEGAL_MARKDOWN_RENDERER.render(markdown).strip(),
+            }
+        ],
+    }

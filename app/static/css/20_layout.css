@@ -212,11 +212,23 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin: 0;
 }
 
+.promat-content-block__body > * {
+  margin: 0;
+}
+
 .promat-content-block__list {
   padding-left: 1.15rem;
 }
 
+.promat-content-block__body :where(ul, ol) {
+  padding-left: 1.15rem;
+}
+
 .promat-content-block__list li + li {
+  margin-top: var(--pm-reading-list-item-gap);
+}
+
+.promat-content-block__body :where(li + li) {
   margin-top: var(--pm-reading-list-item-gap);
 }
 

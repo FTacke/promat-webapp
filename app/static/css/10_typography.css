@@ -284,6 +284,7 @@ textarea {
   letter-spacing: var(--pm-type-reading-h3-tracking);
 }
 
+.promat-content-block :where(h2),
 .promat-content-block__title,
 .pm-panel__title {
   margin: 0;

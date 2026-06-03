@@ -1442,7 +1442,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "common.status.saved": "saved",
         "common.status.unsaved": "unsaved",
         "common.status.new": "new",
-        "footer.imprint": "Imprint",
+        "footer.imprint": "Legal Notice",
         "footer.privacy": "Privacy",
         "errors.401.page_title": "401 - Unauthorized",
         "errors.401.title": "Unauthorized",

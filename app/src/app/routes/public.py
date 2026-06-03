@@ -39,10 +39,9 @@ from ..services.access_request_notifications import deliver_access_request_notif
 from ..teaching_content import resolve_teaching_topic_media_artifact, resolve_topic_route_target
 from ..extensions.sqlalchemy_ext import get_engine
 from .public_content import (
-    DEFAULT_UI_LANGUAGE,
-    LEGAL_PAGES,
     PROJECT_PAGE_ORDER,
     RESEARCH_PAGE_ORDER,
+    build_legal_page,
     build_project_page,
     build_research_language_root_page,
     build_research_page,
@@ -600,19 +599,40 @@ def _render_promat_page(
     )
 
 
-def _render_legal_page(page_key: str) -> str:
-    ui_lang = DEFAULT_UI_LANGUAGE
-    page = LEGAL_PAGES[page_key]
+def _resolve_legal_ui_lang(ui_lang: str | None) -> str:
+    if ui_lang is not None:
+        return _require_ui_lang(ui_lang)
+    return resolve_request_ui_language(
+        explicit_ui_lang=request.values.get("lang") or request.values.get("ui_lang"),
+        stored_ui_lang=request.cookies.get(PREFERRED_UI_LANGUAGE_COOKIE_NAME),
+        next_candidates=(request.referrer, request.path),
+        accept_language=request.headers.get("Accept-Language"),
+    )
+
+
+def _render_legal_page(page_key: str, ui_lang: str | None = None) -> str:
+    resolved_ui_lang = _resolve_legal_ui_lang(ui_lang)
+    page = build_legal_page(resolved_ui_lang, page_key)
+    if page is None:
+        abort(404)
     panel = _panel_config(
         section_key="legal",
-        section_label=get_section_label("legal", ui_lang),
+        section_label=get_section_label("legal", resolved_ui_lang),
         active_slug=page_key,
         items=[
-            {"label": "Impressum", "href": url_for("public.impressum_page"), "page_slug": "impressum"},
-            {"label": "Datenschutz", "href": url_for("public.privacy_page"), "page_slug": "privacy"},
+            {
+                "label": get_text(resolved_ui_lang, "footer.imprint"),
+                "href": url_for("public.impressum_page", ui_lang=resolved_ui_lang),
+                "page_slug": "impressum",
+            },
+            {
+                "label": get_text(resolved_ui_lang, "footer.privacy"),
+                "href": url_for("public.privacy_page", ui_lang=resolved_ui_lang),
+                "page_slug": "privacy",
+            },
         ],
     )
-    return _render_promat_page(page=page, panel=panel, page_name="legal", ui_lang=ui_lang)
+    return _render_promat_page(page=page, panel=panel, page_name="legal", ui_lang=resolved_ui_lang)
 
 
 @blueprint.get("/")
@@ -1387,12 +1407,14 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
     return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang)
 
 
-@blueprint.get("/impressum")
-def impressum_page():
-    return _render_legal_page("impressum")
+@blueprint.get("/impressum", defaults={"ui_lang": None})
+@blueprint.get("/<ui_lang>/impressum")
+def impressum_page(ui_lang: str | None):
+    return _render_legal_page("impressum", ui_lang)
 
 
-@blueprint.get("/datenschutz")
-@blueprint.get("/privacy")
-def privacy_page():
-    return _render_legal_page("privacy")
+@blueprint.get("/datenschutz", defaults={"ui_lang": None})
+@blueprint.get("/privacy", defaults={"ui_lang": None})
+@blueprint.get("/<ui_lang>/privacy")
+def privacy_page(ui_lang: str | None):
+    return _render_legal_page("privacy", ui_lang)
