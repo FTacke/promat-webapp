@@ -68,6 +68,25 @@ blocks:
   - type: section_heading
     layout:
       span: 2
+    title: Subject-specific background
+
+  - type: text
+    layout:
+      span: 1
+    variant: plain
+    body: |
+      This section can later provide a concise subject-specific explanation: which variants, terms, or connections are important for this topic?
+
+  - type: info_box
+    layout:
+      span: 1
+    title: Background knowledge
+    body: |
+      This box can later contain curated background information that brings together key points and makes them quickly usable for teachers.
+
+  - type: section_heading
+    layout:
+      span: 2
     title: Teaching context
 
   - type: text

@@ -68,6 +68,25 @@ blocks:
   - type: section_heading
     layout:
       span: 2
+    title: Fachliche Einordnung
+
+  - type: text
+    layout:
+      span: 1
+    variant: plain
+    body: |
+      Hier können später fachliche Hintergründe knapp eingeordnet werden: Welche Varianten, Begriffe oder Zusammenhänge sind für das Thema wichtig?
+
+  - type: info_box
+    layout:
+      span: 1
+    title: Hintergrundwissen
+    body: |
+      Hier kann später eine kuratierte fachliche Information stehen, die zentrale Zusammenhänge bündelt und für Lehrkräfte schnell nutzbar macht.
+
+  - type: section_heading
+    layout:
+      span: 2
     title: Einordnung für den Unterricht
 
   - type: text
