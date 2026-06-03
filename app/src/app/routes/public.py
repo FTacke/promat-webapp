@@ -443,7 +443,7 @@ def _panel_items_for_project(ui_lang: str) -> list[dict[str, str]]:
     ]
 
 
-def _panel_items_for_language(section_key: str, language_slug: str, ui_lang: str) -> list[dict[str, str]]:
+def _panel_items_for_language(section_key: str, language_slug: str, ui_lang: str) -> list[dict[str, Any]]:
     if section_key == "research":
         is_authenticated = getattr(g, "user_id", None) is not None
         return [
@@ -466,6 +466,50 @@ def _panel_items_for_language(section_key: str, language_slug: str, ui_lang: str
     return []
 
 
+def _panel_items_for_teaching_selection(ui_lang: str) -> list[dict[str, Any]]:
+    return [
+        {
+            "label": get_text(ui_lang, "teaching.action.back_to_selection"),
+            "href": url_for("public.teaching_home", ui_lang=ui_lang),
+            "page_slug": "language-selection",
+        }
+    ]
+
+
+def _panel_items_for_teaching_language(language_slug: str, ui_lang: str) -> list[dict[str, Any]]:
+    return [
+        {
+            "label": get_text(ui_lang, "teaching.nav.topic_pages"),
+            "href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=language_slug),
+            "page_slug": "topic-pages",
+        }
+    ]
+
+
+def _teaching_language_panel(canonical_language_slug: str, ui_lang: str) -> dict[str, Any]:
+    language = get_language(canonical_language_slug)
+    if language is None:
+        abort(404)
+    language_label = get_language_label(language, ui_lang)
+    return _panel_config(
+        section_key="teaching",
+        section_label=get_section_label("teaching", ui_lang),
+        active_slug="topic-pages",
+        language_label=language_label,
+        context_mode="language",
+        context_title=language_label,
+        context_root_href=url_for(
+            "public.teaching_language_root",
+            ui_lang=ui_lang,
+            language_slug=canonical_language_slug,
+        ),
+        context_back_href=url_for("public.teaching_home", ui_lang=ui_lang),
+        context_back_label=get_text(ui_lang, "teaching.action.back_to_selection"),
+        context_title_is_link=False,
+        items=_panel_items_for_teaching_language(canonical_language_slug, ui_lang),
+    )
+
+
 def _panel_config(
     *,
     section_key: str,
@@ -477,7 +521,8 @@ def _panel_config(
     context_root_href: str | None = None,
     context_back_href: str | None = None,
     context_back_label: str | None = None,
-    items: list[dict[str, str]],
+    context_title_is_link: bool = True,
+    items: list[dict[str, Any]],
 ) -> dict[str, Any]:
     resolved_context_title = context_title or language_label or section_label
     mobile_context_title = resolved_context_title if context_mode == "language" and resolved_context_title else section_label
@@ -499,6 +544,7 @@ def _panel_config(
         "context_root_href": context_root_href,
         "context_back_href": context_back_href,
         "context_back_label": context_back_label,
+        "context_title_is_link": context_title_is_link,
         "active_slug": active_slug,
         "items": items,
     }
@@ -1251,7 +1297,13 @@ def research_player_item_download(ui_lang: str, language_slug: str, session_id: 
 @blueprint.get("/<ui_lang>/teaching")
 def teaching_home(ui_lang: str):
     ui_lang = _require_ui_lang(ui_lang)
-    panel = _panel_config(section_key="teaching", section_label=get_section_label("teaching", ui_lang), active_slug="", context_mode="none", items=[])
+    panel = _panel_config(
+        section_key="teaching",
+        section_label=get_section_label("teaching", ui_lang),
+        active_slug="language-selection",
+        context_mode="none",
+        items=_panel_items_for_teaching_selection(ui_lang),
+    )
     return _render_promat_page(
         page=build_teaching_select_page(ui_lang),
         panel=panel,
@@ -1290,7 +1342,7 @@ def teaching_language_root(ui_lang: str, language_slug: str):
             302,
         )
 
-    panel = _panel_config(section_key="teaching", section_label=get_section_label("teaching", resolved_ui_lang), active_slug="", context_mode="none", items=[])
+    panel = _teaching_language_panel(canonical_language_slug, resolved_ui_lang)
     return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang)
 
 
@@ -1331,7 +1383,7 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
     if page is None:
         abort(404)
 
-    panel = _panel_config(section_key="teaching", section_label=get_section_label("teaching", resolved_ui_lang), active_slug="", context_mode="none", items=[])
+    panel = _teaching_language_panel(canonical_language_slug, resolved_ui_lang)
     return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang)
 
 

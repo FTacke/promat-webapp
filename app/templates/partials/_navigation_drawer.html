@@ -38,10 +38,14 @@
       </div>
       {% if panel['context_mode'] == 'language' %}
       <div class="promat-panel__language-header pm-panel__language-header">
+        {% if panel.get('context_title_is_link', True) and panel.get('context_back_href') %}
         <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="{{ panel.get('context_back_label') or t('shell.panel.back_to_selection') }}">
           <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--back" aria-hidden="true"></span>
           <p class="promat-panel__language-title">{{ panel['context_title'] }}</p>
         </a>
+        {% else %}
+        <p class="promat-panel__language-title">{{ panel['context_title'] }}</p>
+        {% endif %}
       </div>
       {% endif %}
     </div>
