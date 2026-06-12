@@ -190,7 +190,7 @@ def test_load_french_repo_catalogs_define_connected_text_and_wordlist(monkeypatc
     assert text_catalog.items_by_id["t_01"].text == "Il était une fois le Petit Chaperon rouge, étudiante à l’université de Marbourg."
     assert text_catalog.items_by_id["t_67"].text == "Bien joué, chat non botté, quelle bonne idée !"
     assert len(wordlist_catalog.items_by_id) == 95
-    assert wordlist_catalog.items_by_id["wl_014"].text == "théatre"
+    assert wordlist_catalog.items_by_id["wl_014"].text == "théâtre"
     assert wordlist_catalog.items_by_id["wl_095"].text == "huit cours – oui, cours !"
     assert player_config.language == "french"
     assert player_config.text.default_render_mode == "running_text"
