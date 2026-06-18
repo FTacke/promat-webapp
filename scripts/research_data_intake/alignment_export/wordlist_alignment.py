@@ -100,12 +100,17 @@ def seconds_to_ms(seconds: float) -> int:
     return int(round(seconds * 1000))
 
 
+def _is_silence_marker(value: str) -> bool:
+    normalized = value.strip().lower().strip("-_ ")
+    return normalized in SILENCE_MARKERS
+
+
 def build_timed_items(
     catalog_items: list[CatalogItem],
     intervals: list[TextGridInterval],
     validate_labels: str,
 ) -> tuple[list[TimedWordlistItem], list[str]]:
-    non_silence_intervals = [interval for interval in intervals if interval.text.strip().lower() not in SILENCE_MARKERS]
+    non_silence_intervals = [interval for interval in intervals if not _is_silence_marker(interval.text)]
     expected_count = len(catalog_items)
     if len(non_silence_intervals) != expected_count:
         raise ValueError(

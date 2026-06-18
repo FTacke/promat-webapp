@@ -20,6 +20,9 @@ from alignment_export.import_interview_amberscript import InterviewImportError  
 from alignment_export.prepare_text_mfa_corpus import _align_text_items_to_intervals  # noqa: E402
 from alignment_export.prepare_text_mfa_corpus import _frame_bounds  # noqa: E402
 from alignment_export.prepare_text_mfa_corpus import TextSourceItem  # noqa: E402
+from alignment_export.wordlist_alignment import build_timed_items  # noqa: E402
+from alignment_export.wordlist_alignment import CatalogItem  # noqa: E402
+from alignment_export.wordlist_alignment import TextGridInterval as WordlistTextGridInterval  # noqa: E402
 import intake_batch_common  # noqa: E402
 from intake_batch_common import working_intake_state_path  # noqa: E402
 
@@ -418,6 +421,23 @@ def test_text_mfa_frame_bounds_clamps_tiny_end_overrun() -> None:
     assert end_frame == 1000
     assert warning is not None
     assert "clamped TextGrid end boundary" in warning
+
+
+def test_wordlist_alignment_treats_silent_dash_as_silence() -> None:
+    items = [
+        CatalogItem(item_id="wl_001", item_number="1", text="un"),
+        CatalogItem(item_id="wl_002", item_number="2", text="deux"),
+    ]
+    intervals = [
+        WordlistTextGridInterval(start_seconds=0.0, end_seconds=0.1, text="un"),
+        WordlistTextGridInterval(start_seconds=0.1, end_seconds=0.2, text="silent-"),
+        WordlistTextGridInterval(start_seconds=0.2, end_seconds=0.3, text="deux"),
+    ]
+
+    timed_items, warnings = build_timed_items(items, intervals, validate_labels="fail")
+
+    assert [item.text for item in timed_items] == ["un", "deux"]
+    assert warnings == []
 
 
 def test_text_mfa_allows_omitted_spoken_title_item() -> None:

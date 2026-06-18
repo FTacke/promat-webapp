@@ -45,6 +45,7 @@ public/*
 !public/README.md
 scripts/research_data_intake/import/*
 scripts/research_data_intake/exports/*
+scripts/research_data_intake/.mfa_cache/
 
 # Temporary QA/debug artifacts that must not live in repo root
 /desktop_screenshot*.png
