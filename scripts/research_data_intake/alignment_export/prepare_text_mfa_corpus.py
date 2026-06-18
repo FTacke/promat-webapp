@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 import sys
+import re
 import wave
 
 
@@ -25,6 +26,7 @@ from textgrid_support import parse_textgrid_intervals, round_textgrid_seconds, s
 
 
 TEXT_MFA_PREPARATION_VERSION = "2026-05-27-text-mfa-v2"
+FRAME_BOUNDARY_TOLERANCE_SECONDS = 0.001
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +34,7 @@ class TextSourceItem:
     item_id: str
     item_number: str
     text: str
+    spoken_title_item: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +45,15 @@ class ManifestItem:
     source_start_seconds: float
     source_end_seconds: float
     utterance_basename: str
+
+
+@dataclass(frozen=True, slots=True)
+class OmittedManifestItem:
+    item_id: str
+    item_number: str
+    text: str
+    omitted: bool
+    omit_reason: str
 
 
 @dataclass(slots=True)
@@ -112,7 +124,14 @@ def _load_text_source_items(path: Path) -> tuple[list[TextSourceItem], str | Non
             raise ValueError(f"Text source item_number must be a non-empty string at index {index}: {path}")
         if not isinstance(text, str) or not text.strip():
             raise ValueError(f"Text source text must be a non-empty string at index {index}: {path}")
-        items.append(TextSourceItem(item_id=item_id, item_number=item_number, text=text))
+        items.append(
+            TextSourceItem(
+                item_id=item_id,
+                item_number=item_number,
+                text=text,
+                spoken_title_item=item_payload.get("spoken_title_item") is True,
+            )
+        )
     return items, declared_language
 
 
@@ -154,6 +173,57 @@ def _utterance_basename(index: int, item: TextSourceItem) -> str:
     return f"text_{index:03d}_{item.item_id}"
 
 
+def _comparison_text(value: str) -> str:
+    normalized = value.translate(
+        str.maketrans(
+            {
+                "\u2018": "'",
+                "\u2019": "'",
+                "\u201c": '"',
+                "\u201d": '"',
+                "\u2013": "-",
+                "\u2014": "-",
+                "\u00a0": " ",
+            }
+        )
+    )
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    normalized = re.sub(r"\s*-\s*", "-", normalized)
+    return normalized.lower()
+
+
+def _texts_match(source_item: TextSourceItem, interval: object) -> bool:
+    interval_text = getattr(interval, "text", "")
+    if not isinstance(interval_text, str):
+        return False
+    return _comparison_text(source_item.text) == _comparison_text(interval_text)
+
+
+def _align_text_items_to_intervals(
+    text_items: list[TextSourceItem],
+    intervals: list[object],
+    person_id: str,
+) -> tuple[list[TextSourceItem], list[OmittedManifestItem]]:
+    if len(intervals) == len(text_items):
+        return text_items, []
+    if len(text_items) == len(intervals) + 1 and text_items and text_items[0].spoken_title_item:
+        candidate_items = text_items[1:]
+        if all(_texts_match(text_item, interval) for text_item, interval in zip(candidate_items, intervals, strict=True)):
+            omitted = text_items[0]
+            return candidate_items, [
+                OmittedManifestItem(
+                    item_id=omitted.item_id,
+                    item_number=omitted.item_number,
+                    text=omitted.text,
+                    omitted=True,
+                    omit_reason="unspoken_title",
+                )
+            ]
+    raise ValueError(
+        f"Text source item count ({len(text_items)}) does not match spoken TextGrid interval count ({len(intervals)}) for {person_id}"
+    )
+
+
 def _read_wave_params(path: Path) -> tuple[wave._wave_params, int, int]:
     with wave.open(str(path), "rb") as handle:
         params = handle.getparams()
@@ -162,18 +232,27 @@ def _read_wave_params(path: Path) -> tuple[wave._wave_params, int, int]:
     return params, total_frames, sample_rate
 
 
-def _frame_bounds(start_seconds: float, end_seconds: float, sample_rate: int, total_frames: int) -> tuple[int, int]:
+def _frame_bounds(start_seconds: float, end_seconds: float, sample_rate: int, total_frames: int) -> tuple[int, int, str | None]:
     start_frame = max(0, int(round(start_seconds * sample_rate)))
     end_frame = int(round(end_seconds * sample_rate))
     if end_frame > total_frames:
-        raise ValueError(
-            f"TextGrid boundary exceeds source audio duration: end_seconds={end_seconds:.4f} total_frames={total_frames}"
+        total_duration = total_frames / sample_rate
+        if end_seconds > total_duration + FRAME_BOUNDARY_TOLERANCE_SECONDS:
+            raise ValueError(
+                f"TextGrid boundary exceeds source audio duration: end_seconds={end_seconds:.4f} total_frames={total_frames}"
+            )
+        end_frame = total_frames
+        warning = (
+            "clamped TextGrid end boundary to source WAV duration: "
+            f"end_seconds={end_seconds:.6f} source_duration={total_duration:.6f}"
         )
+    else:
+        warning = None
     if end_frame <= start_frame:
         raise ValueError(
             f"Non-positive segment after frame conversion: start={start_seconds:.4f} end={end_seconds:.4f}"
         )
-    return start_frame, end_frame
+    return start_frame, end_frame, warning
 
 
 def _clear_existing_outputs(mfa_corpus_dir: Path, manifest_path: Path) -> None:
@@ -234,12 +313,9 @@ def _process_person(
         raise FileNotFoundError(f"Missing or empty text TextGrid for {person_id}: {source_textgrid}")
 
     intervals = spoken_intervals(parse_textgrid_intervals(source_textgrid))
-    if len(intervals) != len(text_items):
-        raise ValueError(
-            f"Text source item count ({len(text_items)}) does not match spoken TextGrid interval count ({len(intervals)}) for {person_id}"
-        )
+    aligned_text_items, omitted_items = _align_text_items_to_intervals(text_items, intervals, person_id)
 
-    manifest_items = _build_manifest_items(text_items, intervals)
+    manifest_items = _build_manifest_items(aligned_text_items, intervals)
     params, total_frames, sample_rate = _read_wave_params(source_wav)
     if params.nchannels <= 0 or params.sampwidth <= 0 or sample_rate <= 0:
         raise ValueError(f"Unsupported WAV parameters for {person_id}: {source_wav}")
@@ -247,6 +323,7 @@ def _process_person(
         _frame_bounds(item.source_start_seconds, item.source_end_seconds, sample_rate, total_frames)
         for item in manifest_items
     ]
+    frame_warnings = [warning for _, _, warning in frame_bounds if warning]
 
     mfa_corpus_dir = working_text_mfa_corpus_dir(batch_dir, person_id)
     mfa_output_dir = working_text_mfa_output_dir(batch_dir, person_id)
@@ -276,7 +353,7 @@ def _process_person(
     if replace_existing:
         _clear_existing_outputs(mfa_corpus_dir, manifest_path)
 
-    for item, (start_frame, end_frame) in zip(manifest_items, frame_bounds, strict=True):
+    for item, (start_frame, end_frame, _) in zip(manifest_items, frame_bounds, strict=True):
         _write_segment_wav(
             source_wav=source_wav,
             target_wav=mfa_corpus_dir / f"{item.utterance_basename}.wav",
@@ -300,6 +377,10 @@ def _process_person(
         },
         "items": [asdict(item) for item in manifest_items],
     }
+    if omitted_items:
+        manifest_payload["omitted_items"] = [asdict(item) for item in omitted_items]
+    if frame_warnings:
+        manifest_payload["warnings"] = frame_warnings
     manifest_path.write_text(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     state_path = working_text_mfa_state_path(batch_dir, person_id)
     state_payload = {
@@ -313,6 +394,8 @@ def _process_person(
         "mfa_output_dir": str(mfa_output_dir.relative_to(batch_dir)).replace("\\", "/"),
         "source_signatures": manifest_payload["source_signatures"],
     }
+    if frame_warnings:
+        state_payload["warnings"] = frame_warnings
     state_path.write_text(json.dumps(state_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return len(manifest_items), {
         "person_id": person_id,

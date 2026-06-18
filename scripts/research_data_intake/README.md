@@ -59,6 +59,8 @@ Regeln:
 - Für `interview` braucht der Organizer eine klassifizierte `source`-WAV plus eine klassifizierte alignment-source JSON-Datei.
 - Die Text-MFA schreibt zusätzlich eine task-lokale `mfa_state.json`, damit unveränderte Inputs die aktuelle Textausgabe wiederverwenden können, statt MFA erneut auszuführen.
 - MFA-Executable-Auflösung folgt überall demselben Vertrag: CLI `--mfa-executable` > `PROMAT_MFA_EXECUTABLE` > `docker`.
+- Docker-backed Text-MFA mountet `MFA_ROOT_DIR=/mfa` aus einem gemeinsamen Sprachcache unter `scripts/research_data_intake/.mfa_cache/shared/{language_code}/`, zum Beispiel `shared/en/`, `shared/fr/`, `shared/es/` oder `shared/de/`.
+- Die MFA-Modell-Downloads sind von `mfa align` getrennt: vorhandene `pretrained_models/acoustic/*.zip` und `pretrained_models/dictionary/*.dict` werden wiederverwendet, fehlende Modelle werden einmalig in den Shared Cache geladen.
 - `raw` kann als Fallback genutzt werden wenn kein `source`-WAV vorhanden ist; das Archiv dokumentiert dies in `task_audio_roles`.
 - Native Speaker mit `-N-` bleiben für `interview` neutral `not_expected_for_native_speaker`.
 
@@ -146,6 +148,9 @@ Checksum-Vertrag:
 DB-Payload-Regel:
 
 - Wenn ein reales Import-Payload verfuegbar ist, wird es als `db/import_payload.json` ins Paket aufgenommen.
+- Ohne explizites Publish-Flag wird `db/import_payload.json` nur ausgeliefert, aber nicht in die Produktionsdatenbank geschrieben.
+- Der Produktions-DB-Upsert laeuft nur mit `--apply-db-upsert`, validiert vorher das staged Release, fuehrt einen Dry-Run aus und schreibt danach transaktional.
+- Der Upsert betrifft `research_people`, `research_sessions` und `research_session_exposures`; nicht im Payload enthaltene Personen oder Sessions werden nicht geloescht.
 - Kein Dummy-Payload.
 - Keine Secure- oder direkt personenbezogenen Felder in Upload-Payloads.
 
@@ -190,6 +195,14 @@ Kontrollierten lokalen Import ausführen:
 
 `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanish_batch_20260421 --target-language es --sync-tasks`
 
+Einzelnen Docker-MFA-Personenlauf testen:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/alignment_export/run_text_mfa.py --batch-dir english_batch_20260618 --person-id EN-L-0001 --language en --mfa-executable docker --dry-run`
+
+Shared MFA-Modellcache bei Bedarf manuell leeren:
+
+`Remove-Item -Recurse -Force scripts/research_data_intake/.mfa_cache/shared/en`
+
 Runtime-Session validieren:
 
 `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py runtime-tree --session-dir C:/dev/promat/data/sessions/spanish/ES-L-0001-2026-S01`
@@ -213,6 +226,18 @@ Prod-Upload-Paket validieren:
 Prod-Upload-Paket nach incoming übertragen (`auto`: rsync nur wenn lokal und remote verfügbar, sonst tar-over-SSH):
 
 `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/upload_prod_package.py --package-dir C:/dev/promat/scripts/research_data_intake/exports/french_batch_20260527_initial_fix01 --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/french_batch_20260527_initial_fix01 --method auto`
+
+Runtime-only Publish ohne DB-Write:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/publish_prod_release.py --upload-id french_batch_20260527_initial_fix01 --host vhrz2184 --smoke-base-url <prod-base-url>`
+
+Publish mit Produktions-DB-Upsert aus `db/import_payload.json`:
+
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/publish_prod_release.py --upload-id french_batch_20260527_initial_fix01 --host vhrz2184 --smoke-base-url <prod-base-url> --apply-db-upsert`
+
+Serverseitigen DB-Payload-Upsert gegen ein staged Release nur pruefen:
+
+`docker exec -i promat-web-prod python - --release-dir /app/data/releases/<release_id> --payload /app/data/releases/<release_id>/db/import_payload.json < /srv/webapps/promat/app/scripts/research_data_intake/apply_prod_db_payload.py`
 
 Expliziten Dev-Research-File-Reset nur dry-run anzeigen:
 

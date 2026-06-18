@@ -19,6 +19,7 @@ Teaching ist nicht Teil dieses Runbooks. `content/`, `public/teaching/` und Teac
 - Zentrale Konfiguration: `scripts/research_data_intake/language_config.py`
 - Aktuell vorbereitete Codes: `es`, `de`, `fr`, `en`
 - Die Sprachkonfiguration hält die geplanten MFA-Akustik- und Dictionary-Modelle pro Sprache zusammen.
+- Docker-backed MFA-Modelle werden pro Sprache im gemeinsamen Cache `scripts/research_data_intake/.mfa_cache/shared/{language_code}/` gehalten und nicht pro `person_id` oder Manifest-Hash erneut heruntergeladen.
 - Für `en` bleiben die kanonischen Katalogquellen `data/config/research_player/english/task_catalogs/wordlist.json` und `data/config/research_player/english/task_catalogs/text.json`.
 
 ## Schritt 1: Drop-in-Batch scannen
@@ -76,6 +77,9 @@ Regeln:
 
 - Die eigentliche MFA-Ausführung bleibt außerhalb dieses Repo-Skripts und schreibt in `working/{person_id}/text/mfa_output/`.
 - Wenn der Host-`mfa`-CLI nicht verfügbar ist, darf der zentrale Importer auf Docker-backed MFA ausweichen, statt den Textlauf stillschweigend zu überspringen.
+- Docker-backed MFA mountet den gemeinsamen Sprachcache als `MFA_ROOT_DIR=/mfa`, prüft Host-seitig auf vorhandene Acoustic- und Dictionary-Dateien und führt `mfa model download` nur für fehlende Modelle aus. Der nachfolgende `mfa align`-Aufruf bleibt davon getrennt.
+- Ein einzelner Personenlauf kann mit `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/alignment_export/run_text_mfa.py --batch-dir english_batch_20260618 --person-id EN-L-0001 --language en --mfa-executable docker --dry-run` geprüft werden; der Dry Run gibt Ensure- und Align-Commandlisten aus.
+- Bei Bedarf kann ein Sprachcache manuell gelöscht werden, zum Beispiel `Remove-Item -Recurse -Force scripts/research_data_intake/.mfa_cache/shared/en`.
 - OOVs, Dysfluencies und Selbstreparaturen sind Qualitätswarnungen, aber im Working-Pfad nicht automatisch Abbruchgründe.
 
 ## Schritt 6: MFA in Working-JSON zurückimportieren

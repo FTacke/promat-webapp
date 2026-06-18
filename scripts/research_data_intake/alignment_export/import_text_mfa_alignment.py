@@ -326,6 +326,34 @@ def _build_alignment_payload(session_id: str | None, person_id: str, items: list
     }
 
 
+def _manifest_omitted_items(manifest_payload: dict[str, Any], manifest_path: Path) -> list[dict[str, object]]:
+    omitted_payload = manifest_payload.get("omitted_items")
+    if omitted_payload is None:
+        return []
+    if not isinstance(omitted_payload, list):
+        raise ValueError(f"Manifest omitted_items must be a list when present: {manifest_path}")
+    omitted_items: list[dict[str, object]] = []
+    for index, item_payload in enumerate(omitted_payload, start=1):
+        if not isinstance(item_payload, dict):
+            raise ValueError(f"Manifest omitted item {index} must be an object: {manifest_path}")
+        item_id = _require_non_empty_string(item_payload, "item_id", manifest_path, index)
+        item_number = _require_non_empty_string(item_payload, "item_number", manifest_path, index)
+        text = _require_non_empty_string(item_payload, "text", manifest_path, index)
+        omit_reason = _require_non_empty_string(item_payload, "omit_reason", manifest_path, index)
+        if item_payload.get("omitted") is not True:
+            raise ValueError(f"Manifest omitted item {item_id} must set omitted=true: {manifest_path}")
+        omitted_items.append(
+            {
+                "item_id": item_id,
+                "item_number": item_number,
+                "text": text,
+                "omitted": True,
+                "omit_reason": omit_reason,
+            }
+        )
+    return omitted_items
+
+
 def _write_alignment_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -409,6 +437,9 @@ def _import_person(
         person_id=person_id,
         items=item_payloads,
     )
+    omitted_items = _manifest_omitted_items(manifest_payload, paths["manifest"])
+    if omitted_items:
+        payload["omitted_items"] = omitted_items
 
     if payload.get("session_id") is None:
         warnings.append("session_id remains unresolved in the working tree and was serialized as null")

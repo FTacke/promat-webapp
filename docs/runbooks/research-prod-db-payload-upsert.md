@@ -2,48 +2,82 @@
 
 ## Zweck
 
-Kontrollierter Ablauf für den optionalen DB-Upsert aus `db/import_payload.json` nach einem bereits erfolgreichen Datei-Publish.
+Kontrollierter Ablauf fuer den optionalen Produktions-DB-Upsert aus `db/import_payload.json`.
 
 ## Grundsatz
 
-- Datei-Publish und DB-Upsert sind getrennte Schritte.
-- Ein fehlendes `db/import_payload.json` blockiert den Datei-Publish nicht.
-- Ein vorhandenes `db/import_payload.json` wird nur über den freigegebenen Importpfad verarbeitet.
+- Runtime-only Publish bleibt der sichere Default.
+- Ein vorhandenes `db/import_payload.json` wird nur geschrieben, wenn der Publish mit `--apply-db-upsert` gestartet wird.
+- Ohne Flag wird das Payload mit ausgeliefert, aber nicht angewendet.
+- Der Upsert betrifft nur `research_people`, `research_sessions` und `research_session_exposures`.
+- Der Upsert ist idempotent: stabile Schluessel sind `person_id`, `session_id` und `(session_id, sort_order)` fuer Exposures.
+- Nicht im Payload enthaltene Personen oder Sessions werden nicht geloescht. Exposure-Reihen werden nur fuer Sessions im Payload auf die Payload-Reihenfolge gebracht.
 
-## Inputs
+## Tool
 
-- Upload-ID und Release-Kontext aus dem Publish-Report
-- Paketpfad unter `/srv/webapps_storage/promat/data/incoming/{upload_id}/`
-- Optional: `db/import_payload.json`
+Dry-run gegen einen bereits gestagten Release aus der Webcontainer-Umgebung:
 
-## Gates
+`docker exec -i promat-web-prod python - --release-dir /app/data/releases/<release_id> --payload /app/data/releases/<release_id>/db/import_payload.json < /srv/webapps/promat/app/scripts/research_data_intake/apply_prod_db_payload.py`
 
-1. Verifizieren, dass der Dateipublish erfolgreich war und `current` auf den erwarteten Release zeigt.
-2. Prüfen, ob `db/import_payload.json` vorhanden und JSON-valid ist.
-3. Sicherstellen, dass keine Secrets oder secure-Inhalte in Logs ausgegeben werden.
+Transaktional anwenden:
 
-## Ablauf
+`docker exec -i promat-web-prod python - --release-dir /app/data/releases/<release_id> --payload /app/data/releases/<release_id>/db/import_payload.json --apply < /srv/webapps/promat/app/scripts/research_data_intake/apply_prod_db_payload.py`
 
-1. Payload aus incoming-Paket lesen.
-2. Import ausschließlich mit dem freigegebenen Produktions-Importer ausführen.
-3. Import-Ergebnis protokollieren: Anzahl Inserts/Updates, Warnungen, Fehler.
-4. Bei Fehlern keine verdeckten Retry-Schleifen; stattdessen klaren Abbruch und Incident-Notiz.
+Im Publish-Ablauf ist das direkte Tool normalerweise nicht noetig; bevorzugt wird:
 
-## Stop-Bedingungen
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/publish_prod_release.py --upload-id <upload_id> --host vhrz2184 --smoke-base-url <prod-base-url> --apply-db-upsert`
 
-- Importpfad oder Ziel-DB unklar
-- Payload ungültig oder schema-inkonsistent
-- Sicherheitsverletzung (PII/Secrets im Log)
+## Server-Gates
 
-## Report
+Das Upsert-Tool bricht vor jedem Write ab, wenn:
 
-`/srv/webapps_storage/promat/data/publish_logs/promat_db_upsert_<upload_id>_<timestamp>.md`
+- `db/import_payload.json` fehlt oder kein valides JSON ist.
+- Das Payload-Schema nicht zu `persons`, `sessions` und `exposures` passt.
+- `batch_name` fehlt oder nicht als Batch erkennbar ist.
+- Personen- oder Session-Schluessel doppelt sind.
+- Sessions unbekannte Personen referenzieren.
+- Exposures unbekannte Sessions referenzieren.
+- `target_language` nicht in der Intake-Sprachkonfiguration aufloesbar ist.
+- Lokale Windows-Pfade wie `C:\...` oder UNC-Pfade enthalten sind.
+- Referenzierte Runtime-Dateien im staged Release fehlen: `metadata.json`, `alignment/{task}.json`, `derived/{task}.mp3`.
+- Das Payload keine Personen oder keine Sessions enthaelt.
 
-Mindestinhalt:
+## Dry-Run
 
-- Upload-ID
-- Payload-Status (vorhanden/fehlend)
-- Import-Werkzeug und Zielumgebung
-- Ergebnis (insert/update/skip)
-- Fehler/Warnungen
-- Offene Folgepunkte
+Der Dry-Run schreibt nicht. Er gibt JSON aus mit:
+
+- Modus `dry_run`
+- Batch-ID und Sprachen
+- Payload-Counts fuer Personen, Sessions, Exposures und dokumentierte Tasks
+- pro Tabelle Counts fuer `insert`, `update`, `unchanged`, `delete`
+- vorhandene Tabellen-Counts vor dem Write
+- Rollback-Hinweis
+
+Der Publish mit `--apply-db-upsert` fuehrt den Dry-Run vor dem echten Write aus und schreibt dessen Ausgabe ins Publish-Log.
+
+## Write, Transaction und Rollback
+
+Der echte Upsert laeuft in einer einzelnen SQLAlchemy-Transaktion. Bei Fehlern wird automatisch gerollt und der Publish bricht vor dem `current`-Switch ab.
+
+Rollback nach einem erfolgreichen Write:
+
+1. Wenn Runtime bereits promoted wurde: `data/current` auf den vorherigen Release zurueckzeigen lassen.
+2. DB ueber den vorhandenen Produktions-DB-Backup- oder Snapshot-Weg wiederherstellen.
+3. Alternativ nur die im Upsert-Report gelisteten betroffenen Personen, Sessions und Exposures anhand der Pre-Counts und Payload-Schluessel pruefen und gezielt korrigieren.
+
+## Erfolg erkennen
+
+- Dry-Run und Apply geben JSON ohne Fehler aus.
+- `post_upsert_validation.status` ist `ok`.
+- Publish-Log enthaelt `db_upsert_status: applied`.
+- Health/Ready und Research-Smoke-Routen sind nach dem Promote gruen.
+
+## Pflicht-Smoke
+
+Nach einem Publish mit DB-Upsert:
+
+- `/health`
+- `/ready`
+- `/{ui_lang}/research/{corpus}`
+- `/{ui_lang}/research/{corpus}/design`
+- ein geschuetzter Player-/Detailpfad nur mit sicherem Auth-Verfahren, ohne Tokens in Logs

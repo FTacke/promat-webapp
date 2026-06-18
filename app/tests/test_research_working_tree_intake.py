@@ -17,6 +17,9 @@ sys.path.insert(0, str(TEST_REPO_ROOT / "scripts" / "research_data_intake"))
 
 from alignment_export.import_interview_amberscript import build_interview_alignment_payload  # noqa: E402
 from alignment_export.import_interview_amberscript import InterviewImportError  # noqa: E402
+from alignment_export.prepare_text_mfa_corpus import _align_text_items_to_intervals  # noqa: E402
+from alignment_export.prepare_text_mfa_corpus import _frame_bounds  # noqa: E402
+from alignment_export.prepare_text_mfa_corpus import TextSourceItem  # noqa: E402
 import intake_batch_common  # noqa: E402
 from intake_batch_common import working_intake_state_path  # noqa: E402
 
@@ -263,6 +266,34 @@ def test_build_interview_alignment_payload_keeps_intraword_brackets_as_literal_t
     assert segment["text"] == 'Ja, "thr[i]ten" nicht'
 
 
+def test_build_interview_alignment_payload_keeps_non_material_bracket_literals(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    _write_json(source_json, _minimal_interview_payload(reference_words=["[u].", "[x]", "[theta]"]))
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="EN-L-0001", session_id=None)
+
+    segment = payload["segments"][1]
+    assert [token["text"] for token in segment["tokens"][1:]] == ["[u].", "[x]", "[theta]"]
+    assert segment.get("annotations") is None
+    assert segment["text"] == "Ja, [u]. [x] [theta]"
+
+
+def test_build_interview_alignment_payload_maps_uuid_speaker_ids_from_speakers_table(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    payload_data = _minimal_interview_payload()
+    payload_data["speakers"] = [
+        {"spkid": "spk1", "name": "Speaker 1"},
+        {"spkid": "d39f1341-f0dd-4917-8eba-831abe7577d3", "name": "Speaker 2"},
+    ]
+    payload_data["segments"][1]["speaker"] = "d39f1341-f0dd-4917-8eba-831abe7577d3"
+    _write_json(source_json, payload_data)
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="EN-L-0001", session_id=None)
+
+    assert payload["segments"][0]["speaker_code"] == "interviewer"
+    assert payload["segments"][1]["speaker_code"] == "participant"
+
+
 def test_build_interview_alignment_payload_rejects_unknown_material_ref_item_id(tmp_path: Path) -> None:
     source_json = tmp_path / "input.json"
     _write_json(source_json, _minimal_interview_payload(reference_words=["89[wl_999]."]))
@@ -313,6 +344,38 @@ def test_build_interview_alignment_payload_clamps_zero_duration_word_with_warnin
     assert "//ich//" in " ".join(t["text"] for t in payload["segments"][1]["tokens"])
     import_warnings = payload.get("_import_warnings", [])
     assert any("//ich//" in w and "zero duration" in w for w in import_warnings)
+
+
+def test_text_mfa_frame_bounds_clamps_tiny_end_overrun() -> None:
+    start_frame, end_frame, warning = _frame_bounds(0.0, 1.0006, 1000, 1000)
+
+    assert start_frame == 0
+    assert end_frame == 1000
+    assert warning is not None
+    assert "clamped TextGrid end boundary" in warning
+
+
+def test_text_mfa_allows_omitted_spoken_title_item() -> None:
+    class Interval:
+        def __init__(self, text: str) -> None:
+            self.text = text
+
+    text_items = [
+        TextSourceItem("t_01", "T1", "The Boy who Cried Wolf", spoken_title_item=True),
+        TextSourceItem("t_02", "T2", "There was once a poor shepherd boy, "),
+        TextSourceItem("t_03", "T3", "\u2014 a child more than a man \u2014 "),
+    ]
+    intervals = [
+        Interval("There was once a poor shepherd boy,"),
+        Interval("-a child more than a man-"),
+    ]
+
+    aligned_items, omitted_items = _align_text_items_to_intervals(text_items, intervals, "EN-L-0008")
+
+    assert [item.item_id for item in aligned_items] == ["t_02", "t_03"]
+    assert len(omitted_items) == 1
+    assert omitted_items[0].item_id == "t_01"
+    assert omitted_items[0].omit_reason == "unspoken_title"
 
 
 def test_organize_batch_working_tree_bootstraps_and_only_builds_interview(tmp_path: Path) -> None:

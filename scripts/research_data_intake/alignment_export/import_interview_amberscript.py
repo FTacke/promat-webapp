@@ -27,6 +27,10 @@ SPEAKER_CODE_MAP = {
     "spk1": "interviewer",
     "spk2": "participant",
 }
+SPEAKER_NAME_CODE_MAP = {
+    "speaker 1": "interviewer",
+    "speaker 2": "participant",
+}
 ANNOTATION_TASK_PREFIXES = (
     ("wl_", "wordlist"),
     ("d_", "text"),
@@ -115,11 +119,46 @@ def _require_word_text(word_payload: dict[str, Any], source_json_path: Path, seg
     return value.strip()
 
 
-def _speaker_code(raw_value: Any, source_json_path: Path, segment_number: int) -> str:
+def _amberscript_speaker_code_map(payload: dict[str, Any], source_json_path: Path) -> dict[str, str]:
+    speakers_payload = payload.get("speakers")
+    if speakers_payload is None:
+        return {}
+    if not isinstance(speakers_payload, list):
+        raise ValueError(f"Amberscript export speakers must be a list when present: {source_json_path}")
+
+    mapped: dict[str, str] = {}
+    for index, speaker_payload in enumerate(speakers_payload, start=1):
+        if not isinstance(speaker_payload, dict):
+            raise ValueError(f"Amberscript speaker {index} must be an object: {source_json_path}")
+        raw_spkid = speaker_payload.get("spkid")
+        raw_name = speaker_payload.get("name")
+        if not isinstance(raw_spkid, str) or not raw_spkid.strip():
+            continue
+        if not isinstance(raw_name, str) or not raw_name.strip():
+            continue
+
+        normalized_spkid = raw_spkid.strip().lower()
+        normalized_name = raw_name.strip().lower()
+        resolved_code = SPEAKER_NAME_CODE_MAP.get(normalized_name)
+        if resolved_code is None:
+            continue
+        existing_code = mapped.get(normalized_spkid)
+        if existing_code is not None and existing_code != resolved_code:
+            raise ValueError(
+                f"Amberscript speaker id {raw_spkid!r} maps to multiple speaker roles in {source_json_path}"
+            )
+        mapped[normalized_spkid] = resolved_code
+    return mapped
+
+
+def _speaker_code(raw_value: Any, source_json_path: Path, segment_number: int, speaker_id_map: dict[str, str]) -> str:
     if not isinstance(raw_value, str) or not raw_value.strip():
         raise ValueError(f"Segment {segment_number} must declare a speaker code in {source_json_path}")
     normalized = raw_value.strip().lower()
     if normalized not in SPEAKER_CODE_MAP:
+        mapped_code = speaker_id_map.get(normalized)
+        if mapped_code is not None:
+            return mapped_code
         raise ValueError(f"Unsupported Amberscript speaker code {raw_value!r} in segment {segment_number}: {source_json_path}")
     return SPEAKER_CODE_MAP[normalized]
 
@@ -242,6 +281,18 @@ def _is_intraword_bracket_literal(raw_text: str) -> bool:
     return has_left_anchor and has_right_anchor
 
 
+def _is_non_material_bracket_literal(raw_text: str) -> bool:
+    if _is_intraword_bracket_literal(raw_text):
+        return True
+    match = re.fullmatch(r"\[(?P<label>[^\[\]]+)\](?P<suffix>[.,!?;:\-]+)?", raw_text.strip())
+    if match is None:
+        return False
+    label = match.group("label").strip()
+    if re.fullmatch(r"[A-Za-z]+_\d+", label):
+        return False
+    return bool(label)
+
+
 def _append_suffix_to_previous_token(tokens: list[dict[str, object]], suffix: str) -> None:
     if not suffix:
         return
@@ -267,13 +318,14 @@ def build_interview_alignment_payload(
     segments_payload = _require_segments(payload, source_json_path)
     normalized_person_id = _normalize_person_id(person_id)
     language_slug = person_id_language_slug(normalized_person_id)
+    speaker_id_map = _amberscript_speaker_code_map(payload, source_json_path)
 
     warnings: list[str] = []
     segments: list[dict[str, object]] = []
     for segment_index, segment_payload in enumerate(segments_payload, start=1):
         words_payload = _require_words(segment_payload, source_json_path, segment_index)
         segment_id = f"seg_{segment_index:03d}"
-        speaker_code = _speaker_code(segment_payload.get("speaker"), source_json_path, segment_index)
+        speaker_code = _speaker_code(segment_payload.get("speaker"), source_json_path, segment_index, speaker_id_map)
         first_start_ms = _require_word_timing(words_payload[0], "start", source_json_path, segment_index, 1)
         last_end_ms = _require_word_timing(
             words_payload[-1],
@@ -334,7 +386,7 @@ def build_interview_alignment_payload(
                     start_ms=start_ms,
                     end_ms=end_ms,
                 )
-            if material_ref_match is None and ("[" in text or "]" in text) and not _is_intraword_bracket_literal(text):
+            if material_ref_match is None and ("[" in text or "]" in text) and not _is_non_material_bracket_literal(text):
                 raise InterviewImportError(
                     "error_invalid_material_ref_marker",
                     f"Invalid material reference marker {text!r}: {source_json_path}",
