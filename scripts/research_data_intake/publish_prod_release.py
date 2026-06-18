@@ -196,8 +196,7 @@ def main() -> int:
     target = f"{args.ssh_user}@{args.host}"
     completed = subprocess.run(
         ["ssh", target, "bash", "-s"],
-        input=script,
-        text=True,
+        input=script.encode("utf-8"),
         check=False,
     )
     return completed.returncode
