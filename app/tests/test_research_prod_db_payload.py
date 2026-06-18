@@ -233,3 +233,237 @@ def test_db_payload_missing_payload_fails_cleanly(tmp_path: Path) -> None:
 
     with pytest.raises(db_payload.PayloadUpsertError, match="missing"):
         db_payload.load_payload(release_dir / "db" / "import_payload.json")
+
+
+def test_db_payload_with_empty_documented_tasks_fails_validation(tmp_path: Path) -> None:
+    database_url = _database_url(tmp_path)
+    release_dir = tmp_path / "release"
+    payload = _payload(tasks=[])
+    _write_payload(release_dir, payload)
+    # No task artifacts on disk → session has no tasks and payload has empty documented_tasks
+    session_dir = release_dir / "sessions" / "english" / "EN-L-0001-2026-S01"
+    (session_dir / "alignment").mkdir(parents=True)
+    (session_dir / "derived").mkdir(parents=True)
+    (session_dir / "metadata.json").write_text('{"session_id": "EN-L-0001-2026-S01", "tasks": []}', encoding="utf-8")
+
+    with pytest.raises(db_payload.PayloadUpsertError, match="no documented_tasks"):
+        db_payload.run_payload_upsert(
+            release_dir=release_dir,
+            payload_path=release_dir / "db" / "import_payload.json",
+            database_url=database_url,
+            apply_changes=False,
+        )
+
+
+# ── cleanup-metadata-only ─────────────────────────────────────────────────────
+
+_CORPUS_SLUGS = {"fr": "french", "en": "english", "es": "spanish", "de": "german"}
+
+
+def _seed_db_session(
+    database_url: str,
+    *,
+    person_id: str,
+    session_id: str,
+    target_language: str,
+) -> None:
+    from datetime import datetime, timezone
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker as _SM
+    engine = create_engine(database_url, future=True)
+    factory = _SM(bind=engine, future=True)
+    now = datetime.now(tz=timezone.utc)
+    with factory.begin() as s:
+        if not s.get(ResearchPerson, person_id):
+            s.add(ResearchPerson(
+                person_id=person_id,
+                speaker_type="learner",
+                l1="DE",
+                research_consent_signed="yes",
+                teaching_consent_signed="unknown",
+                created_at=now,
+                updated_at=now,
+            ))
+        if not s.get(ResearchSession, session_id):
+            s.add(ResearchSession(
+                session_id=session_id,
+                person_id=person_id,
+                session_ref="S01",
+                corpus_language=_CORPUS_SLUGS.get(target_language, "english"),
+                target_language=target_language,
+                recording_year=2026,
+                created_at=now,
+                updated_at=now,
+            ))
+
+
+def test_cleanup_metadata_only_dry_run_finds_sessions_without_task_artifacts(tmp_path: Path) -> None:
+    database_url = _database_url(tmp_path)
+    release_dir = tmp_path / "release"
+
+    # FR-L-0001: has artifacts → should NOT be deleted
+    _write_runtime_session(release_dir, language_slug="french", session_id="FR-L-0001-2026-S01", tasks=("wordlist",))
+    _seed_db_session(database_url, person_id="FR-L-0001", session_id="FR-L-0001-2026-S01", target_language="fr")
+
+    # FR-L-0022: metadata-only (dir exists but no artifacts) → should be deleted
+    meta_dir = release_dir / "sessions" / "french" / "FR-L-0022-2026-S01"
+    meta_dir.mkdir(parents=True)
+    (meta_dir / "metadata.json").write_text('{}', encoding="utf-8")
+    _seed_db_session(database_url, person_id="FR-L-0022", session_id="FR-L-0022-2026-S01", target_language="fr")
+
+    result = db_payload.run_cleanup_metadata_only(
+        release_dir=release_dir,
+        database_url=database_url,
+        target_language="fr",
+        apply_cleanup=False,
+    )
+
+    assert result["mode"] == "dry_run"
+    assert result["sessions_to_delete"] == ["FR-L-0022-2026-S01"]
+    assert result["persons_to_delete"] == ["FR-L-0022"]
+
+    # Dry-run must not touch the DB
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import sessionmaker as _SM
+    engine = create_engine(database_url, future=True)
+    factory = _SM(bind=engine, future=True)
+    with factory() as s:
+        rows = s.scalars(select(ResearchSession)).all()
+    assert len(rows) == 2
+
+
+def test_cleanup_metadata_only_apply_removes_sessions_and_persons(tmp_path: Path) -> None:
+    database_url = _database_url(tmp_path)
+    release_dir = tmp_path / "release"
+
+    _write_runtime_session(release_dir, language_slug="french", session_id="FR-L-0001-2026-S01", tasks=("wordlist",))
+    _seed_db_session(database_url, person_id="FR-L-0001", session_id="FR-L-0001-2026-S01", target_language="fr")
+
+    meta_dir = release_dir / "sessions" / "french" / "FR-L-0022-2026-S01"
+    meta_dir.mkdir(parents=True)
+    (meta_dir / "metadata.json").write_text('{}', encoding="utf-8")
+    _seed_db_session(database_url, person_id="FR-L-0022", session_id="FR-L-0022-2026-S01", target_language="fr")
+
+    result = db_payload.run_cleanup_metadata_only(
+        release_dir=release_dir,
+        database_url=database_url,
+        target_language="fr",
+        apply_cleanup=True,
+    )
+
+    assert result.get("applied") is True
+
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import sessionmaker as _SM
+    engine = create_engine(database_url, future=True)
+    factory = _SM(bind=engine, future=True)
+    with factory() as s:
+        session_rows = s.scalars(select(ResearchSession)).all()
+        person_rows = s.scalars(select(ResearchPerson)).all()
+    assert [r.session_id for r in session_rows] == ["FR-L-0001-2026-S01"]
+    assert [r.person_id for r in person_rows] == ["FR-L-0001"]
+
+
+def test_cleanup_metadata_only_does_not_touch_other_languages(tmp_path: Path) -> None:
+    database_url = _database_url(tmp_path)
+    release_dir = tmp_path / "release"
+
+    # FR session: metadata-only → should be deleted
+    meta_dir = release_dir / "sessions" / "french" / "FR-L-0022-2026-S01"
+    meta_dir.mkdir(parents=True)
+    (meta_dir / "metadata.json").write_text('{}', encoding="utf-8")
+    _seed_db_session(database_url, person_id="FR-L-0022", session_id="FR-L-0022-2026-S01", target_language="fr")
+
+    # EN session: metadata-only too, but cleanup is scoped to fr → must NOT be touched
+    en_meta_dir = release_dir / "sessions" / "english" / "EN-L-0001-2026-S01"
+    en_meta_dir.mkdir(parents=True)
+    (en_meta_dir / "metadata.json").write_text('{}', encoding="utf-8")
+    _seed_db_session(database_url, person_id="EN-L-0001", session_id="EN-L-0001-2026-S01", target_language="en")
+
+    db_payload.run_cleanup_metadata_only(
+        release_dir=release_dir,
+        database_url=database_url,
+        target_language="fr",
+        apply_cleanup=True,
+    )
+
+    from sqlalchemy import create_engine, select
+    from sqlalchemy.orm import sessionmaker as _SM
+    engine = create_engine(database_url, future=True)
+    factory = _SM(bind=engine, future=True)
+    with factory() as s:
+        session_rows = s.scalars(select(ResearchSession)).all()
+    assert [r.session_id for r in session_rows] == ["EN-L-0001-2026-S01"]
+
+
+def test_cleanup_metadata_only_person_with_publishable_session_not_deleted(tmp_path: Path) -> None:
+    """Person who has one metadata-only session AND one session with artifacts must not be deleted."""
+    database_url = _database_url(tmp_path)
+    release_dir = tmp_path / "release"
+
+    # FR-L-0001 has TWO sessions: one with artifacts, one metadata-only
+    _write_runtime_session(release_dir, language_slug="french", session_id="FR-L-0001-2026-S01", tasks=("wordlist",))
+    _seed_db_session(database_url, person_id="FR-L-0001", session_id="FR-L-0001-2026-S01", target_language="fr")
+
+    meta_dir = release_dir / "sessions" / "french" / "FR-L-0001-2026-S02"
+    meta_dir.mkdir(parents=True)
+    (meta_dir / "metadata.json").write_text('{}', encoding="utf-8")
+    # Seed second session for same person
+    from datetime import datetime, timezone
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker as _SM
+    now = datetime.now(tz=timezone.utc)
+    engine2 = create_engine(database_url, future=True)
+    factory2 = _SM(bind=engine2, future=True)
+    with factory2.begin() as s:
+        s.add(ResearchSession(
+            session_id="FR-L-0001-2026-S02",
+            person_id="FR-L-0001",
+            session_ref="S02",
+            corpus_language="french",
+            target_language="fr",
+            recording_year=2026,
+            created_at=now,
+            updated_at=now,
+        ))
+
+    result = db_payload.run_cleanup_metadata_only(
+        release_dir=release_dir,
+        database_url=database_url,
+        target_language="fr",
+        apply_cleanup=True,
+    )
+
+    # metadata-only session deleted, but person kept because they have another session with artifacts
+    assert "FR-L-0001-2026-S02" in result["sessions_to_delete"]
+    assert "FR-L-0001" not in result["persons_to_delete"]
+
+    with factory2() as s:
+        person_row = s.get(ResearchPerson, "FR-L-0001")
+    assert person_row is not None
+
+
+def test_cleanup_metadata_only_is_idempotent(tmp_path: Path) -> None:
+    database_url = _database_url(tmp_path)
+    release_dir = tmp_path / "release"
+
+    meta_dir = release_dir / "sessions" / "french" / "FR-L-0022-2026-S01"
+    meta_dir.mkdir(parents=True)
+    (meta_dir / "metadata.json").write_text('{}', encoding="utf-8")
+    _seed_db_session(database_url, person_id="FR-L-0022", session_id="FR-L-0022-2026-S01", target_language="fr")
+
+    db_payload.run_cleanup_metadata_only(
+        release_dir=release_dir,
+        database_url=database_url,
+        target_language="fr",
+        apply_cleanup=True,
+    )
+    # Second apply must not raise even though rows are already gone
+    result = db_payload.run_cleanup_metadata_only(
+        release_dir=release_dir,
+        database_url=database_url,
+        target_language="fr",
+        apply_cleanup=True,
+    )
+    assert result["sessions_to_delete"] == []
+    assert result["persons_to_delete"] == []

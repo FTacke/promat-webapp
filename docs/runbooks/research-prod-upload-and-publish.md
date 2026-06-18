@@ -135,6 +135,61 @@ Geschuetzte Routen nur mit sicherem Auth-Verfahren testen; keine Tokens loggen.
 2. Failed incoming erst nach erfolgreichem neuen Promote bewusst loeschen oder in Quarantine verschieben.
 3. Cleanup-Schritt im Report dokumentieren.
 
+## Cleanup: Metadata-only Sessions (DB + Runtime)
+
+Sessions, fuer die nur XLSX-Workbook-Zeilen ohne Audio-/Task-Artefakte vorhanden sind, sollen weder in der Runtime noch in der Produktions-DB erscheinen. Falls solche Sessions durch einen frueheren Import in der DB oder im Runtime-Baum vorhanden sind, muessen sie explizit bereinigt werden.
+
+### Schritt 1: Dry-run (immer zuerst)
+
+```bash
+ssh vhrz2184 "docker exec -e PROMAT_APP_SRC=/app/src promat-web-prod \
+  python /tmp/apply_prod_db_payload_new.py \
+  --cleanup-metadata-only \
+  --target-language fr \
+  --release-dir /app/data"
+```
+
+Das Dry-run-Ergebnis benennt `sessions_to_delete`, `persons_to_delete` und `exposures_to_delete`. Nur wenn die Liste plausibel ist und explizit freigegeben wird, weiter.
+
+### Schritt 2: Apply (nur nach bestaetigtem Dry-run)
+
+```bash
+ssh vhrz2184 "docker exec -e PROMAT_APP_SRC=/app/src promat-web-prod \
+  python /tmp/apply_prod_db_payload_new.py \
+  --cleanup-metadata-only \
+  --target-language fr \
+  --release-dir /app/data \
+  --apply-cleanup"
+```
+
+### Schritt 3: Runtime-Ordner entfernen
+
+Nur explizit benannte Ordner loeschen – kein Glob-Delete, kein `--delete`:
+
+```bash
+ssh vhrz2184 "set -euo pipefail
+for s in <SESSION_ID_1> <SESSION_ID_2>; do
+  rm -rf \"/srv/webapps_storage/promat/data/sessions/french/\${s}\"
+done"
+```
+
+### Schritt 4: Container-Restart + Verifikation
+
+```bash
+ssh vhrz2184 "docker restart promat-web-prod && sleep 15"
+curl -fsS -o /dev/null -w '%{http_code}\n' https://<prod-base-url>/health
+curl -fsS -o /dev/null -w '%{http_code}\n' https://<prod-base-url>/ready
+```
+
+### Regeln
+
+- Cleanup immer nur fuer explizit angegebenen `--target-language`-Corpus.
+- Kein globaler Delete.
+- Keine Backups oder Snapshots anlegen.
+- Personen nur loeschen, wenn alle ihre Sessions metadata-only sind.
+- Loeschen transaktional in einer einzigen DB-Transaktion.
+- Andere Sprachen (en, es, de) werden nicht beruehrt.
+
 ## Publish Report
 
 Nach erfolgreichem oder abgebrochenem Lauf immer Report schreiben:

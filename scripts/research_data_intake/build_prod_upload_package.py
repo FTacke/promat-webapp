@@ -44,6 +44,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+_TASK_KEYS = ("wordlist", "text", "interview")
+
+
+def _session_dir_has_task_artifacts(session_dir: Path) -> bool:
+    for task_key in _TASK_KEYS:
+        if (session_dir / "alignment" / f"{task_key}.json").exists():
+            return True
+        if (session_dir / "derived" / f"{task_key}.mp3").exists():
+            return True
+    return False
+
+
 def _discover_all_runtime_sessions() -> list[tuple[str, Path]]:
     sessions_root = get_sessions_root()
     session_roots: list[tuple[str, Path]] = []
@@ -55,8 +67,11 @@ def _discover_all_runtime_sessions() -> list[tuple[str, Path]]:
                 raise IntakeStorageError(f"unsupported runtime language directory with sessions: {language_dir}")
             continue
         for session_dir in session_dirs:
-            if (session_dir / "metadata.json").exists():
-                session_roots.append((language.code, session_dir))
+            if not (session_dir / "metadata.json").exists():
+                continue
+            if not _session_dir_has_task_artifacts(session_dir):
+                continue
+            session_roots.append((language.code, session_dir))
     return session_roots
 
 

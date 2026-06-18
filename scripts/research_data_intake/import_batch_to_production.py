@@ -110,6 +110,7 @@ class SessionImportPlan:
     archive_inputs: tuple[Any, ...]
     warnings: tuple[str, ...]
     conflicts: tuple[str, ...]
+    has_delivered_task_data: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -589,6 +590,27 @@ def _task_not_expected_status(task_key: str, person_id: str, speaker_type: str |
     return None
 
 
+def _session_has_delivered_task_data(
+    initial_task_plans: tuple[TaskSyncPlan, ...],
+    *,
+    existing_session_dir: Path | None,
+    target_session_dir: Path,
+    target_runtime_exists: bool,
+) -> bool:
+    """True if the session has working data for at least one task in this batch, OR runtime artifacts already exist."""
+    for task_plan in initial_task_plans:
+        if task_plan.action in {"sync", "available"}:
+            return True
+    check_dir: Path | None = existing_session_dir
+    if check_dir is None and target_runtime_exists:
+        check_dir = target_session_dir
+    if check_dir is not None:
+        for task_key in RESEARCH_TASK_KEYS:
+            if _task_status_from_session_dir(check_dir, task_key):
+                return True
+    return False
+
+
 def _documented_tasks_from_session_dir(
     session_dir: Path,
     *,
@@ -844,6 +866,13 @@ def _build_import_plans(
             )
             for task_key in RESEARCH_TASK_KEYS
         )
+        # Compute before any skip override so the initial task actions are visible.
+        has_delivered_task_data = _session_has_delivered_task_data(
+            task_plans,
+            existing_session_dir=existing_runtime_dir,
+            target_session_dir=target_session_dir,
+            target_runtime_exists=target_runtime_exists,
+        )
         archive_inputs, archive_conflicts = _archive_inputs_for_person(parsed_batch_files, workbook_session.person_id)
         conflicts.extend(archive_conflicts)
         raw_plans = tuple()
@@ -896,6 +925,7 @@ def _build_import_plans(
                 archive_inputs=archive_inputs,
                 warnings=tuple(warnings),
                 conflicts=tuple(conflicts),
+                has_delivered_task_data=has_delivered_task_data,
             )
         )
 
@@ -927,13 +957,17 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
     raw_missing_count = 0
     raw_conflict_count = 0
     for plan in plans:
-        if plan.mode_action == "create":
+        no_task_data = plan.mode_action in {"create", "update"} and not plan.has_delivered_task_data
+        displayed_action = "skip" if no_task_data else plan.mode_action
+        displayed_reason = "no_delivered_task_data" if no_task_data else plan.reason
+
+        if displayed_action == "create":
             create_count += 1
-        elif plan.mode_action == "update":
+        elif displayed_action == "update":
             update_count += 1
-        elif plan.mode_action == "skip":
+        elif displayed_action == "skip":
             skip_count += 1
-        elif plan.mode_action == "conflict":
+        elif displayed_action == "conflict":
             conflict_count += 1
 
         task_summary_parts: list[str] = []
@@ -963,14 +997,14 @@ def _print_plan(plans: list[SessionImportPlan], workbook_warnings: tuple[str, ..
             raw_summary_parts.append(f"{raw_plan.task_key}={raw_plan.action}{suffix}")
 
         details = [
-            f"{plan.mode_action:8}",
+            f"{displayed_action:8}",
             plan.session.session_id,
             f"({plan.person.person_id}/{plan.session.session_ref})",
             f"tasks[{', '.join(task_summary_parts)}]",
             f"archive_inputs={len(plan.archive_inputs)}",
         ]
-        if plan.reason:
-            details.append(f"reason={plan.reason}")
+        if displayed_reason:
+            details.append(f"reason={displayed_reason}")
         if plan.session_id_change_from is not None:
             details.append(f"rename-from={plan.session_id_change_from}")
         print(" ".join(details))
@@ -1629,6 +1663,8 @@ def main() -> int:
             archive_root = _resolve_optional_path(args.archive_root)
             for plan in plans:
                 if plan.mode_action not in {"create", "update"}:
+                    continue
+                if not plan.has_delivered_task_data:
                     continue
                 if args.sync_raw_only:
                     _apply_raw_only_backfill(plan)

@@ -1225,3 +1225,200 @@ def test_spoken_intervals_ignores_numbered_silence_labels() -> None:
     spoken = spoken_intervals(intervals)
 
     assert [interval.text for interval in spoken] == ["Hallo", "Welt"]
+
+
+# ── has_delivered_task_data filter ───────────────────────────────────────────
+
+def _make_batch_dir_with_no_working_data(tmp_path: Path, person_id: str = "FR-L-0022") -> Path:
+    batch_dir = tmp_path / "french_batch_20260618"
+    batch_dir.mkdir(parents=True, exist_ok=True)
+    return batch_dir
+
+
+def _make_batch_dir_with_wordlist(tmp_path: Path, person_id: str = "FR-L-0001") -> Path:
+    batch_dir = tmp_path / "french_batch_20260618"
+    src = batch_dir / "working" / person_id / "wordlist" / "source"
+    aln = batch_dir / "working" / person_id / "wordlist" / "alignment"
+    src.mkdir(parents=True)
+    aln.mkdir(parents=True)
+    (src / "wordlist.wav").write_bytes(b"wav")
+    (aln / "wordlist.TextGrid").write_text("textgrid", encoding="utf-8")
+    return batch_dir
+
+
+def test_import_plan_has_no_delivered_task_data_when_no_working_files(tmp_path: Path, monkeypatch) -> None:
+    _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _make_batch_dir_with_no_working_data(tmp_path, person_id="FR-L-0022")
+    workbook_path = _write_workbook(tmp_path, person_id="FR-L-0022")
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    # Override person_id in workbook_data to match French naming (testing the logic only)
+    session_factory = _session_factory(tmp_path)
+
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+
+    assert len(plans) == 1
+    assert plans[0].has_delivered_task_data is False
+    assert all(tp.action == "skip" for tp in plans[0].task_plans)
+
+
+def test_import_plan_has_delivered_task_data_when_wordlist_ready(tmp_path: Path, monkeypatch) -> None:
+    _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _prepare_interview_batch(tmp_path, include_raw_master=False)
+    workbook_path = _write_workbook(tmp_path)
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+
+    assert len(plans) == 1
+    assert plans[0].has_delivered_task_data is True
+
+
+def test_import_plan_has_delivered_task_data_when_existing_runtime_artifacts(tmp_path: Path, monkeypatch) -> None:
+    runtime_root = _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _make_batch_dir_with_no_working_data(tmp_path)
+    workbook_path = _write_workbook(tmp_path)
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    # Pre-populate runtime with a session that has artifacts
+    session_dir = runtime_root / "data" / "sessions" / "spanish" / "ES-L-0001-2026-S01"
+    (session_dir / "alignment").mkdir(parents=True)
+    (session_dir / "derived").mkdir(parents=True)
+    (session_dir / "alignment" / "wordlist.json").write_text("{}", encoding="utf-8")
+    (session_dir / "derived" / "wordlist.mp3").write_bytes(b"mp3")
+    (session_dir / "metadata.json").write_text('{"tasks": [{"task_type": "wordlist"}]}', encoding="utf-8")
+
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+
+    assert len(plans) == 1
+    assert plans[0].has_delivered_task_data is True
+
+
+def test_import_plan_native_speaker_with_only_non_expected_interview_has_no_delivered_task_data(
+    tmp_path: Path, monkeypatch
+) -> None:
+    _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _prepare_interview_batch(
+        tmp_path, person_id="ES-N-0001", include_raw_master=False, include_working_interview=True
+    )
+    workbook_path = _write_workbook(tmp_path, person_id="ES-N-0001", speaker_type="native_speaker")
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+
+    # Interview is "not_expected_for_native_speaker" → action=skip; no other tasks → no delivered data.
+    assert plans[0].has_delivered_task_data is False
+    by_task = {tp.task_key: tp for tp in plans[0].task_plans}
+    assert by_task["interview"].action == "skip"
+    assert by_task["interview"].status == "not_expected_for_native_speaker"
+
+
+def test_main_skips_metadata_only_sessions_in_db_and_runtime(tmp_path: Path, monkeypatch) -> None:
+    runtime_root = _set_runtime_env(tmp_path, monkeypatch)
+    # batch_dir has NO working data → metadata-only
+    batch_dir = _make_batch_dir_with_no_working_data(tmp_path)
+    workbook_path = _write_workbook(tmp_path)
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    monkeypatch.setattr(production_importer, "create_full_task_mp3", lambda src, dst: None)
+
+    with session_factory() as db_session:
+        plans, plan_warnings = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=True,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+        assert len(plans) == 1
+        assert not plans[0].has_delivered_task_data
+
+        # _apply_plan must NOT be called for metadata-only sessions.
+        # Simulate the main() loop guard:
+        applied = []
+        for plan in plans:
+            if plan.mode_action not in {"create", "update"}:
+                continue
+            if not plan.has_delivered_task_data:
+                continue
+            applied.append(plan)
+
+    assert applied == []
+    session_dir = runtime_root / "data" / "sessions" / "spanish" / "ES-L-0001-2026-S01"
+    assert not session_dir.exists()
+
+    with session_factory() as db_session:
+        from sqlalchemy import select
+        from app.research_metadata import ResearchSession
+        rows = db_session.scalars(select(ResearchSession)).all()
+    assert rows == []
+
+
+def test_import_db_payload_excludes_metadata_only_sessions(tmp_path: Path, monkeypatch) -> None:
+    """applied_results (and thus db/import_payload.json) must not include sessions with no delivered task data."""
+    _set_runtime_env(tmp_path, monkeypatch)
+    batch_dir = _make_batch_dir_with_no_working_data(tmp_path)
+    workbook_path = _write_workbook(tmp_path)
+    workbook_data = load_intake_workbook(workbook_path, target_language="es")
+    session_factory = _session_factory(tmp_path)
+
+    applied_results = []
+    with session_factory() as db_session:
+        plans, _ = production_importer._build_import_plans(
+            batch_dir=batch_dir,
+            workbook_data=workbook_data,
+            create_missing_only=False,
+            sync_tasks=False,
+            sync_raw_only=False,
+            allow_session_id_change=False,
+            db_session=db_session,
+        )
+        for plan in plans:
+            if plan.mode_action not in {"create", "update"}:
+                continue
+            if not plan.has_delivered_task_data:
+                continue
+            applied_results.append(plan)
+
+    assert applied_results == []

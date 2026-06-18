@@ -9,17 +9,21 @@ import re
 import sys
 from typing import Any
 
-from sqlalchemy import create_engine, func, inspect, select
+from sqlalchemy import create_engine, delete, func, inspect, select
 from sqlalchemy.orm import Session, sessionmaker
 
 
 if str(__file__).startswith("<") or not Path(__file__).exists():
     REPO_ROOT = Path.cwd()
 else:
-    REPO_ROOT = Path(__file__).resolve().parents[2]
-APP_SRC = REPO_ROOT / "app" / "src"
-if not APP_SRC.exists() and (REPO_ROOT / "src").exists():
-    APP_SRC = REPO_ROOT / "src"
+    parents = Path(__file__).resolve().parents
+    REPO_ROOT = parents[2] if len(parents) > 2 else Path.cwd()
+if os.environ.get("PROMAT_APP_SRC"):
+    APP_SRC = Path(os.environ["PROMAT_APP_SRC"])
+else:
+    APP_SRC = REPO_ROOT / "app" / "src"
+    if not APP_SRC.exists() and (REPO_ROOT / "src").exists():
+        APP_SRC = REPO_ROOT / "src"
 SCRIPT_ROOT = Path(__file__).resolve().parent
 if str(APP_SRC) not in sys.path:
     sys.path.insert(0, str(APP_SRC))
@@ -79,6 +83,23 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--apply", action="store_true", help="Apply the transactional DB upsert. Default is dry-run.")
     parser.add_argument("--dry-run", action="store_true", help="Validate and report planned DB changes without writing.")
+    parser.add_argument(
+        "--cleanup-metadata-only",
+        action="store_true",
+        help=(
+            "Find and optionally remove DB rows for sessions of --target-language that have no runtime task artifacts "
+            "in the release dir. Requires --target-language. Default is dry-run; use --apply-cleanup to apply."
+        ),
+    )
+    parser.add_argument(
+        "--target-language",
+        help="Target language code or slug for --cleanup-metadata-only (e.g. fr or french).",
+    )
+    parser.add_argument(
+        "--apply-cleanup",
+        action="store_true",
+        help="Apply the metadata-only cleanup transactionally. Only valid with --cleanup-metadata-only.",
+    )
     return parser.parse_args()
 
 
@@ -234,6 +255,10 @@ def validate_payload_against_release(payload: dict[str, Any], release_dir: Path)
             documented_tasks = [str(task).strip() for task in raw_tasks if str(task).strip()]
         else:
             raise PayloadUpsertError(f"session {session_id} documented_tasks must be a list or text")
+        if not documented_tasks:
+            raise PayloadUpsertError(
+                f"session {session_id} has no documented_tasks; metadata-only sessions must not be in db/import_payload.json"
+            )
         for task in documented_tasks:
             if task not in SUPPORTED_TASKS:
                 raise PayloadUpsertError(f"session {session_id} has unsupported task {task!r}")
@@ -516,6 +541,88 @@ def run_payload_upsert(
     }
 
 
+def _session_dir_has_task_artifacts(session_dir: Path) -> bool:
+    for task_key in SUPPORTED_TASKS:
+        if (session_dir / "alignment" / f"{task_key}.json").exists():
+            return True
+        if (session_dir / "derived" / f"{task_key}.mp3").exists():
+            return True
+    return False
+
+
+def run_cleanup_metadata_only(
+    *,
+    release_dir: Path,
+    database_url: str,
+    target_language: str,
+    apply_cleanup: bool,
+) -> dict[str, Any]:
+    language = resolve_language_config(target_language)
+    sessions_dir = release_dir / "sessions" / language.corpus_slug
+
+    engine = create_engine(database_url, future=True)
+    _assert_schema_ready(engine)
+    session_factory = sessionmaker(bind=engine, future=True)
+
+    metadata_only_session_ids: list[str] = []
+    person_session_ids: dict[str, list[str]] = {}
+    exposure_count_to_delete = 0
+
+    with session_factory() as db_session:
+        all_db_sessions = db_session.scalars(
+            select(ResearchSession).where(ResearchSession.target_language == language.code)
+        ).all()
+
+        for db_row in all_db_sessions:
+            person_session_ids.setdefault(db_row.person_id, []).append(db_row.session_id)
+            session_dir = sessions_dir / db_row.session_id
+            if not _session_dir_has_task_artifacts(session_dir):
+                metadata_only_session_ids.append(db_row.session_id)
+                exp_count = int(
+                    db_session.scalar(
+                        select(func.count())
+                        .select_from(ResearchSessionExposure)
+                        .where(ResearchSessionExposure.session_id == db_row.session_id)
+                    )
+                    or 0
+                )
+                exposure_count_to_delete += exp_count
+
+        metadata_only_set = set(metadata_only_session_ids)
+        persons_to_delete = sorted(
+            person_id
+            for person_id, session_ids in person_session_ids.items()
+            if all(sid in metadata_only_set for sid in session_ids)
+        )
+
+    result: dict[str, Any] = {
+        "mode": "apply_cleanup" if apply_cleanup else "dry_run",
+        "target_language": language.code,
+        "corpus": language.corpus_slug,
+        "sessions_checked": len(all_db_sessions),
+        "sessions_to_delete": sorted(metadata_only_session_ids),
+        "persons_to_delete": persons_to_delete,
+        "exposures_to_delete": exposure_count_to_delete,
+    }
+
+    if apply_cleanup:
+        with session_factory.begin() as db_session:
+            for session_id in metadata_only_session_ids:
+                db_session.execute(
+                    delete(ResearchSessionExposure).where(ResearchSessionExposure.session_id == session_id)
+                )
+                session_row = db_session.get(ResearchSession, session_id)
+                if session_row is not None:
+                    db_session.delete(session_row)
+            for person_id in persons_to_delete:
+                person_row = db_session.get(ResearchPerson, person_id)
+                if person_row is not None:
+                    db_session.delete(person_row)
+        result["applied"] = True
+
+    return result
+
+
 def _post_upsert_validation(db_session: Session, payload: dict[str, Any]) -> dict[str, Any]:
     persons = _require_list(payload, "persons")
     sessions = _require_list(payload, "sessions")
@@ -555,16 +662,31 @@ def _resolve_database_url(explicit_value: str | None) -> str:
 def main() -> int:
     args = parse_args()
     try:
-        if args.apply and args.dry_run:
-            raise PayloadUpsertError("--apply and --dry-run cannot be combined")
-        release_dir = Path(args.release_dir).resolve()
-        payload_path = Path(args.payload).resolve() if args.payload else release_dir / "db" / "import_payload.json"
-        report = run_payload_upsert(
-            release_dir=release_dir,
-            payload_path=payload_path,
-            database_url=_resolve_database_url(args.auth_database_url),
-            apply_changes=args.apply,
-        )
+        if args.cleanup_metadata_only:
+            if args.apply_cleanup and args.dry_run:
+                raise PayloadUpsertError("--apply-cleanup and --dry-run cannot be combined")
+            if not args.target_language:
+                raise PayloadUpsertError("--cleanup-metadata-only requires --target-language")
+            if args.apply and not args.cleanup_metadata_only:
+                raise PayloadUpsertError("--apply cannot be combined with --cleanup-metadata-only; use --apply-cleanup")
+            release_dir = Path(args.release_dir).resolve()
+            report = run_cleanup_metadata_only(
+                release_dir=release_dir,
+                database_url=_resolve_database_url(args.auth_database_url),
+                target_language=args.target_language,
+                apply_cleanup=args.apply_cleanup,
+            )
+        else:
+            if args.apply and args.dry_run:
+                raise PayloadUpsertError("--apply and --dry-run cannot be combined")
+            release_dir = Path(args.release_dir).resolve()
+            payload_path = Path(args.payload).resolve() if args.payload else release_dir / "db" / "import_payload.json"
+            report = run_payload_upsert(
+                release_dir=release_dir,
+                payload_path=payload_path,
+                database_url=_resolve_database_url(args.auth_database_url),
+                apply_changes=args.apply,
+            )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
