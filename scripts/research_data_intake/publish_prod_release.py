@@ -54,7 +54,7 @@ def _q(value: str) -> str:
 
 def build_remote_publish_script(options: RemotePublishOptions) -> str:
     db_block = _db_upsert_block() if options.apply_db_upsert else _db_skip_block()
-    return f"""#!/usr/bin/env bash
+    script = f"""#!/usr/bin/env bash
 set -euo pipefail
 
 UPLOAD_ID={_q(options.upload_id)}
@@ -148,6 +148,7 @@ REPORT
 rm -rf "$INCOMING"
 echo "$PUBLISH_LOG"
 """
+    return script.replace("\r\n", "\n")
 
 
 def _db_skip_block() -> str:
