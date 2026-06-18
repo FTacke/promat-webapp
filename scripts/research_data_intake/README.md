@@ -237,7 +237,7 @@ Publish mit Produktions-DB-Upsert aus `db/import_payload.json`:
 
 Serverseitigen DB-Payload-Upsert gegen ein staged Release nur pruefen:
 
-`docker exec -i promat-web-prod python - --release-dir /app/data/releases/<release_id> --payload /app/data/releases/<release_id>/db/import_payload.json < /srv/webapps/promat/app/scripts/research_data_intake/apply_prod_db_payload.py`
+`docker exec promat-web-prod python /app/scripts/research_data_intake/apply_prod_db_payload.py --release-dir /app/data/releases/<release_id> --payload /app/data/releases/<release_id>/db/import_payload.json`
 
 Expliziten Dev-Research-File-Reset nur dry-run anzeigen:
 

@@ -35,11 +35,10 @@ def test_publish_with_flag_runs_db_dry_run_and_apply_before_current_switch() -> 
     dry_run_index = script.index("DB_DRY_RUN_OUTPUT")
     apply_index = script.index("DB_APPLY_OUTPUT")
     switch_index = script.index("ln -sfn \"$RELEASE\" \"$CURRENT.tmp\"")
-    assert "docker exec -i \"$DB_CONTAINER\" python -" in script
+    assert "docker exec \"$DB_CONTAINER\" python /app/scripts/research_data_intake/apply_prod_db_payload.py" in script
     assert "--release-dir \"$CONTAINER_RELEASE\"" in script
     assert "test -f \"$RELEASE/db/import_payload.json\"" in script
-    assert "apply_prod_db_payload.py" in script
-    assert "--apply < \"$APP_ROOT/scripts/research_data_intake/apply_prod_db_payload.py\"" in script
+    assert "--apply)" in script
     assert dry_run_index < apply_index < switch_index
 
 

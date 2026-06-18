@@ -86,7 +86,7 @@ Mit `--apply-db-upsert`:
 4. Post-Upsert-Validierung ausfuehren.
 5. Erst danach atomaren `current`-Switch ausfuehren.
 
-Der DB-Upsert nutzt `scripts/research_data_intake/apply_prod_db_payload.py`, wird per `docker exec -i promat-web-prod python - ...` in der Webcontainer-Umgebung ausgefuehrt und betrifft nur:
+Der DB-Upsert nutzt `/app/scripts/research_data_intake/apply_prod_db_payload.py` aus dem deployten Webcontainer-Image, wird per `docker exec promat-web-prod python ...` in der Webcontainer-Umgebung ausgefuehrt und betrifft nur:
 
 - `research_people`
 - `research_sessions`

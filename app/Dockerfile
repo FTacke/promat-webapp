@@ -7,6 +7,8 @@ RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r re
 
 COPY app/ ./
 COPY content/ ./content/
+RUN mkdir -p scripts/research_data_intake
+COPY scripts/research_data_intake/apply_prod_db_payload.py ./scripts/research_data_intake/apply_prod_db_payload.py
 
 ENV FLASK_ENV=production
 EXPOSE 5000

@@ -8,6 +8,7 @@ Den Research-Prod-Publish so erweitern, dass ein vorbereitetes `db/import_payloa
 
 - Neues Tool `scripts/research_data_intake/apply_prod_db_payload.py` validiert ein staged Release und plant oder schreibt den DB-Upsert.
 - Neuer Publish-Wrapper `scripts/research_data_intake/publish_prod_release.py` haelt Runtime-only als Default und aktiviert den DB-Upsert nur mit `--apply-db-upsert`.
+- Das Prod-Image kopiert `apply_prod_db_payload.py` nach `/app/scripts/research_data_intake/`, sodass der DB-Upsert im Webcontainer aus deploytem Code laeuft.
 - Der DB-Upsert betrifft `research_people`, `research_sessions` und `research_session_exposures`.
 - Dry-Run und Apply liefern JSON-Reports mit Insert-/Update-/Unchanged-/Delete-Counts, Batch, Sprache, Post-Upsert-Validierung und Rollback-Hinweis.
 - Docs aktualisiert in Spec, Runbooks und README.

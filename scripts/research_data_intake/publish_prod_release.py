@@ -127,7 +127,7 @@ cat > "$PUBLISH_LOG" <<REPORT
 - db_payload_present: $DB_PAYLOAD_PRESENT
 - db_upsert_status: $DB_STATUS
 - db_post_upsert_validation: $DB_POST_VALIDATION
-- db_command: docker exec -i $DB_CONTAINER python - --release-dir "$CONTAINER_RELEASE" --payload "$CONTAINER_RELEASE/db/import_payload.json" < "$APP_ROOT/scripts/research_data_intake/apply_prod_db_payload.py"
+- db_command: docker exec $DB_CONTAINER python /app/scripts/research_data_intake/apply_prod_db_payload.py --release-dir "$CONTAINER_RELEASE" --payload "$CONTAINER_RELEASE/db/import_payload.json"
 - health_status: $HEALTH_STATUS
 - ready_status: $READY_STATUS
 - rollback_hint: repoint current to the previous release; DB upsert is transactional and otherwise restored from the production DB backup/snapshot.
@@ -159,12 +159,11 @@ DB_APPLY_OUTPUT="{\\"mode\\":\\"skipped\\",\\"reason\\":\\"--apply-db-upsert not
 
 def _db_upsert_block() -> str:
     base_command = (
-        'docker exec -i "$DB_CONTAINER" python - '
+        'docker exec "$DB_CONTAINER" python /app/scripts/research_data_intake/apply_prod_db_payload.py '
         '--release-dir "$CONTAINER_RELEASE" --payload "$CONTAINER_RELEASE/db/import_payload.json"'
     )
-    script_redirect = '< "$APP_ROOT/scripts/research_data_intake/apply_prod_db_payload.py"'
-    dry_run_command = f"{base_command} {script_redirect}"
-    apply_command = f"{base_command} --apply {script_redirect}"
+    dry_run_command = base_command
+    apply_command = f"{base_command} --apply"
     return f"""test -f "$RELEASE/db/import_payload.json" || {{
   echo "--apply-db-upsert requires $RELEASE/db/import_payload.json" >&2
   exit 1
