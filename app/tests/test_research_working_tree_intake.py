@@ -173,6 +173,21 @@ def test_scan_import_batch_accepts_drop_in_files_without_stage_subfolders(tmp_pa
     assert "unsupported intake file type skipped: notes.txt" in scan_report.warnings
 
 
+def test_scan_import_batch_treats_bearbeitet_like_processed(tmp_path: Path) -> None:
+    batch_dir = tmp_path / "french_batch_20260618"
+    _write_bytes(batch_dir / "fr_l_0021_wordlist_bearbeitet.wav", b"wordlist-source")
+
+    scan_report = intake_batch_common.scan_import_batch(batch_dir)
+
+    assert scan_report.warnings == ()
+    assert len(scan_report.parsed_files) == 1
+    entry = scan_report.parsed_files[0]
+    assert entry.person_id == "FR-L-0021"
+    assert entry.task == "wordlist"
+    assert entry.stage == "processed"
+    assert entry.file_role == "source"
+
+
 def test_build_interview_alignment_payload_maps_segments_and_annotations(tmp_path: Path) -> None:
     source_json = tmp_path / "input.json"
     _write_json(source_json, _minimal_interview_payload())

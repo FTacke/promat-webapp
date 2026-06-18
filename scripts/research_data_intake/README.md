@@ -31,6 +31,7 @@ Unterstützte Batch-Rollen:
 
 - `raw`: echte unbearbeitete WAV-Master
 - `source`: operative Analyse-/Ableitungs-WAVs, auch aus `*_processed.wav`
+- `bearbeitet`: Dateiname-Alias für `processed`/`source`, z. B. `*_bearbeitet.wav`
 - `alignment_source`: TextGrids, Amberscript-JSON, andere alignment-nahe JSON-Quellen
 - Workbook: `*.xlsx`
 

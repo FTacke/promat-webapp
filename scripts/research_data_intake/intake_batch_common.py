@@ -22,6 +22,7 @@ WORKBOOK_EXTENSIONS = {".xlsx"}
 ROLE_ALIASES = {
     "raw": "raw",
     "origin": "origin",
+    "bearbeitet": "source",
     "processed": "source",
     "source": "source",
     "amberscript": "alignment_source",
@@ -37,7 +38,7 @@ _TOKEN_SPLIT_PATTERN = re.compile(r"[^A-Za-z0-9]+")
 
 _BATCH_FILE_PATTERN = re.compile(
     r"^(?P<corpus>[A-Za-z]{2,})[-_](?P<speaker_marker>[A-Za-z])[-_](?P<person_number>\d{4})"
-    r"_(?P<task>wordlist|text|interview)_(?P<stage>raw|processed)\.(?P<extension>wav|textgrid|json)$",
+    r"_(?P<task>wordlist|text|interview)_(?P<stage>raw|processed|bearbeitet)\.(?P<extension>wav|textgrid|json)$",
     re.IGNORECASE,
 )
 
@@ -192,6 +193,8 @@ def parse_batch_filename(path: Path, source_root: str, batch_dir: Path) -> Parse
     else:
         file_kind = "textgrid"
     relative_source = str(path.relative_to(batch_dir)).replace("\\", "/")
+    raw_stage = str(match.group("stage") or "").lower()
+    stage = "processed" if raw_stage == "bearbeitet" else raw_stage
     return ParsedBatchFile(
         source_path=path,
         source_root=source_root,
@@ -202,9 +205,9 @@ def parse_batch_filename(path: Path, source_root: str, batch_dir: Path) -> Parse
             person_number=str(match.group("person_number") or ""),
         ),
         task=str(match.group("task") or "").lower(),
-        stage=str(match.group("stage") or "").lower(),
+        stage=stage,
         file_kind=file_kind,
-        file_role="source" if str(match.group("stage") or "").lower() == "processed" else "raw",
+        file_role="source" if stage == "processed" else "raw",
     )
 
 
