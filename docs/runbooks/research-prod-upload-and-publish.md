@@ -129,9 +129,31 @@ Pflicht:
 
 Geschuetzte Routen nur mit sicherem Auth-Verfahren testen; keine Tokens loggen.
 
+## Release Retention
+
+Nach jedem erfolgreichen Publish (Health und Ready = 200) laeuft automatisch ein Release-Retention-Schritt:
+
+**Policy: `keep_current_plus_1_previous_max_7_days`**
+
+- Das aktive Release (`current`-Ziel) wird niemals geloescht.
+- Maximal ein vorheriges Release bleibt als kurzfristiger Rollback-Puffer, aber nur wenn es juenger als 7 Tage ist.
+- Alle anderen aelteren Releases werden geloescht.
+- `data/current`, `data/sessions/`, `data/incoming/`, `data/publish_logs/` und DB-Daten werden nicht beruehrt.
+- Alte Releases sind kein Archiv. Dauerhafte Reproduzierbarkeit kommt aus dem lokalen Intake-Archiv und dem Repo.
+
+Publish-Log-Felder: `release_retention_status`, `current_release`, `previous_release_kept`, `previous_release_age_days`, `deleted_releases`, `retention_policy`.
+
+CLI-Optionen:
+
+- `--release-retention-days N` (Default: 7) — maximales Alter des vorherigen Releases in Tagen.
+- `--release-retention-previous N` (Default: 1) — maximale Anzahl vorheriger Releases.
+- `--no-release-retention` — Retention-Schritt ueberspringen (z. B. fuer Dev-Debugging).
+
+Wenn der Retention-Schritt nicht automatisch ausgefuehrt werden konnte oder eine manuelle Bereinigung noetig ist, kann ein Standalone-Skript generiert und per SSH ausgefuehrt werden (Dry-run zuerst, dann Apply).
+
 ## Cleanup
 
-1. Neues incoming nur nach erfolgreichem Promote loeschen.
+1. Neues incoming wird nach erfolgreichem Promote automatisch geloescht.
 2. Failed incoming erst nach erfolgreichem neuen Promote bewusst loeschen oder in Quarantine verschieben.
 3. Cleanup-Schritt im Report dokumentieren.
 

@@ -7,7 +7,11 @@ from pathlib import Path
 TEST_REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(TEST_REPO_ROOT / "scripts" / "research_data_intake"))
 
-from publish_prod_release import RemotePublishOptions, build_remote_publish_script  # noqa: E402
+from publish_prod_release import (  # noqa: E402
+    RemotePublishOptions,
+    build_remote_publish_script,
+    build_standalone_retention_script,
+)
 
 
 def test_publish_without_flag_skips_db_upsert() -> None:
@@ -117,4 +121,116 @@ def test_publish_log_documents_db_upsert_status() -> None:
     assert "## DB Apply" in script
     assert "```json" not in script
     assert "~~~json" in script
+    assert "\r" not in script
+
+
+# ── Release-Retention ─────────────────────────────────────────────────────────
+
+def _default_script() -> str:
+    return build_remote_publish_script(
+        RemotePublishOptions(
+            upload_id="english_batch_20260618_runtime",
+            smoke_base_url="https://promat.example.test",
+        )
+    )
+
+
+def test_retention_current_release_is_never_deleted() -> None:
+    script = _default_script()
+    # current is excluded via readlink comparison
+    assert 'RETENTION_CURRENT="$(readlink -f "$CURRENT"' in script
+    assert '[ "$_r" != "$RETENTION_CURRENT" ] || continue' in script
+
+
+def test_retention_keeps_previous_release_within_age_limit() -> None:
+    script = _default_script()
+    assert "_AGE" in script
+    assert '"$_AGE" -le 7' in script
+    assert "_RET_PREV_KEPT" in script
+    assert "continue" in script
+
+
+def test_retention_deletes_previous_release_older_than_age_limit() -> None:
+    script = _default_script()
+    # When age > retention_days the rm -rf path is taken
+    assert 'rm -rf "$_r"' in script
+    assert "_RET_DELETED" in script
+
+
+def test_retention_path_safety_check_prevents_out_of_bounds_delete() -> None:
+    script = _default_script()
+    assert '"$DATA_ROOT/releases/release_"*)' in script
+    assert "*) continue ;;" in script
+
+
+def test_retention_only_runs_when_health_and_ready_are_200() -> None:
+    script = _default_script()
+    health_gate_index = script.index('if [ "$HEALTH_STATUS" = "200" ] && [ "$READY_STATUS" = "200" ]')
+    inner_block_index = script.index('_RET_PREV_COUNT=0')
+    retention_applied_index = script.index('RETENTION_STATUS="applied"')
+    log_index = script.index("release_retention_status: $RETENTION_STATUS")
+    # Gate wraps the inner block; log comes after
+    assert health_gate_index < inner_block_index < retention_applied_index < log_index
+
+
+def test_no_release_retention_flag_skips_cleanup() -> None:
+    script = build_remote_publish_script(
+        RemotePublishOptions(
+            upload_id="english_batch_20260618_runtime",
+            smoke_base_url="https://promat.example.test",
+            no_release_retention=True,
+        )
+    )
+    assert 'RETENTION_STATUS="skipped_no_flag"' in script
+    assert 'rm -rf "$_r"' not in script
+    assert "RETENTION_POLICY=none_no_flag" in script
+
+
+def test_publish_log_contains_retention_fields() -> None:
+    script = _default_script()
+    assert "release_retention_status: $RETENTION_STATUS" in script
+    assert "current_release: $RETENTION_CURRENT" in script
+    assert "previous_release_kept: $RETENTION_PREVIOUS_KEPT" in script
+    assert "previous_release_age_days: $RETENTION_PREVIOUS_AGE_DAYS" in script
+    assert "deleted_releases: $RETENTION_DELETED" in script
+    assert "retention_policy: $RETENTION_POLICY" in script
+
+
+def test_retention_custom_days_wired_into_script() -> None:
+    script = build_remote_publish_script(
+        RemotePublishOptions(
+            upload_id="english_batch_20260618_runtime",
+            smoke_base_url="https://promat.example.test",
+            release_retention_days=14,
+            release_retention_previous=2,
+        )
+    )
+    assert '"$_AGE" -le 14' in script
+    assert '"$_RET_PREV_COUNT" -lt 2' in script
+    assert "keep_current_plus_2_previous_max_14_days" in script
+
+
+def test_standalone_retention_preview_shows_would_delete_without_rm() -> None:
+    script = build_standalone_retention_script(
+        data_root="/srv/webapps_storage/promat/data",
+        retention_days=7,
+        retention_previous=1,
+        apply=False,
+    )
+    assert "DRY_RUN" in script
+    assert "would_delete:" in script
+    assert "keep_as_previous" in script
+    assert "rm -rf" not in script
+    assert "\r" not in script
+
+
+def test_standalone_retention_apply_script_does_rm() -> None:
+    script = build_standalone_retention_script(
+        data_root="/srv/webapps_storage/promat/data",
+        retention_days=7,
+        retention_previous=1,
+        apply=True,
+    )
+    assert "APPLY" in script
+    assert 'rm -rf "$_r"' in script
     assert "\r" not in script

@@ -602,6 +602,8 @@ scripts/research_data_intake/exports/{upload_id}/
 - After each promote-plus-rsync step, the app container must be restarted so that `@lru_cache`-backed loaders (`load_language_sessions`, `load_task_ready_sessions`, `is_playable_audio_artifact`) reflect the updated flat session tree; without a restart these caches retain stale data for the lifetime of the process.
 - The initial v0.7 production deployment has no separate `/srv/webapps/promat/media` or `/app/media` bind mount. A separate media root may be added later only if application code gains a real runtime need for it and the platform spec is updated first.
 - Upload omission must never delete existing production files implicitly; deletion is always a separate explicit mechanism, and failed incoming or staging trees stay in place until explicit cleanup approval.
+- Release directories under `data/releases/` are not a permanent archive. After each successful publish, a release-retention step runs: the active `current` target is always kept; at most one previous release is kept as a short-term rollback reserve, only if it is at most 7 days old; all older releases are deleted. This default policy (`keep_current_plus_1_previous_max_7_days`) can be overridden via `--release-retention-days`, `--release-retention-previous`, or disabled with `--no-release-retention`. The retention step only runs if health and ready return 200; it never touches `data/current`, `data/sessions/`, `data/incoming/`, `data/publish_logs/`, or the DB.
+- Durable reproducibility of past releases comes from the local intake archive and the repository, not from an ever-growing server release history. Old releases are expendable once the app has been verified healthy.
 
 ## Active Metadata Semantics
 
