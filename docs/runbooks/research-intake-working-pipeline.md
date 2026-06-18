@@ -13,6 +13,7 @@ Teaching ist nicht Teil dieses Runbooks. `content/`, `public/teaching/` und Teac
 - Der Batch ist ein Drop-in-Verzeichnis ohne Pflicht für `processed/`, `raw/`, `source/` oder `intake_data/`.
 - Workbook, WAV, TextGrid und JSON dürfen direkt im Batch oder in optionalen Hilfsunterordnern liegen.
 - Klassifikation erfolgt strikt über Dateinamen und bekannte Rollen, nicht über freie Workbook-Prosa oder heuristische Pfadannahmen.
+- Dateinamen mit `_processed` oder `_bearbeitet` werden als operative `source`-Eingänge behandelt.
 
 ## Unterstützte Sprachkonfiguration
 
@@ -34,6 +35,7 @@ Regeln:
 - Der Scanner klassifiziert Dateien nach `person_id`, Task, Rolle und Dateityp.
 - Mehrdeutige oder konkurrierende Kandidaten bleiben sichtbar im Report und werden nicht automatisch aufgelöst.
 - Das Workbook wird aus dem Batch rekursiv gefunden; es ist nicht mehr an `intake_data/*.xlsx` gebunden.
+- Für einen sauberen Re-Run dürfen nur generierte Zwischen- und Output-Bereiche gelöscht oder überschrieben werden; Workbook, Original-Audio, Original-Transkripte und Konfiguration bleiben erhalten.
 
 ## Schritt 2: Working-Tree organisieren
 

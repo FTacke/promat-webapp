@@ -150,3 +150,5 @@ Mindestinhalt:
 - Health/Smoke-Ergebnisse
 - Cleanup-Entscheidung
 - offene Folgepunkte
+
+Der generierte Markdown-Report darf JSON-Blöcke in einem Bash-Heredoc nicht mit Backtick-Fences schreiben, weil unquoted heredocs Backticks als Command Substitution behandeln. Für eingebettete JSON-Ausgaben werden deshalb Tilde-Fences wie `~~~json` verwendet.

@@ -56,3 +56,6 @@ def test_publish_log_documents_db_upsert_status() -> None:
     assert "db_post_upsert_validation: $DB_POST_VALIDATION" in script
     assert "## DB Dry Run" in script
     assert "## DB Apply" in script
+    assert "```json" not in script
+    assert "~~~json" in script
+    assert "\r" not in script

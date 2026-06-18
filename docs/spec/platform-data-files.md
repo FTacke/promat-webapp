@@ -513,6 +513,7 @@ scripts/research_data_intake/import/{batch_name}/
 - There is no manual subfolder requirement for `processed/`, `raw/`, `source/`, or `intake_data/`.
 - Users may place the workbook, WAVs, TextGrids, Amberscript JSON, and other task-related intake files directly under the batch root or in optional helper subfolders.
 - The active batch scanner must classify files strictly from explicit filename signals for `person_id`, target corpus, task, role, and file type.
+- Accepted filename role signals include `raw`, `source`, `processed`, and `bearbeitet`; `processed` and `bearbeitet` are normalized to the operative `source` role.
 - If filename classification is ambiguous, conflicting, or incomplete, the pipeline must warn, skip the affected unit, or fail explicitly; it must not guess.
 - Workbook prose may refine metadata, but it must not substitute for missing explicit filename-based file identity.
 

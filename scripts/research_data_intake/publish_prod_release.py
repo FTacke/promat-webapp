@@ -134,15 +134,15 @@ cat > "$PUBLISH_LOG" <<REPORT
 
 ## DB Dry Run
 
-```json
+~~~json
 $DB_DRY_RUN_OUTPUT
-```
+~~~
 
 ## DB Apply
 
-```json
+~~~json
 $DB_APPLY_OUTPUT
-```
+~~~
 REPORT
 
 rm -rf "$INCOMING"
