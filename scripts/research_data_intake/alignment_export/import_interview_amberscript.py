@@ -171,20 +171,36 @@ def _annotation_task(item_id: str) -> str | None:
     return None
 
 
-def _resolve_annotation_catalog_entry(*, language_slug: str, item_id: str, source_json_path: Path) -> tuple[str, dict[str, object]]:
+def _zero_padded_item_id(item_id: str) -> str:
+    match = re.fullmatch(r"(?P<prefix>wl_|d_|qy_|qw_|t_)(?P<number>\d+)", item_id.strip().lower())
+    if match is None:
+        return item_id
+    width = 3 if match.group("prefix") == "wl_" else 2
+    return f"{match.group('prefix')}{int(match.group('number')):0{width}d}"
+
+
+def _resolve_annotation_catalog_entry(*, language_slug: str, item_id: str, source_json_path: Path) -> tuple[str, str, dict[str, object]]:
     task_name = _annotation_task(item_id)
     if task_name is None:
         raise InterviewImportError(
             "error_invalid_material_ref_marker",
             f"Unsupported material reference prefix in {item_id!r}: {source_json_path}",
         )
-    catalog_entry = resolve_catalog_item(language_slug, task_name, item_id)
+    resolved_item_id = item_id
+    catalog_entry = resolve_catalog_item(language_slug, task_name, resolved_item_id)
+    if catalog_entry is None:
+        normalized_item_id = _zero_padded_item_id(item_id)
+        if normalized_item_id != item_id:
+            normalized_catalog_entry = resolve_catalog_item(language_slug, task_name, normalized_item_id)
+            if normalized_catalog_entry is not None:
+                resolved_item_id = normalized_item_id
+                catalog_entry = normalized_catalog_entry
     if catalog_entry is None:
         raise InterviewImportError(
             "error_unknown_material_ref_item_id",
             f"Unknown material reference item_id {item_id!r} for {language_slug}/{task_name}: {source_json_path}",
         )
-    return task_name, {
+    return task_name, resolved_item_id, {
         "label": catalog_entry.label,
         "item_number": catalog_entry.item_number,
         "canonical_text": catalog_entry.canonical_text,
@@ -229,14 +245,14 @@ def _material_ref_annotation(
     language_slug: str,
     source_json_path: Path,
 ) -> dict[str, object]:
-    task_name, catalog_payload = _resolve_annotation_catalog_entry(
+    task_name, resolved_item_id, catalog_payload = _resolve_annotation_catalog_entry(
         language_slug=language_slug,
         item_id=item_id,
         source_json_path=source_json_path,
     )
     return {
         "kind": "material_ref",
-        "item_id": item_id,
+        "item_id": resolved_item_id,
         "task": task_name,
         "insert_after_token_id": insert_after_token_id,
         **catalog_payload,
@@ -276,17 +292,30 @@ def _is_intraword_bracket_literal(raw_text: str) -> bool:
     match = re.search(r"\[[^\]]+\]", raw_text)
     if match is None:
         return False
+    label = match.group(0).strip("[]")
+    if re.fullmatch(r"[A-Za-z]+_\d+", label):
+        return False
     has_left_anchor = match.start() > 0 and raw_text[match.start() - 1].isalnum()
     has_right_anchor = match.end() < len(raw_text) and raw_text[match.end()].isalnum()
-    return has_left_anchor and has_right_anchor
+    has_right_boundary = match.end() == len(raw_text) or not raw_text[match.end()].isalnum()
+    return has_left_anchor and (has_right_anchor or has_right_boundary)
 
 
 def _is_non_material_bracket_literal(raw_text: str) -> bool:
     if _is_intraword_bracket_literal(raw_text):
         return True
-    match = re.fullmatch(r"\[(?P<label>[^\[\]]+)\](?P<suffix>[.,!?;:\-]+)?", raw_text.strip())
+    stripped = raw_text.strip().strip('"')
+    match = re.search(r"\[(?P<label>[^\[\]]+)\]", stripped)
     if match is None:
-        return False
+        unmatched = re.search(r"\[(?P<label>[^\[\]\s]+)$", stripped)
+        if unmatched is None:
+            unmatched_closing = re.search(r"(?P<label>[^\[\]\s]+)\]", stripped)
+            if unmatched_closing is None:
+                return False
+            label = unmatched_closing.group("label").strip()
+            return bool(label) and not re.fullmatch(r"[A-Za-z]+_\d+", label)
+        label = unmatched.group("label").strip()
+        return bool(label) and not re.fullmatch(r"[A-Za-z]+_\d+", label)
     label = match.group("label").strip()
     if re.fullmatch(r"[A-Za-z]+_\d+", label):
         return False
@@ -335,7 +364,8 @@ def build_interview_alignment_payload(
             len(words_payload),
         )
         if last_end_ms <= first_start_ms:
-            raise ValueError(f"Segment {segment_index} has a non-positive duration: {source_json_path}")
+            warnings.append(f"segment {segment_index} has zero duration; clamped to 1ms")
+            last_end_ms = first_start_ms + 1
 
         tokens: list[dict[str, object]] = []
         annotations: list[dict[str, object]] = []

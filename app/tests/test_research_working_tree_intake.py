@@ -293,6 +293,29 @@ def test_build_interview_alignment_payload_keeps_non_material_bracket_literals(t
     assert segment["text"] == "Ja, [u]. [x] [theta]"
 
 
+def test_build_interview_alignment_payload_keeps_quoted_word_final_brackets_as_literal(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    _write_json(
+        source_json,
+        _minimal_interview_payload(
+            reference_words=['"blan[k]"', '"aspe[kt]"', "all[e", 'ɛ]lles"', "[ʒ]-Sound", '"[ʒ]eler"-']
+        ),
+    )
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="EN-L-0001", session_id=None)
+
+    segment = payload["segments"][1]
+    assert [token["text"] for token in segment["tokens"][1:]] == [
+        '"blan[k]"',
+        '"aspe[kt]"',
+        "all[e",
+        'ɛ]lles"',
+        "[ʒ]-Sound",
+        '"[ʒ]eler"-',
+    ]
+    assert segment.get("annotations") is None
+
+
 def test_build_interview_alignment_payload_maps_uuid_speaker_ids_from_speakers_table(tmp_path: Path) -> None:
     source_json = tmp_path / "input.json"
     payload_data = _minimal_interview_payload()
@@ -347,6 +370,17 @@ def test_build_interview_alignment_payload_accepts_dash_suffix_on_material_ref(t
     assert segment.get("annotations")
 
 
+def test_build_interview_alignment_payload_zero_pads_known_material_ref_ids(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    _write_json(source_json, _minimal_interview_payload(reference_words=["[t_8]."]))
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="FR-L-0001", session_id=None)
+
+    annotations = payload["segments"][1]["annotations"]
+    assert annotations[0]["item_id"] == "t_08"
+    assert annotations[0]["item_number"] == "T8"
+
+
 def test_build_interview_alignment_payload_clamps_zero_duration_word_with_warning(tmp_path: Path) -> None:
     source_json = tmp_path / "input.json"
     zero_dur_word = {"start": 3.0, "end": 3.0, "text": "//ich//", "duration": 0.0, "conf": 1, "pristine": True}
@@ -359,6 +393,22 @@ def test_build_interview_alignment_payload_clamps_zero_duration_word_with_warnin
     assert "//ich//" in " ".join(t["text"] for t in payload["segments"][1]["tokens"])
     import_warnings = payload.get("_import_warnings", [])
     assert any("//ich//" in w and "zero duration" in w for w in import_warnings)
+
+
+def test_build_interview_alignment_payload_clamps_zero_duration_segment_with_warning(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    payload_data = _minimal_interview_payload()
+    payload_data["segments"][1]["words"] = [
+        {"start": 3.0, "end": 3.0, "text": "oui", "duration": 0.0, "conf": 1, "pristine": True}
+    ]
+    _write_json(source_json, payload_data)
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="EN-L-0001", session_id=None)
+
+    segment = payload["segments"][1]
+    assert segment["end_ms"] == segment["start_ms"] + 1
+    import_warnings = payload.get("_import_warnings", [])
+    assert any("segment 2 has zero duration" in w for w in import_warnings)
 
 
 def test_text_mfa_frame_bounds_clamps_tiny_end_overrun() -> None:
