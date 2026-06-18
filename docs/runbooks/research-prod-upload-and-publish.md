@@ -12,10 +12,12 @@ Wiederholbarer Ablauf fuer den sicheren Transfer eines validierten Research-Prod
 ## Serverzustand
 
 - Der aktive Daten-Mount liegt unter `/app/data`.
-- Der produktive Stand wird ausschliesslich ueber den Marker `data/current` gesteuert.
+- Der aktive Daten-Mount liegt unter `/app/data`; `get_sessions_root()` liest aus dem flachen `data/sessions/`-Baum, nicht ueber `current/`.
+- Der `data/current`-Marker ist ein relativer Symlink auf den jeweils aktuellen Release und dient als Rollback-Referenz sowie als Eingabepfad fuer den DB-Upsert-Schritt.
 - Neue Uploads gehen immer zuerst nach `/srv/webapps_storage/promat/data/incoming/{upload_id}/`.
 - Releases liegen unter `/srv/webapps_storage/promat/data/releases/{release_id}/`.
-- Direkte Writes in `data/current` oder bestehende Release-Ziele sind nicht zulaessig.
+- Nach dem Promote rsync das Publish-Skript jeden Corpus aus dem neuen Release in `data/sessions/{corpus_slug}/` und startet den App-Container neu.
+- Direkte Writes in `data/current` oder bestehende Release-Ziele ausserhalb des gesteuerten Publish-Ablaufs sind nicht zulaessig.
 
 ## Incoming Transfer
 
@@ -103,14 +105,18 @@ Stop-Bedingungen:
 
 ## Promote
 
-1. Atomic symlink switch auf neues `data/current`.
-2. Verifizieren, dass App-Runtime auf dem erwarteten Root liest.
-3. Keine direkten Hot-Writes in Live-Ziele ausserhalb Stage/Current-Switch.
+1. Atomarer relativer Symlink-Switch auf neues `data/current` (relativer Pfad `releases/{release_id}`, kein absoluter Host-Pfad).
+2. Rsync jedes Corpus aus dem neuen Release in den flachen App-Leseordner `data/sessions/{corpus_slug}/` (altes Corpus-Verzeichnis wird zuerst entfernt).
+3. App-Container (`promat-web-prod`) neu starten, damit `@lru_cache`-gebundene Session-Loader den neuen Stand uebernehmen.
+4. Keine direkten Hot-Writes in Live-Ziele ausserhalb dieses gesteuerten Ablaufs.
+
+Das Publish-Skript uebernimmt Schritte 1-3 automatisch. Mit `--no-restart-container` kann der Neustart uebersprungen werden, was aber nur fuer Dev-Debugging geeignet ist.
 
 Stop-Bedingungen:
 
 - atomarer Switch nicht garantiert
-- Runtime-Root unklar
+- Rsync fehlgeschlagen oder Corpus-Verzeichnis nach dem Sync nicht vorhanden
+- Container-Neustart fehlgeschlagen und Health-Check rot
 
 ## Health und Smoke
 
@@ -147,6 +153,8 @@ Mindestinhalt:
 - verwendeter DB-Upsert-Command
 - Post-Upsert-Validierung
 - Rollback-Hinweis
+- Sessions-Sync-Status (`sessions_sync_status`)
+- Container-Restart-Status (`container_restart_status`)
 - Health/Smoke-Ergebnisse
 - Cleanup-Entscheidung
 - offene Folgepunkte

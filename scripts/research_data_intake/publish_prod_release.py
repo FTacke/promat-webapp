@@ -10,6 +10,7 @@ DEFAULT_DATA_ROOT = "/srv/webapps_storage/promat/data"
 DEFAULT_REMOTE_APP_ROOT = "/srv/webapps/promat/app"
 DEFAULT_DB_CONTAINER = "promat-web-prod"
 DEFAULT_CONTAINER_DATA_ROOT = "/app/data"
+DEFAULT_CONTAINER_RESTART_DELAY = 15
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +21,7 @@ class RemotePublishOptions:
     db_container: str = DEFAULT_DB_CONTAINER
     container_data_root: str = DEFAULT_CONTAINER_DATA_ROOT
     apply_db_upsert: bool = False
+    restart_container: bool = True
     smoke_base_url: str = "https://promat.example.invalid"
 
 
@@ -40,6 +42,12 @@ def parse_args() -> argparse.Namespace:
         help="Validate and apply db/import_payload.json before the atomic current switch.",
     )
     parser.add_argument(
+        "--no-restart-container",
+        dest="restart_container",
+        action="store_false",
+        help="Skip the app-container restart after promote. Default is to restart so the runtime cache is invalidated.",
+    )
+    parser.add_argument(
         "--smoke-base-url",
         default="https://promat.example.invalid",
         help="Base URL used for health and smoke checks after promote.",
@@ -54,6 +62,8 @@ def _q(value: str) -> str:
 
 def build_remote_publish_script(options: RemotePublishOptions) -> str:
     db_block = _db_upsert_block() if options.apply_db_upsert else _db_skip_block()
+    sync_sessions_block = _sync_sessions_block()
+    restart_block = _restart_container_block(DEFAULT_CONTAINER_RESTART_DELAY) if options.restart_container else _restart_skip_block()
     script = f"""#!/usr/bin/env bash
 set -euo pipefail
 
@@ -76,6 +86,8 @@ DB_APPLY_OUTPUT=""
 DB_STATUS="skipped"
 DB_PAYLOAD_PRESENT="no"
 DB_POST_VALIDATION="not_run"
+SESSIONS_SYNC_STATUS="not_run"
+CONTAINER_RESTART_STATUS="not_run"
 CONTAINER_RELEASE="$CONTAINER_DATA_ROOT/releases/$RELEASE_ID"
 
 mkdir -p "$RELEASES" "$PUBLISH_LOG_DIR"
@@ -112,8 +124,12 @@ done
 
 {db_block}
 
-ln -sfn "$RELEASE" "$CURRENT.tmp"
+ln -sfn "releases/$RELEASE_ID" "$CURRENT.tmp"
 mv -Tf "$CURRENT.tmp" "$CURRENT"
+
+{sync_sessions_block}
+
+{restart_block}
 
 HEALTH_STATUS="$(curl -fsS -o /dev/null -w '%{{http_code}}' "$SMOKE_BASE_URL/health" || true)"
 READY_STATUS="$(curl -fsS -o /dev/null -w '%{{http_code}}' "$SMOKE_BASE_URL/ready" || true)"
@@ -128,9 +144,11 @@ cat > "$PUBLISH_LOG" <<REPORT
 - db_upsert_status: $DB_STATUS
 - db_post_upsert_validation: $DB_POST_VALIDATION
 - db_command: docker exec $DB_CONTAINER python /app/scripts/research_data_intake/apply_prod_db_payload.py --release-dir "$CONTAINER_RELEASE" --payload "$CONTAINER_RELEASE/db/import_payload.json"
+- sessions_sync_status: $SESSIONS_SYNC_STATUS
+- container_restart_status: $CONTAINER_RESTART_STATUS
 - health_status: $HEALTH_STATUS
 - ready_status: $READY_STATUS
-- rollback_hint: repoint current to the previous release; DB upsert is transactional and otherwise restored from the production DB backup/snapshot.
+- rollback_hint: repoint current to the previous release with a relative symlink; rsync the previous release sessions to DATA_ROOT/sessions/; restart the container.
 
 ## DB Dry Run
 
@@ -149,6 +167,37 @@ rm -rf "$INCOMING"
 echo "$PUBLISH_LOG"
 """
     return script.replace("\r\n", "\n")
+
+
+def _sync_sessions_block() -> str:
+    return """if [ -d "$RELEASE/sessions" ]; then
+  mkdir -p "$DATA_ROOT/sessions"
+  for corpus_dir in "$RELEASE/sessions"/*/; do
+    [ -d "$corpus_dir" ] || continue
+    corpus="$(basename "$corpus_dir")"
+    corpus_target="$DATA_ROOT/sessions/$corpus"
+    rm -rf "$corpus_target"
+    rsync -a "$corpus_dir" "$corpus_target/"
+  done
+  SESSIONS_SYNC_STATUS="applied"
+else
+  SESSIONS_SYNC_STATUS="skipped_no_sessions_in_release"
+fi
+"""
+
+
+def _restart_container_block(delay_seconds: int) -> str:
+    return f"""if docker restart "$DB_CONTAINER" 2>/dev/null; then
+  sleep {delay_seconds}
+  CONTAINER_RESTART_STATUS="done"
+else
+  CONTAINER_RESTART_STATUS="failed"
+fi
+"""
+
+
+def _restart_skip_block() -> str:
+    return 'CONTAINER_RESTART_STATUS="skipped_no_flag"\n'
 
 
 def _db_skip_block() -> str:
@@ -187,6 +236,7 @@ def main() -> int:
         db_container=args.db_container,
         container_data_root=args.container_data_root,
         apply_db_upsert=args.apply_db_upsert,
+        restart_container=args.restart_container,
         smoke_base_url=args.smoke_base_url.rstrip("/"),
     )
     script = build_remote_publish_script(options)
