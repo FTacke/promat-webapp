@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 
+from item_text_normalization import canonicalize_item_text
 from textgrid_support import parse_textgrid_intervals as parse_generic_textgrid_intervals
 
 
@@ -15,6 +16,7 @@ class CatalogItem:
     item_id: str
     item_number: str
     text: str
+    correction_messages: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,7 +76,17 @@ def load_wordlist_catalog(path: Path) -> list[CatalogItem]:
             )
         if not isinstance(text, str) or not text:
             raise ValueError(f"Catalog text must be a non-empty string at index {index}")
-        catalog_items.append(CatalogItem(item_id=item_id, item_number=item_number, text=text))
+        canonical_text, corrections = canonicalize_item_text(language_value, text)
+        catalog_items.append(
+            CatalogItem(
+                item_id=item_id,
+                item_number=item_number,
+                text=canonical_text,
+                correction_messages=tuple(
+                    correction.report_message(task="wordlist", item_id=item_id) for correction in corrections
+                ),
+            )
+        )
     return catalog_items
 
 
@@ -109,6 +121,8 @@ def build_timed_items(
     catalog_items: list[CatalogItem],
     intervals: list[TextGridInterval],
     validate_labels: str,
+    *,
+    language_slug: str | None = None,
 ) -> tuple[list[TimedWordlistItem], list[str]]:
     non_silence_intervals = [interval for interval in intervals if not _is_silence_marker(interval.text)]
     expected_count = len(catalog_items)
@@ -120,9 +134,15 @@ def build_timed_items(
     warnings: list[str] = []
     timed_items: list[TimedWordlistItem] = []
     for catalog_item, interval in zip(catalog_items, non_silence_intervals, strict=True):
-        if interval.text != catalog_item.text:
+        warnings.extend(catalog_item.correction_messages)
+        interval_text, interval_corrections = canonicalize_item_text(language_slug or "", interval.text)
+        warnings.extend(
+            correction.report_message(task="wordlist", item_id=catalog_item.item_id)
+            for correction in interval_corrections
+        )
+        if interval_text != catalog_item.text:
             message = (
-                f"TextGrid label mismatch for {catalog_item.item_id}: catalog={catalog_item.text!r} textgrid={interval.text!r}"
+                f"TextGrid label mismatch for {catalog_item.item_id}: catalog={catalog_item.text!r} textgrid={interval_text!r}"
             )
             if validate_labels == "fail":
                 raise ValueError(message)

@@ -1269,6 +1269,44 @@ def _make_batch_dir_with_wordlist(tmp_path: Path, person_id: str = "FR-L-0001") 
     return batch_dir
 
 
+def test_french_import_plan_reports_canonical_wordlist_correction(tmp_path: Path) -> None:
+    textgrid_path = tmp_path / "wordlist.TextGrid"
+    textgrid_path.write_text(
+        '''
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+item [1]:
+    class = "IntervalTier"
+    name = "words"
+    xmin = 0
+    xmax = 1
+    intervals: size = 1
+    intervals [1]:
+        xmin = 0
+        xmax = 1
+        text = "théatre"
+'''.lstrip(),
+        encoding="utf-8",
+    )
+    task_plan = production_importer.TaskSyncPlan(
+        task_key="wordlist",
+        action="sync",
+        status="ready",
+        reason=None,
+        working_root=tmp_path,
+        source_wav=tmp_path / "wordlist.wav",
+        alignment_textgrid=textgrid_path,
+        working_alignment_json=None,
+    )
+
+    warnings = production_importer._canonical_item_correction_warnings("fr", (task_plan,))
+
+    assert len(warnings) == 1
+    assert "canonical_item_correction" in warnings[0]
+    assert "occurrences=1" in warnings[0]
+
+
 def test_import_plan_has_no_delivered_task_data_when_no_working_files(tmp_path: Path, monkeypatch) -> None:
     _set_runtime_env(tmp_path, monkeypatch)
     batch_dir = _make_batch_dir_with_no_working_data(tmp_path, person_id="FR-L-0022")

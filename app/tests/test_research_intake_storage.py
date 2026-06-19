@@ -100,6 +100,8 @@ def test_discover_all_runtime_sessions_uses_canonical_language_codes(tmp_path: P
     session_dir = _minimal_runtime_session(tmp_path, session_id="ES-L-0002-2026-S01")
     english_dir = tmp_path / "data" / "sessions" / "english" / "EN-L-0001-2026-S01"
     _write_text(english_dir / "metadata.json", "{}\n")
+    _write_text(english_dir / "alignment" / "text.json", "{}\n")
+    _write_bytes(english_dir / "derived" / "text.mp3", b"mp3")
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(tmp_path))
 
     discovered = _discover_all_runtime_sessions()

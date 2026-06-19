@@ -52,7 +52,6 @@ from .research_sessions import (
     matching_sessions_for_person,
     resolve_selected_session,
     session_has_task,
-    sort_sessions_by_recency,
     sort_sessions_for_display,
 )
 from .routes.public_content import get_language, get_language_label, get_research_page_label, get_section_label

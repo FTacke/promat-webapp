@@ -212,6 +212,33 @@ curl -fsS -o /dev/null -w '%{http_code}\n' https://<prod-base-url>/ready
 - Loeschen transaktional in einer einzigen DB-Transaktion.
 - Andere Sprachen (en, es, de) werden nicht beruehrt.
 
+## French Item Canonicalization Migration
+
+After a deploy that contains `migrate_french_theatre_item.py`, inspect the live read-only mount and every `research_*` database table first:
+
+```bash
+ssh vhrz2184 "docker exec -e PROMAT_APP_SRC=/app/src promat-web-prod \
+  python /app/scripts/research_data_intake/migrate_french_theatre_item.py \
+  --data-root /app/data \
+  --dry-run"
+```
+
+The JSON result must be retained in the run log. `asset_path_changes_required` must be `false`. If the file section reports changes, correct the local canonical runtime, build and validate a new allowlist package, and publish it through the normal incoming/release workflow; do not write directly into `current` or the flat production session tree.
+
+If the reviewed Dry-run reports DB-only changes and no asset/path references, apply only the database transaction:
+
+```bash
+ssh vhrz2184 "docker exec -e PROMAT_APP_SRC=/app/src promat-web-prod \
+  python /app/scripts/research_data_intake/migrate_french_theatre_item.py \
+  --data-root /app/data \
+  --skip-files \
+  --apply"
+```
+
+Repeat the full Dry-run after the DB transaction. A clean result has zero affected tables, rows, files, and occurrences. Then restart `promat-web-prod` only if a corrected runtime package was published, and verify `/health` and `/ready`.
+
+The migration is exact and idempotent. It scans only tables whose names begin with `research_` plus the French runtime/config JSON roots. It never rewrites the unaccented English word `theatre`, never deletes assets, and refuses automatic apply when a filename, asset key, URL, or path-like value would need migration.
+
 ## Publish Report
 
 Nach erfolgreichem oder abgebrochenem Lauf immer Report schreiben:

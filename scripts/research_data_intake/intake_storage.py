@@ -12,6 +12,7 @@ from typing import Any, Iterable, Sequence
 
 from intake_batch_common import ParsedBatchFile
 from language_config import maybe_resolve_language_config, resolve_language_config
+from item_text_normalization import contains_noncanonical_french_item_text
 
 
 DEFAULT_LOCAL_ARCHIVE_ROOT = Path(r"C:\dev\promat_data_archive")
@@ -212,6 +213,19 @@ def validate_prod_package(package_dir: Path) -> list[str]:
                     errors.append(
                         f"package session language segment must use corpus slug '{language.corpus_slug}', got '{language_segment}'"
                     )
+
+        is_french_json = suffix == ".json" and (
+            relative_path.startswith("sessions/french/")
+            or relative_path.startswith("config/research_player/french/")
+        )
+        if is_french_json:
+            try:
+                json_text = file_path.read_text(encoding="utf-8")
+            except UnicodeDecodeError as exc:
+                errors.append(f"French package JSON is not valid UTF-8: {relative_path}: {exc}")
+            else:
+                if contains_noncanonical_french_item_text(json_text):
+                    errors.append(f"noncanonical French item text in prod package JSON: {relative_path}")
 
     _validate_manifest_payload(package_dir, package_files, errors)
     _validate_checksum_file(package_dir, package_files, errors)

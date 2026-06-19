@@ -453,6 +453,22 @@ def test_wordlist_alignment_treats_silent_dash_as_silence() -> None:
     assert warnings == []
 
 
+def test_french_wordlist_alignment_canonicalizes_theatre_before_validation() -> None:
+    items = [CatalogItem(item_id="wl_014", item_number="14", text="théâtre")]
+    intervals = [WordlistTextGridInterval(start_seconds=0.0, end_seconds=0.5, text="théatre")]
+
+    timed_items, warnings = build_timed_items(
+        items,
+        intervals,
+        validate_labels="fail",
+        language_slug="french",
+    )
+
+    assert timed_items[0].text == "théâtre"
+    assert any("canonical_item_correction" in warning for warning in warnings)
+    assert not any("label mismatch" in warning for warning in warnings)
+
+
 def test_wordlist_alignment_accepts_utf8_textgrid(tmp_path: Path) -> None:
     textgrid_path = tmp_path / "wordlist.TextGrid"
     textgrid_path.write_text(

@@ -44,6 +44,7 @@ from apply_auth_migration import apply_postgres_migration  # noqa: E402
 from alignment_export.import_text_mfa_alignment import import_text_mfa_alignment_for_person  # noqa: E402
 from alignment_export.prepare_text_mfa_corpus import prepare_text_mfa_for_person  # noqa: E402
 from alignment_export.run_text_mfa import check_mfa_available, resolve_mfa_executable, run_text_mfa_for_person  # noqa: E402
+from alignment_export.wordlist_alignment import parse_textgrid_intervals  # noqa: E402
 from audio_conversion.ffmpeg_audio import create_full_task_mp3, ensure_media_tools  # noqa: E402
 from intake_batch_common import (  # noqa: E402
     collect_batch_files,
@@ -58,6 +59,7 @@ from intake_batch_common import (  # noqa: E402
 )
 from intake_storage import validate_runtime_tree, write_batch_archive_reports, write_secure_person_export, write_session_archive  # noqa: E402
 from intake_workbook_reader import IntakeExposureRow, IntakePersonRow, IntakeSessionRow, SecurePersonIntakeRow, SessionLinkKey, load_intake_workbook  # noqa: E402
+from item_text_normalization import canonicalize_item_text, ItemTextCorrection  # noqa: E402
 from language_config import resolve_language_config  # noqa: E402
 from organize_batch_working_tree import organize_batch_working_tree  # noqa: E402
 from produce_text_artifacts import produce_text_artifacts  # noqa: E402
@@ -770,6 +772,29 @@ def _existing_runtime_dirs(corpus_language: str) -> dict[str, Path]:
     return {path.name: path for path in runtime_root.iterdir() if path.is_dir()}
 
 
+def _canonical_item_correction_warnings(
+    target_language: str,
+    task_plans: tuple[TaskSyncPlan, ...],
+) -> list[str]:
+    if target_language != "fr":
+        return []
+    warnings: list[str] = []
+    for task_plan in task_plans:
+        if task_plan.task_key != "wordlist" or task_plan.alignment_textgrid is None:
+            continue
+        totals: dict[tuple[str, str], int] = {}
+        for interval in parse_textgrid_intervals(task_plan.alignment_textgrid):
+            for correction in canonicalize_item_text(target_language, interval.text)[1]:
+                key = (correction.source, correction.replacement)
+                totals[key] = totals.get(key, 0) + correction.occurrences
+        for (source, replacement), occurrences in sorted(totals.items()):
+            correction = ItemTextCorrection(source=source, replacement=replacement, occurrences=occurrences)
+            warnings.append(
+                f"{correction.report_message(task='wordlist')} input={task_plan.alignment_textgrid}"
+            )
+    return warnings
+
+
 def _build_import_plans(
     *,
     batch_dir: Path,
@@ -868,6 +893,7 @@ def _build_import_plans(
             )
             for task_key in RESEARCH_TASK_KEYS
         )
+        warnings.extend(_canonical_item_correction_warnings(workbook_session.target_language, task_plans))
         # Compute before any skip override so the initial task actions are visible.
         has_delivered_task_data = _session_has_delivered_task_data(
             task_plans,

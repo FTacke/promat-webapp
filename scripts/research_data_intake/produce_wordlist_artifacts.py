@@ -279,7 +279,12 @@ def produce_wordlist_artifacts(
     resolved_catalog_path = catalog_path or _catalog_path_for_language(language_slug)
     catalog_items = load_wordlist_catalog(resolved_catalog_path)
     intervals = parse_textgrid_intervals(resolved_alignment_textgrid)
-    timed_items, label_warnings = build_timed_items(catalog_items, intervals, validate_labels)
+    timed_items, label_warnings = build_timed_items(
+        catalog_items,
+        intervals,
+        validate_labels,
+        language_slug=language_slug,
+    )
     split_paths = [item.split_mp3 for item in timed_items]
     source_profile = probe_audio_profile(resolved_source_wav)
     source_duration = float(source_profile.get("duration") or 0.0)
