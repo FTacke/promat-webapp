@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
-import re
 from pathlib import Path
+
+from textgrid_support import parse_textgrid_intervals as parse_generic_textgrid_intervals
 
 
 SILENCE_MARKERS = {"", "sp", "sil", "silence", "silent"}
@@ -78,14 +79,13 @@ def load_wordlist_catalog(path: Path) -> list[CatalogItem]:
 
 
 def parse_textgrid_intervals(path: Path) -> list[TextGridInterval]:
-    raw_text = path.read_text(encoding="utf-16")
-    pattern = re.compile(
-        r"intervals \[\d+\]:\s*xmin = ([0-9.]+)\s*xmax = ([0-9.]+)\s*text = \"(.*?)\"",
-        re.DOTALL,
-    )
     intervals = [
-        TextGridInterval(start_seconds=float(start), end_seconds=float(end), text=text)
-        for start, end, text in pattern.findall(raw_text)
+        TextGridInterval(
+            start_seconds=interval.start_seconds,
+            end_seconds=interval.end_seconds,
+            text=interval.text,
+        )
+        for interval in parse_generic_textgrid_intervals(path)
     ]
     if not intervals:
         raise ValueError(f"No intervals found in TextGrid: {path}")

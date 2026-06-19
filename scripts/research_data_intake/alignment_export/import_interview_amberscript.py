@@ -289,7 +289,7 @@ def _token_text_for_segment_text(token: dict[str, object]) -> str:
 
 
 def _is_intraword_bracket_literal(raw_text: str) -> bool:
-    match = re.search(r"\[[^\]]+\]", raw_text)
+    match = re.search(r"\[[^\]]*\]", raw_text)
     if match is None:
         return False
     label = match.group(0).strip("[]")
@@ -305,7 +305,7 @@ def _is_non_material_bracket_literal(raw_text: str) -> bool:
     if _is_intraword_bracket_literal(raw_text):
         return True
     stripped = raw_text.strip().strip('"')
-    match = re.search(r"\[(?P<label>[^\[\]]+)\]", stripped)
+    match = re.search(r"\[(?P<label>[^\[\]]*)\]", stripped)
     if match is None:
         unmatched = re.search(r"\[(?P<label>[^\[\]\s]+)$", stripped)
         if unmatched is None:
@@ -319,7 +319,7 @@ def _is_non_material_bracket_literal(raw_text: str) -> bool:
     label = match.group("label").strip()
     if re.fullmatch(r"[A-Za-z]+_\d+", label):
         return False
-    return bool(label)
+    return True
 
 
 def _append_suffix_to_previous_token(tokens: list[dict[str, object]], suffix: str) -> None:

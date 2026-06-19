@@ -379,12 +379,14 @@ def _run_working_pipeline(
         force_tasks=set(),
         person_ids=person_ids or None,
     )
-    summary = report_payload.get("summary")
-    if isinstance(summary, dict) and int(summary.get("errors") or 0) > 0:
-        raise ProductionImportError(
-            f"working-tree build reported errors for {batch_dir.name}; see task statuses in the organizer report"
-        )
     return report_payload
+
+
+def _working_report_error_count(report_payload: dict[str, object]) -> int:
+    summary = report_payload.get("summary")
+    if not isinstance(summary, dict):
+        return 0
+    return int(summary.get("errors") or 0)
 
 
 def _run_text_pipeline(
@@ -1616,8 +1618,11 @@ def main() -> int:
                 person_ids=person_id_filter,
                 dry_run=args.dry_run,
             )
+            working_error_count = _working_report_error_count(working_report)
+            working_error_suffix = f" with {working_error_count} task error(s)" if working_error_count else ""
             run_notes.append(
-                f"Working-tree orchestration completed for {', '.join(working_report.get('person_ids', [])) or 'all in-scope people'}."
+                f"Working-tree orchestration completed{working_error_suffix} for "
+                f"{', '.join(working_report.get('person_ids', [])) or 'all in-scope people'}."
             )
         selected_mfa_executable = resolve_mfa_executable(args.mfa_executable)
         if args.run_mfa:

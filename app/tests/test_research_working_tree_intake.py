@@ -22,6 +22,7 @@ from alignment_export.prepare_text_mfa_corpus import _frame_bounds  # noqa: E402
 from alignment_export.prepare_text_mfa_corpus import TextSourceItem  # noqa: E402
 from alignment_export.wordlist_alignment import build_timed_items  # noqa: E402
 from alignment_export.wordlist_alignment import CatalogItem  # noqa: E402
+from alignment_export.wordlist_alignment import parse_textgrid_intervals as parse_wordlist_textgrid_intervals  # noqa: E402
 from alignment_export.wordlist_alignment import TextGridInterval as WordlistTextGridInterval  # noqa: E402
 import intake_batch_common  # noqa: E402
 from intake_batch_common import working_intake_state_path  # noqa: E402
@@ -296,6 +297,18 @@ def test_build_interview_alignment_payload_keeps_non_material_bracket_literals(t
     assert segment["text"] == "Ja, [u]. [x] [theta]"
 
 
+def test_build_interview_alignment_payload_keeps_empty_phonetic_omission_brackets(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    _write_json(source_json, _minimal_interview_payload(reference_words=['"va[]nilla".', "weiter"]))
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="ES-L-0015", session_id=None)
+
+    segment = payload["segments"][1]
+    assert [token["text"] for token in segment["tokens"][1:]] == ['"va[]nilla".', "weiter"]
+    assert segment.get("annotations") is None
+    assert segment["text"] == 'Ja, "va[]nilla". weiter'
+
+
 def test_build_interview_alignment_payload_keeps_quoted_word_final_brackets_as_literal(tmp_path: Path) -> None:
     source_json = tmp_path / "input.json"
     _write_json(
@@ -438,6 +451,34 @@ def test_wordlist_alignment_treats_silent_dash_as_silence() -> None:
 
     assert [item.text for item in timed_items] == ["un", "deux"]
     assert warnings == []
+
+
+def test_wordlist_alignment_accepts_utf8_textgrid(tmp_path: Path) -> None:
+    textgrid_path = tmp_path / "wordlist.TextGrid"
+    textgrid_path.write_text(
+        '''
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+item [1]:
+    class = "IntervalTier"
+    name = "words"
+    xmin = 0
+    xmax = 1
+    intervals: size = 1
+    intervals [1]:
+        xmin = 0
+        xmax = 0.5
+        text = "vainilla"
+'''.lstrip(),
+        encoding="utf-8",
+    )
+
+    intervals = parse_wordlist_textgrid_intervals(textgrid_path)
+
+    assert len(intervals) == 1
+    assert intervals[0].text == "vainilla"
+    assert intervals[0].end_seconds == 0.5
 
 
 def test_text_mfa_allows_omitted_spoken_title_item() -> None:

@@ -1099,6 +1099,29 @@ def test_run_text_pipeline_falls_back_to_docker_when_host_mfa_missing(tmp_path: 
     assert notes[-1] == "Imported working text alignment for ES-L-0010: items=3 tokens=9"
 
 
+def test_run_working_pipeline_keeps_isolated_task_errors_nonfatal(tmp_path: Path, monkeypatch) -> None:
+    report_payload = {
+        "person_ids": ["ES-L-0015"],
+        "summary": {"errors": 1},
+        "tasks": [
+            {"person_id": "ES-L-0015", "task": "wordlist", "status": "rebuilt"},
+            {"person_id": "ES-L-0015", "task": "text", "status": "rebuilt"},
+            {"person_id": "ES-L-0015", "task": "interview", "status": "error_invalid_material_ref_marker"},
+        ],
+    }
+
+    monkeypatch.setattr(production_importer, "organize_batch_working_tree", lambda **kwargs: report_payload)
+
+    result = production_importer._run_working_pipeline(
+        batch_dir=tmp_path / "spanish_batch_20260619",
+        person_ids={"ES-L-0015"},
+        dry_run=True,
+    )
+
+    assert result == report_payload
+    assert production_importer._working_report_error_count(result) == 1
+
+
 def test_detect_working_text_requires_preparation_when_alignment_json_missing(tmp_path: Path) -> None:
     batch_dir = tmp_path / "english_batch_20260525"
     person_id = "EN-L-0011"
