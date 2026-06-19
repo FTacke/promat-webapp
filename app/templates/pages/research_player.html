@@ -64,7 +64,9 @@
                         <p class="pm-player-session-picker__label">{{ summary.session_switch.label }}</p>
                         <div class="pm-player-session-picker__options">
                           {% for option in summary.session_switch.options %}
-                          {% if option.current %}
+                          {% if option.divider %}
+                          <hr class="pm-player-session-picker__divider" aria-hidden="true">
+                          {% elif option.current %}
                           <span class="pm-player-session-picker__option is-current" aria-current="page">{{ option.label }}</span>
                           {% else %}
                           <a class="pm-player-session-picker__option" href="{{ option.href }}">{{ option.label }}</a>

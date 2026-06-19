@@ -53,6 +53,7 @@ from .research_sessions import (
     resolve_selected_session,
     session_has_task,
     sort_sessions_by_recency,
+    sort_sessions_for_display,
 )
 from .routes.public_content import get_language, get_language_label, get_research_page_label, get_section_label
 
@@ -130,15 +131,40 @@ def _format_level(session: SessionRecord, ui_lang: str) -> str:
 
 
 STANDARD_VARIETY_LABEL_KEYS = {
+    # Spanish varieties
     "castellano": "research.shared.standard_variety.castellano",
     "es_std": "research.shared.standard_variety.es_std",
     "mx_std": "research.shared.standard_variety.mx_std",
+    "ar_std": "research.shared.standard_variety.ar_std",
+    "co_std": "research.shared.standard_variety.co_std",
+    "ec_std": "research.shared.standard_variety.ec_std",
+    "cl_std": "research.shared.standard_variety.cl_std",
+    "pe_std": "research.shared.standard_variety.pe_std",
+    "bo_std": "research.shared.standard_variety.bo_std",
+    "uy_std": "research.shared.standard_variety.uy_std",
+    "py_std": "research.shared.standard_variety.py_std",
+    "ve_std": "research.shared.standard_variety.ve_std",
     "rioplatense": "research.shared.standard_variety.rioplatense",
     "andino": "research.shared.standard_variety.andino",
     "caribeno": "research.shared.standard_variety.caribeno",
     "caribeno_estandar": "research.shared.standard_variety.caribeno_estandar",
     "mexicano": "research.shared.standard_variety.mexicano",
     "mexicano_estandar": "research.shared.standard_variety.mexicano_estandar",
+    # English varieties
+    "gb_std": "research.shared.standard_variety.gb_std",
+    "us_std": "research.shared.standard_variety.us_std",
+    "au_std": "research.shared.standard_variety.au_std",
+    "nz_std": "research.shared.standard_variety.nz_std",
+    # French varieties
+    "fr_std": "research.shared.standard_variety.fr_std",
+    "ca_std": "research.shared.standard_variety.ca_std",
+    "fr_ch_std": "research.shared.standard_variety.fr_ch_std",
+    "be_std": "research.shared.standard_variety.be_std",
+    # German varieties
+    "de_std": "research.shared.standard_variety.de_std",
+    "at_std": "research.shared.standard_variety.at_std",
+    "de_ch_std": "research.shared.standard_variety.de_ch_std",
+    "de_south_std": "research.shared.standard_variety.de_south_std",
 }
 
 ORIGIN_COUNTRY_LABEL_KEYS = {
@@ -1390,7 +1416,7 @@ def _comparison_material_presets(language_slug: str, ui_lang: str) -> list[dict[
 
 def _phenomena_session_options(language_slug: str) -> dict[str, list[dict[str, str]]]:
     sessions_by_task: dict[str, list[dict[str, str]]] = {task_key: [] for task_key in PHENOMENA_ITEM_TASKS}
-    for session in sort_sessions_by_recency(load_language_sessions(language_slug)):
+    for session in sort_sessions_for_display(load_language_sessions(language_slug)):
         for task_key in PHENOMENA_ITEM_TASKS:
             if not session_has_task(session, task_key):
                 continue
@@ -1521,7 +1547,7 @@ def _comparison_session_task_summary(clip_counts: list[dict[str, Any]]) -> str:
 def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[str, Any]]:
     task_labels = _phenomena_task_labels(language_slug, ui_lang)
     catalog: list[dict[str, Any]] = []
-    for session in sort_sessions_by_recency(load_language_sessions(language_slug)):
+    for session in sort_sessions_for_display(load_language_sessions(language_slug)):
         documented_tasks = [task_key for task_key in PHENOMENA_ITEM_TASKS if session_has_task(session, task_key)]
         available_item_ids_by_task: dict[str, list[str]] = {task_key: [] for task_key in PHENOMENA_ITEM_TASKS}
         clip_counts: list[dict[str, Any]] = []
@@ -2365,6 +2391,22 @@ def _build_wordlist_player_items(
     return rows
 
 
+def _with_group_dividers(options: list[dict[str, Any]], sessions: list[SessionRecord]) -> list[dict[str, Any]]:
+    """Splice a divider dict between the learner and native option groups, if both are present."""
+    has_learners = any(not s.is_native for s in sessions)
+    has_natives = any(s.is_native for s in sessions)
+    if not (has_learners and has_natives):
+        return options
+    result: list[dict[str, Any]] = []
+    crossed = False
+    for option, session in zip(options, sessions):
+        if not crossed and session.is_native:
+            result.append({"divider": True})
+            crossed = True
+        result.append(option)
+    return result
+
+
 def _build_player_switchers(
     ui_lang: str,
     language_slug: str,
@@ -2381,7 +2423,9 @@ def _build_player_switchers(
     render_mode: str | None = None,
 ) -> dict[str, Any]:
     compare_session_id = compare_session.session_id if compare_session else None
-    primary_options = [
+    sorted_sessions = list(sort_sessions_for_display(ready_sessions))
+
+    raw_primary_options = [
         {
             "label": _player_session_option_label(candidate, ui_lang),
             "href": _player_page_href(
@@ -2399,48 +2443,47 @@ def _build_player_switchers(
             ),
             "current": candidate.session_id == primary_session.session_id,
         }
-        for candidate in ready_sessions
+        for candidate in sorted_sessions
     ]
+    primary_options = _with_group_dividers(raw_primary_options, sorted_sessions)
 
-    compare_options = [
+    compare_candidates = [s for s in sorted_sessions if s.session_id != primary_session.session_id]
+    raw_compare_options = [
         {
-            "label": _player_compare_disabled_option(ui_lang),
+            "label": _player_session_option_label(candidate, ui_lang),
             "href": _player_page_href(
                 ui_lang,
                 language_slug,
                 primary_session.session_id,
                 task_key,
                 source,
+                compare_session_id=candidate.session_id,
+                compare_mode=compare_mode,
                 set_id=set_id,
                 preset_id=preset_id,
                 **_player_focus_kwargs(task_key, focus_item=focus_item, focus_segment=focus_segment),
                 render_mode=render_mode if task_key == "text" else None,
             ),
-            "current": compare_session is None,
+            "current": compare_session is not None and candidate.session_id == compare_session.session_id,
         }
+        for candidate in compare_candidates
     ]
-    for candidate in ready_sessions:
-        if candidate.session_id == primary_session.session_id:
-            continue
-        compare_options.append(
-            {
-                "label": _player_session_option_label(candidate, ui_lang),
-                "href": _player_page_href(
-                    ui_lang,
-                    language_slug,
-                    primary_session.session_id,
-                    task_key,
-                    source,
-                    compare_session_id=candidate.session_id,
-                    compare_mode=compare_mode,
-                    set_id=set_id,
-                    preset_id=preset_id,
-                    **_player_focus_kwargs(task_key, focus_item=focus_item, focus_segment=focus_segment),
-                    render_mode=render_mode if task_key == "text" else None,
-                ),
-                "current": compare_session is not None and candidate.session_id == compare_session.session_id,
-            }
-        )
+    disabled_option = {
+        "label": _player_compare_disabled_option(ui_lang),
+        "href": _player_page_href(
+            ui_lang,
+            language_slug,
+            primary_session.session_id,
+            task_key,
+            source,
+            set_id=set_id,
+            preset_id=preset_id,
+            **_player_focus_kwargs(task_key, focus_item=focus_item, focus_segment=focus_segment),
+            render_mode=render_mode if task_key == "text" else None,
+        ),
+        "current": compare_session is None,
+    }
+    compare_options = [disabled_option] + _with_group_dividers(raw_compare_options, compare_candidates)
 
     return {
         "title": _player_session_switch_title(ui_lang),

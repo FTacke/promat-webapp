@@ -476,6 +476,24 @@ def sort_sessions_by_recency(sessions: Iterable[SessionRecord]) -> tuple[Session
     return tuple(sorted(sessions, key=lambda item: item.session_recency_key, reverse=True))
 
 
+def _session_display_sort_key(session: SessionRecord) -> tuple[int, int, int, int, str]:
+    parsed_session = parse_session_id(session.session_id)
+    if parsed_session is None:
+        return (2, 0, 0, 0, session.session_id)
+    parsed_person = parse_person_id(parsed_session.person_id)
+    if parsed_person is None:
+        return (2, 0, 0, 0, session.session_id)
+    # L→0 (learner first), N→1 (native second), unknown→2 (fallback to end)
+    marker_order = {"L": 0, "N": 1}
+    speaker_type_order = marker_order.get(parsed_person.speaker_marker, 2)
+    return (speaker_type_order, parsed_person.sequence, parsed_session.recording_year, parsed_session.session_number, session.session_id)
+
+
+def sort_sessions_for_display(sessions: Iterable[SessionRecord]) -> tuple[SessionRecord, ...]:
+    """Sort for dropdown display: learners (L) first then natives (N), each group numerically."""
+    return tuple(sorted(sessions, key=_session_display_sort_key))
+
+
 def _latest_non_empty_value(sessions: Iterable[SessionRecord], field_name: str) -> Any:
     for session in sort_sessions_by_recency(sessions):
         value = getattr(session, field_name)

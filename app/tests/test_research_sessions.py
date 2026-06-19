@@ -23,11 +23,12 @@ from app import register_context_processors
 from app.research_presets import clear_research_preset_caches
 from app.research_player_runtime import (
     _build_interview_text_segments,
+    _build_text_segments,
     _normalize_bundle_tokens,
     _normalize_interview_annotations,
     load_task_ready_sessions,
 )
-from app.research_views import build_player_page, build_speaker_profile_page, build_speakers_page
+from app.research_views import _format_standard_variety_value, build_player_page, build_speaker_profile_page, build_speakers_page
 from app.routes.auth import blueprint as auth_blueprint
 from app.routes.public import blueprint as public_blueprint
 from app.research_sessions import (
@@ -35,6 +36,7 @@ from app.research_sessions import (
     load_person_records,
     matching_sessions_for_person,
     resolve_selected_session,
+    sort_sessions_for_display,
 )
 
 
@@ -3307,6 +3309,234 @@ def test_build_interview_text_segments_keeps_material_ref_before_suffix_for_suff
         assert material_ref["suffix"] == "."
         assert renderable_token["text"] in {"25", "80"}
         assert renderable_token["suffix"] == "."
+
+
+def test_build_text_segments_case_insensitive_match_preserves_original_case() -> None:
+    """Alignment token in lowercase must match and capture the uppercase original."""
+    segments, renderable = _build_text_segments(
+        "seg_ci",
+        "Vorlesen Bitte",
+        [
+            {"token_id": "seg_ci_tok_001", "text": "vorlesen", "start_ms": 0, "end_ms": 500},
+            {"token_id": "seg_ci_tok_002", "text": "bitte", "start_ms": 500, "end_ms": 1000},
+        ],
+    )
+    token_texts = [s["text"] for s in segments if s["kind"] == "token"]
+    assert token_texts == ["Vorlesen", "Bitte"]
+    renderable_texts = [t["text"] for t in renderable]
+    assert renderable_texts == ["Vorlesen", "Bitte"]
+
+
+def test_build_text_segments_short_word_fully_inside_span() -> None:
+    """Short word like 'so' must not split into a leading char plus a shorter span."""
+    segments, renderable = _build_text_segments(
+        "seg_sw",
+        "Das so war es.",
+        [{"token_id": "seg_sw_tok_001", "text": "so", "start_ms": 0, "end_ms": 300}],
+    )
+    token_texts = [s["text"] for s in segments if s["kind"] == "token"]
+    assert token_texts == ["so"]
+    assert renderable[0]["text"] == "so"
+
+
+def test_build_text_segments_multisyllable_word_fully_inside_span() -> None:
+    """Multi-syllable word like 'insgesamt' must be captured whole."""
+    segments, renderable = _build_text_segments(
+        "seg_ms",
+        "Das war insgesamt gut.",
+        [{"token_id": "seg_ms_tok_001", "text": "insgesamt", "start_ms": 0, "end_ms": 800}],
+    )
+    token_texts = [s["text"] for s in segments if s["kind"] == "token"]
+    assert token_texts == ["insgesamt"]
+    assert renderable[0]["text"] == "insgesamt"
+
+
+def test_build_text_segments_eszett_expansion_does_not_shift_subsequent_token_positions() -> None:
+    """
+    ß casefolds to ss (2 chars), shifting all normalized positions by 1 relative
+    to original positions. Tokens that follow ß must still capture their full
+    original form with no leading char left as plain text outside the span.
+    """
+    text = "Straße Vorlesen so insgesamt."
+    raw_tokens = [
+        {"token_id": "t1", "text": "straße", "start_ms": 0, "end_ms": 400},
+        {"token_id": "t2", "text": "vorlesen", "start_ms": 400, "end_ms": 700},
+        {"token_id": "t3", "text": "so", "start_ms": 700, "end_ms": 800},
+        {"token_id": "t4", "text": "insgesamt", "start_ms": 800, "end_ms": 1000},
+    ]
+    segments, renderable = _build_text_segments("seg_sz", text, raw_tokens)
+
+    token_texts = [s["text"] for s in segments if s["kind"] == "token"]
+    assert token_texts == ["Straße", "Vorlesen", "so", "insgesamt"], (
+        f"Got {token_texts!r}; expected full original-case words with no leading chars outside spans"
+    )
+
+    renderable_texts = [t["text"] for t in renderable]
+    assert renderable_texts == ["Straße", "Vorlesen", "so", "insgesamt"]
+
+    # Plain-text segments between tokens must only contain whitespace or punctuation,
+    # never a word-leading character that belongs to a token.
+    plain_texts = [s["text"] for s in segments if s["kind"] == "text"]
+    for plain in plain_texts:
+        assert plain.strip() in {"", "."}, (
+            f"Unexpected plain-text fragment {plain!r} — a token-leading char may have leaked outside its span"
+        )
+
+
+def test_format_standard_variety_value_resolves_known_codes_to_localized_labels() -> None:
+    cases = [
+        # Codes that previously fell through to _humanize_value
+        ("EC_STD", "de", "Ecuador"),
+        ("CL_STD", "de", "Chile"),
+        ("GB_STD", "de", "Großbritannien"),
+        ("fr_ch_std", "de", "Schweiz"),
+        ("de_ch_std", "de", "Schweiz"),
+        # English labels
+        ("EC_STD", "en", "Ecuador"),
+        ("CL_STD", "en", "Chile"),
+        ("GB_STD", "en", "United Kingdom"),
+        ("fr_ch_std", "en", "Switzerland"),
+        ("de_ch_std", "en", "Switzerland"),
+        # Previously mapped codes remain unchanged
+        ("ES_STD", "de", "Spanien"),
+        ("MX_STD", "de", "Mexiko"),
+        ("ES_STD", "en", "Spain"),
+        ("MX_STD", "en", "Mexico"),
+    ]
+    for code, lang, expected in cases:
+        result = _format_standard_variety_value(code, lang)
+        assert result == expected, f"_format_standard_variety_value({code!r}, {lang!r}) = {result!r}, expected {expected!r}"
+
+
+def test_format_standard_variety_value_unknown_code_falls_back_to_humanization() -> None:
+    result = _format_standard_variety_value("UNKNOWN_VAR", "de")
+    assert result == "Unknown Var"
+
+
+def test_format_standard_variety_value_none_returns_dash() -> None:
+    assert _format_standard_variety_value(None, "de") == "-"
+    assert _format_standard_variety_value(None, "en") == "-"
+
+
+# ---------------------------------------------------------------------------
+# sort_sessions_for_display tests
+# ---------------------------------------------------------------------------
+
+class _FakeSession:
+    """Minimal stand-in for SessionRecord — sort_sessions_for_display only needs session_id."""
+    def __init__(self, session_id: str) -> None:
+        self.session_id = session_id
+
+
+def test_sort_sessions_for_display_learners_before_natives() -> None:
+    sessions = [
+        _FakeSession("ES-N-0005-2026-S01"),
+        _FakeSession("ES-L-0016-2026-S01"),
+        _FakeSession("ES-L-0015-2026-S01"),
+    ]
+    result = sort_sessions_for_display(sessions)
+    ids = [s.session_id for s in result]
+    learner_positions = [i for i, s in enumerate(result) if "-L-" in s.session_id]
+    native_positions = [i for i, s in enumerate(result) if "-N-" in s.session_id]
+    assert max(learner_positions) < min(native_positions), f"Expected all L before all N, got {ids}"
+
+
+def test_sort_sessions_for_display_learners_numerically_ascending() -> None:
+    sessions = [
+        _FakeSession("ES-L-0019-2026-S01"),
+        _FakeSession("ES-L-0015-2026-S01"),
+        _FakeSession("ES-L-0018-2026-S01"),
+        _FakeSession("ES-L-0016-2026-S01"),
+    ]
+    result = sort_sessions_for_display(sessions)
+    ids = [s.session_id for s in result]
+    assert ids == ["ES-L-0015-2026-S01", "ES-L-0016-2026-S01", "ES-L-0018-2026-S01", "ES-L-0019-2026-S01"], ids
+
+
+def test_sort_sessions_for_display_natives_numerically_ascending() -> None:
+    sessions = [
+        _FakeSession("ES-N-0010-2026-S01"),
+        _FakeSession("ES-N-0005-2026-S01"),
+    ]
+    result = sort_sessions_for_display(sessions)
+    ids = [s.session_id for s in result]
+    assert ids == ["ES-N-0005-2026-S01", "ES-N-0010-2026-S01"], ids
+
+
+def test_sort_sessions_for_display_zero_padded_number_treated_numerically() -> None:
+    sessions = [
+        _FakeSession("ES-L-0016-2026-S01"),
+        _FakeSession("ES-L-0015-2026-S01"),
+        _FakeSession("ES-N-0005-2026-S01"),
+    ]
+    result = sort_sessions_for_display(sessions)
+    ids = [s.session_id for s in result]
+    assert ids.index("ES-L-0015-2026-S01") < ids.index("ES-L-0016-2026-S01"), ids
+    assert ids.index("ES-L-0016-2026-S01") < ids.index("ES-N-0005-2026-S01"), ids
+
+
+def test_sort_sessions_for_display_mixed_list_full_order() -> None:
+    sessions = [
+        _FakeSession("ES-N-0005-2026-S01"),
+        _FakeSession("ES-L-0016-2026-S01"),
+        _FakeSession("ES-L-0015-2026-S01"),
+        _FakeSession("ES-L-0019-2026-S01"),
+        _FakeSession("ES-L-0018-2026-S01"),
+    ]
+    result = sort_sessions_for_display(sessions)
+    ids = [s.session_id for s in result]
+    assert ids == [
+        "ES-L-0015-2026-S01",
+        "ES-L-0016-2026-S01",
+        "ES-L-0018-2026-S01",
+        "ES-L-0019-2026-S01",
+        "ES-N-0005-2026-S01",
+    ], ids
+
+
+def test_sort_sessions_for_display_invalid_id_does_not_crash() -> None:
+    sessions = [
+        _FakeSession("ES-L-0015-2026-S01"),
+        _FakeSession("INVALID"),
+        _FakeSession("ES-N-0005-2026-S01"),
+    ]
+    result = sort_sessions_for_display(sessions)
+    ids = [s.session_id for s in result]
+    # Valid IDs come first; invalid goes to end; no crash
+    assert "INVALID" in ids
+    assert ids.index("ES-L-0015-2026-S01") < ids.index("INVALID")
+
+
+def test_player_route_dropdown_contains_divider_between_learner_and_native_groups(runtime_env: Path, url_app: Flask) -> None:
+    primary_session_id = "ES-L-0001-2026-S01"
+    native_session_id = "ES-N-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        primary_session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=primary_session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist",),
+        ),
+    )
+    _write_session(runtime_env, "spanish", native_session_id, _native_payload("ES-N-0001", native_session_id, "2026-03-11"))
+    _write_wordlist_player_artifacts(runtime_env, "spanish", primary_session_id, "ES-L-0001")
+    _write_wordlist_player_artifacts(runtime_env, "spanish", native_session_id, "ES-N-0001")
+
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+    response = client.get(f"/de/research/spanish/player/{primary_session_id}/wordlist?source=speakers")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "pm-player-session-picker__divider" in html, (
+        "Expected a divider <hr> between learner and native groups in the session picker dropdown"
+    )
 
 
 def test_player_route_renders_interview_transcript_and_reference_dialog_in_both_languages(runtime_env: Path, url_app: Flask) -> None:

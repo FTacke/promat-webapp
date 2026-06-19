@@ -256,8 +256,20 @@ def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, A
     if not tokens:
         return ([{"kind": "text", "text": text_value}], [])
 
+    # Build a position map: norm_to_orig[i] is the index in text_value that
+    # produced normalized_text[i]. casefold() can expand characters (e.g.
+    # ß→ss), making normalized and original positions diverge; tracking them
+    # separately prevents off-by-one splits where a leading char ends up as
+    # plain text outside the token span.
+    norm_to_orig: list[int] = []
+    for orig_pos, ch in enumerate(text_value):
+        for _ in ch.casefold():
+            norm_to_orig.append(orig_pos)
+    norm_to_orig.append(len(text_value))  # sentinel
+
     normalized_text = text_value.casefold()
-    cursor = 0
+    norm_cursor = 0
+    orig_cursor = 0
     segments: list[dict[str, Any]] = []
     renderable_tokens: list[dict[str, Any]] = []
 
@@ -274,24 +286,27 @@ def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, A
         if not isinstance(token_start_ms, int) or not isinstance(token_end_ms, int):
             continue
 
-        match_start = normalized_text.find(token_text.casefold(), cursor)
-        if match_start < 0:
+        token_cf = token_text.casefold()
+        match_start_norm = normalized_text.find(token_cf, norm_cursor)
+        if match_start_norm < 0:
             continue
 
-        if match_start > cursor:
-            segments.append({"kind": "text", "text": text_value[cursor:match_start]})
+        orig_match_start = norm_to_orig[match_start_norm]
+        match_end_norm = match_start_norm + len(token_cf)
+        orig_match_end = norm_to_orig[match_end_norm]
 
-        match_end = match_start + len(token_text)
-        suffix_end = match_end
+        if orig_match_start > orig_cursor:
+            segments.append({"kind": "text", "text": text_value[orig_cursor:orig_match_start]})
+
         matched_suffix = ""
-        if token_suffix and text_value.startswith(token_suffix, match_end):
-            suffix_end = match_end + len(token_suffix)
+        if token_suffix and text_value.startswith(token_suffix, orig_match_end):
             matched_suffix = token_suffix
+
         token_index = len(renderable_tokens)
         renderable_token = {
             "token_id": token_id or f"{item_id}_token_{token_index}",
             "token_index": token_index,
-            "text": text_value[match_start:match_end],
+            "text": text_value[orig_match_start:orig_match_end],
             "start_ms": token_start_ms,
             "end_ms": token_end_ms,
         }
@@ -309,13 +324,15 @@ def _build_text_segments(item_id: str, text_value: str, tokens: list[dict[str, A
         if matched_suffix:
             token_segment["suffix"] = matched_suffix
         segments.append(token_segment)
-        cursor = suffix_end
+
+        orig_cursor = orig_match_end + len(matched_suffix)
+        norm_cursor = match_end_norm + len(matched_suffix.casefold())
 
     if not renderable_tokens:
         return ([{"kind": "text", "text": text_value}], [])
 
-    if cursor < len(text_value):
-        segments.append({"kind": "text", "text": text_value[cursor:]})
+    if orig_cursor < len(text_value):
+        segments.append({"kind": "text", "text": text_value[orig_cursor:]})
 
     return (segments, renderable_tokens)
 
