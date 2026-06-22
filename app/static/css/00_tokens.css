@@ -895,6 +895,7 @@ html[data-theme="auto"][data-system-dark="false"] {
   --pm-admonition-citation-bg: #fff;
   --pm-admonition-citation-border: #e5e5e5;
   --pm-admonition-citation-accent: #e5e5e5;
+  --pm-surface-canvas: #ffffff;
 }
 
 html[data-theme="dark"],
@@ -957,6 +958,7 @@ html[data-theme="auto"][data-system-dark="true"] {
   --pm-nav-state-active-bg: var(--pm-surface-accent-soft);
   --pm-nav-state-active-border: transparent;
   --pm-nav-state-active-line: transparent;
+  --pm-surface-canvas: var(--pm-surface-paper);
 }
 
 :root {

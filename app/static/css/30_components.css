@@ -5696,7 +5696,7 @@ body[data-page="login"] .pm-auth-secondary--card {
   padding: clamp(0.62rem, 0.8vw, 0.78rem);
   border: 1px solid var(--pm-border-subtle);
   border-radius: var(--pm-radius-card);
-  background: var(--pm-surface-paper);
+  background: var(--pm-surface-canvas);
   isolation: isolate;
 }
 
