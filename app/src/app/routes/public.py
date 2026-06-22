@@ -11,7 +11,7 @@ import re
 import time
 from urllib.parse import unquote, urlparse
 
-from flask import Blueprint, abort, current_app, flash, g, jsonify, make_response, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, current_app, g, jsonify, make_response, redirect, render_template, request, send_file, url_for
 from itsdangerous import BadSignature, URLSafeSerializer
 from sqlalchemy import event, inspect, text
 
@@ -132,6 +132,12 @@ def _build_access_request_href(ui_lang: str, next_url: str | None = None) -> str
     if next_url:
         return url_for("public.access_request_page", next=next_url)
     return url_for("public.access_request_page", ui_lang=ui_lang)
+
+
+def _build_access_request_submitted_href(ui_lang: str, next_url: str | None = None) -> str:
+    if next_url:
+        return url_for("public.access_request_page", next=next_url, submitted="1")
+    return url_for("public.access_request_page", ui_lang=ui_lang, submitted="1")
 
 
 def _build_login_href(ui_lang: str, next_url: str | None = None) -> str:
@@ -280,7 +286,7 @@ def _validate_access_request_form(ui_lang: str, values: dict[str, Any]) -> dict[
     return errors
 
 
-def _render_access_request_page(*, next_url: str, form_values: dict[str, Any] | None = None, form_errors: dict[str, str] | None = None, status_code: int = 200):
+def _render_access_request_page(*, next_url: str, form_values: dict[str, Any] | None = None, form_errors: dict[str, str] | None = None, status_code: int = 200, submitted: bool = False):
     ui_lang = _resolve_auth_ui_lang(next_url)
     form_token = _build_access_request_form_token(next_url=next_url, ui_lang=ui_lang)
     response = make_response(
@@ -295,6 +301,7 @@ def _render_access_request_page(*, next_url: str, form_values: dict[str, Any] | 
             page_name="access-request",
             shell_class="app-shell--panel-hidden",
             ui_lang=ui_lang,
+            submitted=submitted,
         )
     )
     return _no_store_response(response, status_code=status_code)
@@ -692,7 +699,8 @@ def access_request_page():
     ui_lang = _resolve_auth_ui_lang(next_url)
     if getattr(g, "user_id", None):
         return _redirect_authenticated_public_auth(next_url=next_url, ui_lang=ui_lang)
-    return _render_access_request_page(next_url=next_url)
+    submitted = request.args.get("submitted") == "1"
+    return _render_access_request_page(next_url=next_url, submitted=submitted)
 
 
 @blueprint.post("/access-request", endpoint="access_request_submit")
@@ -716,8 +724,7 @@ def access_request_submit():
         )
 
     if _access_request_submission_is_suspicious(ui_lang=ui_lang, next_url=next_url, form_values=form_values):
-        flash(get_text(ui_lang, "auth.access_request.success"), "success")
-        return redirect(_build_access_request_href(ui_lang, next_url), 303)
+        return redirect(_build_access_request_submitted_href(ui_lang, next_url), 303)
 
     access_request = auth_services.create_access_request(
         first_name=form_values["first_name"],
@@ -733,8 +740,7 @@ def access_request_submit():
         ip_address=request.headers.get("X-Forwarded-For", request.remote_addr),
     )
     deliver_access_request_notification(access_request)
-    flash(get_text(ui_lang, "auth.access_request.success"), "success")
-    return redirect(_build_access_request_href(ui_lang, next_url), 303)
+    return redirect(_build_access_request_submitted_href(ui_lang, next_url), 303)
 
 
 @blueprint.get("/health")

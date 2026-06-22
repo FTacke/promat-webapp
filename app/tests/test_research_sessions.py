@@ -2002,7 +2002,8 @@ def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
     assert html.count('pm-teaching-block--text') >= 4
     assert 'pm-teaching-block--overview' in html
     assert 'pm-teaching-block--teaching-impulses' in html
-    assert html.count('pm-teaching-block--admonition') == 1
+    assert html.count('pm-teaching-block--admonition') == 2
+    assert 'pm-admonition--context' in html
     assert html.count('pm-teaching-block--download') == 1
     assert '>Geplant<' not in html
     assert 'Auf einen Blick' in html
@@ -2068,7 +2069,8 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'pm-teaching-topic-section__grid pm-teaching-block-grid pm-teaching-block-grid--topic pm-teaching-topic-section__grid--citation' in html
     assert '<em>Seseo</em> und <em>distinción</em>' in html
     assert 'Impulse für den Unterricht' in html
-    assert 'class="pm-teaching-block pm-teaching-block--span-2 pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text pm-teaching-rich-text--didactic_close" data-block-variant="didactic_close"' in html
+    assert 'class="pm-teaching-block pm-teaching-block--span-1 pm-teaching-block--teaching-impulses pm-panel pm-reading"' in html
+    assert html.count('class="pm-teaching-impulses__item"') == 3
     assert 'Erst hören lassen' in html
     assert 'Vor der Erklärung die Hörbeispiele abspielen: Hören die Lernenden einen Unterschied zwischen <em>casa</em> und <em>caza</em>?' in html
     assert 'Variation sichtbar machen' in html
@@ -2093,8 +2095,8 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'pm-card-grid pm-card-grid--compact pm-teaching-further-reading__grid' not in html
     assert 'Der <em>yeísmo</em> ist heute die Norm' in html
     assert 'In vielen Regionen wird /s/ am Silben- oder Wortende abgeschwächt oder getilgt.' in html
-    assert 'Hier mehr erfahren' in html
-    assert html.count('Hier mehr erfahren') == 2
+    assert 'Mehr erfahren' in html
+    assert html.count('Mehr erfahren') == 2
     assert 'Hörbeispiele öffnen' not in html
     assert 'Hörbeispiele zur Vertiefung öffnen' not in html
     assert 'Ausblick: Weitere Aussprachemerkmale' not in html
@@ -2252,7 +2254,8 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'class="pm-teaching-topic-section pm-teaching-topic-section--citation pm-teaching-topic-section--topic-citation"' in html
     assert 'class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav"' in html
     assert 'Classroom prompts' in html
-    assert 'class="pm-teaching-block pm-teaching-block--span-2 pm-teaching-block--rich-text pm-panel pm-reading pm-teaching-rich-text pm-teaching-rich-text--didactic_close" data-block-variant="didactic_close"' in html
+    assert 'class="pm-teaching-block pm-teaching-block--span-1 pm-teaching-block--teaching-impulses pm-panel pm-reading"' in html
+    assert html.count('class="pm-teaching-impulses__item"') == 3
     assert 'Listen first' in html
     assert 'Before explaining, play the audio examples: do learners hear a difference between <em>casa</em> and <em>caza</em>?' in html
     assert 'Make variation visible' in html
@@ -2268,8 +2271,8 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'pm-teaching-further-reading-card' not in html
     assert '*Yeísmo* is now the norm' not in html
     assert '<em>Yeísmo</em> is now the norm' in html
-    assert 'Learn more here' in html
-    assert html.count('Learn more here') == 2
+    assert 'Learn more' in html
+    assert html.count('Learn more') == 2
     assert 'Open listening examples' not in html
     assert 'Open audio examples for further exploration' not in html
     assert 'Outlook: More pronunciation features' not in html
@@ -2308,7 +2311,7 @@ def test_teaching_topic_box_css_uses_eye_overview_and_structured_context_box() -
     assert 'width: 82%;' not in components_css
     assert ".pm-teaching-page--topic .audio-section" in components_css
     assert "--pm-audio-section-title-size: clamp(1rem" in components_css
-    assert 'width: min(100%, 820px);' in components_css
+    assert ".pm-teaching-page--topic .audio-section {\n  max-width: none;\n}" in components_css
     assert 'grid-template-columns: minmax(0, 1fr);' in components_css
     assert 'border: 0;' in components_css
     assert ".pm-teaching-further-reading__header" in components_css
@@ -3132,7 +3135,7 @@ def test_research_workbench_builders_expose_english_shared_labels(runtime_env: P
         speakers_page = build_speakers_page("en", "spanish", {})
         profile_page = build_speaker_profile_page("en", "spanish", "ES-L-0001", learner_session)
 
-    assert speakers_page["content_header"]["intro"] == "Person-based access to the Spanish corpus. A person appears exactly once and matches as soon as at least one of their sessions satisfies all active filters."
+    assert speakers_page["content_header"]["intro"] == ""
     assert speakers_page["status"]["result_label"] == "people"
     assert speakers_page["cards"][0]["selected_session_label"] == "Selected session"
     assert speakers_page["cards"][0]["recordings_label"] == "Recordings"

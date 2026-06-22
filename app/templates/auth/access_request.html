@@ -1,32 +1,45 @@
 {% extends "_pm_skeletons/auth_login_skeleton.html" %}
 {% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
-{% block page_title %}{{ format_page_title(t('auth.access_request.heading')) }}{% endblock %}
+{% block page_title %}{{ format_page_title(t('auth.access_request.submitted_heading') if submitted else t('auth.access_request.heading')) }}{% endblock %}
 
-{% set auth_heading = t('auth.access_request.heading') %}
-{% set auth_intro = t('auth.access_request.page_intro') %}
+{% set auth_heading = t('auth.access_request.submitted_heading') if submitted else t('auth.access_request.heading') %}
+{% set auth_intro = '' if submitted else t('auth.access_request.page_intro') %}
 {% set auth_breadcrumbs = [
   { 'label': BRANDING.app_display_name if BRANDING is defined else 'Pronunciation Matters', 'href': url_for('public.landing_page'), 'current': false },
-  { 'label': t('auth.access_request.heading'), 'href': none, 'current': true },
-] %}
+  { 'label': t('auth.access_request.heading'), 'href': none if submitted else url_for('public.access_request_page'), 'current': not submitted },
+] + ([{ 'label': t('auth.access_request.submitted_heading'), 'href': none, 'current': true }] if submitted else []) %}
 
 {% block auth_body %}
+{% if submitted %}
+<article class="pm-auth-surface pm-access-request-page pm-access-request-page--submitted">
+  <div class="pm-auth-stack">
+    <div class="pm-auth-message is-success" role="status">
+      <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">check_circle</span>
+      <div class="pm-auth-message__body">
+        <p class="pm-auth-message__eyebrow">{{ t('auth.common.notice') }}</p>
+        <p class="pm-auth-message__text">{{ t('auth.access_request.submitted_body') }}</p>
+      </div>
+    </div>
+    <p class="pm-auth-note">{{ t('auth.access_request.submitted_disclaimer') }}</p>
+  </div>
+</article>
+
+<aside class="pm-auth-secondary pm-auth-secondary--card pm-access-request-page__secondary" aria-labelledby="access-request-submitted-login-title">
+  <div class="pm-auth-secondary__header">
+    <p class="pm-auth-secondary__eyebrow">{{ t('auth.login.heading') }}</p>
+    <h2 id="access-request-submitted-login-title" class="pm-auth-secondary__title">{{ t('auth.access_request.existing_access_heading') }}</h2>
+  </div>
+  <div class="pm-auth-secondary__body pm-auth-secondary__body--quiet">
+    <p class="pm-auth-secondary__text">{{ t('auth.access_request.submitted_login_hint') }}</p>
+    <div class="pm-auth-secondary__actions">
+      {{ render_navigation_pill({ 'label': t('auth.access_request.login_link'), 'href': login_href, 'size': 'medium' }, 'pm-auth-secondary__action-link') }}
+    </div>
+  </div>
+</aside>
+{% else %}
 <article class="pm-auth-surface pm-access-request-page">
   <div class="pm-auth-stack">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="pm-auth-message{% if category == 'error' %} is-error{% elif category == 'success' %} is-success{% endif %}" role="alert" aria-live="assertive">
-            <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">{% if category == 'success' %}check_circle{% elif category == 'info' %}info{% else %}error{% endif %}</span>
-            <div class="pm-auth-message__body">
-              <p class="pm-auth-message__eyebrow">{{ t('auth.common.notice') }}</p>
-              <p class="pm-auth-message__text">{{ message }}</p>
-            </div>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
     {% if access_request_errors %}
       <div class="pm-auth-message is-error" role="alert" aria-live="assertive">
         <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">error</span>
@@ -187,9 +200,12 @@
     </div>
   </div>
 </aside>
+{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
 {{ super() }}
+{% if not submitted %}
 <script type="module" src="{{ url_for('static', filename='js/pages/access-request.js') }}"></script>
+{% endif %}
 {% endblock %}

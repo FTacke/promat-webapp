@@ -761,12 +761,15 @@ def test_access_request_submit_persists_request_and_shows_success(auth_app: Flas
     )
 
     assert response.status_code == 303
-    assert response.headers["Location"] == "/access-request?next=/de/research/spanish"
+    assert response.headers["Location"] == "/access-request?next=/de/research/spanish&submitted=1"
 
     follow_up = client.get(response.headers["Location"])
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
-    assert "Ihre Anfrage wurde erfasst. Wir melden uns nach der Prüfung per E-Mail." in html
+    assert "Vielen Dank. Ihre Anfrage wurde übermittelt." in html
+    assert "72 Stunden" in html
+    assert "Anfrage übermittelt" in html
+    assert "<form" not in html
 
     with auth_app.app_context():
         with get_session() as session:
@@ -972,6 +975,81 @@ def test_access_request_logs_metadata_without_full_pii(
     assert "Universität Marburg" not in caplog.text
     assert "Ich benötige Zugang für ein Seminar" not in caplog.text
     assert "Purpose:" not in caplog.text
+
+
+def test_access_request_submitted_page_shows_de_confirmation(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/access-request?submitted=1&ui_lang=de")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Vielen Dank. Ihre Anfrage wurde übermittelt." in html
+    assert "72 Stunden" in html
+    assert "Ein automatischer Anspruch auf Zugang besteht nicht." in html
+    assert "Anfrage übermittelt" in html
+    assert "<form" not in html
+
+
+def test_access_request_submitted_page_shows_en_confirmation(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/access-request?submitted=1&ui_lang=en")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Thank you. Your request has been submitted." in html
+    assert "72 hours" in html
+    assert "Access is not granted automatically." in html
+    assert "Request Submitted" in html
+    assert "<form" not in html
+
+
+def test_access_request_submitted_page_has_login_link(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/access-request?next=/de/research/spanish&submitted=1")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Zum Login" in html or "Go to login" in html
+
+
+def test_access_request_form_page_shows_form_without_submitted(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/access-request")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "<form" in html
+    assert "Vielen Dank" not in html
+    assert "Thank you" not in html
+
+
+def test_access_request_submit_redirects_to_submitted_state_no_500(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(client)
+
+    post_response = client.post("/access-request", data=payload, follow_redirects=False)
+    assert post_response.status_code == 303
+
+    confirm_response = client.get(post_response.headers["Location"])
+    assert confirm_response.status_code == 200
+
+
+def test_access_request_honeypot_redirects_to_submitted_state(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(client, overrides={"website": "https://spam.invalid"})
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert "submitted=1" in response.headers["Location"]
+    follow_up = client.get(response.headers["Location"])
+    assert follow_up.status_code == 200
+    html = follow_up.get_data(as_text=True)
+    assert "<form" not in html
 
 
 def test_public_auth_pages_redirect_authenticated_users(auth_app: Flask) -> None:
