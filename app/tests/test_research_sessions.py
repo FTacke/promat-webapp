@@ -2020,6 +2020,29 @@ def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
     assert 'href="/teaching-media/spanish/r-am-silbenende/downloads/' not in html
 
 
+def test_teaching_which_pronunciation_uses_session_0004_for_seseo_audio(url_app: Flask) -> None:
+    client = url_app.test_client()
+    distincion_pair = '/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3'
+    seseo_pair = '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-casa-caza-es-n-0004-2026-s01.mp3'
+    distincion_series = '/teaching-media/spanish/which-pronunciation/audio/variation/distincion-word-series.mp3'
+    seseo_series = '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-word-series-es-n-0004-2026-s01.mp3'
+
+    for ui_lang in ('de', 'en'):
+        response = client.get(f'/{ui_lang}/teaching/spanish/which-pronunciation')
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert html.index(distincion_pair) < html.index(seseo_pair)
+        assert html.index(distincion_series) < html.index(seseo_series)
+        assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-casa-caza.mp3' not in html
+        assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-word-series.mp3' not in html
+
+    for audio_path in (seseo_pair, seseo_series):
+        audio_response = client.get(audio_path)
+        assert audio_response.status_code == 200
+        assert audio_response.mimetype == 'audio/mpeg'
+        assert audio_response.content_length > 0
+
+
 def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app: Flask) -> None:
     client = url_app.test_client()
 
@@ -2177,9 +2200,11 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert html.count('data-audio-feedback-target="') == 8
     assert html.count('data-audio-state="idle"') >= 14
     assert '/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3' in html
-    assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-casa-caza.mp3' in html
+    assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-casa-caza-es-n-0004-2026-s01.mp3' in html
     assert '/teaching-media/spanish/which-pronunciation/audio/variation/distincion-word-series.mp3' in html
-    assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-word-series.mp3' in html
+    assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-word-series-es-n-0004-2026-s01.mp3' in html
+    assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-casa-caza.mp3' not in html
+    assert '/teaching-media/spanish/which-pronunciation/audio/variation/seseo-word-series.mp3' not in html
     assert '>Audios aus<' in html
     assert html.count('>Wortfolge<') == 2
     assert '<em>caza</em>' in html

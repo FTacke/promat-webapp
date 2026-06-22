@@ -62,7 +62,7 @@ blocks:
         note: "*casa* und *caza* werden unterschiedlich ausgesprochen."
       - label: "*Seseo*"
         subtitle: Hispanoamerika / Kanaren / Teile Andalusiens
-        audio: variation/seseo-casa-caza.mp3
+        audio: variation/seseo-casa-caza-es-n-0004-2026-s01.mp3
         note: "*casa* und *caza* werden gleich ausgesprochen."
   - type: audio_contrast
     layout:
@@ -77,7 +77,7 @@ blocks:
         note: "Besonders hörbar bei `c` in *gracias* und *ciudad* sowie `z` in *paz*."
       - label: "*Seseo*"
         subtitle: Hispanoamerika / Kanaren / Teile Andalusiens
-        audio: variation/seseo-word-series.mp3
+        audio: variation/seseo-word-series-es-n-0004-2026-s01.mp3
         note: "`c`, `z` und `ci` werden hier wie `s` ausgesprochen."
   - type: section_heading
     layout:
