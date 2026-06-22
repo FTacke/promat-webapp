@@ -40,6 +40,33 @@ function setScrolledFlag() {
   }
 }
 
+export function resolveHashTarget(hash, root = document) {
+  if (!hash || hash === "#") return null;
+
+  let targetId;
+  try {
+    targetId = decodeURIComponent(hash.slice(1));
+  } catch {
+    return null;
+  }
+
+  return targetId ? root.getElementById(targetId) : null;
+}
+
+function scrollToNavigationPosition() {
+  const hashTarget = resolveHashTarget(window.location.hash);
+  if (hashTarget) {
+    requestAnimationFrame(() => {
+      hashTarget.scrollIntoView({ block: "start", behavior: "auto" });
+      setScrolledFlag();
+    });
+    return;
+  }
+
+  window.scrollTo({ top: 0, behavior: "auto" });
+  setScrolledFlag();
+}
+
 /**
  * Exports
  */
@@ -61,10 +88,8 @@ export function initScrollState() {
 
   // Handler für Navigationsereignisse
   const handleNav = () => {
-    console.log("[Scroll State] Navigation event, scrolling to top");
-    // Optional: zu Top scrollen bei Navigation
-    window.scrollTo({ top: 0, behavior: "instant" });
-    setScrolledFlag();
+    console.log("[Scroll State] Navigation event, resolving scroll target");
+    scrollToNavigationPosition();
   };
 
   // Standard Events
@@ -84,6 +109,7 @@ export function initScrollState() {
 
   // Browser Back/Forward
   window.addEventListener("popstate", handleNav);
+  window.addEventListener("hashchange", handleNav);
 
   // Fallback: pageshow (bfcache)
   window.addEventListener("pageshow", () => {
@@ -95,8 +121,10 @@ export function initScrollState() {
 }
 
 // Auto-Init wenn direkt als Script geladen
-try {
-  initScrollState();
-} catch (e) {
-  console.warn("[Scroll State] Auto-init failed:", e);
+if (typeof document !== "undefined" && typeof window !== "undefined") {
+  try {
+    initScrollState();
+  } catch (e) {
+    console.warn("[Scroll State] Auto-init failed:", e);
+  }
 }

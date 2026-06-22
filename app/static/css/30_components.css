@@ -1184,7 +1184,7 @@ html:not(.no-js) .pm-expandable.is-expanded .pm-expandable__viewport::after {
   display: grid;
   grid-template-columns: var(--pm-space-lg) minmax(0, 1fr);
   gap: var(--promat-space-3);
-  scroll-margin-block-start: var(--pm-space-xl);
+  scroll-margin-block-start: calc(var(--pm-shell-top-offset) + var(--pm-space-sm));
   counter-increment: pm-footnote;
 }
 
@@ -1219,7 +1219,7 @@ html:not(.no-js) .pm-expandable.is-expanded .pm-expandable__viewport::after {
   font-size: 0.65em;
   line-height: 0;
   vertical-align: super;
-  scroll-margin-block-start: var(--pm-space-xl);
+  scroll-margin-block-start: calc(var(--pm-shell-top-offset) + var(--pm-space-sm));
 }
 
 .pm-footnote-ref a {
