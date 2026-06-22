@@ -559,12 +559,11 @@ def test_landing_page_renders_english_copy_and_shared_language_switch(auth_app: 
     assert "Exploring and teaching foreign languages digitally." in html
     assert "Research pronunciation" in html
     assert "Empirical speech data and analysis tools for research and university teaching." in html
-    assert "Go to research data" in html
     assert "Research setting with a discussion and audio analysis on a laptop" in html
     assert "Teach pronunciation" in html
     assert "Practical materials for practising and reflecting on pronunciation." in html
-    assert "Go to teaching" in html
     assert "Classroom scene representing teaching materials and listening examples" in html
+    assert html.count('<span class="pm-cta-link__label">Open</span>') == 2
     assert 'class="promat-topbar__language-switch"' in html
     assert 'href="/de?lang=de"' in html
     assert 'href="/en?lang=en"' in html

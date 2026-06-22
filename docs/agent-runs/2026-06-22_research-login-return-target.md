@@ -43,8 +43,19 @@ Zeile 49 aktualisiert: alte Regel „corpus root login returns to same corpus la
 
 ## Testergebnisse
 
-15 neue/aktualisierte Tests: alle grün (`15 passed`).  
-1 pre-existierender Failure (`test_landing_page_renders_english_copy_and_shared_language_switch`) war vor dieser Session bereits rot — nicht durch diese Änderungen verursacht.
+15 neue/aktualisierte Tests der Return-Target-Logik: alle grün.  
+1 pre-existierender Failure (`test_landing_page_renders_english_copy_and_shared_language_switch`) in Folgerun behoben (siehe unten).  
+Gesamtergebnis nach beiden Runs: **128 passed, 0 failed**.
+
+### Nachtrag: pre-existing Failure behoben (2026-06-22)
+
+**Ursache:** Die Landing-Card-CTAs wurden irgendwann von `"Go to research data"` / `"Go to teaching"` auf `"Open"` (i18n-Key `landing.research.link` / `landing.teaching.link`) geändert; der Test wurde dabei nicht aktualisiert.
+
+**Fix:** Die beiden veralteten String-Assertions im Test durch eine präzise Zählprüfung ersetzt:
+```python
+assert html.count('<span class="pm-cta-link__label">Open</span>') == 2
+```
+Damit wird sichergestellt, dass genau zwei CTA-Labels mit `"Open"` gerendert werden (eines pro Landing-Card).
 
 ## Architektur-Entscheidung
 
