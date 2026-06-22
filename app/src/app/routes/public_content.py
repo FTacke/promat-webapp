@@ -526,7 +526,7 @@ def build_research_language_root_page(
             },
             {
                 "label": get_text(ui_lang, "research.root.action.login"),
-                "href_key": "login",
+                "href_key": f"login_next:research:{language_slug}:speakers",
             },
         ],
         "page_kind": "reading",

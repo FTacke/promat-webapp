@@ -990,26 +990,123 @@ def test_public_auth_pages_redirect_authenticated_users(auth_app: Flask) -> None
     assert public_request.headers["Location"] == "/de/research/spanish"
 
 
-def test_login_from_corpus_root_returns_to_same_corpus_root(auth_app: Flask) -> None:
+def test_login_from_corpus_root_redirects_to_speakers(auth_app: Flask) -> None:
     client = auth_app.test_client()
 
     landing_response = client.get("/de/research/spanish")
 
     assert landing_response.status_code == 200
-    assert 'href="/login?next=/de/research/spanish"' in landing_response.get_data(as_text=True)
+    assert 'href="/login?next=/de/research/spanish/speakers"' in landing_response.get_data(as_text=True)
 
     login_response = client.post(
         "/auth/login",
         data={
             "email": "alice@example.org",
             "password": "ValidPass1",
-            "next": "/de/research/spanish",
+            "next": "/de/research/spanish/speakers",
         },
         follow_redirects=False,
     )
 
     assert login_response.status_code == 303
-    assert login_response.headers["Location"] == "/de/research/spanish"
+    assert login_response.headers["Location"] == "/de/research/spanish/speakers"
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "corpus"),
+    [
+        ("de", "spanish"),
+        ("de", "french"),
+        ("de", "german"),
+        ("de", "english"),
+        ("en", "spanish"),
+        ("en", "french"),
+        ("en", "german"),
+        ("en", "english"),
+    ],
+)
+def test_corpus_root_login_href_points_to_speakers(auth_app: Flask, ui_lang: str, corpus: str) -> None:
+    client = auth_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/{corpus}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'href="/login?next=/{ui_lang}/research/{corpus}/speakers"' in html
+    assert f'href="/login?next=/{ui_lang}/research/{corpus}"' not in html
+
+
+def test_protected_research_route_click_preserves_exact_target(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/de/research/spanish/comparison", follow_redirects=False)
+
+    assert response.status_code in (302, 303)
+    assert response.headers["Location"] == "/login?next=/de/research/spanish/comparison"
+
+
+def test_speakers_route_click_preserves_speakers_target(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/de/research/spanish/speakers", follow_redirects=False)
+
+    assert response.status_code in (302, 303)
+    assert response.headers["Location"] == "/login?next=/de/research/spanish/speakers"
+
+
+def test_phenomena_route_click_preserves_exact_target(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/de/research/spanish/phenomena", follow_redirects=False)
+
+    assert response.status_code in (302, 303)
+    assert response.headers["Location"] == "/login?next=/de/research/spanish/phenomena"
+
+
+def test_design_page_is_publicly_accessible_without_login(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.get("/de/research/spanish/design")
+
+    assert response.status_code == 200
+
+
+def test_login_post_rejects_external_next_url_and_falls_back_to_default(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.post(
+        "/auth/login",
+        data={
+            "email": "alice@example.org",
+            "password": "ValidPass1",
+            "next": "https://evil.example.com/steal",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    location = response.headers["Location"]
+    assert "evil.example.com" not in location
+    assert location.startswith("/")
+
+
+def test_login_post_rejects_protocol_relative_external_next_url(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+
+    response = client.post(
+        "/auth/login",
+        data={
+            "email": "alice@example.org",
+            "password": "ValidPass1",
+            "next": "//evil.example.com/steal",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    location = response.headers["Location"]
+    assert "evil.example.com" not in location
+    assert location.startswith("/")
 
 
 def test_login_accepts_email_and_rejects_nonexistent_identifier(auth_app: Flask) -> None:

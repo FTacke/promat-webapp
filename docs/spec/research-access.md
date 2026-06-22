@@ -46,7 +46,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - Access clarification belongs at the route boundary: unauthenticated requests are redirected to login with a safe return target, and the protected workbench or media response must not already render in the background.
 - There are no corpus-specific access exceptions such as public comparison or public phenomena variants outside `design`.
 - On public research pages for unauthenticated users, protected research destinations remain visibly linked but render in a muted locked state without repeating login CTA copy at each entry.
-- When the public corpus root links to login, that login path preserves the exact corpus-root return target so successful authentication returns the user to the same corpus landing page.
+- When the public corpus root links to login, the login return target is `/{ui_lang}/research/{corpus}/speakers`, not the corpus root itself. Successful authentication therefore lands the user directly on the speakers page. Unauthenticated clicks on any other concrete protected route (e.g. `/comparison`, `/phenomena`, a player or profile detail) preserve that exact route as the return target unchanged.
 - The public access-request journey for these corpus roots uses the canonical `/access-request` form surface; it does not fall back to a `mailto` draft.
 
 ### Protected research surfaces

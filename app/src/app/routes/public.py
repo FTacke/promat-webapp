@@ -384,6 +384,12 @@ def _resolve_href_key(href_key: str, ui_lang: str) -> str:
     if href_key == "access_request":
         return url_for("public.access_request_page", next=_request_next_value())
 
+    # "login_next:<target-key>" — login href with an explicit next URL resolved from target-key
+    if href_key.startswith("login_next:"):
+        target_key = href_key[len("login_next:"):]
+        next_url = _resolve_href_key(target_key, ui_lang)
+        return _build_login_href(ui_lang, next_url=next_url)
+
     if ":" not in href_key:
         return href_key
 
