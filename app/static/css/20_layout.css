@@ -237,6 +237,8 @@ body.app-shell.page-landing .md3-content-wrapper {
   list-style: none;
   padding-left: 0;
   margin-left: 0;
+  font-size: var(--pm-literature-font-size);
+  line-height: var(--pm-literature-line-height);
 }
 
 .pm-literature li {

@@ -10,6 +10,7 @@ import { initPreloadGuard, initPageTitleAndScroll } from "./ui.js";
 import { initConfig } from "./config.js";
 import { initFlashSnackbar } from "./snackbar.js";
 import { initExternalHttpLinks } from "./external-links.js";
+import { initReadingExpandables, refreshExpandedReadingLists } from "./reading-expandables.js";
 
 // Import legacy main.js to preserve existing functionality (Navigation, Token Refresh, etc.)
 import "../../main.js";
@@ -71,6 +72,9 @@ initDatawrapperEmbedsWhenPresent();
 // Enable compact public mini-players on Teaching pages when present.
 initTeachingMiniPlayersWhenPresent();
 initTeachingCitationCopyWhenPresent();
+initReadingExpandables();
+
+window.addEventListener("resize", refreshExpandedReadingLists, { passive: true });
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Auth Handler (401 listener and param check)
@@ -84,4 +88,5 @@ document.addEventListener("turbo:load", () => {
     initDatawrapperEmbedsWhenPresent();
     initTeachingCitationCopyWhenPresent();
     initTeachingMiniPlayersWhenPresent();
+    initReadingExpandables();
 });

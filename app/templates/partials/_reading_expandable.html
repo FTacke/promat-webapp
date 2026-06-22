@@ -1,0 +1,32 @@
+<section
+  class="pm-expandable"
+  aria-labelledby="{{ content_element.id }}-title"
+  data-pm-expandable
+>
+  <div class="pm-expandable__header">
+    <h3 class="pm-expandable__title" id="{{ content_element.id }}-title">{{ content_element.title }}</h3>
+    <button
+      class="pm-action-button pm-action-button--tertiary pm-action-button--small pm-expandable__toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="{{ content_element.id }}-content"
+      data-pm-expandable-toggle
+      data-label-show="{{ t('common.actions.show') }}"
+      data-label-hide="{{ t('common.actions.hide') }}"
+    >
+      <span data-pm-expandable-toggle-label>{{ t('common.actions.show') }}</span>
+      <span class="material-symbols-rounded pm-interaction__icon pm-expandable__toggle-icon" aria-hidden="true">expand_more</span>
+    </button>
+  </div>
+  <p class="pm-expandable__summary">{{ content_element.summary_html | safe }}</p>
+  <div class="pm-expandable__viewport" id="{{ content_element.id }}-content" data-pm-expandable-viewport>
+    <ol class="pm-expandable__list">
+      {% for item in content_element['items'] %}
+      <li class="pm-expandable__item">
+        <span class="pm-expandable__label">{{ item.label }}</span>
+        <span class="pm-expandable__text">{{ item.text }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>

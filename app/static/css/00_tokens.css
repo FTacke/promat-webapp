@@ -640,8 +640,17 @@
   --pm-reading-heading-gap-before-h3: var(--pm-space-text);
   --pm-reading-heading-gap-after-h3: var(--promat-space-2);
   --pm-reading-list-item-gap: var(--promat-space-2);
+  --pm-reading-material-font-size: 0.84em;
+  --pm-reading-material-line-height: 1.35;
+  --pm-reading-material-summary-font-size: 0.9em;
+  --pm-reading-material-preview-height: calc(3 * 1.35em + var(--pm-space-sm));
+  --pm-reading-material-motion-duration: 220ms;
+  --pm-reading-footnote-font-size: 0.82em;
+  --pm-reading-footnote-line-height: 1.45;
   --pm-literature-indent: 1.5rem;
   --pm-literature-item-gap: 0.65rem;
+  --pm-literature-font-size: 0.9em;
+  --pm-literature-line-height: 1.5;
   --pm-literature-abbreviation-width: 5.5rem;
   --pm-literature-abbreviation-gap: 0.5rem;
   --pm-literature-abbreviation-item-gap: 0.18rem;
@@ -959,6 +968,9 @@ html[data-theme="auto"][data-system-dark="true"] {
   --pm-nav-state-active-border: transparent;
   --pm-nav-state-active-line: transparent;
   --pm-surface-canvas: var(--pm-surface-paper);
+  --pm-admonition-weiterlesen-bg: color-mix(in srgb, var(--book-surface-2) 86%, var(--book-bg) 14%);
+  --pm-admonition-weiterlesen-border: color-mix(in srgb, var(--book-border) 94%, transparent);
+  --pm-admonition-weiterlesen-accent: color-mix(in srgb, var(--book-adm-weiterlesen) 48%, var(--book-surface-2) 52%);
 }
 
 :root {

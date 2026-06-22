@@ -2472,11 +2472,12 @@ def test_project_about_page_embeds_video_and_hides_intro(
 
 
 @pytest.mark.parametrize(
-    ("ui_lang", "expected_phrase", "expected_about_label", "expected_structure_label", "expected_data_label", "expected_team_label"),
+    ("ui_lang", "expected_phrase", "expected_updated_phrase", "expected_about_label", "expected_structure_label", "expected_data_label", "expected_team_label"),
     [
         (
             "de",
             "Die spanischen Aufgaben dieses Korpus wurden entwickelt",
+            "Die Liste umfasst 92 Items",
             "Worum es geht",
             "Projektaufbau",
             "Daten & Methodik",
@@ -2485,6 +2486,7 @@ def test_project_about_page_embeds_video_and_hides_intro(
         (
             "en",
             "The Spanish tasks in this corpus were developed",
+            "The list comprises 92 items",
             "What this project is about",
             "Project structure",
             "Data & methods",
@@ -2496,6 +2498,7 @@ def test_spanish_design_page_is_localized_links_to_project_pages_and_has_no_intr
     url_app: Flask,
     ui_lang: str,
     expected_phrase: str,
+    expected_updated_phrase: str,
     expected_about_label: str,
     expected_structure_label: str,
     expected_data_label: str,
@@ -2507,14 +2510,13 @@ def test_spanish_design_page_is_localized_links_to_project_pages_and_has_no_intr
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    expected_data_label_html = expected_data_label.replace("&", "&amp;")
-    expected_team_label_html = expected_team_label.replace("&", "&amp;")
     assert expected_phrase in html
+    assert expected_updated_phrase in html
     assert 'class="promat-page__intro pm-content-header__intro"' not in html
     assert f'>{expected_about_label}<' in html
     assert f'>{expected_structure_label}<' in html
-    assert f'>{expected_data_label_html}<' in html
-    assert f'>{expected_team_label_html}<' in html
+    assert f'>{expected_data_label}<' in html
+    assert f'>{expected_team_label}<' in html
     assert f'href="/{ui_lang}/project/about"' in html
     assert f'href="/{ui_lang}/project/structure"' in html
     assert f'href="/{ui_lang}/project/data-methods"' in html
@@ -2540,6 +2542,61 @@ def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask
     assert 'text-indent: calc(-1 * var(--pm-literature-indent));' in css
     assert '.pm-literature-abbreviations li {' in css
     assert 'href="https://hispanistica.com/projects/marele/"' in html
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "wordlist_title", "sentence_list_title", "show_label", "footnotes_heading"),
+    [
+        ("de", "Finale Wortliste anzeigen", "Finale Satzliste anzeigen", "Anzeigen", "Fußnoten"),
+        ("en", "Show final wordlist", "Show final sentence list", "Show", "Footnotes"),
+    ],
+)
+def test_spanish_design_page_renders_expandable_material_and_footnotes_in_content_order(
+    url_app: Flask,
+    ui_lang: str,
+    wordlist_title: str,
+    sentence_list_title: str,
+    show_label: str,
+    footnotes_heading: str,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert html.count('class="pm-expandable"') == 2
+    assert html.count('aria-expanded="false"') >= 2
+    assert 'aria-controls="spanish-final-wordlist-content"' in html
+    assert 'aria-controls="spanish-final-sentence-list-content"' in html
+    assert html.count(f'<span data-pm-expandable-toggle-label>{show_label}</span>') == 2
+    assert f'id="spanish-final-wordlist-title">{wordlist_title}</h3>' in html
+    assert f'id="spanish-final-sentence-list-title">{sentence_list_title}</h3>' in html
+    assert '<span class="pm-expandable__label">92</span>' in html
+    assert '<span class="pm-expandable__label">QW10</span>' in html
+    assert html.index(wordlist_title) < html.index("Warum kein" if ui_lang == "de" else "Why no traditional")
+    assert html.index(sentence_list_title) < html.index(">Interview<")
+    assert f'id="pm-footnotes-heading">{footnotes_heading}</h2>' in html
+    assert 'href="#fn-spanish-design-1"' in html
+    assert 'id="fn-spanish-design-1"' in html
+    assert html.index('class="pm-footnotes pm-reading"') < html.index('class="promat-content-block__list pm-literature"')
+
+
+def test_reading_expandable_uses_shared_responsive_component_styles(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    component_css = client.get("/static/css/30_components.css").get_data(as_text=True)
+    layout_css = client.get("/static/css/20_layout.css").get_data(as_text=True)
+    expandable_js = client.get("/static/js/modules/core/reading-expandables.js").get_data(as_text=True)
+
+    assert ".pm-expandable__list {" in component_css
+    assert "column-count: 2;" in component_css
+    assert "@media (max-width: 720px)" in component_css
+    assert "column-count: 1;" in component_css
+    assert "html:not(.no-js) .pm-expandable__viewport" in component_css
+    assert ".pm-footnotes {" in component_css
+    assert "font-size: var(--pm-literature-font-size);" in layout_css
+    assert 'toggle.setAttribute("aria-expanded", String(expanded));' in expandable_js
 
 
 @pytest.mark.parametrize(

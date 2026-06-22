@@ -52,9 +52,14 @@
   {% endif %}
 
   <div class="promat-page__sections">
+    {% set footnotes_state = namespace(rendered=false) %}
     {% for section in promat_page.sections | default([]) %}
+    {% if promat_page.footnotes_html and not footnotes_state.rendered and section.list_class == 'pm-literature' %}
+      {% include 'partials/_reading_footnotes.html' %}
+      {% set footnotes_state.rendered = true %}
+    {% endif %}
     <section class="promat-content-section">
-      {% set has_block_body = section.paragraphs or section.paragraphs_html or section.body_html or section.bullets or section.bullets_html or section.table or section.media_embed %}
+      {% set has_block_body = section.paragraphs or section.paragraphs_html or section.body_html or section.content_elements or section.bullets or section.bullets_html or section.table or section.media_embed %}
       {% if has_block_body %}
       <div class="promat-content-block pm-panel pm-reading">
         {% if section.heading %}
@@ -69,6 +74,11 @@
         {% if section.body_html %}
         <div class="promat-content-block__body">{{ section.body_html | safe }}</div>
         {% endif %}
+        {% for content_element in section.content_elements | default([]) %}
+          {% if content_element.type == 'pm_expandable_text' %}
+            {% include 'partials/_reading_expandable.html' %}
+          {% endif %}
+        {% endfor %}
         {% if section.bullets %}
         <ul class="promat-content-block__list{{ ' ' ~ section.list_class if section.list_class else '' }}">
           {% for bullet in section.bullets %}
@@ -181,6 +191,9 @@
       {% endif %}
     </section>
     {% endfor %}
+    {% if promat_page.footnotes_html and not footnotes_state.rendered %}
+      {% include 'partials/_reading_footnotes.html' %}
+    {% endif %}
   </div>
 </article>
 {% endblock %}
