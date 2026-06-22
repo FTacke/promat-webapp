@@ -2548,10 +2548,37 @@ def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask
 
 
 @pytest.mark.parametrize(
-    ("ui_lang", "wordlist_title", "sentence_list_title", "show_label", "footnotes_heading"),
+    (
+        "ui_lang",
+        "wordlist_title",
+        "sentence_list_title",
+        "show_label",
+        "footnotes_heading",
+        "wordlist_summary",
+        "section_headings",
+        "backref_label",
+    ),
     [
-        ("de", "Finale Wortliste anzeigen", "Finale Satzliste anzeigen", "Anzeigen", "Fußnoten"),
-        ("en", "Show final wordlist", "Show final sentence list", "Show", "Footnotes"),
+        (
+            "de",
+            "Wortliste anzeigen",
+            "Satzliste anzeigen",
+            "Anzeigen",
+            "Fußnoten",
+            "Die spanische Wortliste umfasst 92 Items: 86 Einzellexeme und 6 Minimal- bzw. Pseudominimalpaare.",
+            ("Methodische Grundidee", "Konzeption der Wortliste", "Grenzen klassischer Lesetexte", "Satzliste als kontrollierte Alternative"),
+            "Zurück zur Fußnotenreferenz",
+        ),
+        (
+            "en",
+            "Show wordlist",
+            "Show sentence list",
+            "Show",
+            "Footnotes",
+            "The Spanish wordlist contains 92 items: 86 individual lexical items and 6 minimal or pseudo-minimal pairs.",
+            ("Methodological starting point", "Design of the wordlist", "Limitations of traditional reading passages", "The sentence list as a controlled alternative"),
+            "Back to footnote reference",
+        ),
     ],
 )
 def test_spanish_design_page_renders_expandable_material_and_footnotes_in_content_order(
@@ -2561,6 +2588,9 @@ def test_spanish_design_page_renders_expandable_material_and_footnotes_in_conten
     sentence_list_title: str,
     show_label: str,
     footnotes_heading: str,
+    wordlist_summary: str,
+    section_headings: tuple[str, ...],
+    backref_label: str,
 ) -> None:
     client = url_app.test_client()
 
@@ -2575,14 +2605,22 @@ def test_spanish_design_page_renders_expandable_material_and_footnotes_in_conten
     assert html.count(f'<span data-pm-expandable-toggle-label>{show_label}</span>') == 2
     assert f'id="spanish-final-wordlist-title">{wordlist_title}</h3>' in html
     assert f'id="spanish-final-sentence-list-title">{sentence_list_title}</h3>' in html
+    assert wordlist_summary in html
     assert '<span class="pm-expandable__label">92</span>' in html
     assert '<span class="pm-expandable__label">QW10</span>' in html
-    assert html.index(wordlist_title) < html.index("Warum kein" if ui_lang == "de" else "Why no traditional")
+    assert [html.index(heading) for heading in section_headings] == sorted(html.index(heading) for heading in section_headings)
+    assert html.index(wordlist_title) < html.index(section_headings[2])
     assert html.index(sentence_list_title) < html.index(">Interview<")
     assert f'id="pm-footnotes-heading">{footnotes_heading}</h2>' in html
-    assert 'href="#fn-spanish-design-1"' in html
-    assert 'id="fn-spanish-design-1"' in html
+    assert f'id="fnref-spanish-design-1-{ui_lang}"' in html
+    assert f'href="#fn-spanish-design-1-{ui_lang}"' in html
+    assert f'id="fn-spanish-design-1-{ui_lang}"' in html
+    assert f'href="#fnref-spanish-design-1-{ui_lang}"' in html
+    assert html.count('class="pm-footnotes__backref"') == 3
+    assert f'aria-label="{backref_label}"' in html
     assert html.index('class="pm-footnotes pm-reading"') < html.index('class="promat-content-block__list pm-literature"')
+    sections_html = html[html.index('<div class="promat-page__sections">'):html.index("</article>")]
+    assert "Pronunciation Matters" not in sections_html.replace("<em>Pronunciation Matters</em>", "")
 
 
 def test_reading_expandable_uses_shared_responsive_component_styles(url_app: Flask) -> None:
@@ -2598,6 +2636,9 @@ def test_reading_expandable_uses_shared_responsive_component_styles(url_app: Fla
     assert "column-count: 1;" in component_css
     assert "html:not(.no-js) .pm-expandable__viewport" in component_css
     assert ".pm-footnotes {" in component_css
+    assert "width: min(100%, var(--pm-layout-reading-width));" in component_css
+    assert "grid-template-columns: var(--pm-space-lg) minmax(0, 1fr);" in component_css
+    assert ".pm-footnotes__backref" in component_css
     assert "font-size: var(--pm-literature-font-size);" in layout_css
     assert 'toggle.setAttribute("aria-expanded", String(expanded));' in expandable_js
 

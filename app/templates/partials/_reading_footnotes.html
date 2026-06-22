@@ -1,10 +1,19 @@
 <section class="pm-footnotes pm-reading" aria-labelledby="pm-footnotes-heading" role="doc-endnotes">
-  <h2 class="pm-footnotes__heading" id="pm-footnotes-heading">{{ t('public.reading.footnotes_heading') }}</h2>
-  <ol class="pm-footnotes__list">
-    {% for footnote in promat_page.footnotes_html %}
-    <li class="pm-footnotes__item" id="{{ footnote.id }}" value="{{ footnote.label }}">
-      {{ footnote.html | safe }}
-    </li>
-    {% endfor %}
-  </ol>
+  <div class="pm-footnotes__inner">
+    <h2 class="pm-footnotes__heading" id="pm-footnotes-heading">{{ t('public.reading.footnotes_heading') }}</h2>
+    <ol class="pm-footnotes__list">
+      {% for footnote in promat_page.footnotes_html %}
+      <li class="pm-footnotes__item" id="{{ footnote.id }}-{{ current_ui_lang }}">
+        <span class="pm-footnotes__body">
+          <span class="pm-footnotes__content">{{ footnote.html | safe }}</span>
+          <a
+            class="pm-footnotes__backref"
+            href="#{{ footnote.id | replace('fn-', 'fnref-', 1) }}-{{ current_ui_lang }}"
+            aria-label="{{ t('public.reading.back_to_footnote_reference') }}"
+          >↩</a>
+        </span>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
 </section>

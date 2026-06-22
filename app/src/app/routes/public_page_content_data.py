@@ -720,8 +720,8 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
         },
         {
             "heading": {
-                "de": "Rationale der Aufgaben",
-                "en": "Rationale of the tasks",
+                "de": "Methodische Grundidee",
+                "en": "Methodological starting point",
             },
             "paragraphs_html": {
                 "de": [
@@ -736,18 +736,18 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
         },
         {
             "heading": {
-                "de": "Von (I)FEC zu Pronunciation Matters: Wortliste",
-                "en": "From (I)FEC to Pronunciation Matters: wordlist",
+                "de": "Konzeption der Wortliste",
+                "en": "Design of the wordlist",
             },
             "paragraphs_html": {
                 "de": [
-                    'Die (I)FEC-Wortliste ist für ein breites korpusphonologisches Programm konzipiert. Sie soll zahlreiche Phänomene des spanischen Lautsystems, regionale Variation und mögliche Kontraste erfassen. Für ein Lernendenkorpus ist diese Breite nur teilweise sinnvoll. Einige Items sind phonologisch interessant, erwiesen sich aber für Lernende als unnötige Stolperstellen oder wiesen praktisch keinen analytischen Nutzen auf: morphologisch komplexe Formen wie <em>estudiéis</em>, seltene Diphthonge oder Triphthonge in Items wie <em>bou</em>, <em>miau</em> und <em>guau</em>, Lehnwörter wie <em>kétchup</em> und <em>iceberg</em> oder lexikalisch randständige Wörter wie <em>ñandú</em>, <em>yunque</em> und <em>ciempiés</em>.<sup class="pm-footnote-ref" id="fnref-spanish-design-1"><a href="#fn-spanish-design-1">1</a></sup> Solche Wörter können dazu führen, dass nicht mehr primär Aussprache erhoben wird, sondern Wortkenntnis, Lesesicherheit oder Unsicherheit im Umgang mit unbekannten Formen vom eigentlichen Fokus ablenken.',
-                    'Die neue Wortliste verlässt daher bewusst das Ideal einer vollständigen Protokollübernahme. Sie ist aber weiterhin stark an (I)FEC gebunden: 58 unterschiedliche Wortformen aus (I)FEC wurden übernommen.<sup class="pm-footnote-ref" id="fnref-spanish-design-2"><a href="#fn-spanish-design-2">2</a></sup> Die Abfolge aus randomisiertem Hauptteil mit Einzellexemen und einem abschließenden Block mit Minimal- bzw. Pseudominimalpaaren wurde ebenfalls beibehalten. Gleichzeitig wurden 32 Wortformen neu ergänzt, um die Liste besser an Lernende und an die geplanten Analysen anzupassen.<sup class="pm-footnote-ref" id="fnref-spanish-design-3"><a href="#fn-spanish-design-3">3</a></sup> Dazu gehören u. a. Items zur besseren Abdeckung bestimmter Konsonantenphänomene, etwa finales /d/ in <em>ciudad</em>, <em>usted</em> und <em>verdad</em>. In (I)FEC ist finales /d/ nicht systematisch abgedeckt; für <em>Pronunciation Matters</em> wurde dieses Phänomen daher gezielt ausgebaut.',
+                    'Die (I)FEC-Wortliste ist für ein breites korpusphonologisches Programm konzipiert. Sie soll zahlreiche Phänomene des spanischen Lautsystems, regionale Variation und mögliche Kontraste erfassen. Für ein Lernendenkorpus ist diese Breite nur teilweise sinnvoll. Einige Items sind phonologisch interessant, erwiesen sich aber für Lernende als unnötige Stolperstellen oder wiesen praktisch keinen analytischen Nutzen auf: morphologisch komplexe Formen wie <em>estudiéis</em>, seltene Diphthonge oder Triphthonge in Items wie <em>bou</em>, <em>miau</em> und <em>guau</em>, Lehnwörter wie <em>kétchup</em> und <em>iceberg</em> oder lexikalisch randständige Wörter wie <em>ñandú</em>, <em>yunque</em> und <em>ciempiés</em>.<sup class="pm-footnote-ref" id="fnref-spanish-design-1-de"><a href="#fn-spanish-design-1-de" aria-label="Fußnote 1">1</a></sup> Solche Wörter können dazu führen, dass nicht mehr primär Aussprache erhoben wird, sondern Wortkenntnis, Lesesicherheit oder Unsicherheit im Umgang mit unbekannten Formen vom eigentlichen Fokus ablenken.',
+                    'Die neue Wortliste verlässt daher bewusst das Ideal einer vollständigen Protokollübernahme. Sie ist aber weiterhin stark an (I)FEC gebunden: 58 unterschiedliche Wortformen aus (I)FEC wurden übernommen.<sup class="pm-footnote-ref" id="fnref-spanish-design-2-de"><a href="#fn-spanish-design-2-de" aria-label="Fußnote 2">2</a></sup> Die Abfolge aus randomisiertem Hauptteil mit Einzellexemen und einem abschließenden Block mit Minimal- bzw. Pseudominimalpaaren wurde ebenfalls beibehalten. Gleichzeitig wurden 32 Wortformen neu ergänzt, um die Liste besser an Lernende und an die geplanten Analysen anzupassen.<sup class="pm-footnote-ref" id="fnref-spanish-design-3-de"><a href="#fn-spanish-design-3-de" aria-label="Fußnote 3">3</a></sup> Dazu gehören u. a. Items zur besseren Abdeckung bestimmter Konsonantenphänomene, etwa finales /d/ in <em>ciudad</em>, <em>usted</em> und <em>verdad</em>. In (I)FEC ist finales /d/ nicht systematisch abgedeckt; für <em>Pronunciation Matters</em> wurde dieses Phänomen daher gezielt ausgebaut.',
                     "Die Wortliste wurde somit nicht neu erfunden, sondern gezielt überarbeitet. Entscheidend sind Intelligibilität, systematische Realisationen und relevante Kontraste, nicht die Orientierung an einer erstsprachlichen Zielnorm oder maximale Systemvollständigkeit. Die Liste umfasst 92 Items: einen Hauptteil mit Einzellexemen (86) und einen klar abgegrenzten Block mit Minimal- bzw. Pseudominimalpaaren am Ende (6). Die Items sind phonologisch motiviert ausgewählt, aber lernendengerecht gefiltert. Bevorzugt werden hochfrequente, frühen Lernniveaus entsprechende und orthographisch möglichst transparente Wörter. Relevante Phänomene sollen mehrfach vertreten sein, in der Regel durch drei bis fünf Items, damit Einzelbeobachtungen nicht überinterpretiert werden.",
                 ],
                 "en": [
-                    'The (I)FEC wordlist was designed for a broad corpus-phonological programme. It aims to capture numerous phenomena of the Spanish sound system, regional variation, and possible contrasts. For a learner corpus, this breadth is only partly useful. Some items are phonologically interesting, but turned out to be unnecessary stumbling blocks for learners or had little practical analytic value: morphologically complex forms such as <em>estudiéis</em>, rare diphthongs or triphthongs in items such as <em>bou</em>, <em>miau</em>, and <em>guau</em>, loanwords such as <em>kétchup</em> and <em>iceberg</em>, or lexically marginal words such as <em>ñandú</em>, <em>yunque</em>, and <em>ciempiés</em>.<sup class="pm-footnote-ref" id="fnref-spanish-design-1-en"><a href="#fn-spanish-design-1">1</a></sup> Such words can shift the task away from pronunciation and toward lexical knowledge, reading confidence, or uncertainty when dealing with unfamiliar forms.',
-                    'The new wordlist therefore deliberately moves away from the ideal of adopting the full protocol unchanged. At the same time, it remains strongly indebted to (I)FEC: 58 different word forms from (I)FEC were retained.<sup class="pm-footnote-ref" id="fnref-spanish-design-2-en"><a href="#fn-spanish-design-2">2</a></sup> The sequence of a randomised main part with individual lexical items followed by a final block of minimal or pseudo-minimal pairs was also kept. At the same time, 32 word forms were newly added in order to adapt the list more closely to learners and to the planned analyses.<sup class="pm-footnote-ref" id="fnref-spanish-design-3-en"><a href="#fn-spanish-design-3">3</a></sup> These include items that improve the coverage of specific consonantal phenomena, for instance word-final /d/ in <em>ciudad</em>, <em>usted</em>, and <em>verdad</em>. In (I)FEC, final /d/ is not covered systematically; in <em>Pronunciation Matters</em>, this phenomenon was therefore expanded deliberately.',
+                    'The (I)FEC wordlist was designed for a broad corpus-phonological programme. It aims to capture numerous phenomena of the Spanish sound system, regional variation, and possible contrasts. For a learner corpus, this breadth is only partly useful. Some items are phonologically interesting, but turned out to be unnecessary stumbling blocks for learners or had little practical analytic value: morphologically complex forms such as <em>estudiéis</em>, rare diphthongs or triphthongs in items such as <em>bou</em>, <em>miau</em>, and <em>guau</em>, loanwords such as <em>kétchup</em> and <em>iceberg</em>, or lexically marginal words such as <em>ñandú</em>, <em>yunque</em>, and <em>ciempiés</em>.<sup class="pm-footnote-ref" id="fnref-spanish-design-1-en"><a href="#fn-spanish-design-1-en" aria-label="Footnote 1">1</a></sup> Such words can shift the task away from pronunciation and toward lexical knowledge, reading confidence, or uncertainty when dealing with unfamiliar forms.',
+                    'The new wordlist therefore deliberately moves away from the ideal of adopting the full protocol unchanged. At the same time, it remains strongly indebted to (I)FEC: 58 different word forms from (I)FEC were retained.<sup class="pm-footnote-ref" id="fnref-spanish-design-2-en"><a href="#fn-spanish-design-2-en" aria-label="Footnote 2">2</a></sup> The sequence of a randomised main part with individual lexical items followed by a final block of minimal or pseudo-minimal pairs was also kept. At the same time, 32 word forms were newly added in order to adapt the list more closely to learners and to the planned analyses.<sup class="pm-footnote-ref" id="fnref-spanish-design-3-en"><a href="#fn-spanish-design-3-en" aria-label="Footnote 3">3</a></sup> These include items that improve the coverage of specific consonantal phenomena, for instance word-final /d/ in <em>ciudad</em>, <em>usted</em>, and <em>verdad</em>. In (I)FEC, final /d/ is not covered systematically; in <em>Pronunciation Matters</em>, this phenomenon was therefore expanded deliberately.',
                     "The wordlist was therefore not reinvented, but revised in a targeted way. What matters are intelligibility, systematic realisations, and relevant contrasts, not orientation toward a first-language target norm or maximal coverage of the sound system. The list comprises 92 items: a main part with individual lexical items (86) and a clearly separated final block of minimal or pseudo-minimal pairs (6). The items are selected on phonological grounds, but filtered for learner suitability. Preference was given to high-frequency words, words appropriate to early learning levels, and forms that are as orthographically transparent as possible. Relevant phenomena should be represented repeatedly, usually by three to five items, so that individual tokens are not overinterpreted.",
                 ],
             },
@@ -756,12 +756,12 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "type": "pm_expandable_text",
                     "id": "spanish-final-wordlist",
                     "title": {
-                        "de": "Finale Wortliste anzeigen",
-                        "en": "Show final wordlist",
+                        "de": "Wortliste anzeigen",
+                        "en": "Show wordlist",
                     },
                     "summary_html": {
-                        "de": "Die finale spanische Wortliste umfasst 92 Items: 86 Einzellexeme und 6 Minimal- bzw. Pseudominimalpaarblöcke.",
-                        "en": "The final Spanish wordlist contains 92 items: 86 individual lexical items and 6 minimal or pseudo-minimal pair blocks.",
+                        "de": "Die spanische Wortliste umfasst 92 Items: 86 Einzellexeme und 6 Minimal- bzw. Pseudominimalpaare.",
+                        "en": "The Spanish wordlist contains 92 items: 86 individual lexical items and 6 minimal or pseudo-minimal pairs.",
                     },
                     "items": [
                         {"label": "1", "text": "mesa"},
@@ -862,8 +862,8 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
         },
         {
             "heading": {
-                "de": "Warum kein klassischer Lesetext übernommen wurde",
-                "en": "Why no traditional reading passage was adopted",
+                "de": "Grenzen klassischer Lesetexte",
+                "en": "Limitations of traditional reading passages",
             },
             "paragraphs_html": {
                 "de": [
@@ -882,8 +882,8 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
         },
         {
             "heading": {
-                "de": "Warum eine Satzliste entwickelt wurde",
-                "en": "Why a sentence list was developed",
+                "de": "Satzliste als kontrollierte Alternative",
+                "en": "The sentence list as a controlled alternative",
             },
             "paragraphs_html": {
                 "de": [
@@ -902,8 +902,8 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "type": "pm_expandable_text",
                     "id": "spanish-final-sentence-list",
                     "title": {
-                        "de": "Finale Satzliste anzeigen",
-                        "en": "Show final sentence list",
+                        "de": "Satzliste anzeigen",
+                        "en": "Show sentence list",
                     },
                     "summary_html": {
                         "de": "Die finale spanische Satzliste umfasst 50 Sätze: 30 Aussagesätze, 10 Entscheidungsfragen und 10 W-Fragen. Jeder Satz enthält genau zwei Items aus der Wortliste.",

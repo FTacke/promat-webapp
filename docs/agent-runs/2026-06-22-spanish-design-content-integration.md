@@ -8,6 +8,8 @@
 - Reused the shared action-button, reading typography, surface, spacing, border, and radius systems; added only Reading-specific scale and preview tokens.
 - Added progressive expandable behavior with complete no-JavaScript fallback, localized toggle labels, `aria-expanded`, stable controlled IDs, responsive columns, and reduced-motion handling.
 - Positioned footnotes immediately before the final `pm-literature` section and retained the existing literature family at a quieter reading scale.
+- Refined the footnote apparatus to the full Reading measure with a compact number/text grid, UI-language-specific targets, localized accessible return links, and bidirectional reference navigation.
+- Applied the requested Spanish design heading, expandable-title, and wordlist-summary corrections without changing list items or research prose.
 - Removed the temporary source document after integration to avoid a duplicate content source inside `app/`.
 - Updated the focused route regression to cover wording that is unique to the revised content.
 
@@ -28,6 +30,7 @@
 - Browser acceptance on `/de/research/spanish/design` and `/en/research/spanish/design` at `1440x1000` and `390x844`.
   - Both material blocks were clipped at 81 px initially, fully expanded to their complete measured height, used two desktop columns and one mobile column, and produced no horizontal overflow or browser-console errors.
   - The collapsed component was also checked in dark mode, and `/en/project/about` was checked as an unaffected shared Reading route.
+  - The follow-up footnote pass measured identical footnote/literature widths (`724.5 px` desktop and `358 px` mobile) in both UI languages and exercised reference plus return-link navigation successfully.
   - Screenshots and the machine-readable report live under `tmp/ui-qa/2026-06-22-spanish-design-reading-elements/`.
 - The complete `app/tests/test_research_sessions.py` run reached 207 passed and 14 failures. Those failures concern pre-existing login-link, locked-navigation, Teaching-content/CSS, and workbench-intro expectations outside this change; the focused changed and unaffected routes pass.
 
