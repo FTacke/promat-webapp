@@ -4363,6 +4363,21 @@ body[data-page="login"] .pm-auth-secondary--card {
 .pm-comparison-filter-zone--levels {
   flex: 1 1 auto;
   justify-content: center;
+  gap: 0.6rem;
+}
+
+.pm-comparison-level-header {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.pm-comparison-level-label {
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  color: var(--book-muted);
+  white-space: nowrap;
 }
 
 .pm-comparison-filter-zone--secondary {
@@ -4660,8 +4675,8 @@ body[data-page="login"] .pm-auth-secondary--card {
 .pm-research-meta-badge--level,
 .pm-comparison-speaker-badge--level {
   color: var(--pm-research-level-badge-text);
-  border-color: currentColor;
-  font-weight: 600;
+  border-color: var(--pm-border-subtle);
+  font-weight: 400;
 }
 
 .pm-research-meta-badge--role {
@@ -5784,6 +5799,12 @@ body[data-page="login"] .pm-auth-secondary--card {
 .pm-research-filter-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--pm-filter-grid-min)), 1fr));
   align-items: end;
+}
+
+.pm-research-filter-field__label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .pm-research-filter-field__label,
@@ -8023,6 +8044,12 @@ dialog.pm-dialog .pm-dialog__surface {
 .pm-player-stub-summary__grid dd,
 .pm-profile-related__list {
   margin: 0;
+}
+
+.pm-profile-metadata__label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .pm-profile-hero__header {

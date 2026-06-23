@@ -536,7 +536,8 @@ def _player_summary_badges(session: SessionRecord, ui_lang: str) -> list[dict[st
         return badges
 
     if session.level_code:
-        level_badge = _meta_badge(_format_level(session, ui_lang), "level", session.level_code.lower())
+        level_label = f"{_format_level(session, ui_lang)} · {_t(ui_lang, 'common.labels.level')}"
+        level_badge = _meta_badge(level_label, "level", session.level_code.lower())
         if level_badge is not None:
             badges.append(level_badge)
     l1_badge = _meta_badge(f"L1 {session.l1}" if session.l1 else None, "detail")
@@ -786,6 +787,7 @@ def _speakers_filter_form(ui_lang: str, language_slug: str, filters: Mapping[str
                 {
                     "name": "level",
                     "label": _t(ui_lang, "common.labels.level"),
+                    "tooltip": _t(ui_lang, "common.labels.self_placement_tooltip"),
                     "value": filters["level"],
                     "options": [{"value": "", "label": _all_label(ui_lang)}] + [
                         {"value": level, "label": level} for level in levels
@@ -1098,7 +1100,7 @@ def _session_card_rows(session: SessionRecord, ui_lang: str) -> list[dict[str, A
     if not session.is_native:
         rows.extend(
             [
-                {"label": _t(ui_lang, "common.labels.level_at_recording"), "value": session.level_self or _format_level(session, ui_lang)},
+                {"label": _t(ui_lang, "common.labels.level_at_recording"), "value": session.level_self or _format_level(session, ui_lang), "tooltip": _t(ui_lang, "common.labels.self_placement_tooltip")},
                 _build_exposure_row(session, ui_lang),
             ]
         )
@@ -1563,7 +1565,7 @@ def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[s
                 }
             )
 
-        context_label = _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "research.comparison.level_label")
+        context_label = _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "common.labels.level")
         context_value = _native_reference_value(session.standard_variety, session.origin_country, ui_lang) if session.is_native else _format_level(session, ui_lang)
         detail_label = _origin_country_label(ui_lang) if session.is_native else _t(ui_lang, "common.labels.l1_short")
         detail_value = _format_origin_country_value(session.origin_country, ui_lang) if session.is_native else (session.l1 or "-")
@@ -1750,6 +1752,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
                         "phenomenaChooseLabel": "research.comparison.phenomena_choose_label",
                         "speakerGroupLabel": "research.comparison.speaker_group_label",
                         "levelLabel": "research.comparison.level_label",
+                        "levelTooltip": "common.labels.self_placement_tooltip",
                         "l1ShortLabel": "research.comparison.l1_short_label",
                         "speakerIdLabel": "research.comparison.speaker_id_label",
                         "searchPlaceholder": "research.comparison.search_placeholder",
@@ -3268,7 +3271,7 @@ def build_player_page(
             "person_id": session.person_id,
             "recording_date": _format_recording_date(session),
             "speaker_type": _label(SPEAKER_TYPE_LABEL_KEYS, session.speaker_type, ui_lang),
-            "context_label": _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "research.comparison.level_label"),
+            "context_label": _t(ui_lang, "research.comparison.variety_label") if session.is_native else _t(ui_lang, "common.labels.level"),
             "context_value": context_value,
             "detail_label": _origin_country_label(ui_lang) if session.is_native else _t(ui_lang, "common.labels.l1_short"),
             "detail_value": detail_value,

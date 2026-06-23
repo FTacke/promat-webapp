@@ -53,7 +53,17 @@
           <div class="pm-profile-metadata__grid">
             {% for row in session.rows %}
             <div class="pm-profile-metadata__row{{ ' pm-profile-metadata__row--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">
+              {% if row.tooltip is defined and row.tooltip %}
+              <div class="pm-profile-metadata__label-row">
+                <p class="pm-profile-metadata__label">{{ row.label }}</p>
+                <details class="pm-comparison-inline-help pm-profile-metadata__help">
+                  <summary class="pm-comparison-inline-help__summary" aria-label="{{ row.label }}"><span aria-hidden="true">i</span></summary>
+                  <div class="pm-comparison-inline-help__body" role="note">{{ row.tooltip }}</div>
+                </details>
+              </div>
+              {% else %}
               <p class="pm-profile-metadata__label">{{ row.label }}</p>
+              {% endif %}
               {% if row.entries is defined and row.entries %}
               <div class="pm-profile-metadata__rich{{ ' pm-profile-metadata__rich--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">
                 <ul class="pm-profile-metadata__list{{ ' pm-profile-metadata__list--exposure' if row.kind is defined and row.kind == 'exposure' else '' }}">

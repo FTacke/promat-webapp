@@ -2955,7 +2955,7 @@ def test_speakers_page_uses_neutral_learner_cards_with_level_badges(runtime_env:
     assert html.index('pm-speaker-card__session-id') < html.index('pm-speaker-card__profile-link') < html.index('pm-speaker-card__meta')
     learner_card = next(card for card in page["cards"] if card["person_id"] == "ES-L-0001")
     native_card = next(card for card in page["cards"] if card["person_id"] == "ES-N-0001")
-    assert [row["label"] for row in learner_card["meta_rows"]] == ["Niveau", "L1", "Geschlecht", "Sprachaufenthalte"]
+    assert [row["label"] for row in learner_card["meta_rows"]] == ["Selbsteinordnung", "L1", "Geschlecht", "Sprachaufenthalte"]
     assert learner_card["meta_rows"][0]["badges"][0]["modifiers"] == ["level", "a2"]
     assert learner_card["profile_label"] == "Profil"
     assert [row["label"] for row in native_card["meta_rows"]] == ["Standardvarietät", "Herkunftsregion", "Geschlecht", "Aufnahmejahr"]
@@ -3811,7 +3811,7 @@ def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, u
         "Sprachaufenthalte",
         "Explorator:in",
     ]
-    assert [badge["label"] for badge in single_page["summary_cards"][0]["badges"]] == ["Lernende", "B1", "L1 DE"]
+    assert [badge["label"] for badge in single_page["summary_cards"][0]["badges"]] == ["Lernende", "B1 · Selbsteinordnung", "L1 DE"]
     assert single_page["summary_cards"][0]["badges"][1]["modifiers"] == ["level", "b1"]
     assert [action["action"] for action in single_page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
     assert single_page["summary_cards"][0]["card_actions"][1]["label"] == "Vergleich"
@@ -4199,7 +4199,7 @@ def test_player_page_builds_compare_context_and_mode_switches(runtime_env: Path,
         "Sprachaufenthalte",
         "Explorator:in",
     ]
-    assert any(badge["label"] == "B1" for badge in page["summary_cards"][0]["badges"])
+    assert any(badge["label"] == "B1 · Selbsteinordnung" for badge in page["summary_cards"][0]["badges"])
     assert page["player"]["compare"]["sequence_toggle"]["label"] == "Beide abspielen"
     assert page["player"]["compare"]["sequence_toggle"]["enabled"] is True
     assert any(option["current"] for option in page["player"]["compare"]["switchers"]["compare"]["options"])

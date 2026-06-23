@@ -35,6 +35,13 @@
           </div>
 
           <div class="pm-comparison-filter-zone pm-comparison-filter-zone--levels">
+            <div class="pm-comparison-level-header">
+              <span class="pm-comparison-level-label">{{ promat_page.client_state.labels.levelLabel }}</span>
+              <details class="pm-comparison-inline-help pm-comparison-level-info">
+                <summary class="pm-comparison-inline-help__summary" aria-label="{{ promat_page.client_state.labels.levelLabel }}"><span aria-hidden="true">i</span></summary>
+                <div class="pm-comparison-inline-help__body" role="note">{{ promat_page.client_state.labels.levelTooltip }}</div>
+              </details>
+            </div>
             <div class="pm-comparison-level-filters" role="group" aria-label="{{ promat_page.client_state.labels.levelLabel }}" data-comparison-level-filters></div>
           </div>
 
