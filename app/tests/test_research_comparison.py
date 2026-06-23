@@ -463,7 +463,7 @@ def test_public_comparison_route_renders_dedicated_workspace(comparison_app: Fla
     assert "data-comparison-material-controls" in html
     assert "data-comparison-material-preset-select" in html
     assert "data-comparison-filter-search" in html
-    assert "data-comparison-level-filters" in html
+    assert "data-comparison-filter-level-select" in html
     assert "data-comparison-filter-l1" in html
     assert "data-comparison-filter-gender" in html
     assert "data-comparison-filter-exposure" in html

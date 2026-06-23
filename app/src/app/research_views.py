@@ -1100,7 +1100,7 @@ def _session_card_rows(session: SessionRecord, ui_lang: str) -> list[dict[str, A
     if not session.is_native:
         rows.extend(
             [
-                {"label": _t(ui_lang, "common.labels.level_at_recording"), "value": session.level_self or _format_level(session, ui_lang), "tooltip": _t(ui_lang, "common.labels.self_placement_tooltip")},
+                {"label": _t(ui_lang, "common.labels.level"), "value": session.level_self or _format_level(session, ui_lang), "tooltip": _t(ui_lang, "common.labels.self_placement_tooltip")},
                 _build_exposure_row(session, ui_lang),
             ]
         )
@@ -1752,6 +1752,8 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
                         "phenomenaChooseLabel": "research.comparison.phenomena_choose_label",
                         "speakerGroupLabel": "research.comparison.speaker_group_label",
                         "levelLabel": "research.comparison.level_label",
+                        "levelFilterLabel": "research.comparison.level_filter_label",
+                        "selfPlacementPrefix": "research.comparison.self_placement_prefix",
                         "levelTooltip": "common.labels.self_placement_tooltip",
                         "l1ShortLabel": "research.comparison.l1_short_label",
                         "speakerIdLabel": "research.comparison.speaker_id_label",

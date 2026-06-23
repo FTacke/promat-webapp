@@ -56,9 +56,9 @@
               {% if row.tooltip is defined and row.tooltip %}
               <div class="pm-profile-metadata__label-row">
                 <p class="pm-profile-metadata__label">{{ row.label }}</p>
-                <details class="pm-comparison-inline-help pm-profile-metadata__help">
-                  <summary class="pm-comparison-inline-help__summary" aria-label="{{ row.label }}"><span aria-hidden="true">i</span></summary>
-                  <div class="pm-comparison-inline-help__body" role="note">{{ row.tooltip }}</div>
+                <details class="pm-info-tip">
+                  <summary class="pm-info-tip__trigger" aria-label="{{ row.label }}"><span aria-hidden="true">i</span></summary>
+                  <div class="pm-info-tip__body" role="note">{{ row.tooltip }}</div>
                 </details>
               </div>
               {% else %}

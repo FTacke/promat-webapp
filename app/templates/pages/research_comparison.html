@@ -34,22 +34,25 @@
             </label>
           </div>
 
-          <div class="pm-comparison-filter-zone pm-comparison-filter-zone--levels">
-            <div class="pm-comparison-level-header">
-              <span class="pm-comparison-level-label">{{ promat_page.client_state.labels.levelLabel }}</span>
-              <details class="pm-comparison-inline-help pm-comparison-level-info">
-                <summary class="pm-comparison-inline-help__summary" aria-label="{{ promat_page.client_state.labels.levelLabel }}"><span aria-hidden="true">i</span></summary>
-                <div class="pm-comparison-inline-help__body" role="note">{{ promat_page.client_state.labels.levelTooltip }}</div>
-              </details>
-            </div>
-            <div class="pm-comparison-level-filters" role="group" aria-label="{{ promat_page.client_state.labels.levelLabel }}" data-comparison-level-filters></div>
-          </div>
-
           <div class="pm-comparison-filter-zone pm-comparison-filter-zone--secondary">
             <label class="pm-comparison-filter-field pm-comparison-filter-field--select">
               <span class="sr-only">{{ promat_page.client_state.labels.l1FilterLabel }}</span>
               <select class="pm-phenomena-field__input pm-comparison-filter-select" data-comparison-filter-l1></select>
             </label>
+
+            <div class="pm-comparison-filter-level-wrap">
+              <select class="pm-phenomena-field__input pm-comparison-filter-select" data-comparison-filter-level-select aria-label="{{ promat_page.client_state.labels.levelFilterLabel }}">
+                <option value="">{{ promat_page.client_state.labels.levelFilterLabel }}</option>
+                <option value="A1">A1</option>
+                <option value="A2">A2</option>
+                <option value="B1">B1</option>
+                <option value="B2">B2</option>
+              </select>
+              <details class="pm-info-tip">
+                <summary class="pm-info-tip__trigger" aria-label="{{ promat_page.client_state.labels.levelFilterLabel }}"><span aria-hidden="true">i</span></summary>
+                <div class="pm-info-tip__body" role="note">{{ promat_page.client_state.labels.levelTooltip }}</div>
+              </details>
+            </div>
 
             <details class="pm-comparison-more-filters" data-comparison-more-filters>
               <summary class="pm-comparison-more-filters__summary">{{ promat_page.client_state.labels.moreFiltersLabel }}</summary>

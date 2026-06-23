@@ -28,9 +28,9 @@
           <div class="pm-research-filter-field__label-row">
             <label class="pm-research-filter-field__label" for="pm-filter-{{ field.name }}">{{ field.label }}</label>
             {% if field.tooltip %}
-            <details class="pm-comparison-inline-help pm-research-filter-field__help">
-              <summary class="pm-comparison-inline-help__summary" aria-label="{{ field.label }}"><span aria-hidden="true">i</span></summary>
-              <div class="pm-comparison-inline-help__body" role="note">{{ field.tooltip }}</div>
+            <details class="pm-info-tip">
+              <summary class="pm-info-tip__trigger" aria-label="{{ field.label }}"><span aria-hidden="true">i</span></summary>
+              <div class="pm-info-tip__body" role="note">{{ field.tooltip }}</div>
             </details>
             {% endif %}
           </div>

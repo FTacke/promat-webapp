@@ -139,7 +139,7 @@ function init() {
   const selectedSessionsList = root.querySelector("[data-comparison-selected-sessions]");
   const editItemsLink = root.querySelector("[data-comparison-edit-items]");
   const filterSearchInput = root.querySelector("[data-comparison-filter-search]");
-  const levelFilters = root.querySelector("[data-comparison-level-filters]");
+  const levelSelect = root.querySelector("[data-comparison-filter-level-select]");
   const l1FilterSelect = root.querySelector("[data-comparison-filter-l1]");
   const genderFilterSelect = root.querySelector("[data-comparison-filter-gender]");
   const exposureFilterSelect = root.querySelector("[data-comparison-filter-exposure]");
@@ -187,7 +187,6 @@ function init() {
   let isImplicitDraft = false;
   let isExplicitMaterialSelection = Boolean(state.requestedSetId);
   let isBootstrappingWorkspace = Boolean(state.isAuthenticated && !state.requestedSetId);
-  const levelOptions = ["A1", "A2", "B1", "B2"];
   const filterState = {
     search: currentUrlState.filters.search || "",
     levels: new Set(currentUrlState.filters.levels || []),
@@ -973,9 +972,12 @@ function init() {
         : "";
     }
 
+    const levelBadgeText = session.levelValue && session.levelValue !== "-"
+      ? `${labels.selfPlacementPrefix ? labels.selfPlacementPrefix + " " : ""}${session.levelValue}`
+      : "";
     return [
-      session.levelValue && session.levelValue !== "-"
-        ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--level pm-comparison-speaker-badge--${escapeHtml((session.levelValue || "").toLowerCase())}">${escapeHtml(session.levelValue)}</span>`
+      levelBadgeText
+        ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--level pm-comparison-speaker-badge--${escapeHtml((session.levelValue || "").toLowerCase())}">${escapeHtml(levelBadgeText)}</span>`
         : "",
       session.l1BadgeLabel
         ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--detail">${escapeHtml(session.l1BadgeLabel)}</span>`
@@ -1177,15 +1179,8 @@ function init() {
       filterSearchInput.value = filterState.search;
     }
 
-    if (levelFilters) {
-      levelFilters.innerHTML = levelOptions.map((level) => `
-        <button
-          type="button"
-          class="pm-comparison-filter-chip${filterState.levels.has(level) ? " is-active" : ""}"
-          data-comparison-filter-level="${escapeHtml(level)}"
-          aria-pressed="${filterState.levels.has(level) ? "true" : "false"}"
-        >${escapeHtml(level)}</button>
-      `).join("");
+    if (levelSelect) {
+      levelSelect.value = Array.from(filterState.levels)[0] || "";
     }
 
     if (l1FilterSelect) {
@@ -1223,7 +1218,7 @@ function init() {
     if (activeFilters) {
       const chips = [];
       for (const level of filterState.levels) {
-        chips.push({ key: `level:${level}`, label: level });
+        chips.push({ key: `level:${level}`, label: `${labels.selfPlacementPrefix || ""} ${level}`.trim() });
       }
       if (filterState.l1) {
         chips.push({ key: "l1", label: `${labels.l1ShortLabel || ""}: ${filterState.l1}` });
@@ -1556,19 +1551,6 @@ function init() {
       return;
     }
 
-    const levelFilterButton = event.target.closest("[data-comparison-filter-level]");
-    if (levelFilterButton) {
-      event.preventDefault();
-      const level = levelFilterButton.dataset.comparisonFilterLevel || "";
-      if (filterState.levels.has(level)) {
-        filterState.levels.delete(level);
-      } else {
-        filterState.levels.add(level);
-      }
-      syncUrl();
-      render();
-      return;
-    }
 
     const removeFilterButton = event.target.closest("[data-comparison-remove-filter]");
     if (removeFilterButton) {
@@ -1685,6 +1667,14 @@ function init() {
         transientMessage = error.message || saveErrorFallbackLabel;
         render();
       }
+    });
+  }
+  if (levelSelect) {
+    levelSelect.addEventListener("change", () => {
+      const value = levelSelect.value || "";
+      filterState.levels = new Set(value ? [value] : []);
+      syncUrl();
+      render();
     });
   }
   if (l1FilterSelect) {
