@@ -767,8 +767,9 @@ def test_access_request_submit_persists_request_and_shows_success(auth_app: Flas
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
     assert "Vielen Dank, Mara Fischer." in html
-    assert "Ihre Anfrage wurde übermittelt." in html
-    assert "72 Stunden" in html
+    assert "Ihre Anfrage wurde erfolgreich übermittelt." in html
+    assert "Hinweis zur Prüfung" in html
+    assert "in der Regel innerhalb von 72 Stunden" in html
     assert "Anfrage eingegangen" in html
     assert "Spam-Ordner" in html
     assert "<form" not in html
@@ -823,8 +824,9 @@ def test_access_request_submit_en_shows_english_confirmation(auth_app: Flask) ->
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
     assert "Thank you, Mara Fischer." in html
-    assert "Your request has been submitted." in html
-    assert "72 hours" in html
+    assert "Your request has been submitted successfully." in html
+    assert "Review note" in html
+    assert "usually get back to you within 72 hours" in html
     assert "spam folder" in html
     assert "Request received" in html
     assert "<form" not in html
@@ -1055,8 +1057,9 @@ def test_access_request_thanks_de_shows_confirmation_without_name(auth_app: Flas
     html = response.get_data(as_text=True)
     assert "Vielen Dank." in html
     assert "Vielen Dank," not in html
-    assert "Ihre Anfrage wurde übermittelt." in html
-    assert "72 Stunden" in html
+    assert "Ihre Anfrage wurde erfolgreich übermittelt." in html
+    assert "Hinweis zur Prüfung" in html
+    assert "in der Regel innerhalb von 72 Stunden" in html
     assert "Spam-Ordner" in html
     assert "Ein automatischer Anspruch auf Zugang besteht nicht." in html
     assert "Anfrage eingegangen" in html
@@ -1073,8 +1076,9 @@ def test_access_request_thanks_en_shows_confirmation_without_name(auth_app: Flas
     html = response.get_data(as_text=True)
     assert "Thank you." in html
     assert "Thank you," not in html
-    assert "Your request has been submitted." in html
-    assert "72 hours" in html
+    assert "Your request has been submitted successfully." in html
+    assert "Review note" in html
+    assert "usually get back to you within 72 hours" in html
     assert "spam folder" in html
     assert "Access is not granted automatically." in html
     assert "Request received" in html
@@ -1097,7 +1101,9 @@ def test_access_request_thanks_de_shows_name_after_post(auth_app: Flask) -> None
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
     assert "Vielen Dank, Felix Tacke." in html
-    assert "72 Stunden" in html
+    assert "Ihre Anfrage wurde erfolgreich übermittelt." in html
+    assert "Hinweis zur Prüfung" in html
+    assert "in der Regel innerhalb von 72 Stunden" in html
     assert "Anfrage eingegangen" in html
     assert "<form" not in html
 
@@ -1119,7 +1125,9 @@ def test_access_request_thanks_en_shows_name_after_post(auth_app: Flask) -> None
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
     assert "Thank you, Felix Tacke." in html
-    assert "72 hours" in html
+    assert "Your request has been submitted successfully." in html
+    assert "Review note" in html
+    assert "usually get back to you within 72 hours" in html
     assert "Request received" in html
     assert "<form" not in html
 

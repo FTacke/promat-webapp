@@ -14,22 +14,24 @@
 {% if submitted %}
 <article class="pm-auth-surface pm-access-request-page pm-access-request-page--submitted">
   <div class="pm-auth-stack">
-    <div class="pm-auth-message is-success" role="status">
-      <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">check_circle</span>
+    <div class="pm-auth-success" role="status">
+      <span class="pm-auth-success__icon material-symbols-rounded" aria-hidden="true">check_circle</span>
+      <p class="pm-auth-success__greeting">
+        {%- if display_name is defined and display_name -%}
+          {{ t('auth.access_request.submitted_greeting') }}, {{ display_name | e }}.
+        {%- else -%}
+          {{ t('auth.access_request.submitted_greeting') }}.
+        {%- endif -%}
+      </p>
+      <p class="pm-auth-success__subtitle">{{ t('auth.access_request.submitted_subtitle') }}</p>
+    </div>
+    <div class="pm-auth-message" role="note">
+      <span class="pm-auth-message__icon material-symbols-rounded" aria-hidden="true">info</span>
       <div class="pm-auth-message__body">
-        <p class="pm-auth-message__eyebrow">{{ t('auth.common.notice') }}</p>
-        <p class="pm-auth-message__text">
-          {%- if display_name is defined and display_name -%}
-            {{ t('auth.access_request.submitted_greeting') }}, {{ display_name | e }}.
-          {%- else -%}
-            {{ t('auth.access_request.submitted_greeting') }}.
-          {%- endif -%}
-        </p>
-        <p class="pm-auth-message__text">{{ t('auth.access_request.submitted_body') }}</p>
-        <p class="pm-auth-message__text">{{ t('auth.access_request.submitted_spam_hint') }}</p>
+        <p class="pm-auth-message__eyebrow">{{ t('auth.access_request.submitted_review_heading') }}</p>
+        <p class="pm-auth-message__text">{{ t('auth.access_request.submitted_review_text') }}</p>
       </div>
     </div>
-    <p class="pm-auth-note">{{ t('auth.access_request.submitted_disclaimer') }}</p>
   </div>
 </article>
 
