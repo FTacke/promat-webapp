@@ -147,26 +147,28 @@ def deliver_access_request_notification(access_request: AccessRequest) -> bool:
             sender(message)
         else:
             _deliver_with_configured_backend(message)
+        _update_request_status(message.request_id, "notified")
+        access_request.status = "notified"
+        current_app.logger.info(
+            "Access request notification sent | request_id=%s | status=%s | email_domain=%s | reply_to_set=%s",
+            access_request.id,
+            access_request.status,
+            _email_domain(access_request.email),
+            bool(message.reply_to),
+        )
+        return True
     except Exception as exc:  # noqa: BLE001
-        _update_request_status(message.request_id, "notification_failed")
-        access_request.status = "notification_failed"
+        try:
+            _update_request_status(message.request_id, "notification_failed")
+            access_request.status = "notification_failed"
+        except Exception:  # noqa: BLE001
+            pass
         current_app.logger.warning(
             "Access request notification failed | request_id=%s | status=%s | email_domain=%s | reply_to_set=%s | error_type=%s",
             access_request.id,
-            access_request.status,
+            getattr(access_request, "status", "unknown"),
             _email_domain(access_request.email),
             bool(message.reply_to),
             type(exc).__name__,
         )
         return False
-
-    _update_request_status(message.request_id, "notified")
-    access_request.status = "notified"
-    current_app.logger.info(
-        "Access request notification sent | request_id=%s | status=%s | email_domain=%s | reply_to_set=%s",
-        access_request.id,
-        access_request.status,
-        _email_domain(access_request.email),
-        bool(message.reply_to),
-    )
-    return True

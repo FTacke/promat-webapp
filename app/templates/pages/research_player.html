@@ -146,11 +146,9 @@
             {% if promat_page.player.set_select %}
             <div class="pm-player-material-strip__set-inline">
               <label for="pm-player-set-select" class="pm-player-material-strip__set-inline-label">{{ promat_page.player.set_select.label }}</label>
-              <details class="pm-comparison-inline-help pm-player-material-strip__set-help">
-                <summary class="pm-comparison-inline-help__summary" aria-label="{{ promat_page.player.set_select.info_label }}">
-                  <span aria-hidden="true">i</span>
-                </summary>
-                <div class="pm-comparison-inline-help__body" role="note">{{ promat_page.player.set_select.info_text }}</div>
+              <details class="pm-info-tip pm-player-material-strip__set-help">
+                <summary class="pm-info-tip__trigger" aria-label="{{ promat_page.player.set_select.info_label }}"><span aria-hidden="true">i</span></summary>
+                <div class="pm-info-tip__body" role="note">{{ promat_page.player.set_select.info_text }}</div>
               </details>
 
               <select id="pm-player-set-select" class="pm-phenomena-field__input pm-comparison-filter-select pm-player-material-strip__select" data-player-set-select{% if promat_page.player.set_select.disabled %} disabled{% endif %}>

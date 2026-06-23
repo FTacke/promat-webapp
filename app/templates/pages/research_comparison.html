@@ -42,7 +42,7 @@
 
             <div class="pm-comparison-filter-level-wrap">
               <select class="pm-phenomena-field__input pm-comparison-filter-select" data-comparison-filter-level-select aria-label="{{ promat_page.client_state.labels.levelFilterLabel }}">
-                <option value="">{{ promat_page.client_state.labels.levelFilterLabel }}</option>
+                <option value="">{{ t('common.labels.level') }}</option>
                 <option value="A1">A1</option>
                 <option value="A2">A2</option>
                 <option value="B1">B1</option>
@@ -126,13 +126,9 @@
           <div class="pm-comparison-set-select-block__label-row">
             <label for="pm-comparison-set-select" class="pm-phenomena-field__label">{{ promat_page.client_state.labels.setSelectLabel }}</label>
 
-            <details class="pm-comparison-inline-help">
-              <summary class="pm-comparison-inline-help__summary" aria-label="{{ promat_page.client_state.labels.setSelectInfoLabel }}">
-                <span aria-hidden="true">i</span>
-              </summary>
-              <div class="pm-comparison-inline-help__body" role="note">
-                {{ promat_page.client_state.labels.setSelectInfoText }}
-              </div>
+            <details class="pm-info-tip">
+              <summary class="pm-info-tip__trigger" aria-label="{{ promat_page.client_state.labels.setSelectInfoLabel }}"><span aria-hidden="true">i</span></summary>
+              <div class="pm-info-tip__body" role="note">{{ promat_page.client_state.labels.setSelectInfoText }}</div>
             </details>
           </div>
 

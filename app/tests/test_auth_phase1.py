@@ -768,7 +768,8 @@ def test_access_request_submit_persists_request_and_shows_success(auth_app: Flas
     html = follow_up.get_data(as_text=True)
     assert "Vielen Dank. Ihre Anfrage wurde übermittelt." in html
     assert "72 Stunden" in html
-    assert "Anfrage übermittelt" in html
+    assert "Anfrage eingegangen" in html
+    assert "Spam-Ordner" in html
     assert "<form" not in html
 
     with auth_app.app_context():
@@ -797,6 +798,73 @@ def test_access_request_submit_persists_request_and_shows_success(auth_app: Flas
     assert "Institution: Universität Marburg" in message.body
     assert "Role / function: Wissenschaftliche Mitarbeiterin" in message.body
     assert "Ich benötige Zugang für ein Seminar" in message.body
+
+
+def test_access_request_submit_en_shows_english_confirmation(auth_app: Flask) -> None:
+    """POST via English UI → 303 → confirmation page renders English text without 500."""
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(
+        client,
+        next_url="/en/research/spanish",
+        overrides={"ui_lang": "en"},
+    )
+
+    response = client.post(
+        "/access-request",
+        data=payload,
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    location = response.headers["Location"]
+    assert "submitted=1" in location
+
+    follow_up = client.get(location)
+    assert follow_up.status_code == 200
+    html = follow_up.get_data(as_text=True)
+    assert "Thank you. Your request has been submitted." in html
+    assert "72 hours" in html
+    assert "spam folder" in html
+    assert "Request received" in html
+    assert "<form" not in html
+
+
+def test_access_request_submit_does_not_500_when_status_update_fails(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """If the DB status update after mail delivery fails, the user still gets a 303, not a 500."""
+    client = auth_app.test_client()
+
+    original_update = __import__(
+        "app.services.access_request_notifications",
+        fromlist=["_update_request_status"],
+    )._update_request_status
+
+    call_count = 0
+
+    def flaky_update(request_id: str, status: str) -> None:
+        nonlocal call_count
+        call_count += 1
+        if status == "notified":
+            raise RuntimeError("DB unavailable")
+        original_update(request_id, status)
+
+    monkeypatch.setattr(
+        "app.services.access_request_notifications._update_request_status",
+        flaky_update,
+    )
+    payload = _build_access_request_payload(client)
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    location = response.headers["Location"]
+    assert "submitted=1" in location
+
+    follow_up = client.get(location)
+    assert follow_up.status_code == 200
+    assert "Anfrage eingegangen" in follow_up.get_data(as_text=True)
 
 
 def test_access_request_notification_uses_selected_mail_backend(
@@ -986,8 +1054,9 @@ def test_access_request_submitted_page_shows_de_confirmation(auth_app: Flask) ->
     html = response.get_data(as_text=True)
     assert "Vielen Dank. Ihre Anfrage wurde übermittelt." in html
     assert "72 Stunden" in html
+    assert "Spam-Ordner" in html
     assert "Ein automatischer Anspruch auf Zugang besteht nicht." in html
-    assert "Anfrage übermittelt" in html
+    assert "Anfrage eingegangen" in html
     assert "<form" not in html
 
 
@@ -1000,8 +1069,9 @@ def test_access_request_submitted_page_shows_en_confirmation(auth_app: Flask) ->
     html = response.get_data(as_text=True)
     assert "Thank you. Your request has been submitted." in html
     assert "72 hours" in html
+    assert "spam folder" in html
     assert "Access is not granted automatically." in html
-    assert "Request Submitted" in html
+    assert "Request received" in html
     assert "<form" not in html
 
 
