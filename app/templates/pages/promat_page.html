@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
+{% from 'partials/_admonition.html' import render_admonition %}
 
 {% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
@@ -193,6 +194,26 @@
     {% endfor %}
     {% if promat_page.footnotes_html and not footnotes_state.rendered %}
       {% include 'partials/_reading_footnotes.html' %}
+    {% endif %}
+    {% if promat_page.citation %}
+    <section class="promat-content-section promat-content-section--citation pm-reading">
+      {{ render_admonition({
+        'tag': 'aside',
+        'variant': 'citation',
+        'title': promat_page.citation.title,
+        'body_html_blocks': promat_page.citation.body_html_blocks,
+        'header_action': {
+          'class': 'pm-admonition__action--copy',
+          'aria_label': t('teaching.citation.copy'),
+          'title': t('teaching.citation.copy'),
+          'copy_text': promat_page.citation.copy_text,
+          'success_label': t('teaching.citation.copied'),
+          'error_label': t('teaching.citation.copy_failed'),
+          'copied_label': t('teaching.citation.copied'),
+          'default_label': t('teaching.citation.copy'),
+        },
+      }) }}
+    </section>
     {% endif %}
   </div>
 </article>

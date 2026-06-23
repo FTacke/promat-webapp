@@ -666,6 +666,10 @@ PROJECT_PAGES_CONTENT: dict[str, dict[str, object]] = {
 
 SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
     "title": {
+        "de": "Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll",
+        "en": "Spanish learner pronunciation: elicitation design and task protocol",
+    },
+    "nav_current_label": {
         "de": "Design",
         "en": "Design",
     },
@@ -1103,5 +1107,23 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                 "html": "Newly added word forms: <em>mesa</em>, <em>neutro</em>, <em>ciudad</em>, <em>lavar</em>, <em>avión</em>, <em>jamón</em>, <em>gente</em>, <em>regla</em>, <em>euforia</em>, <em>oír</em>, <em>usted</em>, <em>giro</em>, <em>cuidado</em>, <em>solo</em>, <em>vacío</em>, <em>traer</em>, <em>jefe</em>, <em>vida</em>, <em>ustedes</em>, <em>tirar</em>, <em>carro</em>, <em>tierra</em>, <em>tampoco</em>, <em>hambre</em>, <em>suave</em>, <em>barrio</em>, <em>verdad</em>, <em>caro</em>, <em>bien</em>, <em>ola</em>, <em>hola</em>, <em>bienes</em>.",
             },
         ],
+    },
+    "citation": {
+        "title": {
+            "de": "Diese Forschungsseite zitieren",
+            "en": "Cite this research page",
+        },
+        "body_html_blocks": {
+            "de": [
+                '<p>Tacke, Felix (2026): „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/de/research/spanish/design">pronunciation-matters.de/de/research/spanish/design</a>.</p>',
+            ],
+            "en": [
+                '<p>Tacke, Felix (2026): “Spanish learner pronunciation: elicitation design and task protocol”. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/en/research/spanish/design">pronunciation-matters.de/en/research/spanish/design</a>.</p>',
+            ],
+        },
+        "copy_text": {
+            "de": "Tacke, Felix (2026): „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: Pronunciation Matters. Online: https://pronunciation-matters.de/de/research/spanish/design.",
+            "en": "Tacke, Felix (2026): “Spanish learner pronunciation: elicitation design and task protocol”. In: Pronunciation Matters. Online: https://pronunciation-matters.de/en/research/spanish/design.",
+        },
     },
 }

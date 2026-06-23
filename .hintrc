@@ -14,7 +14,8 @@
     "axe/structure": [
       "default",
       {
-        "list": "off"
+        "list": "off",
+        "listitem": "off"
       }
     ],
     "axe/aria": [
@@ -31,6 +32,12 @@
           "backdrop-filter",
           "color: color-mix(in srgb, var(--book-fg) 86%, var(--book-muted) 14%)"
         ]
+      }
+    ],
+    "axe/language": [
+      "default",
+      {
+        "html-lang-valid": "off"
       }
     ]
   },

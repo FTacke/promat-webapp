@@ -2548,6 +2548,56 @@ def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask
 
 
 @pytest.mark.parametrize(
+    ("ui_lang", "page_title", "citation_heading", "citation_url", "copy_label", "citation_html", "copy_text"),
+    [
+        (
+            "de",
+            "Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll",
+            "Diese Forschungsseite zitieren",
+            "https://pronunciation-matters.de/de/research/spanish/design",
+            "Zitat kopieren",
+            'Tacke, Felix (2026): „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/de/research/spanish/design">pronunciation-matters.de/de/research/spanish/design</a>.',
+            "Tacke, Felix (2026): „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: Pronunciation Matters. Online: https://pronunciation-matters.de/de/research/spanish/design.",
+        ),
+        (
+            "en",
+            "Spanish learner pronunciation: elicitation design and task protocol",
+            "Cite this research page",
+            "https://pronunciation-matters.de/en/research/spanish/design",
+            "Copy citation",
+            'Tacke, Felix (2026): “Spanish learner pronunciation: elicitation design and task protocol”. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/en/research/spanish/design">pronunciation-matters.de/en/research/spanish/design</a>.',
+            "Tacke, Felix (2026): “Spanish learner pronunciation: elicitation design and task protocol”. In: Pronunciation Matters. Online: https://pronunciation-matters.de/en/research/spanish/design.",
+        ),
+    ],
+)
+def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
+    url_app: Flask,
+    ui_lang: str,
+    page_title: str,
+    citation_heading: str,
+    citation_url: str,
+    copy_label: str,
+    citation_html: str,
+    copy_text: str,
+) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'<h1 id="promat-page-title" class="promat-page__title pm-content-header__title">{page_title}</h1>' in html
+    assert 'aria-current="page">Design</span>' in html
+    assert f'<h3 class="pm-admonition__title">{citation_heading}</h3>' in html
+    assert html.count('data-admonition-variant="citation"') == 1
+    assert f'aria-label="{copy_label}"' in html
+    assert f'<a href="{citation_url}">{citation_url.removeprefix("https://")}</a>.' in html
+    assert f'<p>{citation_html}</p>' in html
+    assert f'data-copy-text="{copy_text}"' in html
+    assert html.index('class="promat-content-block__list pm-literature"') < html.index(citation_heading) < html.index("</article>")
+
+
+@pytest.mark.parametrize(
     (
         "ui_lang",
         "wordlist_title",
