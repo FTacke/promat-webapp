@@ -1110,8 +1110,8 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
     },
     "citation": {
         "title": {
-            "de": "Diese Forschungsseite zitieren",
-            "en": "Cite this research page",
+            "de": "Diesen Aufsatz zitieren",
+            "en": "Cite this article",
         },
         "body_html_blocks": {
             "de": [
