@@ -267,6 +267,7 @@
   --pm-status-neutral-text: var(--book-muted);
   --pm-status-success-surface: color-mix(in srgb, var(--book-adm-success) 14%, var(--pm-surface-paper) 86%);
   --pm-status-success-text: color-mix(in srgb, var(--book-adm-success) 78%, var(--book-fg) 22%);
+  --pm-status-success-border: color-mix(in srgb, var(--book-adm-success) 38%, var(--pm-surface-paper) 62%);
   --pm-status-pending-surface: color-mix(in srgb, var(--promat-wordmark-accent) 13%, var(--pm-surface-paper) 87%);
   --pm-status-pending-text: var(--promat-wordmark-accent);
   --pm-status-error-surface: color-mix(in srgb, var(--book-adm-danger) 12%, var(--pm-surface-paper) 88%);
