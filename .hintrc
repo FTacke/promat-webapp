@@ -28,9 +28,15 @@
       {
         "ignore": [
           "user-select",
-          "backdrop-filter"
+          "backdrop-filter",
+          "color: color-mix(in srgb, var(--book-fg) 86%, var(--book-muted) 14%)"
         ]
       }
     ]
-  }
+  },
+  "browserslist": [
+    "defaults",
+    "not ie 11",
+    "not chrome <= 109"
+  ]
 }
