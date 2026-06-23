@@ -3659,10 +3659,11 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
 .pm-auth-message__icon {
   grid-column: 1;
   grid-row: 1;
-  align-self: center;
+  align-self: start;
   color: var(--book-muted);
   font-size: 1.1rem;
   line-height: 1;
+  padding-top: 0.05rem;
 }
 
 .pm-auth-message.is-error .pm-auth-message__icon {
@@ -3674,19 +3675,18 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
 }
 
 .pm-auth-message__body {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  grid-column: 2;
+  min-width: 0;
 }
 
 .pm-auth-message__eyebrow {
-  grid-column: 2;
-  grid-row: 1;
-  align-self: center;
   margin: 0;
 }
 
 .pm-auth-message__text {
-  grid-column: 1 / -1;
-  grid-row: 2;
 }
 
 .pm-auth-secondary {

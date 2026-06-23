@@ -761,12 +761,13 @@ def test_access_request_submit_persists_request_and_shows_success(auth_app: Flas
     )
 
     assert response.status_code == 303
-    assert response.headers["Location"] == "/access-request?next=/de/research/spanish&submitted=1"
+    assert response.headers["Location"] == "/de/access-request/thanks"
 
     follow_up = client.get(response.headers["Location"])
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
-    assert "Vielen Dank. Ihre Anfrage wurde übermittelt." in html
+    assert "Vielen Dank, Mara Fischer." in html
+    assert "Ihre Anfrage wurde übermittelt." in html
     assert "72 Stunden" in html
     assert "Anfrage eingegangen" in html
     assert "Spam-Ordner" in html
@@ -816,13 +817,13 @@ def test_access_request_submit_en_shows_english_confirmation(auth_app: Flask) ->
     )
 
     assert response.status_code == 303
-    location = response.headers["Location"]
-    assert "submitted=1" in location
+    assert response.headers["Location"] == "/en/access-request/thanks"
 
-    follow_up = client.get(location)
+    follow_up = client.get(response.headers["Location"])
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
-    assert "Thank you. Your request has been submitted." in html
+    assert "Thank you, Mara Fischer." in html
+    assert "Your request has been submitted." in html
     assert "72 hours" in html
     assert "spam folder" in html
     assert "Request received" in html
@@ -859,10 +860,9 @@ def test_access_request_submit_does_not_500_when_status_update_fails(
     response = client.post("/access-request", data=payload, follow_redirects=False)
 
     assert response.status_code == 303
-    location = response.headers["Location"]
-    assert "submitted=1" in location
+    assert response.headers["Location"] == "/de/access-request/thanks"
 
-    follow_up = client.get(location)
+    follow_up = client.get(response.headers["Location"])
     assert follow_up.status_code == 200
     assert "Anfrage eingegangen" in follow_up.get_data(as_text=True)
 
@@ -1045,14 +1045,17 @@ def test_access_request_logs_metadata_without_full_pii(
     assert "Purpose:" not in caplog.text
 
 
-def test_access_request_submitted_page_shows_de_confirmation(auth_app: Flask) -> None:
+def test_access_request_thanks_de_shows_confirmation_without_name(auth_app: Flask) -> None:
+    """Direct GET to /de/access-request/thanks (no session) shows fallback greeting."""
     client = auth_app.test_client()
 
-    response = client.get("/access-request?submitted=1&ui_lang=de")
+    response = client.get("/de/access-request/thanks")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "Vielen Dank. Ihre Anfrage wurde übermittelt." in html
+    assert "Vielen Dank." in html
+    assert "Vielen Dank," not in html
+    assert "Ihre Anfrage wurde übermittelt." in html
     assert "72 Stunden" in html
     assert "Spam-Ordner" in html
     assert "Ein automatischer Anspruch auf Zugang besteht nicht." in html
@@ -1060,19 +1063,83 @@ def test_access_request_submitted_page_shows_de_confirmation(auth_app: Flask) ->
     assert "<form" not in html
 
 
-def test_access_request_submitted_page_shows_en_confirmation(auth_app: Flask) -> None:
+def test_access_request_thanks_en_shows_confirmation_without_name(auth_app: Flask) -> None:
+    """Direct GET to /en/access-request/thanks (no session) shows fallback greeting."""
     client = auth_app.test_client()
 
-    response = client.get("/access-request?submitted=1&ui_lang=en")
+    response = client.get("/en/access-request/thanks")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "Thank you. Your request has been submitted." in html
+    assert "Thank you." in html
+    assert "Thank you," not in html
+    assert "Your request has been submitted." in html
     assert "72 hours" in html
     assert "spam folder" in html
     assert "Access is not granted automatically." in html
     assert "Request received" in html
     assert "<form" not in html
+
+
+def test_access_request_thanks_de_shows_name_after_post(auth_app: Flask) -> None:
+    """DE POST with first_name=Felix last_name=Tacke → thanks page shows 'Vielen Dank, Felix Tacke.'"""
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(
+        client,
+        overrides={"first_name": "Felix", "last_name": "Tacke"},
+    )
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["Location"] == "/de/access-request/thanks"
+
+    follow_up = client.get(response.headers["Location"])
+    assert follow_up.status_code == 200
+    html = follow_up.get_data(as_text=True)
+    assert "Vielen Dank, Felix Tacke." in html
+    assert "72 Stunden" in html
+    assert "Anfrage eingegangen" in html
+    assert "<form" not in html
+
+
+def test_access_request_thanks_en_shows_name_after_post(auth_app: Flask) -> None:
+    """EN POST with first_name=Felix last_name=Tacke → thanks page shows 'Thank you, Felix Tacke.'"""
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(
+        client,
+        next_url="/en/research/spanish",
+        overrides={"first_name": "Felix", "last_name": "Tacke", "ui_lang": "en"},
+    )
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["Location"] == "/en/access-request/thanks"
+
+    follow_up = client.get(response.headers["Location"])
+    assert follow_up.status_code == 200
+    html = follow_up.get_data(as_text=True)
+    assert "Thank you, Felix Tacke." in html
+    assert "72 hours" in html
+    assert "Request received" in html
+    assert "<form" not in html
+
+
+def test_access_request_thanks_name_is_html_escaped(auth_app: Flask) -> None:
+    """Name containing HTML characters must be escaped, not rendered as markup."""
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(
+        client,
+        overrides={"first_name": "<script>alert(1)</script>", "last_name": "Test"},
+    )
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+    assert response.status_code == 303
+
+    follow_up = client.get(response.headers["Location"])
+    assert follow_up.status_code == 200
+    html = follow_up.get_data(as_text=True)
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
 
 
 def test_access_request_submitted_page_has_login_link(auth_app: Flask) -> None:
@@ -1115,7 +1182,7 @@ def test_access_request_honeypot_redirects_to_submitted_state(auth_app: Flask) -
     response = client.post("/access-request", data=payload, follow_redirects=False)
 
     assert response.status_code == 303
-    assert "submitted=1" in response.headers["Location"]
+    assert "access-request/thanks" in response.headers["Location"]
     follow_up = client.get(response.headers["Location"])
     assert follow_up.status_code == 200
     html = follow_up.get_data(as_text=True)
