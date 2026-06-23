@@ -31,6 +31,7 @@ from app.research_player_runtime import (
 from app.research_views import _format_standard_variety_value, build_player_page, build_speaker_profile_page, build_speakers_page
 from app.routes.auth import blueprint as auth_blueprint
 from app.routes.public import blueprint as public_blueprint
+from app.routes.public_page_content_data import SPANISH_DESIGN_PAGE_CONTENT
 from app.research_sessions import (
     load_language_sessions,
     load_person_records,
@@ -2479,21 +2480,21 @@ def test_project_about_page_embeds_video_and_hides_intro(
     [
         (
             "de",
-            "Die spanischen Aufgaben dieses Korpus wurden entwickelt",
+            "Das spanische Korpus von <em>Pronunciation Matters</em> setzt dort an",
             "Die Liste umfasst 92 Items",
             "Worum es geht",
             "Projektaufbau",
-            "Daten & Methodik",
-            "Team & Mitwirkende",
+            "Daten &amp; Methodik",
+            "Team &amp; Mitwirkende",
         ),
         (
             "en",
-            "The Spanish tasks in this corpus were developed",
+            "The Spanish corpus of <em>Pronunciation Matters</em> is situated",
             "The list comprises 92 items",
             "What this project is about",
             "Project structure",
-            "Data & methods",
-            "Team & contributors",
+            "Data &amp; methods",
+            "Team &amp; contributors",
         ),
     ],
 )
@@ -2547,6 +2548,23 @@ def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask
     assert 'href="https://hispanistica.com/projects/marele/"' in html
 
 
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui_lang: str) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/spanish/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    for url in (
+        "https://doi.org/10.1075/ivitra.42",
+        "https://doi.org/10.24053/9783381100125",
+        "https://andrea-peskova.com/archivo-de-los-acentos-l2/",
+        "https://hispanistica.com/projects/marele/",
+    ):
+        assert f'<a href="{url}">{url}</a>' in html
+
+
 @pytest.mark.parametrize(
     ("ui_lang", "page_title", "citation_heading", "citation_url", "copy_label", "citation_html", "copy_text"),
     [
@@ -2589,6 +2607,7 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
     assert f'<h1 id="promat-page-title" class="promat-page__title pm-content-header__title">{page_title}</h1>' in html
     assert 'aria-current="page">Design</span>' in html
     assert f'<h3 class="pm-admonition__title">{citation_heading}</h3>' in html
+    assert 'class="promat-content-section promat-content-section--citation pm-reading pm-teaching-page--topic"' in html
     assert html.count('data-admonition-variant="citation"') == 1
     assert f'aria-label="{copy_label}"' in html
     assert f'<a href="{citation_url}">{citation_url.removeprefix("https://")}</a>.' in html
@@ -2611,8 +2630,8 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
     [
         (
             "de",
-            "Wortliste anzeigen",
-            "Satzliste anzeigen",
+            "Wortliste",
+            "Satzliste",
             "Anzeigen",
             "Fußnoten",
             "Die spanische Wortliste umfasst 92 Items: 86 Einzellexeme und 6 Minimal- bzw. Pseudominimalpaare.",
@@ -2621,8 +2640,8 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
         ),
         (
             "en",
-            "Show wordlist",
-            "Show sentence list",
+            "Wordlist",
+            "Sentence list",
             "Show",
             "Footnotes",
             "The Spanish wordlist contains 92 items: 86 individual lexical items and 6 minimal or pseudo-minimal pairs.",
@@ -2662,15 +2681,50 @@ def test_spanish_design_page_renders_expandable_material_and_footnotes_in_conten
     assert html.index(wordlist_title) < html.index(section_headings[2])
     assert html.index(sentence_list_title) < html.index(">Interview<")
     assert f'id="pm-footnotes-heading">{footnotes_heading}</h2>' in html
-    assert f'id="fnref-spanish-design-1-{ui_lang}"' in html
-    assert f'href="#fn-spanish-design-1-{ui_lang}"' in html
-    assert f'id="fn-spanish-design-1-{ui_lang}"' in html
-    assert f'href="#fnref-spanish-design-1-{ui_lang}"' in html
-    assert html.count('class="pm-footnotes__backref"') == 3
+    for number in range(1, 5):
+        assert f'id="fnref-spanish-design-{number}-{ui_lang}"' in html
+        assert f'href="#fn-spanish-design-{number}-{ui_lang}"' in html
+        assert f'id="fn-spanish-design-{number}-{ui_lang}"' in html
+        assert f'href="#fnref-spanish-design-{number}-{ui_lang}"' in html
+    assert f"fn-spanish-design-1-{ui_lang}-{ui_lang}" not in html
+    assert html.count('class="pm-footnotes__backref"') == 4
     assert f'aria-label="{backref_label}"' in html
     assert html.index('class="pm-footnotes pm-reading"') < html.index('class="promat-content-block__list pm-literature"')
     sections_html = html[html.index('<div class="promat-page__sections">'):html.index("</article>")]
-    assert "Pronunciation Matters" not in sections_html.replace("<em>Pronunciation Matters</em>", "")
+    reading_sections_html = sections_html[:sections_html.index("promat-content-section--citation")]
+    assert "Pronunciation Matters" not in reading_sections_html.replace("<em>Pronunciation Matters</em>", "")
+
+
+def test_spanish_design_footnote_data_has_complete_bilingual_numeric_links() -> None:
+    footnote_counts: list[int] = []
+
+    for ui_lang, aria_prefix in (("de", "Fußnote"), ("en", "Footnote")):
+        footnotes = SPANISH_DESIGN_PAGE_CONTENT["footnotes_html"][ui_lang]
+        footnote_ids = [footnote["id"] for footnote in footnotes]
+        labels = [footnote["label"] for footnote in footnotes]
+        expected_labels = [str(number) for number in range(1, len(footnotes) + 1)]
+        paragraphs_html = "\n".join(
+            paragraph
+            for section in SPANISH_DESIGN_PAGE_CONTENT["sections"]
+            for paragraph in section.get("paragraphs_html", {}).get(ui_lang, [])
+        )
+        href_targets = re.findall(r'href="#(fn-spanish-design-\d+-(?:de|en))"', paragraphs_html)
+        ref_ids = re.findall(r'id="(fnref-spanish-design-\d+-(?:de|en))"', paragraphs_html)
+
+        assert len(footnote_ids) == len(set(footnote_ids))
+        assert labels == expected_labels
+        assert "*" not in labels
+        assert set(href_targets) == set(footnote_ids)
+        assert len(href_targets) == len(footnote_ids)
+        assert set(ref_ids) == {footnote_id.replace("fn-", "fnref-", 1) for footnote_id in footnote_ids}
+        for number in range(1, len(footnotes) + 1):
+            assert (
+                f'id="fnref-spanish-design-{number}-{ui_lang}">'
+                f'<a href="#fn-spanish-design-{number}-{ui_lang}" aria-label="{aria_prefix} {number}">{number}</a>'
+            ) in paragraphs_html
+        footnote_counts.append(len(footnotes))
+
+    assert footnote_counts[0] == footnote_counts[1]
 
 
 def test_reading_expandable_uses_shared_responsive_component_styles(url_app: Flask) -> None:

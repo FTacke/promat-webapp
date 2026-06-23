@@ -3,12 +3,12 @@
     <h2 class="pm-footnotes__heading" id="pm-footnotes-heading">{{ t('public.reading.footnotes_heading') }}</h2>
     <ol class="pm-footnotes__list">
       {% for footnote in promat_page.footnotes_html %}
-      <li class="pm-footnotes__item" id="{{ footnote.id }}-{{ current_ui_lang }}">
+      <li class="pm-footnotes__item" id="{{ footnote.id }}">
         <span class="pm-footnotes__body">
           <span class="pm-footnotes__content">{{ footnote.html | safe }}</span>
           <a
             class="pm-footnotes__backref"
-            href="#{{ footnote.id | replace('fn-', 'fnref-', 1) }}-{{ current_ui_lang }}"
+            href="#{{ footnote.id | replace('fn-', 'fnref-', 1) }}"
             aria-label="{{ t('public.reading.back_to_footnote_reference') }}"
           >↩</a>
         </span>
