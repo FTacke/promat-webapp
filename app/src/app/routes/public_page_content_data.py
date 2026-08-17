@@ -554,7 +554,7 @@ PROJECT_PAGES_CONTENT: dict[str, dict[str, object]] = {
                                 },
                                 {
                                     "label": "Materialkonzeption",
-                                    "value": "Prof. Dr. Kathrin Siebold",
+                                    "value": "Theresa Fischer, M.A., Prof. Dr. Kathrin Siebold",
                                 },
                                 {
                                     "label": "Durchführung",
