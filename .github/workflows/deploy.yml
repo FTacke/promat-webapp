@@ -1,18 +1,97 @@
 name: Deploy production
 
+# Production is deployed only for a commit whose CI run succeeded.
+#
+#   push to main -> CI workflow (.github/workflows/ci.yml, job "release-gate")
+#                -> on SUCCESSFUL completion: this workflow (workflow_run)
+#                -> self-hosted runner on the production host checks out *that exact commit* and runs
+#                   scripts/deploy_prod.sh
+#
+# Why workflow_run and not a plain `push` trigger: a `push` trigger starts in parallel with CI and cannot wait
+# for it. Why the explicit SHA: for `workflow_run` events `github.sha` is the *latest commit of the default
+# branch*, not the commit CI tested, so the tested commit must be taken from `workflow_run.head_sha`.
+#
+# Manual runs (workflow_dispatch) are the rollback path: select an older ref in "Use workflow from". The
+# commit must have a successful CI run; deploying an untested commit is deliberately not possible. Run CI on
+# it first (Actions -> CI -> Run workflow) if needed.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
+
+concurrency:
+  # One deployment at a time; never cancel one that is already running on the server.
+  group: production-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    # For workflow_run: only successful CI runs triggered by a push to main (never pull requests or forks).
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main') }}
     runs-on: [self-hosted, promat-prod]
     steps:
+      - name: Resolve the exact commit to deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
+            deploy_sha="${TESTED_SHA}"
+          else
+            deploy_sha="${DISPATCH_SHA}"
+          fi
+          [[ "${deploy_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Could not resolve a commit SHA to deploy."; exit 1; }
+
+          # Require a successful CI run for exactly this commit (always true for workflow_run; the real
+          # check for manual/rollback runs).
+          runs_json="$(
+            curl -fsSL \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${deploy_sha}&status=success&per_page=1"
+          )"
+          ci_success_count="$(printf '%s' "${runs_json}" | sed -n 's/.*"total_count"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+          if [[ -z "${ci_success_count}" || "${ci_success_count}" -lt 1 ]]; then
+            echo "::error::No successful CI run found for ${deploy_sha}. Refusing to deploy an untested commit."
+            exit 1
+          fi
+
+          echo "DEPLOY_SHA=${deploy_sha}" >> "${GITHUB_ENV}"
+          echo "Deploying tested commit ${deploy_sha}"
+
+      - name: Skip if a newer commit has reached main
+        # Two quick pushes can finish CI out of order. Deploying the older one last would roll production
+        # back to older code, so only the commit that is still the tip of main is deployed automatically.
+        # (Manual rollbacks to an older commit are exempt.)
+        if: ${{ github.event_name == 'workflow_run' }}
+        run: |
+          set -euo pipefail
+          cd /srv/webapps/promat/app
+          main_tip="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [[ -z "${main_tip}" ]]; then
+            echo "::error::Could not determine the current tip of main."
+            exit 1
+          fi
+          if [[ "${main_tip}" != "${DEPLOY_SHA}" ]]; then
+            echo "::warning::main moved on to ${main_tip}; skipping ${DEPLOY_SHA}. That commit's own CI run deploys it."
+            echo "SKIP_DEPLOY=true" >> "${GITHUB_ENV}"
+          fi
+
       - name: Resolve public deploy metadata
+        if: ${{ env.SKIP_DEPLOY != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           GOATCOUNTER_URL: https://pronunciation-matters.goatcounter.com/count
@@ -38,10 +117,11 @@ jobs:
           } >> "${GITHUB_ENV}"
 
       - name: Deploy on server
+        if: ${{ env.SKIP_DEPLOY != 'true' }}
         run: |
           set -euo pipefail
           cd /srv/webapps/promat/app
           git fetch --prune origin
-          git checkout --force "$GITHUB_SHA"
-          git reset --hard "$GITHUB_SHA"
+          git checkout --force "${DEPLOY_SHA}"
+          git reset --hard "${DEPLOY_SHA}"
           bash scripts/deploy_prod.sh
