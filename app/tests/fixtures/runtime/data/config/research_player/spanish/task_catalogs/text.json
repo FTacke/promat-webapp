@@ -1,0 +1,44 @@
+{
+  "task": "text",
+  "language": "spanish",
+  "player_source": {
+    "source_kind": "sentence_list",
+    "content_mode": "sentence_list",
+    "default_view": "list",
+    "allowed_views": [
+      "list"
+    ],
+    "primary_audio_mode": "item",
+    "supports_item_audio": true,
+    "supports_full_audio": true,
+    "supports_text_view": false,
+    "paragraph_model": "none"
+  },
+  "items": [
+    {
+      "item_id": "d_01",
+      "item_number": "D1",
+      "group_id": "D",
+      "text": "Hoy miro el reloj con calma antes de salir."
+    },
+    {
+      "item_id": "d_05",
+      "item_number": "D5",
+      "group_id": "D",
+      "text": "Cuidar un perro exige tiempo y atención diaria."
+    },
+    {
+      "item_id": "qy_03",
+      "item_number": "QY3",
+      "group_id": "QY",
+      "text": "¿El vaso está lleno de vino ahora?"
+    },
+    {
+      "item_id": "qw_04",
+      "item_number": "QW4",
+      "group_id": "QW",
+      "text": "¿Cuándo sale el próximo tren?"
+    }
+  ],
+  "display_label": "Satzliste"
+}

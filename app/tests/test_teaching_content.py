@@ -426,8 +426,9 @@ def test_build_teaching_topic_page_parses_teaching_impulses(
         {"key": "status", "label": "Status", "value": "In Vorbereitung"},
         {"key": "created", "label": "Erstellt", "value": "06.07.2025"},
     ]
-    assert [block["type"] for block in page["blocks"]] == ["text", "teaching_impulses"]
-    impulses = page["blocks"][1]
+    assert [block["type"] for block in page["blocks"]] == ["section_heading", "text", "teaching_impulses"]
+    assert page["blocks"][0]["title"] == "Impulse für den Unterricht"
+    impulses = page["blocks"][2]
     assert impulses["layout"]["span"] == 1
     assert len(impulses["items"]) == 2
     assert impulses["items"][0]["title"] == "Hören vorbereiten"

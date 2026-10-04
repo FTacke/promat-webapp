@@ -18,6 +18,7 @@ if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
 from app.runtime_paths import get_sessions_root  # noqa: E402
+from intake_batch_common import research_player_config_root  # noqa: E402
 from intake_storage import IntakeStorageError, build_prod_upload_package  # noqa: E402
 from language_config import maybe_resolve_language_config, resolve_language_config  # noqa: E402
 
@@ -107,7 +108,7 @@ def main() -> int:
 
     config_roots = []
     if args.include_research_player_config:
-        config_roots.append(REPO_ROOT / "data" / "config" / "research_player")
+        config_roots.append(research_player_config_root())
 
     try:
         result = build_prod_upload_package(

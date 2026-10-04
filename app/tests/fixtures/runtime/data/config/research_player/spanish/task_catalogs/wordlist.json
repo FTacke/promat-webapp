@@ -1,0 +1,34 @@
+{
+  "task": "wordlist",
+  "language": "spanish",
+  "player_source": {
+    "source_kind": "wordlist",
+    "content_mode": "wordlist",
+    "default_view": "list",
+    "allowed_views": [
+      "list"
+    ],
+    "primary_audio_mode": "item",
+    "supports_item_audio": true,
+    "supports_full_audio": true,
+    "supports_text_view": false,
+    "paragraph_model": "none"
+  },
+  "items": [
+    {
+      "item_id": "wl_059",
+      "item_number": "59",
+      "text": "mesa"
+    },
+    {
+      "item_id": "wl_087",
+      "item_number": "87",
+      "text": "reloj"
+    },
+    {
+      "item_id": "wl_089",
+      "item_number": "89",
+      "text": "ahí – allí"
+    }
+  ]
+}

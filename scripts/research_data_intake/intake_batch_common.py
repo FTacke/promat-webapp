@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import filecmp
 from functools import lru_cache
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -502,8 +503,24 @@ def is_native_speaker_person_id(person_id: str) -> bool:
     return person_id_speaker_marker(person_id) == "N"
 
 
+def research_config_root() -> Path:
+    """Canonical runtime config root, ``<PROMAT_RUNTIME_ROOT>/data/config``.
+
+    Matches ``app.runtime_paths.get_config_root`` so the intake tooling and the app read the same
+    research-player configuration. When ``PROMAT_RUNTIME_ROOT`` is unset the repository root is used,
+    which is what the intake entrypoints already default to.
+    """
+    runtime_root = os.environ.get("PROMAT_RUNTIME_ROOT")
+    base = Path(runtime_root).expanduser() if runtime_root and runtime_root.strip() else REPO_ROOT
+    return base / "data" / "config"
+
+
+def research_player_config_root() -> Path:
+    return research_config_root() / "research_player"
+
+
 def task_catalog_path(language_slug: str, task_key: str) -> Path:
-    return REPO_ROOT / "data" / "config" / "research_player" / language_slug / "task_catalogs" / f"{task_key}.json"
+    return research_player_config_root() / language_slug / "task_catalogs" / f"{task_key}.json"
 
 
 @lru_cache(maxsize=None)

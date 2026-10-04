@@ -746,7 +746,7 @@ def test_load_intake_workbook_person_id_filter_accepts_set(tmp_path: Path) -> No
     assert workbook_data.errors == ()
 
 
-def test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode(tmp_path: Path) -> None:
+def test_run_text_pipeline_skips_missing_working_text_inputs_in_write_mode(tmp_path: Path, fixture_runtime_root: Path) -> None:
     batch_dir = tmp_path / "spanish_batch_20260525"
     batch_dir.mkdir()
 

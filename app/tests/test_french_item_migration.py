@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 
+import pytest
 from sqlalchemy import JSON, Column, MetaData, String, Table, Text, create_engine, insert, select
 
 
@@ -18,7 +19,9 @@ def _database_url(tmp_path: Path) -> str:
     return f"sqlite+pysqlite:///{(tmp_path / 'research.sqlite').as_posix()}"
 
 
+@pytest.mark.data
 def test_runtime_french_item_catalog_and_exports_use_canonical_value() -> None:
+    """Operator check against the real runtime catalog/exports (run with ``pytest -m data``)."""
     catalog_path = TEST_REPO_ROOT / "data" / "config" / "research_player" / "french" / "task_catalogs" / "wordlist.json"
     payload = json.loads(catalog_path.read_text(encoding="utf-8"))
     item = next(item for item in payload["items"] if item["item_id"] == "wl_014")

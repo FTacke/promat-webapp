@@ -37,6 +37,7 @@ from audio_conversion.ffmpeg_audio import (  # noqa: E402
     probe_audio_profile,
     probe_duration_seconds,
 )
+from intake_batch_common import task_catalog_path  # noqa: E402
 from item_split.wordlist_splits import build_split_boundaries, create_wordlist_splits  # noqa: E402
 from language_config import resolve_language_config  # noqa: E402
 
@@ -50,7 +51,7 @@ def _resolve_language_slug(value: str | None) -> str:
 
 
 def _catalog_path_for_language(language_slug: str) -> Path:
-    return REPO_ROOT / "data" / "config" / "research_player" / language_slug / "task_catalogs" / "wordlist.json"
+    return task_catalog_path(language_slug, "wordlist")
 
 
 def parse_args() -> argparse.Namespace:

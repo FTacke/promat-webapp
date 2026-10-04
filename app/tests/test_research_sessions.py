@@ -1632,14 +1632,16 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
         assert "Zum Schutz personenbezogener und forschungsbezogener Daten sind nicht alle Bereiche öffentlich zugänglich." in html
         assert "Als legitime Nutzer:innen gelten Angehörige von Forschungs- und Bildungseinrichtungen." in html
         assert f'href="/access-request?next={quote(path, safe="/?")}"' in html
-        assert f'href="/login?next={quote(path, safe="/?")}"' in html
+        # Corpus-root login returns to the language's speakers page (1705434); a specific restricted page keeps its exact target.
+        assert f'href="/login?next={quote(path + "/speakers", safe="/?")}"' in html
         assert re.search(r'pm-nav-pill__label">Zugang beantragen</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
         assert re.search(r'pm-nav-pill__label">Zum Login</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
     else:
         assert "To protect personal and research-related data, not every area is publicly accessible." in html
         assert "Legitimate users are members of research and educational institutions." in html
         assert f'href="/access-request?next={quote(path, safe="/?")}"' in html
-        assert f'href="/login?next={quote(path, safe="/?")}"' in html
+        # Corpus-root login returns to the language's speakers page (1705434); a specific restricted page keeps its exact target.
+        assert f'href="/login?next={quote(path + "/speakers", safe="/?")}"' in html
         assert re.search(r'pm-nav-pill__label">Request access</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
         assert re.search(r'pm-nav-pill__label">Go to login</span>\s*<span class="pm-interaction__arrow"', html, re.S) is not None
 
@@ -1659,7 +1661,7 @@ def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(
     assert "pm-icon-mask--lock" in html
     assert "Login erforderlich" not in html
     assert f'href="/access-request?next={quote("/de/research/spanish", safe="/?")}"' in html
-    assert f'href="/login?next={quote("/de/research/spanish", safe="/?")}"' in html
+    assert f'href="/login?next={quote("/de/research/spanish/speakers", safe="/?")}"' in html
     _assert_muted_locked_nav_item_order(drawer_html, "Sprecher:innen")
     _assert_muted_locked_nav_item_order(drawer_html, "Vergleich")
     _assert_muted_locked_nav_item_order(drawer_html, "Phänomene")
@@ -2571,7 +2573,7 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
         (
             "de",
             "Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll",
-            "Diese Forschungsseite zitieren",
+            "Diesen Aufsatz zitieren",
             "https://pronunciation-matters.de/de/research/spanish/design",
             "Zitat kopieren",
             'Tacke, Felix (2026): „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/de/research/spanish/design">pronunciation-matters.de/de/research/spanish/design</a>.',
@@ -2580,7 +2582,7 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
         (
             "en",
             "Spanish learner pronunciation: elicitation design and task protocol",
-            "Cite this research page",
+            "Cite this article",
             "https://pronunciation-matters.de/en/research/spanish/design",
             "Copy citation",
             'Tacke, Felix (2026): “Spanish learner pronunciation: elicitation design and task protocol”. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/en/research/spanish/design">pronunciation-matters.de/en/research/spanish/design</a>.',

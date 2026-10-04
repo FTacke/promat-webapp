@@ -107,6 +107,7 @@ def _write_minimal_language_config(runtime_root: Path, *, presets: list[dict[str
     _write_json(base_dir / "phenomena_presets.json", {"language": "spanish", "presets": presets})
 
 
+@pytest.mark.data
 def test_load_player_config_reads_spanish_defaults_from_repo(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
@@ -119,6 +120,7 @@ def test_load_player_config_reads_spanish_defaults_from_repo(monkeypatch: pytest
     assert config.text.display_label == "Satzliste"
 
 
+@pytest.mark.data
 def test_load_phenomena_presets_reads_mixed_spanish_presets_from_repo(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
@@ -133,6 +135,7 @@ def test_load_phenomena_presets_reads_mixed_spanish_presets_from_repo(monkeypatc
     assert any(reference.task == "text" for reference in preset_map["question_prosody_paths"].items)
 
 
+@pytest.mark.data
 def test_load_task_catalog_reads_existing_text_display_label_from_repo(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
@@ -147,6 +150,7 @@ def test_load_task_catalog_reads_existing_text_display_label_from_repo(monkeypat
     assert "qw_10" in catalog.items_by_id
 
 
+@pytest.mark.data
 def test_load_english_repo_catalogs_define_connected_text_and_wordlist(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
@@ -172,6 +176,7 @@ def test_load_english_repo_catalogs_define_connected_text_and_wordlist(monkeypat
     assert player_config.text.display_label == "Text"
 
 
+@pytest.mark.data
 def test_load_french_repo_catalogs_define_connected_text_and_wordlist(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
@@ -197,6 +202,7 @@ def test_load_french_repo_catalogs_define_connected_text_and_wordlist(monkeypatc
     assert player_config.text.display_label == "Text"
 
 
+@pytest.mark.data
 def test_load_english_repo_presets_are_catalog_valid(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))

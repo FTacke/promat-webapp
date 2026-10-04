@@ -19,7 +19,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 APP_SRC = REPO_ROOT / "app" / "src"
 SCRIPT_ROOT = Path(__file__).resolve().parent
 ALIGNMENT_EXPORT_ROOT = SCRIPT_ROOT / "alignment_export"
-IMPORT_SCRIPT_ROOT = SCRIPT_ROOT / "import"
 APP_SCRIPT_ROOT = REPO_ROOT / "app" / "scripts"
 if str(APP_SRC) not in sys.path:
     sys.path.insert(0, str(APP_SRC))
@@ -27,8 +26,6 @@ if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 if str(ALIGNMENT_EXPORT_ROOT) not in sys.path:
     sys.path.insert(0, str(ALIGNMENT_EXPORT_ROOT))
-if str(IMPORT_SCRIPT_ROOT) not in sys.path:
-    sys.path.insert(0, str(IMPORT_SCRIPT_ROOT))
 if str(APP_SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(APP_SCRIPT_ROOT))
 
@@ -51,6 +48,7 @@ from intake_batch_common import (  # noqa: E402
     is_native_speaker_person_id,
     resolve_batch_dir,
     scan_import_batch,
+    task_catalog_path,
     working_alignment_path,
     working_intake_state_path,
     working_source_path,
@@ -277,7 +275,7 @@ def _apply_runtime_overrides(args: argparse.Namespace) -> None:
 
 def _text_task_catalog_path(target_language: str) -> Path:
     language_slug = resolve_language_config(target_language).corpus_slug
-    return REPO_ROOT / "data" / "config" / "research_player" / language_slug / "task_catalogs" / "text.json"
+    return task_catalog_path(language_slug, "text")
 
 
 def _file_signature(path: Path) -> dict[str, object]:

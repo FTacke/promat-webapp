@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shutil
 import sys
 from pathlib import Path
+
+import pytest
 
 
 TEST_REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -26,18 +27,11 @@ from alignment_export.wordlist_alignment import parse_textgrid_intervals as pars
 from alignment_export.wordlist_alignment import TextGridInterval as WordlistTextGridInterval  # noqa: E402
 import intake_batch_common  # noqa: E402
 from intake_batch_common import working_intake_state_path  # noqa: E402
+from organize_batch_working_tree import organize_batch_working_tree  # noqa: E402
 
 
-_ORGANIZER_SPEC = importlib.util.spec_from_file_location(
-    "organize_batch_working_tree_module",
-    TEST_REPO_ROOT / "scripts" / "research_data_intake" / "import" / "organize_batch_working_tree.py",
-)
-assert _ORGANIZER_SPEC is not None
-assert _ORGANIZER_SPEC.loader is not None
-_ORGANIZER_MODULE = importlib.util.module_from_spec(_ORGANIZER_SPEC)
-sys.modules[_ORGANIZER_SPEC.name] = _ORGANIZER_MODULE
-_ORGANIZER_SPEC.loader.exec_module(_ORGANIZER_MODULE)
-organize_batch_working_tree = _ORGANIZER_MODULE.organize_batch_working_tree
+# Interview material references resolve against the task catalogs; use the tracked minimal fixtures.
+pytestmark = pytest.mark.usefixtures("fixture_runtime_root")
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:

@@ -403,7 +403,8 @@ def test_build_comparison_page_exposes_english_labels_for_migrated_workspace(com
         page = build_comparison_page("en", "spanish", {"task": "text"})
 
     assert page is not None
-    assert page["content_header"]["intro"] == "Item-centered comparison workbench for speakers, sets, and directly usable split clips."
+    # The comparison page intentionally has no intro line (translation cleared in eff0add); an empty intro is not rendered.
+    assert page["content_header"]["intro"] == ""
     assert page["client_state"]["labels"]["materialPrompt"] == "Select items"
     assert page["client_state"]["labels"]["setSelectLabel"] == "Choose set"
     assert page["client_state"]["labels"]["fullTextLabel"] == "Full text"
