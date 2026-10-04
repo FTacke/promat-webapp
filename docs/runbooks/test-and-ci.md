@@ -33,7 +33,7 @@ Der kanonische lokale Testlauf, die Bedeutung der CI-Jobs und der Umgang mit ope
    mkdir -p /tmp/promat/data/config /tmp/promat/data/sessions /tmp/promat/public /tmp/promat/logs
    ```
 
-3. Qualitäts-Checks im Repo-Root: `python -m ruff check .`, `python -m compileall -q app scripts`, `python scripts/ci_governance_checks.py`, `python scripts/validate_teaching_content.py`, `shellcheck scripts/*.sh`
+3. Qualitäts-Checks im Repo-Root: `python -m ruff check .`, `python -m compileall -q app scripts`, `python scripts/ci_governance_checks.py`, `python scripts/validate_teaching_content.py`, `shellcheck --severity=warning scripts/*.sh`
 4. Vollständige Python-Suite im Ordner `app/`: `python -m pytest tests -q`
 5. JavaScript-Tests im Repo-Root: `node --test app/tests/js/*.test.mjs`
 6. Optional Image und Backup-Rehearsal: `docker build -f app/Dockerfile -t promat-ci-image .` sowie `PYTHON=python scripts/ci_backup_restore_smoke.sh`

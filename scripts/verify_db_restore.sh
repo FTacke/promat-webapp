@@ -43,7 +43,7 @@ command -v docker >/dev/null 2>&1 || fail "docker is required."
 NAME="promat-restore-verify-$$"
 PASSWORD="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)"
 
-# shellcheck disable=SC2329  # invoked through the EXIT trap
+# shellcheck disable=SC2317,SC2329  # invoked through the EXIT trap
 cleanup() {
   if [[ "${KEEP}" -eq 1 ]]; then
     echo "Leaving container '${NAME}' running (remove with: docker rm -f ${NAME})."

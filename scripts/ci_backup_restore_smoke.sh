@@ -17,6 +17,7 @@ PORT="${PROMAT_SMOKE_DB_PORT:-55433}"
 PASSWORD="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)"
 WORKDIR="$(mktemp -d)"
 
+# shellcheck disable=SC2317,SC2329  # invoked through the EXIT trap
 cleanup() {
   docker rm -f "${NAME}" >/dev/null 2>&1 || true
   rm -rf "${WORKDIR}"

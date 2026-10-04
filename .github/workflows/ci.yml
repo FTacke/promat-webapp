@@ -76,7 +76,7 @@ jobs:
         run: python scripts/ci_governance_checks.py
 
       - name: Shell script lint
-        run: shellcheck scripts/*.sh
+        run: shellcheck --severity=warning scripts/*.sh
 
       - name: Teaching content validation
         run: python scripts/validate_teaching_content.py

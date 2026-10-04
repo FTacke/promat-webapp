@@ -63,6 +63,7 @@ PARTIAL="${FINAL}.partial"
 COUNTS_PARTIAL="${FINAL}.counts.tsv.partial"
 [[ ! -e "${FINAL}" ]] || fail "Refusing to overwrite existing backup ${FINAL}."
 
+# shellcheck disable=SC2317,SC2329  # invoked through the EXIT trap
 cleanup() {
   rm -f "${PARTIAL}" "${COUNTS_PARTIAL}"
 }
