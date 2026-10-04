@@ -51,6 +51,7 @@ def group_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         TESTING=True,
         SECRET_KEY="test-group-secret",
         SERVER_NAME="promat.test",
+        PROMAT_PUBLIC_BASE_URL="https://promat.test",
         JWT_SECRET_KEY="test-group-secret",
         JWT_TOKEN_LOCATION=["cookies"],
         JWT_COOKIE_CSRF_PROTECT=False,

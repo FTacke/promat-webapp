@@ -1049,46 +1049,14 @@ def _person_section_rows(person: PersonRecord, ui_lang: str) -> list[dict[str, s
             ]
         )
 
-    if person.origin_region:
+    if person.origin_region and not person.is_native:  # natives already show it above; never twice
         rows.append({"label": _origin_region_label(ui_lang), "value": person.origin_region})
+    # `person_notes` is a documented internal research note (Research_Person sheet). Administrative fields that
+    # originate in the Secure_Person_Intake sheet - consent flags/date/files, questionnaire file, secure_notes -
+    # are deliberately NOT rendered in the research-user-facing profile (see docs/spec/research-access.md).
     if person.person_notes:
         rows.append({"label": _t(ui_lang, "common.labels.person_notes"), "value": person.person_notes})
-    if person.research_consent_signed:
-        rows.append({"label": _t(ui_lang, "common.labels.research_consent_signed"), "value": _consent_status_value(person.research_consent_signed, ui_lang)})
-    if person.teaching_consent_signed:
-        rows.append({"label": _t(ui_lang, "common.labels.teaching_consent_signed"), "value": _teaching_consent_value(person.teaching_consent_signed, ui_lang)})
-    if person.consent_date:
-        rows.append({"label": _t(ui_lang, "common.labels.consent_date"), "value": person.consent_date.isoformat()})
-    if person.consent_file:
-        rows.append({"label": _t(ui_lang, "common.labels.consent_file"), "value": person.consent_file})
-    if person.questionnaire_file:
-        rows.append({"label": _t(ui_lang, "common.labels.questionnaire_file"), "value": person.questionnaire_file})
-    if person.secure_notes:
-        rows.append({"label": _t(ui_lang, "common.labels.secure_notes"), "value": person.secure_notes})
     return rows
-
-
-
-def _consent_status_value(value: str | None, ui_lang: str) -> str:
-    normalized = (value or "").strip().lower()
-    if normalized == "yes":
-        return _yes_label(ui_lang)
-    if normalized == "no":
-        return _no_label(ui_lang)
-    if normalized == "unknown":
-        return _t(ui_lang, "common.values.unknown")
-    return "-"
-
-
-def _teaching_consent_value(value: str | None, ui_lang: str) -> str:
-    normalized = (value or "").strip().lower()
-    if normalized == "yes":
-        return _t(ui_lang, "research.profile.teaching_consent.yes")
-    if normalized == "no":
-        return _t(ui_lang, "research.profile.teaching_consent.no")
-    if normalized == "unknown":
-        return _t(ui_lang, "research.profile.teaching_consent.unknown")
-    return "-"
 
 
 def _session_card_rows(session: SessionRecord, ui_lang: str) -> list[dict[str, Any]]:

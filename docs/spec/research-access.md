@@ -179,6 +179,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 - Each session container shows its own metadata and its own recording links.
 - `context` stays technical and is not displayed raw as `baseline` or `follow_up`.
 - `recorded_by` is shown to users as `Explorator:in`.
+- The person section never renders administrative fields that originate in the `Secure_Person_Intake` sheet: `research_consent_signed`, `teaching_consent_signed`, `consent_date`, `consent_file`, `questionnaire_file`, and `secure_notes`. They may stay in runtime metadata and the research database for internal tooling, but no research-user-facing profile, speaker card, or player metadata card shows them. `person_notes` (a `Research_Person` field) remains the documented internal research note and is the only free-text note shown in the person section.
 
 ### Learner profile semantics
 
@@ -324,7 +325,7 @@ Rules:
 Rules:
 
 - These internal metadata fields are available only in protected Research contexts, not in public Teaching or other public routes.
-- `person_notes`, `session_notes`, and `secure_notes` are internal readable notes.
+- `person_notes` and `session_notes` are internal readable notes in protected Research contexts. `secure_notes`, the consent fields, `consent_file`, and `questionnaire_file` are administrative Secure-sheet fields: carried as metadata, never rendered in research-user-facing views (see Shared profile semantics).
 - `teaching_consent_signed` is a protected safety and eligibility flag for manual Teaching selection only and is not an automatic publication switch.
 
 ## Non-goals of the Current Runtime

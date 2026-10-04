@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from flask import current_app, url_for
+from urllib.parse import urlsplit
+
+from flask import current_app
 
 from ..branding import BRANDING
 from ..i18n import normalize_supported_ui_language, translate
@@ -36,12 +38,24 @@ def _t(ui_lang: str, key: str, **kwargs: object) -> str:
 
 
 def build_password_link(raw_token: str, ui_lang: str) -> str:
-    return url_for(
+    """Absolute password-reset/invitation link on the configured canonical origin.
+
+    The origin comes only from ``PROMAT_PUBLIC_BASE_URL`` (validated at startup). Request headers such as
+    ``Host`` or ``X-Forwarded-Host`` are never consulted, so a forged header cannot redirect the link, and the
+    path is built from a fresh URL adapter so a forged ``X-Forwarded-Prefix`` cannot alter it either.
+    """
+    base_url = str(current_app.config.get("PROMAT_PUBLIC_BASE_URL") or "").rstrip("/")
+    parts = urlsplit(base_url)
+    if parts.scheme not in {"http", "https"} or not parts.netloc:
+        # Never fall back to the request host: configuration is validated in load_config() at startup.
+        raise RuntimeError("PROMAT_PUBLIC_BASE_URL is not configured; refusing to build an external link.")
+    adapter = current_app.url_map.bind(parts.netloc, script_name="/", url_scheme=parts.scheme)
+    path = adapter.build(
         "auth.password_reset_page",
-        token=raw_token,
-        ui_lang=ui_lang,
-        _external=True,
+        {"token": raw_token, "ui_lang": ui_lang},
+        force_external=False,
     )
+    return f"{base_url}{path}"
 
 
 def build_auth_mail_preview(

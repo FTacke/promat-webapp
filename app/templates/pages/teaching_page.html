@@ -51,7 +51,7 @@
 
   {% if promat_page.overview_intro %}
   <section class="pm-reading pm-teaching-overview__intro" aria-label="{{ t('teaching.overview.intro') }}">
-    <p class="pm-teaching-overview__intro-text">{{ (promat_page.overview_intro_html or promat_page.overview_intro) | safe }}</p>
+    <p class="pm-teaching-overview__intro-text">{{ promat_page.overview_intro_html | safe if promat_page.overview_intro_html else promat_page.overview_intro }}</p>
   </section>
   {% endif %}
 
@@ -77,9 +77,9 @@
     <section class="pm-teaching-topic-group pm-teaching-content-wide" {% if group.title %}aria-labelledby="teaching-group-{{ loop.index }}"{% else %}aria-label="{{ t('teaching.hub.cards_aria') }}"{% endif %}>
       {% if group.title %}
       <div class="pm-teaching-topic-group__header">
-        <h2 id="teaching-group-{{ loop.index }}" class="pm-teaching-topic-group__title">{{ (group.title_html or group.title) | safe }}</h2>
+        <h2 id="teaching-group-{{ loop.index }}" class="pm-teaching-topic-group__title">{{ group.title_html | safe if group.title_html else group.title }}</h2>
         {% if group.description %}
-        <p class="pm-teaching-topic-group__description">{{ (group.description_html or group.description) | safe }}</p>
+        <p class="pm-teaching-topic-group__description">{{ group.description_html | safe if group.description_html else group.description }}</p>
         {% endif %}
       </div>
       {% endif %}
@@ -105,7 +105,7 @@
     {% for section in promat_page.topic_sections %}
     <section class="pm-teaching-topic-section pm-teaching-topic-section--{{ section.kind }}{{ ' pm-teaching-topic-section--topic-citation' if section.kind == 'citation' else '' }}"{% if section.heading %} aria-labelledby="{{ section.heading.id }}"{% endif %}>
       {% if section.heading %}
-      <h2 id="{{ section.heading.id }}" class="pm-teaching-section-heading__title">{{ (section.heading.title_html or section.heading.title) | safe }}</h2>
+      <h2 id="{{ section.heading.id }}" class="pm-teaching-section-heading__title">{{ section.heading.title_html | safe if section.heading.title_html else section.heading.title }}</h2>
       {% endif %}
       {% if section.blocks %}
       <div class="pm-teaching-topic-section__grid pm-teaching-block-grid pm-teaching-block-grid--topic{{ ' pm-teaching-topic-section__grid--citation' if section.kind == 'citation' else '' }}">

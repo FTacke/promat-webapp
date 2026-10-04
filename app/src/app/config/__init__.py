@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
+from urllib.parse import urlsplit
 
 from ..runtime_paths import (
     get_config_root,
@@ -16,6 +18,12 @@ from ..runtime_paths import (
 
 
 DEFAULT_SECRET_SENTINEL = "__CHANGE_ME__"
+# Local development serves on this origin (scripts/dev-start.ps1); used when no public base URL is configured.
+DEFAULT_DEV_PUBLIC_BASE_URL = "http://127.0.0.1:8000"
+# Template markers such as `__CHANGE_ME__` or `__SET_PUBLIC_BASE_URL__` in app/passwords.env.template. A real
+# random secret or URL never has this shape, so this does not reject legitimate values.
+_TEMPLATE_PLACEHOLDER_PATTERN = re.compile(r"^__[A-Z0-9_]+__$")
+_DEV_LIKE_ENVS = frozenset({"development", "dev", "testing", "test"})
 DEFAULT_DEV_DATABASE_URL = "postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth"
 GOATCOUNTER_ENDPOINT = "https://pronunciation-matters.goatcounter.com/count"
 
@@ -44,6 +52,25 @@ def _default_mail_backend(env_name: str) -> str:
     if env_name in {"development", "dev", "testing", "test"}:
         return "disabled"
     return "smtp"
+
+
+def is_unset_or_placeholder(value: str | None) -> bool:
+    """True for empty values and for template markers such as ``__CHANGE_ME__`` (never logs the value)."""
+    normalized = _normalize_value(value)
+    return not normalized or bool(_TEMPLATE_PLACEHOLDER_PATTERN.match(normalized))
+
+
+def normalize_public_base_url(raw_value: str | None) -> str:
+    """Return the canonical external origin (no trailing slash) or raise ``ValueError`` if it is unusable."""
+    value = _normalize_value(raw_value)
+    if is_unset_or_placeholder(value):
+        raise ValueError("PROMAT_PUBLIC_BASE_URL is not set to a real URL.")
+    parts = urlsplit(value)
+    if parts.scheme not in {"http", "https"} or not parts.hostname:
+        raise ValueError("PROMAT_PUBLIC_BASE_URL must be an absolute http(s) URL such as https://example.org.")
+    if parts.username or parts.password or parts.query or parts.fragment:
+        raise ValueError("PROMAT_PUBLIC_BASE_URL must not contain credentials, a query string, or a fragment.")
+    return value.rstrip("/")
 
 
 def _is_production_env(env_name: str) -> bool:
@@ -204,9 +231,29 @@ def load_config(app, env_name: str | None = None) -> None:
 
     if not app.config.get("AUTH_DATABASE_URL"):
         raise RuntimeError("AUTH_DATABASE_URL is required for PROMAT.")
-    if app.config.get("SECRET_KEY") == DEFAULT_SECRET_SENTINEL and resolved_env not in {"development", "dev", "testing", "test"}:
-        raise RuntimeError("FLASK_SECRET_KEY must be configured for non-development environments.")
-    if resolved_env not in {"development", "dev", "testing", "test"}:
+    if resolved_env not in _DEV_LIKE_ENVS:
+        if is_unset_or_placeholder(app.config.get("SECRET_KEY")):
+            raise RuntimeError("FLASK_SECRET_KEY must be configured for non-development environments.")
+        # Roles are read from the signed token, so a placeholder JWT secret would let anyone forge an admin token.
+        if is_unset_or_placeholder(app.config.get("JWT_SECRET_KEY")):
+            raise RuntimeError(
+                "JWT_SECRET_KEY must be configured for non-development environments "
+                "(it is empty or still a template placeholder such as __CHANGE_ME__)."
+            )
+    # Canonical external origin for links that leave the app (password reset / invitation mails). It is never
+    # derived from request headers, which a client can forge. Production requires a real https origin; local
+    # development and tests fall back to the dev origin when nothing is configured.
+    configured_base_url = _normalize_value(app.config.get("PROMAT_PUBLIC_BASE_URL"))
+    if configured_base_url or resolved_env not in _DEV_LIKE_ENVS:
+        try:
+            app.config["PROMAT_PUBLIC_BASE_URL"] = normalize_public_base_url(configured_base_url)
+        except ValueError as exc:
+            raise RuntimeError(str(exc)) from exc
+        if resolved_env not in _DEV_LIKE_ENVS and not app.config["PROMAT_PUBLIC_BASE_URL"].startswith("https://"):
+            raise RuntimeError("PROMAT_PUBLIC_BASE_URL must use https:// for non-development environments.")
+    else:
+        app.config["PROMAT_PUBLIC_BASE_URL"] = DEFAULT_DEV_PUBLIC_BASE_URL
+    if resolved_env not in _DEV_LIKE_ENVS:
         if not rate_limit_storage_uri:
             raise RuntimeError("RATE_LIMIT_STORAGE_URI must be configured for non-development environments.")
         if rate_limit_storage_uri.lower() == "memory://":

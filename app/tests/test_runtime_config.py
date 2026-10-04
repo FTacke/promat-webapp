@@ -38,6 +38,7 @@ def _reload_config_module(
     monkeypatch.setenv("AUTH_DATABASE_URL", f"sqlite:///{(tmp_path / 'auth.sqlite3').as_posix()}")
     monkeypatch.setenv("FLASK_SECRET_KEY", "test-secret")
     monkeypatch.setenv("JWT_SECRET_KEY", "test-secret")
+    monkeypatch.setenv("PROMAT_PUBLIC_BASE_URL", "https://pm.example.test")
     monkeypatch.delenv("RATE_LIMIT_STORAGE_URI", raising=False)
     monkeypatch.delenv("RATELIMIT_STORAGE_URI", raising=False)
     monkeypatch.delenv("VITE_APP_VERSION", raising=False)
@@ -204,3 +205,108 @@ def test_goatcounter_url_does_not_accept_other_sites(tmp_path: Path, monkeypatch
 
     assert app.config["VITE_GOATCOUNTER_URL"] == "https://example.goatcounter.com/count"
     assert app.config["GOATCOUNTER_URL"] == ""
+
+
+def _production_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, **env: str | None):
+    _reload_config_module(
+        tmp_path,
+        monkeypatch,
+        env_name="production",
+        rate_limit_storage_uri="redis://rate_limit:6379/0",
+    )
+    for name, value in env.items():
+        if value is None:
+            monkeypatch.delenv(name, raising=False)
+        else:
+            monkeypatch.setenv(name, value)
+    reloaded = importlib.reload(config_module)
+    return reloaded, Flask(__name__)
+
+
+@pytest.mark.parametrize("placeholder", ["__CHANGE_ME__", "__SET_JWT_SECRET__", "  __CHANGE_ME__  "])
+def test_production_rejects_template_placeholder_jwt_secret(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, placeholder: str
+) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, JWT_SECRET_KEY=placeholder)
+
+    with pytest.raises(RuntimeError, match="JWT_SECRET_KEY must be configured") as excinfo:
+        reloaded.load_config(app, "production")
+
+    message = str(excinfo.value)
+    assert "__CHANGE_ME__" in message  # the hint names the template marker
+    if placeholder.strip() != "__CHANGE_ME__":
+        assert placeholder.strip() not in message  # the configured value itself is never echoed
+
+
+def test_production_rejects_placeholder_flask_secret(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, FLASK_SECRET_KEY="__CHANGE_ME__")
+
+    with pytest.raises(RuntimeError, match="FLASK_SECRET_KEY must be configured"):
+        reloaded.load_config(app, "production")
+
+
+def test_production_jwt_secret_never_falls_back_to_a_placeholder_flask_secret(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, FLASK_SECRET_KEY="__CHANGE_ME__", JWT_SECRET_KEY=None)
+
+    with pytest.raises(RuntimeError, match="must be configured"):
+        reloaded.load_config(app, "production")
+
+
+@pytest.mark.parametrize("secret", ["x" * 64, "k8Zp-Q2_wT9vLmN4aB7cD1eF6gH3jR5s", "a__b__c", "__lower_case__"])
+def test_production_accepts_legitimate_jwt_secrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, secret: str) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, JWT_SECRET_KEY=secret)
+
+    reloaded.load_config(app, "production")
+
+    assert app.config["JWT_SECRET_KEY"] == secret
+
+
+def test_testing_and_development_keep_simple_secrets_for_ergonomics(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for env_name in ("testing", "development"):
+        reloaded = _reload_config_module(tmp_path, monkeypatch, env_name=env_name, rate_limit_storage_uri=None)
+        monkeypatch.setenv("JWT_SECRET_KEY", "__CHANGE_ME__")
+        reloaded = importlib.reload(reloaded)
+        app = Flask(__name__)
+
+        reloaded.load_config(app, env_name)
+
+        assert app.config["JWT_SECRET_KEY"] == "__CHANGE_ME__"
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        (None, "not set to a real URL"),
+        ("", "not set to a real URL"),
+        ("__SET_PUBLIC_BASE_URL__", "not set to a real URL"),
+        ("pm.example.test", "absolute http"),
+        ("ftp://pm.example.test", "absolute http"),
+        ("https://user:pw@pm.example.test", "credentials"),
+        ("https://pm.example.test/?x=1", "credentials, a query string"),
+        ("http://pm.example.test", "must use https://"),
+    ],
+)
+def test_production_requires_a_real_https_public_base_url(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, value: str | None, message: str
+) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, PROMAT_PUBLIC_BASE_URL=value)
+
+    with pytest.raises(RuntimeError, match=message):
+        reloaded.load_config(app, "production")
+
+
+def test_public_base_url_is_normalized_and_dev_falls_back_to_local_origin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, PROMAT_PUBLIC_BASE_URL=" https://pm.example.test/ ")
+    reloaded.load_config(app, "production")
+    assert app.config["PROMAT_PUBLIC_BASE_URL"] == "https://pm.example.test"
+
+    reloaded = _reload_config_module(tmp_path, monkeypatch, env_name="testing", rate_limit_storage_uri=None)
+    monkeypatch.delenv("PROMAT_PUBLIC_BASE_URL", raising=False)
+    reloaded = importlib.reload(reloaded)
+    dev_app = Flask(__name__)
+    reloaded.load_config(dev_app, "testing")
+    assert dev_app.config["PROMAT_PUBLIC_BASE_URL"] == reloaded.DEFAULT_DEV_PUBLIC_BASE_URL

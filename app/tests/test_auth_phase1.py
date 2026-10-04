@@ -12,6 +12,7 @@ import sys
 from flask import Flask, abort, jsonify, render_template
 import pytest
 from flask_jwt_extended import jwt_required
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -94,6 +95,7 @@ def auth_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Flask:
         TESTING=True,
         SECRET_KEY="test-secret",
         SERVER_NAME="promat.test",
+        PROMAT_PUBLIC_BASE_URL="https://promat.test",
         JWT_SECRET_KEY="test-secret",
         JWT_TOKEN_LOCATION=["cookies"],
         JWT_COOKIE_CSRF_PROTECT=False,
@@ -1580,6 +1582,72 @@ def test_password_forgot_creates_reset_token_without_leaking_account(
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         expires_in = expires_at - datetime.now(timezone.utc)
         assert 13 <= expires_in.days <= 14
+
+
+def test_password_reset_link_uses_configured_base_url_and_ignores_forged_host_headers(
+    auth_app: Flask,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Same proxy trust as production (create_app applies ProxyFix with x_host/x_prefix), so forged
+    # X-Forwarded-* headers are honoured by the request object and must still not reach the mailed link.
+    auth_app.wsgi_app = ProxyFix(auth_app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+    sent_messages: list[mail_delivery.MailMessage] = []
+
+    def fake_send_mail(message):
+        sent_messages.append(message)
+        return mail_delivery.MailDeliveryResult(sent=True, backend="smtp")
+
+    monkeypatch.setattr("app.routes.auth.send_mail", fake_send_mail)
+
+    response = auth_app.test_client().post(
+        "/auth/password/forgot",
+        data={"email": "alice@example.org", "ui_lang": "en"},
+        headers={
+            "Host": "evil.example",
+            "X-Forwarded-Host": "evil.example",
+            "X-Forwarded-Proto": "http",
+            "X-Forwarded-Prefix": "/phish",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 200
+    assert len(sent_messages) == 1
+    body = sent_messages[0].body
+    link = next(line for line in body.splitlines() if "/auth/password/reset" in line)
+    assert link.startswith("https://promat.test/auth/password/reset?token=")
+    assert "ui_lang=en" in link
+    assert "evil.example" not in body
+    assert "phish" not in body
+
+
+def test_build_password_link_never_uses_request_origin(auth_app: Flask) -> None:
+    from app.services.auth_mail_messages import build_password_link
+
+    with auth_app.test_request_context("/", base_url="http://evil.example/", headers={"X-Forwarded-Host": "evil.example"}):
+        link = build_password_link("abc123", "de")
+
+    assert link == "https://promat.test/auth/password/reset?token=abc123&ui_lang=de"
+
+
+def test_build_password_link_supports_a_path_prefix_in_the_configured_base_url(auth_app: Flask) -> None:
+    from app.services.auth_mail_messages import build_password_link
+
+    auth_app.config["PROMAT_PUBLIC_BASE_URL"] = "https://promat.test/promat/"
+    with auth_app.test_request_context("/"):
+        link = build_password_link("abc123", "en")
+
+    assert link == "https://promat.test/promat/auth/password/reset?token=abc123&ui_lang=en"
+
+
+@pytest.mark.parametrize("value", [None, "", "promat.test", "__SET_PUBLIC_BASE_URL__"])
+def test_build_password_link_refuses_to_guess_when_base_url_is_not_configured(auth_app: Flask, value: str | None) -> None:
+    from app.services.auth_mail_messages import build_password_link
+
+    auth_app.config["PROMAT_PUBLIC_BASE_URL"] = value
+    with auth_app.test_request_context("/", base_url="http://evil.example/"):
+        with pytest.raises(RuntimeError, match="PROMAT_PUBLIC_BASE_URL is not configured"):
+            build_password_link("abc123", "de")
 
 
 def test_password_forgot_request_does_not_enumerate_missing_accounts(

@@ -747,11 +747,19 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
     assert person_rows["Weitere L1"] == "IT, EN"
     assert person_rows["Zusätzliche Sprachen"] == "English, French"
 
+    # The documented research note stays; administrative Secure_Person_Intake fields never reach the profile.
     person_rows = {row["label"]: row["value"] for row in page["person_section"]["rows"]}
     assert person_rows["Person-Notizen"] == "Stable internal biography note."
-    assert person_rows["Research-Einwilligung"] == "Ja"
-    assert person_rows["Teaching-Freigabe"] == "Unbekannt · Vor Verwendung prüfen"
-    assert person_rows["Interne Notizen"] == "Check teaching release before editorial reuse."
+    for hidden_label in (
+        "Research-Einwilligung",
+        "Teaching-Freigabe",
+        "Einwilligungsdatum",
+        "Einwilligungsdatei",
+        "Fragebogen-Datei",
+        "Interne Notizen",
+    ):
+        assert hidden_label not in person_rows
+    assert "Check teaching release before editorial reuse." not in person_rows.values()
 
     exposure_row = next(row for row in page["sessions_section"]["cards"][0]["rows"] if row["label"] == "Auslands-/Sprachaufenthalte")
     assert exposure_row["entries"] == [
@@ -762,6 +770,64 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
     ]
     assert [task["key"] for task in page["sessions_section"]["cards"][0]["tasks"]] == ["wordlist", "text", "interview"]
     assert all(not task["is_disabled"] for task in page["sessions_section"]["cards"][0]["tasks"])
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "hidden_texts"),
+    [
+        (
+            "de",
+            ("Research-Einwilligung", "Teaching-Freigabe", "Einwilligungsdatum", "Einwilligungsdatei", "Fragebogen-Datei", "Interne Notizen"),
+        ),
+        (
+            "en",
+            ("Research consent", "Teaching eligibility", "Consent date", "Consent file", "Questionnaire file", "Internal notes"),
+        ),
+    ],
+)
+def test_profile_route_never_exposes_consent_or_internal_administrative_metadata(
+    runtime_env: Path,
+    url_app: Flask,
+    ui_lang: str,
+    hidden_texts: tuple[str, ...],
+) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0001",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B1",
+            context="baseline",
+            task_types=("wordlist",),
+            person_notes="Stable biography note visible to researchers.",
+            research_consent_signed="yes",
+            teaching_consent_signed="no",
+            secure_notes="Internal: do not reuse editorially.",
+        ),
+    )
+    _set_test_auth(url_app)
+
+    response = url_app.test_client().get(f"/{ui_lang}/research/spanish/speakers/ES-L-0001?session={session_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Stable biography note visible to researchers." in html
+    for text in hidden_texts:
+        assert text not in html
+    for value in (
+        "consent_anna.pdf",  # _learner_payload derives consent_date/consent_file/questionnaire_file from the consent flag
+        "questionnaire_anna.pdf",
+        "Internal: do not reuse editorially.",
+        "2026-03-14",
+        "manuelle Teaching-Auswahl",
+        "manual teaching selection",
+    ):
+        assert value not in html
 
 
 def test_profile_page_keeps_selection_and_accent_bound_to_each_session(runtime_env: Path, url_app: Flask) -> None:

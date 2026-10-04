@@ -844,6 +844,49 @@ def test_public_set_editor_route_renders_for_authenticated_owner(phenomena_app: 
     assert 'md3-dialog' not in confirm_slice
 
 
+HOSTILE_SET_LABEL = '<img src=x onerror=alert(1)><b>fett</b> & "Zitat" \u2013 \u0283 \u0272 \u00c4\u00d6\u00dc\u00df'
+
+
+def test_set_editor_page_escapes_hostile_set_label_in_the_page_heading(phenomena_app: Flask) -> None:
+    with phenomena_app.app_context():
+        draft = create_draft_set(owner_user_id="user-1", corpus_language="spanish")
+        update_set_metadata(owner_user_id="user-1", set_id=draft.set_id, label=HOSTILE_SET_LABEL, state="saved")
+
+    phenomena_app.config["TEST_AUTH_USER"] = "alice"
+    phenomena_app.config["TEST_AUTH_USER_ID"] = "user-1"
+    response = phenomena_app.test_client().get(f"/de/research/spanish/phenomena/sets/{draft.set_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    heading_start = html.index('id="promat-page-title"')
+    heading = html[heading_start : html.index("</h1>", heading_start)]
+    assert "<img src=x" not in html
+    assert "<b>fett</b>" not in html
+    assert "&lt;img src=x onerror=alert(1)&gt;&lt;b&gt;fett&lt;/b&gt; &amp; &#34;Zitat&#34;" in heading
+    # Ordinary Unicode, including phonetic characters, is preserved verbatim.
+    assert "\u2013 \u0283 \u0272 \u00c4\u00d6\u00dc\u00df" in heading
+
+
+def test_content_header_partial_escapes_plain_title_and_intro_but_keeps_trusted_html_fields(phenomena_app: Flask) -> None:
+    from flask import render_template
+
+    with phenomena_app.test_request_context("/de/research/spanish"):
+        escaped = render_template(
+            "partials/_content_header.html",
+            content_header={"title": HOSTILE_SET_LABEL, "intro": "<script>alert(1)</script>"},
+        )
+        trusted = render_template(
+            "partials/_content_header.html",
+            content_header={"title": "plain", "title_html": "<em>trusted</em> markup", "intro": "x", "intro_html": "<em>ok</em>"},
+        )
+
+    assert "<script>alert(1)</script>" not in escaped
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in escaped
+    assert "<img src=x" not in escaped
+    assert "<em>trusted</em> markup" in trusted
+    assert "<em>ok</em>" in trusted
+
+
 # --- USER button visibility matrix tests ---
 
 def test_overview_user_curated_entry_shows_only_view_button(phenomena_app: Flask) -> None:

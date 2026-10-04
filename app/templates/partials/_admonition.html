@@ -20,9 +20,9 @@
     <span class="pm-admonition__icon" aria-hidden="true"></span>
     <div class="pm-admonition__header-body">
       {% if eyebrow %}
-      <p class="pm-card__eyebrow pm-admonition__eyebrow">{{ (eyebrow_html or eyebrow) | safe }}</p>
+      <p class="pm-card__eyebrow pm-admonition__eyebrow">{{ eyebrow_html | safe if eyebrow_html else eyebrow }}</p>
       {% endif %}
-      <h3 class="pm-admonition__title">{{ (resolved_title_html or resolved_title) | safe }}</h3>
+      <h3 class="pm-admonition__title">{{ resolved_title_html | safe if resolved_title_html else resolved_title }}</h3>
     </div>
     {{ _render_admonition_header_action(header_action) }}
   </div>
@@ -51,7 +51,7 @@
         {% endif %}
       </div>
       {% if item.footer %}
-      <p class="pm-admonition__footer">{{ (item.footer_html or item.footer) | safe }}</p>
+      <p class="pm-admonition__footer">{{ item.footer_html | safe if item.footer_html else item.footer }}</p>
       {% endif %}
     </div>
   </{{ root_tag }}>
