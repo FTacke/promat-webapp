@@ -6,6 +6,13 @@ Wiederholbarer Ablauf für den Drop-in-Batch-Pfad unter `scripts/research_data_i
 
 Teaching ist nicht Teil dieses Runbooks. `content/`, `public/teaching/` und Teaching-Media bleiben unangetastet.
 
+## Organizer-Code und lokale Altkopie
+
+- Der Organizer liegt versioniert unter `scripts/research_data_intake/organize_batch_working_tree.py`. Das Verzeichnis `import/` enthält nur Batch-Daten und nie ausführbaren Code.
+- Die frühere, nie committete Kopie unter `import/organize_batch_working_tree.py` war nur auf der lokalen Maschine vorhanden. Die versionierte Fassung wurde aus den Tests, diesem Runbook und den Run-Logs rekonstruiert (siehe Modul-Docstring).
+- **Einmalig vor dem nächsten echten Intake:** die lokale Altkopie gegen die versionierte Fassung diffen (Statusnamen, Report-Felder, Konfliktregeln). Weicht die Altkopie fachlich ab, die Altkopie nach `scripts/research_data_intake/organize_batch_working_tree.py` übernehmen und die Tests (`pytest tests/test_research_working_tree_intake.py`) laufen lassen. Danach die Altkopie unter `import/` löschen, damit es nur eine Fassung gibt.
+- Der Importer importiert den Organizer nicht mehr aus `import/`; eine dort verbliebene Altkopie wird ignoriert.
+
 ## Batch-Definition
 
 - Der Batch liegt unter `scripts/research_data_intake/import/`.
@@ -40,16 +47,16 @@ Regeln:
 ## Schritt 2: Working-Tree organisieren
 
 - Dry run:
-  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import/organize_batch_working_tree.py --batch-dir spanish_batch_20260421 --dry-run`
+  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/organize_batch_working_tree.py --batch-dir spanish_batch_20260421 --dry-run`
 - Schreiben:
-  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import/organize_batch_working_tree.py --batch-dir spanish_batch_20260421`
+  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/organize_batch_working_tree.py --batch-dir spanish_batch_20260421`
 
 Regeln:
 
 - Dieser Schritt arbeitet inkrementell pro `person_id` und Task, führt den batch-lokalen Zustand in `working/.intake_state.json` und ersetzt nur Task-Unterbäume mit geänderten oder neu vollständigen Inputs.
 - Für `wordlist` und `text` zählen nur klassifizierte `source`-WAVs und alignment-source TextGrids als operative Working-Eingänge.
 - Für `interview` sind nur klassifizierte `source`-WAV plus klassifizierte alignment-source JSON-Datei operative Eingänge.
-- `raw` allein ist kein zulässiger Fallback für die operative Interview-Ableitung.
+- Für `interview` ist die processed-WAV bevorzugt; gibt es keine, ist eine eindeutige raw-WAV die operative Quelle (`raw_wav_used_as_source` im Report). `origin`-WAVs sind nie ein Fallback.
 - Wenn bei Interview mehrere gleichrangige WAV- oder JSON-Kandidaten existieren, meldet der Organizer einen harten Konflikt statt zu raten.
 - Wenn ein Interview-Input fehlt, bleiben andere Tasks derselben Person unangetastet und der Report nennt den taskweisen Status.
 - Native Speaker mit `speaker_type = native_speaker` oder `-N-` bleiben für `interview` neutral `not_expected_for_native_speaker`.

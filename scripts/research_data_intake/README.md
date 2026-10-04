@@ -186,7 +186,7 @@ JSON-Dry-Run-Report für den Scan:
 
 Batch in den Working-Tree organisieren:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import/organize_batch_working_tree.py --batch-dir spanish_batch_20260421`
+`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/organize_batch_working_tree.py --batch-dir spanish_batch_20260421`
 
 Zentralen lokalen Import nach Runtime, Dev-DB und Archiv dry-run planen:
 

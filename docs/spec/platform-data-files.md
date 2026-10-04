@@ -12,6 +12,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `data/` is the protected research-data space.
 - `public/` is the explicitly released public-media space.
 - `content/` is the versioned editorial content space for fully public file-based surfaces such as Teaching.
+- `content/legal/` holds the source of the public Impressum and privacy pages. `content/` is copied into the production image; `docs/` is not, so no runtime code may read from `docs/`.
 - `secure/` is the clear-text space and is never accessed by the webapp.
 - `scripts/` contains repeatable import, export, setup, and pipeline steps.
 - `scripts/research_data_intake/` is the canonical root for research-data intake and derivation pipelines.
@@ -328,6 +329,8 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - `PROMAT_PUBLIC_ROOT` is the canonical public root.
 - `PROMAT_TEACHING_CONTENT_ROOT` is the canonical optional override for the file-based Teaching content root; when unset in local development, the default is the repo-root `content/teaching` tree.
 - Paths are derived through runtime/config wiring, not freehand string paths.
+- `PROMAT_PUBLIC_BASE_URL` is the canonical external origin of the deployed app. It is the only source for absolute links that leave the app (password-reset and invitation mails); request headers such as `Host`, `X-Forwarded-Host`, and `X-Forwarded-Prefix` are never used for them. Non-development environments require a real `https://` origin without credentials, query, or fragment; development and testing fall back to `http://127.0.0.1:8000`.
+- Non-development startup fails fast when `FLASK_SECRET_KEY` or `JWT_SECRET_KEY` is empty or still a template placeholder of the form `__NAME__` (for example `__CHANGE_ME__`); values are never logged. Secrets should be random and at least 32 bytes long (PyJWT warns below that for HMAC keys). The deployment verifies this with the new image before it replaces the running container.
 - In development and testing, the rate-limit backend may use `memory://`.
 - In non-development environments, `RATE_LIMIT_STORAGE_URI` must be set to one shared non-memory backend; silent production fallback to `memory://` is not part of the active runtime contract.
 - For the default local development PostgreSQL URL `postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth`, `scripts/dev-start.ps1` is the canonical app entrypoint and must ensure the local `promat_auth_db` service plus the idempotent auth/core and research-set migrations are applied before the Flask app starts.
@@ -346,6 +349,15 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The owner-bound research set model persists in PostgreSQL and does not get a second browser-only or file-backed storage path.
 - The PostgreSQL model keeps one canonical set core plus a dedicated owner-bound workbench-state submodel; comparison filters or session selections must not be folded back into the set core columns.
 
+## Release Gate and Deployment
+
+- `main` is deployed to production automatically, so `.github/workflows/ci.yml` is the release gate: ruff, `compileall`, governance checks, teaching-content validation, shell-script lint, the whole `pytest` suite, the JavaScript tests, the production compose config, the production image build with an in-image runtime-asset check, and a PostgreSQL backup/restore rehearsal. The `release-gate` job depends on every other job and must list all of them.
+- `.github/workflows/deploy.yml` runs only after a successful CI run for a push to `main` (`workflow_run`), or manually for a rollback. It deploys `workflow_run.head_sha` - the exact tested commit, never the branch tip - and refuses commits without a successful CI run. Deployments are serialized and an automatic deployment is skipped when `main` has already moved on.
+- The canonical suite is the whole `pytest` run configured in `app/pyproject.toml`; it must pass from a fresh checkout without operator data. Tests that validate the content of operator-owned runtime configuration carry the `data` marker and are run by the operator with `pytest -m data`.
+- `scripts/deploy_prod.sh` validates the production configuration with the new image, applies migrations, and replaces only the `web` container. PostgreSQL and Redis are recreated only when their compose definition changes.
+- Rollback is a manual run of the deploy workflow on an older ref whose commit has a successful CI run; there is no automated rollback.
+- Backups and restores follow `docs/runbooks/backup-and-restore.md`; there is no backup artifact in the repository.
+
 ## Data Spaces
 
 ### `data/`
@@ -357,6 +369,10 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 ### `data/config/`
 
 - Runtime configuration files belong under `data/config/`.
+- `data/config/research_player/` is operator-owned runtime configuration and is intentionally not versioned in this repository. The canonical home for a corpus is `data/config/research_player/{language}/` (for example `german`), shipped to the server only through the upload package (`build_prod_upload_package.py --include-research-player-config`).
+- The server reads the flat `data/config/research_player/` tree; the publish step does not copy `config/` from a release into it. After shipping new or changed catalogs the operator must confirm the flat tree matches the release (see `docs/runbooks/backup-and-restore.md` scope and `docs/runbooks/deploy-and-rollback.md`).
+- `scripts/research_data_intake/validate_research_config.py` checks any runtime root with the app's own loaders. The tracked minimal fixtures under `app/tests/fixtures/runtime/` exist only so the canonical test suite runs without operator data; they are not research content.
+- Intake tooling resolves catalogs from the same runtime root as the app (`<PROMAT_RUNTIME_ROOT>/data/config`; the repository root when the variable is unset).
 - Research-player corpus configuration belongs under `data/config/research_player/{language}/`.
 - The canonical corpus-level research-player config files include `data/config/research_player/{language}/player_config.json` and `data/config/research_player/{language}/task_catalogs/{task}.json`.
 - `data/config/research_player/{language}/phenomena_presets.json` is a **legacy/deprecated file**; it is no longer loaded at runtime and is not part of the productive phenomena capability. All active phenomena sets are stored in the PostgreSQL `research_sets` table.
@@ -517,6 +533,7 @@ scripts/research_data_intake/import/{batch_name}/
 ### Drop-in semantics
 
 - Batch directories under `scripts/research_data_intake/import/` are generic intake drop-in areas and are not hard-wired to one corpus language.
+- `scripts/research_data_intake/import/` holds batch data only (it is gitignored apart from `.gitkeep`); executable intake code never lives there. The batch organizer is `scripts/research_data_intake/organize_batch_working_tree.py`.
 - A processable batch directory must keep `batch` in its directory name.
 - There is no manual subfolder requirement for `processed/`, `raw/`, `source/`, or `intake_data/`.
 - Users may place the workbook, WAVs, TextGrids, Amberscript JSON, and other task-related intake files directly under the batch root or in optional helper subfolders.
@@ -565,7 +582,7 @@ working/{person_id}/interview/alignment/interview.json
 - In this working-tree-only `text` JSON step, `audio.full_mp3` may already point to the canonical future relative artifact path `derived/text.mp3` even though the MP3 artifact is not produced yet in that same step.
 - In this working-tree-only `text` JSON step, `session_id` may remain `null` until later metadata integration resolves the final production session identity.
 - The preparatory `text` MFA step must obtain canonical item texts from an explicit external source such as a task catalog or mapping JSON and must not guess final texts from TextGrid labels.
-- For `interview`, the working organizer now requires a classified source WAV and a classified alignment-source JSON; raw-only interview delivery is not an operative fallback for runtime derivation.
+- For `interview`, the working organizer requires an alignment-source JSON and a source WAV. The processed WAV is preferred; when none exists a unique raw WAV is the operative source and the task report sets `raw_wav_used_as_source`. `origin` WAVs are never a fallback. Several equally ranked candidates are a hard conflict.
 - In that interview alignment JSON, spoken token cores stay in `tokens[].text`, punctuation that originally followed a material-reference marker such as `25[wl_025].` stays token-local in `tokens[].suffix`, and `annotations[]` keep only the structured `material_ref` payload plus `insert_after_token_id` without any parallel `trailing_punctuation` field.
 - Interview transcript bracket annotations that are not PROMAT material references, including IPA forms such as `[θ]` or `[x]`, unintelligible markers such as `[u]`, and empty phonetic omission markers such as `[]` inside a token, stay token text and must not produce `material_ref` annotations.
 - PROMAT material references are limited to the controlled item-id patterns used by task catalogs, such as `wl_059`, `t_18`, `d_01`, `qy_01`, and `qw_01`; unknown material-ref-like prefixes remain errors instead of being guessed.
