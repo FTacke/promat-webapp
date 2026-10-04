@@ -25,7 +25,9 @@ from .public_page_content_data import (
 )
 
 
-LEGAL_CONTENT_SOURCE = Path("docs/plans/impressum_datenschutz.md")
+# Runtime asset: lives under the versioned editorial content space that the production image ships (`content/`).
+# It must never point into `docs/`, which is not part of the image.
+LEGAL_CONTENT_SOURCE = Path("content/legal/impressum_datenschutz.md")
 _LEGAL_MARKDOWN_RENDERER = MarkdownIt(
     "commonmark",
     {"html": False, "linkify": True, "typographer": False, "breaks": True},

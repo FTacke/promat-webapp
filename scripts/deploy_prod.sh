@@ -79,11 +79,24 @@ done
 echo "Building web image..."
 compose build web
 
+# Fail before anything running is touched: load the production configuration exactly as the app does at startup
+# (placeholder secrets, missing/invalid PROMAT_PUBLIC_BASE_URL, rate-limit store, ...). The running web container
+# keeps serving until this passes, because `compose run --rm` starts a separate throw-away container.
+echo "Validating production configuration with the new image..."
+compose run --rm --no-deps web python -c 'from flask import Flask; from src.app.config import load_config; load_config(Flask("preflight"))' \
+  || fail "Production configuration is invalid; the running services were not changed. See the error above."
+
 echo "Applying non-destructive database migrations..."
 compose run --rm --no-deps web python scripts/apply_auth_migration.py --engine postgres
 
-echo "Starting web service..."
-compose up -d --build --force-recreate
+# Only the web container is replaced. PostgreSQL and the rate-limit Redis are infrastructure with their own
+# lifecycle: restarting them on every application deploy interrupts open connections for no benefit, and a
+# database restart is never required to ship application code. `compose up -d db rate_limit` above still
+# recreates either one if (and only if) its definition in the compose file changed, which is the intended
+# way to roll out a Postgres/Redis change. `--no-deps` keeps Compose from touching them here, and the
+# image was already built by `compose build web`.
+echo "Starting web service (database and rate-limit services stay running)..."
+compose up -d --no-deps --force-recreate web
 
 echo "Waiting for Docker health on ${WEB_CONTAINER}..."
 for attempt in $(seq 1 60); do
