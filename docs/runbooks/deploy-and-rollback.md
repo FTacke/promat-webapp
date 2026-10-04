@@ -36,9 +36,9 @@ Wird CI rot, passiert nichts auf dem Server; der nächste grüne Commit deployt.
 - „No successful CI run found“: CI auf dem Commit ausführen (siehe oben).
 - Deployment läuft nicht an: prüfen, ob `deploy.yml` mit dem `workflow_run`-Trigger auf `main` liegt und der Runner online ist.
 
-## Prüfliste für den Operator (einmalig nach Einführung, danach nach Bedarf)
+## Prüfliste für den Operator (einmalig bei Einführung, danach nach Bedarf)
 
-Diese Punkte lassen sich nicht aus dem Repository klären und wurden nie gegen Produktion geprüft.
+Diese Punkte lassen sich nicht aus dem Repository klären und wurden nie gegen Produktion geprüft. **Die Punkte 2 und 3 vor dem Merge prüfen:** Der Produktionsstart verlangt ab dieser Änderung einen echten `JWT_SECRET_KEY` und `PROMAT_PUBLIC_BASE_URL=https://…`. Sind sie falsch, bricht das erste Deployment in der Konfigurationsprüfung ab; der laufende Container bleibt dabei unverändert, es wird aber auch nichts ausgeliefert.
 
 1. **Rechtsseiten:** `https://<domain>/impressum`, `/de/privacy` und `/en/privacy` liefern 200 (vorher lasen sie eine Datei, die das Image nicht enthält).
 2. **JWT-Secret:** auf dem Server prüfen, ohne den Wert auszugeben: `grep -c '^JWT_SECRET_KEY=__' /srv/webapps/promat/config/passwords.env` muss `0` sein; Länge mindestens 32 Zeichen (`awk -F= '/^JWT_SECRET_KEY=/{print length($2)}' …`). Kürzere Schlüssel erzeugen mit PyJWT 2.15 pro Token eine `InsecureKeyLengthWarning` im Log.
