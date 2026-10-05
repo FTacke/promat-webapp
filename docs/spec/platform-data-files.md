@@ -506,6 +506,15 @@ PROMAT_LOCAL_ARCHIVE_ROOT/
 - `metadata/archive_manifest.json` is the canonical per-session archive manifest and must record source batch, timestamps, input/output checksums, warnings, and skipped or missing artifacts without duplicating unnecessary clear-text personal data.
 - `reports/` may contain session-local validation, import, or archive reports.
 
+## Local Storage Roles And Preservation Root
+
+- Local disk is workspace, spool and cache. The institutional preservation root is the only preservation layer; its physical location is configuration, never architecture.
+- The preservation root is a logical role. Its current physical target is `K:\Pronunciation_Matters` (a university network share). `K:\Corapan` is a separate project root and must never be mixed with it. No session ID, batch ID, archive layout or manifest field may depend on a drive letter.
+- Until the preservation root is verified, `PROMAT_LOCAL_ARCHIVE_ROOT` remains the working archive and counts as **local-only**. Data is "preserved" only after copy, per-file checksum comparison and manifest verification against the institutional location; a checksum-verified copy must exist before any local source is cleanup-eligible.
+- Storage roles: `SOURCE/UNIQUE` (never deleted automatically), `WORKING` (active batch `working/`), `SPOOL` (finished data awaiting preservation, upload packages), `REGENERABLE` (derived MP3s, MFA corpus/output, runtime session projections), `CACHE` (venvs, tool caches, MFA model caches), `PRESERVATION` (institutional root).
+- Operator-local files without git history (`data/config/research_player/**` catalogs, intake workbooks, `import/` batches) are `SOURCE/UNIQUE` unless an identical copy is verified elsewhere.
+- Cleanup procedure and the read-only inventory tool: `docs/runbooks/local-storage-hygiene.md`, `scripts/storage_inventory.py`. No tool may delete research data without an explicit operator action and dry-run default.
+
 ## Intake Batch Working Filesystem
 
 ### Batch root
