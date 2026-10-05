@@ -75,6 +75,7 @@ STATUS_UNCHANGED = "unchanged"
 STATUS_REBUILT = "rebuilt"
 STATUS_PLANNED_REBUILD = "planned_rebuild"
 STATUS_NATIVE_INTERVIEW = "not_expected_for_native_speaker"
+STATUS_UNKNOWN_PERSON = "error_unknown_person"
 
 
 def _now_iso() -> str:
@@ -414,6 +415,23 @@ def organize_batch_working_tree(
     task_reports: list[dict[str, object]] = []
 
     for person_id in selected_person_ids:
+        if requested_person_ids and person_id not in inventory:
+            # An explicitly requested person without any file in the batch is an operator mistake (typo, wrong
+            # batch), not a "nothing delivered yet" case: fail clearly and write no state for it.
+            message = f"person_id {person_id} has no files in this batch"
+            warnings.append(f"{person_id}: {STATUS_UNKNOWN_PERSON}: {message}")
+            task_reports.append(
+                {
+                    "person_id": person_id,
+                    "task": "",
+                    "status": STATUS_UNKNOWN_PERSON,
+                    "message": message,
+                    "raw_wav_used_as_source": False,
+                    "selected_inputs": {},
+                    "outputs": [],
+                }
+            )
+            continue
         person_inventory = inventory.get(person_id, {})
         person_state = persons_state.setdefault(person_id, {}) if not dry_run else persons_state.get(person_id, {})
         for task in SUPPORTED_TASKS:

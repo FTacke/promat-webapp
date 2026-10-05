@@ -856,3 +856,49 @@ def test_organize_batch_working_tree_conflicts_on_multiple_raw_wavs_when_no_proc
     )
 
     assert _task_status(report_payload, "EN-L-0001", "wordlist") == "conflict_multiple_raw_wav_candidates"
+
+
+def test_organize_batch_working_tree_fails_clearly_for_explicitly_requested_unknown_person(tmp_path: Path) -> None:
+    batch_dir = _prepare_incremental_batch(tmp_path)
+
+    report_payload = organize_batch_working_tree(
+        batch_dir=batch_dir,
+        transfer_mode="copy",
+        dry_run=False,
+        replace_existing=False,
+        force_tasks=set(),
+        person_ids={"ES-L-9999"},
+    )
+
+    assert report_payload["summary"]["errors"] == 1
+    assert [(t["person_id"], t["status"]) for t in report_payload["tasks"]] == [("ES-L-9999", "error_unknown_person")]
+    assert report_payload["person_ids"] == ["ES-L-9999"]
+    assert not (batch_dir / "working" / "ES-L-9999").exists()
+    state_path = working_intake_state_path(batch_dir)
+    assert not state_path.exists() or "ES-L-9999" not in json.loads(state_path.read_text(encoding="utf-8")).get("persons", {})
+
+
+def test_organize_batch_working_tree_known_person_request_is_unchanged_by_unknown_person_check(tmp_path: Path) -> None:
+    batch_dir = _prepare_incremental_batch(tmp_path)
+
+    report_payload = organize_batch_working_tree(
+        batch_dir=batch_dir,
+        transfer_mode="copy",
+        dry_run=False,
+        replace_existing=False,
+        force_tasks=set(),
+        person_ids={"es-l-0001", "ES-L-9999"},  # request is case-insensitive; the unknown one alone errors
+    )
+
+    assert report_payload["summary"]["errors"] == 1
+    assert _task_status(report_payload, "ES-L-0001", "interview") == "rebuilt"
+    assert (batch_dir / "working" / "ES-L-0001" / "interview" / "alignment" / "interview.json").exists()
+
+
+def test_organize_batch_working_tree_unfiltered_run_never_reports_unknown_person(tmp_path: Path) -> None:
+    batch_dir = _prepare_incremental_batch(tmp_path)
+    report_payload = organize_batch_working_tree(
+        batch_dir=batch_dir, transfer_mode="copy", dry_run=True, replace_existing=False, force_tasks=set()
+    )
+    assert report_payload["summary"]["errors"] == 0
+    assert all(t["status"] != "error_unknown_person" for t in report_payload["tasks"])
