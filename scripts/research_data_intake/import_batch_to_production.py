@@ -55,6 +55,7 @@ from intake_batch_common import (  # noqa: E402
     working_task_root,
     working_text_mfa_state_path,
 )
+import provenance as provenance_helpers  # noqa: E402
 from intake_storage import validate_runtime_tree, write_batch_archive_reports, write_secure_person_export, write_session_archive  # noqa: E402
 from intake_workbook_reader import IntakeExposureRow, IntakePersonRow, IntakeSessionRow, SecurePersonIntakeRow, SessionLinkKey, load_intake_workbook  # noqa: E402
 from item_text_normalization import canonicalize_item_text, ItemTextCorrection  # noqa: E402
@@ -1354,6 +1355,20 @@ def _remove_runtime_task_artifacts(session_dir: Path, task_key: str) -> None:
         shutil.rmtree(items_dir)
 
 
+def _session_run_provenance(run_provenance: dict[str, Any] | None, target_language: str) -> dict[str, Any]:
+    """Run-level provenance plus the text task catalog of this session's language (best effort, additive)."""
+    result = dict(run_provenance or {})
+    catalogs: list[dict[str, Any]] = []
+    try:
+        catalog_path = _text_task_catalog_path(target_language)
+        if catalog_path.is_file():
+            catalogs.append(provenance_helpers.catalog_provenance(catalog_path))
+    except Exception:  # provenance must never fail an intake run
+        pass
+    result["catalogs"] = catalogs
+    return result
+
+
 def _apply_plan(
     db_session: Session,
     plan: SessionImportPlan,
@@ -1362,6 +1377,7 @@ def _apply_plan(
     write_archive: bool = True,
     write_db: bool = True,
     archive_root: Path | None = None,
+    run_provenance: dict[str, Any] | None = None,
 ) -> None:
     workspace = SessionWorkspace(target_dir=plan.target_session_dir, seed_dir=plan.existing_session_dir)
     workspace.prepare()
@@ -1407,9 +1423,10 @@ def _apply_plan(
                 input_files=plan.archive_inputs,
                 warnings=plan.warnings,
                 skipped_or_missing_artifacts=skipped_or_missing_artifacts,
-                importer_version="import_batch_to_production",
+                importer_version=provenance_helpers.importer_version("import_batch_to_production"),
                 archive_root=archive_root,
                 report_payload={"documented_tasks": list(documented_tasks)},
+                provenance=_session_run_provenance(run_provenance, plan.session.target_language),
             )
             if plan.secure_person is not None:
                 sp = plan.secure_person
@@ -1523,6 +1540,17 @@ def _apply_raw_only_backfill(plan: SessionImportPlan) -> None:
         raise
 
 
+def _build_run_provenance(workbook_path: Path | None) -> dict[str, Any]:
+    run: dict[str, Any] = {
+        "git_revision": provenance_helpers.current_git_revision(),
+        "tool_versions": provenance_helpers.tool_versions(),
+        "workbook": None,
+    }
+    if workbook_path is not None and workbook_path.is_file():
+        run["workbook"] = provenance_helpers.workbook_provenance(workbook_path)
+    return run
+
+
 def _render_markdown_list(items: Sequence[str]) -> str:
     if not items:
         return "- none\n"
@@ -1537,6 +1565,8 @@ def _write_batch_reports(
     applied_results: Sequence[dict[str, Any]],
     run_notes: Sequence[str] = (),
     archive_root: Path | None = None,
+    workbook_path: Path | None = None,
+    run_provenance: dict[str, Any] | None = None,
 ) -> None:
     import_payload = {
         "batch_name": batch_name,
@@ -1594,6 +1624,8 @@ def _write_batch_reports(
         archive_report_markdown=archive_report,
         run_notes=run_notes,
         archive_root=archive_root,
+        workbook_path=workbook_path,
+        provenance={k: v for k, v in (run_provenance or {}).items() if k != "workbook"},
     )
 
 
@@ -1690,6 +1722,7 @@ def main() -> int:
                 ensure_media_tools()
             applied_results: list[dict[str, Any]] = []
             archive_root = _resolve_optional_path(args.archive_root)
+            run_provenance = _build_run_provenance(workbook_path)
             for plan in plans:
                 if plan.mode_action not in {"create", "update"}:
                     continue
@@ -1706,6 +1739,7 @@ def main() -> int:
                             write_archive=True,
                             write_db=True,
                             archive_root=archive_root,
+                            run_provenance=run_provenance,
                         )
                     )
             if args.cleanup_working_on_success and args.run_working and not args.dry_run:
@@ -1718,6 +1752,8 @@ def main() -> int:
                     applied_results=applied_results,
                     run_notes=run_notes,
                     archive_root=archive_root,
+                    workbook_path=workbook_path,
+                    run_provenance=run_provenance,
                 )
         return 0
     except ProductionImportError as exc:

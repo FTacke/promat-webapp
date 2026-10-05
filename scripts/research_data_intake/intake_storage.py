@@ -13,6 +13,8 @@ from typing import Any, Iterable, Sequence
 from intake_batch_common import ParsedBatchFile
 from language_config import maybe_resolve_language_config, resolve_language_config
 from item_text_normalization import contains_noncanonical_french_item_text
+import fixity
+import provenance as provenance_helpers
 
 
 DEFAULT_LOCAL_ARCHIVE_ROOT = Path(r"C:\dev\promat_data_archive")
@@ -360,6 +362,42 @@ def _validate_checksum_file(package_dir: Path, package_files: set[str], errors: 
         errors.append(f"checksums.sha256 has extra entries: {', '.join(unexpected[:5])}")
 
 
+SESSION_FIXITY_RELATIVE = "metadata/checksums.sha256"
+
+
+def _derived_from(archive_relative: str, task_audio_roles: dict[str, dict[str, Any]]) -> list[str]:
+    """Archive-relative source files a runtime file was derived from, by task name (empty when not task-bound)."""
+    parts = archive_relative.split("/")
+    candidates = {Path(parts[-1]).stem}
+    if len(parts) > 2 and parts[1] == "items":
+        candidates.add(parts[2])
+    for task in sorted(candidates):
+        role_info = task_audio_roles.get(task)
+        if role_info and role_info.get("source_file_path"):
+            return [str(role_info["source_file_path"])]
+    return []
+
+
+def _session_provenance_block(provenance: dict[str, Any] | None, *, intake_timestamp: str) -> dict[str, Any]:
+    block: dict[str, Any] = {
+        "intake_timestamp": intake_timestamp,
+        "git_revision": provenance_helpers.UNKNOWN,
+        "tool_versions": {},
+        "workbook": None,
+        "catalogs": [],
+    }
+    block.update(provenance or {})
+    return block
+
+
+def refresh_session_fixity(archive_session_dir: Path) -> Path:
+    """(Re)write ``metadata/checksums.sha256`` over every file of one session archive except the manifest itself."""
+    manifest_path = archive_session_dir / SESSION_FIXITY_RELATIVE
+    entries = fixity.compute_manifest(archive_session_dir, exclude=(SESSION_FIXITY_RELATIVE,))
+    fixity.write_manifest(entries, manifest_path)
+    return manifest_path
+
+
 def write_session_archive(
     *,
     session_dir: Path,
@@ -373,7 +411,11 @@ def write_session_archive(
     importer_version: str,
     archive_root: Path | None = None,
     report_payload: dict[str, Any] | None = None,
+    provenance: dict[str, Any] | None = None,
 ) -> ArchiveWriteResult:
+    """Archive one session. ``provenance`` is optional run context (git revision, tool versions, workbook and
+    catalog records); without it the manifest still records per-file provenance and ``unknown`` placeholders."""
+    intake_timestamp = provenance_helpers.utc_timestamp()
     archive_dir = archive_session_dir(language_code, session_id, archive_root)
     for subdir in ARCHIVE_SESSION_SUBDIRS:
         (archive_dir / subdir).mkdir(parents=True, exist_ok=True)
@@ -417,6 +459,17 @@ def write_session_archive(
         _copy_file(entry.source_path, target_path)
         copied_input_paths.append(relative_target)
         manifest_entry = _file_manifest_entry(target_path, relative_to=archive_dir, role=entry.file_role)
+        manifest_entry.update(
+            {
+                "original_filename": entry.source_path.name,
+                "original_relative_source": provenance_helpers.normalized_relative_source(entry.relative_source),
+                "canonical_name": entry.canonical_name,
+                "task": entry.task,
+                "batch_id": source_batch,
+                "session_id": session_id,
+                "intake_timestamp": intake_timestamp,
+            }
+        )
         if entry.source_path in raw_wav_derivation_paths:
             manifest_entry["source_file_role"] = "raw"
             manifest_entry["source_file_used_for_derivation"] = True
@@ -435,7 +488,9 @@ def write_session_archive(
         target_path = archive_dir / archive_relative.replace("/", os.sep)
         _copy_file(runtime_file, target_path)
         copied_runtime_paths.append(archive_relative)
-        runtime_manifest_entries.append(_file_manifest_entry(target_path, relative_to=archive_dir, role="runtime_output"))
+        runtime_entry = _file_manifest_entry(target_path, relative_to=archive_dir, role="runtime_output")
+        runtime_entry["derived_from"] = _derived_from(archive_relative, task_wav_entries)
+        runtime_manifest_entries.append(runtime_entry)
 
     manifest = {
         "session_id": session_id,
@@ -444,6 +499,8 @@ def write_session_archive(
         "source_batch": source_batch,
         "archived_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "importer_version": importer_version,
+        "provenance_schema_version": provenance_helpers.PROVENANCE_SCHEMA_VERSION,
+        "provenance": _session_provenance_block(provenance, intake_timestamp=intake_timestamp),
         "task_audio_roles": task_wav_entries,
         "input_files": input_manifest_entries,
         "generated_runtime_files": runtime_manifest_entries,
@@ -464,6 +521,8 @@ def write_session_archive(
     }
     report_path = archive_dir / "reports" / "import_report.json"
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    refresh_session_fixity(archive_dir)
 
     archive_errors = validate_archive_tree(archive_dir)
     if archive_errors:
@@ -580,6 +639,9 @@ def write_secure_person_export(
         _copy_file(consent_pdf_source, secure_dir / "consent" / consent_pdf_source.name)
     if questionnaire_pdf_source is not None and questionnaire_pdf_source.exists():
         _copy_file(questionnaire_pdf_source, secure_dir / "questionnaire" / questionnaire_pdf_source.name)
+    # The secure export is written after the session archive; keep the session fixity manifest complete.
+    if (archive_session_dir / SESSION_FIXITY_RELATIVE).exists():
+        refresh_session_fixity(archive_session_dir)
 
 
 def write_batch_archive_reports(
@@ -591,6 +653,8 @@ def write_batch_archive_reports(
     archive_report_markdown: str,
     run_notes: Sequence[str] = (),
     archive_root: Path | None = None,
+    workbook_path: Path | None = None,
+    provenance: dict[str, Any] | None = None,
 ) -> BatchArchiveReportResult:
     batch_dir = archive_batches_root(archive_root) / batch_name
     batch_dir.mkdir(parents=True, exist_ok=True)
@@ -612,12 +676,28 @@ def write_batch_archive_reports(
     archive_report_path.write_text(archive_report_markdown, encoding="utf-8")
 
     checksums_path = batch_dir / "checksums.sha256"
-    relative_paths = (
+    relative_paths = [
         "import_payload.json",
         "intake_report.md",
         "validation_report.md",
         "archive_report.md",
-    )
+    ]
+    # Additive provenance: the workbook is personal data and goes to the secure class of the batch archive.
+    if provenance is not None or workbook_path is not None:
+        batch_provenance = dict(provenance or {})
+        batch_provenance.setdefault("batch_id", batch_name)
+        batch_provenance.setdefault("provenance_schema_version", provenance_helpers.PROVENANCE_SCHEMA_VERSION)
+        if workbook_path is not None and workbook_path.is_file():
+            secure_workbook_relative = f"secure/workbook/{workbook_path.name}"
+            _copy_file(workbook_path, batch_dir / secure_workbook_relative)
+            relative_paths.append(secure_workbook_relative)
+            batch_provenance["workbook"] = {
+                **provenance_helpers.workbook_provenance(workbook_path),
+                "archive_path": secure_workbook_relative,
+            }
+        provenance_path = batch_dir / "batch_provenance.json"
+        provenance_path.write_text(json.dumps(batch_provenance, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        relative_paths.append("batch_provenance.json")
     write_sha256_checksums(batch_dir, relative_paths, output_path=checksums_path)
 
     return BatchArchiveReportResult(

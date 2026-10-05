@@ -522,6 +522,28 @@ PROMAT_LOCAL_ARCHIVE_ROOT/
 - `metadata/archive_manifest.json` is the canonical per-session archive manifest and must record source batch, timestamps, input/output checksums, warnings, and skipped or missing artifacts without duplicating unnecessary clear-text personal data.
 - `reports/` may contain session-local validation, import, or archive reports.
 
+### Archive provenance and fixity
+
+New archive writes (`scripts/research_data_intake/intake_storage.py`, called by `import_batch_to_production.py`) record, additively and without changing intake behaviour:
+
+- `metadata/archive_manifest.json` per input file: `original_filename`, `original_relative_source` (relative POSIX path, never a drive letter), `canonical_name`, `task`, `role`, `size`, `sha256`, `batch_id`, `session_id`, `intake_timestamp`; per runtime file: `derived_from` (archive-relative source files by task name, empty when not task-bound).
+- A `provenance` block (`provenance_schema_version` 2): `git_revision` (`<sha>`, `<sha>-dirty`, or `unknown`; `PROMAT_GIT_REVISION` may pin it), `tool_versions` (`ffmpeg`, `mfa`, each `unavailable` when not found), `workbook` (original filename, size, sha256, storage class `secure`) and `catalogs` (task catalog: filename, sha256, size, language, catalog type, item count, schema version; header fields `unknown`/`null` when absent).
+- `importer_version` is `import_batch_to_production@<git revision>`; it falls back to `@unknown`.
+- `metadata/checksums.sha256` covers every file of the session archive except itself and is refreshed after `secure/` is written.
+- Batch archives (`batches/{batch}/`) additionally hold `batch_provenance.json` and the intake workbook under `secure/workbook/{name}`; `checksums.sha256` covers them. The workbook is personal data (secure class): never in Git, `data/`, `public/` or prod upload packages, and the `--exclude-secure` copy mode omits it.
+- Fixity uses the single existing format: `checksums.sha256`, sha256sum lines `<64 hex>  <relative POSIX path>`, UTF-8, LF only, sorted, no backslashes, drive letters or absolute paths.
+- Archive units that predate manifests get an **additive baseline** under `PROMAT_LOCAL_ARCHIVE_ROOT/fixity/baseline/{unit}.sha256` (+ `.json` metadata). A baseline records current content, not historical correctness; existing archive files and manifests are never rewritten, and an existing baseline is never replaced (drift is reported instead).
+
+### Institutional preservation
+
+- The local archive is a working archive. Writing to it is **not** preservation.
+- A unit (one session archive or one batch archive) is `PRESERVED` only after every file exists in a configured *preservation root* and was verified by full SHA-256 against expected fixity (baseline or complete unit manifest).
+- The preservation root is `PROMAT_PRESERVATION_ROOT` or `--preservation-root`. It has no default and no hard-coded location; its physical location is *current configuration, not architectural identity*. Its identity is `PRESERVATION_ROOT.json` (`root_id`). A move needs only a verified copy (`archive_preservation.py copy --archive-root <old root>/archive --preservation-root <new root>`), integrity verification, and a configuration change.
+- Layout of a root: `PRESERVATION_ROOT.json`, `archive/{sessions,batches}/...` (same shape as the local archive), `_preservation/receipts/`. Local evidence: `PROMAT_LOCAL_ARCHIVE_ROOT/preservation/receipts/`.
+- States: `ACTIVE_LOCAL` (no expected fixity) → `PRESERVATION_PENDING` (fixity known, no valid verified copy) → `PRESERVED` (valid receipt for the current root, unchanged manifest, destination present) → `LOCAL_CLEANUP_ELIGIBLE` (additionally: full re-verification of the destination now, local files still match fixity, destination separate from the local archive). Scope-limited copies (`--exclude-secure`) never count as preserved. A changed unit or a changed root returns the unit to `PRESERVATION_PENDING`.
+- Copies write `*.partial`, read back, then rename atomically; destination files with different content are conflicts and are never overwritten; sources that no longer match fixity are not copied; dry-run is the default.
+- Cleanup eligibility is a report (`promat.cleanup_eligibility.v1`, `deletes_anything: false`). No code in the repository deletes archive or source data; deletion of preserved source material is an explicit operator action.
+
 ## Intake Batch Working Filesystem
 
 ### Batch root
