@@ -564,3 +564,13 @@ def test_cli_baseline_command_and_config_errors(tmp_path: Path, monkeypatch) -> 
     assert cli.run(["copy", "--archive-root", str(archive)]) == 2
     assert cli.run(["copy", "--archive-root", str(tmp_path / "does_not_exist"), "--preservation-root", str(tmp_path / "p")]) == 2
     assert cli.run(["status", "--archive-root", str(archive)]) == 0  # status works without a root: nothing preserved
+
+
+def test_reports_name_archive_root_entries_the_unit_copy_does_not_cover(world, tmp_path: Path) -> None:
+    archive, pres_path = world
+    (archive / "praat_pipeline").mkdir()
+    assert pres.uncovered_top_level(archive) == ["praat_pipeline"]
+    root = _root(archive, pres_path)
+    pres.copy_unit(archive, UNIT, root, execute=True)  # tool-owned dirs (preservation/, fixity/) never show up
+    assert pres.uncovered_top_level(archive) == ["praat_pipeline"]
+    assert pres.cleanup_eligibility_report(archive, root)["archive_root_entries_not_covered_by_unit_copy"] == ["praat_pipeline"]

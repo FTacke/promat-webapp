@@ -10,6 +10,18 @@ Das lokale Archiv (`PROMAT_LOCAL_ARCHIVE_ROOT`) ist ein Arbeitsarchiv. Dieses Ru
 
 Der heutige physische Ort der Ablage (beim Betreiber: ein Ordner auf Laufwerk `K:`) ist **aktuelle Konfiguration, keine Architektur-Identität**. Ein späterer Umzug braucht nur: verifizierte Kopie, Integritätsprüfung, Konfigurationsänderung.
 
+## Ausgangslage (Messung `docs/reports/2026-10-05_local-storage-audit.md`, nur zur Orientierung)
+
+- Das lokale Archiv liegt am Betreiberrechner im Code-Standard `C:\dev\promat_data_archive`, weil `PROMAT_LOCAL_ARCHIVE_ROOT` dort nicht gesetzt ist (Fallback in `intake_storage.py`). Es ist die einzige Kopie der Originalaufnahmen; erstes Migrationsziel ist genau dieses bestehende Archiv.
+- Die Drop-in-Ordner `import/<batch>/` enthalten Duplikate der archivierten Originale. Nach verifizierter Preservation kann dort erheblicher Speicher frei werden (Zahlen stehen nur im Audit-Bericht, nicht im Code).
+- Task-Kataloge (`data/config/research_player/**`) liegen nur beim Operator und sind nicht im Git; identische Kopien stecken in den Upload-Paketen. Aktuelle Intake-Workbooks liegen nur in den Batch-Verzeichnissen. **Beides deckt `copy` für historische Batches nicht ab**: Es kopiert nur Archiv-Einheiten (`sessions/`, `batches/`). Neue Imports archivieren Workbook und Katalog-Identität (SHA-256) additiv; historische Bestände werden nicht nachträglich umgeschrieben. Historische Workbooks, Kataloge und Archivwurzel-Ordner wie `praat_pipeline/` oder `informanten_intake_*` müssen separat gesichert werden; die Berichte weisen solche Einträge unter „Archive-root entries not covered by the unit copy“ aus.
+- `K:\Corapan` ist ein anderes Projekt und darf nie mit `K:\Pronunciation_Matters` vermischt werden.
+
+## Archivwurzel und Preservation-Root
+
+- `PROMAT_LOCAL_ARCHIVE_ROOT` (oder Code-Standard): Arbeitsarchiv, in das der Intake wie bisher schreibt. Fluss: Intake → lokales Archiv → verifizierte Kopie.
+- `PROMAT_PRESERVATION_ROOT`: zweite, institutionell abgelegte Kopie. Nur `archive_preservation.py` und `storage_inventory.py` lesen sie. Sie macht das Intake-Archiv **nicht** zum direkten Schreibziel, und `PROMAT_LOCAL_ARCHIVE_ROOT` wird nicht dorthin umgestellt.
+
 ## Voraussetzungen
 
 - Ausführung lokal auf dem Betreiberrechner (Windows, PowerShell), nicht in der Cloud-Umgebung; Python 3.12; Repository ausgecheckt
@@ -48,8 +60,8 @@ Platzhalter `<ZIEL>` = der konkrete Zielordner, z. B. `K:\Pronunciation_Matters`
    ```powershell
    python scripts\research_data_intake\archive_preservation.py status --preservation-root K:\Pronunciation_Matters --report-dir tmp\preservation-reports
    ```
-9. **Root konfigurieren.** Dauerhaft `PROMAT_PRESERVATION_ROOT=K:\Pronunciation_Matters` setzen (Benutzer-Umgebungsvariable oder lokale `.env`, nie ins Git).
-10. **Inventar erneut laufen lassen** (`scripts/storage_inventory.py` aus dem Lokalspeicher-Audit; liegt auf keinem Branch dieses Repositories und wird hier nicht vorausgesetzt). Die Ausgabe von `cleanup-report` (Schema `promat.cleanup_eligibility.v1`) ist als Eingabe dafür gedacht.
+9. **Root konfigurieren.** Dauerhaft `PROMAT_PRESERVATION_ROOT=K:\Pronunciation_Matters` setzen (Benutzer-Umgebungsvariable oder lokale `.env`, nie ins Git). `PROMAT_LOCAL_ARCHIVE_ROOT` bleibt unverändert (auch wenn es ungesetzt ist und der Code-Standard gilt); es wird nicht auf `K:` umgestellt.
+10. **Inventar erneut laufen lassen:** `python scripts\storage_inventory.py` (liest `PROMAT_PRESERVATION_ROOT`, zeigt Zustände je Einheit und nicht abgedeckte Archivwurzel-Einträge). Optional mit dem Bericht aus Schritt 11 (`--cleanup-report`); das Inventar bleibt read-only.
 11. **Erst dann Duplikate identifizieren:**
     ```powershell
     python scripts\research_data_intake\archive_preservation.py cleanup-report --preservation-root K:\Pronunciation_Matters --candidate-dir <lokaler-Batch-Ordner> --report-dir tmp\preservation-reports

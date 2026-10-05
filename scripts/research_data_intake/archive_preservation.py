@@ -62,6 +62,11 @@ def _render_markdown(report: dict[str, Any]) -> str:
     for key, value in report["summary"].items():
         lines.append(f"- {key}: {value}")
     lines.append("")
+    not_covered = report.get("archive_root_entries_not_covered_by_unit_copy") or []
+    lines.append("")
+    lines.append("## Archive-root entries not covered by the unit copy")
+    lines.extend([f"- `{name}`" for name in not_covered] or ["- none"])
+    lines.append("")
     lines.append("## Units needing attention")
     flagged = [u for u in report["units"] if u.get("problems") or u.get("reasons")]
     if not flagged:
@@ -74,6 +79,8 @@ def _render_markdown(report: dict[str, Any]) -> str:
 
 
 def _emit(report: dict[str, Any], report_dir: Path | None) -> None:
+    if report.get("archive_root_entries_not_covered_by_unit_copy"):
+        print("NOTE not covered by the unit copy (preserve separately): " + ", ".join(report["archive_root_entries_not_covered_by_unit_copy"]))
     print(f"[{report['command']}] result={report['result']} " + " ".join(f"{k}={v}" for k, v in report["summary"].items()))
     for unit in report["units"]:
         if unit.get("problems") or unit.get("reasons"):
@@ -172,6 +179,7 @@ def run(argv: Sequence[str] | None = None) -> int:
         report["cleanup"] = {k: v for k, v in cleanup.items() if k != "units"}
         report["summary"] = {"units": len(cleanup["units"]), **cleanup["counts"], "deletes_anything": False}
 
+    report["archive_root_entries_not_covered_by_unit_copy"] = pres.uncovered_top_level(archive_root)
     if problems:
         report["result"] = "problems"
     _emit(report, args.report_dir)

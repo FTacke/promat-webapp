@@ -198,6 +198,17 @@ def discover_units(archive_root: Path) -> list[str]:
     return units
 
 
+_TOOL_OWNED_TOP_LEVEL = {"sessions", "batches", "fixity", "preservation"}
+
+
+def uncovered_top_level(archive_root: Path) -> list[str]:
+    """Top-level archive-root entries that are not units (for example legacy pipeline or first-generation
+    workbook folders). The unit copy does NOT preserve them; reports list them so they are not forgotten."""
+    if not archive_root.is_dir():
+        return []
+    return sorted(child.name for child in archive_root.iterdir() if child.name not in _TOOL_OWNED_TOP_LEVEL)
+
+
 def unit_path(archive_root: Path, unit_id: str) -> Path:
     return archive_root / Path(*unit_id.split("/"))
 
@@ -616,6 +627,7 @@ def cleanup_eligibility_report(
         "note": "Report only. Eligibility is not an instruction; deleting preserved source material is an explicit operator action.",
         "preservation_root_id": root.root_id if root else None,
         "counts": counts,
+        "archive_root_entries_not_covered_by_unit_copy": uncovered_top_level(archive_root),
         "units": units,
         "candidate_directories": candidates,
     }
