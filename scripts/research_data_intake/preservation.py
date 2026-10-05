@@ -577,6 +577,27 @@ def derive_state(
 CLEANUP_SCHEMA = "promat.cleanup_eligibility.v1"
 
 
+def _candidate_files(directory: Path) -> Iterable[tuple[str, str | None]]:
+    """Regular files below ``directory`` as ``(relative_path, error)``; never raises for one unreadable entry.
+
+    Windows can fail ``stat`` on some tool-internal files (for example Kaldi ``.ark`` files below ``.mfa_cache``,
+    ``WinError 1920``). Such files are reported as unreadable (and so never counted as covered) instead of
+    aborting the whole report.
+    """
+    for current, dirnames, filenames in os.walk(directory, followlinks=False):
+        dirnames.sort()
+        for name in sorted(filenames):
+            full = Path(current) / name
+            relative = full.relative_to(directory).as_posix()
+            try:
+                if full.is_symlink() or not full.is_file():
+                    continue
+            except OSError as exc:
+                yield relative, str(exc)
+                continue
+            yield relative, None
+
+
 def cleanup_eligibility_report(
     archive_root: Path,
     root: PreservationRoot | None,
@@ -602,8 +623,11 @@ def cleanup_eligibility_report(
     candidates: list[dict[str, Any]] = []
     for directory in candidate_dirs:
         entry: dict[str, Any] = {"directory_name": directory.name, "duplicates": [], "not_covered": [], "unreadable": []}
-        for relative in fixity.list_unit_files(directory):
+        for relative, walk_error in _candidate_files(directory):
             file_path = directory / relative
+            if walk_error is not None:
+                entry["unreadable"].append({"path": relative, "error": walk_error})
+                continue
             try:
                 size = file_path.stat().st_size
                 if size not in sizes:

@@ -513,6 +513,30 @@ def test_cleanup_report_lists_duplicates_and_deletes_nothing(world, tmp_path: Pa
     assert (_snapshot(archive), _snapshot(batch_working), _snapshot(pres_path)) == (archive_before, working_before, dest_before)
 
 
+def test_cleanup_report_survives_unstatable_candidate_file(world, tmp_path: Path, monkeypatch) -> None:
+    # Windows regression: stat() on e.g. Kaldi *.ark files under .mfa_cache raises WinError 1920.
+    archive, pres_path = world
+    root = _root(archive, pres_path)
+    pres.copy_unit(archive, UNIT, root, execute=True)
+    batch = tmp_path / "batch"
+    _write(batch / "ok.wav", b"unique and not preserved")
+    _write(batch / ".mfa_cache" / "ali.1.ark", b"unreadable on windows")
+    real_is_file = Path.is_file
+
+    def flaky_is_file(self: Path) -> bool:
+        if self.name.endswith(".ark"):
+            raise OSError(1920, "cannot access the file")
+        return real_is_file(self)
+
+    monkeypatch.setattr(Path, "is_file", flaky_is_file)
+    report = pres.cleanup_eligibility_report(archive, root, candidate_dirs=[batch])
+
+    entry = report["candidate_directories"][0]
+    assert [u["path"] for u in entry["unreadable"]] == [".mfa_cache/ali.1.ark"]
+    assert [n["path"] for n in entry["not_covered"]] == ["ok.wav"]
+    assert entry["duplicates"] == []
+
+
 def test_cleanup_report_without_preservation_marks_nothing_eligible(world, tmp_path: Path) -> None:
     archive, _ = world
     report = pres.cleanup_eligibility_report(archive, None)

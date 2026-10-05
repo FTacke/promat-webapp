@@ -272,3 +272,7 @@ Not measurable: Docker engine down (`docker system df` unreachable), so images/b
 Cloud now knows from this report: local storage topology and sizes; preservation-root plan and that `K:\Pronunciation_Matters` is absent; archive location/status (single copy, 65 sessions, manifests present); the measured duplication lifecycle; organizer comparison (hashes, test result, interface differences); catalog availability (untracked, recoverable from packages); workbook provenance gap; toolchain versions and the two missing provenance items; cleanup policy and runbook; German-readiness facts.
 
 Still requires operator/local execution: creating/copying to `K:\Pronunciation_Matters` and checksum verification; testing `K:` writability/throughput; production SSH operations and confirming prod publish state; Docker/DB volume inspection; real German source-data intake; real-batch dry-run comparison of the two organizers; setting `PROMAT_LOCAL_ARCHIVE_ROOT`; deleting any preserved local originals; deleting the English legacy `.mfa_cache`.
+
+## Update (same day, later run)
+
+Organizer comparison, fixity baseline and the preservation dry-run were carried out afterwards; the statuses in section P are superseded by `docs/agent-runs/2026-10-05_preservation-activation-organizer-equivalence.md` (organizer: equivalent with documented interface differences; preservation root: blocked because `K:\Pronunciation_Matters` could not be created, access denied).

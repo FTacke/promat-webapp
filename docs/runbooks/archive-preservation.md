@@ -34,7 +34,7 @@ Der heutige physische Ort der Ablage (beim Betreiber: ein Ordner auf Laufwerk `K
 Platzhalter `<ZIEL>` = der konkrete Zielordner, z. B. `K:\Pronunciation_Matters`. Der Pfad steht nirgends im Code; er wird nur hier und in der Konfiguration genannt.
 
 1. **Erreichbarkeit prüfen.** `Test-Path K:\` muss `True` liefern. Sonst Laufwerk/Netzwerk klären; nicht fortfahren.
-2. **Zielordner anlegen.** `New-Item -ItemType Directory K:\Pronunciation_Matters` (oder den vom Betreiber gewählten Ordner).
+2. **Zielordner anlegen.** `New-Item -ItemType Directory K:\Pronunciation_Matters` (oder den vom Betreiber gewählten Ordner). Schlägt das mit „Zugriff verweigert“ fehl, hat das Konto kein Anlegerecht im Wurzelverzeichnis von `K:`; dann muss der Ordner durch die Dateiablage-Verwaltung angelegt oder das Recht erteilt werden. Nicht auf andere Projektordner (z. B. `K:\Corapan`) ausweichen. Stand 2026-10-05: der Ordner existiert nicht und das Betreiberkonto kann ihn nicht anlegen.
 3. **Schreibzugriff prüfen.** Das Kopierwerkzeug legt Marker `PRESERVATION_ROOT.json` an und führt eine Schreib-/Lese-Probe aus (nur mit `--execute`). Schlägt sie fehl, bricht es ab (Exit-Code 2). Zusätzlich manuell: Datei anlegen, lesen, löschen (nur die Probedatei).
 4. **Baseline-Fixity erzeugen** (additiv; nur neue Dateien unter `fixity/baseline/`):
    ```powershell
@@ -85,6 +85,6 @@ Platzhalter `<ZIEL>` = der konkrete Zielordner, z. B. `K:\Pronunciation_Matters`
 
 ## Risiken und Rückbau
 
-- Windows-Langpfade: Dateioperationen nutzen das `\\?\`-Präfix; zusätzlich `LongPathsEnabled` in Windows setzen. Die Pfadumwandlung ist getestet, der Lauf auf Windows selbst nicht (Cloud-Entwicklung ohne Windows/`K:`).
+- Windows-Langpfade: Dateioperationen nutzen das `\\?\`-Präfix; zusätzlich `LongPathsEnabled` in Windows setzen. Die Pfadumwandlung ist getestet; Baseline, Dry-Run, Kopie, `verify` und `status` liefen am 2026-10-05 lokal auf Windows (Probe auf `C:`, siehe `docs/agent-runs/2026-10-05_preservation-activation-organizer-equivalence.md`). Ein Lauf gegen das Netzlaufwerk `K:` steht noch aus.
 - Eine Baseline dokumentiert den **heutigen** Inhalt, nicht historische Korrektheit.
 - Rückbau: Baselines/Quittungen/Berichte sind reine Zusatzdateien und können gelöscht werden; Archivinhalt wird nie verändert. Die Ablage selbst wird von keinem Werkzeug gelöscht.
