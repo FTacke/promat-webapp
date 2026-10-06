@@ -39,6 +39,10 @@ Neu: `content/publication/resources.yaml`, `app/src/app/publication.py`, `templa
 - Run-3-Baseline: axe 0 Verstöße auf 52 Kombinationen der betroffenen öffentlichen Seiten (eine neue `heading-order`-Meldung auf der Korpusseite gefunden und behoben), Überlauf 0 von 78; keine neuen Scripts oder Abhängigkeiten.
 - Zotero: kein Zotero-Client/CLI verfügbar, kein echter Import durchgeführt. Geprüft ist nur, dass die von Referenzmanagern gelesenen `citation_*`-Tags, `meta author`, Titel und canonical im finalen DOM stehen.
 
+## Production-Aktionen
+
+Push `6423dc8..66723d1` nach einem vollständigen Linux-Container-Lauf der Suite; CI grün, Deploy grün, Post-Deploy-Smoke grün; Live-Prüfung von 13 Seiten (Titel, Description, canonical, hreflang, JSON-LD, Zitat) plus 404- und Parameterfälle. Keine Server- oder Datenänderung außerhalb des Deployments.
+
 ## Abweichungen
 
 Keine von den Specs. Die Spec-Regel „nicht öffentliches Thema leitet auf den Hub um“ wurde bewusst auf 404 geändert.

@@ -2,7 +2,7 @@
 
 Datum: 2026-10-06. Nicht-normativ; die aktive Regel steht in `docs/spec/platform-data-files.md`, Abschnitt „Publication Metadata“. Run-Journal: `docs/agent-runs/2026-10-06_publication-metadata-run4.md`.
 
-**Endstatus: siehe Abschnitt „Production“.**
+**Endstatus: `RUN 4: COMPLETE_WITH_POLICY_DECISIONS`** – Architektur auf `main` und Production (`66723d1`); offen sind nur fachliche Entscheidungen (Lizenz/Rechteinhaber, Teaching-Verantwortliche, Korpusversion).
 
 ## Resource Model
 
@@ -24,21 +24,21 @@ Contributors mit Rolle (aus dem bisherigen Bestand übernommen): Spanisch Materi
 
 | Finding | Phase-0-Status | Entscheidung | Umsetzung | Validation | Endstatus |
 |---|---|---|---|---|---|
-| PUBL-02 Autor:innenschaft doppelt, Freitext, ohne Rollen | `STILL_OPEN` | Registry mit Personen und Rollen; Creators getrennt vom Plattformherausgeber | `resources.yaml`, `publication.py`; Korpuskarten und Team-Seite generiert; Themen mit `metadata.creators` | Tests „eine Quelle“, „Herausgeber wird nie Autor“, gleiche Personen auf Karten und Team-Seite | s. Production |
+| PUBL-02 Autor:innenschaft doppelt, Freitext, ohne Rollen | `STILL_OPEN` | Registry mit Personen und Rollen; Creators getrennt vom Plattformherausgeber | `resources.yaml`, `publication.py`; Korpuskarten und Team-Seite generiert; Themen mit `metadata.creators` | Tests „eine Quelle“, „Herausgeber wird nie Autor“, gleiche Personen auf Karten und Team-Seite | `CLOSED_AND_DEPLOYED` |
 | PUBL-03 Lizenz/Rechteinhaber | `POLICY_DECISION_REQUIRED` | nicht entscheiden; Feld `license` vorhanden, `null` | Modell, JSON-LD und Spec tragen eine Lizenz, sobald entschieden | Test „unentschiedene Werte werden nie erfunden“ | `POLICY_DECISION_REQUIRED` |
-| PUBL-04 Version/Datenstand der Korpora | `STILL_OPEN` | Infrastruktur, kein künstlicher Wert | `version`, `data_as_of` in Registry, Zitat und JSON-LD | Test mit gesetzten Werten | technisch geschlossen; Wert: `CONTENT_DECISION_REQUIRED` |
-| PUBL-05 Identität nur am Slug, 302 statt 404 | `STILL_OPEN` | persistente `resource_id`; 404; explizite `aliases` (301) | Topic-Routing, Validator | Tests 404, Alias, Sprachfallback; Smokes | s. Production |
-| METADATA-02 canonical, hreflang, Parametervarianten | `STILL_OPEN` | canonical aus Registry-Origin plus Pfad; hreflang nur bei echtem Äquivalent | `_build_page_meta`, `_page_meta.html` | 14 Seiten parametrisiert, Reziprozität, Parametervarianten, Thema ohne Äquivalent | s. Production |
-| METADATA-03 keine maschinenlesbaren Metadaten | `STILL_OPEN` | schema.org JSON-LD als eine primäre Repräsentation; `citation_*` abgeleitet; `<time>` | `publication.json_ld`, Head-Komponente | JSON-LD-Hierarchie, Script-Escape, DOM-Prüfung im Browser-Smoke | s. Production |
-| METADATA-04 globale deutsche Description | `STILL_OPEN` | dreistufiger Fallback, lokalisiert | Registry-Beschreibung, `meta.description.*`, Ressourcen-Summary | Test „lokalisiert und ressourcenspezifisch“ | s. Production |
+| PUBL-04 Version/Datenstand der Korpora | `STILL_OPEN` | Infrastruktur, kein künstlicher Wert | `version`, `data_as_of` in Registry, Zitat und JSON-LD | Test mit gesetzten Werten | `CLOSED_AND_DEPLOYED` (Infrastruktur); Wert: `CONTENT_DECISION_REQUIRED` |
+| PUBL-05 Identität nur am Slug, 302 statt 404 | `STILL_OPEN` | persistente `resource_id`; 404; explizite `aliases` (301) | Topic-Routing, Validator | Tests 404, Alias, Sprachfallback; Smokes | `CLOSED_AND_DEPLOYED` |
+| METADATA-02 canonical, hreflang, Parametervarianten | `STILL_OPEN` | canonical aus Registry-Origin plus Pfad; hreflang nur bei echtem Äquivalent | `_build_page_meta`, `_page_meta.html` | 14 Seiten parametrisiert, Reziprozität, Parametervarianten, Thema ohne Äquivalent | `CLOSED_AND_DEPLOYED` |
+| METADATA-03 keine maschinenlesbaren Metadaten | `STILL_OPEN` | schema.org JSON-LD als eine primäre Repräsentation; `citation_*` abgeleitet; `<time>` | `publication.json_ld`, Head-Komponente | JSON-LD-Hierarchie, Script-Escape, DOM-Prüfung im Browser-Smoke | `CLOSED_AND_DEPLOYED` |
+| METADATA-04 globale deutsche Description | `STILL_OPEN` | dreistufiger Fallback, lokalisiert | Registry-Beschreibung, `meta.description.*`, Ressourcen-Summary | Test „lokalisiert und ressourcenspezifisch“ | `CLOSED_AND_DEPLOYED` |
 | Landing-`<title>` doppelt | `ALREADY_FIXED` (Run 3) | Titel jetzt zentral aus `page_meta` | zehn Template-Overrides entfernt | Titeltest | `ALREADY_CLOSED` |
 | CITE-01 Zitat-URL Domain-Wurzel | `ALREADY_FIXED` (Run 1) | – | – | bestehende Tests angepasst | `ALREADY_CLOSED` |
-| CITE-02 Zitat driftet vom Seitentitel | `STILL_OPEN` | Zitat generiert, exakter Seitentitel | getippte Zitate in YAML und Python entfernt | Test gegen YAML-Titel | s. Production |
-| CITE-03 kein zentrales Zitierangebot | `STILL_OPEN` | vier Ebenen plus Design-Artikel | Zitatblock auf Projektseite, Korpusseite, Teaching-Hub, Themenseite, Design | Test der vier Ebenen; Copy-Button im Browser | s. Production |
-| DATA-05 Personen in mehreren Registries | `STILL_OPEN` | nur der bibliographische Teil | Personen aus `LANGUAGES` und Team-Seite entfernt | Test | s. Production; übrige Korpus-/Vokabular-Literale unverändert (nicht Publication) |
-| DATA-11 Validator zu schwach | `STILL_OPEN` | Frontmatter öffentlicher Themen und Registry prüfen | `validate_teaching_content.py` | 16 Validator-Tests | s. Production; verwaiste Medien nicht geprüft |
-| DATA-03 142 Itemtexte auf der Design-Seite | `STILL_OPEN` | nicht Teil der Metadatenarchitektur | – | – | unverändert offen (kein Publication-Blocker) |
-| CONTENT-02 Platzhalter-`design` | `STILL_OPEN` | ehrlicher „In Vorbereitung“-Zustand, `noindex`, kein Zitat | `build_research_page`, i18n | Test und Browser-Smoke | s. Production; geschützte Platzhalter des deutschen Korpus unverändert |
+| CITE-02 Zitat driftet vom Seitentitel | `STILL_OPEN` | Zitat generiert, exakter Seitentitel | getippte Zitate in YAML und Python entfernt | Test gegen YAML-Titel | `CLOSED_AND_DEPLOYED` |
+| CITE-03 kein zentrales Zitierangebot | `STILL_OPEN` | vier Ebenen plus Design-Artikel | Zitatblock auf Projektseite, Korpusseite, Teaching-Hub, Themenseite, Design | Test der vier Ebenen; Copy-Button im Browser | `CLOSED_AND_DEPLOYED` |
+| DATA-05 Personen in mehreren Registries | `STILL_OPEN` | nur der bibliographische Teil | Personen aus `LANGUAGES` und Team-Seite entfernt | Test | `CLOSED_AND_DEPLOYED` (bibliographischer Teil); übrige Korpus-/Vokabular-Literale unverändert (nicht Publication) |
+| DATA-11 Validator zu schwach | `STILL_OPEN` | Frontmatter öffentlicher Themen und Registry prüfen | `validate_teaching_content.py` | 16 Validator-Tests | `CLOSED_AND_DEPLOYED`; verwaiste Medien nicht geprüft |
+| DATA-03 142 Itemtexte auf der Design-Seite | `STILL_OPEN` | nicht Teil der Metadatenarchitektur | – | – | nicht bearbeitet (kein Publication-Blocker, kein Endstatus dieses Runs) |
+| CONTENT-02 Platzhalter-`design` | `STILL_OPEN` | ehrlicher „In Vorbereitung“-Zustand, `noindex`, kein Zitat | `build_research_page`, i18n | Test und Browser-Smoke | `CLOSED_AND_DEPLOYED` (öffentliche `design`-Seite); geschützte Platzhalter des deutschen Korpus unverändert |
 | Teaching-Verantwortliche Französisch/Deutsch/Englisch | neu | nicht aus dem Repo ableitbar | `creators: []`, nicht zitierbar | Test | `CONTENT_DECISION_REQUIRED` |
 
 ## Citation Examples
@@ -73,7 +73,10 @@ In der HTML-Fassung sind die Titel der selbständigen Ressourcen und der Plattfo
 
 ## Production
 
-Wird nach Merge, CI, Deploy und Post-Deploy-Smoke ergänzt.
+- `main` = Production = `66723d1`; CI (`release-gate` inklusive Browser-Smoke) und Deploy grün; `scripts/post_deploy_smoke.py` gegen `https://pronunciation-matters.de` grün (jetzt mit canonical, JSON-LD, Zitat-URL und 404 für unbekannte Ressourcen).
+- Live read-only geprüft (13 Seiten, DE und EN): Plattform (`WebSite`, Herausgeber Felix Tacke), Korpora Spanisch/Französisch/Englisch (`Dataset`, Creators Tacke/Reinhardt/Kreyer, `isPartOf` Plattform), Teaching-Bereich Spanisch (`Collection`), Themenseite DE/EN (`Article` + `LearningResource`, gleiche `resource_id`, `isPartOf` Teaching-Bereich), Design-Artikel (`ScholarlyArticle`, `isPartOf` Korpus). Titel, lokalisierte Description, canonical auf dem non-`www`-Host, reziprokes `hreflang` und der Kopierwert des Zitats entsprechen den Erwartungen; die Zitate in „Citation Examples“ sind die live ausgelieferten.
+- Korpus Deutsch und Teaching-Hub Französisch: indexierbar, ohne Zitat und ohne JSON-LD. `…/french/design`: `noindex`, kein canonical. Unbekanntes Thema und Entwurf (`/de/teaching/french/liaison`): 404. `?utm_x=1` ändert das canonical nicht.
+- Nicht geprüft: authentifizierte Seiten (kein QA-Konto) und ein echter Zotero-Import.
 
 ## Tests
 
