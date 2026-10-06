@@ -35,6 +35,10 @@ App: `__init__.py` (429-Handler, Static-Cache), `extensions/__init__.py` (Limite
 - axe: 0 Verstöße (alle Impact-Stufen) auf allen 44 Kombinationen; Überlauf 0 von 66 Fällen (390/820/1280, DE/EN).
 - Screenshot-Matrix (DE/EN × Light/Dark × 390/820/1280) für Landing, Research-Hub, Speakers, Comparison, Player, Phenomena (Übersicht und Set), Teaching-Hub, Teaching-Thema, Login, Access-Request, plus 429-Seite; stichprobenartig gesichtet (Comparison und Player mobil, Phänomene-Set, Research-Hub, Teaching-Hub dunkel, 429).
 
+## Production-Aktionen
+
+- Push `4eb2838..390fff1`: CI rot (Linux-only Testfehler, siehe Bericht), Deploy blockiert. Fix `c2c999f` (Test-Isolation des Health-Monitors) im Linux-Container reproduziert und verifiziert, danach Push: CI grün, Deploy grün, Post-Deploy-Smoke grün. Read-only Produktionsprüfung: immutable Static-Header, 10,9-KB-Icon-Font, Landing-Titel, Transfer; nginx-Kompression offen (kein Proxy-Zugriff, SSH vom Berechtigungsprüfer abgelehnt).
+
 ## Abweichungen
 
 Keine von den Specs; die Spec-Aussage zu Google Fonts war veraltet (Fonts sind selbst gehostet, CSP `font-src 'self'`) und wurde korrigiert.
