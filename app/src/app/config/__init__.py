@@ -8,6 +8,7 @@ import re
 from urllib.parse import urlsplit
 
 from ..runtime_paths import (
+    resolve_environment_name,
     get_config_root,
     get_data_root,
     get_logs_dir,
@@ -24,6 +25,12 @@ DEFAULT_DEV_PUBLIC_BASE_URL = "http://127.0.0.1:8000"
 # random secret or URL never has this shape, so this does not reject legitimate values.
 _TEMPLATE_PLACEHOLDER_PATTERN = re.compile(r"^__[A-Z0-9_]+__$")
 _DEV_LIKE_ENVS = frozenset({"development", "dev", "testing", "test"})
+# Production secrets must be real random values: HS256 signing keys shorter than this are guessable, and the
+# role claim in the signed token is trusted without a database lookup.
+MIN_PRODUCTION_SECRET_LENGTH = 32
+_MIN_PRODUCTION_SECRET_DISTINCT_CHARACTERS = 8
+_WEAK_SECRET_VALUES = frozenset({"changeme", "change-me", "change_me", "secret", "password", "test-secret", "dev-secret"})
+_MAIL_ADDRESS_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DEFAULT_DEV_DATABASE_URL = "postgresql+psycopg2://promat_auth:promat_auth@127.0.0.1:54321/promat_auth"
 GOATCOUNTER_ENDPOINT = "https://pronunciation-matters.goatcounter.com/count"
 
@@ -73,6 +80,36 @@ def normalize_public_base_url(raw_value: str | None) -> str:
     return value.rstrip("/")
 
 
+def _validate_production_secret(name: str, value: str | None) -> None:
+    """Reject unusable production secrets without ever including the value in the message."""
+    normalized = _normalize_value(value)
+    if is_unset_or_placeholder(normalized):
+        raise RuntimeError(
+            f"{name} must be configured for non-development environments "
+            f"(it is empty or still a template placeholder such as {DEFAULT_SECRET_SENTINEL})."
+        )
+    if normalized.lower() in _WEAK_SECRET_VALUES:
+        raise RuntimeError(f"{name} is a well-known placeholder value; configure a random secret.")
+    if len(normalized) < MIN_PRODUCTION_SECRET_LENGTH:
+        raise RuntimeError(f"{name} must be at least {MIN_PRODUCTION_SECRET_LENGTH} characters for non-development environments.")
+    if len(set(normalized)) < _MIN_PRODUCTION_SECRET_DISTINCT_CHARACTERS:
+        raise RuntimeError(f"{name} is too repetitive; configure a random secret.")
+
+
+def _validate_access_request_mail(app_config) -> None:
+    """With access-request mail enabled, an unusable sender, recipient or SMTP host is a startup error, not a runtime 500."""
+    if not app_config.get("AUTH_ACCESS_REQUEST_MAIL_ENABLED"):
+        return
+    recipient = _normalize_value(app_config.get("AUTH_ACCESS_REQUEST_EMAIL"))
+    sender = _normalize_value(app_config.get("AUTH_ACCESS_REQUEST_FROM_EMAIL") or app_config.get("AUTH_MAIL_FROM_EMAIL"))
+    if is_unset_or_placeholder(recipient) or not _MAIL_ADDRESS_PATTERN.match(recipient):
+        raise RuntimeError("AUTH_ACCESS_REQUEST_EMAIL must be a real e-mail address when access-request mail is enabled.")
+    if is_unset_or_placeholder(sender) or not _MAIL_ADDRESS_PATTERN.match(sender):
+        raise RuntimeError("AUTH_ACCESS_REQUEST_FROM_EMAIL (or AUTH_MAIL_FROM_EMAIL) must be a real e-mail address when access-request mail is enabled.")
+    if app_config.get("AUTH_MAIL_BACKEND") == "smtp" and is_unset_or_placeholder(app_config.get("AUTH_ACCESS_REQUEST_SMTP_HOST")):
+        raise RuntimeError("AUTH_ACCESS_REQUEST_SMTP_HOST must be set to a real host when the smtp mail backend is used.")
+
+
 def _is_production_env(env_name: str) -> bool:
     return env_name in {"production", "prod"}
 
@@ -95,7 +132,7 @@ def _resolve_rate_limit_storage_uri(env_name: str) -> str:
 
 class BaseConfig:
     PROJECT_ROOT = Path(__file__).resolve().parents[3]
-    APP_ENV = _normalize_value(os.getenv("PROMAT_ENV") or os.getenv("APP_ENV") or os.getenv("FLASK_ENV") or "production").lower()
+    APP_ENV = resolve_environment_name()
     PROMAT_ENV = APP_ENV
     PROMAT_PUBLIC_BASE_URL = _normalize_value(os.getenv("PROMAT_PUBLIC_BASE_URL") or "")
 
@@ -166,6 +203,9 @@ class BaseConfig:
     AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS = float(
         _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS") or "0.5")
     )
+    # Largest accepted request body. Forms and the JSON set API stay far below this; anything bigger is rejected with
+    # 413 before it is parsed or stored.
+    MAX_CONTENT_LENGTH = int(_normalize_value(os.getenv("MAX_CONTENT_LENGTH") or str(1024 * 1024)))
     RESEARCH_SET_DRAFT_TTL_DAYS = int(_normalize_value(os.getenv("RESEARCH_SET_DRAFT_TTL_DAYS") or "14"))
 
     APP_REPOSITORY_URL = _normalize_value(os.getenv("APP_REPOSITORY_URL") or "https://github.com/FTacke/promat-webapp")
@@ -218,9 +258,7 @@ CONFIG_MAP = {
 
 def load_config(app, env_name: str | None = None) -> None:
     """Load environment-specific config into the Flask app."""
-    resolved_env = _normalize_value(
-        env_name or os.getenv("PROMAT_ENV") or os.getenv("FLASK_ENV") or os.getenv("APP_ENV") or "production"
-    ).lower()
+    resolved_env = resolve_environment_name(env_name)
     config_class = CONFIG_MAP.get(resolved_env, ProductionConfig)
     app.config.from_object(config_class)
     app.config["FLASK_ENV"] = resolved_env
@@ -228,18 +266,18 @@ def load_config(app, env_name: str | None = None) -> None:
     rate_limit_storage_uri = _resolve_rate_limit_storage_uri(resolved_env)
     app.config["RATE_LIMIT_STORAGE_URI"] = rate_limit_storage_uri
     app.config["RATELIMIT_STORAGE_URI"] = rate_limit_storage_uri
+    if rate_limit_storage_uri.lower().startswith(("redis://", "rediss://")):
+        # Short timeouts: with a dead Redis every request must fail open quickly instead of waiting on a socket.
+        app.config["RATELIMIT_STORAGE_OPTIONS"] = {"socket_connect_timeout": 1, "socket_timeout": 1}
 
     if not app.config.get("AUTH_DATABASE_URL"):
         raise RuntimeError("AUTH_DATABASE_URL is required for PROMAT.")
     if resolved_env not in _DEV_LIKE_ENVS:
-        if is_unset_or_placeholder(app.config.get("SECRET_KEY")):
-            raise RuntimeError("FLASK_SECRET_KEY must be configured for non-development environments.")
-        # Roles are read from the signed token, so a placeholder JWT secret would let anyone forge an admin token.
-        if is_unset_or_placeholder(app.config.get("JWT_SECRET_KEY")):
-            raise RuntimeError(
-                "JWT_SECRET_KEY must be configured for non-development environments "
-                "(it is empty or still a template placeholder such as __CHANGE_ME__)."
-            )
+        _validate_production_secret("FLASK_SECRET_KEY", app.config.get("SECRET_KEY"))
+        # Roles are read from the signed token, so a weak or placeholder JWT secret would let anyone forge an admin token.
+        _validate_production_secret("JWT_SECRET_KEY", app.config.get("JWT_SECRET_KEY"))
+        if app.config.get("SECRET_KEY") == app.config.get("JWT_SECRET_KEY"):
+            raise RuntimeError("JWT_SECRET_KEY must differ from FLASK_SECRET_KEY.")
     # Canonical external origin for links that leave the app (password reset / invitation mails). It is never
     # derived from request headers, which a client can forge. Production requires a real https origin; local
     # development and tests fall back to the dev origin when nothing is configured.
@@ -258,7 +296,9 @@ def load_config(app, env_name: str | None = None) -> None:
             raise RuntimeError("RATE_LIMIT_STORAGE_URI must be configured for non-development environments.")
         if rate_limit_storage_uri.lower() == "memory://":
             raise RuntimeError("RATE_LIMIT_STORAGE_URI must not use memory:// for non-development environments.")
-    if app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_TLS") and app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_SSL"):
-        raise RuntimeError("AUTH_ACCESS_REQUEST_SMTP_USE_TLS and AUTH_ACCESS_REQUEST_SMTP_USE_SSL are mutually exclusive.")
     if app.config.get("AUTH_MAIL_BACKEND") not in {"disabled", "smtp", "sendmail"}:
         raise RuntimeError("AUTH_MAIL_BACKEND must be one of disabled, smtp, or sendmail.")
+    if resolved_env not in _DEV_LIKE_ENVS:
+        _validate_access_request_mail(app.config)
+    if app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_TLS") and app.config.get("AUTH_ACCESS_REQUEST_SMTP_USE_SSL"):
+        raise RuntimeError("AUTH_ACCESS_REQUEST_SMTP_USE_TLS and AUTH_ACCESS_REQUEST_SMTP_USE_SSL are mutually exclusive.")

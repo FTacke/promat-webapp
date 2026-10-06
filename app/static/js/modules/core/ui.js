@@ -1,6 +1,7 @@
 /**
  * UI Utilities
- * Handles preload guard, page title updates, and scroll state.
+ * Handles preload guard and scroll state. The document title is rendered by the server per route and is never
+ * rewritten on the client.
  */
 
 export function initPreloadGuard() {
@@ -17,18 +18,9 @@ export function initPreloadGuard() {
 
 
 
-export function initPageTitleAndScroll() {
-  if (window.__pageTitleInit) return;
-  window.__pageTitleInit = true;
-
-  const TITLE_TEXT = 'Pronunciation Matters';
-
-  function applyTitle() {
-    const t = TITLE_TEXT;
-    const el = document.querySelector('[data-page-title-el]');
-    if (el) el.textContent = t;
-    document.title = t;
-  }
+export function initScrollIndicator() {
+  if (window.__scrollIndicatorInit) return;
+  window.__scrollIndicatorInit = true;
 
   function applyScroll() {
     const thr = 8;
@@ -39,42 +31,22 @@ export function initPageTitleAndScroll() {
     }
   }
 
-  applyTitle();
   applyScroll();
   window.addEventListener('scroll', applyScroll, { passive: true });
 
   if (window.htmx) {
-    document.body.addEventListener('htmx:afterSwap', function() {
-      applyTitle();
-      applyScroll();
-    });
-    document.body.addEventListener('htmx:afterSettle', function() {
-      applyTitle();
-      applyScroll();
-    });
-    document.body.addEventListener('htmx:historyRestore', function() {
-      applyTitle();
-      applyScroll();
-    });
+    document.body.addEventListener('htmx:afterSwap', applyScroll);
+    document.body.addEventListener('htmx:afterSettle', applyScroll);
+    document.body.addEventListener('htmx:historyRestore', applyScroll);
   }
 
   if (window.Turbo) {
-    document.addEventListener('turbo:render', function() {
-      applyTitle();
-      applyScroll();
-    });
+    document.addEventListener('turbo:render', applyScroll);
   }
 
-  window.addEventListener('popstate', function() {
-    applyTitle();
-    applyScroll();
-  });
-  
-  // Also run on DOMContentLoaded if not already there (though this function is likely called from there)
+  window.addEventListener('popstate', applyScroll);
+
   if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        applyTitle();
-        applyScroll();
-      });
+    document.addEventListener('DOMContentLoaded', applyScroll);
   }
 }

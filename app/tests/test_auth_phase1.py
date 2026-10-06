@@ -1370,7 +1370,7 @@ def test_logout_clears_auth_cookie_and_session_state(auth_app: Flask) -> None:
     assert session_response.status_code == 200
     assert session_response.get_json()["authenticated"] is True
 
-    logout_response = client.get("/auth/logout", follow_redirects=False)
+    logout_response = client.post("/auth/logout", follow_redirects=False)
 
     assert logout_response.status_code == 303
     assert logout_response.headers["Location"] == "/"
@@ -1831,7 +1831,7 @@ def test_account_password_change_persists_and_preserves_admin_role(auth_app: Fla
         assert auth_services.verify_password("ChangedPass2", user.password_hash)
         assert not auth_services.verify_password("ValidPass1", user.password_hash)
 
-    assert client.get("/auth/logout").status_code == 303
+    assert client.post("/auth/logout").status_code == 303
     assert _login(client, email="admin@example.org", password="ValidPass1").status_code == 401
     assert _login(client, email="admin@example.org", password="ChangedPass2").status_code == 303
 
@@ -1895,7 +1895,11 @@ def test_forced_reset_form_uses_jwt_csrf_and_refreshes_access_cookie(auth_app: F
     assert admin_page_response.status_code == 200
     assert "/auth/account/password" not in admin_page_response.request.path
 
-    assert client.get("/auth/logout").status_code == 303
+    # With JWT CSRF protection on, the logout POST must carry the double-submit token like every other mutation.
+    assert client.post("/auth/logout").status_code == 403
+    csrf_cookie = client.get_cookie("csrf_access_token", domain="promat.test")
+    assert csrf_cookie is not None
+    assert client.post("/auth/logout", headers={"X-CSRF-TOKEN": csrf_cookie.value}).status_code == 303
     assert _login(client, email="admin@example.org", password="ValidPass1").status_code == 401
     assert _login(client, email="admin@example.org", password="ChangedPass2").status_code == 303
 
@@ -2773,15 +2777,16 @@ def test_admin_users_page_uses_sidebar_only_for_admin_area_navigation(auth_app: 
 
 def test_security_headers_allow_project_youtube_embed() -> None:
     app = Flask(__name__)
+    app.config["GOATCOUNTER_URL"] = "https://pronunciation-matters.goatcounter.com/count"
 
-    @app.get("/probe")
+    @app.get("/de/project")
     def probe() -> str:
         return "ok"
 
     register_security_headers(app)
 
     with app.test_client() as client:
-        response = client.get("/probe")
+        response = client.get("/de/project")
 
     assert response.status_code == 200
     csp = response.headers["Content-Security-Policy"]
@@ -2897,10 +2902,7 @@ def test_ready_rejects_production_memory_rate_limit(auth_app: Flask, tmp_path: P
     assert response.status_code == 503
     payload = response.get_json()
     assert payload["status"] == "not_ready"
-    assert payload["checks"]["rate_limit_backend"] == {
-        "ok": False,
-        "error": "RATE_LIMIT_STORAGE_URI must not be memory:// in production",
-    }
+    assert payload["checks"]["rate_limit_backend"] == {"ok": False, "error": "memory_backend_not_allowed"}
 
 
 def test_rate_limit_still_applies_to_public_mutating_routes(auth_app: Flask) -> None:
@@ -3024,3 +3026,129 @@ def test_admin_analytics_page_renders_aggregated_usage(auth_app: Flask) -> None:
     assert "Unique visitors" in html
     assert "Spanish" in html
     assert "8" in html
+
+
+# --- access request: single-use form token, mail configuration errors, status model (TI-06 / TI-18) ----------------
+
+
+def _stored_access_requests(auth_app: Flask) -> list[AccessRequest]:
+    with auth_app.app_context():
+        with get_session() as session:
+            return session.query(AccessRequest).all()
+
+
+def test_access_request_form_token_is_single_use(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(client)
+
+    first = client.post("/access-request", data=payload, follow_redirects=False)
+    replay = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert first.status_code == 303
+    assert replay.status_code == 303
+    assert replay.headers["Location"] == "/de/access-request/thanks"
+    assert len(_stored_access_requests(auth_app)) == 1
+    assert len(auth_app.config["TEST_ACCESS_REQUEST_MESSAGES"]) == 1
+
+
+def test_access_request_replayed_without_the_original_session_creates_nothing(auth_app: Flask) -> None:
+    payload = _build_access_request_payload(auth_app.test_client())
+
+    bot = auth_app.test_client()
+    response = bot.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert _stored_access_requests(auth_app) == []
+
+
+def test_access_request_form_token_survives_validation_errors_and_a_second_open_form(auth_app: Flask) -> None:
+    client = auth_app.test_client()
+    invalid = _build_access_request_payload(client, overrides={"email": "not-an-email"})
+    other_tab = _build_access_request_payload(client)
+
+    assert client.post("/access-request", data=invalid, follow_redirects=False).status_code == 400
+    assert client.post("/access-request", data=other_tab, follow_redirects=False).status_code == 303
+    # The first form's token was not consumed by the rejected submission: a corrected resubmission still works.
+    corrected = dict(invalid, email="mara.fischer@uni-marburg.de")
+    assert client.post("/access-request", data=corrected, follow_redirects=False).status_code == 303
+    assert len(_stored_access_requests(auth_app)) == 2
+
+
+@pytest.mark.parametrize(
+    "broken_config",
+    [
+        {"AUTH_ACCESS_REQUEST_FROM_EMAIL": "", "AUTH_MAIL_FROM_EMAIL": ""},
+        {"AUTH_ACCESS_REQUEST_EMAIL": "__SET_OPERATOR_EMAIL__"},
+        {"AUTH_ACCESS_REQUEST_EMAIL": ""},
+    ],
+)
+def test_access_request_with_unusable_mail_configuration_is_saved_and_not_a_500(auth_app: Flask, broken_config: dict[str, str]) -> None:
+    client = auth_app.test_client()
+    auth_app.config.pop("AUTH_ACCESS_REQUEST_MAIL_SENDER", None)
+    auth_app.config.update(broken_config)
+    payload = _build_access_request_payload(client)
+
+    response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["Location"] == "/de/access-request/thanks"
+    stored = _stored_access_requests(auth_app)
+    assert len(stored) == 1
+    assert stored[0].status == "notification_failed"
+
+
+def test_access_request_status_update_failure_after_a_sent_mail_is_not_reported_as_delivery_failure(
+    auth_app: Flask, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    from app.services import access_request_notifications
+
+    def failing_update(_request_id: str, _status: str) -> None:
+        raise RuntimeError("database hiccup")
+
+    monkeypatch.setattr(access_request_notifications, "_update_request_status", failing_update)
+    client = auth_app.test_client()
+    payload = _build_access_request_payload(client)
+
+    with caplog.at_level("WARNING"):
+        response = client.post("/access-request", data=payload, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert len(auth_app.config["TEST_ACCESS_REQUEST_MESSAGES"]) == 1
+    assert not any("notification failed" in record.getMessage() for record in caplog.records)
+    assert any("status update failed" in record.getMessage() for record in caplog.records)
+
+
+def test_access_request_status_values_are_enforced_by_the_model_and_match_migration_0011(auth_app: Flask) -> None:
+    from sqlalchemy.exc import IntegrityError
+
+    from app.auth.models import ACCESS_REQUEST_STATUSES
+
+    migration = (Path(__file__).resolve().parents[1] / "migrations" / "0011_extend_access_request_status.sql").read_text(encoding="utf-8")
+    declared = tuple(re.findall(r"'([a-z_]+)'", migration[migration.index("CHECK (status IN"):]))
+    assert declared == ACCESS_REQUEST_STATUSES
+
+    now = datetime.now(timezone.utc)
+
+    def add(status: str) -> None:
+        with get_session() as session:
+            session.add(
+                AccessRequest(
+                    id=f"status-{status}",
+                    status=status,
+                    first_name="A",
+                    last_name="B",
+                    institution="I",
+                    role_or_function="R",
+                    email="a@example.org",
+                    purpose="P",
+                    consent_confirmed=True,
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+
+    with auth_app.app_context():
+        for status in ACCESS_REQUEST_STATUSES:
+            add(status)
+        with pytest.raises(IntegrityError):
+            add("bogus")

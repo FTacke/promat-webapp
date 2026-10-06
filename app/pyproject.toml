@@ -28,7 +28,8 @@ filterwarnings = [
 markers = [
   "live: requires external services / live endpoints",
   "data: requires large runtime data files",
-  "e2e: end-to-end / long running"
+  "e2e: end-to-end / long running",
+  "postgres: needs a PostgreSQL server (PROMAT_TEST_POSTGRES_URL); skipped when it is not configured"
 ]
 
 [tool.ruff]

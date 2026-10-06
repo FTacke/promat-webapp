@@ -17,6 +17,9 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 import app.config as config_module
 
+STRONG_FLASK_SECRET = "f1ask-Sup3r-Secret-Key-0123456789-abcdefXYZ"
+STRONG_JWT_SECRET = "jwt-Sup3r-Secret-Key-9876543210-zyxwvuTSR"
+
 
 def _reload_config_module(
     tmp_path: Path,
@@ -36,9 +39,14 @@ def _reload_config_module(
     monkeypatch.setenv("PROMAT_RUNTIME_ROOT", str(runtime_root))
     monkeypatch.setenv("PROMAT_PUBLIC_ROOT", str(public_root))
     monkeypatch.setenv("AUTH_DATABASE_URL", f"sqlite:///{(tmp_path / 'auth.sqlite3').as_posix()}")
-    monkeypatch.setenv("FLASK_SECRET_KEY", "test-secret")
-    monkeypatch.setenv("JWT_SECRET_KEY", "test-secret")
+    monkeypatch.setenv("FLASK_SECRET_KEY", STRONG_FLASK_SECRET)
+    monkeypatch.setenv("JWT_SECRET_KEY", STRONG_JWT_SECRET)
     monkeypatch.setenv("PROMAT_PUBLIC_BASE_URL", "https://pm.example.test")
+    monkeypatch.setenv("AUTH_ACCESS_REQUEST_MAIL_ENABLED", "true")
+    monkeypatch.setenv("AUTH_ACCESS_REQUEST_EMAIL", "ops@pm.example.test")
+    monkeypatch.setenv("AUTH_ACCESS_REQUEST_FROM_EMAIL", "noreply@pm.example.test")
+    monkeypatch.setenv("AUTH_ACCESS_REQUEST_SMTP_HOST", "smtp.pm.example.test")
+    monkeypatch.delenv("AUTH_MAIL_BACKEND", raising=False)
     monkeypatch.delenv("RATE_LIMIT_STORAGE_URI", raising=False)
     monkeypatch.delenv("RATELIMIT_STORAGE_URI", raising=False)
     monkeypatch.delenv("VITE_APP_VERSION", raising=False)
@@ -254,7 +262,15 @@ def test_production_jwt_secret_never_falls_back_to_a_placeholder_flask_secret(
         reloaded.load_config(app, "production")
 
 
-@pytest.mark.parametrize("secret", ["x" * 64, "k8Zp-Q2_wT9vLmN4aB7cD1eF6gH3jR5s", "a__b__c", "__lower_case__"])
+@pytest.mark.parametrize(
+    "secret",
+    [
+        "k8Zp-Q2_wT9vLmN4aB7cD1eF6gH3jR5s",
+        "a__b__c" + "Kq3Zp7Xm2Wd9Lv5Nb8Tc1Rf6Hg4Js0Ya",
+        "__lower_case__" + "Qw3Er5Ty7Ui9Op1As2Df4Gh6Jk8L",
+        "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    ],
+)
 def test_production_accepts_legitimate_jwt_secrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, secret: str) -> None:
     reloaded, app = _production_app(tmp_path, monkeypatch, JWT_SECRET_KEY=secret)
 
@@ -310,3 +326,136 @@ def test_public_base_url_is_normalized_and_dev_falls_back_to_local_origin(
     dev_app = Flask(__name__)
     reloaded.load_config(dev_app, "testing")
     assert dev_app.config["PROMAT_PUBLIC_BASE_URL"] == reloaded.DEFAULT_DEV_PUBLIC_BASE_URL
+
+
+@pytest.mark.parametrize(
+    "secret",
+    ["short", "k8Zp-Q2_wT9vLmN4aB7cD1eF6gH3jR5", "x" * 64, "ab" * 32, "changeme", "test-secret", "secret", "password"],
+)
+def test_production_rejects_short_weak_or_repetitive_jwt_secrets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, secret: str
+) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, JWT_SECRET_KEY=secret)
+
+    with pytest.raises(RuntimeError, match="JWT_SECRET_KEY") as excinfo:
+        reloaded.load_config(app, "production")
+
+    assert len(secret) <= 6 or secret not in str(excinfo.value)
+
+
+def test_production_rejects_short_flask_secret(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, FLASK_SECRET_KEY="short-flask")
+
+    with pytest.raises(RuntimeError, match="FLASK_SECRET_KEY must be at least 32 characters"):
+        reloaded.load_config(app, "production")
+
+
+def test_production_rejects_identical_flask_and_jwt_secrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, FLASK_SECRET_KEY=STRONG_FLASK_SECRET, JWT_SECRET_KEY=STRONG_FLASK_SECRET)
+
+    with pytest.raises(RuntimeError, match="must differ") as excinfo:
+        reloaded.load_config(app, "production")
+
+    assert STRONG_FLASK_SECRET not in str(excinfo.value)
+
+
+def test_production_jwt_secret_without_its_own_value_falls_back_to_flask_secret_and_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, JWT_SECRET_KEY=None)
+
+    with pytest.raises(RuntimeError, match="must differ"):
+        reloaded.load_config(app, "production")
+
+
+@pytest.mark.parametrize(
+    ("env", "message"),
+    [
+        ({"AUTH_ACCESS_REQUEST_EMAIL": "__SET_OPERATOR_EMAIL__"}, "AUTH_ACCESS_REQUEST_EMAIL"),
+        ({"AUTH_ACCESS_REQUEST_EMAIL": ""}, "AUTH_ACCESS_REQUEST_EMAIL"),
+        ({"AUTH_ACCESS_REQUEST_EMAIL": "not-an-address"}, "AUTH_ACCESS_REQUEST_EMAIL"),
+        ({"AUTH_ACCESS_REQUEST_FROM_EMAIL": "__SET_SERVER_ALLOWED_FROM_EMAIL__"}, "AUTH_ACCESS_REQUEST_FROM_EMAIL"),
+        ({"AUTH_ACCESS_REQUEST_FROM_EMAIL": ""}, "AUTH_ACCESS_REQUEST_FROM_EMAIL"),
+        ({"AUTH_ACCESS_REQUEST_SMTP_HOST": "__SET_SMTP_HOST__"}, "AUTH_ACCESS_REQUEST_SMTP_HOST"),
+        ({"AUTH_ACCESS_REQUEST_SMTP_HOST": ""}, "AUTH_ACCESS_REQUEST_SMTP_HOST"),
+    ],
+)
+def test_production_rejects_unusable_access_request_mail_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, env: dict[str, str], message: str
+) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, **env)
+
+    with pytest.raises(RuntimeError, match=message):
+        reloaded.load_config(app, "production")
+
+
+def test_production_with_mail_disabled_or_sendmail_backend_needs_no_smtp_host(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    reloaded, app = _production_app(tmp_path, monkeypatch, AUTH_MAIL_BACKEND="sendmail", AUTH_ACCESS_REQUEST_SMTP_HOST="__SET_SMTP_HOST__")
+    reloaded.load_config(app, "production")
+
+    reloaded, app = _production_app(
+        tmp_path,
+        monkeypatch,
+        AUTH_ACCESS_REQUEST_MAIL_ENABLED="false",
+        AUTH_ACCESS_REQUEST_EMAIL="__SET_OPERATOR_EMAIL__",
+        AUTH_MAIL_BACKEND=None,
+    )
+    reloaded.load_config(app, "production")
+
+
+# --- one environment resolution everywhere (TI-11) ---------------------------------------------------------------
+
+
+def test_resolve_environment_name_precedence_and_fail_closed_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.runtime_paths import resolve_environment_name
+
+    for name in ("PROMAT_ENV", "FLASK_ENV", "APP_ENV"):
+        monkeypatch.delenv(name, raising=False)
+    assert resolve_environment_name() == "production"
+
+    monkeypatch.setenv("APP_ENV", "testing")
+    assert resolve_environment_name() == "testing"
+    monkeypatch.setenv("FLASK_ENV", "development")
+    assert resolve_environment_name() == "development"
+    monkeypatch.setenv("PROMAT_ENV", " Production ")
+    assert resolve_environment_name() == "production"
+    assert resolve_environment_name("testing") == "testing"
+
+    monkeypatch.setenv("PROMAT_ENV", "   ")
+    assert resolve_environment_name() == "development"
+
+
+def test_entry_point_with_only_promat_env_production_is_production_not_debug(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    reloaded = _reload_config_module(tmp_path, monkeypatch, env_name="production", rate_limit_storage_uri="redis://rate_limit:6379/0")
+    monkeypatch.setenv("PROMAT_ENV", "production")
+    monkeypatch.delenv("FLASK_ENV", raising=False)
+    monkeypatch.delenv("APP_ENV", raising=False)
+    reloaded = importlib.reload(reloaded)
+    app = Flask(__name__)
+
+    from app.runtime_paths import resolve_environment_name
+
+    reloaded.load_config(app, resolve_environment_name())
+
+    assert app.config["DEBUG"] is False
+    assert app.config["JWT_COOKIE_CSRF_PROTECT"] is True
+    assert app.config["JWT_COOKIE_SECURE"] is True
+    assert reloaded.BaseConfig.APP_ENV == "production"
+
+
+def test_entry_point_uses_the_shared_resolver_and_has_no_development_default() -> None:
+    source = (Path(__file__).resolve().parents[1] / "src" / "app" / "main.py").read_text(encoding="utf-8")
+
+    assert "resolve_environment_name()" in source
+    assert '"development"' not in source.replace("FLASK_ENV=development", "")
+    assert "setdefault" not in source
+
+
+def test_missing_environment_selects_production_and_then_requires_production_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    reloaded = _reload_config_module(tmp_path, monkeypatch, env_name="production", rate_limit_storage_uri=None)
+    for name in ("PROMAT_ENV", "FLASK_ENV", "APP_ENV"):
+        monkeypatch.delenv(name, raising=False)
+    reloaded = importlib.reload(reloaded)
+
+    with pytest.raises(RuntimeError, match="RATE_LIMIT_STORAGE_URI must be configured"):
+        reloaded.load_config(Flask(__name__))

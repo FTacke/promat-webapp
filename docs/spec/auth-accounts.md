@@ -20,6 +20,7 @@ Personal accounts are the default. They map one natural person to one PROMAT use
 - **Invitation:** a 14-day password-setup link is prepared and optionally sent by email.
 - **Self-service:** the user can change their own profile data and password at `/auth/account` and `/auth/account/password`.
 - **Password reset:** available via the public forgot-password flow (`/auth/password/forgot`).
+- **Logout:** `POST /auth/logout` only (CSRF-protected); the access token itself stays valid until it expires because tokens are stateless. Immediate revocation (logout, deactivation, role change) is a separate, not yet implemented contract.
 - Fields: `first_name`, `last_name`, `email` (all required at creation).
 - `account_kind = 'personal'` (DB default for all pre-existing accounts).
 

@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
 from importlib import metadata
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from flask import Flask, jsonify, make_response, redirect, render_template, request, url_for
+from flask import Flask, g, jsonify, make_response, redirect, render_template, request, url_for
+from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .branding import BRANDING, format_page_title
@@ -22,14 +24,22 @@ from .teaching_content import resolve_teaching_switch_path
 from .config import load_config
 
 
+def _request_value(name: str) -> str | None:
+    """Read a query/form value without letting an oversized or malformed body break error and header handling."""
+    try:
+        return request.values.get(name)
+    except HTTPException:
+        return request.args.get(name)
+
+
 def _resolve_request_ui_language() -> str:
     """Resolve UI language for routes that do not carry a ui_lang path segment."""
     return resolve_request_ui_language(
         path_ui_lang=(request.view_args or {}).get("ui_lang"),
-        explicit_ui_lang=request.values.get("lang") or request.values.get("ui_lang"),
+        explicit_ui_lang=_request_value("lang") or _request_value("ui_lang"),
         stored_ui_lang=request.cookies.get(PREFERRED_UI_LANGUAGE_COOKIE_NAME),
         next_candidates=(
-            request.values.get("next"),
+            _request_value("next"),
             request.args.get("next"),
             request.referrer,
             request.path,
@@ -101,6 +111,29 @@ def _build_ui_lang_switch_url(target_ui_lang: str) -> str:
 
     query = urlencode(rewritten_items, doseq=True)
     return f"{localized_path}?{query}" if query else localized_path
+
+
+# Public editorial pages that may load the third-party analytics script. Everything else (speaker profiles, player,
+# comparison, phenomena, sets, account and admin pages) carries pseudonymous person/session ids in the path or is
+# behind login and must not talk to a third party. Only the corpus landing, the corpus selection and `design` of
+# the research area are public.
+_GOATCOUNTER_PUBLIC_PATH_PATTERN = re.compile(
+    r"^/?(?:"
+    r"|impressum|privacy"
+    r"|(?:de|en)(?:/(?:impressum|privacy|project(?:/.*)?|teaching(?:/.*)?|research(?:/[^/]+(?:/design)?)?))?"
+    r")/?$"
+)
+
+
+def goatcounter_url_for_path(configured_url: str, path: str) -> str:
+    """Return the analytics endpoint if the script may be loaded on ``path``, otherwise an empty string."""
+    if configured_url and _GOATCOUNTER_PUBLIC_PATH_PATTERN.match(path or "/"):
+        return configured_url
+    return ""
+
+
+def _request_goatcounter_url(app: Flask) -> str:
+    return goatcounter_url_for_path(app.config.get("GOATCOUNTER_URL", ""), request.path)
 
 
 def _verify_critical_dependencies() -> list[str]:
@@ -269,18 +302,7 @@ def register_context_processors(app: Flask) -> None:
     @app.context_processor
     def inject_utilities():  # pragma: no cover - thin wrapper
         current_ui_lang = _resolve_request_ui_language()
-        _gc_url = app.config.get("GOATCOUNTER_URL", "")
-        _gc_path = request.path
-        _goatcounter_url = (
-            _gc_url
-            if _gc_url
-            and not (
-                _gc_path.startswith("/admin")
-                or _gc_path.startswith("/auth")
-                or _gc_path == "/login"
-            )
-            else ""
-        )
+        _goatcounter_url = _request_goatcounter_url(app)
         return {
             "now": lambda: datetime.now(timezone.utc),
             "app_version": app.config.get("APP_VERSION", ""),
@@ -300,7 +322,7 @@ def register_context_processors(app: Flask) -> None:
 
     @app.after_request
     def persist_explicit_ui_language(response):
-        selected_ui_lang = normalize_supported_ui_language(request.values.get("lang") or request.values.get("ui_lang"))
+        selected_ui_lang = normalize_supported_ui_language(_request_value("lang") or _request_value("ui_lang"))
         if selected_ui_lang is not None:
             response.set_cookie(
                 PREFERRED_UI_LANGUAGE_COOKIE_NAME,
@@ -411,6 +433,37 @@ def register_auth_context(app: Flask) -> None:
         }
 
 
+_NO_STORE_PATH_PREFIXES = ("/auth/", "/admin", "/api/")
+
+
+def _is_protected_response() -> bool:
+    """True for responses that carry login-gated content and must not be reused from a browser cache."""
+    path = request.path
+    return (
+        path == "/login"
+        or path.startswith(_NO_STORE_PATH_PREFIXES)
+        or bool(getattr(g, "promat_protected_response", False))
+    )
+
+
+def _content_security_policy(*, goatcounter: bool) -> str:
+    script_src = "script-src 'self'" + (" https://gc.zgo.at" if goatcounter else "")
+    connect_src = "connect-src 'self'" + (" https://pronunciation-matters.goatcounter.com" if goatcounter else "")
+    return (
+        "default-src 'self'; "
+        f"{script_src}; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https: blob:; "
+        "font-src 'self'; "
+        f"{connect_src}; "
+        "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net; "
+        "frame-ancestors 'none'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
+
+
 def register_security_headers(app: Flask) -> None:
     """Add security headers to all responses."""
 
@@ -426,24 +479,22 @@ def register_security_headers(app: Flask) -> None:
                 "max-age=31536000; includeSubDomains"
             )
 
-        csp = (
-            "default-src 'self'; "
-            "script-src 'self' https://gc.zgo.at; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https: blob:; "
-            "font-src 'self'; "
-            "connect-src 'self' https://pronunciation-matters.goatcounter.com; "
-            "frame-src 'self' https://www.youtube.com https://datawrapper.dwcdn.net; "
-            "frame-ancestors 'none'; "
-            "object-src 'none'; "
-            "base-uri 'self'; "
-            "form-action 'self';"
+        response.headers["Content-Security-Policy"] = _content_security_policy(
+            goatcounter=bool(_request_goatcounter_url(app))
         )
-        response.headers["Content-Security-Policy"] = csp
 
-        if request.path.startswith("/auth/"):
-            response.headers["Cache-Control"] = "no-store, private"
-            response.headers["Vary"] = "Cookie"
+        if request.path == "/auth/password/reset":
+            # The one-time reset token is part of this URL; keep it out of Referer headers of follow-up requests.
+            response.headers["Referrer-Policy"] = "no-referrer"
+
+        if _is_protected_response():
+            # Protected HTML/JSON must not come back from the browser cache after logout (Back button). Audio keeps
+            # revalidation so seeking and replay stay cheap, but never becomes a shared-cache entry.
+            if response.mimetype.startswith("audio/"):
+                response.headers["Cache-Control"] = "private, no-cache"
+            else:
+                response.headers["Cache-Control"] = "private, no-store"
+            response.vary.add("Cookie")
 
         return response
 
@@ -490,6 +541,13 @@ def register_error_handlers(app: Flask) -> None:
         if _request_prefers_json_errors():
             return _json_error_response("Not found", 404)
         return render_template("errors/404.html", error=error), 404
+
+    @app.errorhandler(413)
+    def request_too_large(error):
+        app.logger.warning("Request body too large: %s %s", request.method, request.path)
+        if _request_prefers_json_errors():
+            return _json_error_response("Request body too large", 413, error="Payload too large")
+        return render_template("errors/413.html", error=error), 413
 
     @app.errorhandler(500)
     def internal_server_error(error):

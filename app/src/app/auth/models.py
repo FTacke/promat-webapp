@@ -13,6 +13,7 @@ from typing import Optional
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     ForeignKey,
@@ -177,8 +178,25 @@ class AnalyticsLanguageAreaDaily(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+# Mirrors ck_access_requests_status in migration 0011. `notified` / `notification_failed` are written by the
+# notification service; `reviewed` / `resolved` are operator states.
+ACCESS_REQUEST_STATUSES: tuple[str, ...] = (
+    "submitted",
+    "notified",
+    "notification_failed",
+    "reviewed",
+    "resolved",
+)
+
+
 class AccessRequest(Base):
     __tablename__ = "access_requests"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('submitted', 'notified', 'notification_failed', 'reviewed', 'resolved')",
+            name="ck_access_requests_status",
+        ),
+    )
 
     id: Mapped[Optional[str]] = mapped_column(String(36), primary_key=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="submitted")

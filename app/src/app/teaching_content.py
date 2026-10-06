@@ -7,6 +7,7 @@ from html import escape
 from html.parser import HTMLParser
 import logging
 import os
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -18,11 +19,18 @@ from markdown_it import MarkdownIt
 
 from .content_navigation import build_content_header
 from .i18n import SUPPORTED_UI_LANGUAGES, translate
+from .runtime_paths import is_dev_environment
 
 
 logger = logging.getLogger(__name__)
 
 _TOPIC_MEDIA_TYPES = frozenset({"audio", "downloads", "images", "video"})
+# A topic is an unfinished scaffold, and therefore not public, when its status says so or its only author is the
+# placeholder "NN". This is part of the single availability rule in `topic_is_public`.
+_UNFINISHED_STATUS_VALUES = frozenset({"draft", "private", "pending", "planned", "scaffold"})
+_PLACEHOLDER_AUTHOR_NAMES = frozenset({"nn", "n.n.", "n. n."})
+_TEACHING_LANG_PATTERN = re.compile(r"^[a-z]+$")
+_TOPIC_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _DATAWRAPPER_EMBED_HOST = "datawrapper.dwcdn.net"
 
 
@@ -354,6 +362,15 @@ def _topic_card_byline(ui_lang: str, raw_topic: dict[str, Any]) -> str:
     return translate(ui_lang, "teaching.topic.byline", authors=", ".join(authors))
 
 
+def _topic_is_unfinished(raw_topic: dict[str, Any]) -> bool:
+    hub = raw_topic.get("hub") if isinstance(raw_topic.get("hub"), dict) else {}
+    for value in (raw_topic.get("status"), hub.get("status")):
+        if isinstance(value, str) and value.strip().lower() in _UNFINISHED_STATUS_VALUES:
+            return True
+    authors = _topic_author_names(raw_topic)
+    return bool(authors) and all(author.strip().lower() in _PLACEHOLDER_AUTHOR_NAMES for author in authors)
+
+
 def topic_is_public(
     teaching_lang: str,
     ui_lang: str,
@@ -361,6 +378,16 @@ def topic_is_public(
     entry: dict[str, Any] | None = None,
     raw_topic: dict[str, Any] | None = None,
 ) -> bool:
+    """Single public-availability rule for a Teaching topic edition.
+
+    Public means: the locale file exists, no explicit ``is_available``/``is_public``/``published`` flag (on the hub
+    entry or the topic) says otherwise, and the topic is not an unfinished scaffold (draft status or only the
+    placeholder author ``NN``). Non-public topics are neither linked from the hub nor served as topic pages.
+    """
+    if raw_topic is None:
+        raw_topic = load_teaching_topic(teaching_lang, ui_lang, topic_slug)
+    if raw_topic is None:
+        return False
     explicit_values = [
         _explicit_public_availability(source)
         for source in (entry, raw_topic)
@@ -368,10 +395,26 @@ def topic_is_public(
     ]
     if any(value is False for value in explicit_values):
         return False
-    exists = raw_topic is not None if raw_topic is not None else topic_exists(teaching_lang, ui_lang, topic_slug)
-    if any(value is True for value in explicit_values):
-        return exists
-    return exists
+    return not _topic_is_unfinished(raw_topic)
+
+
+def topic_has_public_edition(teaching_lang: str, topic_slug: str) -> bool:
+    return any(
+        topic_is_public(teaching_lang, ui_lang, topic_slug)
+        for ui_lang in SUPPORTED_UI_LANGUAGES
+    )
+
+
+def resolve_public_teaching_topic_media_artifact(
+    teaching_lang: str,
+    topic_slug: str,
+    media_type: str,
+    filename: str,
+) -> Path | None:
+    """Media for the public delivery route: only for public topics of a known teaching language."""
+    if not topic_has_public_edition(teaching_lang, topic_slug):
+        return None
+    return resolve_teaching_topic_media_artifact(teaching_lang, topic_slug, media_type, filename)
 
 
 def resolve_teaching_topic_media_artifact(
@@ -381,6 +424,10 @@ def resolve_teaching_topic_media_artifact(
     filename: str,
 ) -> Path | None:
     if media_type not in _TOPIC_MEDIA_TYPES:
+        return None
+    if not _TEACHING_LANG_PATTERN.fullmatch(teaching_lang or "") or not _TOPIC_SLUG_PATTERN.fullmatch(topic_slug or ""):
+        return None
+    if load_teaching_manifest(teaching_lang) is None:
         return None
 
     normalized_filename = _as_text(filename).replace("\\", "/")
@@ -395,9 +442,11 @@ def resolve_teaching_topic_media_artifact(
     if relative_path.is_absolute() or ".." in relative_path.parts:
         return None
 
-    media_root = (_topic_media_root(teaching_lang, topic_slug) / media_type).resolve()
+    topic_media_root = _topic_media_root(teaching_lang, topic_slug).resolve()
+    media_root = (topic_media_root / media_type).resolve()
     candidate = (media_root / relative_path).resolve()
     try:
+        media_root.relative_to(topic_media_root)
         candidate.relative_to(media_root)
     except ValueError:
         return None
@@ -1329,7 +1378,7 @@ def _topic_blocks(
             continue
         if block_type == "citation":
             if top_level_citation is not None:
-                if os.getenv("FLASK_ENV") == "development":
+                if is_dev_environment():
                     logger.warning(
                         "Ignoring explicit teaching citation block '%s' in %s/%s/%s because top-level citation metadata is present.",
                         block_id,

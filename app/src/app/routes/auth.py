@@ -6,6 +6,7 @@ from urllib.parse import unquote, urlparse
 
 from flask import (
     Blueprint,
+    abort,
     Response,
     current_app,
     flash,
@@ -17,6 +18,7 @@ from flask import (
     session,
     url_for,
 )
+from flask_jwt_extended.exceptions import CSRFError
 from flask_jwt_extended import (
     get_jwt,
     get_jwt_identity,
@@ -30,6 +32,7 @@ from ..auth import Role
 from ..auth import services as auth_services
 from ..extensions import limiter
 from ..i18n import resolve_ui_language, translate
+from ..return_targets import safe_return_target
 from ..protected_navigation import (
     build_admin_panel,
     build_protected_content_header,
@@ -64,17 +67,7 @@ def save_return_url(url: str | None = None) -> None:
 
 
 def _safe_next(raw: str | None) -> str | None:
-    if not raw:
-        return None
-    parsed = urlparse(unquote(raw))
-    if parsed.netloc and parsed.netloc != request.host:
-        return None
-    if parsed.path.startswith(("/auth/login", "/auth/logout", "/login")):
-        return None
-    safe = parsed.path or ""
-    if parsed.query:
-        safe += f"?{parsed.query}"
-    return safe or None
+    return safe_return_target(raw, host=request.host)
 
 
 def _resolve_auth_ui_lang(*candidates: str | None) -> str:
@@ -646,9 +639,17 @@ def login_post() -> Response:
     return response
 
 
-@blueprint.route("/logout_any", methods=["GET", "POST"])
-@blueprint.route("/logout", methods=["GET", "POST"])
+@blueprint.post("/logout_any")
+@blueprint.post("/logout")
 def logout_any() -> Response:
+    # State-changing and CSRF-protected: with a valid session cookie the JWT double-submit check must pass, so a
+    # cross-site form post cannot sign the user out. An expired or malformed cookie still gets cleared.
+    try:
+        verify_jwt_in_request(optional=True, locations=["cookies"])
+    except CSRFError:
+        abort(403)
+    except Exception:  # noqa: BLE001
+        pass
     response = make_response(redirect(url_for("public.landing_page"), 303))
     unset_jwt_cookies(response)
     session.pop(RETURN_URL_SESSION_KEY, None)

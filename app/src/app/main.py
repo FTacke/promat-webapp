@@ -5,19 +5,12 @@ from __future__ import annotations
 import os
 
 from . import create_app
+from .runtime_paths import resolve_environment_name
 from werkzeug.serving import run_simple
 
-
-def _resolve_env() -> str:
-    env_name = os.getenv("FLASK_ENV")
-    if env_name:
-        return env_name
-    env_name = "development"
-    os.environ["FLASK_ENV"] = env_name
-    return env_name
-
-
-app = create_app(_resolve_env())
+# Fail-closed: without PROMAT_ENV / FLASK_ENV / APP_ENV this is production. Local development sets
+# FLASK_ENV=development explicitly (scripts/dev-start.ps1).
+app = create_app(resolve_environment_name())
 
 
 def _resolve_debug() -> bool:

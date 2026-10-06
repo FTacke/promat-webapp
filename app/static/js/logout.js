@@ -3,7 +3,7 @@
  * - Intercepts clicks on elements with data-logout="fetch" and performs
  *   a fetch request to the logout endpoint, then refreshes the UI using
  *   window.location.reload()
- * - Keeps fallback via href for no-JS environments
+ * - Logout is a state-changing POST (CSRF-protected on the server); there is no GET fallback.
  */
 
 (function () {
@@ -13,8 +13,8 @@
   window.__logoutInit = true;
 
   function performLogout(el) {
-    const url = el.dataset.logoutUrl || el.getAttribute('href') || '/auth/logout';
-    const method = (el.dataset.logoutMethod || 'POST').toUpperCase();
+    const url = el.dataset.logoutUrl || '/auth/logout';
+    const method = 'POST';
 
     // Try to obtain a CSRF token helper if available
     const token = (window.authSetup && window.authSetup.getCSRFToken) ? window.authSetup.getCSRFToken() : null;
@@ -25,7 +25,7 @@
       headers: {},
     };
 
-    if (token && method !== 'GET') {
+    if (token) {
       opts.headers['X-CSRF-Token'] = token;
     }
 
@@ -45,23 +45,18 @@
           window.location.href = hxRedirect;
           return;
         }
-        // Regardless of server response (JSON or redirect), navigate to the
-        // site root. This avoids showing raw JSON errors to users after logout
-        // when using fetch-based logout handling.
-        // Prefer server-sent redirect URL when present.
-        if (res.redirected && res.url) {
-          window.location.href = res.url;
+        // A rejected request (for example a failed CSRF check) did not sign the user out: stay on the page state
+        // the server reports instead of pretending the logout worked.
+        if (!res.ok) {
+          window.location.reload();
           return;
         }
-
-        // Otherwise go to index/root to present the logged-out landing page.
-        window.location.href = '/';
+        // Prefer server-sent redirect URL when present, otherwise present the logged-out landing page.
+        window.location.href = res.redirected && res.url ? res.url : '/';
       })
       .catch((err) => {
         console.error('[Logout] Failed', err);
-        // fallback to non-JS behaviour
-        // Force navigation to the logout URL (GET) — ensures we leave protected pages
-        window.location.href = url;
+        window.location.reload();
       });
   }
 
@@ -69,7 +64,6 @@
     const el = e.target.closest && e.target.closest('[data-logout="fetch"]');
     if (!el) return;
 
-    // If it's a GET-only logout anchor, prefer to POST via fetch for safety, but respect data attributes
     e.preventDefault();
     performLogout(el);
   }

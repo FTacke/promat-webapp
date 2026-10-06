@@ -128,6 +128,13 @@ def _deliver_with_configured_backend(message: AccessRequestNotificationMessage) 
 
 
 def deliver_access_request_notification(access_request: AccessRequest) -> bool:
+    """Send the operator notification for a stored access request; never raises.
+
+    The request is already committed when this runs. Any failure (message building because of a missing or invalid
+    mail configuration, the mail backend, the status update) is logged and recorded as ``notification_failed``, so
+    the submitter still gets the confirmation page and the stored request keeps a truthful state.
+    """
+    request_id = str(access_request.id or "")
     if not _mail_enabled():
         current_app.logger.info(
             "Access request notification skipped | request_id=%s | status=%s | mail_delivery=%s",
@@ -137,38 +144,49 @@ def deliver_access_request_notification(access_request: AccessRequest) -> bool:
         )
         return False
 
-    message = build_access_request_notification_message(access_request)
-    sender: Callable[[AccessRequestNotificationMessage], None] | None = current_app.config.get(
-        "AUTH_ACCESS_REQUEST_MAIL_SENDER"
-    )
-
+    reply_to_set = False
     try:
+        message = build_access_request_notification_message(access_request)
+        reply_to_set = bool(message.reply_to)
+        sender: Callable[[AccessRequestNotificationMessage], None] | None = current_app.config.get(
+            "AUTH_ACCESS_REQUEST_MAIL_SENDER"
+        )
         if callable(sender):
             sender(message)
         else:
             _deliver_with_configured_backend(message)
-        _update_request_status(message.request_id, "notified")
-        access_request.status = "notified"
-        current_app.logger.info(
-            "Access request notification sent | request_id=%s | status=%s | email_domain=%s | reply_to_set=%s",
-            access_request.id,
-            access_request.status,
-            _email_domain(access_request.email),
-            bool(message.reply_to),
-        )
-        return True
     except Exception as exc:  # noqa: BLE001
-        try:
-            _update_request_status(message.request_id, "notification_failed")
-            access_request.status = "notification_failed"
-        except Exception:  # noqa: BLE001
-            pass
+        _record_notification_status(access_request, request_id, "notification_failed")
         current_app.logger.warning(
             "Access request notification failed | request_id=%s | status=%s | email_domain=%s | reply_to_set=%s | error_type=%s",
             access_request.id,
             getattr(access_request, "status", "unknown"),
             _email_domain(access_request.email),
-            bool(message.reply_to),
+            reply_to_set,
             type(exc).__name__,
         )
         return False
+
+    # The mail is out. A failing status update must not be reported as a delivery failure.
+    _record_notification_status(access_request, request_id, "notified")
+    current_app.logger.info(
+        "Access request notification sent | request_id=%s | status=%s | email_domain=%s | reply_to_set=%s",
+        access_request.id,
+        access_request.status,
+        _email_domain(access_request.email),
+        reply_to_set,
+    )
+    return True
+
+
+def _record_notification_status(access_request: AccessRequest, request_id: str, status: str) -> None:
+    try:
+        _update_request_status(request_id, status)
+        access_request.status = status
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.error(
+            "Access request status update failed | request_id=%s | target_status=%s | error_type=%s",
+            request_id,
+            status,
+            type(exc).__name__,
+        )

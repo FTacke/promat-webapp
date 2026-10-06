@@ -39,13 +39,23 @@ def _json_error(message: str, status: HTTPStatus) -> tuple[Response, int]:
     return jsonify({"error": message}), status.value
 
 
-def _json_object_payload() -> dict[str, Any]:
+def _json_object_payload(*, required: bool = False) -> dict[str, Any]:
     payload = request.get_json(silent=True)
     if payload is None:
+        if required:
+            raise ResearchSetValidationError("Request body must be a JSON object")
         return {}
     if not isinstance(payload, dict):
         raise ResearchSetValidationError("Request body must be a JSON object")
     return payload
+
+
+def _required_json_list(payload: dict[str, Any], field_name: str) -> list[Any]:
+    """A replace-all route must receive its list explicitly; a missing field must never silently clear the set."""
+    value = payload.get(field_name)
+    if not isinstance(value, list):
+        raise ResearchSetValidationError(f"{field_name} is required and must be a JSON array")
+    return value
 
 
 def _current_owner_user_id() -> str:
@@ -232,11 +242,11 @@ def delete_set(set_id: str) -> tuple[Response, int]:
 @jwt_required()
 def put_set_items(set_id: str) -> tuple[Response, int]:
     try:
-        payload = _json_object_payload()
+        payload = _json_object_payload(required=True)
         record = replace_set_items(
             owner_user_id=_current_owner_user_id(),
             set_id=set_id,
-            items=payload.get("items", []),
+            items=_required_json_list(payload, "items"),
         )
     except ResearchSetValidationError as exc:
         return _json_error(str(exc), HTTPStatus.BAD_REQUEST)
@@ -251,11 +261,11 @@ def put_set_items(set_id: str) -> tuple[Response, int]:
 @jwt_required()
 def put_set_sessions(set_id: str) -> tuple[Response, int]:
     try:
-        payload = _json_object_payload()
+        payload = _json_object_payload(required=True)
         record = replace_set_sessions(
             owner_user_id=_current_owner_user_id(),
             set_id=set_id,
-            sessions=payload.get("sessions", []),
+            sessions=_required_json_list(payload, "sessions"),
         )
     except ResearchSetValidationError as exc:
         return _json_error(str(exc), HTTPStatus.BAD_REQUEST)

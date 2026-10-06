@@ -43,7 +43,7 @@ MAILTO=<operator-mail>
 15 2 * * * cd /srv/webapps/promat/app && scripts/backup_prod_db.sh >> /srv/webapps/promat/logs/backup.log 2>&1
 ```
 
-Vor einem Deployment mit neuen SQL-Migrationen zusätzlich ein manuelles Backup erstellen. Ein Backup, das nur auf dem Produktionsserver liegt, schützt nicht vor Verlust des Servers: Dump, `.sha256` und `.counts.tsv` zusätzlich an einen vom Operator gewählten Ort außerhalb des Servers kopieren (zulässig nur für Speicher, der personenbezogene Daten aufnehmen darf).
+Jedes Deployment (`scripts/deploy_prod.sh`) legt vor den Migrationen automatisch ein Backup mit diesem Skript an und bricht ab, wenn es fehlschlägt (nur eine Datenbank ohne Auth-Schema überspringt es). Der Zeitplan oben bleibt trotzdem nötig; das Deployment-Backup ersetzt ihn nicht. Ein Backup, das nur auf dem Produktionsserver liegt, schützt nicht vor Verlust des Servers: Dump, `.sha256` und `.counts.tsv` zusätzlich an einen vom Operator gewählten Ort außerhalb des Servers kopieren (zulässig nur für Speicher, der personenbezogene Daten aufnehmen darf).
 
 ## Schritte: Restore üben und prüfen (ungefährlich)
 

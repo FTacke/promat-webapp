@@ -1772,7 +1772,34 @@ def test_research_design_page_keeps_sidebar_entries_unmuted_for_authenticated_us
     assert "pm-nav__item--muted" not in html
 
 
-def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> None:
+@pytest.fixture
+def released_teaching_content(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """The real content tree with every draft scaffold released (draft markers and the placeholder author removed).
+
+    The repository keeps its scaffolds unpublished (see test_web_hardening.py); the hub/topic *rendering* tests
+    below need pages in the available state, so they run against this released copy.
+    """
+    import shutil
+
+    import app.teaching_content as teaching_content
+
+    root = tmp_path / "teaching_released"
+    shutil.copytree(TEST_REPO_ROOT / "content" / "teaching", root)
+    for locale_file in root.glob("*/*/??.yaml"):
+        text = locale_file.read_text(encoding="utf-8")
+        if not re.search(r"^status: draft$", text, flags=re.M):
+            continue
+        text = re.sub(r"^status: draft\n", "", text, flags=re.M)
+        text = re.sub(r"^  status: draft\n", "", text, flags=re.M)
+        text = text.replace("    - NN\n", "    - Test Autor\n")
+        locale_file.write_text(text, encoding="utf-8")
+    monkeypatch.setattr(teaching_content, "TEACHING_CONTENT_ROOT", root)
+    teaching_content.clear_teaching_content_caches()
+    yield root
+    teaching_content.clear_teaching_content_caches()
+
+
+def test_teaching_overview_keeps_language_selection_label(url_app: Flask, released_teaching_content: Path) -> None:
     client = url_app.test_client()
 
     response = client.get("/de/teaching")
@@ -1828,7 +1855,7 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask) -> Non
     assert '>Deutsch<' not in drawer_html
 
 
-def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Flask) -> None:
+def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Flask, released_teaching_content: Path) -> None:
     client = url_app.test_client()
 
     response = client.get("/de/teaching/spanish")
@@ -1926,7 +1953,7 @@ def test_teaching_french_hub_uses_current_language_drawer_context(url_app: Flask
     assert 'Die Liaison' not in drawer_html
 
 
-def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask) -> None:
+def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask, released_teaching_content: Path) -> None:
     client = url_app.test_client()
 
     response = client.get("/en/teaching/spanish")
@@ -2014,7 +2041,7 @@ def test_teaching_topic_missing_target_edition_redirects_to_hub(url_app: Flask) 
     assert response.headers["Location"].endswith("/en/teaching/spanish")
 
 
-def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
+def test_teaching_topic_renders_public_content_blocks(url_app: Flask, released_teaching_content: Path) -> None:
     client = url_app.test_client()
 
     response = client.get("/de/teaching/spanish/r-am-silbenende")
@@ -2046,7 +2073,7 @@ def test_teaching_topic_renders_public_content_blocks(url_app: Flask) -> None:
     assert 'class="pm-teaching-topic-meta__authors"' in html
     assert 'class="pm-teaching-topic-meta__details"' in html
     assert 'Autor:innen:' in html
-    assert 'NN' in html
+    assert 'Test Autor' in html
     assert 'Status:' in html
     assert 'In Vorbereitung' in html
     assert 'Peer Review:' not in html
@@ -2205,8 +2232,8 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert '<code>z</code>' in html
     assert '<code>ci</code>' in html
     assert 'werden hier wie' in html
-    assert 'href="https://www.pronunciation-matters.de"' in html
-    assert '>pronunciation-matters.de<' in html
+    assert 'href="https://pronunciation-matters.de/de/teaching/spanish/which-pronunciation"' in html
+    assert '>pronunciation-matters.de/de/teaching/spanish/which-pronunciation<' in html
     assert 'audio-section--contrast' in html
     assert 'audio-section--examples' in html
     assert '<code>z/c</code>' in html
@@ -2300,7 +2327,7 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'Editionen' not in html
 
 
-def test_teaching_english_topic_uses_natural_hub_backlink(url_app: Flask) -> None:
+def test_teaching_english_topic_uses_natural_hub_backlink(url_app: Flask, released_teaching_content: Path) -> None:
     client = url_app.test_client()
 
     response = client.get("/en/teaching/spanish/r-am-silbenende")
@@ -2348,7 +2375,8 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'For those who want to know more' not in html
     assert 'Continue in this hub' not in html
     assert '<em>Pronunciation Matters</em>' in html
-    assert 'href="https://www.pronunciation-matters.de"' in html
+    assert 'href="https://pronunciation-matters.de/en/teaching/spanish/which-pronunciation"' in html
+    assert 'href="https://www.pronunciation-matters.de"' not in html
     assert 'aria-label="Copy citation"' in html
     assert 'data-admonition-toggle' not in html
     assert 'pm-admonition__chevron' not in html

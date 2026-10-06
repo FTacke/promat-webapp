@@ -18,6 +18,22 @@ ROOT = Path(__file__).resolve().parents[1]
 MIGRATIONS_DIR = ROOT / "migrations"
 
 
+_DEV_LIKE_ENVIRONMENTS = {"development", "dev", "testing", "test"}
+
+
+def _environment_allows_reset() -> bool:
+    """`--reset` drops every auth/research table. Only an explicitly dev-like environment may do that.
+
+    Same precedence as app.runtime_paths.resolve_environment_name (kept inline so this script does not import the
+    app package): PROMAT_ENV, FLASK_ENV, APP_ENV; nothing set means production, which refuses.
+    """
+    for name in ("PROMAT_ENV", "FLASK_ENV", "APP_ENV"):
+        value = (os.getenv(name) or "").strip().lower()
+        if value:
+            return value in _DEV_LIKE_ENVIRONMENTS
+    return False
+
+
 def _postgres_migration_files() -> tuple[Path, ...]:
     migrations: list[Path] = []
     for path in sorted(MIGRATIONS_DIR.glob("*.sql")):
@@ -38,6 +54,14 @@ def _read_sql(path: Path) -> str:
 def apply_postgres_migration(reset: bool = False) -> None:
     """Apply PostgreSQL migration using AUTH_DATABASE_URL."""
     import sys
+
+    if reset and not _environment_allows_reset():
+        print(
+            "ERROR: --reset drops all auth and research tables and is refused outside an explicitly "
+            "development/testing environment (PROMAT_ENV / FLASK_ENV / APP_ENV).",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     try:
         import psycopg2
@@ -161,7 +185,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="DROP existing tables before applying migration (dev-only).",
+        help="DROP existing tables before applying migration (refused unless the environment is development/testing).",
     )
     args = parser.parse_args()
 

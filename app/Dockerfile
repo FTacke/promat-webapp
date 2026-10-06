@@ -13,4 +13,4 @@ COPY scripts/research_data_intake/apply_prod_db_payload.py ./scripts/research_da
 ENV FLASK_ENV=production
 EXPOSE 5000
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:5000 --workers ${GUNICORN_WORKERS:-2} --timeout ${GUNICORN_TIMEOUT:-60} --access-logfile - --error-logfile - --worker-tmp-dir /dev/shm src.app.main:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "src.app.main:app"]

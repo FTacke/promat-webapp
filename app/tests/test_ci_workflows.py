@@ -115,3 +115,12 @@ def test_full_suite_is_not_a_separate_manual_only_workflow() -> None:
     assert not (WORKFLOWS / "full-test.yml").exists()
     release_candidate = _load("release-candidate-check.yml")
     assert release_candidate["jobs"]["release-gate"]["uses"] == "./.github/workflows/ci.yml"
+
+
+def test_python_job_provides_postgres_so_the_postgres_tests_cannot_be_skipped_in_the_gate() -> None:
+    job = _load("ci.yml")["jobs"]["python"]
+    pytest_step = next(step for step in job["steps"] if "pytest" in str(step.get("run", "")))
+
+    assert job["services"]["postgres"]["image"].startswith("postgres:15")
+    assert pytest_step["env"]["PROMAT_TEST_POSTGRES_URL"].startswith("postgresql+psycopg2://")
+    assert "127.0.0.1:5432" in pytest_step["env"]["PROMAT_TEST_POSTGRES_URL"]

@@ -5,7 +5,6 @@ from __future__ import annotations
 import functools
 import json
 import re
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
@@ -73,10 +72,6 @@ class ResolvedPlayerRuntimeState:
 
 def _t(ui_lang: str, key: str, **kwargs: object) -> str:
     return translate(ui_lang, key, **kwargs)
-
-
-def _profile_duration_ms(started_at: float) -> float:
-    return (time.perf_counter() - started_at) * 1000.0
 
 
 def _normalize_text(value: str | None) -> str | None:
@@ -1220,10 +1215,8 @@ def resolve_player_runtime_state(
     focus_item: str | None,
     focus_segment: str | None,
     render_mode: str | None,
-    profile: dict[str, float] | None = None,
     load_owned_set_fn=load_owned_set,
 ) -> ResolvedPlayerRuntimeState:
-    set_context_started_at = time.perf_counter()
     set_context = resolve_player_set_context(
         language_slug,
         task_key,
@@ -1233,21 +1226,13 @@ def resolve_player_runtime_state(
         owner_user_id=owner_user_id,
         load_owned_set_fn=load_owned_set_fn,
     )
-    if profile is not None:
-        profile["set_context_ms"] = _profile_duration_ms(set_context_started_at)
     effective_set_id = set_context["requested_set_id"] if set_context is not None else set_id
     effective_preset_id = set_context["effective_preset_id"] if set_context is not None else preset_id
     active_selector_preset_id = effective_preset_id if effective_set_id is None else None
 
-    task_bundle_started_at = time.perf_counter()
     task_bundle = load_task_bundle(session, task_key) if task_is_productive_in_player(task_key) else None
-    if profile is not None:
-        profile["task_bundle_ms"] = _profile_duration_ms(task_bundle_started_at)
 
-    ready_sessions_started_at = time.perf_counter()
     ready_sessions, ready_bundles = load_task_ready_sessions(language_slug, task_key) if task_is_productive_in_player(task_key) else ([], {})
-    if profile is not None:
-        profile["ready_sessions_ms"] = _profile_duration_ms(ready_sessions_started_at)
 
     compare_session = None
     compare_bundle = None
@@ -1284,7 +1269,6 @@ def resolve_player_runtime_state(
     compare_rows: list[dict[str, Any]] = []
     visible_focus_item_id = None
     visible_focus_segment_id = None
-    player_items_started_at = time.perf_counter()
     if task_bundle is not None and player_source is not None:
         if task_key == "interview":
             primary_items = build_player_interview_segments(
@@ -1317,8 +1301,6 @@ def resolve_player_runtime_state(
                 compare_rows = build_player_compare_rows(primary_items, secondary_items, ui_lang)
             if isinstance(focus_item, str) and focus_item and any(item["item_id"] == focus_item for item in primary_items):
                 visible_focus_item_id = focus_item
-    if profile is not None:
-        profile["player_items_ms"] = _profile_duration_ms(player_items_started_at)
 
     return ResolvedPlayerRuntimeState(
         set_context=set_context,

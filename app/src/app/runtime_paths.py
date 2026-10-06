@@ -10,9 +10,20 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+def resolve_environment_name(explicit: str | None = None) -> str:
+    """The one environment-name resolution used by config, runtime paths and the entry point.
+
+    Precedence: explicit argument, ``PROMAT_ENV``, ``FLASK_ENV``, ``APP_ENV``. When nothing is set the answer is
+    ``production`` (fail-closed): a missing or empty variable never silently selects a debug configuration.
+    """
+    for candidate in (explicit, os.getenv("PROMAT_ENV"), os.getenv("FLASK_ENV"), os.getenv("APP_ENV")):
+        if candidate and candidate.strip():
+            return candidate.strip().lower()
+    return "production"
+
+
 def is_dev_environment() -> bool:
-    env_name = (os.getenv("PROMAT_ENV") or os.getenv("FLASK_ENV") or os.getenv("APP_ENV") or "production").lower()
-    return env_name in ("development", "dev")
+    return resolve_environment_name() in ("development", "dev")
 
 
 def project_root() -> Path:

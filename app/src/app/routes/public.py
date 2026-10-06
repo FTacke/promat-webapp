@@ -2,24 +2,24 @@
 
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from typing import Any
 
 import re
 import time
-from urllib.parse import unquote, urlparse
+import uuid
 
 from flask import Blueprint, abort, current_app, g, jsonify, make_response, redirect, render_template, request, send_file, session, url_for
 from itsdangerous import BadSignature, URLSafeSerializer
-from sqlalchemy import event, inspect, text
+from sqlalchemy import inspect, text
 
 from ..auth import Role
 from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
 from ..extensions import limiter
 from ..i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, resolve_request_ui_language
+from ..return_targets import safe_return_target
 from ..research_capabilities import get_research_page_surface_mode
 from ..research_access import requires_research_auth
 from ..research_phenomena_views import (
@@ -36,7 +36,7 @@ from ..research_views import (
     resolve_player_item_download,
 )
 from ..services.access_request_notifications import deliver_access_request_notification
-from ..teaching_content import resolve_teaching_topic_media_artifact, resolve_topic_route_target
+from ..teaching_content import resolve_public_teaching_topic_media_artifact, resolve_topic_route_target
 from ..extensions.sqlalchemy_ext import get_engine
 from .public_content import (
     PROJECT_PAGE_ORDER,
@@ -71,6 +71,8 @@ blueprint = Blueprint("public", __name__)
 _ACCESS_REQUEST_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _ACCESS_REQUEST_HONEYPOT_FIELD = "website"
 _ACCESS_REQUEST_FORM_TOKEN_FIELD = "access_request_form_token"
+_ACCESS_REQUEST_NONCES_SESSION_KEY = "access_request_form_nonces"
+_ACCESS_REQUEST_MAX_OPEN_NONCES = 8
 _ACCESS_REQUEST_MAX_LENGTHS = {
     "first_name": 160,
     "last_name": 160,
@@ -101,17 +103,7 @@ def _request_next_value() -> str:
 
 
 def _safe_next_value(raw: str | None) -> str | None:
-    if not raw:
-        return None
-    parsed = urlparse(unquote(raw))
-    if parsed.netloc and parsed.netloc != request.host:
-        return None
-    if parsed.path.startswith(("/auth/login", "/auth/logout", "/login", "/access-request")):
-        return None
-    safe = parsed.path or ""
-    if parsed.query:
-        safe += f"?{parsed.query}"
-    return safe or None
+    return safe_return_target(raw, host=request.host)
 
 
 def _research_login_redirect():
@@ -177,12 +169,27 @@ def _access_request_form_serializer() -> URLSafeSerializer:
 
 
 def _build_access_request_form_token(*, next_url: str, ui_lang: str, issued_at: float | None = None) -> str:
+    # The nonce makes the token single-use: it is remembered in the visitor's session when the form is rendered and
+    # consumed by the first accepted submission, so a replayed or double-posted form creates no second request.
+    nonce = uuid.uuid4().hex
+    open_nonces = [value for value in session.get(_ACCESS_REQUEST_NONCES_SESSION_KEY, []) if isinstance(value, str)]
+    session[_ACCESS_REQUEST_NONCES_SESSION_KEY] = [*open_nonces, nonce][-_ACCESS_REQUEST_MAX_OPEN_NONCES:]
     payload = {
         "issued_at": float(issued_at if issued_at is not None else time.time()),
         "next": next_url,
         "ui_lang": ui_lang,
+        "nonce": nonce,
     }
     return _access_request_form_serializer().dumps(payload)
+
+
+def _consume_access_request_nonce(nonce: Any) -> bool:
+    open_nonces = [value for value in session.get(_ACCESS_REQUEST_NONCES_SESSION_KEY, []) if isinstance(value, str)]
+    if not isinstance(nonce, str) or nonce not in open_nonces:
+        return False
+    open_nonces.remove(nonce)
+    session[_ACCESS_REQUEST_NONCES_SESSION_KEY] = open_nonces
+    return True
 
 
 def _resolve_access_request_form_token(raw_token: str | None) -> dict[str, Any] | None:
@@ -235,6 +242,9 @@ def _access_request_submission_is_suspicious(*, ui_lang: str, next_url: str, for
         return True
     if token_age_seconds > max_age_seconds:
         current_app.logger.info("Access request blocked by expired form token | ui_lang=%s", ui_lang)
+        return True
+    if not _consume_access_request_nonce(token_payload.get("nonce")):
+        current_app.logger.info("Access request blocked by already used or unknown form token | ui_lang=%s", ui_lang)
         return True
 
     return False
@@ -349,6 +359,7 @@ def _require_research_route_access(*, page_slug: str | None = None, detail_route
     if not requires_research_auth(page_slug=page_slug, detail_route=detail_route):
         return None
     if getattr(g, "user_id", None):
+        g.promat_protected_response = True
         return None
     return _research_login_redirect()
 
@@ -358,10 +369,6 @@ def _require_ui_lang(ui_lang: str) -> str:
     if resolved is None:
         abort(404)
     return resolved
-
-
-def _player_profile_requested() -> bool:
-    return request.args.get("_profile") == "1" or request.headers.get("X-Promat-Profile") == "1"
 
 
 def _player_prewarm_requested() -> bool:
@@ -794,29 +801,61 @@ def health_check():
 
 
 def _readiness_check_path(path: Path, *, mode: str) -> dict[str, Any]:
+    """Non-mutating directory check; the response carries only a short code, details go to the server log."""
     try:
         if not path.exists():
             return {"ok": False, "error": "missing"}
         if not path.is_dir():
             return {"ok": False, "error": "not_a_directory"}
         if mode == "read":
-            try:
-                next(path.iterdir(), None)
-            except StopIteration:
-                pass
+            next(path.iterdir(), None)
             return {"ok": True, "error": None}
         if mode == "write":
-            probe = path / ".promat-ready-probe"
-            probe.write_text("ok", encoding="utf-8")
-            probe.unlink(missing_ok=True)
+            if not os.access(path, os.W_OK):
+                return {"ok": False, "error": "not_writable"}
             return {"ok": True, "error": None}
-        return {"ok": False, "error": f"unknown_mode:{mode}"}
+        return {"ok": False, "error": "unknown_mode"}
     except OSError as exc:
-        return {"ok": False, "error": f"{type(exc).__name__}: {exc.strerror or exc}"}
+        current_app.logger.warning("Readiness check failed | path_check=%s | error_type=%s", mode, type(exc).__name__)
+        return {"ok": False, "error": "unavailable"}
 
 
 def _readiness_payload(status: str, checks: dict[str, dict[str, Any]], status_code: int):
     return jsonify({"status": status, "service": "promat-web", "checks": checks}), status_code
+
+
+def _readiness_check_auth_db() -> dict[str, Any]:
+    try:
+        engine = get_engine()
+        if engine is None:
+            raise RuntimeError("Auth engine not initialized")
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        if not inspect(engine).has_table("users"):
+            raise RuntimeError("required table 'users' is missing")
+        return {"ok": True, "error": None}
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.warning("Readiness check failed | check=auth_db | error_type=%s | detail=%s", type(exc).__name__, exc)
+        return {"ok": False, "error": "unavailable"}
+
+
+def _readiness_check_rate_limit_backend() -> dict[str, Any]:
+    rate_limit_uri = str(current_app.config.get("RATE_LIMIT_STORAGE_URI") or "")
+    if not rate_limit_uri:
+        return {"ok": False, "error": "not_configured"}
+    if rate_limit_uri.lower() == "memory://" and current_app.config.get("FLASK_ENV") not in {"development", "dev", "testing", "test"}:
+        return {"ok": False, "error": "memory_backend_not_allowed"}
+    # Ask the real backend (Redis PING). Rate limiting fails open when it is down, so this is the only place the
+    # outage becomes visible to the orchestration.
+    try:
+        healthy = bool(limiter.storage.check())
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.warning("Readiness check failed | check=rate_limit_backend | error_type=%s", type(exc).__name__)
+        return {"ok": False, "error": "unavailable"}
+    if not healthy:
+        current_app.logger.warning("Readiness check failed | check=rate_limit_backend | detail=storage did not answer")
+        return {"ok": False, "error": "unavailable"}
+    return {"ok": True, "error": None}
 
 
 @blueprint.get("/ready")
@@ -824,39 +863,14 @@ def _readiness_payload(status: str, checks: dict[str, dict[str, Any]], status_co
 def readiness_check():
     checks: dict[str, dict[str, Any]] = {
         "flask": {"ok": True, "error": None},
-        "auth_db": {"ok": False, "error": None},
-        "data_root": {"ok": False, "error": None},
-        "logs_dir": {"ok": False, "error": None},
-        "rate_limit_backend": {"ok": False, "error": None},
+        "auth_db": _readiness_check_auth_db(),
+        "data_root": _readiness_check_path(Path(current_app.config["DATA_ROOT"]), mode="read"),
+        "logs_dir": _readiness_check_path(Path(current_app.config["LOGS_DIR"]), mode="write"),
+        "rate_limit_backend": _readiness_check_rate_limit_backend(),
     }
 
-    try:
-        engine = get_engine()
-        if engine is None:
-            raise RuntimeError("Auth engine not initialized")
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-        inspector = inspect(engine)
-        if not inspector.has_table("users"):
-            raise RuntimeError("required table 'users' is missing")
-        checks["auth_db"] = {"ok": True, "error": None}
-    except Exception as exc:  # noqa: BLE001
-        checks["auth_db"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
-
-    checks["data_root"] = _readiness_check_path(Path(current_app.config["DATA_ROOT"]), mode="read")
-    checks["logs_dir"] = _readiness_check_path(Path(current_app.config["LOGS_DIR"]), mode="write")
-
-    rate_limit_uri = str(current_app.config.get("RATE_LIMIT_STORAGE_URI") or "")
-    if not rate_limit_uri:
-        checks["rate_limit_backend"] = {"ok": False, "error": "RATE_LIMIT_STORAGE_URI is not configured"}
-    elif rate_limit_uri.lower() == "memory://" and current_app.config.get("FLASK_ENV") not in {"development", "dev", "testing", "test"}:
-        checks["rate_limit_backend"] = {"ok": False, "error": "RATE_LIMIT_STORAGE_URI must not be memory:// in production"}
-    else:
-        checks["rate_limit_backend"] = {"ok": True, "error": None}
-
     if os.getenv("PROMAT_REQUIRE_RUNTIME_CONFIG", "").lower() in {"1", "true", "yes", "on"}:
-        config_root = Path(current_app.config["CONFIG_ROOT"])
-        checks["config_root"] = _readiness_check_path(config_root, mode="read")
+        checks["config_root"] = _readiness_check_path(Path(current_app.config["CONFIG_ROOT"]), mode="read")
 
     if all(check["ok"] for check in checks.values()):
         return _readiness_payload("ready", checks, 200)
@@ -1134,48 +1148,15 @@ def research_speaker_profile(ui_lang: str, language_slug: str, person_id: str):
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>")
 def research_player(ui_lang: str, language_slug: str, session_id: str, task: str):
-    profile_requested = _player_profile_requested()
     prewarm_requested = _player_prewarm_requested()
-    route_started_at = time.perf_counter()
-    access_started_at = time.perf_counter()
-    db_metrics = {"count": 0, "duration_ms": 0.0}
-    player_profile: dict[str, float] = {}
-    engine = None
-    before_cursor_execute = None
-    after_cursor_execute = None
-
-    if profile_requested:
-        engine = get_engine()
-
-        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-            del cursor, statement, parameters, executemany
-            context._promat_started_at = time.perf_counter()
-
-        def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-            del conn, cursor, statement, parameters, executemany
-            started_at = getattr(context, "_promat_started_at", None)
-            if started_at is None:
-                return
-            db_metrics["count"] += 1
-            db_metrics["duration_ms"] += (time.perf_counter() - started_at) * 1000.0
-
-        event.listen(engine, "before_cursor_execute", before_cursor_execute)
-        event.listen(engine, "after_cursor_execute", after_cursor_execute)
 
     ui_lang = _require_ui_lang(ui_lang)
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
-        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
-            event.remove(engine, "before_cursor_execute", before_cursor_execute)
-            event.remove(engine, "after_cursor_execute", after_cursor_execute)
         abort(404)
 
     access_response = _require_research_route_access(detail_route="player")
-    access_ms = (time.perf_counter() - access_started_at) * 1000.0
     if access_response is not None:
-        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
-            event.remove(engine, "before_cursor_execute", before_cursor_execute)
-            event.remove(engine, "after_cursor_execute", after_cursor_execute)
         return access_response
 
     language = get_language(canonical_language_slug)
@@ -1187,7 +1168,6 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
     focus_item = request.args.get("focus_item")
     focus_segment = request.args.get("focus_segment")
     render_mode = request.args.get("render_mode")
-    build_started_at = time.perf_counter()
     page = build_player_page(
         ui_lang,
         canonical_language_slug,
@@ -1201,46 +1181,13 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
         focus_item,
         focus_segment,
         render_mode,
-        profile=player_profile if profile_requested else None,
     )
-    build_ms = (time.perf_counter() - build_started_at) * 1000.0
     if page is None or language is None:
-        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
-            event.remove(engine, "before_cursor_execute", before_cursor_execute)
-            event.remove(engine, "after_cursor_execute", after_cursor_execute)
         abort(404)
 
     if prewarm_requested:
-        if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
-            event.remove(engine, "before_cursor_execute", before_cursor_execute)
-            event.remove(engine, "after_cursor_execute", after_cursor_execute)
-        route_ms = (time.perf_counter() - route_started_at) * 1000.0
         response = make_response("", 204)
         response.headers["X-Promat-Player-Prewarm"] = "1"
-        if profile_requested:
-            response.headers["X-Promat-Player-Profile"] = json.dumps(
-                {
-                    "access_ms": round(access_ms, 3),
-                    "build_ms": round(build_ms, 3),
-                    "render_ms": 0.0,
-                    "route_ms": round(route_ms, 3),
-                    "db_query_count": db_metrics["count"],
-                    "db_duration_ms": round(db_metrics["duration_ms"], 3),
-                    **{key: round(value, 3) for key, value in player_profile.items()},
-                },
-                ensure_ascii=True,
-                separators=(",", ":"),
-            )
-            response.headers["Server-Timing"] = ", ".join(
-                [
-                    f"access;dur={access_ms:.3f}",
-                    f"build;dur={build_ms:.3f}",
-                    "render;dur=0.000",
-                    f"route;dur={route_ms:.3f}",
-                    f"db;dur={db_metrics['duration_ms']:.3f};desc=queries:{db_metrics['count']}",
-                    *(f"runtime-{key.removesuffix('_ms')};dur={value:.3f}" for key, value in player_profile.items()),
-                ]
-            )
         return response
 
     language_label = get_language_label(language, ui_lang)
@@ -1270,43 +1217,7 @@ def research_player(ui_lang: str, language_slug: str, session_id: str, task: str
         context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
-    render_started_at = time.perf_counter()
-    html = _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
-    render_ms = (time.perf_counter() - render_started_at) * 1000.0
-
-    if profile_requested and engine is not None and before_cursor_execute is not None and after_cursor_execute is not None:
-        event.remove(engine, "before_cursor_execute", before_cursor_execute)
-        event.remove(engine, "after_cursor_execute", after_cursor_execute)
-
-    if not profile_requested:
-        return html
-
-    route_ms = (time.perf_counter() - route_started_at) * 1000.0
-    response = make_response(html)
-    response.headers["X-Promat-Player-Profile"] = json.dumps(
-        {
-            "access_ms": round(access_ms, 3),
-            "build_ms": round(build_ms, 3),
-            "render_ms": round(render_ms, 3),
-            "route_ms": round(route_ms, 3),
-            "db_query_count": db_metrics["count"],
-            "db_duration_ms": round(db_metrics["duration_ms"], 3),
-            **{key: round(value, 3) for key, value in player_profile.items()},
-        },
-        ensure_ascii=True,
-        separators=(",", ":"),
-    )
-    response.headers["Server-Timing"] = ", ".join(
-        [
-            f"access;dur={access_ms:.3f}",
-            f"build;dur={build_ms:.3f}",
-            f"render;dur={render_ms:.3f}",
-            f"route;dur={route_ms:.3f}",
-            f"db;dur={db_metrics['duration_ms']:.3f};desc=queries:{db_metrics['count']}",
-            *(f"runtime-{key.removesuffix('_ms')};dur={value:.3f}" for key, value in player_profile.items()),
-        ]
-    )
-    return response
+    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
 
 
 def _player_download_filename(person_id: str, task_key: str, item_id: str, download_label: str) -> str:
@@ -1390,7 +1301,7 @@ def teaching_home(ui_lang: str):
 
 @blueprint.get("/teaching-media/<teaching_lang>/<topic_slug>/<media_type>/<path:filename>")
 def teaching_topic_media(teaching_lang: str, topic_slug: str, media_type: str, filename: str):
-    asset_file = resolve_teaching_topic_media_artifact(teaching_lang, topic_slug, media_type, filename)
+    asset_file = resolve_public_teaching_topic_media_artifact(teaching_lang, topic_slug, media_type, filename)
     if asset_file is None:
         abort(404)
 

@@ -16,9 +16,8 @@ import { initTurboIntegration } from "./turbo-integration.js";
 // Import viewport detection
 import "./viewport.js";
 
-// Import and initialize scroll state and page title
+// Import and initialize scroll state
 import { initScrollState } from "./scroll-state.js";
-import { initPageTitle } from "./page-title.js";
 
 /**
  * Initialize MD3 Navigation System
@@ -39,8 +38,7 @@ export function initMD3Navigation() {
   // Initialize Turbo integration for persistent navigation
   initTurboIntegration();
 
-  // Initialize adaptive title and scroll state (framework-agnostisch)
-  initPageTitle();
+  // Initialize scroll state (framework-agnostisch)
   initScrollState();
 
   // Log current window size (dev only)

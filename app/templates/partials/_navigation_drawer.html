@@ -108,7 +108,7 @@
             {% if role_value == 'admin' %}
             <a href="{{ url_for('admin.users_page', ui_lang=current_ui_lang) }}" class="promat-panel__utility-link">{{ t('shell.panel.admin') }}</a>
             {% endif %}
-            <a href="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"
+            <a href="#"
                data-logout="fetch"
                data-logout-method="POST"
                data-logout-url="{{ url_for('auth.logout_any', ui_lang=current_ui_lang) }}"

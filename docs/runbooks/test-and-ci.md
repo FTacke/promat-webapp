@@ -36,7 +36,8 @@ Der kanonische lokale Testlauf, die Bedeutung der CI-Jobs und der Umgang mit ope
 3. Qualitäts-Checks im Repo-Root: `python -m ruff check .`, `python -m compileall -q app scripts`, `python scripts/ci_governance_checks.py`, `python scripts/validate_teaching_content.py`, `shellcheck --severity=warning scripts/*.sh`
 4. Vollständige Python-Suite im Ordner `app/`: `python -m pytest tests -q`
 5. JavaScript-Tests im Repo-Root: `node --test app/tests/js/*.test.mjs`
-6. Optional Image und Backup-Rehearsal: `docker build -f app/Dockerfile -t promat-ci-image .` sowie `PYTHON=python scripts/ci_backup_restore_smoke.sh`
+6. Optional Image und Backup-Rehearsal: `docker build -f app/Dockerfile -t promat-ci-image .` sowie `PYTHON=python scripts/ci_backup_restore_smoke.sh`. Der Image-Smoke läuft im gebauten Image: `docker run --rm -i -e PROMAT_RUNTIME_ROOT=/app -e PROMAT_PUBLIC_ROOT=/tmp/public promat-ci-image python - < scripts/ci_image_smoke.py` (Rechtsseiten, öffentliche Seiten, keine öffentlichen Entwürfe, Login-Redirect geschützter Seiten über die echte `create_app`-Komposition).
+7. Optional PostgreSQL-Tests (Marker `postgres`, echte Migrationen gegen eine Wegwerf-Datenbank): einen Wegwerf-Server starten, zum Beispiel `docker run -d --name promat-test-pg -e POSTGRES_PASSWORD=pw -p 127.0.0.1:55432:5432 postgres:15`, dann `PROMAT_TEST_POSTGRES_URL=postgresql+psycopg2://postgres:pw@127.0.0.1:55432/postgres python -m pytest tests/test_postgres_integration.py -q` im Ordner `app/`. Ohne die Variable werden diese Tests übersprungen; in CI ist sie gesetzt (Service-Container im `python`-Job). Nicht gegen die lokale Dev-Datenbank (`promat_auth_db`) richten.
 
 Die Suite ist die gesamte `pytest`-Konfiguration aus `app/pyproject.toml`. Es gibt keine Teilmenge als „kanonisch“; `-k`, `::` oder `--deselect` im CI-Schritt sind durch `app/tests/test_ci_workflows.py` verboten.
 
@@ -51,9 +52,9 @@ Die Suite ist die gesamte `pytest`-Konfiguration aus `app/pyproject.toml`. Es gi
 
 | Job | Prüft |
 |---|---|
-| `python` | ruff, compileall, Governance, Teaching-Validierung, shellcheck, gesamte pytest-Suite |
+| `python` | ruff, compileall, Governance, Teaching-Validierung, shellcheck, gesamte pytest-Suite (mit PostgreSQL-Service-Container für die `postgres`-Tests) |
 | `javascript` | `node --test` |
-| `docker` | Compose-Config, Image-Build, Laufzeit-Assets im gebauten Image (`scripts/ci_image_smoke.py`) |
+| `docker` | Compose-Config, Image-Build, Laufzeit-Assets und HTTP-Smoke im gebauten Image (`scripts/ci_image_smoke.py`: Rechtsseiten, öffentliche Seiten, Entwürfe nicht öffentlich, Login-Redirect) |
 | `backup-restore` | echte Migrationen, Backup, verifizierter Restore in Wegwerf-Postgres |
 | `release-gate` | Sammelstatus; hängt von allen anderen Jobs ab |
 

@@ -26,6 +26,8 @@ SET_LIFECYCLES: tuple[str, ...] = ("draft", "saved", "archived")
 PRIVATE_SET_LIFECYCLES: tuple[str, ...] = ("draft", "saved")
 CURATED_SET_LIFECYCLES: tuple[str, ...] = ("saved", "archived")
 SET_ITEM_TASKS: tuple[str, ...] = set_filter_task_keys()
+MAX_SET_LABEL_LENGTH = 200
+MAX_SET_NOTE_LENGTH = 4000
 COMPARISON_VIEW_TASKS: tuple[str, ...] = comparison_view_task_keys()
 RESEARCH_CURATED_TEST_SET_ID = "00000000-0000-0000-0000-000000000601"
 UNSET = object()
@@ -340,6 +342,8 @@ def _normalize_optional_label(label: Any) -> str | None:
     if not isinstance(label, str):
         raise ResearchSetValidationError("label must be a string when provided")
     normalized = label.strip()
+    if len(normalized) > MAX_SET_LABEL_LENGTH:
+        raise ResearchSetValidationError(f"label must not be longer than {MAX_SET_LABEL_LENGTH} characters")
     return normalized or None
 
 
@@ -356,6 +360,8 @@ def _normalize_optional_note(note: Any) -> str | None:
     if not isinstance(note, str):
         raise ResearchSetValidationError("note must be a string when provided")
     normalized = note.strip()
+    if len(normalized) > MAX_SET_NOTE_LENGTH:
+        raise ResearchSetValidationError(f"note must not be longer than {MAX_SET_NOTE_LENGTH} characters")
     return normalized or None
 
 
@@ -583,7 +589,12 @@ def _validated_item_references(raw_items: list[Any], *, language_slug: str, cont
     for index, raw_item in enumerate(raw_items, start=1):
         if not isinstance(raw_item, Mapping):
             raise ResearchSetValidationError(f"Invalid item payload at position {index} in {context}")
-        reference = normalize_task_item_reference(raw_item, context=f"{context} item #{index}")
+        try:
+            reference = normalize_task_item_reference(raw_item, context=f"{context} item #{index}")
+        except ResearchConfigError as exc:
+            raise ResearchSetValidationError(str(exc)) from exc
+        if reference.note and len(reference.note) > MAX_SET_NOTE_LENGTH:
+            raise ResearchSetValidationError(f"Item note at position {index} in {context} is too long")
         if reference.task not in SET_ITEM_TASKS:
             raise ResearchSetValidationError(
                 f"Unsupported set item task '{reference.task}' in {context}; only 'wordlist' and 'text' are allowed"

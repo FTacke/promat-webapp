@@ -415,7 +415,7 @@ def test_build_teaching_topic_page_parses_teaching_impulses(
         "spanish",
         "r-am-silbenende",
         "de",
-        "title: R am Silbenende\nmetadata:\n  authors:\n    - NN\n  status:\n    - In Vorbereitung\n  created: 2025-07-06\nblocks:\n  - type: section_heading\n    title: Impulse für den Unterricht\n  - type: text\n    layout:\n      span: 1\n    body: Hier können später Impulse stehen.\n  - type: teaching_impulses\n    layout:\n      span: 1\n    items:\n      - title: Hören vorbereiten\n        body: Einstieg über Hörbeispiele.\n      - title: Beobachtung sichern\n        body: Höreindrücke sammeln.\n",
+        "title: R am Silbenende\nmetadata:\n  authors:\n    - Test Autor\n  status:\n    - In Vorbereitung\n  created: 2025-07-06\nblocks:\n  - type: section_heading\n    title: Impulse für den Unterricht\n  - type: text\n    layout:\n      span: 1\n    body: Hier können später Impulse stehen.\n  - type: teaching_impulses\n    layout:\n      span: 1\n    items:\n      - title: Hören vorbereiten\n        body: Einstieg über Hörbeispiele.\n      - title: Beobachtung sichern\n        body: Höreindrücke sammeln.\n",
     )
 
     with teaching_app.test_request_context():

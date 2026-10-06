@@ -2758,7 +2758,6 @@ def build_player_page(
     focus_item: str | None = None,
     focus_segment: str | None = None,
     render_mode: str | None = None,
-    profile: dict[str, float] | None = None,
 ) -> dict[str, Any] | None:
     session = get_session(language_slug, session_id)
     task = get_research_task(task_key)
@@ -2779,7 +2778,6 @@ def build_player_page(
         focus_item=focus_item,
         focus_segment=focus_segment,
         render_mode=render_mode,
-        profile=profile,
         load_owned_set_fn=load_owned_set,
     )
     set_context = runtime_state.set_context

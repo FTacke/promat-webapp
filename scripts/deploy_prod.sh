@@ -86,6 +86,18 @@ echo "Validating production configuration with the new image..."
 compose run --rm --no-deps web python -c 'from flask import Flask; from src.app.config import load_config; load_config(Flask("preflight"))' \
   || fail "Production configuration is invalid; the running services were not changed. See the error above."
 
+# A migration must never run without a fresh, verified backup. backup_prod_db.sh validates the dump with
+# pg_restore --list before keeping it and exits non-zero otherwise, which aborts the deploy here, before any
+# schema change and before the running web container is touched. A brand-new database (no users table yet) has
+# nothing to back up.
+echo "Backing up the database before migrations..."
+HAS_AUTH_SCHEMA="$(docker exec -i promat-db-prod sh -c 'psql --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" --no-psqlrc --tuples-only --no-align' <<< "SELECT to_regclass('public.users') IS NOT NULL;" | tr -d '[:space:]')"   || fail "Could not inspect the database before the backup; no migration was applied."
+if [[ "${HAS_AUTH_SCHEMA}" == "t" ]]; then
+  bash scripts/backup_prod_db.sh --container promat-db-prod     || fail "Database backup failed; no migration was applied and the running services were not changed."
+else
+  echo "Database has no auth schema yet (first deployment); skipping the pre-migration backup."
+fi
+
 echo "Applying non-destructive database migrations..."
 compose run --rm --no-deps web python scripts/apply_auth_migration.py --engine postgres
 
