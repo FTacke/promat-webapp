@@ -73,7 +73,7 @@
   --pm-teaching-audio-quote-border: #e6e6e6;
   --pm-teaching-audio-section-accent: #c7d7e8;
   --pm-teaching-audio-icon-color: #2f5f8f;
-  --pm-teaching-audio-token-color: #777;
+  --pm-teaching-audio-token-color: #5c5c5c;
   --pm-teaching-audio-subtitle-color: #666;
   --pm-teaching-audio-linked-progress-bg: color-mix(in srgb, var(--pm-surface-paper) 84%, var(--promat-wordmark-accent) 16%);
   --pm-teaching-audio-linked-progress-bg-strong: color-mix(in srgb, var(--pm-surface-paper) 70%, var(--promat-wordmark-accent) 30%);
@@ -170,8 +170,8 @@
   --pm-teaching-topic-card-border: color-mix(in srgb, var(--pm-border-default) 76%, var(--promat-wordmark-accent) 24%);
   --pm-teaching-topic-card-hover-surface: color-mix(in srgb, var(--pm-surface-paper) 83%, var(--promat-wordmark-accent) 17%);
   --pm-teaching-topic-card-hover-border: color-mix(in srgb, var(--pm-border-default) 56%, var(--promat-wordmark-accent) 44%);
-  --pm-teaching-topic-card-action: color-mix(in srgb, var(--promat-wordmark-accent) 76%, var(--book-fg) 24%);
-  --pm-teaching-topic-card-action-hover: color-mix(in srgb, var(--promat-wordmark-accent) 88%, var(--book-fg) 12%);
+  --pm-teaching-topic-card-action: color-mix(in srgb, var(--pm-text-accent) 76%, var(--book-fg) 24%);
+  --pm-teaching-topic-card-action-hover: color-mix(in srgb, var(--pm-text-accent) 88%, var(--book-fg) 12%);
   --pm-teaching-topic-card-pending-accent: color-mix(in srgb, var(--pm-teaching-topic-card-accent) 18%, var(--pm-border-subtle) 82%);
   --pm-teaching-topic-card-pending-surface: color-mix(in srgb, var(--pm-surface-paper) 96%, var(--promat-wordmark-accent) 4%);
   --pm-teaching-topic-card-pending-border: color-mix(in srgb, var(--pm-border-subtle) 86%, var(--promat-wordmark-accent) 14%);
@@ -569,9 +569,9 @@
   --pm-interaction-disabled-bg: color-mix(in srgb, var(--pm-surface-paper) 88%, var(--pm-surface-neutral) 12%);
   --pm-interaction-disabled-fg: var(--pm-text-muted-strong);
   --pm-interaction-disabled-border: color-mix(in srgb, var(--pm-border-subtle) 76%, transparent);
-  --pm-interaction-focus-ring-width: 3px;
+  --pm-interaction-focus-ring-width: 2px;
   --pm-interaction-focus-ring-offset: 2px;
-  --pm-interaction-focus-ring-color: color-mix(in srgb, var(--book-accent-2) 38%, transparent);
+  --pm-interaction-focus-ring-color: var(--book-link); /* solid, >= 3:1 on every surface in both themes (WCAG 1.4.11) */
   --pm-interaction-hover-duration: 140ms;
   --pm-interaction-active-duration: 110ms;
 
@@ -585,7 +585,7 @@
   --pm-nav-state-active-border: transparent;
   --pm-nav-state-active-line: transparent;
   --pm-nav-state-active-text: var(--pm-text-accent);
-  --pm-text-accent: var(--promat-wordmark-accent);
+  --pm-text-accent: var(--pm-accent-text-tone, var(--promat-wordmark-accent));
   --pm-text-intro: var(--book-muted);
   --pm-breadcrumb-text: var(--book-muted);
   --pm-breadcrumb-current-text: var(--book-fg);
@@ -906,6 +906,10 @@ html[data-theme="auto"][data-system-dark="false"] {
   --pm-admonition-citation-border: #e5e5e5;
   --pm-admonition-citation-accent: #e5e5e5;
   --pm-surface-canvas: #ffffff;
+  /* Text-sized accent: the wordmark purple (#a15a95) is 3.9-4.7:1 on tinted surfaces, so running text and labels use a
+     darker tone (>= 5:1 on every surface in use); the wordmark itself keeps --promat-wordmark-accent. */
+  --pm-accent-text-tone: #85427a;
+  --book-danger: #b54747;
 }
 
 html[data-theme="dark"],
@@ -919,6 +923,14 @@ html[data-theme="auto"][data-system-dark="true"] {
   --book-border-strong: rgba(255, 255, 255, 0.16);
   --book-accent: #7ab0e8;
   --book-accent-strong: #9cc9f3;
+  /* Dark theme text on the light-blue primary and the lighter accent/danger tones (WCAG AA). */
+  --pm-accent-text-tone: #d49ac9;
+  --book-danger: #f2999b;
+  --pm-status-unsaved-text: var(--book-danger);
+  --pm-status-error-text: var(--book-danger);
+  --promat-on-primary: #0b1220;
+  --pm-button-primary-fg: #0b1220;
+  --pm-action-button-primary-fg: #0b1220;
   --book-accent-2: #5a9fd4;
   --nav-active-bg: rgba(122, 176, 232, 0.14);
   --nav-hover-bg: rgba(122, 176, 232, 0.09);

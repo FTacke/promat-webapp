@@ -125,5 +125,5 @@
 
 {% block extra_scripts %}
 <script id="pm-phenomena-overview-state" type="application/json">{{ promat_page.client_state | tojson }}</script>
-<script type="module" src="{{ url_for('static', filename='js/pages/research-phenomena-overview.js') }}"></script>
+<script type="module" src="{{ static_asset('js/pages/research-phenomena-overview.js') }}"></script>
 {% endblock %}

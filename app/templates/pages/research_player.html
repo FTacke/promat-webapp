@@ -2,7 +2,7 @@
 {% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
 {% macro render_player_text(item, text_class) -%}
-<span class="{{ text_class }}">{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}" data-player-token-start-ms="{{ segment.start_ms }}" data-player-token-end-ms="{{ segment.end_ms }}">{{ segment.text }}</span>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" aria-haspopup="dialog" aria-expanded="false"><span class="pm-player-inline-ref__bracket" aria-hidden="true">[</span><span class="pm-player-inline-ref__label">{{ segment.reference.label }}</span><span class="pm-player-inline-ref__bracket" aria-hidden="true">]</span></button>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
+<span class="{{ text_class }}"{% if promat_page.player.content_lang and promat_page.player.content_lang != current_ui_lang %} lang="{{ promat_page.player.content_lang }}"{% endif %}>{% if item.text_segments %}{% for segment in item.text_segments %}{% if segment.kind == 'token' %}<span class="pm-player-token" data-player-token data-player-token-id="{{ segment.token_id }}" data-player-token-index="{{ segment.token_index }}" data-player-token-start-ms="{{ segment.start_ms }}" data-player-token-end-ms="{{ segment.end_ms }}">{{ segment.text }}</span>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% elif segment.kind == 'material_ref' and segment.reference %}{% if segment.prefix %}{{ segment.prefix }}{% endif %}<button type="button" class="pm-player-inline-ref" data-player-reference-trigger data-reference-label="{{ segment.reference.label }}" data-reference-task-label="{{ segment.reference.task_label }}" data-reference-item-number="{{ segment.reference.item_number or '' }}" data-reference-canonical-text="{{ segment.reference.canonical_text }}" data-reference-open-href="{{ segment.reference.open_href }}" data-reference-clip-href="{{ segment.reference.clip_href or '' }}" data-reference-clip-label="{{ segment.reference.clip_label or '' }}" data-reference-time-label="{{ segment.reference.time_label or '' }}" aria-haspopup="dialog" aria-expanded="false"><span class="pm-player-inline-ref__bracket" aria-hidden="true">[</span><span class="pm-player-inline-ref__label">{{ segment.reference.label }}</span><span class="pm-player-inline-ref__bracket" aria-hidden="true">]</span></button>{% if segment.suffix %}<span class="pm-player-inline-ref__punctuation">{{ segment.suffix }}</span>{% endif %}{% else %}{{ segment.text }}{% endif %}{% endfor %}{% else %}{{ item.text }}{% endif %}</span>
 {%- endmacro %}
 
 {% macro render_player_meta(item, player_mode) -%}
@@ -246,6 +246,11 @@
               </div>
             </div>
           </div>
+
+          <p class="pm-player-status pm-workspace-feedback" data-player-status role="status" aria-live="polite" hidden
+             data-msg-loading="{{ t('research.player.status.loading') }}"
+             data-msg-error="{{ t('research.player.status.audio_error') }}"
+             data-msg-session="{{ t('research.player.status.session_expired') }}"></p>
         </section>
 
         {% if promat_page.player.compare.is_ready %}
@@ -279,7 +284,7 @@
               {% if row.primary.is_available %}
               <div class="pm-player-list__cell pm-player-list__cell--primary" data-player-item data-speaker-key="primary" data-item-id="{{ row.primary.item_id }}" data-start-ms="{{ row.primary.start_ms }}" data-end-ms="{{ row.primary.end_ms }}">
                 <span class="pm-player-list__number">{{ row.primary.item_number }}</span>
-                <button type="button" class="pm-player-list__trigger" data-player-seek aria-label="{{ row.primary.text }}">
+                <button type="button" class="pm-player-list__trigger" data-player-seek aria-label="{{ promat_page.player.primary.label }}: {{ row.primary.text }}">
                   {{ render_player_text(row.primary, 'pm-player-list__text pm-item-content-text') }}
                   {{ render_player_meta(row.primary, promat_page.player.mode) }}
                 </button>
@@ -301,7 +306,7 @@
 
               {% if row.secondary.is_available %}
               <div class="pm-player-list__cell" data-player-item data-speaker-key="secondary" data-item-id="{{ row.secondary.item_id }}" data-start-ms="{{ row.secondary.start_ms }}" data-end-ms="{{ row.secondary.end_ms }}">
-                <button type="button" class="pm-player-list__trigger" data-player-seek aria-label="{{ row.secondary.text }}">
+                <button type="button" class="pm-player-list__trigger" data-player-seek aria-label="{{ promat_page.player.secondary.label }}: {{ row.secondary.text }}">
                   {{ render_player_text(row.secondary, 'pm-player-list__text pm-item-content-text') }}
                   {{ render_player_meta(row.secondary, promat_page.player.mode) }}
                 </button>
@@ -472,6 +477,6 @@
 <script id="pm-player-state" type="application/json">{{ promat_page.player.client_state | tojson }}</script>
 {% endif %}
 {% if promat_page.player.mode in ['wordlist', 'text', 'interview'] or promat_page.player.set_select %}
-<script type="module" src="{{ url_for('static', filename='js/pages/research-player.js') }}"></script>
+<script type="module" src="{{ static_asset('js/pages/research-player.js') }}"></script>
 {% endif %}
 {% endblock %}

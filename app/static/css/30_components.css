@@ -2931,8 +2931,8 @@ a.pm-teaching-topic-card--available:active {
   --pm-card-padding-inline: clamp(1rem, 0.96rem + 0.16vw, 1.2rem);
   --pm-card-padding-block-start: clamp(0.92rem, 0.88rem + 0.12vw, 1.04rem);
   --pm-card-padding-block-end: clamp(0.94rem, 0.9rem + 0.12vw, 1.08rem);
-  --pm-cta-link-primary: color-mix(in srgb, var(--promat-wordmark-accent) 70%, var(--book-fg) 30%);
-  --pm-cta-link-hover: color-mix(in srgb, var(--promat-wordmark-accent) 84%, var(--book-fg) 16%);
+  --pm-cta-link-primary: color-mix(in srgb, var(--pm-text-accent) 70%, var(--book-fg) 30%);
+  --pm-cta-link-hover: color-mix(in srgb, var(--pm-text-accent) 84%, var(--book-fg) 16%);
   width: 100%;
   max-width: none;
 }
@@ -3315,8 +3315,8 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   --pm-cta-link-font-weight: 520;
   --pm-cta-link-line-height: 1.32;
   --pm-cta-link-gap: 0.22rem;
-  --pm-cta-link-primary: color-mix(in srgb, var(--promat-wordmark-accent) 62%, var(--book-muted) 38%);
-  --pm-cta-link-hover: color-mix(in srgb, var(--promat-wordmark-accent) 74%, var(--book-fg) 26%);
+  --pm-cta-link-primary: color-mix(in srgb, var(--pm-text-accent) 62%, var(--book-muted) 38%);
+  --pm-cta-link-hover: color-mix(in srgb, var(--pm-text-accent) 74%, var(--book-fg) 26%);
 }
 
 .pm-teaching-further-reading__item-action .pm-interaction__arrow {
@@ -5733,7 +5733,7 @@ body[data-page="login"] .pm-auth-secondary--card {
   flex-wrap: wrap;
   gap: 0.18rem 0.34rem;
   align-items: center;
-  color: var(--pm-state-muted-text-strong);
+  color: var(--pm-state-muted-text);
   font-size: 0.68rem;
   font-weight: 500;
   letter-spacing: 0;
@@ -8611,7 +8611,7 @@ html[data-theme="auto"][data-system-dark="true"] .promat-panel__context-line--ac
 }
 
 .pm-nav__item--muted {
-  color: var(--pm-state-muted-text-strong);
+  color: var(--pm-state-muted-text);
 }
 
 .pm-nav__item--muted:hover,
@@ -10399,5 +10399,71 @@ td.wrap-text {
     overflow-y: visible;
     height: auto;
     max-height: none;
+  }
+}
+
+/* ============================================================
+   Focus indicators (WCAG 2.4.7 / 1.4.11)
+   One solid ring colour (--book-link: >= 3:1 against the page surface in light and dark) for the controls
+   that previously suppressed the outline or relied on a faint tint.
+   ============================================================ */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid var(--book-link);
+  outline-offset: 2px;
+}
+
+.promat-panel__language-link:focus-visible,
+.promat-topbar__language-link:focus-visible,
+.pm-card:focus-visible,
+.promat-card:focus-visible {
+  outline: 2px solid var(--book-link);
+  outline-offset: 2px;
+}
+
+.pm-form-control:focus-visible,
+.pm-phenomena-field__input:focus-visible,
+.pm-phenomena-editor__note-input:focus-visible {
+  outline: 2px solid var(--book-link);
+  outline-offset: 1px;
+}
+
+/* ============================================================
+   Narrow viewports (about 390 px): nothing may overflow the page width
+   - the player's set select wraps below its label instead of sitting right of a nowrap row
+   - the playback settings (volume / speed) stack in one column and the rate slider track may shrink
+   ============================================================ */
+@media (max-width: 719px) {
+  .pm-player-material-strip__set-inline {
+    flex-wrap: wrap;
+  }
+
+  .pm-player-material-strip__select {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .pm-player-control-bar__row--settings,
+  .pm-comparison-toolbar .pm-player-control-bar__row--settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pm-player-rate-slider,
+  .pm-comparison-toolbar .pm-player-rate-slider {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .pm-player-rate-field,
+  .pm-player-range-field {
+    min-width: 0;
   }
 }

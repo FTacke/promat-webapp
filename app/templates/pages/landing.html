@@ -40,7 +40,7 @@
     {% for card in promat_page.landing_cards | default([]) %}
     <a class="landing-card pm-card pm-card--entry pm-card--entry-{{ card.entry_kind }} pm-card--with-image" href="{{ card.href }}">
       <div class="pm-card__image">
-        <img src="{{ url_for('static', filename=card.image_asset) }}" alt="{{ card.image_alt }}">
+        <img src="{{ static_asset(card.image_asset) }}" alt="{{ card.image_alt }}"{% if card.image_width %} width="{{ card.image_width }}" height="{{ card.image_height }}"{% endif %} decoding="async">
       </div>
       <div class="pm-card__body">
         <h2 class="pm-card__title">{{ card.title }}</h2>

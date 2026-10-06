@@ -392,7 +392,7 @@ def test_build_comparison_page_marks_requested_set_for_client_loading(comparison
     assert page is not None
     assert page["workspace"]["mode"] == "load-set"
     assert page["client_state"]["requestedSetId"] == draft.set_id
-    assert page["client_state"]["labels"]["stateDraft"] == "Draft"
+    assert page["client_state"]["labels"]["stateDraft"] == "Entwurf"
     assert page["client_state"]["labels"]["stateSaved"] == "Gespeichert"
 
 
@@ -431,9 +431,9 @@ def test_build_comparison_page_includes_saved_custom_sets_in_material_options(co
 
     assert page is not None
     option_labels = [entry["optionLabel"] for entry in page["client_state"]["materialPresets"]]
-    assert "Starter · curated" in option_labels
-    assert "Mein Fokusset · custom" in option_labels
-    assert "Nur Draft · custom" not in option_labels
+    assert "Starter · kuratiert" in option_labels
+    assert "Mein Fokusset · eigenes Set" in option_labels
+    assert "Nur Draft · eigenes Set" not in option_labels
 
 
 def test_comparison_route_redirects_to_login_without_auth(comparison_app: Flask) -> None:

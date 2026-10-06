@@ -604,7 +604,8 @@ def login_form() -> Response:
 
 
 @blueprint.post("/login", endpoint="login_post")
-@limiter.limit("5 per minute")
+# Only failed attempts count: a seminar (or campus NAT) behind one address must not lock itself out by signing in.
+@limiter.limit("5 per minute", deduct_when=lambda response: response.status_code >= 400)
 def login_post() -> Response:
     email = auth_services.normalize_email(request.form.get("email", ""))
     password = request.form.get("password", "")

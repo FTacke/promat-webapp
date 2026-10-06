@@ -51,7 +51,7 @@
       {% endif %}
       {% if example.transcript_html %}
       <div class="pm-teaching-audio-example__transcript audio-quote" data-audio-state="idle"{% if feedback_target_id %} id="{{ feedback_target_id }}"{% endif %}>
-        <p class="pm-teaching-audio-example__text">{{ example.transcript_html | safe }}</p>
+        <p class="pm-teaching-audio-example__text"{% if example.lang and example.lang != current_ui_lang %} lang="{{ example.lang }}"{% endif %}>{{ example.transcript_html | safe }}</p>
         {% if example.token_id %}
         <p class="pm-teaching-audio-example__token audio-token">{{ example.token_id }}</p>
         {% endif %}
@@ -289,6 +289,7 @@
     {{ render_admonition({
       'id': block.id,
       'variant': 'overview',
+      'heading_tag': 'h2',
       'title': block.title,
       'title_html': block.title_html,
       'body_html_blocks': block.body_html_blocks,

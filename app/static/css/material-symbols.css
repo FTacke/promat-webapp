@@ -2,7 +2,8 @@
    Material Symbols Rounded - Local Font (Self-Hosted)
    ============================================
    Downloaded from: https://github.com/google/material-design-icons
-   Variable font with all icons included
+   Subset font (about 11 KB): only the icons used by the app, axes pinned to FILL 0 / wght 300 / opsz 24.
+   Rebuild with scripts/build_icon_font.py when a new icon name is introduced.
    ============================================ */
 
 /* Self-hosted Material Symbols Rounded Variable Font */
@@ -10,8 +11,7 @@
   font-family: "Material Symbols Rounded";
   font-style: normal;
   font-weight: 100 700;
-  src: url("/static/fonts/MaterialSymbolsRounded.woff2") format(woff2)
-    tech(variations);
+  src: url("/static/fonts/MaterialSymbolsRounded.woff2?v=2") format(woff2);
   font-display: block; /* Prevents FOUC */
 }
 
@@ -42,26 +42,4 @@
     "wght" 300,
     "GRAD" 0,
     "opsz" 24;
-}
-
-/* JavaScript will add this class if font doesn't load */
-.material-symbols-not-loaded .material-symbols-rounded {
-  display: none !important;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-}
-
-/* Hide icon containers entirely if font doesn't load */
-.material-symbols-not-loaded .md3-navigation-drawer__icon,
-.material-symbols-not-loaded .md3-navigation-drawer__chevron,
-.material-symbols-not-loaded
-  .md3-top-app-bar__navigation-icon
-  .material-symbols-rounded {
-  display: none;
-}
-
-/* Adjust spacing when icons are hidden */
-.material-symbols-not-loaded .md3-navigation-drawer__item {
-  padding-left: var(--space-4);
 }

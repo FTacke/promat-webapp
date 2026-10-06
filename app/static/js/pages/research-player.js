@@ -1,3 +1,4 @@
+import { bindSelectCommit } from '../modules/research/select-commit.js';
 import { resolveActiveTimedItem } from '../modules/research/player-highlight.js';
 
 function formatClock(totalSeconds) {
@@ -66,6 +67,43 @@ function setPlayerNavigationPending(isPending) {
   page.removeAttribute('aria-busy');
 }
 
+// The in-place navigation replaces the whole player article, which would drop the keyboard focus (WCAG 2.4.3).
+// Return focus to the equivalent control: the set select itself, or the now-current entry of the strip the user clicked in.
+function focusSelectorForActiveElement() {
+  const active = document.activeElement;
+  if (!active || active === document.body) {
+    return null;
+  }
+  if (active.matches('[data-player-set-select]')) {
+    return '[data-player-set-select]';
+  }
+  const regions = [
+    '.pm-player-session-picker',
+    '.pm-player-material-strip',
+    '.pm-player-view-switch',
+  ];
+  for (const region of regions) {
+    if (active.closest(region)) {
+      return `${region} [aria-current="page"], ${region} .is-current`;
+    }
+  }
+  return null;
+}
+
+function restoreFocusAfterNavigation(selector) {
+  if (!selector) {
+    return;
+  }
+  const target = document.querySelector(selector);
+  if (!target) {
+    return;
+  }
+  if (!target.matches('a, button, select, input, [tabindex]')) {
+    target.setAttribute('tabindex', '-1');
+  }
+  target.focus({ preventScroll: true });
+}
+
 async function navigatePlayerInPlace(href) {
   if (!href) {
     return false;
@@ -113,6 +151,7 @@ async function navigatePlayerInPlace(href) {
       throw new Error('Player page markup is missing.');
     }
 
+    const focusRestoreSelector = focusSelectorForActiveElement();
     currentPage.replaceWith(document.importNode(nextPage, true));
 
     const currentState = document.getElementById('pm-player-state');
@@ -131,6 +170,7 @@ async function navigatePlayerInPlace(href) {
 
     initSetSelect();
     init();
+    restoreFocusAfterNavigation(focusRestoreSelector);
     return true;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
@@ -157,8 +197,7 @@ function initSetSelect() {
   }
   select.dataset.playerSetSelectBound = 'true';
 
-  select.addEventListener('change', () => {
-    const nextHref = select.value;
+  bindSelectCommit(select, (nextHref) => {
     if (!nextHref || nextHref === window.location.href) {
       return;
     }
@@ -355,6 +394,49 @@ function init() {
   const pauseLabel = toggle.dataset.pauseLabel || '';
   const desktopMedia = window.matchMedia(`(min-width: ${Number(state.mobileMinWidth || 900)}px)`);
   const audioMap = new Map(audioElements.map((element) => [element.dataset.speakerKey, element]));
+
+  // Audio status for assistive technology and sighted users: loading/stalled, load errors and an expired session are
+  // announced through the polite live region instead of leaving the click without any visible effect.
+  const statusElement = root.querySelector('[data-player-status]');
+  function showAudioStatus(kind) {
+    if (!statusElement) {
+      return;
+    }
+    const message = statusElement.dataset[kind === 'loading' ? 'msgLoading' : kind === 'session' ? 'msgSession' : 'msgError'] || '';
+    statusElement.hidden = !message;
+    statusElement.textContent = message;
+    statusElement.dataset.tone = kind === 'loading' ? 'info' : 'error';
+    statusElement.setAttribute('role', kind === 'loading' ? 'status' : 'alert');
+  }
+  function clearAudioStatus() {
+    if (statusElement && statusElement.dataset.tone === 'info') {
+      statusElement.hidden = true;
+      statusElement.textContent = '';
+    }
+  }
+  async function reportAudioFailure(audio) {
+    // The media element does not expose the HTTP status; ask the server whether the session is still valid.
+    try {
+      const response = await fetch(audio.currentSrc || audio.src, { method: 'HEAD', credentials: 'same-origin', redirect: 'manual' });
+      const contentType = (response.headers.get('content-type') || '').toLowerCase();
+      if (response.type === 'opaqueredirect' || response.status === 401 || response.status === 403 || contentType.startsWith('text/html')) {
+        showAudioStatus('session');
+        return;
+      }
+    } catch {
+      // Network error: fall through to the generic message.
+    }
+    showAudioStatus('error');
+  }
+  for (const audioElement of audioMap.values()) {
+    audioElement.addEventListener('waiting', () => showAudioStatus('loading'));
+    audioElement.addEventListener('stalled', () => showAudioStatus('loading'));
+    audioElement.addEventListener('playing', clearAudioStatus);
+    audioElement.addEventListener('canplay', clearAudioStatus);
+    audioElement.addEventListener('error', () => {
+      reportAudioFailure(audioElement);
+    });
+  }
   const domSpeakerItems = collectSpeakerItemsFromDom(itemElements);
   const speakerState = new Map(
     state.speakers.map((speaker) => [
@@ -513,6 +595,7 @@ function init() {
       audio.defaultPlaybackRate = currentRate;
     }
     volumeLabel.textContent = `${Math.round(nextVolume * 100)}%`;
+    volume.setAttribute('aria-valuetext', `${Math.round(nextVolume * 100)}%`);
   }
 
   function rateIndexForValue(rate) {
@@ -526,6 +609,7 @@ function init() {
     if (rateValue) {
       rateValue.textContent = formatRate(currentRate);
     }
+    rateSlider.setAttribute('aria-valuetext', formatRate(currentRate));
   }
 
   function clearReferenceDialogPosition() {
@@ -685,6 +769,7 @@ function init() {
     const currentTime = currentAudio && Number.isFinite(currentAudio.currentTime) ? currentAudio.currentTime : 0;
     currentLabel.textContent = formatClock(currentTime);
     durationLabel.textContent = formatClock(duration);
+    progress.setAttribute('aria-valuetext', `${formatClock(currentTime)} / ${formatClock(duration)}`);
 
     if (duration > 0) {
       progress.disabled = false;
@@ -854,7 +939,16 @@ function init() {
         continue;
       }
       for (const element of speakerItems.get(itemId).elements) {
-        element.classList.toggle('is-active', itemId === nextItemId);
+        const isActive = itemId === nextItemId;
+        element.classList.toggle('is-active', isActive);
+        const seekControl = element.matches('[data-player-seek]') ? element : element.querySelector('[data-player-seek]');
+        if (seekControl) {
+          if (isActive) {
+            seekControl.setAttribute('aria-current', 'true');
+          } else {
+            seekControl.removeAttribute('aria-current');
+          }
+        }
       }
     }
   }
@@ -1060,9 +1154,15 @@ function init() {
         audio.addEventListener('ended', onEnded);
         audio.play().then(() => {
           startSyncLoop();
-        }).catch(() => finish(false));
+        }).catch(() => {
+          showAudioStatus('error');
+          finish(false);
+        });
       });
-    }).catch(() => false);
+    }).catch(() => {
+      reportAudioFailure(audio);
+      return false;
+    });
   }
 
   async function startSequence(itemId) {
@@ -1103,6 +1203,7 @@ function init() {
       startSyncLoop();
     } catch {
       syncToggleLabel();
+      showAudioStatus('error');
     }
   });
 

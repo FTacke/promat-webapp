@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Mapping
@@ -1513,10 +1514,27 @@ def _comparison_session_task_summary(clip_counts: list[dict[str, Any]]) -> str:
     return " · ".join(parts)
 
 
+# The catalog reads every session's task bundles (about 0.5 s for the Spanish corpus) and is identical for every
+# request until the runtime data changes. It follows the lifetime of `load_language_sessions`: the entry is reused only
+# while that function still returns the very same session tuple, so clearing its cache (tests, publish + restart)
+# also invalidates this one. No second invalidation mechanism.
+_COMPARISON_CATALOG_CACHE: dict[tuple[str, str], tuple[object, list[dict[str, Any]]]] = {}
+
+
 def _comparison_session_catalog(language_slug: str, ui_lang: str) -> list[dict[str, Any]]:
+    sessions = load_language_sessions(language_slug)
+    cached = _COMPARISON_CATALOG_CACHE.get((language_slug, ui_lang))
+    if cached is not None and cached[0] is sessions:
+        return copy.deepcopy(cached[1])
+    catalog = _build_comparison_session_catalog(language_slug, ui_lang, sessions)
+    _COMPARISON_CATALOG_CACHE[(language_slug, ui_lang)] = (sessions, catalog)
+    return copy.deepcopy(catalog)
+
+
+def _build_comparison_session_catalog(language_slug: str, ui_lang: str, sessions: Any) -> list[dict[str, Any]]:
     task_labels = _phenomena_task_labels(language_slug, ui_lang)
     catalog: list[dict[str, Any]] = []
-    for session in sort_sessions_for_display(load_language_sessions(language_slug)):
+    for session in sort_sessions_for_display(sessions):
         documented_tasks = [task_key for task_key in PHENOMENA_ITEM_TASKS if session_has_task(session, task_key)]
         available_item_ids_by_task: dict[str, list[str]] = {task_key: [] for task_key in PHENOMENA_ITEM_TASKS}
         clip_counts: list[dict[str, Any]] = []
@@ -1654,6 +1672,7 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
         "client_state": {
             "uiLang": ui_lang,
             "languageSlug": language_slug,
+            "contentLang": str((get_language(language_slug) or {}).get("lang_code") or ""),
             "isAuthenticated": is_authenticated,
             "hasRuntimeData": has_runtime_data,
             "requestedSetId": requested_set_id,
@@ -1748,9 +1767,11 @@ def build_comparison_page(ui_lang: str, language_slug: str, query_args: Mapping[
                         "workspaceNoRows": "research.comparison.workspace_no_rows",
                         "workspaceNoMatches": "research.comparison.workspace_no_matches",
                         "clipUnavailable": "research.comparison.clip_unavailable",
+                        "clipSessionExpired": "research.comparison.clip_session_expired",
                         "taskLabel": "research.comparison.task_label",
                         "sessionLabel": "research.comparison.session_label",
                         "requestFailed": "common.errors.request_failed",
+                        "rateLimited": "common.errors.rate_limited",
                         "saveHint": "research.comparison.save_hint",
                         "saveValidationError": "research.comparison.save_validation_error",
                         "saveSuccessPrefix": "research.comparison.save_success_prefix",
@@ -3101,6 +3122,7 @@ def build_player_page(
                 "switchers": player_switchers,
                 "rows": compare_rows,
             },
+            "content_lang": str((get_language(language_slug) or {}).get("lang_code") or ""),
             "text_blocks": _build_running_text_blocks(primary_items) if task_key == "text" and player_source.render_mode == "running_text" and not compare_is_ready else [],
             "client_state": {
                 "requestedMode": effective_compare_mode,

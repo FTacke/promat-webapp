@@ -89,6 +89,7 @@ def test_ci_is_the_full_release_gate() -> None:
     assert "docker build -f app/Dockerfile" in run_text
     assert "docker compose --env-file app/passwords.env.template -f infra/docker-compose.prod.yml config" in run_text
     assert "scripts/ci_image_smoke.py" in run_text
+    assert "python scripts/qa/ci_browser_smoke.py" in run_text
 
 
 def test_ci_pytest_step_runs_the_whole_suite_without_selecting_a_subset() -> None:

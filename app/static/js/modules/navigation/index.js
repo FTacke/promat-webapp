@@ -10,7 +10,6 @@ import {
 } from "./window-size.js";
 import { initNavigationDrawer } from "./drawer.js";
 import { initTopAppBar } from "./app-bar.js";
-import { initMaterialSymbolsFallback } from "./material-symbols-loader.js";
 import { initTurboIntegration } from "./turbo-integration.js";
 
 // Import viewport detection
@@ -23,9 +22,6 @@ import { initScrollState } from "./scroll-state.js";
  * Initialize MD3 Navigation System
  */
 export function initMD3Navigation() {
-  // Check Material Symbols font loading
-  initMaterialSymbolsFallback();
-
   // Apply window size classes to body for CSS targeting
   const cleanup = applyWindowSizeClass(document.body, "app");
 

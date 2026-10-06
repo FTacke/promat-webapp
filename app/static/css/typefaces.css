@@ -9,7 +9,7 @@
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("/static/fonts/Inter-Variable.woff2") format(woff2) tech(variations);
+  src: url("/static/fonts/Inter-Variable.woff2?v=1") format(woff2) tech(variations);
 }
 
 @font-face {
@@ -17,7 +17,7 @@
   font-style: italic;
   font-weight: 100 900;
   font-display: swap;
-  src: url("/static/fonts/Inter-Italic-Variable.woff2") format(woff2) tech(variations);
+  src: url("/static/fonts/Inter-Italic-Variable.woff2?v=1") format(woff2) tech(variations);
 }
 
 /* ============================================
@@ -31,7 +31,7 @@
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
-  src: url("/static/fonts/SourceSerif4-Variable.woff2") format(woff2) tech(variations);
+  src: url("/static/fonts/SourceSerif4-Variable.woff2?v=1") format(woff2) tech(variations);
 }
 
 @font-face {
@@ -39,5 +39,5 @@
   font-style: italic;
   font-weight: 200 900;
   font-display: swap;
-  src: url("/static/fonts/SourceSerif4-Italic-Variable.woff2") format(woff2) tech(variations);
+  src: url("/static/fonts/SourceSerif4-Italic-Variable.woff2?v=1") format(woff2) tech(variations);
 }

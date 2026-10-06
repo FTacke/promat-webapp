@@ -9,31 +9,31 @@
     <!-- Theme color is synchronized from canonical CSS tokens by theme.js -->
     <meta name="theme-color" content="" data-theme-color>
     <!-- no-js removal moved to static/js/theme.js (externalized for CSP) -->
+    <!-- Icon font (about 11 KB) is needed for the first paint of every page -->
+    <link rel="preload" href="/static/fonts/MaterialSymbolsRounded.woff2?v=2" as="font" type="font/woff2" crossorigin>
     <!-- Preload critical resources to prevent FOUC -->
-    <link rel="preload" href="{{ url_for('static', filename='css/layout.css') }}" as="style">
-    <link rel="preload" href="{{ url_for('static', filename='css/00_tokens.css') }}" as="style">
+    <link rel="preload" href="{{ static_asset('css/layout.css') }}" as="style">
+    <link rel="preload" href="{{ static_asset('css/00_tokens.css') }}" as="style">
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/typefaces.css') }}">
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename=favicon_asset) }}">
+    <link rel="stylesheet" href="{{ static_asset('css/layout.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/typefaces.css') }}">
+    <link rel="icon" type="image/png" href="{{ static_asset(favicon_asset) }}">
     <!-- App Tokens -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/00_tokens.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/material-symbols.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/10_typography.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/20_layout.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/30_components.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/40_cards.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/50_feedback.css') }}">
+        <link rel="stylesheet" href="{{ static_asset('css/00_tokens.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/material-symbols.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/10_typography.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/20_layout.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/30_components.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/40_cards.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/footer.css') }}">
+    <link rel="stylesheet" href="{{ static_asset('css/50_feedback.css') }}">
     
     <!-- Global Theme Controller - muss vor allen anderen Scripts laden -->
-    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/auth-setup.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/logout.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/drawer-logo.js') }}" defer></script>
-    <!-- htmx for progressive enhancement -->
-    <script src="{{ url_for('static', filename='vendor/htmx.min.js') }}" defer></script>
+    <script src="{{ static_asset('js/theme.js') }}"></script>
+    <script src="{{ static_asset('js/auth-setup.js') }}" defer></script>
+    <script src="{{ static_asset('js/logout.js') }}" defer></script>
+    <script src="{{ static_asset('js/theme-toggle.js') }}" defer></script>
+    <script src="{{ static_asset('js/drawer-logo.js') }}" defer></script>
     {% if goatcounter_url %}
     {# Server-rendered navigation triggers GoatCounter's built-in initial page-load count; workbench replaceState updates are UI state, not separate page views. #}
     <script data-goatcounter="{{ goatcounter_url }}" async src="https://gc.zgo.at/count.js"></script>
@@ -76,7 +76,7 @@
       {% include 'partials/footer.html' %}
     </footer>
     
-    <script type="module" src="{{ url_for('static', filename='js/modules/core/entry.js') }}" defer></script>
+    <script type="module" src="{{ static_asset('js/modules/core/entry.js') }}" defer></script>
     
     {% block extra_scripts %}
     {% endblock %}

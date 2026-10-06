@@ -14,7 +14,7 @@
   {% endif %}
 
   {% if content_header.breadcrumbs %}
-  <nav class="pm-breadcrumb{{ ' pm-breadcrumb--mobile-only' if content_header.get('breadcrumb_mode') == 'mobile-only' else '' }}" aria-label="Pfad"{% if content_header.get('breadcrumb_depth') %} data-depth="{{ content_header.get('breadcrumb_depth') }}"{% endif %}>
+  <nav class="pm-breadcrumb{{ ' pm-breadcrumb--mobile-only' if content_header.get('breadcrumb_mode') == 'mobile-only' else '' }}" aria-label="{{ t('shell.breadcrumb.label') }}"{% if content_header.get('breadcrumb_depth') %} data-depth="{{ content_header.get('breadcrumb_depth') }}"{% endif %}>
     <ol class="pm-breadcrumb__list">
       {% for item in content_header.breadcrumbs %}
       <li class="pm-breadcrumb__item{{ ' is-current' if item.current else '' }}">

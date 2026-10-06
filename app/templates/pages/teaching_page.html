@@ -118,7 +118,7 @@
     {% endfor %}
   </div>
   {% if promat_page.back_link %}
-  <nav class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav" aria-label="{{ promat_page.back_link.label }}">
+  <nav class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav" aria-label="{{ t('shell.page_end.back_label') }}">
     {{ render_navigation_pill({ 'label': promat_page.back_link.label, 'href': promat_page.back_link.href, 'size': 'medium', 'direction': 'back' }, 'pm-back-link__pill') }}
   </nav>
   {% endif %}

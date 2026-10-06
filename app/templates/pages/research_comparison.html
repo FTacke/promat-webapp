@@ -83,7 +83,7 @@
       <div class="pm-comparison-session-groups">
         <section class="pm-comparison-session-group pm-comparison-session-group--source" aria-labelledby="pm-comparison-learners-title">
           <div class="pm-comparison-session-group__header">
-            <h4 id="pm-comparison-learners-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.learnersTitle }}</h4>
+            <h3 id="pm-comparison-learners-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.learnersTitle }}</h3>
           </div>
 
           <ul class="pm-comparison-session-list" data-comparison-learner-sessions></ul>
@@ -91,7 +91,7 @@
 
         <section class="pm-comparison-session-group pm-comparison-session-group--source" aria-labelledby="pm-comparison-native-title">
           <div class="pm-comparison-session-group__header">
-            <h4 id="pm-comparison-native-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.nativeTitle }}</h4>
+            <h3 id="pm-comparison-native-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.nativeTitle }}</h3>
           </div>
 
           <ul class="pm-comparison-session-list" data-comparison-native-sessions></ul>
@@ -99,7 +99,7 @@
 
         <section class="pm-comparison-session-group pm-comparison-session-group--selected" aria-labelledby="pm-comparison-selected-title">
           <div class="pm-comparison-session-group__header">
-            <h4 id="pm-comparison-selected-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.selectedTitle }}</h4>
+            <h3 id="pm-comparison-selected-title" class="pm-comparison-session-group__title">{{ promat_page.client_state.labels.selectedTitle }}</h3>
           </div>
 
           <ul class="pm-comparison-session-list" data-comparison-selected-sessions></ul>
@@ -136,8 +136,8 @@
         </div>
       </div>
 
-      <p class="pm-comparison-status-card__text pm-comparison-status-card__text--subtle" data-comparison-status-text hidden>{{ promat_page.workspace.text }}</p>
-      <p class="pm-workspace-feedback" data-comparison-feedback hidden></p>
+      <p class="pm-comparison-status-card__text pm-comparison-status-card__text--subtle" data-comparison-status-text role="status" aria-live="polite" hidden>{{ promat_page.workspace.text }}</p>
+      <p class="pm-workspace-feedback" data-comparison-feedback role="status" aria-live="polite" hidden></p>
     </section>
 
     <section class="pm-container pm-comparison-matrix-panel" data-comparison-matrix-panel>
@@ -198,5 +198,5 @@
 
 {% block extra_scripts %}
 <script id="pm-comparison-state" type="application/json">{{ promat_page.client_state | tojson }}</script>
-<script type="module" src="{{ url_for('static', filename='js/pages/research-comparison.js') }}"></script>
+<script type="module" src="{{ static_asset('js/pages/research-comparison.js') }}"></script>
 {% endblock %}

@@ -483,6 +483,11 @@ def register_security_headers(app: Flask) -> None:
             goatcounter=bool(_request_goatcounter_url(app))
         )
 
+        if request.path.startswith("/static/") and "v" in request.args and response.status_code in (200, 304):
+            # `static_asset()` fingerprints URLs with the file's mtime (?v=...), so a versioned URL never changes its
+            # content: cache it for a year instead of revalidating it on every navigation.
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+
         if request.path == "/auth/password/reset":
             # The one-time reset token is part of this URL; keep it out of Referer headers of follow-up requests.
             response.headers["Referrer-Policy"] = "no-referrer"
@@ -505,6 +510,19 @@ def _request_prefers_json_errors() -> bool:
         or request.accept_mimetypes.best == "application/json"
         or request.is_json
     )
+
+
+def _retry_after_seconds() -> int:
+    """Seconds until the exceeded limit resets (flask-limiter's current limit), at least 1 and at most one hour."""
+    import time
+
+    from .extensions import limiter
+
+    try:
+        reset_at = limiter.current_limit.reset_at
+        return max(1, min(3600, int(reset_at - time.time()) + 1))
+    except Exception:  # noqa: BLE001 - no limit context (for example a 429 raised elsewhere)
+        return 60
 
 
 def _json_error_response(message: str, status_code: int, *, error: str | None = None):
@@ -548,6 +566,20 @@ def register_error_handlers(app: Flask) -> None:
         if _request_prefers_json_errors():
             return _json_error_response("Request body too large", 413, error="Payload too large")
         return render_template("errors/413.html", error=error), 413
+
+    @app.errorhandler(429)
+    def too_many_requests(error):
+        retry_after = _retry_after_seconds()
+        app.logger.warning("Rate limit exceeded: %s %s", request.method, request.path)
+        if _request_prefers_json_errors():
+            response = _json_error_response(
+                translate(_resolve_request_ui_language(), "errors.429.message"), 429, error="rate_limited"
+            )[0]
+            response.status_code = 429
+        else:
+            response = make_response(render_template("errors/429.html", error=error, retry_after=retry_after), 429)
+        response.headers["Retry-After"] = str(retry_after)
+        return response
 
     @app.errorhandler(500)
     def internal_server_error(error):

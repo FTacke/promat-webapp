@@ -1,3 +1,4 @@
+import { bindSelectCommit } from "../modules/research/select-commit.js";
 import { getCsrfToken } from "../api.js";
 import { fetchWithAuth } from "../modules/auth/fetch.js";
 import {
@@ -263,6 +264,9 @@ function init() {
     if (explicitPresetId && materialPresetLookup.has(explicitPresetId)) {
       return explicitPresetId;
     }
+    if (explicitPresetId && materialPresetLookup.has(`saved:${explicitPresetId}`)) {
+      return `saved:${explicitPresetId}`;
+    }
     for (const preset of state.materialPresets || []) {
       if (itemsMatch(record.items || [], preset.items || [])) {
         return preset.presetId;
@@ -381,7 +385,8 @@ function init() {
     for (const button of matrixBody.querySelectorAll("[data-comparison-play-row]")) {
       const rowKey = button.dataset.comparisonPlayRow || "";
       const isActiveRow = playbackState === "playing" && rowKey && rowKey === activeRowKey;
-      const nextLabel = isActiveRow ? stopLabel : playLabel;
+      const itemContext = button.dataset.itemContext || "";
+      const nextLabel = `${isActiveRow ? stopLabel : playLabel}${itemContext ? `: ${itemContext}` : ""}`;
       button.setAttribute("aria-label", nextLabel);
       button.setAttribute("title", nextLabel);
       button.setAttribute("aria-pressed", isActiveRow ? "true" : "false");
@@ -427,8 +432,15 @@ function init() {
     const contentType = (response.headers.get("content-type") || "").toLowerCase();
     const contentDisposition = (response.headers.get("content-disposition") || "").toLowerCase();
     const contentLength = Number(response.headers.get("content-length") || "0");
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(labels.clipSessionExpired || labels.clipUnavailable || requestFailedLabel);
+    }
+    if (response.status === 429) {
+      throw new Error(labels.rateLimited || labels.clipUnavailable || requestFailedLabel);
+    }
     if (!response.ok) {
-      throw new Error(response.statusText || requestFailedLabel);
+      // Never surface the raw server status text ("Not Found"); use the localized message.
+      throw new Error(labels.clipUnavailable || requestFailedLabel);
     }
     if (contentDisposition.startsWith("attachment;")) {
       throw new Error(labels.clipUnavailable || requestFailedLabel);
@@ -721,7 +733,48 @@ function init() {
     return Boolean(record && record.visibility === "private" && record.state === "draft");
   }
 
+  // A private draft copy is created only for an explicit edit (the "create" action). Choosing speakers, material or the
+  // view task on a curated/saved set (or the implicit default workspace) is client-side view state and never forks
+  // the set; whatever was chosen locally is carried over to the draft when it is finally created.
   async function ensureDraft() {
+    if (isDraftRecord(activeSet)) {
+      return activeSet;
+    }
+    const pendingSessionIds = selectedSessionIds();
+    const pendingViewTask = visibleViewTask;
+    const pendingItems = activeSet && !activeSet.set_id ? (activeSet.items || []) : null;
+    const draft = await createDraftRecord();
+
+    let nextSet = draft;
+    if (pendingItems && pendingItems.length && !itemsMatch(nextSet.items || [], pendingItems)) {
+      const itemsPayload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(nextSet.set_id)}/items`, {
+        method: "PUT",
+        body: { items: pendingItems.map((item) => ({ task: item.task, item_id: item.item_id })) },
+      });
+      nextSet = itemsPayload.set;
+    }
+    const storedSessionIds = ((nextSet.workbench_state && nextSet.workbench_state.sessions) || []).map((entry) => entry.session_id);
+    if (storedSessionIds.join("|") !== pendingSessionIds.join("|")) {
+      const sessionsPayload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(nextSet.set_id)}/sessions`, {
+        method: "PUT",
+        body: { sessions: pendingSessionIds.map((sessionId) => ({ session_id: sessionId })) },
+      });
+      nextSet = sessionsPayload.set;
+    }
+    if (((nextSet.workbench_state && nextSet.workbench_state.comparison_view_task) || "all") !== pendingViewTask) {
+      const viewPayload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(nextSet.set_id)}`, {
+        method: "PATCH",
+        body: { workbench_state: { comparison_view_task: pendingViewTask } },
+      });
+      nextSet = viewPayload.set;
+    }
+    if (nextSet !== draft) {
+      applySet(nextSet, { implicit: false, explicitMaterial: isExplicitMaterialSelection });
+    }
+    return activeSet;
+  }
+
+  async function createDraftRecord() {
     if (isDraftRecord(activeSet)) {
       return activeSet;
     }
@@ -1006,7 +1059,6 @@ function init() {
         type="button"
         class="pm-comparison-speaker-row${isSelectedList ? " is-selected pm-comparison-speaker-row--selected" : ""}"
         data-comparison-session-toggle="${escapeHtml(session.sessionId)}"
-        aria-pressed="${isSelectedList ? "true" : "false"}"
         aria-label="${escapeHtml(actionLabel)}: ${escapeHtml(session.personId)}"
         title="${escapeHtml(session.personId)} · ${escapeHtml(session.sessionId)}"
       >
@@ -1166,8 +1218,8 @@ function init() {
           type="button"
           class="pm-material-choice${isCurrent ? " is-current" : ""}${isDisabled ? " is-disabled" : ""}"
           data-comparison-view-filter="${escapeHtml(entry)}"
-          ${isCurrent || isDisabled ? "disabled" : ""}
-          aria-pressed="${isCurrent ? "true" : "false"}"
+          ${isDisabled ? 'aria-disabled="true"' : ""}
+          ${isCurrent ? 'aria-pressed="true"' : 'aria-pressed="false"'}
         >${escapeHtml(state.taskLabels[entry] || entry)}</button>
       `;
       })
@@ -1273,13 +1325,49 @@ function init() {
     materialPresetSelect.disabled = false;
   }
 
+  // Selecting another set/material only changes what is shown. A stored set is loaded as it is (no copy); a
+  // built-in preset or the default material becomes an unsaved in-memory workspace. The selected speakers stay.
+  async function switchMaterialWithoutDraft(presetId) {
+    const preset = presetId ? materialPresetLookup.get(presetId) : null;
+    if (preset && preset.setId) {
+      const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(preset.setId)}`);
+      state.requestedSetId = preset.setId;
+      applySet(payload.set, { implicit: false, explicitMaterial: true });
+      return;
+    }
+    const items = preset ? itemsForPreset(presetId) : defaultSetItems();
+    const nextViewTask = resolveViewTaskForItems(items, preset ? preset.preferredTask : visibleViewTask);
+    state.requestedSetId = null;
+    applySet(
+      {
+        set_id: null,
+        visibility: "private",
+        state: "implicit",
+        label: null,
+        source_preset_id: presetId,
+        items,
+        workbench_state: {
+          comparison_view_task: nextViewTask,
+          preferred_task: nextViewTask,
+          sessions: selectedSessionIds().map((sessionId) => ({ session_id: sessionId })),
+        },
+      },
+      { implicit: true, explicitMaterial: Boolean(preset) },
+    );
+  }
+
   async function updateMaterialSelection({ presetId = null } = {}) {
     if (!state.isAuthenticated) {
       redirectToLogin({ setId: activeSet && activeSet.set_id, task: visibleViewTask !== "all" ? visibleViewTask : null });
       throw new Error(labels.loginText || requestFailedLabel);
     }
 
-    const ensuredSet = await ensureDraft();
+    if (!isDraftRecord(activeSet)) {
+      await switchMaterialWithoutDraft(presetId);
+      return;
+    }
+
+    const ensuredSet = activeSet;
     const nextItems = presetId ? itemsForPreset(presetId) : defaultSetItems();
     const nextViewTask = resolveViewTaskForItems(nextItems, presetId ? materialPresetLookup.get(presetId)?.preferredTask : visibleViewTask);
 
@@ -1429,9 +1517,9 @@ function init() {
                   <div class="pm-comparison-item__meta-row">
                     <span class="pm-comparison-item__number">${escapeHtml(item.itemNumber)}</span>
                   </div>
-                  <p class="pm-comparison-item__text pm-item-content-text pm-item-content-text--compare">${escapeHtml(item.text)}</p>
+                  <p class="pm-comparison-item__text pm-item-content-text pm-item-content-text--compare"${state.contentLang && state.contentLang !== state.uiLang ? ` lang="${escapeHtml(state.contentLang)}"` : ""}>${escapeHtml(item.text)}</p>
                 </div>
-                  ${rowEntries.length ? `<button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary pm-comparison-matrix__row-play" data-comparison-play-row="${escapeHtml(rowKeyForItem(item.task, item.item_id))}" aria-label="${escapeHtml(labels.playRowLabel || "")}" title="${escapeHtml(labels.playRowLabel || "")}" aria-pressed="false" data-playback-state="idle">${iconSvg("play")}</button>` : ""}
+                  ${rowEntries.length ? `<button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary pm-comparison-matrix__row-play" data-comparison-play-row="${escapeHtml(rowKeyForItem(item.task, item.item_id))}" data-item-context="${escapeHtml(`${item.itemNumber} ${item.text}`)}" aria-label="${escapeHtml(`${labels.playRowLabel || ""}: ${item.itemNumber} ${item.text}`)}" title="${escapeHtml(`${labels.playRowLabel || ""}: ${item.itemNumber} ${item.text}`)}" aria-pressed="false" data-playback-state="idle">${iconSvg("play")}</button>` : ""}
                 </div>
               </div>
             </th>
@@ -1444,8 +1532,8 @@ function init() {
               return `
                 <td class="pm-comparison-matrix__cell" data-comparison-matrix-cell="${escapeHtml(session.sessionId)}|${escapeHtml(item.task)}|${escapeHtml(item.item_id)}">
                   <div class="pm-comparison-matrix__cell-actions">
-                    <button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary" data-comparison-play-cell="${escapeHtml(session.sessionId)}|${escapeHtml(item.task)}|${escapeHtml(item.item_id)}|${escapeHtml(item.itemNumber)}" aria-label="${escapeHtml(labels.playClipLabel || "")}" title="${escapeHtml(labels.playClipLabel || "")}">${iconSvg("play")}</button>
-                    <a class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--secondary" href="${escapeHtml(downloadHref)}" download aria-label="${escapeHtml(labels.downloadClip || "")}" title="${escapeHtml(labels.downloadClip || "")}">${iconSvg("download")}</a>
+                    <button type="button" class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--primary" data-comparison-play-cell="${escapeHtml(session.sessionId)}|${escapeHtml(item.task)}|${escapeHtml(item.item_id)}|${escapeHtml(item.itemNumber)}" aria-label="${escapeHtml(`${labels.playClipLabel || ""}: ${item.itemNumber} ${item.text} · ${session.personId}`)}" title="${escapeHtml(`${labels.playClipLabel || ""}: ${item.itemNumber} ${item.text} · ${session.personId}`)}">${iconSvg("play")}</button>
+                    <a class="pm-player-icon-button pm-comparison-icon-button pm-comparison-icon-button--secondary" href="${escapeHtml(downloadHref)}" download aria-label="${escapeHtml(`${labels.downloadClip || ""}: ${item.itemNumber} ${item.text} · ${session.personId}`)}" title="${escapeHtml(`${labels.downloadClip || ""}: ${item.itemNumber} ${item.text} · ${session.personId}`)}">${iconSvg("download")}</a>
                   </div>
                 </td>
               `;
@@ -1461,7 +1549,47 @@ function init() {
     });
   }
 
+  // Sections are re-rendered with innerHTML, which would drop the keyboard focus (WCAG 2.4.3). Remember which control
+  // had focus and put it back on the matching control after the render.
+  const FOCUS_KEYS = [
+    "data-comparison-session-toggle",
+    "data-comparison-view-filter",
+    "data-comparison-play-row",
+    "data-comparison-play-cell",
+    "data-comparison-remove-filter",
+  ];
+
+  function captureFocus() {
+    const element = document.activeElement;
+    if (!element || element === document.body || !root.contains(element)) {
+      return null;
+    }
+    for (const attribute of FOCUS_KEYS) {
+      const value = element.getAttribute(attribute);
+      if (value !== null) {
+        return { attribute, value };
+      }
+    }
+    return null;
+  }
+
+  function restoreFocus(descriptor) {
+    if (!descriptor || (document.activeElement && document.activeElement !== document.body && root.contains(document.activeElement))) {
+      return;
+    }
+    const target = root.querySelector(`[${descriptor.attribute}="${CSS.escape(descriptor.value)}"]`);
+    if (target) {
+      target.focus({ preventScroll: true });
+    }
+  }
+
   function render() {
+    const focusDescriptor = captureFocus();
+    renderAll();
+    restoreFocus(focusDescriptor);
+  }
+
+  function renderAll() {
     renderStatus();
     setFeedback(feedbackState && feedbackState.message, feedbackState && feedbackState.tone);
     renderMaterialControls();
@@ -1472,9 +1600,30 @@ function init() {
     renderMatrix();
   }
 
+  function setLocalSessions(nextSessionIds) {
+    const base = activeSet || buildImplicitDefaultWorkspace();
+    if (!activeSet) {
+      isImplicitDraft = true;
+      isBootstrappingWorkspace = false;
+    }
+    activeSet = enrichSet({
+      ...base,
+      workbench_state: {
+        ...(base.workbench_state || {}),
+        sessions: nextSessionIds.map((sessionId) => ({ session_id: sessionId })),
+      },
+    });
+    transientMessage = null;
+    syncUrl();
+    render();
+  }
+
   async function updateSessions(nextSessionIds) {
-    const ensuredSet = await ensureDraft();
-    const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(ensuredSet.set_id)}/sessions`, {
+    if (!isDraftRecord(activeSet)) {
+      setLocalSessions(nextSessionIds);
+      return;
+    }
+    const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(activeSet.set_id)}/sessions`, {
       method: "PUT",
       body: {
         sessions: nextSessionIds.map((sessionId) => ({ session_id: sessionId })),
@@ -1487,13 +1636,11 @@ function init() {
     visibleViewTask = nextViewTask;
     syncUrl();
     render();
-    if (!activeSet && !state.isAuthenticated) {
+    if (!isDraftRecord(activeSet)) {
       return;
     }
 
-    const ensuredSet = await ensureDraft();
-
-    const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(ensuredSet.set_id)}`, {
+    const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(activeSet.set_id)}`, {
       method: "PATCH",
       body: {
         workbench_state: {
@@ -1520,6 +1667,9 @@ function init() {
     const filterButton = event.target.closest("[data-comparison-view-filter]");
     if (filterButton) {
       event.preventDefault();
+      if (filterButton.getAttribute("aria-disabled") === "true") {
+        return;
+      }
       const nextViewTask = filterButton.dataset.comparisonViewFilter || "all";
       try {
         await updateViewTask(nextViewTask);
@@ -1655,8 +1805,8 @@ function init() {
     });
   }
   if (materialPresetSelect) {
-    materialPresetSelect.addEventListener("change", async () => {
-      const nextValue = materialPresetSelect.value || DEFAULT_MATERIAL_OPTION;
+    bindSelectCommit(materialPresetSelect, async (selectedValue) => {
+      const nextValue = selectedValue || DEFAULT_MATERIAL_OPTION;
       if (nextValue === CURRENT_MATERIAL_OPTION) {
         renderMaterialPresetControl();
         return;

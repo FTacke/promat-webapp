@@ -5,15 +5,16 @@
   <details class="pm-research-filters-accordion">
     <summary class="pm-research-filters-accordion__summary">{{ form_config.summary }}</summary>
     <div class="pm-research-filters-accordion__body">
-      {{ _render_filter_inner(form_config) }}
+      {{ _render_filter_inner(form_config, 'pm-filter-mobile-') }}
     </div>
   </details>
   {% else %}
-  {{ _render_filter_inner(form_config) }}
+  {{ _render_filter_inner(form_config, 'pm-filter-') }}
   {% endif %}
 {%- endmacro %}
 
-{% macro _render_filter_inner(form_config) -%}
+{# id_prefix keeps the ids unique: the form is rendered twice (mobile accordion and desktop panel). #}
+{% macro _render_filter_inner(form_config, id_prefix) -%}
   <section class="pm-research-filters-panel pm-container pm-container--tinted" aria-label="{{ form_config.title }}">
     <div class="pm-research-filters-panel__header">
       <h2 class="pm-research-filters-panel__title">{{ form_config.title }}</h2>
@@ -26,7 +27,7 @@
         {% for field in form_config.fields %}
         <div class="pm-research-filter-field">
           <div class="pm-research-filter-field__label-row">
-            <label class="pm-research-filter-field__label" for="pm-filter-{{ field.name }}">{{ field.label }}</label>
+            <label class="pm-research-filter-field__label" for="{{ id_prefix }}{{ field.name }}">{{ field.label }}</label>
             {% if field.tooltip %}
             <details class="pm-info-tip">
               <summary class="pm-info-tip__trigger" aria-label="{{ field.label }}"><span aria-hidden="true">i</span></summary>
@@ -34,7 +35,7 @@
             </details>
             {% endif %}
           </div>
-          <select class="pm-research-filter-field__input" name="{{ field.name }}" id="pm-filter-{{ field.name }}">
+          <select class="pm-research-filter-field__input" name="{{ field.name }}" id="{{ id_prefix }}{{ field.name }}">
             {% for option in field.options %}
             <option value="{{ option.value }}"{{ ' selected' if option.value == field.value else '' }}>{{ option.label }}</option>
             {% endfor %}

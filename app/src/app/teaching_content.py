@@ -523,6 +523,13 @@ def _hub_topic_card(
     }, "title", "summary", "byline")
 
 
+def _content_lang_code(teaching_lang: str) -> str:
+    """ISO code of the taught language, used as `lang` on example material that is not in the UI language."""
+    from .routes.public_content import get_language  # lazy: public_content imports this module
+
+    return str((get_language(teaching_lang) or {}).get("lang_code") or "")
+
+
 def _audio_example_payload(
     teaching_lang: str,
     topic_slug: str,
@@ -535,6 +542,7 @@ def _audio_example_payload(
     transcript = _as_text(raw_item.get("transcript")) or inherited_transcript
     note = _as_text(raw_item.get("note"))
     return _set_inline_markdown_fields({
+        "lang": _content_lang_code(teaching_lang),
         "label": _as_text(raw_item.get("label")) or _as_text(raw_item.get("title")),
         "title": _as_text(raw_item.get("title")),
         "subtitle": _as_text(raw_item.get("subtitle")),

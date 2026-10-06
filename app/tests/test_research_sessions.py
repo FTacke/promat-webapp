@@ -1366,7 +1366,7 @@ def test_research_sidebar_stays_area_only_when_authenticated(url_app: Flask) -> 
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    drawer_html = _extract_element_by_id(html, "aside", "navigation-drawer-standard")
+    drawer_html = _extract_element_by_id(html, "nav", "navigation-drawer-standard")
 
     assert "Mein Konto" not in drawer_html
     assert "Admin-Bereich" not in drawer_html
@@ -1719,7 +1719,7 @@ def test_research_language_root_shows_muted_locked_entries_for_signed_out_users(
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    drawer_html = _extract_element_by_id(html, "aside", "navigation-drawer-standard")
+    drawer_html = _extract_element_by_id(html, "nav", "navigation-drawer-standard")
     assert "pm-research-language-root__action is-muted" not in html
     assert 'pm-research-language-root__item is-muted' not in html
     assert "pm-research-language-root__nav-pill pm-nav-pill--muted" in html

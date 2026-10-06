@@ -225,7 +225,7 @@ textarea {
   line-height: var(--pm-type-panel-section-line);
   font-weight: var(--pm-type-panel-section-weight);
   letter-spacing: var(--pm-type-panel-section-tracking);
-  color: var(--promat-wordmark-accent);
+  color: var(--pm-text-accent);
 }
 
 .promat-panel__language-title {

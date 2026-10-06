@@ -57,7 +57,19 @@ Diese Punkte lassen sich nicht aus dem Repository klären und wurden nie gegen P
 10. **Speaker-Profile:** ein Profil mit hinterlegten Einwilligungsdaten öffnen und prüfen, dass keine Einwilligungs- oder „Interne Notizen“-Zeilen erscheinen.
 11. **Proxy-Logs und Header (nginx):** `nginx -T` prüfen. Das Zugriffslog-Format darf die Query nicht enthalten (`$uri` statt `$request`, kein `$http_referer`), weil Passwort-Reset-Links das Token als `?token=` tragen; der App-Container loggt ohne Query und ohne Referer. `Host` und `X-Forwarded-*` müssen von nginx selbst gesetzt werden.
 12. **Backup-Ordner:** `PROMAT_BACKUP_DIR` (Standard `/srv/webapps_storage/promat/backups/postgres`) muss für den Runner-Benutzer beschreibbar und groß genug sein, denn jedes Deployment legt vor den Migrationen ein Backup an (Aufräumen: `--keep`, Standard 14).
-13. **Redis-Ausfall:** der Rate-Limiter läuft bei Redis-Ausfall fail-open (Seiten bleiben erreichbar, jeder Fehler steht im Container-Log als „Swallowing error“); `/ready` meldet dann 503 und der Healthcheck bleibt unverändert auf `/health`. Redis-Ausfälle daher über `/ready` oder das Container-Log überwachen.
+13. **Redis-Ausfall:** der Rate-Limiter läuft bei Redis-Ausfall fail-open (Seiten bleiben erreichbar, jeder Fehler steht im Container-Log als „Swallowing error“); `/ready` meldet dann 503 und der Healthcheck bleibt unverändert auf `/health`. Redis-Ausfälle daher über `/ready` oder das Container-Log überwachen. Ein Monitor-Thread in der App (Intervall `RATELIMIT_HEALTH_POLL_SECONDS`, Standard 5 s) schaltet den Limiter während des Ausfalls ab, damit Anfragen nicht je rund 2,5 s auf die Verbindung warten; im Log erscheinen „Rate-limit storage is unavailable“ und beim Wiederanlauf „… available again“.
+14. **Komprimierung und Cache der Static-Dateien (nginx, einmalig):** Die App liefert versionierte Static-Dateien (`/static/...?v=...`) mit `Cache-Control: public, max-age=31536000, immutable`; nginx gibt den Header unverändert weiter. Komprimiert wird nur, was nginx dafür freigibt. Standard ist `gzip_types text/html` (CSS, JS, JSON und SVG gehen unkomprimiert hinaus; `30_components.css` hat unkomprimiert rund 250 KB). Im `server`- oder `http`-Block des Pronunciation-Vhosts eintragen und prüfen:
+
+    ```nginx
+    gzip on;
+    gzip_vary on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_types text/css application/javascript text/javascript application/json image/svg+xml;
+    ```
+
+    `woff2`, JPEG und MP3 sind bereits komprimiert und bleiben draußen. Danach `sudo nginx -t && sudo systemctl reload nginx`. Prüfen: `curl -sI -H 'Accept-Encoding: gzip' https://<domain>/static/css/30_components.css` zeigt `Content-Encoding: gzip`, und `curl -sI 'https://<domain>/static/css/00_tokens.css?v=1'` zeigt `Cache-Control: public, max-age=31536000, immutable`. Kein `proxy_hide_header Cache-Control` und kein `expires`, das den App-Header überschreibt.
 
 ## Verifikation
 

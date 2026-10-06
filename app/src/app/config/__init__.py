@@ -203,6 +203,8 @@ class BaseConfig:
     AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS = float(
         _normalize_value(os.getenv("AUTH_ACCESS_REQUEST_MIN_SUBMIT_SECONDS") or "0.5")
     )
+    # How often a worker probes the rate-limit storage; while it is down the limiter is skipped (see extensions).
+    RATELIMIT_HEALTH_POLL_SECONDS = float(_normalize_value(os.getenv("RATELIMIT_HEALTH_POLL_SECONDS") or "5"))
     # Largest accepted request body. Forms and the JSON set API stay far below this; anything bigger is rejected with
     # 413 before it is parsed or stored.
     MAX_CONTENT_LENGTH = int(_normalize_value(os.getenv("MAX_CONTENT_LENGTH") or str(1024 * 1024)))

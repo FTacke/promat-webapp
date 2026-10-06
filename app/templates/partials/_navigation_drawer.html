@@ -39,7 +39,7 @@
       {% if panel['context_mode'] == 'language' %}
       <div class="promat-panel__language-header pm-panel__language-header">
         {% if panel.get('context_title_is_link', True) and panel.get('context_back_href') %}
-        <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="{{ panel.get('context_back_label') or t('shell.panel.back_to_selection') }}">
+        <a href="{{ panel['context_back_href'] }}" class="promat-panel__language-link" aria-label="{{ panel['context_title'] }}: {{ panel.get('context_back_label') or t('shell.panel.back_to_selection') }}">
           <span class="pm-panel__section-icon pm-icon-mask pm-icon-mask--back" aria-hidden="true"></span>
           <p class="promat-panel__language-title">{{ panel['context_title'] }}</p>
         </a>
@@ -141,8 +141,8 @@
   </div>
 </dialog>
 
-<aside id="navigation-drawer-standard" class="promat-panel promat-panel--standard" role="navigation" aria-label="{{ t('shell.panel.drawer') }}" data-element="nav-drawer-standard">
+<nav id="navigation-drawer-standard" class="promat-panel promat-panel--standard" aria-label="{{ t('shell.panel.drawer') }}" data-element="nav-drawer-standard">
   {% if promat_panel is defined %}
     {{ panel_content(promat_panel) }}
   {% endif %}
-</aside>
+</nav>

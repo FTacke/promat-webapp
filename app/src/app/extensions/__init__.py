@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 
 from flask import Flask, jsonify, request
 from flask_caching import Cache
@@ -20,6 +21,7 @@ limiter = Limiter(
     # Fail open: when the storage (Redis) is unavailable the request is served and every swallowed error is logged
     # (see _route_limiter_log_to_app_log); /ready reports not_ready. There is deliberately no in-memory substitute.
     swallow_errors=True,
+    headers_enabled=True,
     in_memory_fallback_enabled=False,
 )
 cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 300})
@@ -45,12 +47,46 @@ def _resolve_auth_ui_language() -> str:
     )
 
 
+_rate_limit_storage_down = threading.Event()
+
+
+def _start_rate_limit_health_monitor(app: Flask) -> threading.Event | None:
+    """Keep requests fast while the rate-limit storage (Redis) is down.
+
+    With ``swallow_errors`` every request would otherwise wait for a failing connection attempt (about 2.5 s when the
+    Redis host name no longer resolves). A daemon thread probes the real storage; while it is down the limiter is
+    skipped (fail open, logged once per transition) and when it answers again limiting resumes. There is no in-memory
+    substitute store. Returns the event that stops the monitor (used by tests), or ``None`` for in-memory storage.
+    """
+    if str(app.config.get("RATE_LIMIT_STORAGE_URI") or "").lower().startswith("memory"):
+        return None
+    stop = threading.Event()
+    interval = float(app.config.get("RATELIMIT_HEALTH_POLL_SECONDS", 5.0))
+
+    def monitor() -> None:
+        while not stop.is_set():
+            try:
+                healthy = bool(limiter.storage.check())
+            except Exception:  # noqa: BLE001
+                healthy = False
+            if not healthy and not _rate_limit_storage_down.is_set():
+                _rate_limit_storage_down.set()
+                app.logger.error("Rate-limit storage is unavailable; rate limiting is skipped until it answers again")
+            elif healthy and _rate_limit_storage_down.is_set():
+                _rate_limit_storage_down.clear()
+                app.logger.warning("Rate-limit storage is available again; rate limiting resumed")
+            stop.wait(interval)
+
+    threading.Thread(target=monitor, name="rate-limit-health", daemon=True).start()
+    return stop
+
+
 def register_extensions(app: Flask) -> None:
     """Attach Flask extensions to the app."""
 
     @limiter.request_filter
     def _health_and_ready_bypass() -> bool:
-        return _is_rate_limit_exempt_request_path(request.path)
+        return _is_rate_limit_exempt_request_path(request.path) or _rate_limit_storage_down.is_set()
 
     jwt.init_app(app)
     limiter.init_app(app)
@@ -58,6 +94,8 @@ def register_extensions(app: Flask) -> None:
     cache.init_app(app)
     if app.debug:
         limiter.enabled = False
+    elif not app.testing:
+        _start_rate_limit_health_monitor(app)
     register_jwt_handlers()
 
 

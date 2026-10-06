@@ -55,10 +55,22 @@ Die Suite ist die gesamte `pytest`-Konfiguration aus `app/pyproject.toml`. Es gi
 | `python` | ruff, compileall, Governance, Teaching-Validierung, shellcheck, gesamte pytest-Suite (mit PostgreSQL-Service-Container für die `postgres`-Tests) |
 | `javascript` | `node --test` |
 | `docker` | Compose-Config, Image-Build, Laufzeit-Assets und HTTP-Smoke im gebauten Image (`scripts/ci_image_smoke.py`: Rechtsseiten, öffentliche Seiten, Entwürfe nicht öffentlich, Login-Redirect) |
+| `browser-smoke` | Chromium (Playwright) gegen die echte App-Factory mit synthetischer Fixture-Runtime (`scripts/qa/fixture_runtime.py`) und gestubbtem Audio: Seiten ohne Page-/Console-Fehler, Login-Rücksprung, „Alle Items“ im Player, stabile Set-Auswahl im Vergleich (auch bei gespeichertem Set: kein `private-copy`, keine Schreibzugriffe), Stop-Steuerung und kein paralleles Audio, Light/Dark, kein horizontaler Überlauf bei 390 px |
 | `backup-restore` | echte Migrationen, Backup, verifizierter Restore in Wegwerf-Postgres |
 | `release-gate` | Sammelstatus; hängt von allen anderen Jobs ab |
 
 Ein neuer Job muss in `release-gate.needs` aufgenommen werden (wird getestet).
+
+### Browser-Smoke lokal
+
+```text
+pip install playwright==1.59.0 && python -m playwright install chromium
+python scripts/qa/ci_browser_smoke.py --out tmp/ui-qa/<YYYY-MM-DD>-ci-smoke
+```
+
+Das Skript baut die Fixture-Runtime in ein Temp-Verzeichnis, startet die App in-process auf einem freien Port, legt ein einzelnes QA-Konto an und räumt danach auf (`--keep-runtime` behält das Verzeichnis). Keine echten Daten, kein Netzwerk. Exit 1 bei jeder fehlgeschlagenen Prüfung; Screenshots liegen unter `--out` (in CI als Artefakt `browser-smoke-screenshots`). Nachgewiesen rot werden die Mutationen: Stop-Logik oder Stop-Icon der Vergleichsmatrix entfernt, „Alle Items“ nie als aktuelle Set-Option markiert, Syntaxfehler in `research-player.js` (`static_scripts.test.mjs` fängt Letzteres zusätzlich im JS-Test), `set_id` immer in der URL (`research_ui_state_helpers.test.mjs`); die Routenmatrix (`test_route_security_matrix.py`) wird rot, wenn `@jwt_required()` von einer Set-Route entfernt wird.
+
+Windows/Git-Bash: `PYTHONIOENCODING=utf-8` setzen, wenn eigene Debug-Skripte Konsolenmeldungen ausgeben, und `MSYS_NO_PATHCONV=1` bei Pfad-Argumenten, die mit `/` beginnen.
 
 ## Verifikation
 

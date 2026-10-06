@@ -1232,6 +1232,8 @@ def _request_wants_download() -> bool:
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>/audio.mp3")
+# Playback issues HEAD + GET per clip (a comparison row = 6 requests); the default 200/hour would throttle normal use.
+@limiter.limit("3000 per hour")
 def research_player_audio(ui_lang: str, language_slug: str, session_id: str, task: str):
     _require_ui_lang(ui_lang)
     canonical_language_slug = get_canonical_language_slug(language_slug)
@@ -1250,6 +1252,8 @@ def research_player_audio(ui_lang: str, language_slug: str, session_id: str, tas
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/player/<session_id>/<task>/items/<item_id>.mp3")
+# Playback issues HEAD + GET per clip (a comparison row = 6 requests); the default 200/hour would throttle normal use.
+@limiter.limit("3000 per hour")
 def research_player_item_download(ui_lang: str, language_slug: str, session_id: str, task: str, item_id: str):
     _require_ui_lang(ui_lang)
     canonical_language_slug = get_canonical_language_slug(language_slug)

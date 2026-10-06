@@ -218,6 +218,6 @@
 {% block extra_scripts %}
 {{ super() }}
 {% if not submitted %}
-<script type="module" src="{{ url_for('static', filename='js/pages/access-request.js') }}"></script>
+<script type="module" src="{{ static_asset('js/pages/access-request.js') }}"></script>
 {% endif %}
 {% endblock %}

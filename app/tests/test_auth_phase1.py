@@ -2758,7 +2758,7 @@ def test_admin_users_page_uses_sidebar_only_for_admin_area_navigation(auth_app: 
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    drawer_html = _extract_element_by_id(html, "aside", "navigation-drawer-standard")
+    drawer_html = _extract_element_by_id(html, "nav", "navigation-drawer-standard")
     user_menu_html = _extract_element_by_id(html, "div", "user-menu-dropdown")
 
     assert "Admin area" in drawer_html
