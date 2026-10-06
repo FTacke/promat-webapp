@@ -14,7 +14,12 @@ from flask import Blueprint, abort, current_app, g, jsonify, make_response, redi
 from itsdangerous import BadSignature, URLSafeSerializer
 from sqlalchemy import inspect, text
 
+from markupsafe import Markup
+
+from .. import publication
 from ..auth import Role
+from ..branding import format_page_title
+from ..i18n import SUPPORTED_UI_LANGUAGES
 from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
 from ..extensions import limiter
@@ -598,14 +603,66 @@ def _panel_config(
     }
 
 
+def _swap_ui_lang(path: str, ui_lang: str, target_ui_lang: str) -> str | None:
+    prefix = f"/{ui_lang}"
+    if path == prefix or path.startswith(prefix + "/"):
+        return f"/{target_ui_lang}" + path[len(prefix):]
+    return None
+
+
+def _build_page_meta(page: dict[str, Any], ui_lang: str, *, indexable: bool, canonical_path: str | None) -> dict[str, Any]:
+    """Head metadata of one page: title, localized description, canonical, hreflang, robots and JSON-LD.
+
+    Only public, published pages are indexable; everything else (login-gated work areas, unfinished pages) is
+    ``noindex`` and carries neither a canonical URL nor resource metadata.
+    """
+    indexable = indexable and page.get("meta_indexable", True)
+    description = str(page.get("meta_description") or "").strip() or publication.platform_description(ui_lang)
+    meta: dict[str, Any] = {
+        "title": format_page_title(page.get("page_title") or page.get("title")),
+        "description": " ".join(description.split()),
+        "robots": None if indexable else "noindex",
+        "canonical": None,
+        "alternates": [],
+        "json_ld": None,
+        "citation_tags": [],
+        "authors": [],
+    }
+    if not indexable:
+        return meta
+
+    path = canonical_path or request.path
+    meta["canonical"] = publication.canonical_url(path)
+    alternates = page.get("meta_alternates")
+    if alternates is None:
+        alternates = {
+            target: swapped
+            for target in SUPPORTED_UI_LANGUAGES
+            if (swapped := _swap_ui_lang(path, ui_lang, target)) is not None
+        }
+    # hreflang only for real equivalents, always reciprocal and including the page itself.
+    if len(alternates) > 1 and ui_lang in alternates:
+        meta["alternates"] = [(target, publication.canonical_url(alternates[target])) for target in SUPPORTED_UI_LANGUAGES if target in alternates]
+
+    resource = page.get("resource")
+    if resource:
+        meta["json_ld"] = Markup(publication.json_ld_script_text(resource))
+        meta["citation_tags"] = publication.reference_manager_tags(resource)
+        meta["authors"] = publication.author_names(resource)
+    return meta
+
+
 def _render_promat_page(
     *,
     page: dict[str, Any],
     panel: dict[str, Any],
     page_name: str,
     ui_lang: str,
+    indexable: bool = False,
+    canonical_path: str | None = None,
 ) -> str:
     page_context = dict(page)
+    page_meta = _build_page_meta(page_context, ui_lang, indexable=indexable, canonical_path=canonical_path)
     layout = page_context.get("layout", "reading")
     page_context["content_header"] = page_context.get("content_header") or _build_content_header(page_context, panel, page_name, ui_lang)
     page_context["hero_links"] = _linkify(page_context.get("hero_links", []), ui_lang)
@@ -645,6 +702,7 @@ def _render_promat_page(
         shell_class=shell_class,
         body_class=body_class,
         ui_lang=ui_lang,
+        page_meta=page_meta,
     )
 
 
@@ -681,7 +739,15 @@ def _render_legal_page(page_key: str, ui_lang: str | None = None) -> str:
             },
         ],
     )
-    return _render_promat_page(page=page, panel=panel, page_name="legal", ui_lang=resolved_ui_lang)
+    endpoint = "public.impressum_page" if page_key == "impressum" else "public.privacy_page"
+    return _render_promat_page(
+        page=page,
+        panel=panel,
+        page_name="legal",
+        ui_lang=resolved_ui_lang,
+        indexable=True,
+        canonical_path=url_for(endpoint, ui_lang=resolved_ui_lang),
+    )
 
 
 @blueprint.get("/")
@@ -705,7 +771,7 @@ def localized_landing_page(ui_lang: str):
         context_mode="none",
         items=[],
     )
-    return _render_promat_page(page=build_start_page(ui_lang), panel=panel, page_name="start", ui_lang=ui_lang)
+    return _render_promat_page(page=build_start_page(ui_lang), panel=panel, page_name="start", ui_lang=ui_lang, indexable=True)
 
 
 @blueprint.get("/login", endpoint="login")
@@ -892,7 +958,14 @@ def project_home(ui_lang: str):
         context_mode="section",
         items=_panel_items_for_project(ui_lang),
     )
-    return _render_promat_page(page=page, panel=panel, page_name="project", ui_lang=ui_lang)
+    return _render_promat_page(
+        page=page,
+        panel=panel,
+        page_name="project",
+        ui_lang=ui_lang,
+        indexable=True,
+        canonical_path=url_for("public.project_page", ui_lang=ui_lang, page_slug=first_page_slug),
+    )
 
 
 @blueprint.get("/<ui_lang>/project/<page_slug>")
@@ -916,7 +989,7 @@ def project_page(ui_lang: str, page_slug: str):
         context_mode="section",
         items=_panel_items_for_project(ui_lang),
     )
-    return _render_promat_page(page=page, panel=panel, page_name="project", ui_lang=ui_lang)
+    return _render_promat_page(page=page, panel=panel, page_name="project", ui_lang=ui_lang, indexable=True)
 
 
 @blueprint.get("/<ui_lang>/research")
@@ -940,6 +1013,7 @@ def research_home(ui_lang: str):
         panel=panel,
         page_name="research",
         ui_lang=ui_lang,
+        indexable=True,
     )
 
 
@@ -976,7 +1050,7 @@ def research_language_root(ui_lang: str, language_slug: str):
         context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
-    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang, indexable=True)
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/<page_slug>")
@@ -1022,7 +1096,14 @@ def research_language_page(ui_lang: str, language_slug: str, page_slug: str):
         context_back_label=get_text(ui_lang, "nav.back_to_corpus_selection"),
         items=_panel_items_for_language("research", canonical_language_slug, ui_lang),
     )
-    return _render_promat_page(page=page, panel=panel, page_name="research", ui_lang=ui_lang)
+    return _render_promat_page(
+        page=page,
+        panel=panel,
+        page_name="research",
+        ui_lang=ui_lang,
+        # `design` is the only public corpus page; the work areas are login-gated and never indexable.
+        indexable=canonical_page_slug == "design",
+    )
 
 
 @blueprint.get("/<ui_lang>/research/<language_slug>/phenomena/presets/<preset_id>")
@@ -1300,6 +1381,7 @@ def teaching_home(ui_lang: str):
         panel=panel,
         page_name="teaching",
         ui_lang=ui_lang,
+        indexable=True,
     )
 
 
@@ -1334,7 +1416,7 @@ def teaching_language_root(ui_lang: str, language_slug: str):
         )
 
     panel = _teaching_language_panel(canonical_language_slug, resolved_ui_lang)
-    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang)
+    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang, indexable=True)
 
 
 @blueprint.get("/<ui_lang>/teaching/<language_slug>/<page_slug>")
@@ -1347,16 +1429,8 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
     resolution = resolve_topic_route_target(canonical_language_slug, ui_lang, page_slug)
     if resolution["status"] == "missing-language":
         abort(404)
-    if resolution["status"] == "redirect-hub":
-        return redirect(
-            url_for(
-                "public.teaching_language_root",
-                ui_lang=resolution["ui_lang"],
-                language_slug=canonical_language_slug,
-            ),
-            302,
-        )
     if resolution["status"] == "redirect-topic":
+        # Documented cases only: missing UI-language edition (302) or a listed alias of a renamed topic (301).
         return redirect(
             url_for(
                 "public.teaching_language_page",
@@ -1364,7 +1438,7 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
                 language_slug=canonical_language_slug,
                 page_slug=resolution["topic_slug"],
             ),
-            302,
+            resolution.get("code", 302),
         )
     if resolution["status"] != "ok":
         abort(404)
@@ -1375,7 +1449,7 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
         abort(404)
 
     panel = _teaching_language_panel(canonical_language_slug, resolved_ui_lang)
-    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang)
+    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang, indexable=True)
 
 
 @blueprint.get("/impressum", defaults={"ui_lang": None})

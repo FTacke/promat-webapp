@@ -1,25 +1,16 @@
+resource_id: promat-teaching-es-which-pronunciation
 title: Which pronunciation should you teach?
 summary: Why *seseo* and *distinción* are equally valid pronunciations — and what that means for teaching.
 description: Is there one correct pronunciation in Spanish? And what does that mean for teaching?
 equivalents:
   de: which-pronunciation
 metadata:
-  authors:
-    - Felix Tacke
+  creators:
+    - felix-tacke
   peer_review:
     -
   created: 2026-05-11
   updated: 2026-05-13
-citation:
-  title: Cite this topic page
-  text: >-
-    Tacke, Felix (2026): “Which pronunciation should be taught? (topic page)”.
-    In: *Pronunciation Matters*.
-    Online: [pronunciation-matters.de/en/teaching/spanish/which-pronunciation](https://pronunciation-matters.de/en/teaching/spanish/which-pronunciation)
-  copy_text: >-
-    Tacke, Felix (2026): “Which pronunciation should be taught? (topic page)”.
-    In: Pronunciation Matters.
-    Online: https://pronunciation-matters.de/en/teaching/spanish/which-pronunciation
 blocks:
   - type: topic_meta
     layout:

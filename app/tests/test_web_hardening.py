@@ -9,9 +9,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import os
 from pathlib import Path
+import html as html_module
 import re
 import sys
-from urllib.parse import urlparse
 
 import pytest
 import yaml
@@ -755,27 +755,24 @@ def test_route_titles_differ_between_pages(real_app_factory) -> None:
 CANONICAL_ORIGIN = "https://pronunciation-matters.de"
 
 
-def test_topic_citation_urls_point_at_their_own_page_on_the_canonical_host(real_app_factory) -> None:
+def test_topics_carry_no_typed_citation_and_public_ones_cite_their_own_canonical_url(real_app_factory) -> None:
     client = real_app_factory().test_client()
     checked = 0
     for teaching_lang, topic_slug, ui_lang, topic in _topic_editions():
         citation = topic.get("citation")
-        if not isinstance(citation, dict):
-            continue
+        assert not (isinstance(citation, dict) and any(key in citation for key in ("text", "copy_text", "url"))), (teaching_lang, topic_slug, ui_lang)
         page_path = f"/{ui_lang}/teaching/{teaching_lang}/{topic_slug}"
-        for field in ("text", "copy_text"):
-            urls = re.findall(r"https?://[^\s)\]]+", citation.get(field, ""))
-            assert urls, (page_path, field)
-            for url in urls:
-                url = url.rstrip(".,;")
-                parsed = urlparse(url)
-                assert f"{parsed.scheme}://{parsed.netloc}" == CANONICAL_ORIGIN, (page_path, url)
-                assert "www." not in parsed.netloc
-                assert parsed.path == page_path, (page_path, url)
-                response = client.get(parsed.path)
-                assert response.status_code == 200, (page_path, url)
+        response = client.get(page_path)
+        if response.status_code != 200:
+            continue
+        body = response.get_data(as_text=True)
+        copy_texts = [html_module.unescape(text) for text in re.findall(r'data-copy-text="([^"]*)"', body)]
+        assert len(copy_texts) == 1, page_path
+        urls = [url.rstrip(".,;") for url in re.findall(r"https?://[^\s)\]]+", copy_texts[0])]
+        assert urls == [CANONICAL_ORIGIN + page_path], (page_path, urls)
+        assert f'<link rel="canonical" href="{CANONICAL_ORIGIN}{page_path}">' in body
         checked += 1
-    assert checked >= 2, "the which-pronunciation page (de, en) is expected to carry a citation"
+    assert checked >= 2, "the which-pronunciation page (de, en) is expected to be public and citable"
 
 
 def test_rendered_citation_box_exposes_the_page_url(real_app_factory) -> None:

@@ -1,0 +1,26 @@
+{# The one head component for page metadata (docs/spec/platform-data-files.md, "Publication Metadata").
+   `page_meta` comes from routes/public.py::_build_page_meta. Pages rendered without it (sign-in, account, admin,
+   errors) get the localized platform description and are not indexable. #}
+    <meta name="description" content="{{ page_meta.description if page_meta else default_meta_description }}">
+    {% if not page_meta %}
+    <meta name="robots" content="noindex">
+    {% else %}
+    {% if page_meta.robots %}
+    <meta name="robots" content="{{ page_meta.robots }}">
+    {% endif %}
+    {% if page_meta.canonical %}
+    <link rel="canonical" href="{{ page_meta.canonical }}">
+    {% endif %}
+    {% for alternate_lang, alternate_href in page_meta.alternates %}
+    <link rel="alternate" hreflang="{{ alternate_lang }}" href="{{ alternate_href }}">
+    {% endfor %}
+    {% for author_name in page_meta.authors %}
+    <meta name="author" content="{{ author_name }}">
+    {% endfor %}
+    {% for tag_name, tag_content in page_meta.citation_tags %}
+    <meta name="{{ tag_name }}" content="{{ tag_content }}">
+    {% endfor %}
+    {% if page_meta.json_ld %}
+    <script type="application/ld+json">{{ page_meta.json_ld }}</script>
+    {% endif %}
+    {% endif %}

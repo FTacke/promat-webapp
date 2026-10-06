@@ -165,9 +165,9 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Teaching content is file-based under `content/teaching/{teaching_language}/hubs/{ui_lang}.yaml` for hub editions and `content/teaching/{teaching_language}/{topic_slug}/{ui_lang}.yaml` for topic editions.
 - New local Teaching imports are staged only under `content/teaching_import/{import-topic-folder}/` and must follow the binding workflow in `content/teaching_import/README.md` before anything is written into the productive Teaching tree.
 - Topic-local Teaching media lives beside the topic source under `content/teaching/{teaching_language}/{topic_slug}/media/{media_type}/...` and is delivered publicly only through `/teaching-media/{teaching_language}/{topic_slug}/{media_type}/{filename}`. Public Teaching media delivery must resolve only against that topic-local media root, never against `data/`, `secure/`, or protected research routes. The route validates its identifiers before any filesystem access: `teaching_language` must be a language with a `teaching.yaml` manifest (`[a-z]+`), `topic_slug` must match `[a-z0-9]+(-[a-z0-9]+)*`, `media_type` must be one of `audio`, `downloads`, `images`, `video`, the resolved file must stay inside `{topic}/media/{media_type}/`, and only topics with a public edition (see the availability rule) are served.
-- A Teaching topic's citation box names the page's own canonical absolute URL, `https://pronunciation-matters.de/{ui_lang}/teaching/{teaching_language}/{topic_slug}` (non-`www` host, the UI language of that edition, no trailing punctuation inside `copy_text`); it must never name the domain root. The test suite checks that every citation URL equals its page path and answers 200 without a redirect; the post-deploy smoke repeats that against the live site. Generating citations from page metadata is a later publication-architecture task.
+- A citation box names the page's own canonical absolute URL (non-`www` host, the UI language of that edition, no trailing punctuation); it must never name the domain root. Citations are generated from publication metadata (see *Publication Metadata*); the test suite and the post-deploy smoke check that every citation URL equals its page path and answers 200 without a redirect.
 - The server renders the `<title>` of every page. Client scripts must not rewrite `document.title`; the only client-side title update is the fragment navigation of the research player, which applies the title of the fetched server page.
-- One availability rule decides whether a Teaching topic edition is public (`app/src/app/teaching_content.py::topic_is_public`; the existing `is_available` / `is_public` / `published` flags keep their meaning): the locale file exists, no flag on the hub entry or the topic says otherwise, and the topic is not an unfinished scaffold - `status: draft` (also `hub.status: draft`; vocabulary `draft`, `private`, `pending`, `planned`, `scaffold`) or a placeholder author list consisting only of `NN`. A non-public topic is not listed as an available card in the hub, does not count as a released topic page of its language, is not served as a topic page (the route redirects to the hub, like `is_public: false`), is not offered as a language-switch equivalent and its media is not delivered publicly. A language whose topics are all non-public is shown as `In Vorbereitung` / `In preparation`. Releasing a topic means removing the draft marker and the placeholder author in the topic file.
+- One availability rule decides whether a Teaching topic edition is public (`app/src/app/teaching_content.py::topic_is_public`; the existing `is_available` / `is_public` / `published` flags keep their meaning): the locale file exists, no flag on the hub entry or the topic says otherwise, and the topic is not an unfinished scaffold - `status: draft` (also `hub.status: draft`; vocabulary `draft`, `private`, `pending`, `planned`, `scaffold`) or a placeholder author list consisting only of `NN`. A non-public topic is not listed as an available card in the hub, does not count as a released topic page of its language, is not served as a topic page (the route answers 404, like `is_public: false` and like an unknown slug), is not offered as a language-switch equivalent and its media is not delivered publicly. A language whose topics are all non-public is shown as `In Vorbereitung` / `In preparation`. Releasing a topic means removing the draft marker and the placeholder author in the topic file.
 - Each `teaching_language` plus `ui_lang` pair is a Teaching edition. Editions may differ in topic set, order, copy, and didactic focus; they are not required to be one-to-one translations.
 - The Teaching section root `/{ui_lang}/teaching` is a teacher-first language selection that lists only languages with an available edition in the requested UI language or a valid edition fallback, shows their current topic-count status from the resolved edition, and renders as one neutral single-column selection list of compact clickable rows rather than a multi-column language-card grid. The page-entry `h1` is the direct selection question (`Welche Sprache unterrichten Sie?` / `Which language do you teach?`), and the former duplicate hero subtitle line is not part of the active contract.
 - On desktop, each Teaching root selection row keeps one calm horizontal axis with the language title on the left, muted status centered toward the right, and the quiet `Öffnen`/`Open` CTA at the far right for available rows. On mobile, rows may stack into compact two-step text/action flow without a cramped three-column line. Languages whose public Teaching edition exists but currently has no released topic pages remain visible as muted non-link pending rows with `In Vorbereitung` / `In preparation` instead of a CTA.
@@ -185,7 +185,7 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - The closing Teaching `citation` block renders through the shared admonition family as the dedicated `citation` variant: quote icon on the left, citation body in the standard admonition rhythm, and a right-aligned copy action that copies only the citation content without surrounding UI labels.
 - Shared Teaching admonitions and admonition-derived public box variants are always fully visible in the active contract: no toggle button, chevron, `aria-expanded` state, or collapsed body is part of the supported public pattern.
 - Visible Teaching editorial prose fields sourced from YAML, including topic titles or intros, hub card summaries, section headings, labels, captions, citation text, and further-reading labels, may use safe CommonMark emphasis, links, and inline code. They render through one centralized Markdown normalization path with raw HTML disabled. Technical IDs, raw URLs, token fields, audio source paths, and other machine-value fields stay outside that Markdown pass.
-- The canonical public Teaching topic block catalog is: `text`, `rich_text`, `section_heading`, `overview`, `info_box`, `tip_box`, `warning_box`, `image`, optional `embed`, `audio_examples`, `audio_contrast`, `download`, `video`, `teaching_impulses`, `next_topics`, `topic_meta`, `further_reading`, `citation`, plus legacy `credits`. The old singular `audio_example` input may remain as a backward-compatible alias but must normalize to the same rendered `audio_examples` family.
+- The canonical public Teaching topic block catalog is: `text`, `rich_text`, `section_heading`, `overview`, `info_box`, `tip_box`, `warning_box`, `image`, optional `embed`, `audio_examples`, `audio_contrast`, `download`, `video`, `teaching_impulses`, `next_topics`, `topic_meta`, `further_reading`, plus legacy `credits`. The closing citation is not a content block: it is generated from the topic's publication metadata and appended as the last section; a typed `citation` block or `citation.text` in a topic file is ignored and rejected by the validator. The old singular `audio_example` input may remain as a backward-compatible alias but must normalize to the same rendered `audio_examples` family.
 - `overview` is the dedicated quick-scan intro block for short title-plus-bullet orientation in the topic lead area. It is not a generic definition or info box and should render through its own calm wordmark-accent variant instead of being downgraded to `info_box`.
 - `teaching_impulses` is the structured numbered classroom-transfer block. It accepts ordered title-plus-body items, stays in normal source order, and may sit as the compact one-column companion to an introductory `text` block inside the shared two-column topic grid; it does not regress to the retired topic-specific `rich_text` variant `didactic_close`.
 - `topic_meta` is the canonical editorial marker for authorship, peer review, created date, and updated date on Teaching topic pages. It renders once directly below the lead as header-local metadata, not as a visible body block. The active topic composition uses up to two centered quiet lines: authors on the first line, then peer review, created, and updated details on the second line when present; missing fields are simply omitted.
@@ -342,6 +342,102 @@ Research task and page capability semantics are defined in `docs/spec/research-c
 - Visually substantial UI changes require browser validation and screenshot comparison against the affected productive reference surfaces before the run is considered complete.
 - For finished bilingual surfaces, browser validation must cover the same real routes in `de` and `en` and explicitly include dialogs, placeholders, empty states, snackbars, overflow actions, and longer English labels where they affect layout or density.
 - A substantial UI run is not accepted on green tests alone; visible defects found in the browser pass must be fixed and the screenshots regenerated until the in-scope surfaces are linguistically and visually clean.
+
+## Publication Metadata
+
+This section is the contract for how the platform, its language resources and single resources are identified, described and cited. Implementation: `content/publication/resources.yaml` (registry), `app/src/app/publication.py` (model, citation, JSON-LD, validation), `app/templates/partials/_page_meta.html` (the one head component), `scripts/validate_teaching_content.py` (validator).
+
+### Resource hierarchy
+
+| Level | `resource_type` | Example | Parent (`is_part_of`) | schema.org type |
+|---|---|---|---|---|
+| 1 | `platform` | Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching | - | `WebSite` |
+| 2a | `research_corpus` | Pronunciation Matters: French Learner Pronunciation Corpus | platform | `Dataset` |
+| 2b | `teaching_resource` | Pronunciation Matters: Spanish Pronunciation Teaching Resources | platform | `Collection` |
+| 3 | `research_design` | the public design article of a corpus | research corpus | `ScholarlyArticle` |
+| 3 | `teaching_topic` | a published topic page | teaching resource | `Article` + `LearningResource` |
+
+- No further resource types exist. Speaker profiles, sessions, audio items, personal sets and comparison views are not publication resources: they carry no citation, no JSON-LD and are never indexable.
+- Not every level has to be published. A resource with `status: in_preparation`, without a responsible person or without a publication date keeps its page but is not citable and is not described as a scholarly resource.
+
+### Single source of truth
+
+- `content/publication/resources.yaml` is the only place for the platform title, short title, canonical origin, publisher, platform editors, people (name parts, academic title, affiliation, ORCID) and, per language, the research corpus, its design article and the teaching area with `resource_id`, title, status, creators, contributors, dates, version, data state, license and DOI.
+- People are referenced by their registry id everywhere (`creators: [janina-reinhardt]`). Display forms are derived: `name` (citations and metadata), `sort_name` (`Family, Given`), `display_name` (with academic title, for visible lists). Corpus cards, the team page's corpus cards, JSON-LD and citations read the same entries; no page types these names.
+- Page titles of single resources stay with their content (topic YAML `title`, design article title); the registry does not duplicate them.
+- `LANGUAGES` in `routes/public_content.py` keeps only presentation data (labels, subtitles, focus texts); it carries no people.
+
+### People and roles
+
+- `creators`: the people responsible for a resource (corpus responsibility, authors of a topic or article). They are the authors in a citation.
+- `contributors`: further people with a role from the controlled vocabulary `material_design`, `data_collection`, `coordination`.
+- `editors` of the platform: named as editors of the container in every citation and in the platform's JSON-LD. A platform editor is never added to the creators of a resource implicitly.
+- `publisher`: the institution named in the registry.
+- `affiliation` and `orcid` are optional per person; unknown values stay `null`.
+
+### Fields per resource type
+
+`R` required, `O` optional, `-` not used. Optional fields that are undecided stay `null`; no value is invented.
+
+| Field | platform | research_corpus | teaching_resource | research_design | teaching_topic |
+|---|---|---|---|---|---|
+| `resource_id` | R | R | R | R | R (topic YAML, shared by all language editions) |
+| `title` | R | R | R | from the page | from the topic YAML |
+| `status` | - | R | R | R | from the availability rule |
+| `creators` | - (editors) | R when published | R when published | R when published | R (`metadata.creators`) |
+| `contributors` | - | O | O | - | - |
+| `date_published` | R (start year) | R when published | R when published | R when published | R (`metadata.created`) |
+| `continuing` | R | R | R | - | - |
+| `date_modified` | O | O | O | O | O (`metadata.updated`) |
+| `version` | O | O | O | - | - |
+| `data_as_of` | - | O | - | - | - |
+| `license`, `doi`, `related_identifiers` | O | O | O | O | O |
+| `canonical_url`, `is_part_of`, `editors`, `publisher`, `language` | derived | derived | derived | derived | derived |
+
+- `resource_id` is a persistent lower-case ASCII identifier that does not depend on the URL slug; it must be unique across the registry and all topics and never be reused for another resource.
+- Dates are `YYYY` or `YYYY-MM-DD`. `language` is the language the resource is written or recorded in (corpus: the target language; pages: the UI language of the edition); the language a teaching resource is about is expressed separately (`about`).
+
+### URL identity
+
+- Every public indexable page emits exactly one `<link rel="canonical">`: `https://pronunciation-matters.de` (the registry's `canonical_base_url`, https, no `www`) plus the page path, without query string and without trailing slash. The canonical URL of a resource is the URL of the concrete language edition, never the domain root and never the language-negotiating `/` redirect. Query parameters (tracking, `lang`, `ui_lang`) never create another identity.
+- `/{ui_lang}/project` shares the canonical URL of the first project page; unprefixed legal URLs point to their prefixed form.
+- `hreflang` links (`de`, `en`) are emitted only when the other edition really exists and is public, always reciprocally and including the page itself. A topic without a public equivalent has none.
+- Unknown topic slugs and unpublished topics answer 404. Redirects exist for two documented cases only: a UI language without an edition of that teaching language (302 to the existing edition) and slugs listed under `aliases` of a published topic (301 to its current slug). There is no generic redirect to the hub.
+- Login-gated pages, sign-in and account pages, error pages and pages in preparation send `<meta name="robots" content="noindex">` and carry no canonical, `hreflang` or resource metadata.
+- A corpus without a design article shows a plain "in preparation" page for `design` (not indexable, no citation); developer placeholder copy is not part of a public page.
+
+### Head metadata
+
+- One component renders page metadata: `partials/_page_meta.html`, fed by `routes/public.py::_build_page_meta`. Templates do not add their own description, canonical, `hreflang`, robots or structured data.
+- `<title>`: the page or resource title followed by the short platform name; no duplicated parts; localized with the page.
+- `<meta name="description">` in the UI language, in this order: resource-specific summary (topic `summary`/`description`, hub intro, corpus subtitle, design summary), section fallback (`meta.description.*`), localized platform description from the registry.
+- Citable resources additionally emit `<meta name="author">` per author and Highwire-style `citation_*` tags (title, authors, publication date, container title, publisher, language, DOI when present, public URL). These are a derived convenience for browser reference managers, generated from the same model.
+- Visible publication and modification dates are `<time datetime="YYYY-MM-DD">`.
+
+### Structured data
+
+- schema.org JSON-LD is the one primary machine-readable representation: one `<script type="application/ld+json">` per citable resource page with `@type`, `@id`/`url` (canonical URL), `identifier` (`resource_id`), `name`, `description`, `author` or `creator`, `contributor`, `editor` (platform), `publisher`, `datePublished`, `dateModified`, `version`, `inLanguage`, `about` (taught language), `license`, `sameAs` (DOI resolver) and `isPartOf` (parent with `@id`, `identifier`, `name`) - each only when the model has the value.
+- No Dublin Core, Microdata, RDFa or DataCite runtime model. A DataCite or repository record is a later export from this model.
+
+### Citations
+
+- Citations are generated by `publication.format_citation`; no page stores a typed citation. The copy control copies exactly the generated plain text.
+- Platform: `Tacke, Felix (2026–). <Platform title>. <Publisher>. <URL>`.
+- Corpus and teaching area: `<Creators> (2026–). <Resource title>. In: <Editor> (ed.), <Platform title>. <Publisher>. <URL>`.
+- Topic and design article: `<Creators> (<year>). "<Page title>". In: <Editor> (ed.), <Platform title>. <Publisher>. <URL>`.
+- The year is the year of `date_published`; continuously maintained resources (`continuing: true`) append an en dash (`2026–`). `date_modified` never changes the citation year. Quotation marks and the editor abbreviation follow the UI language (`„…“`/`Hrsg.` in German, `“…”`/`ed.` in English). Several creators are joined with `,` and `&`.
+- When a resource has a `version` or `data_as_of`, the citation names it after the title; when it has a `doi`, the DOI resolver URL replaces the page URL.
+- Citation blocks are offered on the project description (platform), the corpus landing page, the teaching hub of a language, published topic pages and design articles - nowhere else.
+
+### Versioning, DOI and license
+
+- `version` and `data_as_of` exist for corpora so that users can state the data state they worked with. No corpus version has been defined yet; both stay `null` and nothing is displayed until the project defines one.
+- `doi` is `null` everywhere; adding one requires only the registry or topic value. No DOI is minted or simulated by the application.
+- `license` is `null` everywhere: the license and rights-holder decision is open. The model carries a license once decided; the application does not state one.
+
+### Validation
+
+- `scripts/validate_teaching_content.py` (CI) validates the registry (required fields, id pattern and uniqueness, known people, controlled roles, date and DOI formats, canonical origin, creators and date for published resources, no placeholder names) and, for every public topic edition: `resource_id` (present, unique, shared by its language editions), title, summary or description, `metadata.creators` with known person ids, no free-text `authors`/`credits`, `metadata.created`, a consistent `metadata.updated`, no typed citation, valid `doi` and `aliases`, and a public, reciprocal equivalent in every UI language of that teaching language.
 
 ## Runtime Boundaries
 

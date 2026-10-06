@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable
 import html
+import json
 from pathlib import Path
 import re
 import sys
@@ -46,6 +47,17 @@ PUBLIC_PATHS = (
 )
 PROTECTED_PATHS = ("/de/research/spanish/speakers", "/en/research/spanish/comparison", "/de/research/spanish/player/x/wordlist")
 CITED_PAGES = ("/de/teaching/spanish/which-pronunciation", "/en/teaching/spanish/which-pronunciation")
+# Citable resources: canonical URL, one JSON-LD block and a generated citation that names exactly this URL.
+RESOURCE_PAGES = (
+    *CITED_PAGES,
+    "/de/research/spanish",
+    "/en/research/french",
+    "/de/research/spanish/design",
+    "/en/research/spanish/design",
+    "/de/teaching/spanish",
+    "/en/teaching/spanish",
+)
+UNKNOWN_RESOURCE_PATHS = ("/de/teaching/spanish/this-topic-does-not-exist",)
 
 Response = tuple[int, dict[str, str], str]
 Fetch = Callable[[str], Response]
@@ -122,7 +134,29 @@ def run_checks(fetch: Fetch, *, canonical_origin: str) -> list[str]:
         if expected and expected not in title:
             failures.append(f"GET {path}: <title> {title!r} does not contain the page title {expected!r}")
 
-    for path in CITED_PAGES:
+    for path in UNKNOWN_RESOURCE_PATHS:
+        status, _headers, _body = fetch(path)
+        if status != 404:
+            failures.append(f"GET {path}: an unknown resource must answer 404, got {status}")
+
+    for path in RESOURCE_PAGES:
+        status, _headers, body = fetch(path)
+        if status != 200:
+            failures.append(f"GET {path}: expected 200, got {status}")
+            continue
+        expected_url = canonical_origin + path
+        canonicals = re.findall(r'<link rel="canonical" href="([^"]*)">', body)
+        if canonicals != [expected_url]:
+            failures.append(f"GET {path}: canonical is {canonicals!r}, expected {expected_url!r}")
+        blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', body, flags=re.S)
+        try:
+            structured = json.loads(blocks[0]) if len(blocks) == 1 else None
+        except ValueError:
+            structured = None
+        if not isinstance(structured, dict) or structured.get("url") != expected_url or not structured.get("identifier"):
+            failures.append(f"GET {path}: missing or inconsistent JSON-LD (url/identifier)")
+
+    for path in RESOURCE_PAGES:
         status, _headers, body = fetch(path)
         if status != 200:
             continue

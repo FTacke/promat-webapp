@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block page_title %}{{ app_display_name }}{% endblock %}</title>
+    <title>{% block page_title %}{{ page_meta.title if page_meta else app_display_name }}{% endblock %}</title>
     <meta name="application-name" content="{{ app_display_name }}">
-    <meta name="description" content="{{ app_meta_description }}">
+{% include 'partials/_page_meta.html' %}
     <!-- Theme color is synchronized from canonical CSS tokens by theme.js -->
     <meta name="theme-color" content="" data-theme-color>
     <!-- no-js removal moved to static/js/theme.js (externalized for CSP) -->

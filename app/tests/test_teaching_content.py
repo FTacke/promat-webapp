@@ -20,6 +20,8 @@ from app.routes.public import blueprint as public_blueprint
 from app import teaching_content
 
 
+PLATFORM_TITLE = "Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching"
+
 def _write_raw_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
@@ -281,7 +283,7 @@ def test_build_teaching_topic_page_groups_blocks_into_sections(teaching_app: Fla
         "spanish",
         "topic-one",
         "de",
-        "title: Thema eins\ndescription: Kurze Einleitung\nblocks:\n  - type: text\n    body: Introtext\n  - type: info_box\n    title: Einstieg\n    body: Erste Info\n  - type: section_heading\n    title: Abschnitt eins\n  - type: text\n    layout:\n      span: 1\n    body: Erster Abschnittstext\n  - type: embed\n    layout:\n      span: 1\n    provider: datawrapper\n    src: https://datawrapper.dwcdn.net/Uza2n/1/\n  - type: next_topics\n    title: Weiter im Hub\n    topics:\n      - topic-two\n  - type: further_reading\n    title: Vertiefung\n    description: Mehr dazu in zwei kurzen Vertiefungen.\n    items:\n      - title: '`ll` und `y`'\n        text: Die traditionelle Unterscheidung ist heute selten.\n        cta: Hörbeispiele zur Vertiefung öffnen\n        href: https://example.test/ll-y\ncitation:\n  text: 'Beispielzitat.'\n",
+        "title: Thema eins\ndescription: Kurze Einleitung\nblocks:\n  - type: text\n    body: Introtext\n  - type: info_box\n    title: Einstieg\n    body: Erste Info\n  - type: section_heading\n    title: Abschnitt eins\n  - type: text\n    layout:\n      span: 1\n    body: Erster Abschnittstext\n  - type: embed\n    layout:\n      span: 1\n    provider: datawrapper\n    src: https://datawrapper.dwcdn.net/Uza2n/1/\n  - type: next_topics\n    title: Weiter im Hub\n    topics:\n      - topic-two\n  - type: further_reading\n    title: Vertiefung\n    description: Mehr dazu in zwei kurzen Vertiefungen.\n    items:\n      - title: '`ll` und `y`'\n        text: Die traditionelle Unterscheidung ist heute selten.\n        cta: Hörbeispiele zur Vertiefung öffnen\n        href: https://example.test/ll-y\nresource_id: promat-test-topic-one\nmetadata:\n  creators:\n    - felix-tacke\n  created: 2026-01-02\n",
     )
 
     with teaching_app.test_request_context():
@@ -332,7 +334,7 @@ def test_build_teaching_topic_page_derives_metadata_and_appends_top_level_citati
     )
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
-        "title: Thema eins\ndescription: Kurzbeschreibung\npeer_review:\n  - \ncreated: 2025-07-06\nupdated: 2026-03-05\ncredits:\n  authors:\n    - name: Marlon Merte\n    - name: Felix Tacke\ncitation:\n  text: 'Merte, Marlon / Tacke, Felix (2026): Thema eins.'\n  url: https://example.test/topic-one\nblocks:\n  - type: text\n    body: Testabsatz\n",
+        "resource_id: promat-test-topic-one\ntitle: Thema eins\ndescription: Kurzbeschreibung\nmetadata:\n  creators:\n    - marlon-merte\n    - felix-tacke\n  created: 2025-07-06\n  updated: 2026-03-05\nblocks:\n  - type: text\n    body: Testabsatz\n",
     )
 
     with teaching_app.test_request_context():
@@ -347,24 +349,23 @@ def test_build_teaching_topic_page_derives_metadata_and_appends_top_level_citati
             "value": "Marlon Merte, Felix Tacke",
         },
         "details": [
-            {"key": "created", "label": "Erstellt", "value": "06.07.2025"},
-            {"key": "updated", "label": "Geändert", "value": "05.03.2026"},
+            {"key": "created", "label": "Erstellt", "value": "06.07.2025", "datetime": "2025-07-06"},
+            {"key": "updated", "label": "Geändert", "value": "05.03.2026", "datetime": "2026-03-05"},
         ],
     }
+    url = "https://pronunciation-matters.de/de/teaching/spanish/topic-one"
     assert page["blocks"][-1]["type"] == "citation"
     assert page["blocks"][-1]["layout"]["span"] == 2
     assert page["blocks"][-1]["citation"] == {
         "title": "Diese Themenseite zitieren",
         "title_html": "Diese Themenseite zitieren",
-        "text": "Merte, Marlon / Tacke, Felix (2026): Thema eins.",
-        "doi": "",
-        "url": "https://example.test/topic-one",
-        "copy_text": "Merte, Marlon / Tacke, Felix (2026): Thema eins.\nhttps://example.test/topic-one",
+        "copy_text": f"Merte, Marlon & Tacke, Felix (2025). „Thema eins“. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. Philipps-Universität Marburg. {url}",
         "body_html_blocks": [
-            "<p>Merte, Marlon / Tacke, Felix (2026): Thema eins.</p>",
-            '<dl class="pm-teaching-citation__meta"><div class="pm-teaching-citation__meta-item"><dt class="pm-teaching-citation__label">URL</dt><dd class="pm-teaching-citation__value"><a href="https://example.test/topic-one" class="pm-teaching-inline-link">https://example.test/topic-one</a></dd></div></dl>',
+            f'<p>Merte, Marlon &amp; Tacke, Felix (2025). „Thema eins“. In: Felix Tacke (Hrsg.), <em>{PLATFORM_TITLE}</em>. Philipps-Universität Marburg. <a href="{url}">{url}</a></p>',
         ],
     }
+    assert page["resource"]["resource_id"] == "promat-test-topic-one"
+    assert page["resource"]["date_modified"] == "2026-03-05"
 
 
 def test_build_teaching_topic_page_moves_metadata_into_explicit_topic_meta_block_and_preserves_inline_code(
@@ -395,7 +396,7 @@ def test_build_teaching_topic_page_moves_metadata_into_explicit_topic_meta_block
             "value": "Marlon Merte",
         },
         "details": [
-            {"key": "created", "label": "Erstellt", "value": "06.07.2025"},
+            {"key": "created", "label": "Erstellt", "value": "06.07.2025", "datetime": "2025-07-06"},
         ],
     }
     assert all(block["type"] != "topic_meta" for block in page["blocks"])
@@ -424,7 +425,7 @@ def test_build_teaching_topic_page_parses_teaching_impulses(
     assert page is not None
     assert page["topic_metadata"]["details"] == [
         {"key": "status", "label": "Status", "value": "In Vorbereitung"},
-        {"key": "created", "label": "Erstellt", "value": "06.07.2025"},
+        {"key": "created", "label": "Erstellt", "value": "06.07.2025", "datetime": "2025-07-06"},
     ]
     assert [block["type"] for block in page["blocks"]] == ["section_heading", "text", "teaching_impulses"]
     assert page["blocks"][0]["title"] == "Impulse für den Unterricht"
@@ -699,10 +700,9 @@ def test_build_teaching_topic_page_keeps_only_valid_structured_further_reading_i
     assert reading_block["items"][0]["href"] == "https://example.test/ll-y"
 
 
-def test_build_teaching_topic_page_prioritizes_top_level_citation_and_uses_copy_text(
+def test_build_teaching_topic_page_generates_the_citation_and_ignores_typed_citation_text(
     teaching_app: Flask,
     tmp_path: Path,
-    caplog: pytest.LogCaptureFixture,
 ) -> None:
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "teaching.yaml",
@@ -714,7 +714,7 @@ def test_build_teaching_topic_page_prioritizes_top_level_citation_and_uses_copy_
     )
     _write_text(
         tmp_path / "content" / "teaching" / "spanish" / "de" / "topics" / "topic-one.yaml",
-        "title: Thema eins\ncitation:\n  title: Diese Seite *zitieren*\n  text: 'Tacke: *Pronunciation Matters*. Online: [pronunciation-matters.de](https://www.pronunciation-matters.de)'\n  copy_text: 'Tacke: Pronunciation Matters. Online: https://www.pronunciation-matters.de'\nblocks:\n  - type: text\n    body: Intro\n  - type: citation\n    title: Alte Zitation\n    text: Veraltete Zitation\n",
+        "resource_id: promat-test-topic-one\ntitle: Thema eins\nmetadata:\n  creators:\n    - felix-tacke\n  created: 2026-02-03\ncitation:\n  title: Diese Seite *zitieren*\n  text: 'Tacke: *Pronunciation Matters*. Online: [pronunciation-matters.de](https://www.pronunciation-matters.de)'\n  copy_text: 'Tacke: Pronunciation Matters. Online: https://www.pronunciation-matters.de'\nblocks:\n  - type: text\n    body: Intro\n  - type: citation\n    title: Alte Zitation\n    text: Veraltete Zitation\n",
     )
 
     with teaching_app.test_request_context():
@@ -724,14 +724,16 @@ def test_build_teaching_topic_page_prioritizes_top_level_citation_and_uses_copy_
     citations = [block for block in page["blocks"] if block["type"] == "citation"]
     assert len(citations) == 1
     citation = citations[0]["citation"]
-    assert citation["title"] == "Diese Seite *zitieren*"
-    assert citation["title_html"] == "Diese Seite <em>zitieren</em>"
-    assert citation["copy_text"] == "Tacke: Pronunciation Matters. Online: https://www.pronunciation-matters.de"
-    assert '<a href="https://www.pronunciation-matters.de">pronunciation-matters.de</a>' in citation["body_html_blocks"][0]
-    assert "Ignoring explicit teaching citation block" in caplog.text
+    assert citation["title"] == "Diese Themenseite zitieren"
+    assert citation["copy_text"] == (
+        f"Tacke, Felix (2026). „Thema eins“. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. "
+        "Philipps-Universität Marburg. https://pronunciation-matters.de/de/teaching/spanish/topic-one"
+    )
+    assert "www." not in citation["copy_text"]
+    assert "Veraltete Zitation" not in str(page["blocks"])
 
 
-def test_build_teaching_topic_page_falls_back_to_plain_text_copy_for_citation_text(
+def test_build_teaching_topic_page_without_publication_metadata_offers_no_citation(
     teaching_app: Flask,
     tmp_path: Path,
 ) -> None:
@@ -752,8 +754,8 @@ def test_build_teaching_topic_page_falls_back_to_plain_text_copy_for_citation_te
         page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
 
     assert page is not None
-    citation = page["blocks"][-1]["citation"]
-    assert citation["copy_text"] == "Tacke: Pronunciation Matters. Online: pronunciation-matters.de"
+    assert all(block["type"] != "citation" for block in page["blocks"])
+    assert page["resource"] is None
 
 
 def test_build_teaching_topic_page_exposes_markdown_ready_header_fields(teaching_app: Flask, tmp_path: Path) -> None:

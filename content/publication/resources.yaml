@@ -1,0 +1,174 @@
+# Bibliographic identity of Pronunciation Matters: the single source for titles, people, roles and identifiers.
+#
+# Contract: docs/spec/platform-data-files.md, "Publication Metadata". Consumers (page <head>, JSON-LD, generated citations, corpus cards,
+# team page) read this file through app/src/app/publication.py; nothing bibliographic is typed anywhere else.
+# Never invent values: `license`, `doi`, `version`, `data_as_of` and `orcid` stay null until they are decided.
+
+platform:
+  resource_id: promat
+  title: "Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching"
+  short_title: Pronunciation Matters
+  canonical_base_url: https://pronunciation-matters.de
+  editors: [felix-tacke]
+  publisher:
+    name: Philipps-Universität Marburg
+    url: https://www.uni-marburg.de/
+  date_published: "2026"
+  continuing: true
+  version: null
+  license: null
+  doi: null
+  description:
+    de: "Pronunciation Matters ist eine mehrsprachige Plattform für Forschung und Lehre zur Aussprache von Fremdsprachenlernenden: Lernendenkorpora für Spanisch, Französisch, Deutsch und Englisch sowie Unterrichtsmaterialien zur Aussprache."
+    en: "Pronunciation Matters is a multilingual platform for research and teaching on learner pronunciation: learner corpora for Spanish, French, German and English, and teaching resources on pronunciation."
+
+people:
+  felix-tacke:
+    given: Felix
+    family: Tacke
+    honorific_prefix: Prof. Dr.
+    affiliation: Philipps-Universität Marburg
+    orcid: null
+  marlon-merte:
+    given: Marlon
+    family: Merte
+    orcid: null
+  ana-goas-perez:
+    given: Ana
+    family: Goás Pérez
+    orcid: null
+  janina-reinhardt:
+    given: Janina
+    family: Reinhardt
+    honorific_prefix: Prof. Dr.
+    orcid: null
+  amelie-spiess:
+    given: Amelie
+    family: Spieß
+    orcid: null
+  kathrin-siebold:
+    given: Kathrin
+    family: Siebold
+    honorific_prefix: Prof. Dr.
+    orcid: null
+  theresa-fischer:
+    given: Theresa
+    family: Fischer
+    honorific_suffix: M.A.
+    orcid: null
+  rolf-kreyer:
+    given: Rolf
+    family: Kreyer
+    honorific_prefix: Prof. Dr.
+    orcid: null
+
+# Per language: the research corpus, its public design article (if one exists) and the teaching area.
+# `status: published` makes a resource citable; `in_preparation` keeps the page reachable but neither citable nor
+# described as a scholarly resource. `creators` are the people responsible for the resource, not the platform editor.
+languages:
+  spanish:
+    research_corpus:
+      resource_id: promat-corpus-es
+      title: "Pronunciation Matters: Spanish Learner Pronunciation Corpus"
+      status: published
+      creators: [felix-tacke]
+      contributors:
+        - {person: felix-tacke, role: material_design}
+        - {person: ana-goas-perez, role: material_design}
+        - {person: marlon-merte, role: data_collection}
+      date_published: "2026"
+      continuing: true
+      version: null
+      data_as_of: null
+      license: null
+      doi: null
+    research_design:
+      resource_id: promat-design-es
+      status: published
+      creators: [felix-tacke]
+      date_published: "2026"
+      date_modified: null
+      license: null
+      doi: null
+    teaching_resource:
+      resource_id: promat-teaching-es
+      title: "Pronunciation Matters: Spanish Pronunciation Teaching Resources"
+      status: published
+      creators: [felix-tacke]
+      date_published: "2026"
+      continuing: true
+      license: null
+      doi: null
+  french:
+    research_corpus:
+      resource_id: promat-corpus-fr
+      title: "Pronunciation Matters: French Learner Pronunciation Corpus"
+      status: published
+      creators: [janina-reinhardt]
+      contributors:
+        - {person: janina-reinhardt, role: material_design}
+        - {person: amelie-spiess, role: data_collection}
+      date_published: "2026"
+      continuing: true
+      version: null
+      data_as_of: null
+      license: null
+      doi: null
+    teaching_resource:
+      resource_id: promat-teaching-fr
+      title: "Pronunciation Matters: French Pronunciation Teaching Resources"
+      status: in_preparation
+      creators: []
+      date_published: null
+      continuing: true
+      license: null
+      doi: null
+  german:
+    research_corpus:
+      resource_id: promat-corpus-de
+      title: "Pronunciation Matters: German Learner Pronunciation Corpus"
+      status: in_preparation
+      creators: [kathrin-siebold]
+      contributors:
+        - {person: theresa-fischer, role: material_design}
+        - {person: kathrin-siebold, role: material_design}
+        - {person: theresa-fischer, role: data_collection}
+      date_published: null
+      continuing: true
+      version: null
+      data_as_of: null
+      license: null
+      doi: null
+    teaching_resource:
+      resource_id: promat-teaching-de
+      title: "Pronunciation Matters: German Pronunciation Teaching Resources"
+      status: in_preparation
+      creators: []
+      date_published: null
+      continuing: true
+      license: null
+      doi: null
+  english:
+    research_corpus:
+      resource_id: promat-corpus-en
+      title: "Pronunciation Matters: English Learner Pronunciation Corpus"
+      status: published
+      creators: [rolf-kreyer]
+      contributors:
+        - {person: rolf-kreyer, role: material_design}
+        - {person: marlon-merte, role: data_collection}
+      date_published: "2026"
+      continuing: true
+      version: null
+      data_as_of: null
+      license: null
+      doi: null
+    teaching_resource:
+      resource_id: promat-teaching-en
+      title: "Pronunciation Matters: English Pronunciation Teaching Resources"
+      status: in_preparation
+      creators: []
+      date_published: null
+      continuing: true
+      license: null
+      doi: null

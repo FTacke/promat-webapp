@@ -9,6 +9,7 @@ from typing import Any
 
 from markdown_it import MarkdownIt
 
+from .. import publication
 from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
 from ..research_capabilities import get_research_page_capability, get_research_page_order
 from ..research_sessions import load_language_sessions
@@ -48,9 +49,6 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
             "de": "Forschungsbereich zur spanischen Lernendenaussprache.",
             "en": "Research area for Spanish learner pronunciation.",
         },
-        "project_lead": "Prof. Dr. Felix Tacke",
-        "conducted_by": "Marlon Merte",
-        "material_conception": ("Felix Tacke", "Ana Goás Pérez"),
         "summary": {
             "de": "Referenzkorpus für plurizentrisches Spanisch zwischen methodischer Dokumentation, Vergleich und didaktischer Weitergabe.",
             "en": "Reference corpus for pluricentric Spanish across method documentation, comparison, and teaching transfer.",
@@ -72,9 +70,6 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
             "de": "Forschungsbereich zur französischen Lernendenaussprache.",
             "en": "Research area for French learner pronunciation.",
         },
-        "project_lead": "Prof. Dr. Janina Reinhardt",
-        "conducted_by": "Amelie Spieß",
-        "material_conception": ("Janina Reinhardt",),
         "summary": {
             "de": "Vorbereiteter Korpusbereich für Rhythmus, Vokalqualität und frankophone Variationslagen.",
             "en": "Prepared corpus area for rhythm, vowel quality, and francophone variation.",
@@ -96,9 +91,6 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
             "de": "Forschungsbereich zur deutschen Lernendenaussprache.",
             "en": "Research area for German learner pronunciation.",
         },
-        "project_lead": "Prof. Dr. Kathrin Siebold",
-        "conducted_by": "Theresa Fischer",
-        "material_conception": ("Theresa Fischer", "Kathrin Siebold"),
         "summary": {
             "de": "Vorbereiteter Korpusbereich für deutsche Ausspracheprofile in Lern- und Vergleichskontexten.",
             "en": "Prepared corpus area for German pronunciation profiles in learning and comparison contexts.",
@@ -120,9 +112,6 @@ LANGUAGES: tuple[dict[str, Any], ...] = (
             "de": "Forschungsbereich zur englischen Lernendenaussprache.",
             "en": "Research area for English learner pronunciation.",
         },
-        "project_lead": "Prof. Dr. Rolf Kreyer",
-        "conducted_by": "Marlon Merte",
-        "material_conception": ("Rolf Kreyer",),
         "summary": {
             "de": "Vorbereiteter Korpusbereich für Akzentprofil, Intonation und intelligibility-orientierte Vergleichsachsen.",
             "en": "Prepared corpus area for accent profile, intonation, and intelligibility-oriented comparison.",
@@ -168,6 +157,18 @@ def _deep_localize(value: Any, ui_lang: str) -> Any:
     if isinstance(value, list):
         return [_deep_localize(item, ui_lang) for item in value]
     return value
+
+
+def citation_block(resource: dict[str, Any] | None, ui_lang: str) -> dict[str, Any] | None:
+    """Citation admonition payload generated from a resource; ``None`` when the resource is not citable."""
+    citation = publication.format_citation(resource, ui_lang) if resource else None
+    if citation is None:
+        return None
+    return {
+        "title": get_text(ui_lang, f"citation.heading.{resource['resource_type']}"),
+        "body_html_blocks": [f"<p>{citation['html']}</p>"],
+        "copy_text": citation["text"],
+    }
 
 
 def get_supported_ui_language(ui_lang: str) -> str | None:
@@ -289,21 +290,26 @@ def _research_reference_recording_copy(count: int, ui_lang: str) -> str:
     return get_text(ui_lang, "research.overview.card.reference_recordings.other", count=count)
 
 
+def _corpus_people_rows(language_slug: str, labels: tuple[str, str, str]) -> list[dict[str, str]]:
+    """Responsible people of a corpus from the publication registry (the only place they are maintained)."""
+    entry = publication.language_entry("research_corpus", language_slug) or {}
+    values = (
+        publication.display_names(entry.get("creators")),
+        publication.display_names(publication.contributor_ids(language_slug, "material_design")),
+        publication.display_names(publication.contributor_ids(language_slug, "data_collection")),
+    )
+    return [{"label": label, "value": ", ".join(names)} for label, names in zip(labels, values) if names]
+
+
 def _research_corpus_card_metadata_rows(language: dict[str, Any], ui_lang: str) -> list[dict[str, str]]:
-    rows: list[dict[str, str]] = [
-        {
-            "label": get_text(ui_lang, "research.overview.card.project_lead"),
-            "value": language["project_lead"],
-        },
-        {
-            "label": get_text(ui_lang, "research.overview.card.material_conception"),
-            "value": ", ".join(language["material_conception"]),
-        },
-        {
-            "label": get_text(ui_lang, "research.overview.card.conducted_by"),
-            "value": language["conducted_by"],
-        },
-    ]
+    rows: list[dict[str, str]] = _corpus_people_rows(
+        language["slug"],
+        (
+            get_text(ui_lang, "research.overview.card.project_lead"),
+            get_text(ui_lang, "research.overview.card.material_conception"),
+            get_text(ui_lang, "research.overview.card.conducted_by"),
+        ),
+    )
 
     learner_recording_count = _research_learner_recording_count(language["slug"])
     if learner_recording_count > 0:
@@ -368,6 +374,8 @@ def build_start_page(ui_lang: str) -> dict[str, Any]:
         "layout": "landing",
         "intro": get_text(ui_lang, "landing.intro"),
         "page_kind": "landing",
+        "resource": publication.platform_resource(ui_lang),
+        "meta_description": publication.platform_description(ui_lang),
         "more_link": {"label": get_text(ui_lang, "nav.more"), "href_key": "project_root"},
         "landing_cards": [
             {
@@ -470,6 +478,7 @@ def build_research_select_page(ui_lang: str) -> dict[str, Any]:
         "corpus_cards": build_corpus_cards_research(ui_lang),
         "sections": [],
         "is_section_root": True,
+        "meta_description": get_text(ui_lang, "meta.description.research"),
     }
 
 
@@ -486,10 +495,14 @@ def build_teaching_select_page(ui_lang: str) -> dict[str, Any]:
         "corpus_cards": build_corpus_cards_teaching(ui_lang),
         "sections": [],
         "is_section_root": True,
+        "meta_description": get_text(ui_lang, "meta.description.teaching"),
     }
 
 
 PROJECT_PAGES: dict[str, dict[str, Any]] = PROJECT_PAGES_CONTENT
+
+#: Public design articles by corpus. A corpus without an entry shows the plain "in preparation" state.
+RESEARCH_DESIGN_PAGES: dict[str, dict[str, Any]] = {"spanish": SPANISH_DESIGN_PAGE_CONTENT}
 
 
 def build_project_page(ui_lang: str, page_slug: str) -> dict[str, Any] | None:
@@ -499,7 +512,34 @@ def build_project_page(ui_lang: str, page_slug: str) -> dict[str, Any] | None:
 
     localized_page = _deep_localize(page, ui_lang)
     localized_page.setdefault("eyebrow", get_section_label("project", ui_lang))
+    if page_slug == "team":
+        _fill_team_corpus_cards(localized_page, ui_lang)
+    localized_page["meta_description"] = get_text(ui_lang, "meta.description.project")
+    if page_slug == PROJECT_PAGE_ORDER[0][0]:
+        # The project description is the place where the platform as a whole is cited.
+        localized_page["citation"] = citation_block(publication.platform_resource(ui_lang), ui_lang)
     return localized_page
+
+
+def _fill_team_corpus_cards(page: dict[str, Any], ui_lang: str) -> None:
+    """The corpus cards of the team page list the same people as the registry; they are generated, not typed."""
+    for section in page.get("sections", []):
+        if section.get("meta_cards_layout") != "team-corpus":
+            continue
+        section["meta_cards"] = [
+            {
+                "title": _research_corpus_card_title(language, ui_lang),
+                "metadata_rows": _corpus_people_rows(
+                    language["slug"],
+                    (
+                        get_text(ui_lang, "project.team.corpus_responsibility"),
+                        get_text(ui_lang, "project.team.material_design"),
+                        get_text(ui_lang, "project.team.implementation"),
+                    ),
+                ),
+            }
+            for language in LANGUAGES
+        ]
 
 
 def build_research_language_root_page(
@@ -513,11 +553,18 @@ def build_research_language_root_page(
         return None
 
     title = _research_corpus_card_title(language, ui_lang)
+    subtitle = _localized(language["root_subtitle"], ui_lang)
+    resource = publication.corpus_resource(language_slug, ui_lang)
+    if resource is not None:
+        resource["description"] = subtitle
     return {
         "title": title,
+        "resource": resource if resource and resource["citable"] else None,
+        "citation": citation_block(resource, ui_lang),
+        "meta_description": get_text(ui_lang, "meta.description.research_corpus", corpus_title=title, subtitle=subtitle),
         "eyebrow": get_section_label("research", ui_lang),
         "template": "pages/research_language_root.html",
-        "intro": _localized(language["root_subtitle"], ui_lang),
+        "intro": subtitle,
         "body_paragraphs": [
             get_text(ui_lang, "research.root.body", corpus_title=title),
             get_text(ui_lang, "research.root.access_text"),
@@ -552,6 +599,36 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
 
     title = get_language_label(language, ui_lang)
     page_title = get_research_page_label(page_slug, ui_lang)
+    corpus_title = _research_corpus_card_title(language, ui_lang)
+
+    if page_slug == "design":
+        design_content = RESEARCH_DESIGN_PAGES.get(language_slug)
+        if design_content is None:
+            # No design description yet: say so plainly; the page is neither indexable nor a citable resource.
+            return {
+                "title": get_text(ui_lang, "research.design_pending.title", corpus_title=corpus_title),
+                "nav_current_label": page_title,
+                "eyebrow": f"{get_section_label('research', ui_lang)} · {title}",
+                "intro": get_text(ui_lang, "research.design_pending.intro", corpus_title=corpus_title),
+                "page_kind": capability.page_kind,
+                "access": capability.access,
+                "meta_indexable": False,
+                "meta_description": get_text(ui_lang, "research.design_pending.intro", corpus_title=corpus_title),
+                "sections": [
+                    {
+                        "heading": get_text(ui_lang, "research.design_pending.heading"),
+                        "paragraphs": [get_text(ui_lang, "research.design_pending.text")],
+                    }
+                ],
+            }
+        page = _deep_localize(design_content, ui_lang)
+        resource = publication.design_resource(language_slug, ui_lang, page["title"])
+        page["meta_description"] = get_text(ui_lang, "meta.description.research_design", corpus_title=corpus_title)
+        if resource is not None:
+            resource["description"] = page["meta_description"]
+        page["resource"] = resource if resource and resource["citable"] else None
+        page["citation"] = citation_block(resource, ui_lang)
+        return page
 
     if language_slug != "spanish":
         return {
@@ -575,9 +652,6 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                 }
             ],
         }
-
-    if page_slug == "design":
-        return _deep_localize(SPANISH_DESIGN_PAGE_CONTENT, ui_lang)
 
     pages: dict[str, dict[str, Any]] = {
         "speakers": {

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import date
-from html import escape
 from html.parser import HTMLParser
 import logging
 import os
@@ -17,9 +16,9 @@ import yaml
 from flask import url_for
 from markdown_it import MarkdownIt
 
+from . import publication
 from .content_navigation import build_content_header
 from .i18n import SUPPORTED_UI_LANGUAGES, translate
-from .runtime_paths import is_dev_environment
 
 
 logger = logging.getLogger(__name__)
@@ -346,7 +345,16 @@ def _explicit_public_availability(entry: dict[str, Any] | None) -> bool | None:
     return None
 
 
+def topic_creator_ids(raw_topic: dict[str, Any]) -> list[str]:
+    """Person ids (``content/publication/resources.yaml``) of the people who wrote the topic."""
+    return _text_entries(_topic_metadata_source(raw_topic).get("creators"))
+
+
 def _topic_author_names(raw_topic: dict[str, Any]) -> list[str]:
+    creators = publication.people(topic_creator_ids(raw_topic))
+    if creators:
+        return [creator["name"] for creator in creators]
+    # Unfinished scaffolds may still carry free-text names (for example the placeholder "NN").
     authors = _text_entries(_topic_metadata_source(raw_topic).get("authors"))
     if authors:
         return authors
@@ -731,10 +739,7 @@ def _topic_metadata_source(raw_topic: dict[str, Any]) -> dict[str, Any]:
 def _topic_metadata(ui_lang: str, raw_topic: dict[str, Any]) -> dict[str, Any]:
     metadata: dict[str, Any] = {"authors": None, "details": []}
     metadata_source = _topic_metadata_source(raw_topic)
-    authors = _text_entries(metadata_source.get("authors"))
-    if not authors:
-        credits = raw_topic.get("credits") if isinstance(raw_topic.get("credits"), dict) else {}
-        authors = [person["name"] for person in _person_entries(credits.get("authors"))]
+    authors = _topic_author_names(raw_topic)
     if authors:
         metadata["authors"] = {
             "key": "authors",
@@ -769,6 +774,7 @@ def _topic_metadata(ui_lang: str, raw_topic: dict[str, Any]) -> dict[str, Any]:
                 "key": "created",
                 "label": translate(ui_lang, "teaching.topic.created"),
                 "value": created,
+                "datetime": _parse_iso_date(metadata_source.get("created")).isoformat(),
             }
         )
 
@@ -779,6 +785,7 @@ def _topic_metadata(ui_lang: str, raw_topic: dict[str, Any]) -> dict[str, Any]:
                 "key": "updated",
                 "label": translate(ui_lang, "teaching.topic.updated"),
                 "value": updated,
+                "datetime": _parse_iso_date(metadata_source.get("updated")).isoformat(),
             }
         )
 
@@ -849,63 +856,42 @@ def _further_reading_item_entries(values: Any) -> list[dict[str, str]]:
     return entries
 
 
-def _citation_payload(ui_lang: str, value: Any) -> dict[str, Any] | None:
-    if not isinstance(value, dict):
+def topic_resource(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: dict[str, Any]) -> dict[str, Any] | None:
+    """Publication resource of a topic edition, or ``None`` while the topic has no ``resource_id``."""
+    resource_id = _as_text(raw_topic.get("resource_id"))
+    if not resource_id:
         return None
-    text = _as_text(value.get("text"))
-    doi = _as_text(value.get("doi"))
-    url = _as_text(value.get("url"))
-    if not any((text, doi, url)):
+    metadata_source = _topic_metadata_source(raw_topic)
+    title = _as_text(raw_topic.get("title"))
+    return publication.topic_resource(
+        teaching_lang,
+        ui_lang,
+        topic_slug,
+        resource_id=resource_id,
+        title=render_markdown_plain_text(title) or title,
+        creator_ids=topic_creator_ids(raw_topic),
+        date_published=_parse_iso_date(metadata_source.get("created")),
+        date_modified=_parse_iso_date(metadata_source.get("updated")),
+        description=render_markdown_plain_text(raw_topic.get("summary") or raw_topic.get("description")) or None,
+        doi=_as_text(raw_topic.get("doi")) or None,
+        license_value=_as_text(raw_topic.get("license")) or None,
+        published=topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic=raw_topic),
+    )
+
+
+def _citation_payload(ui_lang: str, resource: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Citation block generated from the structured resource; topics never carry a typed citation string."""
+    citation = publication.format_citation(resource, ui_lang) if resource else None
+    if citation is None:
         return None
-    body_html_blocks = render_markdown_blocks(text)
-    copy_text = _as_text(value.get("copy_text"))
-    if not copy_text:
-        copy_parts: list[str] = []
-        plain_text = render_markdown_plain_text(text)
-        if plain_text:
-            copy_parts.append(plain_text)
-        if doi and doi not in plain_text:
-            copy_parts.append(doi)
-        if url and url not in plain_text:
-            copy_parts.append(url)
-        copy_text = "\n".join(copy_parts)
-    meta_rows: list[str] = []
-    if doi:
-        meta_rows.append(
-            "".join(
-                (
-                    '<div class="pm-teaching-citation__meta-item">',
-                    f'<dt class="pm-teaching-citation__label">{escape(translate(ui_lang, "teaching.citation.doi"))}</dt>',
-                    f'<dd class="pm-teaching-citation__value">{escape(doi)}</dd>',
-                    "</div>",
-                )
-            )
-        )
-    if url:
-        safe_url = escape(url, quote=True)
-        meta_rows.append(
-            "".join(
-                (
-                    '<div class="pm-teaching-citation__meta-item">',
-                    f'<dt class="pm-teaching-citation__label">{escape(translate(ui_lang, "teaching.citation.url"))}</dt>',
-                    '<dd class="pm-teaching-citation__value">',
-                    f'<a href="{safe_url}" class="pm-teaching-inline-link">{safe_url}</a>',
-                    "</dd>",
-                    "</div>",
-                )
-            )
-        )
-    if meta_rows:
-        body_html_blocks.append(f'<dl class="pm-teaching-citation__meta">{"".join(meta_rows)}</dl>')
-    payload = _set_inline_markdown_fields({
-        "title": _as_text(value.get("title")) or translate(ui_lang, "teaching.citation.heading"),
-        "text": text,
-        "doi": doi,
-        "url": url,
-        "copy_text": copy_text,
-        "body_html_blocks": body_html_blocks,
-    }, "title")
-    return payload
+    return _set_inline_markdown_fields(
+        {
+            "title": translate(ui_lang, f"citation.heading.{resource['resource_type']}"),
+            "copy_text": citation["text"],
+            "body_html_blocks": [f"<p>{citation['html']}</p>"],
+        },
+        "title",
+    )
 
 
 def _decorate_content_header_markdown(content_header: dict[str, Any], *, title: str, intro: str) -> dict[str, Any]:
@@ -1001,7 +987,7 @@ def _topic_blocks(
     topic_metadata: dict[str, Any],
 ) -> list[dict[str, Any]]:
     blocks: list[dict[str, Any]] = []
-    top_level_citation = _citation_payload(ui_lang, raw_topic.get("citation"))
+    top_level_citation = _citation_payload(ui_lang, topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic))
     for index, raw_block in enumerate(raw_topic.get("blocks", [])):
         if not isinstance(raw_block, dict):
             continue
@@ -1385,26 +1371,7 @@ def _topic_blocks(
                 )
             continue
         if block_type == "citation":
-            if top_level_citation is not None:
-                if is_dev_environment():
-                    logger.warning(
-                        "Ignoring explicit teaching citation block '%s' in %s/%s/%s because top-level citation metadata is present.",
-                        block_id,
-                        teaching_lang,
-                        ui_lang,
-                        topic_slug,
-                    )
-                continue
-            citation = _citation_payload(ui_lang, raw_block)
-            if citation is not None:
-                blocks.append(
-                    {
-                        "type": "citation",
-                        "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
-                        "citation": citation,
-                    }
-                )
+            # The citation is generated from the topic's publication metadata and appended below.
             continue
 
         logger.warning(
@@ -1646,6 +1613,9 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
     overview_intro = _hub_overview_intro(index)
     topic_groups = _hub_topic_groups(teaching_lang, effective_ui_lang)
     topic_count = sum(len(group["cards"]) for group in topic_groups)
+    area_resource = publication.teaching_area_resource(teaching_lang, effective_ui_lang, has_public_topics=topic_count > 0)
+    if area_resource is not None:
+        area_resource["description"] = render_markdown_plain_text(overview_intro or lead) or None
     content_header = _decorate_content_header_markdown(
         build_content_header(
             page_name="teaching",
@@ -1689,35 +1659,77 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         },
         "teaching_switch_items": _teaching_switch_items(effective_ui_lang, teaching_lang),
         "content_header": content_header,
+        "resource": area_resource if area_resource and area_resource["citable"] else None,
+        "citation": _citation_payload(effective_ui_lang, area_resource),
+        "meta_description": render_markdown_plain_text(overview_intro or lead) or None,
+        "meta_alternates": {
+            edition: url_for("public.teaching_language_root", ui_lang=edition, language_slug=teaching_lang)
+            for edition in list_existing_ui_editions(teaching_lang)
+        },
     }
 
 
+def resolve_topic_alias(teaching_lang: str, ui_lang: str, requested_slug: str) -> str | None:
+    """Current slug of a public topic that lists ``requested_slug`` under ``aliases`` (documented renames only)."""
+    language_dir = TEACHING_CONTENT_ROOT / teaching_lang
+    if not language_dir.is_dir():
+        return None
+    for topic_dir in sorted(language_dir.iterdir()):
+        if not topic_dir.is_dir() or topic_dir.name == "hubs":
+            continue
+        raw_topic = load_teaching_topic(teaching_lang, ui_lang, topic_dir.name)
+        if raw_topic is None or requested_slug not in _text_entries(raw_topic.get("aliases")):
+            continue
+        if topic_is_public(teaching_lang, ui_lang, topic_dir.name, raw_topic=raw_topic):
+            return topic_dir.name
+    return None
+
+
 def resolve_topic_route_target(teaching_lang: str, requested_ui_lang: str, topic_slug: str) -> dict[str, Any]:
+    """Decide how a topic URL is answered.
+
+    ``ok`` renders the page. ``redirect-topic`` is used for exactly two documented cases: the requested UI
+    language has no edition of this teaching language (temporary redirect to the existing edition), or the slug is
+    a listed alias of a renamed topic (permanent redirect). Everything else, including unfinished topics, is
+    ``not-found``: a URL that is not a published resource must not look like one.
+    """
     effective_ui_lang = resolve_teaching_edition_ui_lang(teaching_lang, requested_ui_lang)
     if effective_ui_lang is None:
         return {"status": "missing-language"}
-
-    if effective_ui_lang != requested_ui_lang:
-        effective_topic = load_teaching_topic(teaching_lang, effective_ui_lang, topic_slug)
-        if effective_topic is not None and topic_is_public(
-            teaching_lang,
-            effective_ui_lang,
-            topic_slug,
-            raw_topic=effective_topic,
-        ):
-            return {"status": "redirect-topic", "ui_lang": effective_ui_lang, "topic_slug": topic_slug}
-        return {"status": "redirect-hub", "ui_lang": effective_ui_lang}
+    if not _TOPIC_SLUG_PATTERN.match(topic_slug):
+        return {"status": "not-found"}
 
     effective_topic = load_teaching_topic(teaching_lang, effective_ui_lang, topic_slug)
-    if effective_topic is None or not topic_is_public(
+    is_public = effective_topic is not None and topic_is_public(
         teaching_lang,
         effective_ui_lang,
         topic_slug,
         raw_topic=effective_topic,
-    ):
-        return {"status": "redirect-hub", "ui_lang": effective_ui_lang}
+    )
+    if is_public:
+        if effective_ui_lang != requested_ui_lang:
+            return {"status": "redirect-topic", "ui_lang": effective_ui_lang, "topic_slug": topic_slug, "code": 302}
+        return {"status": "ok", "ui_lang": effective_ui_lang, "topic_slug": topic_slug}
 
-    return {"status": "ok", "ui_lang": effective_ui_lang, "topic_slug": topic_slug}
+    alias_target = resolve_topic_alias(teaching_lang, effective_ui_lang, topic_slug)
+    if alias_target is not None:
+        return {"status": "redirect-topic", "ui_lang": effective_ui_lang, "topic_slug": alias_target, "code": 301}
+    return {"status": "not-found"}
+
+
+def topic_public_alternates(teaching_lang: str, ui_lang: str, topic_slug: str) -> dict[str, str]:
+    """UI-language editions of a topic that really exist and are public, as ``{ui_lang: path}``."""
+    alternates: dict[str, str] = {}
+    for target_ui_lang in SUPPORTED_UI_LANGUAGES:
+        target_slug = topic_slug if target_ui_lang == ui_lang else resolve_topic_slug_for_ui_lang(teaching_lang, ui_lang, topic_slug, target_ui_lang)
+        if target_slug and topic_is_public(teaching_lang, target_ui_lang, target_slug):
+            alternates[target_ui_lang] = url_for(
+                "public.teaching_language_page",
+                ui_lang=target_ui_lang,
+                language_slug=teaching_lang,
+                page_slug=target_slug,
+            )
+    return alternates
 
 
 def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str) -> dict[str, Any] | None:
@@ -1732,6 +1744,7 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
     hub_title = _as_text(index.get("title")) or teaching_lang.replace("-", " ").title()
     hub_title_plain = render_markdown_plain_text(hub_title) or hub_title
     topic_metadata = _topic_metadata(ui_lang, raw_topic)
+    resource = topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic)
     blocks = _topic_blocks(teaching_lang, ui_lang, topic_slug, raw_topic, topic_metadata)
     topic_sections = _topic_sections(blocks)
     content_header = _decorate_content_header_markdown(
@@ -1775,6 +1788,9 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
         "blocks": blocks,
         "topic_sections": topic_sections,
         "content_header": content_header,
+        "resource": resource if resource and resource["citable"] else None,
+        "meta_description": (resource or {}).get("description") or render_markdown_plain_text(page_intro) or None,
+        "meta_alternates": topic_public_alternates(teaching_lang, ui_lang, topic_slug),
     }
 
 

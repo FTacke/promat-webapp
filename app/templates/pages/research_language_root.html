@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
-{% block page_title %}{{ format_page_title(promat_page.title) }}{% endblock %}
 
 {% block content %}
 <article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }} pm-research-language-root" aria-labelledby="promat-page-title">
@@ -43,5 +42,8 @@
     </nav>
     {% endif %}
   </section>
+  {# The corpus page has no section headings; the citation heading follows the page title directly. #}
+  {% set citation_heading_tag = 'h2' %}
+  {% include 'partials/_page_citation.html' %}
 </article>
 {% endblock %}

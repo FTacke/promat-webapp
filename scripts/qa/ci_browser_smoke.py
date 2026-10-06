@@ -17,7 +17,9 @@ Checks (German and English where a language applies):
   ``/private-copy`` without an item edit;
 * the matrix row play control turns into a stop control, stop ends playback, the audio never overlaps;
 * dark and light theme both apply; no horizontal overflow at 390 px on the key pages;
-* French and English corpora open in the player (fixture sessions of every corpus).
+* French and English corpora open in the player (fixture sessions of every corpus);
+* citable resources carry canonical, reciprocal hreflang, one JSON-LD block and a working copy-citation control in
+  the final DOM; unknown topics answer 404 and pages in preparation are not indexable.
 
 Exit code 1 on any failed check, so the CI job and the mutation guards (stop logic or icon removed, set-id forced
 into the URL, "Alle Items" never selected, syntax error in ``research-player.js``) turn red.
@@ -26,6 +28,7 @@ into the URL, "Alle Items" never selected, syntax error in ``research-player.js`
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from datetime import datetime, timezone
 import os
@@ -202,6 +205,66 @@ def check_public_pages(browser, base: str, report: Report, out: Path) -> None:
             report.check(response is not None and response.status == 200, f"[{lang}] {path} loads (200)")
             report.check(not problems, f"[{lang}] {path} has no page or console errors {problems[:2]}")
         page.screenshot(path=str(out / f"{lang}_teaching_topic.png"), full_page=True)
+        context.close()
+
+
+CANONICAL_ORIGIN = "https://pronunciation-matters.de"
+#: citable resources and the schema.org type their page has to announce
+RESOURCE_PAGES = {
+    "/{lang}/research/spanish": "Dataset",
+    "/{lang}/research/spanish/design": "ScholarlyArticle",
+    "/{lang}/teaching/spanish": "Collection",
+    "/{lang}/teaching/spanish/which-pronunciation": ["Article", "LearningResource"],
+}
+
+
+def check_publication_metadata(browser, base: str, report: Report, out: Path) -> None:
+    """Head metadata in the final DOM (after all scripts ran) and the copy-citation control."""
+    for lang in ("de", "en"):
+        context = browser.new_context(viewport={"width": 1280, "height": 900})
+        context.grant_permissions(["clipboard-read", "clipboard-write"])
+        page = context.new_page()
+        for template, schema_type in RESOURCE_PAGES.items():
+            path = template.format(lang=lang)
+            page.goto(base + path, wait_until="networkidle")
+            dom = page.evaluate(
+                """() => ({
+                    title: document.title,
+                    canonical: [...document.querySelectorAll('link[rel=canonical]')].map(e => e.getAttribute('href')),
+                    alternates: [...document.querySelectorAll('link[rel=alternate][hreflang]')].map(e => [e.getAttribute('hreflang'), e.getAttribute('href')]),
+                    description: (document.querySelector('meta[name=description]') || {}).content || '',
+                    robots: (document.querySelector('meta[name=robots]') || {}).content || '',
+                    jsonld: [...document.querySelectorAll('script[type="application/ld+json"]')].map(e => e.textContent),
+                    copy: [...document.querySelectorAll('[data-copy-text]')].map(e => e.getAttribute('data-copy-text')),
+                    htmlLang: document.documentElement.lang,
+                })"""
+            )
+            expected = CANONICAL_ORIGIN + path
+            report.check(dom["canonical"] == [expected], f"[{lang}] {path} canonical in the final DOM ({dom['canonical']})")
+            report.check(sorted(code for code, _ in dom["alternates"]) == ["de", "en"] and [lang, expected] in dom["alternates"], f"[{lang}] {path} reciprocal hreflang de/en")
+            report.check(bool(dom["description"].strip()) and not dom["robots"], f"[{lang}] {path} has a description and is indexable")
+            report.check(dom["htmlLang"] == lang, f"[{lang}] {path} declares the UI language")
+            try:
+                structured = json.loads(dom["jsonld"][0]) if len(dom["jsonld"]) == 1 else {}
+            except ValueError:
+                structured = {}
+            report.check(structured.get("@type") == schema_type and structured.get("url") == expected, f"[{lang}] {path} JSON-LD type and url ({structured.get('@type')})")
+            report.check(bool((structured.get("isPartOf") or {}).get("@id", "").startswith(CANONICAL_ORIGIN)), f"[{lang}] {path} JSON-LD isPartOf")
+            report.check(len(dom["copy"]) == 1 and dom["copy"][0].endswith(expected), f"[{lang}] {path} offers one citation ending with its own URL")
+            if len(dom["copy"]) == 1:
+                page.locator("[data-copy-text]").first.click()
+                page.wait_for_timeout(300)
+                clipboard = page.evaluate("() => navigator.clipboard.readText().catch(() => null)")
+                report.check(clipboard == dom["copy"][0], f"[{lang}] {path} copy button puts the citation on the clipboard")
+        page.goto(f"{base}/{lang}/teaching/spanish/which-pronunciation", wait_until="networkidle")
+        times = page.evaluate("() => [...document.querySelectorAll('time[datetime]')].map(e => e.getAttribute('datetime'))")
+        report.check(len(times) >= 1 and all(re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value) for value in times), f"[{lang}] topic dates are machine readable {times}")
+        page.screenshot(path=str(out / f"{lang}_topic_citation.png"), full_page=True)
+        response = page.goto(f"{base}/{lang}/teaching/spanish/no-such-topic", wait_until="networkidle")
+        report.check(response is not None and response.status == 404, f"[{lang}] an unknown topic answers 404")
+        response = page.goto(f"{base}/{lang}/research/french/design", wait_until="networkidle")
+        robots = page.evaluate("() => (document.querySelector('meta[name=robots]') || {}).content || ''")
+        report.check(robots == "noindex" and page.locator("link[rel=canonical]").count() == 0, f"[{lang}] a design page in preparation is not indexable")
         context.close()
 
 
@@ -387,6 +450,7 @@ def main() -> int:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()
             check_public_pages(browser, base, report, args.out)
+            check_publication_metadata(browser, base, report, args.out)
             check_login_and_player(browser, base, report, args.out)
             check_comparison(browser, base, report, args.out)
             check_theme_and_mobile(browser, base, report, args.out)

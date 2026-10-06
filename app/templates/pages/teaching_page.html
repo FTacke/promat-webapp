@@ -3,7 +3,6 @@
 {% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 {% from 'partials/_teaching_blocks.html' import render_block, render_teaching_topic_card, render_topic_metadata_rows %}
 
-{% block page_title %}{{ format_page_title(promat_page.page_title or promat_page.title) }}{% endblock %}
 
 {% block content %}
 {% set teaching_view = promat_page.teaching_view | default('overview') %}
@@ -98,6 +97,12 @@
       <p class="pm-teaching-empty-state__text">{{ promat_page.empty_state.text }}</p>
     </div>
   </section>
+  {% endif %}
+
+  {% if teaching_view == 'hub' %}
+  <div class="pm-teaching-content-wide">
+    {% include 'partials/_page_citation.html' %}
+  </div>
   {% endif %}
 
   {% if teaching_view == 'topic' and promat_page.topic_sections %}

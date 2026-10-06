@@ -2007,13 +2007,12 @@ def test_teaching_empty_hubs_render_public_empty_state(url_app: Flask, language_
     assert 'Editionen' not in html
 
 
-def test_teaching_missing_topic_redirects_cleanly_to_hub(url_app: Flask) -> None:
+def test_teaching_unknown_topic_is_not_found(url_app: Flask) -> None:
     client = url_app.test_client()
 
     response = client.get("/de/teaching/spanish/does-not-exist")
 
-    assert response.status_code == 302
-    assert response.headers["Location"].endswith("/de/teaching/spanish")
+    assert response.status_code == 404
 
 
 def test_teaching_topic_media_route_serves_released_media(url_app: Flask) -> None:
@@ -2032,13 +2031,12 @@ def test_teaching_topic_media_route_blocks_parent_traversal(url_app: Flask) -> N
     assert response.status_code == 404
 
 
-def test_teaching_topic_missing_target_edition_redirects_to_hub(url_app: Flask) -> None:
+def test_teaching_unpublished_topic_is_not_found(url_app: Flask) -> None:
     client = url_app.test_client()
 
     response = client.get("/en/teaching/spanish/r")
 
-    assert response.status_code == 302
-    assert response.headers["Location"].endswith("/en/teaching/spanish")
+    assert response.status_code == 404
 
 
 def test_teaching_topic_renders_public_content_blocks(url_app: Flask, released_teaching_content: Path) -> None:
@@ -2233,7 +2231,7 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert '<code>ci</code>' in html
     assert 'werden hier wie' in html
     assert 'href="https://pronunciation-matters.de/de/teaching/spanish/which-pronunciation"' in html
-    assert '>pronunciation-matters.de/de/teaching/spanish/which-pronunciation<' in html
+    assert '>https://pronunciation-matters.de/de/teaching/spanish/which-pronunciation<' in html
     assert 'audio-section--contrast' in html
     assert 'audio-section--examples' in html
     assert '<code>z/c</code>' in html
@@ -2374,7 +2372,7 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'Outlook: More pronunciation features' not in html
     assert 'For those who want to know more' not in html
     assert 'Continue in this hub' not in html
-    assert '<em>Pronunciation Matters</em>' in html
+    assert '<em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>' in html
     assert 'href="https://pronunciation-matters.de/en/teaching/spanish/which-pronunciation"' in html
     assert 'href="https://www.pronunciation-matters.de"' not in html
     assert 'aria-label="Copy citation"' in html
@@ -2670,8 +2668,8 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
             "Diesen Aufsatz zitieren",
             "https://pronunciation-matters.de/de/research/spanish/design",
             "Zitat kopieren",
-            'Tacke, Felix (2026): „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/de/research/spanish/design">pronunciation-matters.de/de/research/spanish/design</a>.',
-            "Tacke, Felix (2026): „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: Pronunciation Matters. Online: https://pronunciation-matters.de/de/research/spanish/design.",
+            'Tacke, Felix (2026). „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: Felix Tacke (Hrsg.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/de/research/spanish/design">https://pronunciation-matters.de/de/research/spanish/design</a>',
+            "Tacke, Felix (2026). „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: Felix Tacke (Hrsg.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/de/research/spanish/design",
         ),
         (
             "en",
@@ -2679,8 +2677,8 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
             "Cite this article",
             "https://pronunciation-matters.de/en/research/spanish/design",
             "Copy citation",
-            'Tacke, Felix (2026): “Spanish learner pronunciation: elicitation design and task protocol”. In: <em>Pronunciation Matters</em>. Online: <a href="https://pronunciation-matters.de/en/research/spanish/design">pronunciation-matters.de/en/research/spanish/design</a>.',
-            "Tacke, Felix (2026): “Spanish learner pronunciation: elicitation design and task protocol”. In: Pronunciation Matters. Online: https://pronunciation-matters.de/en/research/spanish/design.",
+            'Tacke, Felix (2026). “Spanish learner pronunciation: elicitation design and task protocol”. In: Felix Tacke (ed.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/en/research/spanish/design">https://pronunciation-matters.de/en/research/spanish/design</a>',
+            "Tacke, Felix (2026). “Spanish learner pronunciation: elicitation design and task protocol”. In: Felix Tacke (ed.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/en/research/spanish/design",
         ),
     ],
 )
@@ -2706,7 +2704,7 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
     assert 'class="promat-content-section promat-content-section--citation pm-reading pm-teaching-page--topic"' in html
     assert html.count('data-admonition-variant="citation"') == 1
     assert f'aria-label="{copy_label}"' in html
-    assert f'<a href="{citation_url}">{citation_url.removeprefix("https://")}</a>.' in html
+    assert f'<a href="{citation_url}">{citation_url}</a>' in html
     assert f'<p>{citation_html}</p>' in html
     assert f'data-copy-text="{copy_text}"' in html
     assert html.index('class="promat-content-block__list pm-literature"') < html.index(citation_heading) < html.index("</article>")

@@ -1,0 +1,23 @@
+{# Generated citation of the page's resource (platform, corpus, teaching area, design article). #}
+{% from 'partials/_admonition.html' import render_admonition %}
+{% if promat_page.citation %}
+<section class="promat-content-section promat-content-section--citation pm-reading pm-teaching-page--topic">
+  {{ render_admonition({
+    'tag': 'aside',
+    'variant': 'citation',
+    'heading_tag': citation_heading_tag | default('h3'),
+    'title': promat_page.citation.title,
+    'body_html_blocks': promat_page.citation.body_html_blocks,
+    'header_action': {
+      'class': 'pm-admonition__action--copy',
+      'aria_label': t('teaching.citation.copy'),
+      'title': t('teaching.citation.copy'),
+      'copy_text': promat_page.citation.copy_text,
+      'success_label': t('teaching.citation.copied'),
+      'error_label': t('teaching.citation.copy_failed'),
+      'copied_label': t('teaching.citation.copied'),
+      'default_label': t('teaching.citation.copy'),
+    },
+  }) }}
+</section>
+{% endif %}

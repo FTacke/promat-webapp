@@ -1,25 +1,16 @@
+resource_id: promat-teaching-es-which-pronunciation
 title: Welche Aussprache unterrichten?
 summary: "Warum *seseo* und *distinción* gleichwertige Aussprachen sind – und was das für den Unterricht bedeutet."
 description: Gibt es die eine richtige Aussprache im Spanischen? Und was heißt das für den Unterricht?
 equivalents:
   en: which-pronunciation
 metadata:
-  authors:
-    - Felix Tacke
+  creators:
+    - felix-tacke
   peer_review:
     -
   created: 2026-05-11
   updated: 2026-05-13
-citation:
-  title: Diese Themenseite zitieren
-  text: >-
-    Tacke, Felix (2026): „Welche Aussprache unterrichten? (Themenseite)“.
-    In: *Pronunciation Matters*.
-    Online: [pronunciation-matters.de/de/teaching/spanish/which-pronunciation](https://pronunciation-matters.de/de/teaching/spanish/which-pronunciation).
-  copy_text: >-
-    Tacke, Felix (2026): „Welche Aussprache unterrichten? (Themenseite)“.
-    In: Pronunciation Matters.
-    Online: https://pronunciation-matters.de/de/teaching/spanish/which-pronunciation
 blocks:
   - type: topic_meta
     layout:

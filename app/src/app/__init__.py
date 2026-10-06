@@ -14,6 +14,7 @@ from flask import Flask, g, jsonify, make_response, redirect, render_template, r
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from . import publication
 from .branding import BRANDING, format_page_title
 from .analytics import register_analytics
 from .i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, normalize_supported_ui_language, resolve_request_ui_language, resolve_ui_language, translate
@@ -312,6 +313,7 @@ def register_context_processors(app: Flask) -> None:
             "format_page_title": format_page_title,
             "static_asset": static_asset,
             "current_ui_lang": current_ui_lang,
+            "default_meta_description": publication.platform_description(current_ui_lang),
             "ui_lang_switch_urls": {
                 "de": _build_ui_lang_switch_url("de"),
                 "en": _build_ui_lang_switch_url("en"),

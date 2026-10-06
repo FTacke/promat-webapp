@@ -144,7 +144,7 @@
       {% for item in details %}
       <span class="pm-teaching-topic-meta__detail" data-key="{{ item.key }}">
         <span class="pm-teaching-topic-meta__label">{{ item.label }}:</span>
-        <span class="pm-teaching-topic-meta__value">{{ item.value }}</span>
+        <span class="pm-teaching-topic-meta__value">{% if item.datetime %}<time datetime="{{ item.datetime }}">{{ item.value }}</time>{% else %}{{ item.value }}{% endif %}</span>
       </span>{% if not loop.last %}<span class="pm-teaching-topic-meta__separator" aria-hidden="true">·</span>{% endif %}
       {% endfor %}
     </p>

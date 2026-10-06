@@ -11,7 +11,7 @@ Checks, each in ``de`` and ``en`` where a language applies:
 
 * ``document.title`` after the page has fully loaded equals the server-rendered ``<title>`` (no client rewrite);
 * no console output from the removed page-title module;
-* unfinished (draft) Teaching topics redirect to their hub, which does not link them;
+* unfinished (draft) Teaching topics answer 404 and their hub does not link them;
 * with credentials: no third-party analytics request on protected research pages, protected responses are
   ``private, no-store``, and after logout the Back button does not show the protected page from the cache;
 * screenshots of the visited pages are written to ``--out``.
@@ -95,9 +95,9 @@ def run(base_url: str, out: Path, username: str | None, password: str | None) ->
 
         for ui_lang, paths in DRAFT_TOPICS.items():
             for path in paths:
-                page.goto(base_url + path, wait_until="networkidle")
-                report.check(not page.url.rstrip("/").endswith(path.rsplit("/", 1)[-1]), f"[{ui_lang}] draft {path} is redirected away ({page.url})")
-                hub_html = page.content()
+                response = page.goto(base_url + path, wait_until="networkidle")
+                report.check(response is not None and response.status == 404, f"[{ui_lang}] draft {path} is not a public resource (404)")
+                hub_html = page.request.get(base_url + path.rsplit("/", 1)[0]).text()
                 report.check(f'href="{path}"' not in hub_html, f"[{ui_lang}] hub does not link draft {path}")
             screenshot(page, out, f"{ui_lang}_teaching_hub_after_draft_redirect")
 

@@ -13,10 +13,6 @@ BRANDING: dict[str, str] = {
     "app_short_name": "PROMAT",
     "app_tagline": "Ruhige Forschungs- und Unterrichtsplattform für Aussprache, Vergleich und Materialien.",
     "page_title_separator": "·",
-    "app_meta_description": (
-        "Pronunciation Matters ordnet Projektkommunikation, Forschung und Unterricht "
-        "in einer textzentrierten PROMAT-Oberfläche."
-    ),
     "institution_name": "Philipps-Universität Marburg",
     "institution_contact_email": "felix.tacke@uni-marburg.de",
     "footer_brand_url": "https://www.uni-marburg.de/",
