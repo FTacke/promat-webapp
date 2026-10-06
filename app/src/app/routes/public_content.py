@@ -646,8 +646,7 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
                 {
                     "heading": get_text(ui_lang, "research.placeholder.heading"),
                     "paragraphs": [
-                        get_text(ui_lang, "research.placeholder.route_ready"),
-                        get_text(ui_lang, "research.placeholder.future_content"),
+                        get_text(ui_lang, "research.placeholder.text"),
                     ],
                 }
             ],

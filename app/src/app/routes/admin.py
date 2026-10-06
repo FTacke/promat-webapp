@@ -15,6 +15,7 @@ from ..auth.decorators import require_role
 from ..extensions import limiter
 from ..i18n import resolve_ui_language, translate
 from ..protected_navigation import build_admin_panel, build_protected_content_header
+from ..research_capabilities import ACTIVE_RESEARCH_CORPORA
 from ..services.auth_mail_messages import build_auth_mail_preview, resolve_mail_ui_language
 from ..services.mail_delivery import (
     MailConfigurationError,
@@ -578,7 +579,7 @@ def analytics_page():
     analytics = summarize_analytics(period)
     matrix = analytics["matrix"]
     languages = []
-    for slug in ("spanish", "french", "german", "english"):
+    for slug in ACTIVE_RESEARCH_CORPORA:
         language = get_language(slug)
         label = get_language_label(language, ui_lang) if language else slug
         languages.append(

@@ -8,7 +8,7 @@ Flask-JWT-Extended
 Flask-Limiter
 SQLAlchemy
 passlib
-bcrypt
+bcrypt<5  # passlib 1.7.4 raises ValueError with bcrypt 5; replace passlib before lifting the cap
 httpx
 imageio-ffmpeg
 pydub

@@ -25,8 +25,9 @@ if __name__ == "__main__":
     app.debug = debug_enabled
     app.config["TEMPLATES_AUTO_RELOAD"] = debug_enabled
 
+    # The development server carries the Werkzeug debugger; it listens on loopback unless the developer opts in.
     run_simple(
-        "0.0.0.0",
+        os.getenv("PROMAT_BIND_HOST", "127.0.0.1"),
         8000,
         app,
         threaded=True,

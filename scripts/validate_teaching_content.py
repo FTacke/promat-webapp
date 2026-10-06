@@ -5,6 +5,8 @@
 Checks the structure (manifest, hubs, media, equivalents) and, for every topic that is public, its publication
 front matter: stable ``resource_id``, structured creators, publication date, real DE/EN equivalents, and no typed
 citation. The publication registry (``content/publication/resources.yaml``) is validated in the same run.
+Topic media that no source file references is reported: a file is an error unless it is listed with a reason in
+``content/teaching/media-exceptions.yaml``, in which case it is only a warning (and a stale entry is an error).
 Contract: ``docs/spec/platform-data-files.md, "Publication Metadata"``.
 """
 
@@ -28,6 +30,8 @@ UNFINISHED_STATUS_VALUES = {"draft", "private", "pending", "planned", "scaffold"
 PLACEHOLDER_AUTHORS = {"nn", "n.n.", "n. n."}
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DOI_PATTERN = re.compile(r"^10[.][0-9]{4,9}/[^ ]+$")
+MEDIA_EXCEPTIONS_FILE = CONTENT_ROOT / "media-exceptions.yaml"
+MEDIA_EXCEPTION_STATUSES = {"content_decision_required", "retained"}
 
 
 def load_publication_module():
@@ -262,8 +266,81 @@ def validate_publication_front_matter(
                     errors.append(f"{where}: equivalent {other_ui_lang}/{other_slug} does not point back to {topic_slug}")
 
 
+def _string_leaves(value: Any) -> Iterable[str]:
+    if isinstance(value, str):
+        yield value.replace("\\", "/")
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _string_leaves(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _string_leaves(item)
+
+
+def _source_strings(teaching_lang: str) -> list[str]:
+    """Every string in the YAML sources of one teaching language (topics, hubs, manifest).
+
+    Matching on any string (not only the known media fields) keeps references that the block model does not
+    name explicitly, such as media mentioned from hubs or nested block fields, from being reported as orphans.
+    """
+    strings: list[str] = []
+    for source in sorted((CONTENT_ROOT / teaching_lang).rglob("*.yaml")):
+        loaded = _load_yaml_map(source)
+        if loaded is not None:
+            strings.extend(_string_leaves(loaded))
+    return strings
+
+
+def _load_media_exceptions(errors: list[str]) -> dict[str, dict[str, Any]]:
+    if not MEDIA_EXCEPTIONS_FILE.exists():
+        return {}
+    loaded = _load_yaml_map(MEDIA_EXCEPTIONS_FILE)
+    if loaded is None:
+        errors.append(f"Missing or invalid media exceptions file: {MEDIA_EXCEPTIONS_FILE.relative_to(REPO_ROOT)}")
+        return {}
+    exceptions: dict[str, dict[str, Any]] = {}
+    for entry in loaded.get("unreferenced_media") or []:
+        path = _as_text(entry.get("path")) if isinstance(entry, dict) else ""
+        status = _as_text(entry.get("status")) if isinstance(entry, dict) else ""
+        reason = _as_text(entry.get("reason")) if isinstance(entry, dict) else ""
+        if not path or status not in MEDIA_EXCEPTION_STATUSES or not reason:
+            errors.append(f"media exceptions: every entry needs path, reason and status in {sorted(MEDIA_EXCEPTION_STATUSES)}: {entry!r}")
+            continue
+        exceptions[path] = {"status": status, "reason": reason}
+    return exceptions
+
+
+def validate_unreferenced_media(errors: list[str], warnings: list[str], teaching_languages: list[str]) -> None:
+    """Report topic media files that no YAML source of their teaching language references."""
+    exceptions = _load_media_exceptions(errors)
+    orphans: set[str] = set()
+    for teaching_lang in teaching_languages:
+        strings = _source_strings(teaching_lang)
+        for media_file in sorted((CONTENT_ROOT / teaching_lang).glob("*/media/**/*")):
+            if not media_file.is_file():
+                continue
+            relative_to_media = media_file.relative_to(media_file.parents[len(media_file.relative_to(CONTENT_ROOT / teaching_lang).parts) - 3])
+            # {media_type}/{path inside the type}; references may name the path with or without the type folder.
+            parts = relative_to_media.parts
+            inner = "/".join(parts[1:])
+            if any(inner in text or "/".join(parts) in text for text in strings):
+                continue
+            key = media_file.relative_to(CONTENT_ROOT).as_posix()
+            orphans.add(key)
+            if key in exceptions:
+                warnings.append(f"unreferenced media kept by exception ({exceptions[key]['status']}): content/teaching/{key}")
+            else:
+                errors.append(
+                    f"Unreferenced topic media: content/teaching/{key} (reference it, remove it, or list it with a reason in "
+                    f"{MEDIA_EXCEPTIONS_FILE.relative_to(REPO_ROOT).as_posix()})"
+                )
+    for key in sorted(set(exceptions) - orphans):
+        errors.append(f"media exceptions: {key} is no longer an unreferenced file; remove the stale entry")
+
+
 def main() -> int:
     errors: list[str] = []
+    warnings: list[str] = []
     publication = load_publication_module()
     errors.extend(f"publication registry: {error}" for error in publication.validate_registry())
     seen_resource_ids: dict[str, str] = dict(publication.registry_resource_ids())
@@ -303,6 +380,10 @@ def main() -> int:
 
         validate_publication_front_matter(errors, publication, teaching_lang, available_ui_langs, seen_resource_ids)
 
+    validate_unreferenced_media(errors, warnings, teaching_languages)
+
+    for warning in warnings:
+        print(f"warning: {warning}")
     if errors:
         print("Teaching content validation failed:")
         for error in errors:

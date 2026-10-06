@@ -839,7 +839,7 @@ def access_request_submit():
         ui_lang=ui_lang,
         requested_path=next_url or None,
         user_agent=request.user_agent.string if request.user_agent else None,
-        ip_address=request.headers.get("X-Forwarded-For", request.remote_addr),
+        ip_address=request.remote_addr,
     )
     deliver_access_request_notification(access_request)
     display_name = _build_display_name(form_values["first_name"], form_values["last_name"])

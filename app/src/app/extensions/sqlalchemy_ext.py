@@ -19,7 +19,7 @@ def init_engine(app) -> None:
     if not db_url:
         raise RuntimeError("AUTH_DATABASE_URL is not configured")
 
-    _engine = create_engine(db_url, future=True)
+    _engine = create_engine(db_url, future=True, pool_pre_ping=True)
     _session_local = sessionmaker(bind=_engine, autoflush=False, autocommit=False, expire_on_commit=False)
 
 

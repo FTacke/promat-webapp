@@ -1,0 +1,17 @@
+# Topic media files that no Teaching YAML source references (checked by scripts/validate_teaching_content.py).
+# An entry is a documented exception, not an approval: `content_decision_required` marks a file the editors
+# must either wire into a topic or remove; `retained` marks a file kept on purpose. Entries that stop being
+# unreferenced must be deleted (the validator fails on stale entries).
+unreferenced_media:
+  - path: spanish/which-pronunciation/media/audio/variation/seseo-casa-caza.mp3
+    status: content_decision_required
+    reason: Earlier seseo recording, superseded by the session-0004 file (different bytes); app/tests assert it is not rendered. Remove or keep is an editorial/consent decision. Note the media route still serves any file under the topic media root.
+  - path: spanish/which-pronunciation/media/audio/variation/seseo-word-series.mp3
+    status: content_decision_required
+    reason: Earlier seseo recording, superseded by the session-0004 file; same decision as seseo-casa-caza.mp3.
+  - path: spanish/which-pronunciation/media/images/variation/seseo-america.svg
+    status: content_decision_required
+    reason: Pilot graphic from 2026-05 never referenced by the migrated topic (docs/agent-runs/2026-05-23_teaching-content-model-diagnosis.md); wire into the topic or remove.
+  - path: spanish/which-pronunciation/media/images/variation/seseo-distincion-spain.svg
+    status: content_decision_required
+    reason: Pilot graphic from 2026-05 never referenced by the migrated topic; wire into the topic or remove.

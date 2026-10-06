@@ -46,9 +46,10 @@ jobs:
         env:
           PROMAT_QA_EMAIL: ${{ secrets.PROMAT_QA_EMAIL }}
           PROMAT_QA_PASSWORD: ${{ secrets.PROMAT_QA_PASSWORD }}
+          RESPONSIVE_SMOKE_BASE_URL: ${{ inputs.responsive_smoke_base_url }}
         run: |
           if [ -z "$PROMAT_QA_EMAIL" ] || [ -z "$PROMAT_QA_PASSWORD" ]; then
             echo "Skipping responsive smoke: PROMAT_QA_EMAIL/PROMAT_QA_PASSWORD secrets are not configured."
             exit 0
           fi
-          python scripts/qa/responsive_smoke.py --run-id github-release-candidate --base-url "${{ inputs.responsive_smoke_base_url }}"
+          python scripts/qa/responsive_smoke.py --run-id github-release-candidate --base-url "$RESPONSIVE_SMOKE_BASE_URL"

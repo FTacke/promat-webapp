@@ -622,6 +622,8 @@ def login_post() -> Response:
         return _render_login_page(status_code=400, next_url=next_url, email=email)
 
     user = auth_services.find_user_by_username_or_email(email)
+    if user is None:
+        auth_services.spend_password_verification_cost(password)
     if not user or not auth_services.verify_password(password, user.password_hash):
         auth_services.on_failed_login(user)
         flash(_t(ui_lang, "auth.login.error.invalid_credentials"), "error")

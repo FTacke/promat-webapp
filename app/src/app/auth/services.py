@@ -77,6 +77,21 @@ def hash_password(plain: str) -> str:
             return hashed.decode("utf-8")
 
 
+_DUMMY_PASSWORD_HASH: str | None = None
+
+
+def spend_password_verification_cost(plain: str) -> None:
+    """Burn the cost of one real verification when no account matches the login identifier.
+
+    Without it an unknown identifier answers in a few milliseconds and a known one after the hash comparison,
+    which lets a client enumerate accounts by timing. The hash is made with the current hashing scheme.
+    """
+    global _DUMMY_PASSWORD_HASH
+    if _DUMMY_PASSWORD_HASH is None:
+        _DUMMY_PASSWORD_HASH = hash_password(secrets.token_urlsafe(24))
+    verify_password(plain, _DUMMY_PASSWORD_HASH)
+
+
 def verify_password(plain: str, hashed: str) -> bool:
     """Verify a password against a stored hash.
 

@@ -11,13 +11,14 @@ from sqlalchemy import select
 
 from .auth.models import AnalyticsDaily, AnalyticsLanguageAreaDaily
 from .extensions.sqlalchemy_ext import get_session
+from .research_capabilities import ACTIVE_RESEARCH_CORPORA
 
 ANALYTICS_COOKIE_NAME = "pm_analytics_state"
 ANALYTICS_COOKIE_DAYS = 45
 TRACKED_ROOT_SECTIONS = {"project", "research", "teaching"}
 TRACKED_MATRIX_SECTIONS = {"research", "teaching"}
 TRACKED_UI_LANGS = {"de", "en"}
-TRACKED_CORPORA = {"spanish", "french", "german", "english"}
+TRACKED_CORPORA = frozenset(ACTIVE_RESEARCH_CORPORA)
 
 # Substrings that identify automated clients. Checked case-insensitively against
 # the User-Agent header so that we don't inflate unique-visitor counts with bots

@@ -310,6 +310,28 @@ def check_login_and_player(browser, base: str, report: Report, out: Path) -> Non
         context.close()
 
 
+def check_german_in_preparation(browser, base: str, report: Report, out: Path) -> None:
+    """The German corpus has no sessions: its protected pages say so plainly, in both languages, without overflow."""
+    expected = {"de": "In Vorbereitung", "en": "In preparation"}
+    stale = ("technischen Schlüssel", "final technical slug", "strukturell angelegt", "structurally prepared")
+    for lang in ("de", "en"):
+        context = browser.new_context(viewport={"width": 1280, "height": 900})
+        page = context.new_page()
+        login(page, base, f"/{lang}/research/german/speakers")
+        for slug in ("speakers", "comparison", "phenomena"):
+            for width in (1280, 390):
+                page.set_viewport_size({"width": width, "height": 900})
+                response = page.goto(f"{base}/{lang}/research/german/{slug}", wait_until="networkidle")
+                text = page.inner_text("body")
+                label = f"[{lang}] german {slug} at {width}px"
+                report.check(response is not None and response.status == 200, f"{label} opens")
+                report.check(expected[lang] in text, f"{label} shows {expected[lang]!r}")
+                report.check(not any(phrase in text for phrase in stale), f"{label} has no developer placeholder copy")
+                report.check(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), f"{label} has no horizontal overflow")
+            page.screenshot(path=str(out / f"{lang}_german_{slug}.png"), full_page=True)
+        context.close()
+
+
 def check_comparison(browser, base: str, report: Report, out: Path) -> None:
     for lang in ("de", "en"):
         context = browser.new_context(viewport={"width": 1280, "height": 900})
@@ -452,6 +474,7 @@ def main() -> int:
             check_public_pages(browser, base, report, args.out)
             check_publication_metadata(browser, base, report, args.out)
             check_login_and_player(browser, base, report, args.out)
+            check_german_in_preparation(browser, base, report, args.out)
             check_comparison(browser, base, report, args.out)
             check_theme_and_mobile(browser, base, report, args.out)
             browser.close()
