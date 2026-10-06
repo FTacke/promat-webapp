@@ -498,7 +498,8 @@ def test_redis_outage_keeps_pages_up_and_ready_reports_not_ready(real_app_factor
     for handler in flask_app.logger.handlers:
         handler.flush()
     log_text = (Path(flask_app.config["LOGS_DIR"]) / "promat-web.log").read_text(encoding="utf-8")
-    assert "Failed to rate limit. Swallowing error" in log_text
+    # Either the limiter swallowed the storage error itself, or the health monitor had already noticed the outage.
+    assert "Failed to rate limit. Swallowing error" in log_text or "Rate-limit storage is unavailable" in log_text
 
     ready = client.get("/ready")
     assert ready.status_code == 503

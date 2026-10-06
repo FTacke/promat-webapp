@@ -114,3 +114,7 @@ def real_app_factory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         return flask_app
 
     yield build
+    # A production-like app starts a storage health monitor thread; do not let its outage flag leak into other tests.
+    from app.extensions import stop_rate_limit_health_monitors
+
+    stop_rate_limit_health_monitors()

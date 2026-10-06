@@ -48,6 +48,15 @@ def _resolve_auth_ui_language() -> str:
 
 
 _rate_limit_storage_down = threading.Event()
+_health_monitor_stops: list[threading.Event] = []
+
+
+def stop_rate_limit_health_monitors() -> None:
+    """Stop every running storage monitor and forget the outage state (test isolation)."""
+    for stop in _health_monitor_stops:
+        stop.set()
+    _health_monitor_stops.clear()
+    _rate_limit_storage_down.clear()
 
 
 def _start_rate_limit_health_monitor(app: Flask) -> threading.Event | None:
@@ -61,6 +70,7 @@ def _start_rate_limit_health_monitor(app: Flask) -> threading.Event | None:
     if str(app.config.get("RATE_LIMIT_STORAGE_URI") or "").lower().startswith("memory"):
         return None
     stop = threading.Event()
+    _health_monitor_stops.append(stop)
     interval = float(app.config.get("RATELIMIT_HEALTH_POLL_SECONDS", 5.0))
 
     def monitor() -> None:
