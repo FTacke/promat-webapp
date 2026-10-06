@@ -28,10 +28,13 @@ from ..branding import BRANDING
 from ..i18n import translate
 from ..extensions.sqlalchemy_ext import get_session
 from . import Role, normalize_role_value
-from .models import AccessRequest, RefreshToken, ResetToken, User
+from .models import AccessRequest, RefreshToken, ResetToken, RevokedToken, User
 
 # NOTE: Old counter metrics removed - analytics now handled by /api/analytics/event
 # Auth events are no longer tracked (privacy-focused approach)
+
+
+_EMAIL_SHAPE = _re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 # Type for account status
@@ -164,6 +167,63 @@ def create_access_token_for_user(user: User) -> str:
         identity=str(user.id), additional_claims=claims, expires_delta=expires_delta
     )
     return token
+
+
+def _session_state_allows_access(user: User) -> bool:
+    """Account state that must hold on every request, not only at login (lockout after failed logins is login-only)."""
+    now = datetime.now(timezone.utc)
+    if not user.is_active or user.deleted_at is not None:
+        return False
+    if user.valid_from and _ensure_utc(user.valid_from) > now:
+        return False
+    if user.access_expires_at and _ensure_utc(user.access_expires_at) < now:
+        return False
+    return True
+
+
+def access_token_is_valid(payload: dict[str, Any]) -> bool:
+    """Server-side verdict for an already signature-checked access token (fail closed).
+
+    The token must be an access token that was not ended by logout, its subject must still exist and be allowed
+    to sign in (active, not deleted, inside its validity window), and the identity claims that routes trust
+    (role, account kind, must_reset_password) must still equal the database. A change of any of them therefore
+    takes effect on the next request; the user simply signs in again and receives a token with the new claims.
+    """
+    sub = payload.get("sub")
+    jti = payload.get("jti")
+    if payload.get("type", "access") != "access" or not isinstance(sub, str) or not sub or not isinstance(jti, str):
+        return False
+    with get_session() as session:
+        if session.get(RevokedToken, jti) is not None:
+            return False
+        user = session.get(User, sub)
+        if user is None or not _session_state_allows_access(user):
+            return False
+        try:
+            token_role = normalize_role_value(payload.get("role"))
+        except ValueError:
+            return False
+        return (
+            payload.get("role") is not None
+            and token_role == normalize_role_value(user.role)
+            and bool(payload.get("must_reset_password", False)) == bool(user.must_reset_password)
+            and (payload.get("account_kind") or "personal") == (user.account_kind or "personal")
+        )
+
+
+def revoke_access_token(payload: dict[str, Any]) -> None:
+    """End the given access token (logout). Only that token: other sessions of the same account, for example the
+    members of a shared group account, stay signed in."""
+    jti = payload.get("jti")
+    if not isinstance(jti, str) or not jti:
+        return
+    now = datetime.now(timezone.utc)
+    exp = payload.get("exp")
+    expires_at = datetime.fromtimestamp(exp, tz=timezone.utc) if isinstance(exp, (int, float)) else now + timedelta(days=1)
+    with get_session() as session:
+        session.query(RevokedToken).filter(RevokedToken.expires_at < now).delete(synchronize_session=False)
+        if session.get(RevokedToken, jti) is None:
+            session.add(RevokedToken(jti=jti, user_id=payload.get("sub"), expires_at=expires_at, revoked_at=now))
 
 
 # Refresh token handling
@@ -831,6 +891,27 @@ def list_active_admins() -> list[User]:
     ]
 
 
+def _enforce_admin_update_invariants(
+    user: User,
+    *,
+    first_name: str | None,
+    last_name: str | None,
+    email: str | None,
+    role: str | None,
+) -> None:
+    """Account-model rules (docs/spec/auth-accounts.md) that hold regardless of what the admin UI offers."""
+    if user.deleted_at is not None:
+        raise ValueError("account_deleted")
+    if (user.account_kind or "personal") == "group":
+        # Group accounts: role is always `user`, no e-mail, no personal names. Managed via /admin/groups.
+        if role is not None and normalize_role(role) != Role.USER.value:
+            raise ValueError("group_account_role_fixed")
+        if email is not None or first_name is not None or last_name is not None:
+            raise ValueError("group_account_field_not_editable")
+    elif email is not None and not _EMAIL_SHAPE.match(normalize_email(email)):
+        raise ValueError("email_invalid")
+
+
 def update_user_admin(
     user_id: str,
     *,
@@ -847,6 +928,9 @@ def update_user_admin(
         if not user:
             raise KeyError("user_not_found")
 
+        _enforce_admin_update_invariants(
+            user, first_name=first_name, last_name=last_name, email=email, role=role
+        )
         _protect_last_admin(
             user=user,
             requested_role=role,
@@ -906,6 +990,10 @@ def mark_user_for_password_reset(user_id: str) -> User:
         user = session.execute(stmt).scalars().first()
         if not user:
             raise KeyError("user_not_found")
+        if (user.account_kind or "personal") == "group":
+            raise ValueError("group_account_no_reset")
+        if user.deleted_at is not None:
+            raise ValueError("account_deleted")
         user.must_reset_password = True
         user.updated_at = datetime.now(timezone.utc)
         session.flush()
@@ -1016,7 +1104,10 @@ def update_user_profile(
     first_name: Optional[str] = None,
     last_name: Optional[str] = None,
     email: Optional[str] = None,
+    current_password: Optional[str] = None,
 ) -> None:
+    """Update the user's own profile. Changing the e-mail address (login name and password-reset target) needs the
+    current password, so a stolen session cookie alone cannot redirect the account."""
     with get_session() as session:
         stmt = select(User).where(User.id == user_id)
         user = session.execute(stmt).scalars().first()
@@ -1036,10 +1127,17 @@ def update_user_profile(
             normalized_email = normalize_email(email)
             if not normalized_email:
                 raise ValueError("email_required")
-            existing = session.execute(select(User).where(User.email == normalized_email, User.id != user_id)).scalars().first()
-            if existing:
-                raise ValueError("email_exists")
-            user.email = normalized_email
+            if not _EMAIL_SHAPE.match(normalized_email):
+                raise ValueError("email_invalid")
+            if normalized_email != normalize_email(user.email or ""):
+                if not current_password:
+                    raise ValueError("current_password_required")
+                if not verify_password(current_password, user.password_hash):
+                    raise ValueError("current_password_invalid")
+                existing = session.execute(select(User).where(User.email == normalized_email, User.id != user_id)).scalars().first()
+                if existing:
+                    raise ValueError("email_exists")
+                user.email = normalized_email
         user.display_name = build_display_name(
             first_name=user.first_name,
             last_name=user.last_name,

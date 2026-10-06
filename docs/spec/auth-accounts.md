@@ -20,7 +20,8 @@ Personal accounts are the default. They map one natural person to one PROMAT use
 - **Invitation:** a 14-day password-setup link is prepared and optionally sent by email.
 - **Self-service:** the user can change their own profile data and password at `/auth/account` and `/auth/account/password`.
 - **Password reset:** available via the public forgot-password flow (`/auth/password/forgot`).
-- **Logout:** `POST /auth/logout` only (CSRF-protected); the access token itself stays valid until it expires because tokens are stateless. Immediate revocation (logout, deactivation, role change) is a separate, not yet implemented contract.
+- **Logout:** `POST /auth/logout` only (CSRF-protected). It also ends the presented access token server-side (its `jti` is stored in `revoked_tokens` until the token's own expiry, migration `0012`), so a copied token stops working. Only that token is ended: other sessions of the same account - for example the members of a shared group account - stay signed in.
+- **E-mail change:** the e-mail address is the login name and the reset target, so `POST /auth/account` changes it only when the current password is supplied and correct (`current_password`); the new address must be well-formed and unused. Changing names needs no password. A confirmation mail to the new address (double opt-in) is not implemented; it needs a token flow of its own.
 - Fields: `first_name`, `last_name`, `email` (all required at creation).
 - `account_kind = 'personal'` (DB default for all pre-existing accounts).
 
@@ -48,6 +49,30 @@ Group accounts represent a shared access credential for a seminar group, course,
 
 ---
 
+## Session State (applies to every account)
+
+An access token is a signed identity claim, not an authorization by itself. On every request that evaluates a token (page routes and `@jwt_required` routes alike, through the one `token_verification_loader` in `extensions/__init__.py`, `auth/services.py::access_token_is_valid`) the server checks, fail closed:
+
+- the token is an access token and its `jti` is not in `revoked_tokens`;
+- the subject exists, is `is_active`, not soft-deleted, `valid_from` has passed and `access_expires_at` has not;
+- the identity claims routes rely on - `role`, `account_kind`, `must_reset_password` - still equal the database.
+
+Consequently deactivation, deletion, expiry, a role change in either direction, a changed account kind and a `must_reset_password` set after issuance take effect on the next request; a role change requires a fresh sign-in to obtain the new claims. A token whose subject does not exist is never accepted, whatever role it claims. Failed-login lockout (`locked_until`) only blocks signing in; it does not end running sessions. A rejected token behaves like an anonymous request (login redirect for pages, `401` JSON for APIs). Password change does not revoke other sessions (not part of this contract).
+
+---
+
+## Admin Invariants (enforced server-side)
+
+`PATCH /admin/users/<id>`, `PATCH /admin/groups/<id>` and the reset/invite routes keep the account model regardless of UI:
+
+- a deleted account cannot be modified;
+- a group account keeps `role = user`, has no e-mail, first name or last name, and never receives `must_reset_password` (reset/invite routes answer `400`); it can be deactivated or given an expiry;
+- a personal account's e-mail must be present, well-formed and unique; an admin's `access_expires_at` is always cleared;
+- the last active admin cannot be demoted, deactivated or expired;
+- `responsible_admin_user_id` of a group account must be an existing, active admin (or empty).
+
+---
+
 ## Login Field
 
 The login form field accepts both:
@@ -68,6 +93,8 @@ Label (EN): `Email or login name`
 |---|---|---|---|
 | `account_kind` | TEXT | NOT NULL DEFAULT 'personal' CHECK IN ('personal', 'group') | Added in migration 0010 |
 | `responsible_admin_user_id` | TEXT | NULL, FK → users.user_id ON DELETE SET NULL | Added in migration 0010 |
+
+Table `revoked_tokens` (`jti` PK, `user_id`, `expires_at`, `revoked_at`; migration 0012): tokens ended by logout; rows older than their `expires_at` are removed on the next logout.
 
 All pre-existing accounts automatically received `account_kind = 'personal'` via the DEFAULT.
 

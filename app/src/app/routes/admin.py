@@ -519,6 +519,14 @@ def groups_update(user_id: str):
 
         if "responsible_admin_user_id" in payload:
             rid = str(payload["responsible_admin_user_id"] or "").strip() or None
+            if rid is not None:
+                responsible = session.execute(select(UserModel).where(UserModel.id == rid)).scalars().first()
+                if (
+                    responsible is None
+                    or auth_services.normalize_role(responsible.role) != Role.ADMIN.value
+                    or not auth_services._session_state_allows_access(responsible)
+                ):
+                    return jsonify({"ok": False, "error": _t(ui_lang, "auth.admin_users.error.responsible_admin_invalid")}), 400
             user.responsible_admin_user_id = rid
 
         from datetime import datetime, timezone

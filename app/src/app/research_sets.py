@@ -270,6 +270,8 @@ class StoredResearchSet:
         return self.source_curated_set_id
 
     def to_dict(self) -> dict[str, Any]:
+        # Client-facing shape. `created_by_user_id` / `updated_by_user_id` stay on the dataclass for server-side
+        # use but are not serialized: the UI does not need them, and for curated sets they are admin account ids.
         return {
             "set_id": self.set_id,
             "corpus_language": self.corpus_language,
@@ -285,8 +287,6 @@ class StoredResearchSet:
             "state": self.lifecycle,
             "source_curated_set_id": self.source_curated_set_id,
             "source_preset_id": self.source_curated_set_id,
-            "created_by_user_id": self.created_by_user_id,
-            "updated_by_user_id": self.updated_by_user_id,
             "version": self.version,
             "created_at": _serialize_datetime(self.created_at),
             "updated_at": _serialize_datetime(self.updated_at),

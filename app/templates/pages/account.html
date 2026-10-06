@@ -49,6 +49,12 @@
             <span class="pm-admin-field__label">{{ t('auth.account.email_label') }}</span>
             <input id="account-email" name="email" type="email" class="pm-phenomena-field__input" value="{{ account_user.email or '' }}" required>
           </label>
+
+          <label class="pm-admin-field pm-admin-field--full" for="account-current-password">
+            <span class="pm-admin-field__label">{{ t('auth.account.current_password_label') }}</span>
+            <input id="account-current-password" name="current_password" type="password" class="pm-phenomena-field__input" autocomplete="current-password" aria-describedby="account-current-password-hint">
+            <span id="account-current-password-hint" class="pm-auth-field__hint">{{ t('auth.account.current_password_hint') }}</span>
+          </label>
         </div>
 
         <div class="pm-account-actions">

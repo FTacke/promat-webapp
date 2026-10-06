@@ -90,6 +90,9 @@ def create_full_task_mp3(source_wav: Path, target_mp3: Path) -> None:
             "-map",
             "a:0",
             "-vn",
+            # Never inherit the tags of the source recording (names, working titles): DATA-01.
+            "-map_metadata",
+            "-1",
             "-ac",
             str(TARGET_CHANNELS),
             "-c:a",
@@ -133,6 +136,9 @@ def create_split_mp3(source_mp3: Path, target_mp3: Path, start_seconds: float, e
             "-map",
             "a:0",
             "-vn",
+            # Never inherit the tags of the source recording (names, working titles): DATA-01.
+            "-map_metadata",
+            "-1",
             "-ac",
             str(TARGET_CHANNELS),
             "-c:a",

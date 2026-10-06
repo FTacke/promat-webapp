@@ -15,6 +15,7 @@ from language_config import maybe_resolve_language_config, resolve_language_conf
 from item_text_normalization import contains_noncanonical_french_item_text
 import fixity
 import provenance as provenance_helpers
+from audio_tags import read_tags
 
 
 DEFAULT_LOCAL_ARCHIVE_ROOT = Path(r"C:\dev\promat_data_archive")
@@ -124,7 +125,12 @@ def _has_forbidden_path_part(relative_path: str) -> str | None:
     return None
 
 
-def validate_runtime_tree(session_dir: Path, *, required_tasks: Sequence[str] | None = None) -> list[str]:
+def _mp3_tag_errors(file_path: Path, relative_path: str, scope: str) -> list[str]:
+    """Web MP3s must not carry descriptive tags (DATA-01); only frame ids are reported, never tag values."""
+    return [f"{scope} MP3 carries disallowed tag {problem}: {relative_path}" for problem in read_tags(file_path).disallowed]
+
+
+def validate_runtime_tree(session_dir: Path, *, required_tasks: Sequence[str] | None = None, check_audio_tags: bool = True) -> list[str]:
     errors: list[str] = []
     if not session_dir.exists():
         return [f"missing runtime session directory: {session_dir}"]
@@ -146,6 +152,9 @@ def validate_runtime_tree(session_dir: Path, *, required_tasks: Sequence[str] | 
         if not _matches_any(relative_path, ALLOWED_RUNTIME_PATTERNS):
             errors.append(f"unsupported runtime file path: {relative_path}")
             continue
+
+        if check_audio_tags and suffix == ".mp3":
+            errors.extend(_mp3_tag_errors(file_path, relative_path, "runtime"))
 
         parts = Path(relative_path).parts
         if len(parts) >= 2 and parts[0] in {"alignment", "derived"}:
@@ -176,7 +185,8 @@ def validate_archive_tree(session_archive_dir: Path) -> list[str]:
         errors.append(f"missing archive manifest: {manifest_path}")
 
     runtime_dir = session_archive_dir / "runtime"
-    errors.extend(f"archive runtime: {message}" for message in validate_runtime_tree(runtime_dir))
+    # The archive layer is preserved as published; its runtime copy is not re-judged against newer tag policy.
+    errors.extend(f"archive runtime: {message}" for message in validate_runtime_tree(runtime_dir, check_audio_tags=False))
     return errors
 
 
@@ -203,6 +213,9 @@ def validate_prod_package(package_dir: Path) -> list[str]:
         if not _matches_any(relative_path, ALLOWED_PROD_PACKAGE_PATTERNS):
             errors.append(f"unsupported prod package file path: {relative_path}")
             continue
+
+        if suffix == ".mp3":
+            errors.extend(_mp3_tag_errors(file_path, relative_path, "prod package"))
 
         if relative_path.startswith("sessions/"):
             parts = Path(relative_path).parts

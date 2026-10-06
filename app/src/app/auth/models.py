@@ -178,6 +178,17 @@ class AnalyticsLanguageAreaDaily(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class RevokedToken(Base):
+    """Access tokens that were ended before their expiry (logout). Rows are only needed until `expires_at`."""
+
+    __tablename__ = "revoked_tokens"
+
+    jti: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 # Mirrors ck_access_requests_status in migration 0011. `notified` / `notification_failed` are written by the
 # notification service; `reviewed` / `resolved` are operator states.
 ACCESS_REQUEST_STATUSES: tuple[str, ...] = (

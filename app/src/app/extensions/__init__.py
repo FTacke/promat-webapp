@@ -99,6 +99,28 @@ def register_jwt_handlers() -> None:
             pass
         return redirect(url_for("public.login"), 303)
 
+    @jwt.token_verification_loader
+    def verify_account_state(jwt_header, jwt_payload):
+        # Imported here: the auth services import this package.
+        from ..auth import services as auth_services
+
+        return auth_services.access_token_is_valid(jwt_payload)
+
+    @jwt.token_verification_failed_loader
+    def account_state_rejected_callback(jwt_header, jwt_payload):
+        if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":
+            return jsonify({"error": "session_ended", "message": "Session is no longer valid"}), 401
+
+        from flask import flash, redirect, url_for
+        from ..routes.auth import save_return_url
+
+        save_return_url()
+        try:
+            flash(translate(_resolve_auth_ui_language(), "auth.flash.invalid_session"), "info")
+        except RuntimeError:
+            pass
+        return redirect(url_for("public.login"), 303)
+
     @jwt.invalid_token_loader
     def invalid_token_callback(error_string):
         if request.path.startswith("/api/") or request.accept_mimetypes.best == "application/json":

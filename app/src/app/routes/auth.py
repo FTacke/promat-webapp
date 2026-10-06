@@ -384,6 +384,7 @@ def account_update() -> Response:
             first_name=request.form.get("first_name", ""),
             last_name=request.form.get("last_name", ""),
             email=request.form.get("email", ""),
+            current_password=request.form.get("current_password", ""),
         )
     except ValueError as exc:
         flash(_t(ui_lang, f"auth.account.error.{exc}"), "error")
@@ -646,6 +647,11 @@ def logout_any() -> Response:
     # cross-site form post cannot sign the user out. An expired or malformed cookie still gets cleared.
     try:
         verify_jwt_in_request(optional=True, locations=["cookies"])
+        # Ending the cookie is not enough: a copied token would stay valid until it expires. Deny this token
+        # server-side (only this one; other sessions of a shared group account are unaffected).
+        token_payload = get_jwt()
+        if token_payload:
+            auth_services.revoke_access_token(token_payload)
     except CSRFError:
         abort(403)
     except Exception:  # noqa: BLE001

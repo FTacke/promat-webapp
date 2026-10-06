@@ -4661,3 +4661,54 @@ def test_player_item_download_route_uses_delivery_filename(runtime_env: Path, ur
     assert item_range_response.mimetype == "audio/mpeg"
     assert "attachment;" not in (item_range_response.headers.get("Content-Disposition") or "")
     assert item_range_response.headers["Content-Range"].startswith("bytes 0-15/")
+
+
+# --- negative allowlist: administrative / internal fields never reach the client (TI-27) ---------------------------
+
+SENTINEL_FIELDS = {
+    "consent_file": "SENTINEL-CONSENT-FILE.pdf",
+    "questionnaire_file": "SENTINEL-QUESTIONNAIRE-FILE.pdf",
+    "secure_notes": "SENTINEL-SECURE-NOTES-TEXT",
+}
+
+
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+def test_administrative_fields_never_appear_in_any_research_response(runtime_env: Path, url_app: Flask, ui_lang: str) -> None:
+    session_id = "ES-L-0001-2026-S01"
+    payload = _learner_payload(
+        person_id="ES-L-0001",
+        session_id=session_id,
+        recording_year=2026,
+        recording_date="2026-03-10",
+        level_code="B1",
+        context="baseline",
+        task_types=("wordlist",),
+        research_consent_signed="yes",
+        teaching_consent_signed="no",
+        secure_notes=SENTINEL_FIELDS["secure_notes"],
+    )
+    payload["consent_file"] = SENTINEL_FIELDS["consent_file"]
+    payload["questionnaire_file"] = SENTINEL_FIELDS["questionnaire_file"]
+    payload["consent_date"] = "2031-07-19"
+    _write_session(runtime_env, "spanish", session_id, payload)
+    _write_wordlist_player_artifacts(runtime_env, "spanish", session_id, "ES-L-0001")
+    from app.routes.research_api import blueprint as research_api_blueprint
+
+    url_app.register_blueprint(research_api_blueprint)
+    _set_test_auth(url_app)
+    client = url_app.test_client()
+
+    paths = (
+        f"/{ui_lang}/research/spanish/speakers",
+        f"/{ui_lang}/research/spanish/speakers/ES-L-0001?session={session_id}",
+        f"/{ui_lang}/research/spanish/player/{session_id}/wordlist?source=speakers",
+        f"/{ui_lang}/research/spanish/comparison",
+        f"/{ui_lang}/research/spanish/phenomena",
+    )
+    forbidden = (*SENTINEL_FIELDS.values(), "2031-07-19", "research_consent", "teaching_consent", "secureNotes", "secure_notes", "consent_file", "questionnaire_file")
+    for path in paths:
+        response = client.get(path)
+        assert response.status_code == 200, path
+        body = response.get_data(as_text=True)
+        for value in forbidden:
+            assert value not in body, (path, value)

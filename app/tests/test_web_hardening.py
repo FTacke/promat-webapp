@@ -787,3 +787,13 @@ def test_rendered_citation_box_exposes_the_page_url(real_app_factory) -> None:
         assert any(f"{CANONICAL_ORIGIN}/{ui_lang}/teaching/spanish/which-pronunciation" in text for text in copy_texts), ui_lang
         assert not any("www.pronunciation-matters.de" in text for text in copy_texts)
         assert not any(text.rstrip(".").endswith("pronunciation-matters.de") for text in copy_texts)
+
+
+def test_set_api_does_not_expose_account_ids(set_client) -> None:
+    client, set_id, _ = set_client
+
+    for response in (client.get(f"/api/research/sets/{set_id}"), client.get("/api/research/sets?corpus_language=spanish")):
+        body = response.get_data(as_text=True)
+        assert "created_by_user_id" not in body
+        assert "updated_by_user_id" not in body
+        assert "user-1" not in body

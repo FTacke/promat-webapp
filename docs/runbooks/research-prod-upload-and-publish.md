@@ -36,6 +36,8 @@ Skriptregeln:
 
 ## Incoming Gates
 
+0. Tag-Gate fuer Web-MP3: `python scripts/research_data_intake/scan_audio_tags.py --root <package>/sessions` meldet 0 Verstoesse (`violating policy: 0`); `validate_prod_package` prueft das ebenfalls. Bestehende Runtime-Dateien mit Quelltags (DATA-01) werden vor dem Paketbau lokal mit `--clean` bereinigt (nur Tag-Bytes, MPEG-Frames unveraendert, pro Datei per Hash geprueft), nie im Archiv-/Source-Baum.
+
 1. Allowlist-Gate auf Paketpfade.
 2. Forbidden-Scan auf `*.wav`, `*.TextGrid`, `*.xlsx`, `secure/`, `raw/`, `source/`, `alignment_source/`, `working/`, MFA-Artefakte.
 3. JSON-Parse-Gate fuer `manifest.json`, Metadaten, Alignments, Config und optionales DB-Payload.
