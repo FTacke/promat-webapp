@@ -128,3 +128,22 @@ Checked again after the full test suite, the importer dry-run, the app start and
 - Re-run the failed job of the CI run for `80bc1f0` (or rely on the run triggered by this report's commit).
 - Delete the old Claude Code project directory `c--dev-promat` once the new one is confirmed in use.
 - `tmp/relocation-2026-10-07/` (snapshots, helper script and log, package list) can be deleted after one release cycle.
+
+## Post-Run Update (2026-10-07, after the push of this report)
+
+```text
+G1 = PASS
+CI = PASS
+BROWSER_SMOKE = PASS
+PRODUCTION_DEPLOYMENT = PASS
+```
+
+- Commit `4c73c4a` (this report, on top of the storage commit `80bc1f0`) is on `main`. Its CI run was green in every job, including the browser smoke that had been cancelled in the earlier run, and the production deployment that followed succeeded. The cancelled run for `80bc1f0` does not need to be re-run. The statements above that describe G1 as open were correct when written.
+- `DEV_DB`: 177 research sets, 20,572 items. The lower figures in the two earlier reports came from out-of-date table statistics; the dump taken before the move already held these numbers, so nothing was lost in the relocation.
+- `MFA_WORKING_STATE = REGENERABLE`. The Spanish batch may need a new preparation and MFA run if it is ever imported again. No repair is required.
+- Cleanup: the local and remote work branch `repair/path-storage-roots` is removed (fully contained in `main`); the old path-keyed Claude Code project directory is removed after its content was confirmed in the new one; of `tmp/relocation-2026-10-07/` only the pre-move snapshot, the rename log, the package list of the previous environment and the last backup verification report remain.
+
+```text
+LOCAL_RELOCATION_FINALIZED
+INSTITUTIONAL_PRESERVATION_PENDING
+```
