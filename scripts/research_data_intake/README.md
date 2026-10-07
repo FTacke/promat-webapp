@@ -13,7 +13,7 @@ Teaching gehört nicht zu dieser Pipeline. `content/`, `public/teaching/` und Te
 - Der Scanner klassifiziert Workbook, WAV, TextGrid und JSON strikt aus Dateinamen.
 - Batch-lokales `working/` bleibt eine Zwischenstruktur nur für Vorbereitung und MFA-Schritte.
 - `data/sessions/` ist Runtime-only und enthält nur finale JSON/MP3-Artefakte.
-- Das lokale Langzeitarchiv liegt außerhalb des Repo-Workspaces unter `PROMAT_LOCAL_ARCHIVE_ROOT`, standardmäßig lokal zum Beispiel `C:\dev\promat_data_archive`.
+- Das lokale Langzeitarchiv liegt außerhalb des Repo-Workspaces unter `PROMAT_LOCAL_ARCHIVE_ROOT`. Der Root muss gesetzt sein (Umgebung oder `.env` im Repo-Root, siehe `.env.example`); es gibt keinen eingebauten Standardpfad. Die Befehle unten laufen aus dem Repo-Root mit der Projekt-Python-Umgebung.
 - Das Archiv ist session-zentriert unter `sessions/{language_code}/{session_id}/...`.
 - Prod-Uploads entstehen als explizite Allowlist-Pakete unter `scripts/research_data_intake/exports/{upload_id}/` aus bereits validierten Runtime-Artefakten und optionalem `db/import_payload.json`.
 - In Prod-Upload-Paketen liegen Runtime-Sessions immer unter `sessions/{corpus_slug}/{session_id}/` (z. B. `sessions/french/...`), nicht unter Sprachcodes wie `sessions/fr/...`.
@@ -178,27 +178,27 @@ Verboten:
 
 Drop-in-Batch scannen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/scan_import_batch.py --batch-dir spanish_batch_20260421`
+`python scripts/research_data_intake/scan_import_batch.py --batch-dir spanish_batch_20260421`
 
 JSON-Dry-Run-Report für den Scan:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/scan_import_batch.py --batch-dir spanish_batch_20260421 --json`
+`python scripts/research_data_intake/scan_import_batch.py --batch-dir spanish_batch_20260421 --json`
 
 Batch in den Working-Tree organisieren:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/organize_batch_working_tree.py --batch-dir spanish_batch_20260421`
+`python scripts/research_data_intake/organize_batch_working_tree.py --batch-dir spanish_batch_20260421`
 
 Zentralen lokalen Import nach Runtime, Dev-DB und Archiv dry-run planen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanish_batch_20260421 --target-language es --sync-tasks --dry-run`
+`python scripts/research_data_intake/import_batch_to_production.py --batch-dir spanish_batch_20260421 --target-language es --sync-tasks --dry-run`
 
 Kontrollierten lokalen Import ausführen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/import_batch_to_production.py --batch-dir spanish_batch_20260421 --target-language es --sync-tasks`
+`python scripts/research_data_intake/import_batch_to_production.py --batch-dir spanish_batch_20260421 --target-language es --sync-tasks`
 
 Einzelnen Docker-MFA-Personenlauf testen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/alignment_export/run_text_mfa.py --batch-dir english_batch_20260618 --person-id EN-L-0001 --language en --mfa-executable docker --dry-run`
+`python scripts/research_data_intake/alignment_export/run_text_mfa.py --batch-dir english_batch_20260618 --person-id EN-L-0001 --language en --mfa-executable docker --dry-run`
 
 Shared MFA-Modellcache bei Bedarf manuell leeren:
 
@@ -206,35 +206,35 @@ Shared MFA-Modellcache bei Bedarf manuell leeren:
 
 Runtime-Session validieren:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py runtime-tree --session-dir C:/dev/promat/data/sessions/spanish/ES-L-0001-2026-S01`
+`python scripts/research_data_intake/validate_research_intake.py runtime-tree --session-dir data/sessions/spanish/ES-L-0001-2026-S01`
 
 Archiv-Session validieren:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py archive-tree --archive-session-dir C:/dev/promat_data_archive/sessions/es/ES-L-0001-2026-S01`
+`python scripts/research_data_intake/validate_research_intake.py archive-tree --archive-session-dir <PROMAT_LOCAL_ARCHIVE_ROOT>/sessions/es/ES-L-0001-2026-S01`
 
 Prod-Upload-Paket bauen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/build_prod_upload_package.py --language spanish --session-id ES-L-0001-2026-S01 --db-payload C:/dev/promat_data_archive/batches/spanish_batch_20260421/import_payload.json`
+`python scripts/research_data_intake/build_prod_upload_package.py --language spanish --session-id ES-L-0001-2026-S01 --db-payload <PROMAT_LOCAL_ARCHIVE_ROOT>/batches/spanish_batch_20260421/import_payload.json`
 
 Initiales Prod-Upload-Paket fuer alle vorhandenen Runtime-Sessions plus Research-Player-Config bauen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/build_prod_upload_package.py --all-runtime-sessions --include-research-player-config --db-payload C:/dev/promat_data_archive/batches/french_batch_20260527/import_payload.json --upload-id promat_upload_YYYYMMDDTHHMMSSZ_initial_runtime`
+`python scripts/research_data_intake/build_prod_upload_package.py --all-runtime-sessions --include-research-player-config --db-payload <PROMAT_LOCAL_ARCHIVE_ROOT>/batches/french_batch_20260527/import_payload.json --upload-id promat_upload_YYYYMMDDTHHMMSSZ_initial_runtime`
 
 Prod-Upload-Paket validieren:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py prod-package --package-dir C:/dev/promat/scripts/research_data_intake/exports/promat_upload_20260525T120000Z`
+`python scripts/research_data_intake/validate_research_intake.py prod-package --package-dir scripts/research_data_intake/exports/promat_upload_20260525T120000Z`
 
 Prod-Upload-Paket nach incoming übertragen (`auto`: rsync nur wenn lokal und remote verfügbar, sonst tar-over-SSH):
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/upload_prod_package.py --package-dir C:/dev/promat/scripts/research_data_intake/exports/french_batch_20260527_initial_fix01 --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/french_batch_20260527_initial_fix01 --method auto`
+`python scripts/research_data_intake/upload_prod_package.py --package-dir scripts/research_data_intake/exports/french_batch_20260527_initial_fix01 --host vhrz2184 --remote-dir /srv/webapps_storage/promat/data/incoming/french_batch_20260527_initial_fix01 --method auto`
 
 Runtime-only Publish ohne DB-Write:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/publish_prod_release.py --upload-id french_batch_20260527_initial_fix01 --host vhrz2184 --smoke-base-url <prod-base-url>`
+`python scripts/research_data_intake/publish_prod_release.py --upload-id french_batch_20260527_initial_fix01 --host vhrz2184 --smoke-base-url <prod-base-url>`
 
 Publish mit Produktions-DB-Upsert aus `db/import_payload.json`:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/publish_prod_release.py --upload-id french_batch_20260527_initial_fix01 --host vhrz2184 --smoke-base-url <prod-base-url> --apply-db-upsert`
+`python scripts/research_data_intake/publish_prod_release.py --upload-id french_batch_20260527_initial_fix01 --host vhrz2184 --smoke-base-url <prod-base-url> --apply-db-upsert`
 
 Serverseitigen DB-Payload-Upsert gegen ein staged Release nur pruefen:
 
@@ -242,11 +242,11 @@ Serverseitigen DB-Payload-Upsert gegen ein staged Release nur pruefen:
 
 Expliziten Dev-Research-File-Reset nur dry-run anzeigen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/reset_dev_research_runtime.py`
+`python scripts/research_data_intake/reset_dev_research_runtime.py`
 
 Expliziten Dev-Research-File-Reset ausführen:
 
-`c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/reset_dev_research_runtime.py --yes`
+`python scripts/research_data_intake/reset_dev_research_runtime.py --yes`
 
 ## Wichtige Trennungen
 

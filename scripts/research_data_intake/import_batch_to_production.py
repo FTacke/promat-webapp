@@ -56,7 +56,7 @@ from intake_batch_common import (  # noqa: E402
     working_text_mfa_state_path,
 )
 import provenance as provenance_helpers  # noqa: E402
-from intake_storage import validate_runtime_tree, write_batch_archive_reports, write_secure_person_export, write_session_archive  # noqa: E402
+from intake_storage import IntakeStorageError, get_local_archive_root, validate_runtime_tree, write_batch_archive_reports, write_secure_person_export, write_session_archive  # noqa: E402
 from intake_workbook_reader import IntakeExposureRow, IntakePersonRow, IntakeSessionRow, SecurePersonIntakeRow, SessionLinkKey, load_intake_workbook  # noqa: E402
 from item_text_normalization import canonicalize_item_text, ItemTextCorrection  # noqa: E402
 from language_config import resolve_language_config  # noqa: E402
@@ -1643,6 +1643,12 @@ def main() -> int:
     args = parse_args()
     try:
         _apply_runtime_overrides(args)
+        if not args.dry_run:
+            # Fail before any working, runtime or database write when no archive root is configured.
+            try:
+                get_local_archive_root()
+            except IntakeStorageError as exc:
+                raise ProductionImportError(str(exc)) from exc
         if args.sync_raw_only and args.sync_tasks:
             raise ProductionImportError("--sync-raw-only cannot be combined with --sync-tasks")
         if args.sync_raw_only and args.create_missing_only:

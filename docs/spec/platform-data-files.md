@@ -612,11 +612,7 @@ metadata.json
 PROMAT_LOCAL_ARCHIVE_ROOT
 ```
 
-Default local example:
-
-```text
-C:/dev/promat_data_archive/
-```
+There is no default location. The root is configured explicitly (see "Storage Roots"); an unset root is an error.
 
 ### Session archive structure
 
@@ -661,7 +657,7 @@ New archive writes (`scripts/research_data_intake/intake_storage.py`, called by 
 
 - The local archive is a working archive. Writing to it is **not** preservation.
 - A unit (one session archive or one batch archive) is `PRESERVED` only after every file exists in a configured *preservation root* and was verified by full SHA-256 against expected fixity (baseline or complete unit manifest).
-- `PROMAT_LOCAL_ARCHIVE_ROOT` stays the target of intake (flow: intake → local archive → verified preservation copy). Setting `PROMAT_PRESERVATION_ROOT` never redirects intake; only `archive_preservation.py` and `scripts/storage_inventory.py` read it (a test enforces this). `PROMAT_LOCAL_ARCHIVE_ROOT` is not repointed to the preservation root. When it is unset, the built-in fallback in `intake_storage.py` applies (the operator machine currently relies on it); replacing that fallback by a loud failure is not done.
+- `PROMAT_LOCAL_ARCHIVE_ROOT` stays the target of intake (flow: intake → local archive → verified preservation copy). Setting `PROMAT_PRESERVATION_ROOT` never redirects intake; only `archive_preservation.py` and `scripts/storage_inventory.py` read it (a test enforces this). `PROMAT_LOCAL_ARCHIVE_ROOT` is not repointed to the preservation root. When it is unset, intake and archive tooling fail with a named error before writing anything; there is no built-in fallback location.
 - The preservation root is `PROMAT_PRESERVATION_ROOT` or `--preservation-root`. It has no default and no hard-coded location; its physical location is *current configuration, not architectural identity*. Its identity is `PRESERVATION_ROOT.json` (`root_id`). A move needs only a verified copy (`archive_preservation.py copy --archive-root <old root>/archive --preservation-root <new root>`), integrity verification, and a configuration change.
 - Layout of a root: `PRESERVATION_ROOT.json`, `archive/{sessions,batches}/...` (same shape as the local archive), `_preservation/receipts/`. Local evidence: `PROMAT_LOCAL_ARCHIVE_ROOT/preservation/receipts/`.
 - States: `ACTIVE_LOCAL` (no expected fixity) → `PRESERVATION_PENDING` (fixity known, no valid verified copy) → `PRESERVED` (valid receipt for the current root, unchanged manifest, destination present) → `LOCAL_CLEANUP_ELIGIBLE` (additionally: full re-verification of the destination now, local files still match fixity, destination separate from the local archive). Scope-limited copies (`--exclude-secure`) never count as preserved. A changed unit or a changed root returns the unit to `PRESERVATION_PENDING`.
@@ -670,13 +666,58 @@ New archive writes (`scripts/research_data_intake/intake_storage.py`, called by 
 - Only archive units (`sessions/`, `batches/`) are copied. Other archive-root entries (for example legacy pipeline or first-generation workbook folders), operator-local task catalogs and intake workbooks of batches imported before provenance existed are not covered; tool reports list archive-root entries as not covered, and `cleanup-report` lists uncovered batch files as `not_covered`. Historical material is handled additively, never rewritten.
 - Cleanup eligibility is a report (`promat.cleanup_eligibility.v1`, `deletes_anything: false`). No code in the repository deletes archive or source data; deletion of preserved source material is an explicit operator action.
 
+## Storage Roots
+
+Research data has three storage roots with three different roles. They are never interchangeable, and no physical location is part of the architecture.
+
+| | `LOCAL_ARCHIVE` | `PRESERVATION` | `PHYSICAL_BACKUP` |
+|---|---|---|---|
+| Variable | `PROMAT_LOCAL_ARCHIVE_ROOT` | `PROMAT_PRESERVATION_ROOT` | `PROMAT_BACKUP_ROOT` |
+| Role | local working archive; target of intake | verified institutional long-term copy | physically separate backup copy on another device |
+| Authority | authoritative for a unit until that unit is `PRESERVED`; afterwards a working copy | authoritative for every unit that is `PRESERVED` | never authoritative |
+| Allowed writers | the central importer and the archive tooling (`intake_storage.py`, fixity baseline, receipts) | only `archive_preservation.py copy` | only `archive_preservation.py backup-copy` |
+| Allowed readers | intake, preservation, backup and inventory tooling | preservation and inventory tooling | backup and inventory tooling; an operator during a restore |
+| Required | yes, for every intake or archive operation | no; without it every unit stays `PRESERVATION_PENDING` | no; without it every unit stays `BACKUP_PENDING` |
+| Identity | its content (unit ids, fixity) | `PRESERVATION_ROOT.json` (`role: preservation`, `root_id`) | `BACKUP_ROOT.json` (`role: backup`, `root_id`) |
+| Verification | fixity manifests and additive baselines | full SHA-256 read-back; receipt `promat.preservation_receipt.v1` | full SHA-256 read-back; receipt `promat.backup_receipt.v1` |
+| Unit states | `ACTIVE_LOCAL` | `PRESERVATION_PENDING`, `PRESERVED`, `LOCAL_CLEANUP_ELIGIBLE` | `BACKUP_PENDING`, `BACKED_UP` |
+| Enables local cleanup | – | yes, only via `LOCAL_CLEANUP_ELIGIBLE` | never |
+
+### Configuration
+
+- The three roots are configured by their variable in the process environment or, when the variable is unset there, in the git-ignored `.env` file at the repository root. The versioned `.env.example` lists the three names without values.
+- The process environment always wins. The file is read only by `scripts/research_data_intake/storage_roots.py`, only for these three names, and is never written; it is not a general configuration mechanism and the web application does not read it.
+- There is no default, no host detection and no hard-coded drive or folder. A relative value is refused.
+- The web application never reads any of the three roots.
+
+### Fail-closed rules
+
+- Without `PROMAT_LOCAL_ARCHIVE_ROOT` (or an explicit `--archive-root`), intake and archive tooling stop with an error that names the variable. Nothing is created; in particular no directory at a former or conventional location. The importer checks this before any working, runtime or database write of a non-dry run.
+- A directory is one role only. A root that carries the other role's marker file, or that is equal to or nested in the other role's configured root or the local archive root, is refused before anything is written.
+- Neither the preservation root nor the backup root is ever an intake target, a data source for the app, or a fallback for a missing local archive.
+
+### Physical backup
+
+- The backup is made by the same verified copy as preservation (`*.partial`, read-back, atomic rename) from the local archive, against the same expected fixity. Layout of a backup root: `BACKUP_ROOT.json`, `archive/{sessions,batches}/...`, `_backup/receipts/`. Local evidence: `PROMAT_LOCAL_ARCHIVE_ROOT/backup/receipts/`.
+- The copy is additive: it never deletes, never overwrites a differing file (that is a reported conflict) and has no mirror or sync mode. A backup is always complete; `--exclude-secure` is not available for it.
+- `backup-verify` re-reads every file of the backup by SHA-256. With `--unbuffered` (Windows) every file is opened without the operating system's file cache, so the bytes come from the device itself; this is the cold verification and needs no physical reconnect. A verification right after a copy without `--unbuffered` may be answered from memory and does not prove what the volume holds. A unit is `BACKED_UP` only with a valid receipt for the current backup root and an unchanged unit; a changed unit or a changed root returns it to `BACKUP_PENDING`.
+- A backup is not preservation: it never makes a unit `PRESERVED` or `LOCAL_CLEANUP_ELIGIBLE`, and `cleanup-report` refuses a backup root.
+- The backup volume may be offline. `backup-status` and `scripts/storage_inventory.py` report an unreachable root as a state; `backup-copy --execute` fails without creating the missing parent. App and intake are unaffected.
+- The unit copy covers archive units only. Everything else that is not regenerable is copied as **supplemental sets** by `backup-supplemental` (and `supplemental` for the preservation root): every other archive-root entry, the fixity baselines, and operator-local sources named with `--extra NAME=PATH` (a directory, a file or a glob) — the current intake workbooks of the batch folders and `data/config/research_player/`. Layout: `supplemental/{label}/{set}/...` with `supplemental/{label}/_manifests/{set}.sha256` and `.json`; local evidence under `PROMAT_LOCAL_ARCHIVE_ROOT/{backup|preservation}/receipts/supplemental/`.
+- A supplemental label is a snapshot (default: the UTC date). A set is verified against its own manifest in the destination, without its source. When a source changed since a label was written, the run reports `conflict_manifest_differs` and replaces nothing; the changed state is stored under a new label. `verify` and `backup-verify` include all supplemental sets. Supplemental sets do not change any unit state.
+- Procedure: `docs/runbooks/archive-preservation.md`.
+
+### Hard-coded paths
+
+- Machine-dependent absolute paths (a drive letter path, a UNC share, a home directory, the local archive directory name) must not appear in active code or active configuration. `scripts/ci_governance_checks.py` enforces this for `app/src`, `app/scripts`, `scripts`, `infra`, `.github/workflows`, `.vscode`, `docker-compose.dev-postgres.yml` and the `.env.example` files, with an empty baseline. Documentation, tests and gitignored data trees are out of scope; Python docstrings and comments are not inspected; container and server paths of the deployment contract are not machine paths. A justified literal carries `path-literal: <reason>` on the same line.
+
 ## Local Storage Roles And Preservation Root
 
 - Local disk is workspace, spool and cache. The institutional preservation root is the only preservation layer; its physical location is configuration, never architecture.
 - The preservation root is a logical role. Its current physical target is `K:\Pronunciation_Matters` (a university network share). `K:\Corapan` is a separate project root and must never be mixed with it. No session ID, batch ID, archive layout or manifest field may depend on a drive letter.
 - Until the preservation root is verified, `PROMAT_LOCAL_ARCHIVE_ROOT` remains the working archive and counts as **local-only**. Data is "preserved" only after copy, per-file checksum comparison and manifest verification against the institutional location; a checksum-verified copy must exist before any local source is cleanup-eligible.
 - Organizer status (carried forward): the committed `scripts/research_data_intake/organize_batch_working_tree.py` is the canonical organizer. A real-batch A/B comparison against the historical, gitignored organizer (local run of 2026-10-05, `docs/agent-runs/2026-10-05_preservation-activation-organizer-equivalence.md`) classified it as equivalent with documented interface differences: byte-identical success-path working trees, different CLI flags and report labels, and stricter handling of two historical defects that are intentionally not reproduced. An explicitly requested `--person-id` without any file in the batch fails with `error_unknown_person` (as the historical organizer did). The importer, which passes only its own `--person-id` filter, is unaffected. Preservation work never changes the organizer.
-- Storage roles: `SOURCE/UNIQUE` (never deleted automatically), `WORKING` (active batch `working/`), `SPOOL` (finished data awaiting preservation, upload packages), `REGENERABLE` (derived MP3s, MFA corpus/output, runtime session projections), `CACHE` (venvs, tool caches, MFA model caches), `PRESERVATION` (institutional root).
+- Storage roles: `SOURCE/UNIQUE` (never deleted automatically), `WORKING` (active batch `working/`), `SPOOL` (finished data awaiting preservation, upload packages), `REGENERABLE` (derived MP3s, MFA corpus/output, runtime session projections), `CACHE` (venvs, tool caches, MFA model caches), `PRESERVATION` (institutional root), `PHYSICAL_BACKUP` (separate backup volume; see "Storage Roots").
 - Operator-local files without git history (`data/config/research_player/**` catalogs, intake workbooks, `import/` batches) are `SOURCE/UNIQUE` unless an identical copy is verified elsewhere.
 - Cleanup procedure and the read-only inventory tool: `docs/runbooks/local-storage-hygiene.md`, `scripts/storage_inventory.py`. No tool may delete research data without an explicit operator action and dry-run default.
 

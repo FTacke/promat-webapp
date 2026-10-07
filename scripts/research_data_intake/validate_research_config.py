@@ -8,7 +8,7 @@ server-side data directory) holds a loadable configuration.
 Examples:
 
     python scripts/research_data_intake/validate_research_config.py
-    python scripts/research_data_intake/validate_research_config.py --runtime-root C:/dev/promat --language german --require-complete
+    python scripts/research_data_intake/validate_research_config.py --runtime-root <runtime root> --language german --require-complete
 
 Exit code 0 means every inspected file loads cleanly; 1 means at least one problem was found.
 """

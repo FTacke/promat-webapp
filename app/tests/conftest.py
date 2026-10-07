@@ -35,6 +35,23 @@ def _clear_catalog_caches() -> None:
     load_task_catalog_item_index.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def isolated_storage_roots(monkeypatch: pytest.MonkeyPatch) -> None:
+    """No test may see the operator's storage roots: neither from the shell nor from the repository-root ``.env``.
+
+    A test that needs a root sets it explicitly, so the suite can never write into a real archive, preservation
+    or backup location.
+    """
+    scripts_root = str(REPO_ROOT / "scripts" / "research_data_intake")
+    if scripts_root not in sys.path:
+        sys.path.insert(0, scripts_root)
+    import storage_roots
+
+    for name in storage_roots.STORAGE_ROOT_VARIABLES:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(storage_roots, "ENV_FILE", TESTS_ROOT / "no-operator-env-file")
+
+
 @pytest.fixture
 def fixture_runtime_root(monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point the runtime root at the tracked minimal catalog fixtures and reset catalog caches."""

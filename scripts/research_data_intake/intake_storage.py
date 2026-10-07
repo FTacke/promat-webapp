@@ -15,10 +15,10 @@ from language_config import maybe_resolve_language_config, resolve_language_conf
 from item_text_normalization import contains_noncanonical_french_item_text
 import fixity
 import provenance as provenance_helpers
+import storage_roots
 from audio_tags import read_tags
 
 
-DEFAULT_LOCAL_ARCHIVE_ROOT = Path(r"C:\dev\promat_data_archive")
 ARCHIVE_SESSION_SUBDIRS = (
     "secure",
     "raw",
@@ -80,8 +80,11 @@ class BatchArchiveReportResult:
 
 
 def get_local_archive_root() -> Path:
-    configured = (os.getenv("PROMAT_LOCAL_ARCHIVE_ROOT") or "").strip()
-    return Path(configured).expanduser() if configured else DEFAULT_LOCAL_ARCHIVE_ROOT
+    """The configured local archive root. Fails closed: there is no built-in location and nothing is created."""
+    try:
+        return storage_roots.require_root(storage_roots.LOCAL_ARCHIVE_ROOT_ENV, cli_option="--archive-root")
+    except storage_roots.StorageRootNotConfigured as exc:
+        raise IntakeStorageError(str(exc)) from exc
 
 
 def archive_sessions_root(archive_root: Path | None = None) -> Path:

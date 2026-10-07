@@ -16,6 +16,7 @@ Protected routes require explicit QA credentials via flags or environment.
 """
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BASE_URL = "http://127.0.0.1:8000"
 VIEWPORTS = {
     "360": (360, 800),
@@ -177,7 +178,7 @@ def validation_check(page: Page, base_url: str, screenshot_dir: Path, viewport: 
 
 def run() -> dict[str, Any]:
     args = parse_args()
-    out_dir = Path("tmp/ui-qa") / args.run_id
+    out_dir = REPO_ROOT / "tmp" / "ui-qa" / args.run_id
     screenshot_dir = out_dir / "screenshots"
     screenshot_dir.mkdir(parents=True, exist_ok=True)
 

@@ -116,7 +116,7 @@ Regeln:
 - `--run-mfa --dry-run` plant die MFA-Schritte ohne MFA-Outputs zu verlangen, weil ein Dry-run keine batch-lokalen MFA-Dateien schreibt.
 - Er schreibt person-, session- und exposure-bezogene Metadaten nach PostgreSQL und projiziert den Runtime-Baum nach `data/sessions/{language}/{session_id}/`.
 - Runtime bleibt strikt JSON/MP3-only: kein `raw/`, kein `source/`, keine TextGrids, keine XLSX.
-- Der Import schreibt die Langzeitablage separat unter `PROMAT_LOCAL_ARCHIVE_ROOT/sessions/{language_code}/{session_id}/`.
+- Der Import schreibt die Langzeitablage separat unter `PROMAT_LOCAL_ARCHIVE_ROOT/sessions/{language_code}/{session_id}/`. `PROMAT_LOCAL_ARCHIVE_ROOT` (oder `--archive-root`) muss gesetzt sein; ohne Root bricht der Import vor jedem Schreibvorgang ab.
 - Archiveingänge und Runtime-Ziele werden validiert; Konflikte oder Mehrdeutigkeiten bleiben explizite Fehler statt impliziter Überschreibungen.
 - Sessions ohne vollständige Task-Verfügbarkeit bleiben importierbar; nur tatsächlich vorbereitete Tasks werden synchronisiert.
 - Workbook-Zeilen ohne neue Dateien können dennoch DB- oder Runtime-Metadaten aktualisieren; sie erzeugen aber keine erfundenen Audioartefakte.
@@ -127,7 +127,7 @@ Regeln:
 - Runtime-Tree prüfen:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py runtime-tree --session-dir C:/dev/promat/data/sessions/spanish/ES-L-0001-2026-S01`
 - Archiv-Tree prüfen:
-  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py archive-tree --archive-session-dir C:/dev/promat_data_archive/sessions/es/ES-L-0001-2026-S01`
+  `python scripts/research_data_intake/validate_research_intake.py archive-tree --archive-session-dir <PROMAT_LOCAL_ARCHIVE_ROOT>/sessions/es/ES-L-0001-2026-S01`
 
 Regeln:
 
@@ -138,7 +138,7 @@ Regeln:
 ## Schritt 9: Explizites Prod-Upload-Paket bauen
 
 - Paket bauen:
-  `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/build_prod_upload_package.py --language spanish --session-id ES-L-0001-2026-S01 --db-payload C:/dev/promat_data_archive/batches/spanish_batch_20260421/import_payload.json`
+  `python scripts/research_data_intake/build_prod_upload_package.py --language spanish --session-id ES-L-0001-2026-S01 --db-payload <PROMAT_LOCAL_ARCHIVE_ROOT>/batches/spanish_batch_20260421/import_payload.json`
 - Paket validieren:
   `c:/dev/promat/.venv/Scripts/python.exe scripts/research_data_intake/validate_research_intake.py prod-package --package-dir C:/dev/promat/scripts/research_data_intake/exports/promat_upload_20260525T120000Z`
 

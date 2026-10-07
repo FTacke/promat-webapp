@@ -108,18 +108,19 @@ def test_inventory_source_contains_no_deletion() -> None:
 
 def test_intake_never_reads_the_preservation_root() -> None:
     """Setting PROMAT_PRESERVATION_ROOT must not redirect intake writes: only the preservation tools read it."""
-    allowed = {"preservation.py", "archive_preservation.py"}
+    # storage_roots.py only names the variables; it never resolves one root from another.
+    allowed = {"preservation.py", "archive_preservation.py", "storage_roots.py"}
     for path in INTAKE_DIR.glob("*.py"):
         if path.name in allowed:
             continue
         text = path.read_text(encoding="utf-8")
         assert "PRESERVATION_ROOT" not in text and "import preservation" not in text, path.name
-    from intake_storage import get_local_archive_root
+    from intake_storage import IntakeStorageError, get_local_archive_root
 
     os.environ["PROMAT_PRESERVATION_ROOT"] = "/somewhere/else"
     try:
-        configured = os.environ.get("PROMAT_LOCAL_ARCHIVE_ROOT")
-        assert str(get_local_archive_root()) != "/somewhere/else"
-        assert configured is None or str(get_local_archive_root()) == configured
+        # With only the preservation root set, intake has no archive root at all: it fails instead of borrowing it.
+        with pytest.raises(IntakeStorageError):
+            get_local_archive_root()
     finally:
         del os.environ["PROMAT_PRESERVATION_ROOT"]

@@ -1,4 +1,4 @@
-﻿$edgePath = (Get-Command msedge.exe -ErrorAction SilentlyContinue).Source
+$edgePath = (Get-Command msedge.exe -ErrorAction SilentlyContinue).Source
 if (-not $edgePath) {
     $paths = @(
         "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
@@ -17,7 +17,8 @@ $routes = @(
     "/de/teaching", "/de/teaching/spanish", "/de/teaching/english",
     "/de/teaching/spanish/r-am-silbenende", "/en/teaching", "/en/teaching/spanish"
 )
-$outputDir = "C:\dev\promat\tmp\ui-qa\2026-05-11-teaching-polish-followup"
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+$outputDir = Join-Path $repoRoot "tmp\ui-qa\2026-05-11-teaching-polish-followup"
 if (-not (Test-Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir -Force }
 
 foreach ($route in $routes) {
