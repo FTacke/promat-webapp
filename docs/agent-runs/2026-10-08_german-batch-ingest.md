@@ -72,5 +72,5 @@ Alle Änderungen betreffen nur die Batch-Kopie; die Originale liegen bei der Bet
 
 ## Nächste sinnvolle Schritte
 
-- Produktion: Upload-Paket bauen, validieren, hochladen, publizieren (siehe Nachtrag unten).
+- Produktion: Der Code-Stand (L1-Codes, Importer-Regel, Spec) wurde mit Commit `d585cd9` nach `main` gepusht und läuft durch CI und `Deploy production`. Das Upload-Paket `promat_upload_german_20261008` (26 Sessions, 3896 MP3, `config/research_player/german`, `db/import_payload.json`) ist gebaut und mit `validate_research_intake.py prod-package` grün. **Upload und Publish stehen noch aus**, weil der SSH-Zugriff auf den Produktionsserver in dieser Sitzung nicht freigegeben war. Befehle: `docs/runbooks/research-prod-upload-and-publish.md` (`upload_prod_package.py` nach `incoming/`, danach `publish_prod_release.py --upload-id promat_upload_german_20261008 --apply-db-upsert`, Health, Smoke).
 - Quell-Batch erst nach verifizierter Preservation-Kopie aus `import/` entfernen.
