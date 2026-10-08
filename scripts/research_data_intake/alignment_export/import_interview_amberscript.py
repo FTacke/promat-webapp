@@ -30,7 +30,12 @@ SPEAKER_CODE_MAP = {
 SPEAKER_NAME_CODE_MAP = {
     "speaker 1": "interviewer",
     "speaker 2": "participant",
+    "interviewer 1": "interviewer_1",
+    "interviewer 2": "interviewer_2",
+    "participant": "participant",
 }
+# Roles named explicitly in the export's speakers[] table override the positional spk1/spk2 defaults.
+EXPLICIT_SPEAKER_ROLE_CODES = frozenset({"interviewer_1", "interviewer_2"})
 ANNOTATION_TASK_PREFIXES = (
     ("wl_", "wordlist"),
     ("d_", "text"),
@@ -155,6 +160,8 @@ def _speaker_code(raw_value: Any, source_json_path: Path, segment_number: int, s
     if not isinstance(raw_value, str) or not raw_value.strip():
         raise ValueError(f"Segment {segment_number} must declare a speaker code in {source_json_path}")
     normalized = raw_value.strip().lower()
+    if speaker_id_map.get(normalized) in EXPLICIT_SPEAKER_ROLE_CODES:
+        return speaker_id_map[normalized]
     if normalized not in SPEAKER_CODE_MAP:
         mapped_code = speaker_id_map.get(normalized)
         if mapped_code is not None:

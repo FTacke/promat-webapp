@@ -1023,6 +1023,8 @@ def build_player_items(
 def _player_interview_speaker_label(ui_lang: str, speaker_code: str) -> str:
     if speaker_code == "interviewer":
         return _t(ui_lang, "research.player.interview.role.interviewer")
+    if speaker_code in ("interviewer_1", "interviewer_2"):
+        return _t(ui_lang, f"research.player.interview.role.{speaker_code}")
     return _t(ui_lang, "research.player.interview.role.participant")
 
 

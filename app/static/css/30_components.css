@@ -6914,7 +6914,9 @@ body[data-page="login"] .pm-auth-secondary--card {
   --pm-player-transcript-badge-text-inset: 0.5rem;
 }
 
-.pm-player-transcript__speaker--interviewer {
+.pm-player-transcript__speaker--interviewer,
+.pm-player-transcript__speaker--interviewer_1,
+.pm-player-transcript__speaker--interviewer_2 {
   background: color-mix(in srgb, var(--pm-surface-neutral) 88%, var(--pm-surface-paper) 12%);
   border-color: var(--pm-border-subtle);
   color: var(--book-muted);

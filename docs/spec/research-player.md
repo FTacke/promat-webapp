@@ -498,7 +498,7 @@ The top level may additionally include:
 - Each interview segment must transport at least:
 	- `segment_id`
 	- `segment_number`
-	- `speaker_code`
+	- `speaker_code` (`interviewer`, `participant`, or, for sessions with two interviewers, `interviewer_1` and `interviewer_2`; labelled "Explorator:in 1/2" in German and "Interviewer 1/2" in English)
 	- `start_ms`
 	- `end_ms`
 - Optional interview-segment fields may include:

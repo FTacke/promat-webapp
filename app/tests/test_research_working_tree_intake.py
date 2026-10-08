@@ -342,6 +342,41 @@ def test_build_interview_alignment_payload_maps_uuid_speaker_ids_from_speakers_t
     assert payload["segments"][1]["speaker_code"] == "participant"
 
 
+def test_build_interview_alignment_payload_maps_explicit_interviewer_roles_from_speakers_table(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    payload_data = _minimal_interview_payload()
+    payload_data["speakers"] = [
+        {"spkid": "spk1", "name": "Interviewer 1"},
+        {"spkid": "spk2", "name": "Interviewer 2"},
+        {"spkid": "spk3", "name": "Participant"},
+    ]
+    payload_data["segments"].append(
+        {"speaker": "spk3", "words": [{"start": 4.5, "end": 4.9, "text": "Nein", "duration": 0.4, "conf": 1, "pristine": True}]}
+    )
+    _write_json(source_json, payload_data)
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="ES-L-0001", session_id=None)
+
+    assert [segment["speaker_code"] for segment in payload["segments"]] == [
+        "interviewer_1",
+        "interviewer_2",
+        "participant",
+    ]
+
+
+def test_build_interview_alignment_payload_rejects_unnamed_third_speaker(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    payload_data = _minimal_interview_payload()
+    payload_data["speakers"].append({"spkid": "spk3", "name": "Speaker 3"})
+    payload_data["segments"].append(
+        {"speaker": "spk3", "words": [{"start": 4.5, "end": 4.9, "text": "Nein", "duration": 0.4, "conf": 1, "pristine": True}]}
+    )
+    _write_json(source_json, payload_data)
+
+    with pytest.raises(ValueError, match="Unsupported Amberscript speaker code"):
+        build_interview_alignment_payload(source_json_path=source_json, person_id="ES-L-0001", session_id=None)
+
+
 def test_build_interview_alignment_payload_rejects_unknown_material_ref_item_id(tmp_path: Path) -> None:
     source_json = tmp_path / "input.json"
     _write_json(source_json, _minimal_interview_payload(reference_words=["89[wl_999]."]))
