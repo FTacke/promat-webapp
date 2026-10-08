@@ -855,11 +855,16 @@ function init() {
     return (state.sessionCatalog || []).filter((session) => !selectedIds.has(session.sessionId));
   }
 
+  function l1DisplayLabel(value) {
+    const match = (state.sessionCatalog || []).find((session) => session.l1Value === value && session.l1Label);
+    return match ? match.l1Label : value;
+  }
+
   function availableL1Values() {
     return Array.from(new Set((state.sessionCatalog || [])
       .map((session) => session.l1Value)
       .filter((value) => value && value !== "-")))
-      .sort((left, right) => left.localeCompare(right));
+      .sort((left, right) => l1DisplayLabel(left).localeCompare(l1DisplayLabel(right)));
   }
 
   function matchesBaseSessionFilters(session) {
@@ -1033,7 +1038,7 @@ function init() {
         ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--level pm-comparison-speaker-badge--${escapeHtml((session.levelValue || "").toLowerCase())}">${escapeHtml(levelBadgeText)}</span>`
         : "",
       session.l1BadgeLabel
-        ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--detail">${escapeHtml(session.l1BadgeLabel)}</span>`
+        ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--detail"${session.l1BadgeTitle ? ` title="${escapeHtml(session.l1BadgeTitle)}"` : ""}>${escapeHtml(session.l1BadgeLabel)}</span>`
         : "",
     ].join("");
   }
@@ -1238,7 +1243,7 @@ function init() {
     if (l1FilterSelect) {
       l1FilterSelect.innerHTML = [
         `<option value="">${escapeHtml(labels.l1FilterLabel || "")}</option>`,
-        ...availableL1Values().map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`),
+        ...availableL1Values().map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(l1DisplayLabel(value))}</option>`),
       ].join("");
       l1FilterSelect.value = filterState.l1;
     }
@@ -1273,7 +1278,7 @@ function init() {
         chips.push({ key: `level:${level}`, label: `${labels.selfPlacementPrefix || ""} ${level}`.trim() });
       }
       if (filterState.l1) {
-        chips.push({ key: "l1", label: `${labels.l1ShortLabel || ""}: ${filterState.l1}` });
+        chips.push({ key: "l1", label: `${labels.l1ShortLabel || ""}: ${l1DisplayLabel(filterState.l1)}` });
       }
       if (filterState.gender && genderFilterSelect) {
         const selected = genderFilterSelect.selectedOptions[0];

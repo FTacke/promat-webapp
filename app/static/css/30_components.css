@@ -4388,6 +4388,52 @@ body[data-page="login"] .pm-auth-secondary--card {
   overflow-wrap: anywhere;
 }
 
+/* Inline info indicator (L1 language names): opens on hover and keyboard focus, and on click or tap. */
+.pm-l1 {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pm-info-tip--inline {
+  vertical-align: middle;
+}
+
+.pm-info-tip--inline .pm-info-tip__trigger {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+.pm-info-tip--inline .pm-info-tip__trigger:focus-visible {
+  outline: 2px solid var(--book-accent);
+  outline-offset: 2px;
+}
+
+.pm-info-tip.pm-info-tip--inline .pm-info-tip__body {
+  min-width: 0;
+  width: max-content;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+}
+
+.pm-info-tip.pm-info-tip--inline:hover .pm-info-tip__body,
+.pm-info-tip.pm-info-tip--inline:focus-within .pm-info-tip__body,
+.pm-info-tip.pm-info-tip--inline.is-open .pm-info-tip__body {
+  display: block;
+}
+
+.pm-info-tip.pm-info-tip--inline.is-dismissed .pm-info-tip__body {
+  display: none;
+}
+
+.pm-info-tip.pm-info-tip--inline:hover .pm-info-tip__trigger,
+.pm-info-tip.pm-info-tip--inline.is-open .pm-info-tip__trigger {
+  border-color: var(--book-accent);
+  color: var(--book-accent);
+}
+
 .pm-comparison-material-controls {
   display: flex;
   flex-wrap: wrap;

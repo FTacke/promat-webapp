@@ -362,9 +362,12 @@ def test_build_comparison_page_exposes_session_catalog_and_filter_state(comparis
 
     learner_session = next(entry for entry in page["client_state"]["sessionCatalog"] if entry["sessionId"] == "ES-L-0001-2026-S01")
     native_session = next(entry for entry in page["client_state"]["sessionCatalog"] if entry["sessionId"] == "ES-N-0001-2026-S01")
-    assert learner_session["l1BadgeLabel"] == "L1: DE"
+    assert learner_session["l1Value"] == "DE"
+    assert learner_session["l1Label"] == "Deutsch"
+    assert learner_session["l1BadgeLabel"] == "L1: Deutsch"
+    assert learner_session["l1BadgeTitle"] == "ISO 639-1: de"
     assert learner_session["l1AdditionalValues"] == ["IT", "EN"]
-    assert learner_session["l1AdditionalValue"] == "IT, EN"
+    assert learner_session["l1AdditionalValue"] == "Italienisch, Englisch"
     assert native_session["speakerTypeLabel"] == "Native"
     assert native_session["standardVarietyValue"] == "Kastilisches Spanisch"
     assert native_session["detailValue"] == "Spanien"

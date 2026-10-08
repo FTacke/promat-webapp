@@ -937,6 +937,7 @@ Rule:
 
 - `l1`, `l1_additional`, `mother_l1`, and `father_l1` use the same uppercase value list as `l1_code`.
 - `l1_additional` is optional, stores one or more semicolon-separated L1 codes, and stays separate from `additional_languages`.
+- Presentation only: every UI surface shows an L1 code as the language name of the UI language (translation keys `language.l1.<CODE>`, resolved centrally by `app/src/app/l1_display.py`), for example `KAB` as "Kabylisch" or "Kabyle". The ISO standard and code sit behind a discreet info indicator (hover, keyboard focus, click or tap, dismissible with Escape), for example "ISO 639-1: fr" or "ISO 639-3: rcf"; the standard is stated per code (`KAB`, `NMG`, `RCF`, `DUA` are ISO 639-3, the rest ISO 639-1; the historical code `CZ` is registered as ISO 639-1 `cs`). Technical codes are not shown next to the name. A value that cannot be resolved stays visible verbatim and gets no tooltip. Stored values, URL filter parameters (`?l1=KAB`) and filter logic keep the codes; client-rendered comparison rows show the name with the ISO reference as a `title`, because their rows are themselves interactive.
 
 ### `level_code`
 

@@ -80,6 +80,22 @@ L1_CODES: tuple[str, ...] = (
     "unknown",
 )
 
+# ISO standard and code that identify the language behind each L1 vocabulary code. Most vocabulary codes are
+# ISO 639-1; ``KAB``, ``NMG``, ``RCF`` and ``DUA`` have no 639-1 code and use ISO 639-3. ``CZ`` is a historical
+# vocabulary code whose language is registered as ISO 639-1 ``cs``. ``unknown`` has no ISO code.
+L1_ISO_639_3_CODES: frozenset[str] = frozenset({"KAB", "NMG", "RCF", "DUA"})
+L1_ISO_CODE_OVERRIDES: dict[str, str] = {"CZ": "cs"}
+
+
+def get_l1_iso_reference(code: str) -> tuple[str, str] | None:
+    """Return ``(standard, iso_code)`` such as ``("ISO 639-1", "fr")`` for a known L1 code, else ``None``."""
+    if code not in L1_CODES or code == "unknown":
+        return None
+    if code in L1_ISO_639_3_CODES:
+        return ("ISO 639-3", code.lower())
+    return ("ISO 639-1", L1_ISO_CODE_OVERRIDES.get(code, code.lower()))
+
+
 TASK_TYPES: tuple[str, ...] = RESEARCH_TASK_KEYS
 
 CONTEXT_VALUES: tuple[str, ...] = ("baseline", "follow_up")

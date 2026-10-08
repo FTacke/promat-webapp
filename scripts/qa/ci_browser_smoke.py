@@ -426,6 +426,65 @@ def check_comparison(browser, base: str, report: Report, out: Path) -> None:
         context.close()
 
 
+def check_l1_info_indicator(browser, base: str, report: Report, out: Path) -> None:
+    """L1 codes read as language names; the ISO code sits behind an info indicator (hover, focus, click, tap)."""
+    expected = {"de": ("Deutsch", "ISO 639-1: de"), "en": ("German", "ISO 639-1: de")}
+    for lang, (name, tooltip) in expected.items():
+        for touch in (False, True):
+            width = 390 if touch else 1280
+            context = browser.new_context(viewport={"width": width, "height": 900}, has_touch=touch, is_mobile=touch)
+            page = context.new_page()
+            login(page, base, f"/{lang}/research/spanish/speakers")
+            page.goto(f"{base}/{lang}/research/spanish/speakers", wait_until="networkidle")
+            label = f"[{lang}] l1 indicator ({'touch 390px' if touch else 'desktop'})"
+            tips = page.locator(".pm-l1 .pm-info-tip--inline")
+            if not report.check(tips.count() > 0, f"{label} is rendered on the speakers page"):
+                context.close()
+                continue
+            trigger = tips.first.locator(".pm-info-tip__trigger")
+            body = tips.first.locator(".pm-info-tip__body")
+            report.check(name in page.locator(".pm-l1").first.inner_text(), f"{label} shows the language name {name!r}")
+            report.check(not body.is_visible(), f"{label} keeps the ISO code hidden by default")
+            report.check(trigger.get_attribute("aria-label") not in (None, ""), f"{label} trigger has an accessible name")
+            if touch:
+                trigger.tap()
+            else:
+                trigger.hover()
+            report.check(body.is_visible() and body.inner_text().strip() == tooltip, f"{label} shows {tooltip!r} on {'tap' if touch else 'hover'}")
+            report.check(trigger.get_attribute("aria-describedby") == body.get_attribute("id"), f"{label} links trigger and tooltip")
+            if not touch:
+                page.mouse.move(2, 2)
+                report.check(not body.is_visible(), f"{label} hides the tooltip when the pointer leaves")
+                trigger.focus()
+                report.check(body.is_visible(), f"{label} shows the tooltip on keyboard focus")
+                page.keyboard.press("Escape")
+                report.check(not body.is_visible(), f"{label} dismisses the tooltip with Escape")
+                trigger.evaluate("el => el.blur()")
+                trigger.click()
+                report.check(trigger.get_attribute("aria-expanded") == "true" and body.is_visible(), f"{label} pins the tooltip on click")
+            page.locator("h1").first.click()
+            page.mouse.move(2, 2)
+            report.check(not body.is_visible(), f"{label} closes the tooltip when clicking elsewhere")
+            report.check(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), f"{label} causes no horizontal overflow")
+            if not touch:
+                trigger.hover()
+                page.screenshot(path=str(out / f"{lang}_l1_tooltip.png"))
+        for theme in ("light", "dark"):
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            context.add_init_script(f"try {{ localStorage.setItem('site-theme', '{theme}'); }} catch (e) {{}}")
+            page = context.new_page()
+            login(page, base, f"/{lang}/research/spanish/speakers")
+            page.goto(f"{base}/{lang}/research/spanish/speakers", wait_until="networkidle")
+            trigger = page.locator(".pm-l1 .pm-info-tip__trigger").first
+            trigger.hover()
+            colors = page.evaluate(
+                "() => { const b = document.querySelector('.pm-l1 .pm-info-tip__body'); const s = getComputedStyle(b); return [s.color, s.backgroundColor]; }"
+            )
+            report.check(colors[0] != colors[1], f"[{lang}] l1 tooltip text and background differ in {theme} theme {colors}")
+            page.screenshot(path=str(out / f"{lang}_l1_tooltip_{theme}.png"))
+            context.close()
+
+
 def check_theme_and_mobile(browser, base: str, report: Report, out: Path) -> None:
     for theme in ("light", "dark"):
         context = browser.new_context(viewport={"width": 1280, "height": 900})
@@ -476,6 +535,7 @@ def main() -> int:
             check_login_and_player(browser, base, report, args.out)
             check_german_in_preparation(browser, base, report, args.out)
             check_comparison(browser, base, report, args.out)
+            check_l1_info_indicator(browser, base, report, args.out)
             check_theme_and_mobile(browser, base, report, args.out)
             browser.close()
         server.shutdown()

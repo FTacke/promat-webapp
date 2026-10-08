@@ -63,9 +63,17 @@ Alle Änderungen betreffen nur die Batch-Kopie; die Originale liegen bei der Bet
 - Tests: `pytest app/tests` 1277 passed, 2 skipped; `scripts/ci_governance_checks.py` grün.
 - Browser (`tmp/ui-qa/2026-10-08-german-ingest/`): `/de` und `/en` Research-Routen für Hub, Design, Sprecher:innen, Profil, Vergleich, Phänomene und Player (Wortliste, Text, Interview, Muttersprachler) alle 200; Audio-Endpunkte 200 `audio/mpeg`; anonymer Audio-Zugriff wird umgeleitet.
 
+## L1-Sprachbezeichnungen (Nachtrag, Folgelauf)
+
+- Zentrale Auflösung `app/src/app/l1_display.py` mit Namen in der i18n-Schicht (`language.l1.<CODE>`, de/en, alle 61 Vokabular-Codes plus `unknown`) und ISO-Zuordnung in `app/src/app/config/data_conventions.py` (`get_l1_iso_reference`: ISO 639-1 für die meisten Codes, ISO 639-3 für `KAB`, `NMG`, `RCF`, `DUA`; das historische Vokabular-Kürzel `CZ` wird als ISO 639-1 `cs` ausgewiesen).
+- Anzeige: Sprachname mit unauffälligem Info-Indikator (`pm-info-tip--inline`; Hover, Tastaturfokus, Klick/Tap, Escape schließt), Text z. B. „ISO 639-3: rcf“. Kein permanent sichtbarer Code. Unbekannte Werte bleiben unverändert sichtbar ohne Tooltip. Gespeicherte Werte, URL-Parameter (`?l1=KAB`) und Filterlogik sind unverändert.
+- Betroffen: Sprecherkarten, Tabelle, Profil (L1, Weitere L1, Mutter, Vater), Badges in Player und Profil, Filter-Dropdown und Filter-Chip der Sprecherseite, Vergleich (Filter, Chip, Badge mit `title`).
+- Offen/bewusst: In Vergleichszeilen (selbst interaktiv) steht der ISO-Verweis als `title` statt als eigener Indikator; `CZ` ist kein ISO-639-1-Code des Vokabulars, der Tooltip nennt `cs`.
+- Verifikation: 10 neue Unit-Tests (`app/tests/test_l1_display.py`), angepasste Erwartungen in zwei Test-Dateien, neue Browser-Prüfungen in `scripts/qa/ci_browser_smoke.py` (Hover, Fokus, Escape, Klick, Touch 390 px, hell/dunkel, kein Überlauf; de/en). Gesamt: 1287 pytest, 64 JS-Tests, Ruff, Governance, Teaching-Validierung, Browser-Smoke grün.
+
 ## Offene Punkte
 
-- **Frage: Sprachbezeichnungen auflösen?** Die Webapp zeigt L1-Werte als ISO-Code (`KAB`, `FR`, `RCF`). Sollte sie diese in verständliche Sprachbezeichnungen auflösen (DE/EN), damit Nutzer:innen sie lesen können? Das betrifft alle Korpora und braucht eine Entscheidung zu Labels und Ort (i18n-Schicht).
+- Erledigt im Folgelauf: L1-Codes werden als Sprachnamen aufgelöst (siehe oben).
 - Die öffentliche Design-Seite des Deutsch-Korpus ist weiter der Zustand „in Vorbereitung“; eine Beschreibung fehlt.
 - DE-L-0017, Segment 28 („Ah, okay, alles klar. Dann war es das, glaube ich, auch. Das war meine eine Nachfrage …“) ist im Transkript `spk3` (Interviewer 2) zugeordnet, klingt aber nach der deutschen Interviewerin bzw. dem deutschen Interviewer (Interviewer 1); unverändert übernommen, bitte prüfen.
 - Satz 6 der Satzliste lautet im Quelltext „Das Mädchen hat hat eine hübsche neue Tasche.“ (doppeltes „hat“); unverändert übernommen, bitte gegen die Vorlage prüfen.

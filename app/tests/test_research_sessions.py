@@ -744,7 +744,10 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
     assert page["profile_header"]["session_count_label"] == "Zugeordnete Sessions"
     assert page["profile_header"]["session_count_value"] == 1
     person_rows = {row["label"]: row["value"] for row in page["person_section"]["rows"]}
-    assert person_rows["Weitere L1"] == "IT, EN"
+    additional_l1 = str(person_rows["Weitere L1"])
+    assert "Italienisch" in additional_l1 and "Englisch" in additional_l1
+    assert "ISO 639-1: it" in additional_l1 and "ISO 639-1: en" in additional_l1
+    assert "IT, EN" not in additional_l1
     assert person_rows["Zusätzliche Sprachen"] == "English, French"
 
     # The documented research note stays; administrative Secure_Person_Intake fields never reach the profile.
@@ -3196,7 +3199,8 @@ def test_speakers_page_supports_shared_cards_and_table_views(runtime_env: Path, 
 
     assert learner_row["session_id"] == learner_session
     assert learner_row["table_level"] == "A2"
-    assert learner_row["table_detail"] == "DE"
+    assert "Deutsch" in str(learner_row["table_detail"])
+    assert "ISO 639-1: de" in str(learner_row["table_detail"])
     assert learner_row["table_stays"] == "Ja"
     assert learner_row["profile_label"] == "Profil"
     assert learner_row["profile_href"].endswith(f"/de/research/spanish/speakers/ES-L-0001?session={learner_session}")
@@ -4009,7 +4013,10 @@ def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, u
         "Sprachaufenthalte",
         "Explorator:in",
     ]
-    assert [badge["label"] for badge in single_page["summary_cards"][0]["badges"]] == ["Lernende", "B1 · Selbsteinordnung", "L1 DE"]
+    badge_labels = [str(badge["label"]) for badge in single_page["summary_cards"][0]["badges"]]
+    assert badge_labels[:2] == ["Lernende", "B1 · Selbsteinordnung"]
+    assert len(badge_labels) == 3 and badge_labels[2].startswith('<span class="pm-l1">L1 Deutsch')
+    assert "ISO 639-1: de" in badge_labels[2]
     assert single_page["summary_cards"][0]["badges"][1]["modifiers"] == ["level", "b1"]
     assert [action["action"] for action in single_page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
     assert single_page["summary_cards"][0]["card_actions"][1]["label"] == "Vergleich"
