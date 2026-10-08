@@ -120,6 +120,16 @@ Stop-Bedingungen:
 - Rsync fehlgeschlagen oder Corpus-Verzeichnis nach dem Sync nicht vorhanden
 - Container-Neustart fehlgeschlagen und Health-Check rot
 
+## Vor dem Paketbau: DB-Payload prüfen
+
+- `db/import_payload.json` stammt aus dem Batch-Archiv und wird bei **jedem** Importerlauf neu geschrieben, auch bei einem Lauf für nur eine Person (`--person-id`). Nach einem Teil-Nachimport enthält es nur diese Personen.
+- `build_prod_upload_package.py` bricht ab, wenn eine gepackte Session im Payload fehlt. Dann den Payload mit einem vollständigen Lauf (`import_batch_to_production.py --batch-dir <batch> --target-language <code> --update-metadata`) neu erzeugen und das Paket erneut bauen.
+
+## Nach dem Publish: flachen Konfigurationsbaum abgleichen
+
+- Der Publish schreibt `config/` nur in das Release, nicht in den flachen Baum `data/config/research_player/`, den die App liest (siehe `docs/spec/platform-data-files.md`).
+- Bei einem neuen Korpus oder geänderten Katalogen: `diff -rq /srv/webapps_storage/promat/data/config/research_player /srv/webapps_storage/promat/data/current/config/research_player`. Ein neues Korpusverzeichnis additiv kopieren (`cp -a`, nur wenn das Ziel nicht existiert), geänderte Dateien bewusst übernehmen, nichts löschen. Danach `promat-web-prod` neu starten und die Seiten prüfen; ohne die Kataloge scheitern die Research-Seiten des Korpus.
+
 ## Health und Smoke
 
 Pflicht:

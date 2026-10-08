@@ -71,6 +71,23 @@ Alle Änderungen betreffen nur die Batch-Kopie; die Originale liegen bei der Bet
 - Offen/bewusst: In Vergleichszeilen (selbst interaktiv) steht der ISO-Verweis als `title` statt als eigener Indikator; `CZ` ist kein ISO-639-1-Code des Vokabulars, der Tooltip nennt `cs`.
 - Verifikation: 10 neue Unit-Tests (`app/tests/test_l1_display.py`), angepasste Erwartungen in zwei Test-Dateien, neue Browser-Prüfungen in `scripts/qa/ci_browser_smoke.py` (Hover, Fokus, Escape, Klick, Touch 390 px, hell/dunkel, kein Überlauf; de/en). Gesamt: 1287 pytest, 64 JS-Tests, Ruff, Governance, Teaching-Validierung, Browser-Smoke grün.
 
+## Produktion (Folgelauf, 2026-10-08)
+
+- Deployment: `a6a1561` (L1-Anzeige) lief über CI und `Deploy production` erfolgreich; das Web-Image enthielt `l1_display.py` und die Codes `KAB`/`NMG`/`RCF`/`DUA`.
+- Publish 1 (`promat_upload_german_20261008b`): Runtime, Release-Wechsel, Container-Neustart, Health/Ready 200. Der DB-Upsert fügte nur 2 Personen/Sessions ein, weil mein Zweipersonen-Nachimport (DE-L-0017/0020) die `import_payload.json` des Batch-Archivs überschrieben hatte. Die Runtime-Daten (26 Sessions) waren korrekt, die DB nicht.
+- Korrektur: Payload mit einem vollständigen Lauf `--update-metadata` neu erzeugt (26 Personen, 26 Sessions, 20 Expositionen), Paket `promat_upload_german_20261008c` gebaut, validiert, hochgeladen und publiziert: DB-Upsert angewendet (24 Personen, 24 Sessions, 18 Expositionen eingefügt, 2 unverändert), Post-Validierung ok, Health/Ready 200. Prod-DB danach: `de` 26 Sessions, 26 Personen (24 Lernende, 2 Muttersprachler:innen), 20 Expositionen; `en` 10, `es` 24, `fr` 21 unverändert.
+- Zweite Lücke: Die deutschen Task-Kataloge lagen nur im Release, nicht im flachen Baum `data/config/research_player/`, den die App liest (Publish kopiert `config/` nicht, siehe Spec). `diff -rq` zeigte als einzigen Unterschied das neue Verzeichnis `german`; es wurde additiv kopiert (`cp -a`, Ziel existierte nicht), danach sind beide Bäume identisch. Web-Container neu gestartet.
+- Gegenmaßnahmen: `build_prod_upload_package.py` bricht ab, wenn der DB-Payload eine gepackte Session nicht abdeckt (neuer Test); Runbook `research-prod-upload-and-publish.md` um „DB-Payload prüfen“ und „flachen Konfigurationsbaum abgleichen“ ergänzt.
+- Release-Retention (Standardpolicy `keep_current_plus_1_previous_max_7_days`) hat beim Publish die alten Releases vom 2026-10-06 (Französisch, Spanisch) entfernt; die flachen Session-Bäume der anderen Korpora sind unverändert (`spanish` 24, `french` 31, `english` 10, `german` 26 Ordner). Rollback-Referenz: Release `…20261008T183938Z…b` bleibt erhalten, aktuell ist `…20261008T184439Z…c`.
+- Verifikation Produktion: `/health`, `/ready`, `/de|en/research/german/design` 200; anonyme Aufrufe von Sprecherseite und Audio werden nach `/login` umgeleitet (302). Im Produktions-Container über die App-Loader geprüft: 26 deutsche Sessions, Kataloge 96/51 Items, jede Session Wortliste 96 und Text 51 Items, Interviews in 24 Sessions, Rollen DE-L-0017 `interviewer_1` 7 / `interviewer_2` 13 / `participant` 9, DE-L-0020 19 / 26 / 19, `L1`-Namen und Tooltips (`KAB` „Kabylisch“/„Kabyle“, `RCF` „Réunion-Kreolisch“/„Réunion Creole“, `NMG`, `DUA`), DE-L-0011 `l1_additional = RCF`; Seitenbuilder für Sprecher und Vergleich liefern 26 Sessions mit Namen statt Codes.
+- Nicht möglich: Eine angemeldete Browsersitzung auf der Live-Seite (kein Zugangskonto für die Sitzung); Hover/Tap-Verhalten der Tooltips wurde lokal und im CI-Browser-Smoke geprüft, nicht live.
+
+## Aufräumen und Preservation
+
+- Überholtes Paket `promat_upload_german_20261008` aus `incoming/` entfernt (exakt benanntes Verzeichnis, nach Prüfung des `manifest.json`); die Pakete `…b` und `…c` hat der Publish selbst aus `incoming/` entfernt, `incoming/` ist leer. Lokal die Exporte `…20261008` und `…b` gelöscht; `…c` (das veröffentlichte Paket) bleibt als Nachweis.
+- Backup auf das separate Laufwerk (`PROMAT_BACKUP_ROOT`): Baseline-Fixity ergänzt (additiv), `backup-copy` 98/98 Einheiten (26 deutsche Sessions plus Batch), `backup-supplemental` (Label `20261008-german`: Intake-Workbooks, Task-Kataloge inkl. `german`, Fixity), `backup-verify --unbuffered`: 98 Einheiten `BACKED_UP`, 13 915 Dateien, 0 Fehler.
+- Preservation-Kopie (`PROMAT_PRESERVATION_ROOT`): nicht konfiguriert, kein Ziel verfügbar; alle Einheiten bleiben `PRESERVATION_PENDING`. Ein Backup macht nichts löschbar. Der Quell-Batch unter `import/` und das lokale Archiv bleiben unverändert erhalten.
+
 ## Offene Punkte
 
 - Erledigt im Folgelauf: L1-Codes werden als Sprachnamen aufgelöst (siehe oben).
@@ -78,9 +95,9 @@ Alle Änderungen betreffen nur die Batch-Kopie; die Originale liegen bei der Bet
 - DE-L-0017, Segment 28 („Ah, okay, alles klar. Dann war es das, glaube ich, auch. Das war meine eine Nachfrage …“) ist im Transkript `spk3` (Interviewer 2) zugeordnet, klingt aber nach der deutschen Interviewerin bzw. dem deutschen Interviewer (Interviewer 1); unverändert übernommen, bitte prüfen.
 - Satz 6 der Satzliste lautet im Quelltext „Das Mädchen hat hat eine hübsche neue Tasche.“ (doppeltes „hat“); unverändert übernommen, bitte gegen die Vorlage prüfen.
 - Bindestrich-Varianten in der Wortliste (`sagen -sägen`, `Weg - weg`) sind unverändert aus der Vorlage übernommen.
-- Preservation- und Backup-Kopie des neuen Batch-Archivs stehen aus (`PROMAT_PRESERVATION_ROOT` nicht gesetzt); `archive_preservation.py backup-copy` für die neuen Einheiten ausführen, sobald das Laufwerk verfügbar ist.
+- Preservation-Kopie des neuen Batch-Archivs steht aus (`PROMAT_PRESERVATION_ROOT` nicht gesetzt); danach `archive_preservation.py copy`/`verify` und erst dann Quell-Batch aus `import/` entfernen. Backup ist erledigt.
 
 ## Nächste sinnvolle Schritte
 
-- Produktion: Der Code-Stand (L1-Codes, Importer-Regel, Spec) wurde mit Commit `d585cd9` nach `main` gepusht und läuft durch CI und `Deploy production`. Das Upload-Paket `promat_upload_german_20261008` (26 Sessions, 3896 MP3, `config/research_player/german`, `db/import_payload.json`) ist gebaut und mit `validate_research_intake.py prod-package` grün. **Upload und Publish stehen noch aus**, weil der SSH-Zugriff auf den Produktionsserver in dieser Sitzung nicht freigegeben war. Befehle: `docs/runbooks/research-prod-upload-and-publish.md` (`upload_prod_package.py` nach `incoming/`, danach `publish_prod_release.py --upload-id promat_upload_german_20261008 --apply-db-upsert`, Health, Smoke).
+- Produktion: erledigt, siehe Abschnitt „Produktion“.
 - Quell-Batch erst nach verifizierter Preservation-Kopie aus `import/` entfernen.

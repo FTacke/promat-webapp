@@ -564,6 +564,20 @@ def build_prod_upload_package(
     if output_dir.exists():
         raise IntakeStorageError(f"refusing to overwrite existing prod package directory: {output_dir}")
 
+    if db_payload is not None and isinstance(db_payload.get("sessions"), list):
+        # A payload written by a partial importer run (for example one person) would silently leave the
+        # other packaged sessions without database rows in production.
+        payload_session_ids = {
+            entry.get("session_id") for entry in db_payload["sessions"] if isinstance(entry, dict)
+        }
+        uncovered = sorted(session_dir.name for _, session_dir in session_roots if session_dir.name not in payload_session_ids)
+        if uncovered:
+            raise IntakeStorageError(
+                "db payload does not cover packaged session(s): "
+                + ", ".join(uncovered)
+                + "; regenerate it with a full importer run (--update-metadata) before building the package"
+            )
+
     relative_files: list[str] = []
     for language_value, session_dir in session_roots:
         language_slug = resolve_language_config(language_value).corpus_slug

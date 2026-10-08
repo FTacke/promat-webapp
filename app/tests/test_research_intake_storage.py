@@ -6,6 +6,8 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 
 TEST_REPO_ROOT = Path(__file__).resolve().parents[2]
 os.environ.setdefault("PROMAT_RUNTIME_ROOT", str(TEST_REPO_ROOT))
@@ -15,6 +17,7 @@ sys.path.insert(0, str(TEST_REPO_ROOT / "scripts" / "research_data_intake"))
 from intake_batch_common import ParsedBatchFile  # noqa: E402
 from intake_storage import (  # noqa: E402
     ARCHIVE_SESSION_SUBDIRS,
+    IntakeStorageError,
     build_prod_upload_package,
     validate_prod_package,
     validate_runtime_tree,
@@ -75,6 +78,21 @@ def test_build_prod_upload_package_copies_only_allowed_runtime_artifacts(tmp_pat
     assert "manifest.json" in manifest["files"]
     assert "checksums.sha256" in manifest["files"]
     assert "reports/upload_report.md" in manifest["files"]
+
+
+def test_build_prod_upload_package_rejects_payload_that_misses_a_packaged_session(tmp_path: Path) -> None:
+    session_dir = _minimal_runtime_session(tmp_path)
+    output_dir = tmp_path / "exports" / "promat_upload_partial_payload"
+
+    with pytest.raises(IntakeStorageError, match="does not cover packaged session"):
+        build_prod_upload_package(
+            output_dir=output_dir,
+            session_roots=[("es", session_dir)],
+            db_payload={"sessions": [{"session_id": "ES-L-9999-2026-S01"}]},
+            upload_id="promat_upload_partial_payload",
+        )
+
+    assert not output_dir.exists()
 
 
 def test_build_prod_upload_package_copies_research_player_config(tmp_path: Path) -> None:
