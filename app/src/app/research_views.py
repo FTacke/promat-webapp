@@ -156,6 +156,7 @@ STANDARD_VARIETY_LABEL_KEYS = {
     "us_std": "research.shared.standard_variety.us_std",
     "au_std": "research.shared.standard_variety.au_std",
     "nz_std": "research.shared.standard_variety.nz_std",
+    "ie_std": "research.shared.standard_variety.ie_std",
     # French varieties
     "fr_std": "research.shared.standard_variety.fr_std",
     "ca_std": "research.shared.standard_variety.ca_std",

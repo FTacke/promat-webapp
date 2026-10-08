@@ -390,3 +390,60 @@ def test_write_secure_person_export_writes_json_to_archive(tmp_path: Path) -> No
     assert payload["person_id"] == "EN-L-0001"
     assert payload["last_name"] == "Mustermann"
     assert payload["email"] == "anna@example.test"
+
+
+def test_replace_corpora_package_declares_the_replacement_in_the_manifest(tmp_path: Path) -> None:
+    session_dir = _minimal_runtime_session(tmp_path)
+    output_dir = tmp_path / "exports" / "promat_upload_replace"
+
+    result = build_prod_upload_package(
+        output_dir=output_dir,
+        session_roots=[("es", session_dir)],
+        db_payload={"sessions": [{"session_id": session_dir.name}]},
+        upload_id="promat_upload_replace",
+        replace_corpora=("es",),
+    )
+
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["replace_corpora"] == ["spanish"]
+    assert validate_prod_package(output_dir) == []
+
+
+def test_replace_corpora_package_requires_sessions_and_a_payload(tmp_path: Path) -> None:
+    session_dir = _minimal_runtime_session(tmp_path)
+
+    with pytest.raises(IntakeStorageError, match="replace corpora without packaged sessions: french"):
+        build_prod_upload_package(
+            output_dir=tmp_path / "exports" / "no_french",
+            session_roots=[("es", session_dir)],
+            db_payload={"sessions": [{"session_id": session_dir.name}]},
+            upload_id="no_french",
+            replace_corpora=("fr",),
+        )
+    with pytest.raises(IntakeStorageError, match="requires a db payload"):
+        build_prod_upload_package(
+            output_dir=tmp_path / "exports" / "no_payload",
+            session_roots=[("es", session_dir)],
+            upload_id="no_payload",
+            replace_corpora=("es",),
+        )
+
+
+def test_validate_prod_package_rejects_replace_corpora_without_matching_sessions(tmp_path: Path) -> None:
+    session_dir = _minimal_runtime_session(tmp_path)
+    output_dir = tmp_path / "exports" / "promat_upload_tampered"
+    build_prod_upload_package(
+        output_dir=output_dir,
+        session_roots=[("es", session_dir)],
+        db_payload={"sessions": [{"session_id": session_dir.name}]},
+        upload_id="promat_upload_tampered",
+        replace_corpora=("es",),
+    )
+    manifest_path = output_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["replace_corpora"] = ["spanish", "english"]
+    manifest_path.write_text(json.dumps(manifest, indent=2) + chr(10), encoding="utf-8", newline=chr(10))
+
+    errors = validate_prod_package(output_dir)
+
+    assert any("lists english but the package has no sessions for it" in error for error in errors)

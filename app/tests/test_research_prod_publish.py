@@ -234,3 +234,64 @@ def test_standalone_retention_apply_script_does_rm() -> None:
     assert "APPLY" in script
     assert 'rm -rf "$_r"' in script
     assert "\r" not in script
+
+
+def _replace_script(**overrides) -> str:
+    options = dict(
+        upload_id="corpora_replace_20261008",
+        apply_db_upsert=True,
+        smoke_base_url="https://promat.example.test",
+        replace_corpora=("english", "french", "spanish"),
+    )
+    options.update(overrides)
+    return build_remote_publish_script(RemotePublishOptions(**options))
+
+
+def test_replace_removes_old_corpus_sessions_from_the_staged_release_only() -> None:
+    script = _replace_script()
+
+    stage_copy = script.index('tar -cf - .) | (cd "$RELEASE" && tar -xf -)')
+    for slug in ("english", "french", "spanish"):
+        removal = script.index(f'rm -rf -- "$RELEASE/sessions/{slug}"')
+        assert stage_copy < removal < script.index('(cd "$INCOMING" && tar -cf - .)')
+    assert 'rm -rf -- "$RELEASE/sessions/german"' not in script
+    assert "$CURRENT/sessions" not in script and 'rm -rf -- "$CURRENT' not in script
+
+
+def test_replace_requires_the_upload_manifest_to_declare_exactly_the_same_corpora() -> None:
+    script = _replace_script()
+
+    assert 'MANIFEST_REPLACE="$(python3 -c' in script
+    assert '[ "$MANIFEST_REPLACE" != english,french,spanish ]' in script
+    assert script.index("MANIFEST_REPLACE") < script.index('mkdir -p "$RELEASE"')
+
+
+def test_replace_passes_each_language_to_the_db_dry_run_and_apply() -> None:
+    script = _replace_script()
+
+    assert script.count("--replace-language en --replace-language fr --replace-language es") == 2
+    assert "--replace-language de" not in script
+
+
+def test_replace_without_db_upsert_is_rejected() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="requires --apply-db-upsert"):
+        _replace_script(apply_db_upsert=False)
+    with pytest.raises(ValueError, match="unsupported replace corpus"):
+        _replace_script(replace_corpora=("klingon",))
+
+
+def test_upload_without_replace_flag_is_refused_when_manifest_declares_replacement() -> None:
+    script = build_remote_publish_script(
+        RemotePublishOptions(upload_id="plain_upload", apply_db_upsert=True, smoke_base_url="https://promat.example.test")
+    )
+
+    assert "Upload manifest declares replace_corpora but --replace-corpus was not given" in script
+    assert 'rm -rf -- "$RELEASE/sessions/' not in script
+
+
+def test_db_post_validation_status_must_be_ok_before_the_current_switch() -> None:
+    script = _replace_script()
+
+    assert script.index('test "$DB_POST_VALIDATION" = "ok"') < script.index('ln -sfn "releases/$RELEASE_ID"')

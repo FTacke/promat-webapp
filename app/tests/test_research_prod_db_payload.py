@@ -467,3 +467,148 @@ def test_cleanup_metadata_only_is_idempotent(tmp_path: Path) -> None:
     )
     assert result["sessions_to_delete"] == []
     assert result["persons_to_delete"] == []
+
+
+def _seed_workbench_reference(database_url: str, *, set_id: str, session_id: str) -> None:
+    from sqlalchemy import text
+
+    engine = create_engine(database_url, future=True)
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE TABLE IF NOT EXISTS research_set_workbench_sessions "
+                "(set_id TEXT NOT NULL, session_id TEXT NOT NULL, sort_order INTEGER NOT NULL, PRIMARY KEY (set_id, session_id))"
+            )
+        )
+        connection.execute(
+            text("INSERT INTO research_set_workbench_sessions (set_id, session_id, sort_order) VALUES (:s, :x, 1)"),
+            {"s": set_id, "x": session_id},
+        )
+
+
+def _seed_beta_state(database_url: str) -> None:
+    _seed_db_session(database_url, person_id="EN-L-0099", session_id="EN-L-0099-2026-S01", target_language="en")
+    _seed_db_session(database_url, person_id="FR-L-0001", session_id="FR-L-0001-2026-S01", target_language="fr")
+    _seed_db_session(database_url, person_id="DE-L-0001", session_id="DE-L-0001-2026-S01", target_language="de")
+    _seed_workbench_reference(database_url, set_id="set-1", session_id="EN-L-0099-2026-S01")
+    _seed_workbench_reference(database_url, set_id="set-1", session_id="FR-L-0001-2026-S01")
+
+
+def _replace_release(tmp_path: Path) -> tuple[Path, Path]:
+    release_dir = tmp_path / "release"
+    _write_runtime_session(release_dir, language_slug="english", session_id="EN-L-0001-2026-S01", tasks=("text",))
+    return release_dir, _write_payload(release_dir, _payload())
+
+
+def test_plain_upsert_keeps_stale_rows_of_the_same_language(tmp_path: Path) -> None:
+    release_dir, payload_path = _replace_release(tmp_path)
+    database_url = _database_url(tmp_path)
+    _seed_beta_state(database_url)
+
+    db_payload.run_payload_upsert(
+        release_dir=release_dir, payload_path=payload_path, database_url=database_url, apply_changes=True
+    )
+
+    engine = create_engine(database_url, future=True)
+    with sessionmaker(bind=engine, future=True)() as db_session:
+        assert db_session.get(ResearchSession, "EN-L-0099-2026-S01") is not None
+
+
+def test_replace_language_dry_run_reports_deletions_without_writing(tmp_path: Path) -> None:
+    release_dir, payload_path = _replace_release(tmp_path)
+    database_url = _database_url(tmp_path)
+    _seed_beta_state(database_url)
+
+    report = db_payload.run_payload_upsert(
+        release_dir=release_dir,
+        payload_path=payload_path,
+        database_url=database_url,
+        apply_changes=False,
+        replace_languages=("english",),
+    )
+
+    assert report["replace"]["languages"] == ["en"]
+    assert report["replace"]["deleted_person_ids"] == ["EN-L-0099"]
+    assert report["replace"]["deleted_session_ids"] == ["EN-L-0099-2026-S01"]
+    assert report["tables"]["research_people"]["delete"] == 1
+    assert report["tables"]["research_sessions"]["delete"] == 1
+    assert report["tables"]["research_set_workbench_sessions"]["delete"] == 1
+    engine = create_engine(database_url, future=True)
+    with sessionmaker(bind=engine, future=True)() as db_session:
+        assert db_session.get(ResearchSession, "EN-L-0099-2026-S01") is not None
+
+
+def test_replace_language_apply_removes_only_the_replaced_corpus_beta_rows(tmp_path: Path) -> None:
+    release_dir, payload_path = _replace_release(tmp_path)
+    database_url = _database_url(tmp_path)
+    _seed_beta_state(database_url)
+
+    report = db_payload.run_payload_upsert(
+        release_dir=release_dir,
+        payload_path=payload_path,
+        database_url=database_url,
+        apply_changes=True,
+        replace_languages=("en",),
+    )
+
+    assert report["post_upsert_validation"]["status"] == "ok"
+    assert report["post_upsert_validation"]["unexpected_sessions"] == []
+    engine = create_engine(database_url, future=True)
+    with sessionmaker(bind=engine, future=True)() as db_session:
+        assert db_session.get(ResearchPerson, "EN-L-0099") is None
+        assert db_session.get(ResearchSession, "EN-L-0099-2026-S01") is None
+        assert db_session.get(ResearchSession, "EN-L-0001-2026-S01") is not None
+        # Other corpora, including German, stay untouched.
+        assert db_session.get(ResearchSession, "FR-L-0001-2026-S01") is not None
+        assert db_session.get(ResearchSession, "DE-L-0001-2026-S01") is not None
+    from sqlalchemy import text
+
+    with engine.connect() as connection:
+        remaining = connection.execute(text("SELECT session_id FROM research_set_workbench_sessions")).scalars().all()
+    assert remaining == ["FR-L-0001-2026-S01"]
+
+
+def test_replace_language_requires_sessions_of_that_language_in_the_payload(tmp_path: Path) -> None:
+    release_dir, payload_path = _replace_release(tmp_path)
+    database_url = _database_url(tmp_path)
+    _seed_beta_state(database_url)
+
+    with pytest.raises(db_payload.PayloadUpsertError, match="requires sessions of that language"):
+        db_payload.run_payload_upsert(
+            release_dir=release_dir,
+            payload_path=payload_path,
+            database_url=database_url,
+            apply_changes=True,
+            replace_languages=("french",),
+        )
+
+    engine = create_engine(database_url, future=True)
+    with sessionmaker(bind=engine, future=True)() as db_session:
+        assert db_session.get(ResearchSession, "FR-L-0001-2026-S01") is not None
+
+
+def test_replace_language_rolls_back_when_validation_fails_before_commit(tmp_path: Path, monkeypatch) -> None:
+    release_dir, payload_path = _replace_release(tmp_path)
+    database_url = _database_url(tmp_path)
+    _seed_beta_state(database_url)
+    real_validation = db_payload._post_upsert_validation
+
+    def failing_validation(db_session, payload, replace_codes=()):
+        result = real_validation(db_session, payload, replace_codes)
+        return {**result, "status": "failed"}
+
+    monkeypatch.setattr(db_payload, "_post_upsert_validation", failing_validation)
+
+    with pytest.raises(db_payload.PayloadUpsertError, match="rolled back"):
+        db_payload.run_payload_upsert(
+            release_dir=release_dir,
+            payload_path=payload_path,
+            database_url=database_url,
+            apply_changes=True,
+            replace_languages=("en",),
+        )
+
+    engine = create_engine(database_url, future=True)
+    with sessionmaker(bind=engine, future=True)() as db_session:
+        assert db_session.get(ResearchSession, "EN-L-0099-2026-S01") is not None
+        assert db_session.get(ResearchSession, "EN-L-0001-2026-S01") is None

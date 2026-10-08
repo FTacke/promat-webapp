@@ -34,6 +34,17 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Include every existing data/sessions/{language}/{session_id}/ runtime session with a metadata.json file.",
     )
+    parser.add_argument(
+        "--replace-corpus",
+        action="append",
+        default=[],
+        metavar="LANG",
+        help=(
+            "Package every runtime session of this corpus (code or slug; repeatable) as the COMPLETE replacement of "
+            "that corpus: publishing removes sessions of the corpus that are not in the package. Requires --db-payload; "
+            "cannot be combined with --language, --session-id or --all-runtime-sessions."
+        ),
+    )
     parser.add_argument("--db-payload", help="Optional path to a prebuilt import_payload.json.")
     parser.add_argument(
         "--include-research-player-config",
@@ -76,9 +87,27 @@ def _discover_all_runtime_sessions() -> list[tuple[str, Path]]:
     return session_roots
 
 
+def _discover_corpus_runtime_sessions(language_values: list[str]) -> list[tuple[str, Path]]:
+    wanted = {resolve_language_config(value).code for value in language_values}
+    return [(code, path) for code, path in _discover_all_runtime_sessions() if code in wanted]
+
+
 def main() -> int:
     args = parse_args()
-    if args.all_runtime_sessions:
+    if args.replace_corpus:
+        if args.all_runtime_sessions or args.language or args.session_id:
+            print("ERROR: --replace-corpus cannot be combined with --language, --session-id or --all-runtime-sessions")
+            return 1
+        if not args.db_payload:
+            print("ERROR: --replace-corpus requires --db-payload")
+            return 1
+        session_roots = _discover_corpus_runtime_sessions(args.replace_corpus)
+        found = {code for code, _ in session_roots}
+        for value in args.replace_corpus:
+            if resolve_language_config(value).code not in found:
+                print(f"ERROR: no runtime sessions found for corpus {value}")
+                return 1
+    elif args.all_runtime_sessions:
         if args.language or args.session_id:
             print("ERROR: --all-runtime-sessions cannot be combined with --language or --session-id")
             return 1
@@ -117,6 +146,7 @@ def main() -> int:
             db_payload=db_payload,
             config_roots=config_roots,
             upload_id=upload_id,
+            replace_corpora=args.replace_corpus,
         )
     except IntakeStorageError as exc:
         print(f"ERROR: {exc}")

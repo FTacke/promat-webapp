@@ -9,7 +9,7 @@ import re
 import sys
 from typing import Any
 
-from sqlalchemy import create_engine, delete, func, inspect, select
+from sqlalchemy import bindparam, create_engine, delete, func, inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 
@@ -82,6 +82,17 @@ def parse_args() -> argparse.Namespace:
         help="Target DB URL. Defaults to AUTH_DATABASE_URL; no dev fallback is used for this prod tool.",
     )
     parser.add_argument("--apply", action="store_true", help="Apply the transactional DB upsert. Default is dry-run.")
+    parser.add_argument(
+        "--replace-language",
+        action="append",
+        default=[],
+        metavar="LANG",
+        help=(
+            "Complete corpus replacement for this language (code or slug; repeatable). Besides the upsert, people, "
+            "sessions and exposures of that language that are not in the payload are deleted, together with workbench "
+            "references to the deleted sessions. The payload must contain sessions for every listed language."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true", help="Validate and report planned DB changes without writing.")
     parser.add_argument(
         "--cleanup-metadata-only",
@@ -392,6 +403,7 @@ def _plan_and_optionally_apply(
     *,
     apply_changes: bool,
     now: datetime,
+    replace_languages: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     counters = _empty_table_counts()
     persons = _require_list(payload, "persons")
@@ -484,7 +496,99 @@ def _plan_and_optionally_apply(
             if apply_changes:
                 db_session.delete(row)
 
-    return {"tables": counters}
+    replace_report = _plan_and_optionally_replace(
+        db_session,
+        persons=persons,
+        sessions=sessions,
+        replace_languages=replace_languages,
+        apply_changes=apply_changes,
+        counters=counters,
+    )
+    return {"tables": counters, "replace": replace_report}
+
+
+def _plan_and_optionally_replace(
+    db_session: Session,
+    *,
+    persons: list[dict[str, Any]],
+    sessions: list[dict[str, Any]],
+    replace_languages: tuple[str, ...],
+    apply_changes: bool,
+    counters: dict[str, dict[str, int]],
+) -> dict[str, Any]:
+    """Delete rows of the replaced corpora that the payload no longer contains (complete corpus replacement).
+
+    Scope is strictly the listed languages: sessions by ``target_language``, people by their corpus-code prefix
+    (``EN-``, ``FR-``, ...). Everything else stays untouched.
+    """
+    report: dict[str, Any] = {"languages": list(replace_languages), "deleted_session_ids": [], "deleted_person_ids": []}
+    if not replace_languages:
+        return report
+    payload_session_ids = {session["session_id"] for session in sessions}
+    payload_person_ids = {person["person_id"] for person in persons}
+    counters.setdefault("research_set_workbench_sessions", {"insert": 0, "update": 0, "unchanged": 0, "delete": 0})
+
+    deleted_session_ids: list[str] = []
+    deleted_person_ids: list[str] = []
+    for language_code in replace_languages:
+        stale_sessions = db_session.scalars(
+            select(ResearchSession).where(ResearchSession.target_language == language_code)
+        ).all()
+        for row in stale_sessions:
+            if row.session_id not in payload_session_ids:
+                deleted_session_ids.append(row.session_id)
+        stale_people = db_session.scalars(
+            select(ResearchPerson).where(ResearchPerson.person_id.like(f"{language_code.upper()}-%"))
+        ).all()
+        for row in stale_people:
+            if row.person_id not in payload_person_ids:
+                deleted_person_ids.append(row.person_id)
+    # A person that disappears takes all of its sessions with it (ON DELETE CASCADE); count them explicitly.
+    if deleted_person_ids:
+        cascaded = db_session.scalars(
+            select(ResearchSession.session_id).where(ResearchSession.person_id.in_(deleted_person_ids))
+        ).all()
+        for session_id in cascaded:
+            if session_id not in deleted_session_ids:
+                deleted_session_ids.append(session_id)
+
+    workbench_refs = 0
+    if deleted_session_ids:
+        count_statement = text(
+            "SELECT count(*) FROM research_set_workbench_sessions WHERE session_id IN :ids"
+        ).bindparams(bindparam("ids", expanding=True))
+        workbench_refs = int(db_session.execute(count_statement, {"ids": deleted_session_ids}).scalar() or 0)
+    exposure_rows = 0
+    if deleted_session_ids:
+        exposure_rows = int(
+            db_session.scalar(
+                select(func.count())
+                .select_from(ResearchSessionExposure)
+                .where(ResearchSessionExposure.session_id.in_(deleted_session_ids))
+            )
+            or 0
+        )
+    counters["research_session_exposures"]["delete"] += exposure_rows
+    counters["research_sessions"]["delete"] += len(deleted_session_ids)
+    counters["research_people"]["delete"] += len(deleted_person_ids)
+    counters["research_set_workbench_sessions"]["delete"] += workbench_refs
+    report["deleted_session_ids"] = sorted(deleted_session_ids)
+    report["deleted_person_ids"] = sorted(deleted_person_ids)
+
+    if apply_changes and deleted_session_ids:
+        db_session.execute(
+            text("DELETE FROM research_set_workbench_sessions WHERE session_id IN :ids").bindparams(
+                bindparam("ids", expanding=True)
+            ),
+            {"ids": deleted_session_ids},
+        )
+        db_session.execute(
+            delete(ResearchSessionExposure).where(ResearchSessionExposure.session_id.in_(deleted_session_ids))
+        )
+        db_session.execute(delete(ResearchSession).where(ResearchSession.session_id.in_(deleted_session_ids)))
+    if apply_changes and deleted_person_ids:
+        db_session.execute(delete(ResearchPerson).where(ResearchPerson.person_id.in_(deleted_person_ids)))
+    return report
 
 
 def run_payload_upsert(
@@ -493,9 +597,11 @@ def run_payload_upsert(
     payload_path: Path,
     database_url: str,
     apply_changes: bool,
+    replace_languages: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     payload = load_payload(payload_path)
     validation = validate_payload_against_release(payload, release_dir)
+    replace_codes = _validate_replace_languages(replace_languages, validation)
     engine = create_engine(database_url, future=True)
     _assert_schema_ready(engine)
     session_factory = sessionmaker(bind=engine, future=True)
@@ -510,12 +616,24 @@ def run_payload_upsert(
 
     if apply_changes:
         with session_factory.begin() as db_session:
-            changes = _plan_and_optionally_apply(db_session, payload, apply_changes=True, now=now)
+            changes = _plan_and_optionally_apply(
+                db_session, payload, apply_changes=True, now=now, replace_languages=replace_codes
+            )
+            db_session.flush()
+            in_transaction_validation = _post_upsert_validation(db_session, payload, replace_codes)
+            if in_transaction_validation["status"] != "ok":
+                # Raising leaves the ``begin()`` block, which rolls the whole transaction back.
+                raise PayloadUpsertError(
+                    "post-upsert validation failed before commit; transaction rolled back: "
+                    + json.dumps(in_transaction_validation, ensure_ascii=False, sort_keys=True)
+                )
         with session_factory() as db_session:
-            post_validation = _post_upsert_validation(db_session, payload)
+            post_validation = _post_upsert_validation(db_session, payload, replace_codes)
     else:
         with session_factory() as db_session:
-            changes = _plan_and_optionally_apply(db_session, payload, apply_changes=False, now=now)
+            changes = _plan_and_optionally_apply(
+                db_session, payload, apply_changes=False, now=now, replace_languages=replace_codes
+            )
         post_validation = {"status": "not_run", "reason": "dry_run"}
 
     return {
@@ -531,6 +649,7 @@ def run_payload_upsert(
             "documented_task_count": validation["documented_task_count"],
         },
         "tables": changes["tables"],
+        "replace": changes["replace"],
         "pre_upsert_counts": before_counts,
         "post_upsert_validation": post_validation,
         "rollback": (
@@ -623,7 +742,23 @@ def run_cleanup_metadata_only(
     return result
 
 
-def _post_upsert_validation(db_session: Session, payload: dict[str, Any]) -> dict[str, Any]:
+def _validate_replace_languages(replace_languages: tuple[str, ...], validation: dict[str, Any]) -> tuple[str, ...]:
+    codes: list[str] = []
+    for value in replace_languages:
+        code = resolve_language_config(value).code
+        if code not in validation["languages"]:
+            raise PayloadUpsertError(
+                f"--replace-language {value!r} requires sessions of that language in the payload "
+                f"(payload languages: {', '.join(validation['languages'])})"
+            )
+        if code not in codes:
+            codes.append(code)
+    return tuple(codes)
+
+
+def _post_upsert_validation(
+    db_session: Session, payload: dict[str, Any], replace_codes: tuple[str, ...] = ()
+) -> dict[str, Any]:
     persons = _require_list(payload, "persons")
     sessions = _require_list(payload, "sessions")
     exposures = _require_list(payload, "exposures") if "exposures" in payload else []
@@ -642,11 +777,38 @@ def _post_upsert_validation(db_session: Session, payload: dict[str, Any]) -> dic
         )
         or 0
     )
-    status = "ok" if not missing_people and not missing_sessions and actual_exposure_count == expected_exposure_count else "failed"
+    unexpected_sessions: list[str] = []
+    unexpected_people: list[str] = []
+    for language_code in replace_codes:
+        unexpected_sessions.extend(
+            session_id
+            for session_id in db_session.scalars(
+                select(ResearchSession.session_id).where(ResearchSession.target_language == language_code)
+            ).all()
+            if session_id not in session_ids
+        )
+        unexpected_people.extend(
+            person_id
+            for person_id in db_session.scalars(
+                select(ResearchPerson.person_id).where(ResearchPerson.person_id.like(f"{language_code.upper()}-%"))
+            ).all()
+            if person_id not in person_ids
+        )
+    status = (
+        "ok"
+        if not missing_people
+        and not missing_sessions
+        and not unexpected_sessions
+        and not unexpected_people
+        and actual_exposure_count == expected_exposure_count
+        else "failed"
+    )
     return {
         "status": status,
         "missing_people": missing_people,
         "missing_sessions": missing_sessions,
+        "unexpected_sessions": sorted(unexpected_sessions),
+        "unexpected_people": sorted(unexpected_people),
         "expected_exposure_count": expected_exposure_count,
         "actual_exposure_count": actual_exposure_count,
     }
@@ -686,6 +848,7 @@ def main() -> int:
                 payload_path=payload_path,
                 database_url=_resolve_database_url(args.auth_database_url),
                 apply_changes=args.apply,
+                replace_languages=tuple(args.replace_language),
             )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

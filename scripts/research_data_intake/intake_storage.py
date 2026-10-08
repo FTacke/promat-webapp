@@ -11,7 +11,7 @@ import shutil
 from typing import Any, Iterable, Sequence
 
 from intake_batch_common import ParsedBatchFile
-from language_config import maybe_resolve_language_config, resolve_language_config
+from language_config import iter_language_configs, maybe_resolve_language_config, resolve_language_config
 from item_text_normalization import contains_noncanonical_french_item_text
 import fixity
 import provenance as provenance_helpers
@@ -316,6 +316,20 @@ def _validate_manifest_payload(package_dir: Path, package_files: set[str], error
         if unexpected:
             errors.append(f"manifest.json contains unknown files: {', '.join(unexpected[:5])}")
 
+    replace_value = manifest_payload.get("replace_corpora")
+    if replace_value is not None:
+        valid_slugs = {config.corpus_slug for config in iter_language_configs()}
+        if not isinstance(replace_value, list) or not replace_value or not all(isinstance(item, str) for item in replace_value):
+            errors.append("manifest.json replace_corpora must be a non-empty list of corpus slugs")
+        else:
+            for slug in replace_value:
+                if slug not in valid_slugs:
+                    errors.append(f"manifest.json replace_corpora has unknown corpus slug: {slug}")
+                elif not any(path.startswith(f"sessions/{slug}/") for path in package_files):
+                    errors.append(f"manifest.json replace_corpora lists {slug} but the package has no sessions for it")
+            if "db/import_payload.json" not in package_files:
+                errors.append("manifest.json replace_corpora requires db/import_payload.json")
+
     for relative_path in files_value:
         if "\\" in relative_path:
             errors.append(f"manifest.json path uses backslashes: {relative_path}")
@@ -560,9 +574,26 @@ def build_prod_upload_package(
     db_payload: dict[str, Any] | None = None,
     config_roots: Sequence[Path] = (),
     upload_id: str,
+    replace_corpora: Sequence[str] = (),
 ) -> ProdPackageBuildResult:
+    """Build an allowlist prod package.
+
+    ``replace_corpora`` marks the package as the *complete* replacement of those corpora: publishing removes every
+    session of a listed corpus that is not in the package (and the DB step removes the matching rows). The package
+    must then carry sessions for each listed corpus and a payload that covers every packaged session.
+    """
     if output_dir.exists():
         raise IntakeStorageError(f"refusing to overwrite existing prod package directory: {output_dir}")
+
+    replace_slugs = sorted({resolve_language_config(value).corpus_slug for value in replace_corpora})
+    packaged_slugs = {resolve_language_config(language_value).corpus_slug for language_value, _ in session_roots}
+    missing_replace = [slug for slug in replace_slugs if slug not in packaged_slugs]
+    if missing_replace:
+        raise IntakeStorageError(
+            "replace corpora without packaged sessions: " + ", ".join(missing_replace)
+        )
+    if replace_slugs and db_payload is None:
+        raise IntakeStorageError("a corpus replacement package requires a db payload")
 
     if db_payload is not None and isinstance(db_payload.get("sessions"), list):
         # A payload written by a partial importer run (for example one person) would silently leave the
@@ -630,6 +661,8 @@ def build_prod_upload_package(
         "sessions": [session_dir.name for _, session_dir in session_roots],
         "files": final_package_files,
     }
+    if replace_slugs:
+        manifest_payload["replace_corpora"] = replace_slugs
     with manifest_path.open("w", encoding="utf-8", newline="\n") as handle:
         handle.write(json.dumps(manifest_payload, ensure_ascii=False, indent=2) + "\n")
     relative_files.append("manifest.json")

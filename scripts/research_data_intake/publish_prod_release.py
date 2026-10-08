@@ -13,6 +13,7 @@ DEFAULT_CONTAINER_DATA_ROOT = "/app/data"
 DEFAULT_CONTAINER_RESTART_DELAY = 15
 
 
+REPLACEABLE_CORPORA = {"english": "en", "french": "fr", "spanish": "es", "german": "de"}
 DEFAULT_RELEASE_RETENTION_DAYS = 7
 DEFAULT_RELEASE_RETENTION_PREVIOUS = 1
 
@@ -30,6 +31,7 @@ class RemotePublishOptions:
     release_retention_days: int = DEFAULT_RELEASE_RETENTION_DAYS
     release_retention_previous: int = DEFAULT_RELEASE_RETENTION_PREVIOUS
     no_release_retention: bool = False
+    replace_corpora: tuple[str, ...] = ()
 
 
 def parse_args() -> argparse.Namespace:
@@ -58,6 +60,17 @@ def parse_args() -> argparse.Namespace:
         "--smoke-base-url",
         default="https://promat.example.invalid",
         help="Base URL used for health and smoke checks after promote.",
+    )
+    parser.add_argument(
+        "--replace-corpus",
+        action="append",
+        default=[],
+        choices=sorted(REPLACEABLE_CORPORA),
+        help=(
+            "Complete replacement of this corpus slug (repeatable): sessions of the corpus that are not in the upload "
+            "are removed from the new release and the DB rows are reconciled. Must match replace_corpora in the "
+            "upload manifest exactly. Requires --apply-db-upsert."
+        ),
     )
     parser.add_argument("--dry-run", action="store_true", help="Print the remote script instead of running SSH.")
     parser.add_argument(
@@ -92,7 +105,15 @@ def _q(value: str) -> str:
 
 
 def build_remote_publish_script(options: RemotePublishOptions) -> str:
-    db_block = _db_upsert_block() if options.apply_db_upsert else _db_skip_block()
+    replace_corpora = tuple(dict.fromkeys(options.replace_corpora))
+    unknown = [slug for slug in replace_corpora if slug not in REPLACEABLE_CORPORA]
+    if unknown:
+        raise ValueError(f"unsupported replace corpus: {', '.join(unknown)}")
+    if replace_corpora and not options.apply_db_upsert:
+        raise ValueError("--replace-corpus requires --apply-db-upsert so that files and database are replaced together")
+    db_block = _db_upsert_block(replace_corpora) if options.apply_db_upsert else _db_skip_block()
+    replace_check_block = _replace_check_block(replace_corpora)
+    replace_stage_block = _replace_stage_block(replace_corpora)
     sync_sessions_block = _sync_sessions_block()
     restart_block = _restart_container_block(DEFAULT_CONTAINER_RESTART_DELAY) if options.restart_container else _restart_skip_block()
     if options.no_release_retention:
@@ -139,6 +160,7 @@ test -f "$INCOMING/checksums.sha256" || {{ echo "Incoming checksums.sha256 is mi
 
 cd "$INCOMING"
 sha256sum -c checksums.sha256
+{replace_check_block}
 if [ -f "$INCOMING/db/import_payload.json" ]; then
   DB_PAYLOAD_PRESENT="yes"
 fi
@@ -150,6 +172,7 @@ if [ -L "$CURRENT" ] || [ -d "$CURRENT" ]; then
     (cd "$CURRENT_REAL" && tar -cf - .) | (cd "$RELEASE" && tar -xf -)
   fi
 fi
+{replace_stage_block}
 (cd "$INCOMING" && tar -cf - .) | (cd "$RELEASE" && tar -xf -)
 
 cd "$RELEASE"
@@ -186,6 +209,7 @@ cat > "$PUBLISH_LOG" <<REPORT
 - release: $RELEASE
 - current: $(readlink -f "$CURRENT")
 - db_payload_present: $DB_PAYLOAD_PRESENT
+- replace_corpora: {", ".join(replace_corpora) or "none"}
 - db_upsert_status: $DB_STATUS
 - db_post_upsert_validation: $DB_POST_VALIDATION
 - db_command: docker exec $DB_CONTAINER python /app/scripts/research_data_intake/apply_prod_db_payload.py --release-dir "$CONTAINER_RELEASE" --payload "$CONTAINER_RELEASE/db/import_payload.json"
@@ -405,10 +429,39 @@ DB_APPLY_OUTPUT="{\\"mode\\":\\"skipped\\",\\"reason\\":\\"--apply-db-upsert not
 """
 
 
-def _db_upsert_block() -> str:
+def _replace_check_block(replace_corpora: tuple[str, ...]) -> str:
+    """Refuse to continue unless the upload manifest declares exactly the corpora the operator asked to replace."""
+    if not replace_corpora:
+        return """if grep -q '"replace_corpora"' "$INCOMING/manifest.json"; then
+  echo "Upload manifest declares replace_corpora but --replace-corpus was not given" >&2
+  exit 1
+fi
+"""
+    expected = ",".join(sorted(replace_corpora))
+    return f"""MANIFEST_REPLACE="$(python3 -c 'import json,sys; print(",".join(sorted(json.load(open(sys.argv[1])).get("replace_corpora", []))))' "$INCOMING/manifest.json")"
+if [ "$MANIFEST_REPLACE" != {_q(expected)} ]; then
+  echo "replace_corpora mismatch: manifest=[$MANIFEST_REPLACE] requested=[{expected}]" >&2
+  exit 1
+fi
+"""
+
+
+def _replace_stage_block(replace_corpora: tuple[str, ...]) -> str:
+    """Drop the replaced corpora from the staged release only; ``current`` stays untouched as rollback."""
+    if not replace_corpora:
+        return ""
+    lines = ["# Complete corpus replacement: remove the old sessions of the replaced corpora from the STAGED release."]
+    for slug in replace_corpora:
+        lines.append(f'rm -rf -- "$RELEASE/sessions/{slug}"')
+    return "\n".join(lines) + "\n"
+
+
+def _db_upsert_block(replace_corpora: tuple[str, ...] = ()) -> str:
+    replace_flags = "".join(f" --replace-language {REPLACEABLE_CORPORA[slug]}" for slug in replace_corpora)
     base_command = (
         'docker exec "$DB_CONTAINER" python /app/scripts/research_data_intake/apply_prod_db_payload.py '
         '--release-dir "$CONTAINER_RELEASE" --payload "$CONTAINER_RELEASE/db/import_payload.json"'
+        + replace_flags
     )
     dry_run_command = base_command
     apply_command = f"{base_command} --apply"
@@ -421,7 +474,11 @@ DB_DRY_RUN_OUTPUT="$({dry_run_command})"
 DB_STATUS="apply_started"
 DB_APPLY_OUTPUT="$({apply_command})"
 DB_STATUS="applied"
-DB_POST_VALIDATION="$(printf '%s' "$DB_APPLY_OUTPUT" | grep -o '\\\"post_upsert_validation\\\"' >/dev/null && echo ok || echo missing)"
+DB_POST_VALIDATION="$(printf '%s' "$DB_APPLY_OUTPUT" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("post_upsert_validation", {{}}).get("status", "missing"))')"
+test "$DB_POST_VALIDATION" = "ok" || {{
+  echo "DB post-upsert validation is not ok: $DB_POST_VALIDATION" >&2
+  exit 1
+}}
 """
 
 
@@ -439,6 +496,7 @@ def main() -> int:
         release_retention_days=args.release_retention_days,
         release_retention_previous=args.release_retention_previous,
         no_release_retention=args.no_release_retention,
+        replace_corpora=tuple(args.replace_corpus),
     )
     script = build_remote_publish_script(options)
     if args.dry_run:
