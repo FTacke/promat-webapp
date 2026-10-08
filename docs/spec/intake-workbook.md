@@ -285,12 +285,17 @@ SW
 AM
 TI
 SO
+KAB
+NMG
+RCF
+DUA
 unknown
 ```
 
 Rule:
 
 - `unknown` remains lowercase and is accepted for `l1`, `l1_additional`, `mother_l1`, and `father_l1` when a relevant L1 value is not known.
+- `KAB` (Kabyle), `NMG` (Ngumba/Kwasio), `RCF` (Réunion Creole) and `DUA` (Duala) are ISO 639-3 codes for languages without an ISO 639-1 code; the rest of the list is ISO 639-1. Free-text names from source workbooks (for example `KABYL`, `CREOLE`) are never resolved by an alias rule: the workbook cell is corrected per person to the code before intake.
 
 ### `target_language`
 

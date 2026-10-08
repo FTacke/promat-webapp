@@ -337,6 +337,34 @@ def _append_suffix_to_previous_token(tokens: list[dict[str, object]], suffix: st
         tokens[-1]["suffix"] = suffix
 
 
+_PAUSE_FRAME_OPEN = re.compile(r"\[[^\w\[\]]*")
+_PAUSE_FRAME_CLOSE = re.compile(r"[^\w\[\]]*\]")
+
+
+def _spaced_pause_bracket_indices(words_payload: list[Any]) -> set[int]:
+    """1-based word indices of pause frames written as separate words, e.g. ``[ . ]``, ``[ ]`` or ``[. ]``.
+
+    Only an opening word made of ``[`` plus punctuation, followed by words that carry no letter or
+    digit, closed by a word made of punctuation plus ``]``, qualifies. Anything else inside the
+    brackets (for example a material-reference id) is not a pause frame and stays an error.
+    """
+    indices: set[int] = set()
+    texts = [word.get("text") if isinstance(word, dict) else None for word in words_payload]
+    for open_index, open_text in enumerate(texts):
+        if not isinstance(open_text, str) or _PAUSE_FRAME_OPEN.fullmatch(open_text) is None:
+            continue
+        for close_index in range(open_index + 1, len(texts)):
+            inner = texts[close_index]
+            if not isinstance(inner, str):
+                break
+            if _PAUSE_FRAME_CLOSE.fullmatch(inner) is not None:
+                indices.update(range(open_index + 1, close_index + 2))
+                break
+            if re.search(r"[\w\[\]]", inner):
+                break
+    return indices
+
+
 def build_interview_alignment_payload(
     *,
     source_json_path: Path,
@@ -370,6 +398,7 @@ def build_interview_alignment_payload(
         tokens: list[dict[str, object]] = []
         annotations: list[dict[str, object]] = []
         previous_token_id: str | None = None
+        pause_bracket_indices = _spaced_pause_bracket_indices(words_payload)
 
         for word_index, word_payload in enumerate(words_payload, start=1):
             text = _require_word_text(word_payload, source_json_path, segment_index, word_index)
@@ -416,7 +445,12 @@ def build_interview_alignment_payload(
                     start_ms=start_ms,
                     end_ms=end_ms,
                 )
-            if material_ref_match is None and ("[" in text or "]" in text) and not _is_non_material_bracket_literal(text):
+            if (
+                material_ref_match is None
+                and ("[" in text or "]" in text)
+                and word_index not in pause_bracket_indices
+                and not _is_non_material_bracket_literal(text)
+            ):
                 raise InterviewImportError(
                     "error_invalid_material_ref_marker",
                     f"Invalid material reference marker {text!r}: {source_json_path}",

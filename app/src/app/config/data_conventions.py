@@ -73,6 +73,10 @@ L1_CODES: tuple[str, ...] = (
     "AM",
     "TI",
     "SO",
+    "KAB",
+    "NMG",
+    "RCF",
+    "DUA",
     "unknown",
 )
 

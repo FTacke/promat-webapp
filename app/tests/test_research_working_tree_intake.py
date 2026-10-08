@@ -355,6 +355,29 @@ def test_build_interview_alignment_payload_rejects_unknown_material_ref_item_id(
         raise AssertionError("Expected InterviewImportError for unknown material reference item_id")
 
 
+def test_build_interview_alignment_payload_keeps_spaced_pause_bracket_frames_as_separate_tokens(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    _write_json(source_json, _minimal_interview_payload(reference_words=["Ähm", "[", ".", "]", "Oui,", "[", "]", "[.", "]", "ja"]))
+
+    payload = build_interview_alignment_payload(source_json_path=source_json, person_id="DE-L-0001", session_id=None)
+
+    segment = payload["segments"][1]
+    assert [token["text"] for token in segment["tokens"][1:]] == ["Ähm", "[", ".", "]", "Oui,", "[", "]", "[.", "]", "ja"]
+    assert segment.get("annotations") is None
+
+
+def test_build_interview_alignment_payload_rejects_spaced_brackets_around_spoken_content(tmp_path: Path) -> None:
+    source_json = tmp_path / "input.json"
+    _write_json(source_json, _minimal_interview_payload(reference_words=["[", "wl_025", "]"]))
+
+    try:
+        build_interview_alignment_payload(source_json_path=source_json, person_id="ES-L-0001", session_id=None)
+    except InterviewImportError as exc:
+        assert exc.status_code == "error_invalid_material_ref_marker"
+    else:
+        raise AssertionError("Expected InterviewImportError for spaced brackets around spoken content")
+
+
 def test_build_interview_alignment_payload_rejects_invalid_material_ref_marker(tmp_path: Path) -> None:
     source_json = tmp_path / "input.json"
     _write_json(source_json, _minimal_interview_payload(reference_words=["89[foo_089]."]))

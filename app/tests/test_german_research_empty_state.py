@@ -1,4 +1,4 @@
-"""The German corpus has no runtime sessions yet; its protected pages must say so plainly.
+"""A corpus without runtime sessions (the fixture runtime has none for German) must say so plainly on its protected pages.
 
 Contract: ``docs/spec/research-capabilities.md`` (Corpus-Specific Surface Modes): no planning placeholders or dummy
 cards for an empty runtime, and the public ``design`` page is an honest "in preparation" state.
