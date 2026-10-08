@@ -112,6 +112,15 @@ Zusätzliche, physisch getrennte Kopie der Archiv-Einheiten auf einem externen D
 5. **Kalt verifizieren:** `... backup-verify --unbuffered --report-dir tmp\preservation-reports`. Exit-Code 0, `BACKED_UP` = Einheitenzahl und `supplemental_failed=0` erforderlich. `--unbuffered` liest jede Datei am Dateicache des Rechners vorbei direkt vom Datenträger; ein Verify ohne diese Option unmittelbar nach dem Kopieren kann aus dem Arbeitsspeicher bedient werden. Ein Ab- und Wiederanstecken ist dafür nicht nötig.
 6. **Nach jedem neuen Batch** Schritte 1–5 wiederholen; `backup-status` zeigt, welche Einheiten `BACKUP_PENDING` sind. Regelmäßig `backup-verify` laufen lassen, auch ohne neue Daten.
 
+### Ersetzte Archiveinheiten (vollständiger Korpusersatz)
+
+Ersetzt ein Complete-Batch Session-Einheiten, die schon gesichert sind (`conflict_destination_mismatch` bei `backup-copy`, `BACKUP_PENDING` im Status), ist das eine bewusste Operator-Aktion; das Werkzeug überschreibt nie.
+
+1. Lokal: überholte Fixity-Baselines der ersetzten Einheiten entfernen (`fixity/baseline/sessions__<code>__<id>.json` und `.sha256`) und `baseline --execute` neu laufen lassen (die Einheiten sind danach durch ihr Unit-Manifest abgedeckt).
+2. Die neuen Einheiten vorab als Zusatz-Set sichern (`backup-supplemental --label <label> --extra <name>=<archiv>/sessions/<code>`) und mit `backup-verify --unbuffered` prüfen.
+3. Je ersetzter Einheit auf dem Backup-Laufwerk genau den benannten Ordner `archive/sessions/<code>/<id>` und die Quittungen `sessions__<code>__<id>.json` (Backup-Laufwerk `_backup/receipts` und lokal `backup/receipts`) entfernen; vorher Dateiliste und Größen gegen das Zusatz-Set vergleichen.
+4. `backup-copy --execute` und `backup-verify --unbuffered`: Zielzustand alle Einheiten `BACKED_UP`, `BACKUP_PENDING=0`. Danach das redundante Zusatz-Set samt `_manifests/<name>.json|.sha256` entfernen.
+
 Regeln:
 
 - Das Werkzeug löscht und überschreibt auf dem Backup nichts. Weicht eine Zieldatei vom erwarteten Inhalt ab, meldet es `conflict_destination_mismatch` und bricht für diese Einheit ab: Ursache klären (defekter Datenträger oder veränderte Quelle), nicht von Hand „reparieren“.

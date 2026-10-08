@@ -7,13 +7,15 @@ Non-normative run report. Binding rules: `docs/spec/platform-data-files.md`, `do
 ```text
 LOCAL_IMPORT_COMPLETE            (EN 15, FR 31, ES 28 Sessions; Runtime, Dev-DB, Archiv)
 LOCAL_VALIDATION_GREEN
-CATALOGS_UNCHANGED               (12/12 SHA-256 lokal und in Produktion)
-UPLOAD_PACKAGE_ON_SERVER         (promat_upload_corpora_replace_20261008, Checksum-Gate ok)
-PROD_PUBLISH_BLOCKED             (Berechtigungsprüfung lehnte publish_prod_release.py --replace-corpus ab)
-PRESERVATION_ROOT_NOT_CONFIGURED
+CATALOGS_UNCHANGED               (12/12 SHA-256 lokal und in Produktion, vor und nach dem Publish)
+PROD_PUBLISHED                   (release_20261008T205238Z_promat_upload_corpora_replace_20261008)
+PROD_VALIDATED                   (DB, Inventare, Anwendung, Zugriffsschutz)
+BACKUP_COMPLETE                  (110/110 Einheiten BACKED_UP, kalt verifiziert)
+BETA_CLEANED                     (Server, import/, exports/, Rückfallsicherung)
+PRESERVATION_BLOCKED             (K:\Pronunciation_Matters nicht anlegbar: Zugriff verweigert)
 ```
 
-**Der Produktionsstand ist nicht umgestellt.** Produktion enthält weiter den Beta-Stand (EN 10, FR 21, ES 24 Sessions); das Release-Paket liegt geprüft in `incoming/`. Ein Release wurde nicht als vollständig ausgegeben.
+Stand nach dem Abschlussrun: Produktion ist umgestellt (siehe „Abschluss“). Bis dahin war der Publish durch die Berechtigungsprüfung der ersten Sitzung blockiert; die Abschnitte A bis C beschreiben den Zustand vor dem Publish.
 
 ## A. Bestandsvergleich (vor jeder Änderung erhoben)
 
@@ -108,6 +110,35 @@ Produktion:
 - Preservation-Root: nicht konfiguriert (`PROMAT_PRESERVATION_ROOT` leer, kein Ziel). Alle Einheiten bleiben `PRESERVATION_PENDING`. Deshalb wurden die neuen Complete-Batch-Verzeichnisse in `import/` **nicht** entfernt.
 - Noch nicht bereinigt, weil die Produktion noch nicht umgestellt ist: abgelöste Beta-Releases auf dem Server (nach dem Publish fällt das vorherige Release unter die Retention und ist manuell zu entfernen), die Rückfallsicherung, die Altverzeichnisse `import/english_batch_20260618`, `import/french_batch_20260618`, `import/spanish_batch_20260619`, die lokale Altkopie `import/organize_batch_working_tree.py` (nicht identisch mit der versionierten Fassung, 1180 Diff-Zeilen; als Zusatz-Set gesichert) und alte lokale Exporte unter `scripts/research_data_intake/exports/`.
 
-## E. Restpunkte
+## Abschluss (Folgerun, 2026-10-08)
 
-Siehe Abschlussbericht im Chat: Freigabe bzw. Ausführung des Publish, danach Produktionsvalidierung, Bereinigung und Preservation-Ziel.
+**Produktion.** Release `release_20261008T205238Z_promat_upload_corpora_replace_20261008`, Publish-Report auf dem Server `publish_logs/promat_publish_promat_upload_corpora_replace_20261008_20261008T205238Z.md`: `replace_corpora = english, french, spanish`, DB-Upsert angewendet, Post-Validierung `ok` (0 fehlende, 0 unerwartete Personen/Sessions), Sessions-Sync, Container-Neustart, Health/Ready 200, Retention angewendet. DB-Lauf: Personen 19 neu / 2 aktualisiert / 53 unverändert, Sessions 19 neu / 1 aktualisiert / 54 unverändert, Expositionen 9 neu, **0 Löschungen**, 0 Workbench-Verweise betroffen (alle Beta-IDs sind im Batch enthalten).
+
+| Korpus | Personen (L / N) | Sessions | Wortliste / Text / Interview | Korpus-Hash (lokal = Produktion) |
+|---|---:|---:|---|---|
+| Englisch | 15 (12 / 3) | 15 | 15 / 15 / 12 | `90b87351b4f25d63` |
+| Französisch | 31 (29 / 2) | 31 | 31 / 31 / 29 | `a3877e62150f979a` |
+| Spanisch | 28 (23 / 5) | 28 | 28 / 28 / 23 | `2d827e180cf6c738` |
+| Deutsch (unberührt) | 26 (24 / 2) | 26 | 26 / 26 / 24 | `b3501565b468229e` |
+
+- Inventarvergleich: `corpus_inventory.py` im Produktions-Container (per Stdin) gegen die lokalen Inventare: für alle vier Korpora „inventories identical“ (SHA-256 je Session und je Korpus); die Korpus-Hashes entsprechen den Manifesten `tmp/replace-corpora-2026-10-08/manifests/inventory_*.json`. Flache Session-Bäume auf dem Server: 15 / 31 / 28 / 26 Ordner.
+- DB-Konsistenz: 0 Workbench-Verweise ohne Session, 0 Sessions ohne Person, 0 Personen ohne Session, 0 Expositionen ohne Session, 0 doppelte Sessions, `research_consent_signed = yes` bei allen 74 Personen, alle Beta-Sprecher-IDs vorhanden. Nutzer (14), kuratierte Sets (69), Set-Items (3481) und Workbench-Verweise (98) unverändert.
+- Kataloge: 12/12 SHA-256 in Produktion unverändert; flacher Konfigurationsbaum und Release-`config/` identisch.
+- Anwendung (Produktions-Container, App-Builder): für alle 100 Sessions der vier Korpora Sprecherprofile, Player-Bundles (Wortliste 95/95/92/96 Items, Text 56 (oder 55 ohne Titel)/67/50/51), Interviewrollen, Vergleichsseiten (de/en); L1-Namen aufgelöst. Öffentlich: `/health`, `/ready`, Hub, Designseiten EN/FR/ES/DE, Teaching- und Rechtsseiten 200; Sprecher-, Vergleichs-, Profil-, Player- und Audio-Routen aller Korpora für Gäste 302 (Login). Eine angemeldete Browsersitzung auf der Live-Seite war mangels Zugangskonto nicht möglich; die lokale Browser-Prüfung (97 Routen) und die Container-Builder-Prüfung decken die Inhalte ab.
+
+**Backup.** Die 65 ersetzten Beta-Session-Einheiten wurden auf dem Backup-Laufwerk gezielt ersetzt: zuvor je Einheit Dateiliste und Größen gegen das verifizierte Zusatz-Set verglichen (0 Abweichungen), dann genau diese 65 benannten Ordner und 130 Quittungen entfernt (Backup-Laufwerk und lokal), `backup-copy --execute` (110/110 `backed_up`), `backup-verify --unbuffered`: 110 Einheiten `BACKED_UP`, 0 `BACKUP_PENDING`, 30 140 Dateien / 24,2 GB. Danach die redundanten Zusatz-Sets `complete_sessions_{en,fr,es}` (samt Manifesten) entfernt und erneut kalt verifiziert: `result=ok`, 110 `BACKED_UP`, 0 `BACKUP_PENDING`, 17 448 Dateien / 14,3 GB, 16 Zusatz-Sets ok, 0 fehlgeschlagen. Workbooks (`intake_workbooks`), `legacy_organizer`, `fixity` und die übrigen Zusatz-Sets blieben, weil sie die einzige Kopie darstellen.
+
+**Preservation.** `PROMAT_PRESERVATION_ROOT` laut Runbook `K:\Pronunciation_Matters`; das Laufwerk `K:` ist vorhanden (211 GB frei), der Ordner existiert nicht, und das Anlegen scheitert mit „Zugriff verweigert“ (nur Lesen/Schreiben in vorhandenen Ordnern, kein Anlegen im Wurzelverzeichnis). Rechte wurden nicht verändert. Damit ist die Preservation weiterhin blockiert; alle Einheiten sind `PRESERVATION_PENDING`. Das physisch getrennte Backup ist keine Preservation. Konsequenz: Die vier Complete-Batch-Verzeichnisse (inklusive `working/`) bleiben in `import/`.
+
+**Bereinigung (tatsächlich entfernt).**
+
+- Server: vorheriges Release `release_20261008T184439Z_promat_upload_german_20261008c` (enthielt die Beta-Daten; `release_…b` hatte die Retention bereits entfernt), `backups/tmp_rollback_corpora_replace_20261008/` (DB-Rückfallsicherung), `incoming/` ist leer. Verbleibend: nur das aktuelle Release. Reguläre Deploy-DB-Backups unter `backups/postgres/` und `french_theatre_fix_*` nicht berührt.
+- Lokal `import/`: `english_batch_20260618`, `french_batch_20260618`, `spanish_batch_20260619` (Beta, 12,7 GB), die Altkopie `organize_batch_working_tree.py` (als Zusatz-Set gesichert, byte-identisch verifiziert), `__pycache__`.
+- Lokal `exports/`: acht überholte Pakete (englische, französische und spanische Beta-Exporte, Initial-Uploads, `promat_upload_german_20261008c`); behalten: das veröffentlichte `promat_upload_corpora_replace_20261008`.
+- Bewusst behalten: lokale Archiv-Batch-Einheiten der Beta-Importe (`en_batch_20260525`, `english_batch_20260618`, `es_batch_20260525`, `french_batch_20260527`, `french_batch_20260618`, `spanish_batch_20260619`; nur Reports/Provenance/Workbook, kein Audio, durch Fixity-Baselines und Backup referenziert), ältere Backup-Zusatz-Sets, `.mfa_cache`.
+
+## E. Restpunkte (Stand nach Abschluss)
+
+- Preservation-Ziel: `K:\Pronunciation_Matters` anlegen bzw. Schreibrecht im Wurzelverzeichnis vergeben (Infrastruktur), `PROMAT_PRESERVATION_ROOT` setzen, `archive_preservation.py copy --execute` und `verify`; erst danach die Complete-Batch-Verzeichnisse aus `import/` entfernen.
+- Optional: Archiv-Batch-Einheiten der Beta-Importe entfernen (Entscheidung; sie enthalten nur Beta-Provenance).
+- Fachlich offen aus Abschnitt B: FR-L-0028 `needs_review`, Satzumbruch in `french_text.txt`, `ie_std` als neue Varietät (bitte bestätigen).

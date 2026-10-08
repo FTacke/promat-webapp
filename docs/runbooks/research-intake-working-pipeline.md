@@ -10,7 +10,7 @@ Teaching ist nicht Teil dieses Runbooks. `content/`, `public/teaching/` und Teac
 
 - Der Organizer liegt versioniert unter `scripts/research_data_intake/organize_batch_working_tree.py`. Das Verzeichnis `import/` enthält nur Batch-Daten und nie ausführbaren Code.
 - Die frühere, nie committete Kopie unter `import/organize_batch_working_tree.py` war nur auf der lokalen Maschine vorhanden. Die versionierte Fassung wurde aus den Tests, diesem Runbook und den Run-Logs rekonstruiert (siehe Modul-Docstring).
-- **Einmalig vor dem nächsten echten Intake:** die lokale Altkopie gegen die versionierte Fassung diffen (Statusnamen, Report-Felder, Konfliktregeln). Weicht die Altkopie fachlich ab, die Altkopie nach `scripts/research_data_intake/organize_batch_working_tree.py` übernehmen und die Tests (`pytest tests/test_research_working_tree_intake.py`) laufen lassen. Danach die Altkopie unter `import/` löschen, damit es nur eine Fassung gibt.
+- Stand 2026-10-08: Die lokale Altkopie wurde gegen die versionierte Fassung verglichen (stark abweichend, die versionierte Fassung bewältigte drei vollständige Batches ohne Fehler und lieferte für unveränderte Eingaben dieselben Archivhashes), im Backup-Zusatz-Set gesichert und gelöscht. Historischer Hinweis: die lokale Altkopie gegen die versionierte Fassung diffen (Statusnamen, Report-Felder, Konfliktregeln). Weicht die Altkopie fachlich ab, die Altkopie nach `scripts/research_data_intake/organize_batch_working_tree.py` übernehmen und die Tests (`pytest tests/test_research_working_tree_intake.py`) laufen lassen. Danach die Altkopie unter `import/` löschen, damit es nur eine Fassung gibt.
 - Der Importer importiert den Organizer nicht mehr aus `import/`; eine dort verbliebene Altkopie wird ignoriert.
 
 ## Batch-Definition
