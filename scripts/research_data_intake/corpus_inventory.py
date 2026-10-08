@@ -19,12 +19,25 @@ import sys
 from typing import Any
 
 
-SCRIPT_ROOT = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_ROOT.parents[1]
+SCRIPT_ROOT = Path(__file__).resolve().parent if "__file__" in globals() and Path(__file__).exists() else Path.cwd()
+REPO_ROOT = SCRIPT_ROOT.parents[1] if len(SCRIPT_ROOT.parents) > 1 else SCRIPT_ROOT
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from language_config import resolve_language_config  # noqa: E402
+try:
+    from language_config import resolve_language_config  # noqa: E402
+except ModuleNotFoundError:
+    # The production image carries no intake modules; the script is piped into the container via stdin there.
+    from types import SimpleNamespace
+
+    _CORPORA = {"en": "english", "fr": "french", "es": "spanish", "de": "german"}
+
+    def resolve_language_config(value: str):  # type: ignore[misc]
+        key = value.strip().lower()
+        for code, slug in _CORPORA.items():
+            if key in (code, slug):
+                return SimpleNamespace(code=code, corpus_slug=slug)
+        raise ValueError(f"Unsupported corpus {value!r}")
 
 SCHEMA_VERSION = 1
 TASKS = ("wordlist", "text", "interview")

@@ -64,3 +64,35 @@ def test_choose_upload_method_tar_ssh_always_allowed() -> None:
     method = upload_prod_package._choose_upload_method("tar-ssh", rsync_available=False, remote_rsync_available=False)
 
     assert method == "tar-over-ssh"
+
+
+def _fake_remote(monkeypatch, root_entries: list[str]) -> None:
+    class _Done:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_remote_command(ssh_user: str, host: str, command: str) -> str:
+        if "wc -l" in command:
+            return "12"
+        if command.startswith("ls -1") and command.rstrip().endswith("sessions"):
+            return "english\nfrench"
+        return "\n".join(root_entries)
+
+    monkeypatch.setattr(upload_prod_package, "_remote_command", fake_remote_command)
+    monkeypatch.setattr(upload_prod_package, "_run", lambda command: _Done())
+
+
+def test_remote_root_check_accepts_a_package_without_config(monkeypatch) -> None:
+    _fake_remote(monkeypatch, ["manifest.json", "checksums.sha256", "sessions", "reports", "db"])
+
+    count, entries = upload_prod_package._verify_remote_root("root", "host", "/srv/webapps_storage/promat/data/incoming/x")
+
+    assert count == 12 and "config" not in entries
+
+
+def test_remote_root_check_still_requires_sessions_and_manifest(monkeypatch) -> None:
+    _fake_remote(monkeypatch, ["checksums.sha256", "reports", "db"])
+
+    with pytest.raises(RuntimeError, match="missing entries: manifest.json, sessions"):
+        upload_prod_package._verify_remote_root("root", "host", "/srv/webapps_storage/promat/data/incoming/x")

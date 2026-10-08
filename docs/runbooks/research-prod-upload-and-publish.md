@@ -130,6 +130,18 @@ Stop-Bedingungen:
 - Der Publish schreibt `config/` nur in das Release, nicht in den flachen Baum `data/config/research_player/`, den die App liest (siehe `docs/spec/platform-data-files.md`).
 - Bei einem neuen Korpus oder geänderten Katalogen: `diff -rq /srv/webapps_storage/promat/data/config/research_player /srv/webapps_storage/promat/data/current/config/research_player`. Ein neues Korpusverzeichnis additiv kopieren (`cp -a`, nur wenn das Ziel nicht existiert), geänderte Dateien bewusst übernehmen, nichts löschen. Danach `promat-web-prod` neu starten und die Seiten prüfen; ohne die Kataloge scheitern die Research-Seiten des Korpus.
 
+## Vollständiger Korpusersatz (Complete-Batch löst alles Bisherige eines Korpus ab)
+
+Nur wenn ein vollständiger, finaler Batch den gesamten veröffentlichten Bestand eines Korpus ersetzt (zum Beispiel erstes reguläres Release nach der Beta-Phase). Ein normales Paket löscht nie etwas; dieser Ablauf ist der einzige ausdrückliche Löschmechanismus (Spec: `platform-data-files.md`, „Complete corpus replacement“).
+
+1. Alle Batches des Korpus lokal vollständig importieren (Runtime, Dev-DB, Archiv) und validieren; Kataloge nicht anfassen (kein `--include-research-player-config`).
+2. Einen **gemeinsamen** DB-Payload aus den `import_payload.json` der betroffenen Batches bilden (Personen, Sessions, Expositionen zusammenführen, `batch_name` mit `batch`); er muss jede gepackte Session abdecken.
+3. Paket bauen: `python scripts/research_data_intake/build_prod_upload_package.py --replace-corpus english --replace-corpus french --replace-corpus spanish --db-payload <merged>.json --upload-id <id>`; danach `validate_research_intake.py prod-package`.
+4. Vor dem Publish Rückfallsicherung: DB-Auszug der `research_*`-Tabellen auf dem Server (`pg_dump -Fc -t 'research_*'`), und `current` bleibt als Rollback unberührt.
+5. Hochladen wie gewohnt, dann `publish_prod_release.py --upload-id <id> --host <host> --smoke-base-url <url> --apply-db-upsert --replace-corpus english --replace-corpus french --replace-corpus spanish`. Der Publish bricht ab, wenn das Manifest nicht genau diese Korpora nennt. Im Report stehen `replace_corpora` und die Löschzahlen des DB-Laufs (`replace.deleted_*`).
+6. Prüfen: `python scripts/research_data_intake/corpus_inventory.py --language english ... --out inv.json` lokal und im Container (`docker exec -e PYTHONPATH=/app/src promat-web-prod python /app/scripts/research_data_intake/corpus_inventory.py --sessions-root /app/data/sessions --language english ...`) und `--compare`; DB-Zahlen gegen die Manifeste; Smoke wie unten; Kataloge per `sha256sum` gegen den Stand vor dem Publish.
+7. Nach bestätigter Validierung: vorheriges Release (enthält die abgelösten Daten) und die temporäre DB-Rückfallsicherung entfernen, `incoming/` leer halten.
+
 ## Health und Smoke
 
 Pflicht:

@@ -120,7 +120,9 @@ def _verify_remote_root(ssh_user: str, host: str, remote_dir: str) -> tuple[int,
     count = int((count_output.splitlines()[-1] if count_output else "0").strip())
     root_output = _remote_command(ssh_user, host, f"ls -1 {shlex.quote(remote_dir)}")
     root_entries = [line.strip() for line in root_output.splitlines() if line.strip()]
-    required = {"manifest.json", "checksums.sha256", "sessions", "config", "reports"}
+    # ``config/`` is optional: a package that must not touch the research-player catalogs (for example a complete
+    # corpus replacement) ships without it.
+    required = {"manifest.json", "checksums.sha256", "sessions", "reports"}
     missing = sorted(required - set(root_entries))
     if missing:
         raise RuntimeError("remote root sanity check failed; missing entries: " + ", ".join(missing))
