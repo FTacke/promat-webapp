@@ -123,12 +123,12 @@ def test_width_variant_is_assigned_centrally_by_block_type_in_the_shared_partial
         "audio_example",
         "audio_examples",
         "audio_contrast",
-        "embed",
         "video",
         "image",
         "next_topics",
         "topic_grid",
     }
+    assert "embed" not in wide.group(1), "maps and other embeds use the editorial width"
     blocks = re.findall(r'<(?:section|figure) id="\{\{ block\.id \}\}"([^>]*)>', partial)
     assert blocks and all('data-teaching-width="{{ block_width }}"' in attrs for attrs in blocks), "every block carries its width variant"
 

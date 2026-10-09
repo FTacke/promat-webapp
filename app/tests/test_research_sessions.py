@@ -2266,7 +2266,7 @@ def test_every_teaching_topic_edition_uses_the_shared_vertical_layout(url_app: F
 
 
 def test_teaching_topic_blocks_use_editorial_or_component_width_by_function(url_app: Flask) -> None:
-    """Text and text-based boxes sit in the editorial width; audio comparisons, example grids and maps in the component width."""
+    """Text, boxes and maps sit in the editorial width; only audio comparisons and example grids use the component width."""
     client = url_app.test_client()
     expected = [
         ("text", "editorial"),
@@ -2275,9 +2275,9 @@ def test_teaching_topic_blocks_use_editorial_or_component_width_by_function(url_
         ("audio", "wide"),
         ("audio", "wide"),
         ("text", "editorial"),
-        ("embed", "wide"),
+        ("embed", "editorial"),
         ("admonition", "editorial"),
-        ("embed", "wide"),
+        ("embed", "editorial"),
         ("text", "editorial"),
         ("audio", "wide"),
         ("text", "editorial"),

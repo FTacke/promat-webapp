@@ -202,7 +202,7 @@
 
 {#- Topic page widths (shared layout, see 20_layout.css): editorial is the default for text and text-based boxes;
     wide is reserved for interactive or complex visual blocks that need the room. -#}
-{% set teaching_wide_block_types = ['audio_example', 'audio_examples', 'audio_contrast', 'embed', 'video', 'image', 'next_topics', 'topic_grid'] %}
+{% set teaching_wide_block_types = ['audio_example', 'audio_examples', 'audio_contrast', 'video', 'image', 'next_topics', 'topic_grid'] %}
 
 {% macro render_block(block, labels) -%}
   {% set block_width = 'wide' if block.type in teaching_wide_block_types else 'editorial' %}

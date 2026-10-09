@@ -53,6 +53,7 @@ def test_deploy_job_requires_successful_ci_push_run_on_main() -> None:
     assert "github.event.workflow_run.conclusion == 'success'" in condition
     assert "github.event.workflow_run.event == 'push'" in condition
     assert "github.event.workflow_run.head_branch == 'main'" in condition
+    assert "github.event.workflow_run.head_repository.full_name == github.repository" in condition
 
 
 def test_deploy_uses_the_tested_commit_and_not_the_branch_tip() -> None:
@@ -73,6 +74,38 @@ def test_deploy_verifies_ci_success_for_the_exact_commit_and_serializes_runs() -
     assert "actions/workflows/ci.yml/runs?head_sha=${deploy_sha}&status=success" in run_text
     assert workflow["concurrency"] == {"group": "production-deploy", "cancel-in-progress": False}
     assert workflow["jobs"]["deploy"]["runs-on"] == ["self-hosted", "promat-prod"]
+
+
+
+def _resolve_step_text() -> str:
+    steps = _load("deploy.yml")["jobs"]["deploy"]["steps"]
+    return next(str(step["run"]) for step in steps if step["name"] == "Resolve the exact commit to deploy")
+
+
+def test_automatic_deploy_trusts_the_completed_ci_event_and_does_not_poll_the_runs_index() -> None:
+    """Regression for 1058da9: the first deploy attempt failed seconds after CI finished.
+
+    Evidence (GitHub API): CI run 37940431349 completed 13:59:50Z, the deploy run started 13:59:52Z and its first
+    attempt failed in step "Resolve the exact commit to deploy" at 13:59:56Z, the rerun at 14:00:25Z passed. The
+    only external call of that step was the eventually consistent "list workflow runs" lookup. For `workflow_run`
+    the event payload already proves a completed successful CI run for `head_sha`, so that lookup is confined to
+    the manual path, where the CI run finished long before.
+    """
+    text = _resolve_step_text()
+    manual_branch = text.index('if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then')
+    lookup = text.index("actions/workflows/ci.yml/runs?head_sha=${deploy_sha}&status=success")
+    assert lookup > manual_branch, "the runs-index lookup must only run for manual/rollback deployments"
+    automatic = text[: text.index('[[ "${deploy_sha}" =~')]
+    assert "curl" not in automatic and "api" not in automatic.lower()
+    assert 'CI_CONCLUSION}" == "success"' in text, "the automatic path re-checks the triggering conclusion"
+    assert 'deploy_sha="${TESTED_SHA}"' in text
+
+
+def test_deploy_resolution_has_no_sleep_or_retry_workaround() -> None:
+    text = _resolve_step_text()
+    for forbidden in ("sleep", "--retry", "until ", "while "):
+        assert forbidden not in text
+    assert "HTTP ${http_code}" in text, "a failed manual lookup reports the HTTP status instead of hiding it"
 
 
 def test_ci_is_the_full_release_gate() -> None:

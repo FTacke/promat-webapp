@@ -11,7 +11,7 @@ Wie ein Commit von `main` nach Produktion gelangt, wie ein fehlgeschlagenes Depl
 ## Ablauf nach einem Push auf `main`
 
 1. `CI` (`.github/workflows/ci.yml`) läuft für den Commit; `release-gate` ist nur grün, wenn Python-Suite, JS-Tests, Image-Build und Backup-Rehearsal grün sind.
-2. Erst nach erfolgreichem Abschluss startet `Deploy production` (`workflow_run`). Das Deployment nimmt `workflow_run.head_sha`, also genau den getesteten Commit, und bricht ab, wenn für diesen Commit kein erfolgreicher CI-Lauf existiert.
+2. Erst nach erfolgreichem Abschluss startet `Deploy production` (`workflow_run`). Das `workflow_run`-Ereignis wird erst nach dem *Abschluss* des CI-Laufs zugestellt und trägt Ergebnis und SHA; der Job startet nur bei `success` für einen Push auf `main` dieses Repositories, nimmt `workflow_run.head_sha` (genau den getesteten Commit) und fragt die „list workflow runs“-API nicht noch einmal ab (diese Liste hängt dem Abschluss-Ereignis um Sekunden hinterher). Nur der manuelle Lauf (`workflow_dispatch`, Rollback) prüft über diese API, ob für den Commit ein erfolgreicher CI-Lauf existiert, und meldet bei Lesefehlern den HTTP-Status.
 3. Ist `main` inzwischen weitergewandert, wird dieser Lauf übersprungen (Warnung im Log); der Lauf des neueren Commits übernimmt. Deployments laufen nie parallel.
 4. Auf dem Server (Runner `promat-prod`): `git fetch`, Checkout des Commits, danach `scripts/deploy_prod.sh`:
    - Datenbank und Rate-Limit-Dienst starten bzw. unverändert lassen und auf Health warten
@@ -37,7 +37,8 @@ Wird CI rot, passiert nichts auf dem Server; der nächste grüne Commit deployt.
 - „Production configuration is invalid“ im Deploy-Log: `/srv/webapps/promat/config/passwords.env` korrigieren (`JWT_SECRET_KEY` und `FLASK_SECRET_KEY` **verschiedene** echte Zufallswerte von mindestens 32 Zeichen, `PROMAT_PUBLIC_BASE_URL=https://<öffentliche Domain>`, `AUTH_ACCESS_REQUEST_EMAIL` / `AUTH_ACCESS_REQUEST_FROM_EMAIL` echte Adressen, bei `smtp` ein echter `AUTH_ACCESS_REQUEST_SMTP_HOST`), Workflow erneut starten. Der laufende Container wurde nicht angetastet. Die Meldung nennt den Namen der Variable, nie ihren Wert.
 - „Database backup failed“: Platz und Schreibrecht im Backup-Ordner (`PROMAT_BACKUP_DIR`, Standard `/srv/webapps_storage/promat/backups/postgres`) und Zustand von `promat-db-prod` prüfen (`backup-and-restore.md`); es wurde keine Migration angewendet und kein Container ersetzt.
 - Post-Deploy-Smoke rot: die genannte URL prüfen. Bei 5xx auf Rechtsseiten oder öffentlichen Seiten Container-Log lesen und im Zweifel auf den vorherigen Commit zurückrollen (siehe oben).
-- „No successful CI run found“: CI auf dem Commit ausführen (siehe oben).
+- „No successful CI run found“ (nur bei manuellem Lauf): CI auf dem Commit ausführen (siehe oben). „Could not read the CI runs … (HTTP …)“: GitHub-API kurz nicht erreichbar oder Berechtigung; den manuellen Lauf erneut starten.
+- Ein automatisches Deployment, das direkt nach einem grünen CI-Lauf in „Resolve the exact commit to deploy“ rot wird, darf es nicht mehr geben (siehe `docs/agent-runs/2026-10-09_deploy-ci-lookup-race.md`); tritt es doch auf, Log und HTTP-Status des Schritts sichern, statt nur neu zu starten.
 - Deployment läuft nicht an: prüfen, ob `deploy.yml` mit dem `workflow_run`-Trigger auf `main` liegt und der Runner online ist.
 
 ## Prüfliste für den Operator (einmalig bei Einführung, danach nach Bedarf)

@@ -11,6 +11,14 @@ name: Deploy production
 # for it. Why the explicit SHA: for `workflow_run` events `github.sha` is the *latest commit of the default
 # branch*, not the commit CI tested, so the tested commit must be taken from `workflow_run.head_sha`.
 #
+# The `workflow_run` event is itself the proof of a finished, successful CI run: it is delivered only after the
+# CI run has *completed*, and its payload carries the conclusion and the tested SHA. A deploy that arrives while
+# CI is still running therefore cannot exist, and the job below does not ask the "list workflow runs" REST
+# endpoint again for the same fact. That endpoint is an eventually consistent index: queried within seconds of
+# the completion event it can still miss the run (observed for 1058da9: the lookup failed 6 s after CI finished,
+# a rerun 28 s later passed). Only the manual path, which has no event payload, reads that index, and there
+# the CI run finished long ago.
+#
 # Manual runs (workflow_dispatch) are the rollback path: select an older ref in "Use workflow from". The
 # commit must have a successful CI run; deploying an untested commit is deliberately not possible. Run CI on
 # it first (Actions -> CI -> Run workflow) if needed.
@@ -32,41 +40,55 @@ concurrency:
 
 jobs:
   deploy:
-    # For workflow_run: only successful CI runs triggered by a push to main (never pull requests or forks).
+    # For workflow_run: only successful CI runs triggered by a push to main of this repository (never pull
+    # requests or forks; a failed, cancelled or skipped CI run never matches 'success').
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main') }}
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository) }}
     runs-on: [self-hosted, promat-prod]
     steps:
       - name: Resolve the exact commit to deploy
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
+          CI_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
           DISPATCH_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
+            # The completed CI run named by the event is the gate (see the header comment); repeat the
+            # conclusion check here so the step stays safe even if the job condition is edited.
+            [[ "${CI_CONCLUSION}" == "success" ]] || { echo "::error::The triggering CI run concluded '${CI_CONCLUSION}', not 'success'. Refusing to deploy."; exit 1; }
             deploy_sha="${TESTED_SHA}"
           else
             deploy_sha="${DISPATCH_SHA}"
           fi
           [[ "${deploy_sha}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Could not resolve a commit SHA to deploy."; exit 1; }
 
-          # Require a successful CI run for exactly this commit (always true for workflow_run; the real
-          # check for manual/rollback runs).
-          runs_json="$(
-            curl -fsSL \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${GH_TOKEN}" \
-              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${deploy_sha}&status=success&per_page=1"
-          )"
-          ci_success_count="$(printf '%s' "${runs_json}" | sed -n 's/.*"total_count"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' | head -n 1)"
-          if [[ -z "${ci_success_count}" || "${ci_success_count}" -lt 1 ]]; then
-            echo "::error::No successful CI run found for ${deploy_sha}. Refusing to deploy an untested commit."
-            exit 1
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            # Manual/rollback run: there is no CI event, so require a successful CI run for exactly this commit.
+            ci_runs_file="$(mktemp)"
+            http_code="$(
+              curl -sSL -o "${ci_runs_file}" -w '%{http_code}' \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${GH_TOKEN}" \
+                "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?head_sha=${deploy_sha}&status=success&per_page=1"
+            )"
+            if [[ "${http_code}" != "200" ]]; then
+              rm -f "${ci_runs_file}"
+              echo "::error::Could not read the CI runs of ${deploy_sha} (HTTP ${http_code}); not deploying."
+              exit 1
+            fi
+            ci_success_count="$(sed -n 's/.*"total_count"[[:space:]]*:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "${ci_runs_file}" | head -n 1)"
+            rm -f "${ci_runs_file}"
+            if [[ -z "${ci_success_count}" || "${ci_success_count}" -lt 1 ]]; then
+              echo "::error::No successful CI run found for ${deploy_sha}. Refusing to deploy an untested commit."
+              exit 1
+            fi
           fi
 
           echo "DEPLOY_SHA=${deploy_sha}" >> "${GITHUB_ENV}"
