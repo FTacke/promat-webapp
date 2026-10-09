@@ -338,7 +338,7 @@
 
   --pm-type-display-family: var(--book-font-ui);
   --pm-type-display-size: clamp(2.2rem, 2rem + 0.5vw, 2.75rem);
-  --pm-type-display-line: 1;
+  --pm-type-display-line: 1.12;
   --pm-type-display-tracking: -0.03em;
   --pm-type-display-weight: 600;
 

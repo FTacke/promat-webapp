@@ -323,6 +323,25 @@ def test_generated_citations_follow_the_four_levels(client) -> None:
     ]
 
 
+def test_german_corpus_offers_the_same_citation_box_as_the_french_one(client) -> None:
+    """The German corpus is published like the French one: same component, same structure, registry people only."""
+    expected = {
+        "de": f"Siebold, Kathrin (2026–). Pronunciation Matters: German Learner Pronunciation Corpus. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/de/research/german",
+        "en": f"Siebold, Kathrin (2026–). Pronunciation Matters: German Learner Pronunciation Corpus. In: Felix Tacke (ed.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/en/research/german",
+    }
+    headings = {"de": "Dieses Korpus zitieren", "en": "Cite this corpus"}
+    for ui_lang, text in expected.items():
+        assert _copy_text(client, f"/{ui_lang}/research/german") == [text]
+        german = client.get(f"/{ui_lang}/research/german").get_data(as_text=True)
+        french = client.get(f"/{ui_lang}/research/french").get_data(as_text=True)
+        assert headings[ui_lang] in german
+        assert german.count('data-admonition-variant="citation"') == french.count('data-admonition-variant="citation"') == 1
+        # same position: the citation box follows the access buttons of the corpus landing page
+        assert german.index('data-admonition-variant="citation"') > german.index("access-request")
+    entry = publication.language_entry("research_corpus", "german")
+    assert entry["status"] == "published" and entry["creators"] == ["kathrin-siebold"], "no authorship is invented"
+
+
 def test_citations_use_the_exact_page_title_author_and_url(client) -> None:
     for ui_lang in ("de", "en"):
         path = f"/{ui_lang}/teaching/spanish/which-pronunciation"
@@ -340,7 +359,7 @@ def test_citations_use_the_exact_page_title_author_and_url(client) -> None:
 
 
 def test_pages_that_are_not_scholarly_units_offer_no_citation(client) -> None:
-    for path in ("/de", "/de/research", "/de/teaching", "/de/project/team", "/de/impressum", "/en/teaching/french", "/de/research/german", "/de/teaching/german"):
+    for path in ("/de", "/de/research", "/de/teaching", "/de/project/team", "/de/impressum", "/en/teaching/french", "/de/teaching/german"):
         assert _copy_text(client, path) == [], path
 
 
@@ -389,7 +408,7 @@ def test_doi_version_data_as_of_and_license_are_optional_and_need_no_template_ch
 
 
 def test_resources_without_real_authors_or_publication_are_not_citable() -> None:
-    assert publication.corpus_resource("german", "de")["citable"] is False, "in preparation"
+    assert publication.teaching_area_resource("german", "de")["citable"] is False, "in preparation, no responsible person recorded"
     assert publication.teaching_area_resource("french", "de")["citable"] is False, "no responsible person recorded"
     assert publication.teaching_area_resource("spanish", "de", has_public_topics=False)["citable"] is False
     draft = publication.topic_resource(

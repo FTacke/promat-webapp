@@ -63,3 +63,14 @@ def test_no_iso_code_tooltip_or_inline_info_indicator_is_left_in_the_presentatio
             assert needle not in text, f"{needle!r} still present in {path.relative_to(STATIC.parent)}"
     # The set-select and other substantive info indicators stay.
     assert "pm-info-tip__trigger" in (TEMPLATES / "pages" / "research_player.html").read_text(encoding="utf-8")
+
+
+def test_page_h1_line_height_comes_from_the_shared_display_token() -> None:
+    tokens = _css("00_tokens.css")
+    token = re.search(r"--pm-type-display-line:\s*([0-9.]+);", tokens)
+    assert token and float(token.group(1)) == 1.12, "multi-line page titles need a little more air than 1.0"
+    assert "line-height: var(--pm-type-display-line);" in _rule(_css("10_typography.css"), ".promat-page__title")
+    for name in ("20_layout.css", "30_components.css"):
+        css = _css(name)
+        for rule in re.findall(r"(?:^|\n)([^{}\n]*promat-page__title[^{}\n]*)\{([^}]*)\}", css):
+            assert "line-height" not in rule[1], f"page-local H1 line-height override: {rule[0].strip()}"

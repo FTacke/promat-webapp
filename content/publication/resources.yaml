@@ -127,13 +127,13 @@ languages:
     research_corpus:
       resource_id: promat-corpus-de
       title: "Pronunciation Matters: German Learner Pronunciation Corpus"
-      status: in_preparation
+      status: published
       creators: [kathrin-siebold]
       contributors:
         - {person: theresa-fischer, role: material_design}
         - {person: kathrin-siebold, role: material_design}
         - {person: theresa-fischer, role: data_collection}
-      date_published: null
+      date_published: "2026"
       continuing: true
       version: null
       data_as_of: null
