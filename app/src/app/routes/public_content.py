@@ -278,18 +278,6 @@ def _research_reference_speaker_count(language_slug: str) -> int:
     return len(native_speaker_ids)
 
 
-def _research_learner_recording_copy(count: int, ui_lang: str) -> str:
-    if count == 1:
-        return get_text(ui_lang, "research.overview.card.learner_recordings.one", count=count)
-    return get_text(ui_lang, "research.overview.card.learner_recordings.other", count=count)
-
-
-def _research_reference_recording_copy(count: int, ui_lang: str) -> str:
-    if count == 1:
-        return get_text(ui_lang, "research.overview.card.reference_recordings.one", count=count)
-    return get_text(ui_lang, "research.overview.card.reference_recordings.other", count=count)
-
-
 def _corpus_people_rows(language_slug: str, labels: tuple[str, str, str]) -> list[dict[str, str]]:
     """Responsible people of a corpus from the publication registry (the only place they are maintained)."""
     entry = publication.language_entry("research_corpus", language_slug) or {}
@@ -301,35 +289,21 @@ def _corpus_people_rows(language_slug: str, labels: tuple[str, str, str]) -> lis
     return [{"label": label, "value": ", ".join(names)} for label, names in zip(labels, values) if names]
 
 
-def _research_corpus_card_metadata_rows(language: dict[str, Any], ui_lang: str) -> list[dict[str, str]]:
-    rows: list[dict[str, str]] = _corpus_people_rows(
-        language["slug"],
-        (
-            get_text(ui_lang, "research.overview.card.project_lead"),
-            get_text(ui_lang, "research.overview.card.material_conception"),
-            get_text(ui_lang, "research.overview.card.conducted_by"),
-        ),
-    )
+def _research_count_item(count: int, ui_lang: str, key: str) -> dict[str, Any]:
+    """One corpus-scope item: the real count and its localized, pluralised noun."""
+    form = "one" if count == 1 else "other"
+    return {"count": count, "label": get_text(ui_lang, f"research.overview.card.{key}.{form}")}
 
-    learner_recording_count = _research_learner_recording_count(language["slug"])
-    if learner_recording_count > 0:
-        rows.append(
-            {
-                "text": _research_learner_recording_copy(learner_recording_count, ui_lang)
-            }
-        )
-    else:
-        rows.append({"text": get_text(ui_lang, "research.overview.card.in_progress")})
 
+def _research_corpus_card_scope(language: dict[str, Any], ui_lang: str) -> list[dict[str, Any]]:
+    scope: list[dict[str, Any]] = []
+    learner_count = _research_learner_recording_count(language["slug"])
+    if learner_count > 0:
+        scope.append(_research_count_item(learner_count, ui_lang, "learners"))
     reference_speaker_count = _research_reference_speaker_count(language["slug"])
     if reference_speaker_count > 0:
-        rows.append(
-            {
-                "text": _research_reference_recording_copy(reference_speaker_count, ui_lang)
-            }
-        )
-
-    return rows
+        scope.append(_research_count_item(reference_speaker_count, ui_lang, "reference_speakers"))
+    return scope
 
 
 def _research_feature_cards(language_slug: str, ui_lang: str) -> list[dict[str, str]]:
@@ -406,12 +380,21 @@ def build_start_page(ui_lang: str) -> dict[str, Any]:
 def build_corpus_cards_research(ui_lang: str) -> list[dict[str, Any]]:
     cards: list[dict[str, Any]] = []
     for language in LANGUAGES:
+        scope = _research_corpus_card_scope(language, ui_lang)
         cards.append(
             {
+                "presentation": "research-corpus",
                 "title": _research_corpus_card_title(language, ui_lang),
-                "modifier": f"pm-card--corpus-research pm-card--lang-{language['lang_code']} pm-corpus-overview-card--shared-accent",
-                "metadata_rows": _research_corpus_card_metadata_rows(language, ui_lang),
-                "action_label": get_text(ui_lang, "nav.open_corpus"),
+                "people": _corpus_people_rows(
+                    language["slug"],
+                    (
+                        get_text(ui_lang, "research.overview.card.project_lead"),
+                        get_text(ui_lang, "research.overview.card.material_conception"),
+                        get_text(ui_lang, "research.overview.card.conducted_by"),
+                    ),
+                ),
+                "scope": scope,
+                "scope_fallback": "" if scope else get_text(ui_lang, "research.overview.card.in_progress"),
                 "href_key": f"research:{language['slug']}",
             }
         )
@@ -458,10 +441,8 @@ def build_corpus_cards_teaching(ui_lang: str) -> list[dict[str, str]]:
             {
                 "title": title,
                 "presentation": "teaching-selection-row",
-                "modifier": "",
                 "is_available": is_available,
-                "metadata_rows": [{"text": status}],
-                "action_label": get_text(ui_lang, "teaching.action.open_language") if is_available else "",
+                "status": status,
                 **({"href_key": f"teaching:{language['slug']}"} if is_available else {}),
             }
         )

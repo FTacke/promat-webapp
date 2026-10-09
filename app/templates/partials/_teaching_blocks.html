@@ -1,5 +1,5 @@
 {% from 'partials/_admonition.html' import render_admonition %}
-{% from 'partials/_pm_interactions.html' import render_cta_link_visual %}
+{% from 'partials/_pm_interactions.html' import render_cta_link_visual, render_nav_arrow %}
 
 {% macro render_person(person) -%}
   {% set has_external_url = person.url.startswith('http://') or person.url.startswith('https://') %}
@@ -153,13 +153,17 @@
   {% endif %}
 {%- endmacro %}
 
+{#- Compact content card of a topic overview. Available topics are whole-card links with the shared up-right arrow;
+    topics in preparation are plain panels that state "in preparation" and carry no navigation signal. -#}
 {% macro render_teaching_topic_card(card, labels, heading_tag='h3', compact=false) -%}
-  {% set is_available = card.is_available | default(true) %}
-  {% set card_classes = 'pm-card pm-teaching-topic-card ' ~ ('pm-card--interactive pm-teaching-topic-card--available' if is_available else 'pm-teaching-topic-card--pending') ~ (' pm-teaching-topic-card--compact' if compact else '') %}
-  {% if is_available and card.href %}
-  <a class="{{ card_classes }}" href="{{ card.href }}">
-    <div class="pm-card__body pm-teaching-topic-card__body">
-      <{{ heading_tag }} class="pm-card__title">{{ card.title_html | safe if card.title_html else card.title }}</{{ heading_tag }}>
+  {% set is_available = card.is_available | default(true) and card.href %}
+  {% set card_classes = 'pm-teaching-topic-card ' ~ ('pm-nav-surface pm-teaching-topic-card--available' if is_available else 'pm-teaching-topic-card--pending') ~ (' pm-teaching-topic-card--compact' if compact else '') %}
+  {% if is_available %}<a class="{{ card_classes }}" href="{{ card.href }}">{% else %}<article class="{{ card_classes }}">{% endif %}
+    <div class="pm-teaching-topic-card__body">
+      <div class="pm-teaching-topic-card__head">
+        <{{ heading_tag }} class="pm-card__title">{{ card.title_html | safe if card.title_html else card.title }}</{{ heading_tag }}>
+        {% if is_available %}{{ render_nav_arrow() }}{% endif %}
+      </div>
       {% if card.summary %}
       <p class="pm-card__text">{{ card.summary_html | safe if card.summary_html else card.summary }}</p>
       {% endif %}
@@ -170,27 +174,11 @@
         {% endfor %}
       </ul>
       {% endif %}
-      <p class="pm-card__action pm-teaching-topic-card__action">{{ render_cta_link_visual({ 'label': labels.open_topic, 'tone': 'primary' }) }}</p>
-    </div>
-  </a>
-  {% else %}
-  <article class="{{ card_classes }}" aria-disabled="true">
-    <div class="pm-card__body pm-teaching-topic-card__body">
-      <{{ heading_tag }} class="pm-card__title">{{ card.title_html | safe if card.title_html else card.title }}</{{ heading_tag }}>
-      {% if card.summary %}
-      <p class="pm-card__text">{{ card.summary_html | safe if card.summary_html else card.summary }}</p>
+      {% if not is_available %}
+      <p class="pm-teaching-topic-card__status">{{ labels.topic_pending }}</p>
       {% endif %}
-      {% if not compact and card.metadata %}
-      <ul class="pm-teaching-topic-card__meta" aria-label="{{ labels.topic_meta }}">
-        {% for item in card.metadata %}
-        <li class="pm-teaching-topic-card__meta-item"><span class="pm-teaching-topic-card__pill">{{ item.value }}</span></li>
-        {% endfor %}
-      </ul>
-      {% endif %}
-      <p class="pm-card__action pm-teaching-topic-card__action"><span class="pm-teaching-topic-card__status">{{ labels.topic_pending }}</span></p>
     </div>
-  </article>
-  {% endif %}
+  {% if is_available %}</a>{% else %}</article>{% endif %}
 {%- endmacro %}
 
 {% macro render_further_reading_item(item) -%}

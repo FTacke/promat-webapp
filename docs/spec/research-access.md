@@ -18,8 +18,8 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 
 - The research section root is a corpus selection in the German UI (`Korpus wählen`), not a teaching-style language selection.
 - The research section root uses metadata-first corpus cards and does not render an extra intro or subtitle line below the page heading.
-- Those corpus cards always show project lead, material design, and execution in that order; they show learner-recordings counts or the status `Korpus im Aufbau`/`Corpus in progress` before any optional reference-recordings line, and that reference-recordings line counts distinct native-speaker/reference-speaker `person_id` values rather than standard-variety values.
-- Those corpus cards remain part of the shared card system of the app: speaker cards are the primary visual reference, the visible card structure stays title, primary block, secondary block, and footer CTA, and the secondary status block keeps the same minimum inset above and below the surrounding divider rhythm instead of visually touching the footer divider.
+- Those corpus cards always show project lead, material design, and execution in that order, followed by one compact scope line with the distinct learner and reference-speaker `person_id` counts (or `Korpus im Aufbau`/`Corpus in progress` without learner data); the counts come from the runtime data, not from templates.
+- Each corpus card is one whole-card link with the shared navigation arrow instead of a separate CTA link; see `platform-data-files.md` for the shared navigation-surface contract.
 - `design` documents corpus design.
 - `speakers` is the person-based access path.
 - `comparison` and `phenomena` remain conceptually part of the research IA.

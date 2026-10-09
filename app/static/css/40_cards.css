@@ -106,30 +106,6 @@ a.pm-card:focus-visible .pm-card__title,
 .promat-card--workbench {
   background: var(--pm-card-background);
 }
-
-.pm-teaching-topic-card {
-  --pm-card-background: var(--pm-teaching-topic-card-surface);
-  --pm-card-border-color: var(--pm-teaching-topic-card-border);
-  --pm-card-hover-surface: var(--pm-teaching-topic-card-hover-surface);
-  --pm-card-hover-border-color: var(--pm-teaching-topic-card-hover-border);
-  --pm-card-hover-shadow: var(--pm-shadow-card-subtle);
-  --pm-cta-link-primary: var(--pm-teaching-topic-card-action);
-  --pm-cta-link-hover: var(--pm-teaching-topic-card-action-hover);
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-teaching-topic-card-accent);
-  background: var(--pm-card-background);
-}
-
-.pm-teaching-topic-card--pending {
-  --pm-card-background: var(--pm-teaching-topic-card-pending-surface);
-  --pm-card-border-color: var(--pm-teaching-topic-card-pending-border);
-  --pm-card-hover-surface: var(--pm-teaching-topic-card-pending-surface);
-  --pm-card-hover-border-color: var(--pm-teaching-topic-card-pending-border);
-  --pm-card-hover-shadow: none;
-  border-top-color: var(--pm-teaching-topic-card-pending-accent);
-  box-shadow: none;
-}
-
-
 .pm-card__eyebrow,
 .pm-card__text,
 .pm-card__link,
@@ -165,11 +141,6 @@ a.pm-card:focus-visible .pm-card__title,
 .promat-card__title {
   color: var(--pm-card-title-color);
 }
-
-.pm-card--corpus .pm-card__title {
-  margin-bottom: var(--pm-card-title-spacing);
-}
-
 .pm-card__title + .pm-card__meta {
   margin-top: 0;
 }
@@ -209,8 +180,7 @@ a.pm-card:focus-visible .pm-card__title,
 .pm-card__body > .pm-card__action,
 .pm-card__body > .pm-card__link,
 .pm-card__body > footer,
-.pm-card__body > .pm-player-meta-card__footer,
-.pm-card__body > .pm-corpus-overview-card__footer {
+.pm-card__body > .pm-player-meta-card__footer {
   margin-top: auto;
 }
 
@@ -226,48 +196,6 @@ a.pm-card:focus-visible .pm-card__title,
   padding-top: 1.5rem;
   text-align: left;
 }
-
-.pm-card--corpus {
-  --pm-card-fixed-background: var(--pm-card-background);
-  padding: 0;
-  border-color: var(--pm-card-border-color);
-  box-shadow: var(--pm-card-shadow);
-  background: var(--pm-card-fixed-background);
-}
-
-.pm-card--corpus-research {
-  --pm-card-fixed-background: var(--pm-card-background);
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--book-accent);
-}
-
-.pm-card--lang-es {
-  --pm-card-accent-color: color-mix(in srgb, #e63946 55%, #b7b7b7);
-  --pm-card-action-color: color-mix(in srgb, #e63946 75%, #2f3640);
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-card-accent-color);
-}
-
-.pm-card--lang-fr {
-  --pm-card-accent-color: color-mix(in srgb, #6a4c93 55%, #b7b7b7);
-  --pm-card-action-color: color-mix(in srgb, #6a4c93 75%, #2f3640);
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-card-accent-color);
-}
-
-.pm-card--lang-en {
-  --pm-card-accent-color: color-mix(in srgb, #3a86ff 55%, #b7b7b7);
-  --pm-card-action-color: color-mix(in srgb, #3a86ff 75%, #2f3640);
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-card-accent-color);
-}
-
-.pm-card--lang-de {
-  --pm-card-accent-color: color-mix(in srgb, #6c757d 55%, #b7b7b7);
-  --pm-card-action-color: color-mix(in srgb, #6c757d 75%, #2f3640);
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-card-accent-color);
-}
-
-.pm-card--lang-es .pm-card__action {
-  color: var(--pm-card-action-color);
-}
-
 .pm-workbench-card {
   gap: 0;
   width: 100%;
@@ -333,74 +261,6 @@ a.pm-card:focus-visible .pm-card__title,
   --pm-speaker-accent: var(--pm-research-native-accent);
   border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-speaker-accent);
 }
-
-.pm-corpus-overview-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.pm-corpus-overview-card__body {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 100%;
-  gap: 0;
-}
-
-.pm-corpus-overview-card__header {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.pm-corpus-overview-card__section {
-  display: grid;
-  min-width: 0;
-}
-
-.pm-corpus-overview-card__section--primary,
-.pm-corpus-overview-card__section--secondary {
-  margin-block-start: var(--pm-divider-space-before);
-  padding-top: var(--pm-divider-space-after);
-  border-top: 1px solid var(--pm-border-subtle);
-}
-
-.pm-corpus-overview-card__section--primary {
-  gap: 0.85rem;
-}
-
-.pm-corpus-overview-card__section--secondary {
-  gap: 0.55rem;
-}
-
-.pm-corpus-overview-card__footer {
-  gap: 0.45rem;
-}
-
-.pm-corpus-overview-card__footer-section {
-  display: grid;
-  gap: 0.45rem;
-  justify-items: start;
-}
-
-.pm-corpus-overview-card__action {
-  margin-top: 0;
-  justify-self: start;
-}
-
-.pm-corpus-overview-card.pm-card--lang-es,
-.pm-corpus-overview-card.pm-card--lang-fr,
-.pm-corpus-overview-card.pm-card--lang-en,
-.pm-corpus-overview-card.pm-card--lang-de {
-  border-top-color: var(--pm-card-accent-color);
-}
-
-.pm-corpus-overview-card.pm-corpus-overview-card--shared-accent {
-  border-top-color: var(--promat-primary);
-}
-
 .pm-meta-card__body {
   display: grid;
   align-content: start;
@@ -708,34 +568,60 @@ a.pm-card:focus-visible .pm-card__title,
     gap: 0.34rem;
   }
 }
-
-.pm-card--lang-fr .pm-card__action {
-  color: var(--pm-card-action-color);
+/* Quiet navigation surfaces: the shared interaction contract of the landing panels, the teaching language rows and topic
+   cards and the research corpus cards. A component sets its surface through --pm-nav-surface-bg / -bg-hover and keeps its
+   own geometry; hover, focus, arrow and reduced-motion behaviour live here only. Non-link variants (pending content)
+   do not use this class. */
+.pm-nav-surface {
+  --pm-nav-surface-bg: var(--pm-nav-surface-neutral);
+  --pm-nav-surface-bg-hover: var(--pm-nav-surface-neutral-hover);
+  border-radius: var(--pm-nav-surface-radius);
+  background: var(--pm-nav-surface-bg);
+  color: var(--book-fg);
+  text-decoration: none;
+  transition: background var(--promat-transition-fast);
 }
 
-.pm-card--lang-en .pm-card__action {
-  color: var(--pm-card-action-color);
+a.pm-nav-surface:hover,
+a.pm-nav-surface:active {
+  background: var(--pm-nav-surface-bg-hover);
+  color: var(--book-fg);
+  text-decoration: none;
 }
 
-.pm-card--lang-fr .pm-card__action,
-.pm-card--lang-en .pm-card__action,
-.pm-card--lang-de .pm-card__action {
-  color: var(--pm-card-action-color);
+a.pm-nav-surface:focus-visible {
+  outline: var(--pm-nav-focus-outline);
+  outline-offset: var(--pm-nav-focus-offset);
 }
 
-.pm-card--lang-de .pm-card__action {
-  color: var(--pm-card-action-color);
+.pm-nav-surface__arrow {
+  flex: 0 0 auto;
+  color: var(--pm-nav-arrow-color);
+  transition: transform var(--promat-transition-fast), color var(--promat-transition-fast);
 }
 
-.pm-card--corpus .pm-card__body {
-  min-height: 100%;
-  padding: 1.5rem;
+a.pm-nav-surface:hover .pm-nav-surface__arrow,
+a.pm-nav-surface:focus-visible .pm-nav-surface__arrow {
+  color: var(--book-fg);
+  transform: translate(var(--pm-nav-arrow-shift), calc(var(--pm-nav-arrow-shift) * -1));
 }
 
-/* Landing navigation panels: flat, fully clickable editorial surfaces (no border, shadow or accent stripe). */
+@media (prefers-reduced-motion: reduce) {
+  .pm-nav-surface,
+  .pm-nav-surface__arrow {
+    transition: none;
+  }
+
+  a.pm-nav-surface:hover .pm-nav-surface__arrow,
+  a.pm-nav-surface:focus-visible .pm-nav-surface__arrow {
+    transform: none;
+  }
+}
+
+/* Landing navigation panels: flat editorial panels (no border, shadow or accent stripe) with a flat image band. */
 .landing-panel {
-  --pm-landing-panel-surface: var(--pm-landing-panel-surface-research);
-  --pm-landing-panel-surface-hover: var(--pm-landing-panel-surface-research-hover);
+  --pm-nav-surface-bg: var(--pm-nav-surface-neutral);
+  --pm-nav-surface-bg-hover: var(--pm-nav-surface-neutral-hover);
   --pm-landing-panel-image-position: var(--pm-landing-panel-image-position-research);
   display: flex;
   flex-direction: column;
@@ -743,29 +629,12 @@ a.pm-card:focus-visible .pm-card__title,
   height: 100%;
   min-width: 0;
   padding: var(--pm-landing-panel-padding);
-  border-radius: var(--pm-landing-panel-radius);
-  background: var(--pm-landing-panel-surface);
-  color: var(--book-fg);
-  text-decoration: none;
-  transition: background var(--promat-transition-fast);
 }
 
 .landing-panel--teaching {
-  --pm-landing-panel-surface: var(--pm-landing-panel-surface-teaching);
-  --pm-landing-panel-surface-hover: var(--pm-landing-panel-surface-teaching-hover);
+  --pm-nav-surface-bg: var(--pm-nav-surface-accent);
+  --pm-nav-surface-bg-hover: var(--pm-nav-surface-accent-hover);
   --pm-landing-panel-image-position: var(--pm-landing-panel-image-position-teaching);
-}
-
-a.landing-panel:hover,
-a.landing-panel:active {
-  background: var(--pm-landing-panel-surface-hover);
-  color: var(--book-fg);
-  text-decoration: none;
-}
-
-a.landing-panel:focus-visible {
-  outline: 2px solid var(--book-accent);
-  outline-offset: 3px;
 }
 
 .landing-panel__head {
@@ -775,19 +644,8 @@ a.landing-panel:focus-visible {
   gap: var(--pm-space-xs);
 }
 
-.landing-panel__arrow {
-  color: var(--pm-landing-panel-eyebrow-color);
-  transition: transform var(--promat-transition-fast), color var(--promat-transition-fast);
-}
-
-a.landing-panel:hover .landing-panel__arrow,
-a.landing-panel:focus-visible .landing-panel__arrow {
-  color: var(--book-fg);
-  transform: translate(var(--pm-landing-panel-arrow-shift), calc(var(--pm-landing-panel-arrow-shift) * -1));
-}
-
 .landing-panel__image {
-  margin-block: var(--pm-space-xs);
+  margin-block: var(--promat-space-1);
   aspect-ratio: var(--pm-landing-panel-image-ratio);
   overflow: hidden;
   border-radius: var(--pm-landing-panel-image-radius);
@@ -803,22 +661,142 @@ a.landing-panel:focus-visible .landing-panel__arrow {
   mix-blend-mode: var(--pm-landing-panel-image-blend);
 }
 
-@media (max-width: 759px) {
-  .landing-panel {
-    padding: var(--pm-landing-panel-padding-mobile);
-  }
+/* Teaching language rows: compact, purely typographic panels. Available languages are whole-row links; a language
+   without topic pages is a quiet, non-interactive panel without any navigation signal. */
+.pm-teaching-language-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pm-space-sm);
+  min-width: 0;
+  padding: var(--pm-nav-row-padding);
+  border-radius: var(--pm-nav-surface-radius);
+}
+
+.pm-teaching-language-row--available {
+  --pm-nav-surface-bg: var(--pm-nav-surface-accent);
+  --pm-nav-surface-bg-hover: var(--pm-nav-surface-accent-hover);
+}
+
+.pm-teaching-language-row--pending {
+  background: var(--pm-nav-surface-quiet);
+  color: var(--pm-nav-text-pending);
+}
+
+.pm-teaching-language-row__copy {
+  display: grid;
+  gap: var(--promat-space-1);
+  min-width: 0;
+}
+
+/* Teaching topic cards: compact content cards. Available topics are whole-card links; topics in preparation are quiet
+   panels with a status line. Only the available state carries the thin accent line and the arrow. */
+.pm-teaching-topic-card {
+  --pm-nav-surface-bg: var(--pm-teaching-topic-card-surface);
+  --pm-nav-surface-bg-hover: var(--pm-teaching-topic-card-hover-surface);
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--pm-teaching-topic-card-border);
+  border-top: var(--pm-teaching-topic-card-accent-bar) solid var(--pm-teaching-topic-card-accent);
+  border-radius: var(--pm-nav-surface-radius);
+  background: var(--pm-nav-surface-bg);
+  color: var(--book-fg);
+  text-decoration: none;
+  transition: background var(--promat-transition-fast), border-color var(--promat-transition-fast);
+}
+
+a.pm-teaching-topic-card:hover,
+a.pm-teaching-topic-card:focus-visible {
+  border-color: var(--pm-teaching-topic-card-hover-border);
+  border-top-color: var(--pm-teaching-topic-card-accent);
+}
+
+.pm-teaching-topic-card--pending {
+  --pm-nav-surface-bg: var(--pm-teaching-topic-card-pending-surface);
+  border-color: var(--pm-teaching-topic-card-pending-border);
+  color: var(--pm-nav-text-pending);
+}
+
+.pm-teaching-topic-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--promat-space-2);
+  height: 100%;
+  padding: var(--pm-nav-card-padding);
+}
+
+.pm-teaching-topic-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--pm-space-xs);
+}
+
+.pm-teaching-topic-card__head .pm-card__title {
+  margin: 0;
+}
+
+.pm-teaching-topic-card__status {
+  margin: auto 0 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-panel,
-  .landing-panel__arrow {
+  .pm-teaching-topic-card {
     transition: none;
   }
+}
 
-  a.landing-panel:hover .landing-panel__arrow,
-  a.landing-panel:focus-visible .landing-panel__arrow {
-    transform: none;
-  }
+/* Research corpus cards: calm information panels. The whole card is the link; the metadata stays as a structured list. */
+.pm-corpus-overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pm-space-sm);
+  height: 100%;
+  min-width: 0;
+  padding: var(--pm-space-container);
+}
+
+.pm-corpus-overview-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--pm-space-xs);
+}
+
+.pm-corpus-overview-card__people {
+  display: grid;
+  gap: var(--promat-space-3);
+  margin: 0;
+}
+
+.pm-corpus-overview-card__person {
+  display: grid;
+  gap: var(--promat-space-1);
+  min-width: 0;
+}
+
+.pm-corpus-overview-card__label,
+.pm-corpus-overview-card__value {
+  margin: 0;
+}
+
+.pm-corpus-overview-card__scope {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0;
+  margin: auto 0 0;
+  padding-top: var(--pm-space-sm);
+  border-top: 1px solid var(--pm-border-subtle);
+}
+
+.pm-corpus-overview-card__scope-item {
+  white-space: nowrap;
+}
+
+.pm-corpus-overview-card__scope-item + .pm-corpus-overview-card__scope-item::before {
+  content: "\00b7";
+  margin-inline: var(--promat-space-2);
 }
 
 .pm-admonition,
@@ -1193,5 +1171,4 @@ a.landing-panel:focus-visible .landing-panel__arrow {
   --pm-admonition-icon-color: var(--pm-admonition-weiterlesen-icon-color);
   --pm-admonition-title-color: var(--pm-admonition-weiterlesen-title-color);
 }
-
 

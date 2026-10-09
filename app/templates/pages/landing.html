@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'partials/_pm_interactions.html' import render_navigation_pill %}
+{% from 'partials/_pm_interactions.html' import render_navigation_pill, render_nav_arrow %}
 
 
 {% block content %}
@@ -37,10 +37,10 @@
 
   <section class="landing-grid" aria-label="{{ t('landing.cards.aria_label') }}">
     {% for card in promat_page.landing_cards | default([]) %}
-    <a class="landing-panel landing-panel--{{ card.entry_kind }}" href="{{ card.href }}">
+    <a class="pm-nav-surface landing-panel landing-panel--{{ card.entry_kind }}" href="{{ card.href }}">
       <div class="landing-panel__head">
         <span class="landing-panel__eyebrow">{{ card.eyebrow }}</span>
-        <span class="pm-icon-mask pm-icon-mask--arrow-up-right landing-panel__arrow" aria-hidden="true"></span>
+        {{ render_nav_arrow() }}
       </div>
       <div class="landing-panel__image">
         <img src="{{ static_asset(card.image_asset) }}" alt="" width="{{ card.image_width }}" height="{{ card.image_height }}" decoding="async">

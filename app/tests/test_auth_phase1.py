@@ -563,7 +563,7 @@ def test_landing_page_renders_english_copy_and_shared_language_switch(auth_app: 
     assert "Empirical speech data and analysis tools for research and university teaching." in html
     assert "Practical materials for practising and reflecting on pronunciation." in html
     # Two fully clickable panels in the exact visible order: eyebrow, image band, title, text; no separate CTA link.
-    panels = re.findall(r'<a class="landing-panel landing-panel--(\w+)" href="([^"]+)">(.*?)</a>', html, flags=re.S)
+    panels = re.findall(r'<a class="pm-nav-surface landing-panel landing-panel--(\w+)" href="([^"]+)">(.*?)</a>', html, flags=re.S)
     assert [(kind, href) for kind, href, _ in panels] == [("research", "/en/research"), ("teaching", "/en/teaching")]
     for (_, _, body), eyebrow, title in zip(panels, ("Research", "Teaching"), ("Research pronunciation", "Teach pronunciation")):
         order = [

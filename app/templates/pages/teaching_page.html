@@ -7,8 +7,8 @@
 {% block content %}
 {% set teaching_view = promat_page.teaching_view | default('overview') %}
 {% set teaching_labels = {
-  'open_topic': t('teaching.action.open_topic'),
   'topic_meta': t('teaching.topic.meta'),
+  'topic_pending': t('teaching.topic.pending'),
   'credits': t('teaching.credits.heading'),
   'citation_copy': t('teaching.citation.copy'),
   'citation_copy_copied': t('teaching.citation.copied'),
@@ -84,7 +84,7 @@
       {% endif %}
       <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if group.cards | length < 3 else '' }}">
         {% for card in group.cards %}
-        {{ render_teaching_topic_card(card, { 'open_topic': t('teaching.action.open_topic'), 'topic_pending': t('teaching.topic.pending'), 'topic_meta': t('teaching.topic.meta') }, 'h2', compact=true) }}
+        {{ render_teaching_topic_card(card, teaching_labels, 'h2', compact=true) }}
         {% endfor %}
       </div>
     </section>

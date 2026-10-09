@@ -126,3 +126,8 @@
     <span class="pm-interaction__arrow" aria-hidden="true">→</span>
   </span>
 {%- endmacro %}
+
+{#- Small up-right arrow that signals "this whole surface is a link" (see .pm-nav-surface in 40_cards.css). -#}
+{% macro render_nav_arrow() -%}
+  <span class="pm-icon-mask pm-icon-mask--arrow-up-right pm-nav-surface__arrow" aria-hidden="true"></span>
+{%- endmacro %}

@@ -209,18 +209,14 @@ def _extract_section_by_labelledby(html: str, labelledby: str) -> str:
 
 
 def _extract_corpus_card_by_title(html: str, title: str) -> str:
+    """The whole-card link of one research corpus card (the card is the anchor, so it never nests another link)."""
     title_index = html.find(title)
     assert title_index != -1
-    anchor_start_index = html.rfind('<a class="pm-card pm-card--corpus', 0, title_index)
-    article_start_index = html.rfind('<article class="pm-card pm-card--interactive pm-card--corpus', 0, title_index)
-    start_index = max(anchor_start_index, article_start_index)
+    start_index = html.rfind('<a class="pm-nav-surface pm-corpus-overview-card"', 0, title_index)
     assert start_index != -1
-    end_anchor_index = html.find('</a>', title_index)
-    end_article_index = html.find('</article>', title_index)
-    end_index = min(index for index in (end_anchor_index, end_article_index) if index != -1)
+    end_index = html.find('</a>', title_index)
     assert end_index != -1
-    closing_tag = '</article>' if html[start_index:start_index + 8] == '<article' else '</a>'
-    return html[start_index : end_index + len(closing_tag)]
+    return html[start_index : end_index + len('</a>')]
 
 
 def _assert_muted_locked_nav_item_order(drawer_html: str, label: str) -> None:
@@ -1524,15 +1520,16 @@ def test_research_overview_renders_structured_corpus_metadata_and_dynamic_counts
     assert 'Durchführung' in spanish_card
     assert 'Marlon Merte' in spanish_card
     assert spanish_card.index('Projektleitung') < spanish_card.index('Materialkonzeption') < spanish_card.index('Durchführung')
-    assert 'pm-corpus-overview-card__section--primary' in spanish_card
-    assert 'pm-corpus-overview-card__section--secondary pm-card__divider-buffer' in spanish_card
-    assert 'pm-speaker-card__footer pm-corpus-overview-card__footer' in spanish_card
-    assert 'pm-speaker-card__footer-section pm-corpus-overview-card__footer-section' in spanish_card
-    assert 'pm-corpus-overview-card--shared-accent' in spanish_card
-    assert 'pm-cta-link pm-cta-link--primary pm-corpus-overview-card__action' in spanish_card
-    assert 'Aufnahmen von 1 Lernenden' in spanish_card
-    assert 'Aufnahmen von 2 Referenzsprecher:innen' in spanish_card
-    assert spanish_card.index('Aufnahmen von 1 Lernenden') < spanish_card.index('Aufnahmen von 2 Referenzsprecher:innen')
+    # Whole-card link with the shared arrow, no separate "open" link, one structured people list and one scope line.
+    assert 'href="/de/research/spanish"' in spanish_card
+    assert 'pm-nav-surface__arrow' in spanish_card
+    assert 'Korpus öffnen' not in html
+    assert spanish_card.count('<a ') == 1
+    assert '<dl class="pm-corpus-overview-card__people">' in spanish_card
+    assert '<span class="pm-corpus-overview-card__count">1</span> Lernende:r' in spanish_card
+    assert '<span class="pm-corpus-overview-card__count">2</span> Referenzsprecher:innen' in spanish_card
+    assert spanish_card.index('>1</span> Lernende:r') < spanish_card.index('>2</span> Referenzsprecher:innen')
+    assert spanish_card.index('Durchführung') < spanish_card.index('pm-corpus-overview-card__scope')
 
     french_card = _extract_corpus_card_by_title(html, 'Französisch-Korpus')
     assert 'Prof. Dr. Janina Reinhardt' in french_card
@@ -1553,8 +1550,8 @@ def test_research_overview_renders_structured_corpus_metadata_and_dynamic_counts
     assert 'Prof. Dr. Rolf Kreyer' in english_card
     assert 'Marlon Merte' in english_card
     assert 'Rolf Kreyer' in english_card
-    assert 'Aufnahmen von 1 Lernenden' in english_card
-    assert 'Aufnahmen von 1 Referenzsprecher:in' in english_card
+    assert '<span class="pm-corpus-overview-card__count">1</span> Lernende:r' in english_card
+    assert '<span class="pm-corpus-overview-card__count">1</span> Referenzsprecher:in' in english_card
 
     assert 'Learner-Sessions' not in html
     assert 'Kontrolliert angelegtes Korpus' not in html
@@ -1612,13 +1609,12 @@ def test_research_overview_localizes_structured_corpus_cards_in_english(runtime_
     assert 'Project lead' in spanish_card
     assert 'Material design' in spanish_card
     assert 'Conducted by' in spanish_card
-    assert 'pm-corpus-overview-card__section--primary' in spanish_card
-    assert 'pm-corpus-overview-card__section--secondary' in spanish_card
-    assert 'pm-corpus-overview-card--shared-accent' in spanish_card
-    assert 'Recordings from 1 learner' in spanish_card
-    assert 'Recordings from 2 reference speakers' in spanish_card
+    assert 'href="/en/research/spanish"' in spanish_card
+    assert 'Open corpus' not in html
+    assert '<span class="pm-corpus-overview-card__count">1</span> learner<' in spanish_card
+    assert '<span class="pm-corpus-overview-card__count">2</span> reference speakers' in spanish_card
     assert spanish_card.index('Project lead') < spanish_card.index('Material design') < spanish_card.index('Conducted by')
-    assert spanish_card.index('Recordings from 1 learner') < spanish_card.index('Recordings from 2 reference speakers')
+    assert spanish_card.index('>1</span> learner') < spanish_card.index('>2</span> reference speakers')
 
     french_card = _extract_corpus_card_by_title(html, 'French corpus')
     assert 'Corpus in progress' in french_card
@@ -1860,24 +1856,20 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask, releas
     assert 'pm-teaching-language-list' in html
     assert html.count('pm-teaching-language-row--available') == 2
     assert html.count('pm-teaching-language-row--pending') == 2
-    assert html.count('pm-teaching-language-row__secondary') == 0
-    assert html.count('pm-teaching-language-row__body--available') == 2
-    assert html.count('pm-teaching-language-row__body--pending') == 2
     assert html.count('pm-teaching-language-row__copy') == 4
-    assert html.count('pm-teaching-language-row__badges') == 4
     assert html.count('pm-teaching-language-row__status') == 4
-    assert html.count('pm-teaching-language-row__badge--available') == 2
-    assert html.count('pm-teaching-language-row__badge--pending') == 2
-    assert html.count('pm-teaching-language-row__action') == 2
-    assert 'pm-teaching-language-row__primary' not in html
-    assert html.index('>Spanisch<') < html.index('pm-teaching-language-row__badge--available') < html.index('pm-teaching-language-row__action')
-    assert html.index('pm-teaching-language-row__badge--available') < html.index('2 Themenseiten') < html.index('pm-teaching-language-row__action')
+    assert html.count('pm-nav-surface__arrow') == 2
+    # Compact, typographic panels: no separate "Öffnen" link and no status badges.
+    assert 'pm-teaching-language-row__action' not in html
+    assert 'pm-teaching-language-row__badge' not in html
+    assert '>Öffnen<' not in html
+    assert html.index('>Spanisch<') < html.index('2 Themenseiten') < html.index('pm-nav-surface__arrow')
     assert html.index('>Englisch<') < html.index('In Vorbereitung')
     assert 'href="/de/teaching/spanish"' in html
     assert 'href="/de/teaching/english"' not in html
     assert 'href="/de/teaching/french"' in html
     assert 'href="/de/teaching/german"' not in html
-    assert html.count('aria-disabled="true"') == 2
+    assert 'aria-disabled' not in html
     assert '2 Themenseiten' in html
     assert '3 Themenseiten' in html
     assert html.count('In Vorbereitung') == 2
@@ -1957,6 +1949,11 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'pm-teaching-topic-card__meta' not in html
     assert 'pm-teaching-topic-card__pill' not in html
     assert 'Themenmetadaten' not in html
+    # Available topics are whole-card links with the shared arrow (no "Öffnen" link); pending ones are plain panels.
+    assert 'pm-teaching-topic-card__action' not in html
+    assert re.search(r'<a class="pm-teaching-topic-card pm-nav-surface pm-teaching-topic-card--available[^"]*" href="/de/teaching/spanish/which-pronunciation">', html)
+    assert re.search(r'<article class="pm-teaching-topic-card pm-teaching-topic-card--pending[^"]*">', html)
+    assert html.count('pm-nav-surface__arrow') == html.count('pm-teaching-topic-card--available')
     assert 'In Vorbereitung: Aussprache und Hörverstehen rund um das r am Silben- und Wortende.' in html
     first_group_html = _extract_section_by_labelledby(html, 'teaching-group-1')
     assert 'Welche Aussprache unterrichten?' in first_group_html

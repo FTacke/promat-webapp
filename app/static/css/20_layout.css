@@ -980,10 +980,6 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-inline: auto;
 }
 
-.pm-teaching-page--hub .pm-teaching-topic-grid {
-  align-items: start;
-}
-
 .pm-teaching-topic-grid {
   grid-template-columns: minmax(0, 1fr);
   max-width: 100%;

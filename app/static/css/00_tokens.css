@@ -165,16 +165,16 @@
   --pm-overview-body-color: color-mix(in srgb, var(--book-fg) 88%, var(--book-muted) 12%);
   --pm-overview-divider-color: color-mix(in srgb, var(--promat-wordmark-accent) 18%, transparent);
   --pm-overview-bullet-color: var(--pm-overview-accent);
-  --pm-teaching-topic-card-accent: var(--pm-overview-accent);
-  --pm-teaching-topic-card-surface: color-mix(in srgb, var(--pm-surface-paper) 88%, var(--promat-wordmark-accent) 12%);
-  --pm-teaching-topic-card-border: color-mix(in srgb, var(--pm-border-default) 76%, var(--promat-wordmark-accent) 24%);
-  --pm-teaching-topic-card-hover-surface: color-mix(in srgb, var(--pm-surface-paper) 83%, var(--promat-wordmark-accent) 17%);
-  --pm-teaching-topic-card-hover-border: color-mix(in srgb, var(--pm-border-default) 56%, var(--promat-wordmark-accent) 44%);
+  --pm-teaching-topic-card-accent: color-mix(in srgb, var(--promat-wordmark-accent) 50%, var(--pm-border-default));
+  --pm-teaching-topic-card-accent-bar: 2px;
+  --pm-teaching-topic-card-surface: var(--pm-nav-surface-accent);
+  --pm-teaching-topic-card-border: var(--pm-border-subtle);
+  --pm-teaching-topic-card-hover-surface: var(--pm-nav-surface-accent-hover);
+  --pm-teaching-topic-card-hover-border: var(--pm-border-default);
   --pm-teaching-topic-card-action: color-mix(in srgb, var(--pm-text-accent) 76%, var(--book-fg) 24%);
   --pm-teaching-topic-card-action-hover: color-mix(in srgb, var(--pm-text-accent) 88%, var(--book-fg) 12%);
-  --pm-teaching-topic-card-pending-accent: color-mix(in srgb, var(--pm-teaching-topic-card-accent) 18%, var(--pm-border-subtle) 82%);
-  --pm-teaching-topic-card-pending-surface: color-mix(in srgb, var(--pm-surface-paper) 96%, var(--promat-wordmark-accent) 4%);
-  --pm-teaching-topic-card-pending-border: color-mix(in srgb, var(--pm-border-subtle) 86%, var(--promat-wordmark-accent) 14%);
+  --pm-teaching-topic-card-pending-surface: var(--pm-nav-surface-quiet);
+  --pm-teaching-topic-card-pending-border: var(--pm-border-subtle);
   --pm-teaching-topic-card-pending-text: color-mix(in srgb, var(--book-muted) 78%, var(--book-fg) 22%);
   --pm-teaching-topic-card-pending-status: color-mix(in srgb, var(--book-muted) 82%, var(--pm-teaching-topic-card-accent) 18%);
   --pm-teaching-status-surface: color-mix(in srgb, var(--pm-surface-paper) 90%, var(--book-adm-praxis) 10%);
@@ -616,26 +616,35 @@
   --pm-landing-intro-size-mobile: var(--promat-text-md);
   --pm-landing-intro-line-mobile: 1.45;
   --pm-landing-intro-max-mobile: 22rem;
-  /* Landing navigation panels: flat editorial surfaces derived from the theme-aware base tokens, so one definition
-     serves light and dark. Only the image plate needs a per-theme value (see the dark theme block). */
-  --pm-landing-grid-max-width: 58rem;
+  /* Quiet navigation surfaces: one family for the landing panels, the teaching language rows and topic cards and the
+     research corpus cards. Surfaces derive from theme-aware base tokens, so one definition serves light and dark. */
+  --pm-nav-surface-neutral: color-mix(in srgb, var(--book-bg) 68%, var(--book-surface-2));
+  --pm-nav-surface-neutral-hover: color-mix(in srgb, var(--book-bg) 52%, var(--book-surface-2));
+  --pm-nav-surface-accent: color-mix(in srgb, var(--book-bg) 91%, var(--promat-wordmark-accent));
+  --pm-nav-surface-accent-hover: color-mix(in srgb, var(--book-bg) 86%, var(--promat-wordmark-accent));
+  --pm-nav-surface-quiet: color-mix(in srgb, var(--book-bg) 84%, var(--book-surface-2));
+  --pm-nav-surface-radius: var(--pm-radius-container);
+  --pm-nav-arrow-color: var(--book-muted);
+  --pm-nav-arrow-shift: 3px;
+  --pm-nav-focus-outline: 2px solid var(--book-accent);
+  --pm-nav-focus-offset: 3px;
+  --pm-nav-text-pending: color-mix(in srgb, var(--book-fg) 70%, var(--book-bg));
+  --pm-nav-status-available: color-mix(in srgb, var(--pm-text-accent) 76%, var(--book-fg) 24%);
+  --pm-nav-row-padding: var(--pm-space-text) var(--pm-space-container);
+  --pm-nav-card-padding: var(--pm-space-sm) var(--pm-space-container);
+
+  /* Landing navigation panels: flat editorial panels with a flat image band. */
+  --pm-landing-grid-max-width: 55rem;
   --pm-landing-panel-gap: var(--pm-space-lg);
   --pm-landing-panel-gap-mobile: var(--pm-space-container);
-  --pm-landing-panel-padding: var(--pm-space-lg);
-  --pm-landing-panel-padding-mobile: var(--pm-space-container);
-  --pm-landing-panel-radius: var(--pm-radius-container);
-  --pm-landing-panel-surface-research: color-mix(in srgb, var(--book-bg) 68%, var(--book-surface-2));
-  --pm-landing-panel-surface-research-hover: color-mix(in srgb, var(--book-bg) 52%, var(--book-surface-2));
-  --pm-landing-panel-surface-teaching: color-mix(in srgb, var(--book-bg) 91%, var(--promat-wordmark-accent));
-  --pm-landing-panel-surface-teaching-hover: color-mix(in srgb, var(--book-bg) 86%, var(--promat-wordmark-accent));
-  --pm-landing-panel-image-ratio: 13 / 5;
+  --pm-landing-panel-padding: var(--pm-space-container);
+  --pm-landing-panel-image-ratio: 14 / 5;
   --pm-landing-panel-image-position-research: 50% 50%;
-  --pm-landing-panel-image-position-teaching: 50% 77%;
+  --pm-landing-panel-image-position-teaching: 50% 79%;
   --pm-landing-panel-image-radius: var(--pm-radius-sm);
   --pm-landing-panel-image-surface: transparent;
   --pm-landing-panel-image-blend: darken;
   --pm-landing-panel-eyebrow-color: var(--book-muted);
-  --pm-landing-panel-arrow-shift: 3px;
   --pm-landing-panel-title-size: clamp(1.55rem, 1.38rem + 0.7vw, 1.95rem);
   --pm-landing-panel-title-line: 1.15;
   --pm-landing-panel-title-tracking: -0.02em;
@@ -644,10 +653,6 @@
   --pm-research-language-root-mobile-actions-gap: var(--pm-space-container);
   --pm-research-language-root-mobile-actions-divider-color: var(--pm-border-subtle);
   --pm-research-language-root-mobile-actions-padding-top: var(--pm-space-sm);
-  --pm-teaching-language-row-block-gap: 0.32rem;
-  --pm-teaching-language-row-column-gap: 0.72rem;
-  --pm-teaching-language-row-desktop-column-gap: clamp(1rem, 1.8vw, 2rem);
-  --pm-teaching-language-row-desktop-aside-gap: clamp(1.7rem, 3vw, 3.25rem);
   --pm-reading-paragraph-gap: var(--promat-space-3);
   --pm-reading-heading-gap-before-h2: var(--pm-space-container);
   --pm-reading-heading-gap-after-h2: 1.2rem;

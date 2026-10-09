@@ -1509,62 +1509,6 @@ a.promat-card:active .pm-cta-link {
   color: var(--pm-cta-link-hover, var(--pm-text-accent));
 }
 
-.pm-teaching-language-row {
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  padding: 0;
-  border-color: var(--pm-teaching-topic-card-border);
-  border-top: var(--pm-card-accent-bar-thickness) solid var(--pm-teaching-topic-card-accent);
-  background: var(--pm-teaching-topic-card-surface);
-  box-shadow: var(--pm-shadow-card-subtle);
-  transition: transform var(--promat-transition-fast), background var(--promat-transition-fast), border-color var(--promat-transition-fast), box-shadow var(--promat-transition-fast);
-}
-
-.pm-teaching-language-row--available:hover,
-.pm-teaching-language-row--available:focus-visible {
-  background: var(--pm-teaching-topic-card-hover-surface);
-  border-color: var(--pm-teaching-topic-card-hover-border);
-  border-top-color: var(--pm-teaching-topic-card-accent);
-  box-shadow: var(--pm-shadow-card-subtle);
-  transform: translateY(-1px);
-}
-
-.pm-teaching-language-row .pm-card__body {
-  display: grid;
-  gap: 0.45rem var(--pm-teaching-language-row-column-gap);
-  align-items: center;
-  padding: 0.76rem 0.96rem 0.8rem;
-  text-align: left;
-}
-
-.pm-teaching-language-row__body {
-  width: 100%;
-}
-
-.pm-teaching-language-row__body--available {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.pm-teaching-language-row__body--pending {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.pm-teaching-language-row__copy {
-  display: grid;
-  gap: 0.38rem;
-  min-width: 0;
-}
-
-.pm-teaching-language-row__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.38rem;
-  min-width: 0;
-}
-
-.pm-teaching-language-row__title,
-.pm-teaching-language-row__status,
 .pm-teaching-topic-group__description,
 .pm-teaching-empty-state__title,
 .pm-teaching-empty-state__text,
@@ -1575,11 +1519,6 @@ a.promat-card:active .pm-cta-link {
   margin: 0;
 }
 
-.pm-teaching-language-row__title {
-  line-height: 1.25;
-}
-
-.pm-teaching-language-row__status,
 .pm-teaching-topic-group__description {
   color: var(--book-muted);
 }
@@ -1589,62 +1528,6 @@ a.promat-card:active .pm-cta-link {
   width: 100%;
   max-width: none;
   margin-inline: 0;
-}
-
-.pm-teaching-language-row__status {
-  line-height: 1.2;
-}
-
-.pm-teaching-language-row__badge {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  padding: 0.24rem 0.58rem;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-family: var(--book-font-ui);
-  font-size: 0.76rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-}
-
-.pm-teaching-language-row__badge--available {
-  border-color: var(--pm-teaching-topic-card-border);
-  background: var(--pm-surface-paper);
-  color: var(--pm-teaching-topic-card-action);
-}
-
-.pm-teaching-language-row__badge--pending {
-  border-color: var(--pm-teaching-topic-card-pending-border);
-  background: var(--pm-surface-paper);
-  color: var(--pm-teaching-topic-card-pending-status);
-}
-
-.pm-teaching-language-row--pending {
-  border-color: var(--pm-teaching-topic-card-pending-border);
-  border-top-color: var(--pm-teaching-topic-card-pending-accent);
-  background: var(--pm-teaching-topic-card-pending-surface);
-  color: var(--pm-teaching-topic-card-pending-text);
-  box-shadow: none;
-  cursor: default;
-}
-
-.pm-teaching-language-row--pending .pm-card__title,
-.pm-teaching-language-row--pending .pm-teaching-language-row__status {
-  color: inherit;
-}
-
-.pm-teaching-language-row__action {
-  display: inline-flex;
-  align-items: center;
-  justify-self: end;
-  color: var(--pm-teaching-topic-card-action);
-  white-space: nowrap;
-}
-
-.pm-teaching-language-row__action .pm-cta-link {
-  white-space: nowrap;
 }
 
 .pm-teaching-topic-metadata {
@@ -1800,59 +1683,6 @@ a.promat-card:active .pm-cta-link {
 
 .pm-teaching-hero__lead {
   max-width: 42rem;
-}
-
-.pm-teaching-topic-card {
-  position: relative;
-  width: 100%;
-  max-width: none;
-  transition: transform var(--promat-transition-fast), background var(--promat-transition-fast), border-color var(--promat-transition-fast), box-shadow var(--promat-transition-fast), color var(--promat-transition-fast);
-}
-
-.pm-teaching-topic-card__body {
-  gap: 0.72rem;
-}
-
-.pm-teaching-topic-card--available .pm-card__text {
-  color: color-mix(in srgb, var(--book-fg) 86%, var(--book-muted) 14%);
-}
-
-a.pm-teaching-topic-card--available:hover,
-a.pm-teaching-topic-card--available:focus-visible {
-  transform: translateY(-1px);
-}
-
-a.pm-teaching-topic-card--available:active {
-  transform: translateY(0);
-}
-
-.pm-teaching-topic-card--pending {
-  color: var(--pm-teaching-topic-card-pending-text);
-  cursor: default;
-}
-
-.pm-teaching-topic-card--pending .pm-card__title {
-  color: color-mix(in srgb, var(--book-fg) 58%, var(--book-muted) 42%);
-}
-
-.pm-teaching-topic-card--pending .pm-card__text {
-  color: var(--pm-teaching-topic-card-pending-text);
-}
-
-.pm-teaching-topic-card__action {
-  padding-top: 0.9rem;
-}
-
-.pm-teaching-topic-card--available .pm-teaching-topic-card__action {
-  color: var(--pm-teaching-topic-card-action);
-}
-
-.pm-teaching-topic-card__status {
-  color: var(--pm-teaching-topic-card-pending-status);
-  font-family: var(--book-font-ui);
-  font-size: var(--pm-cta-link-font-size);
-  font-weight: var(--pm-cta-link-font-weight);
-  line-height: var(--pm-cta-link-line-height);
 }
 
 .pm-teaching-block--topic-grid {
@@ -2834,7 +2664,6 @@ a.pm-teaching-topic-card--available:active {
   max-width: none;
 }
 
-.pm-teaching-topic-card__body,
 .pm-teaching-download-card__body {
   display: grid;
   gap: 0.74rem;
@@ -2889,50 +2718,6 @@ a.pm-teaching-topic-card--available:active {
   line-height: 1.35;
 }
 
-.pm-teaching-topic-card--compact {
-  --pm-cta-link-font-size: 0.92rem;
-  --pm-cta-link-line-height: 1.3;
-}
-
-.pm-teaching-page--hub .pm-teaching-topic-card--compact {
-  height: auto;
-  align-self: start;
-}
-
-.pm-teaching-topic-card--compact .pm-teaching-topic-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.56rem;
-  height: 100%;
-  min-height: 0;
-  align-content: start;
-}
-
-.pm-teaching-topic-card--compact .pm-card__text {
-  color: var(--book-muted);
-  font-size: 0.98rem;
-  line-height: 1.5;
-}
-
-.pm-teaching-topic-card__byline {
-  margin: 0;
-  color: color-mix(in srgb, var(--book-muted) 86%, var(--book-fg) 14%);
-  font-size: 0.93rem;
-  line-height: 1.45;
-}
-
-.pm-teaching-topic-card--compact .pm-teaching-topic-card__byline {
-  font-size: 0.89rem;
-}
-
-.pm-teaching-topic-card--compact.pm-teaching-topic-card--pending .pm-card__text {
-  color: color-mix(in srgb, var(--book-muted) 88%, var(--pm-surface-paper) 12%);
-}
-
-.pm-teaching-topic-card--pending .pm-teaching-topic-card__byline {
-  color: color-mix(in srgb, var(--book-muted) 90%, var(--pm-surface-paper) 10%);
-}
-
 .pm-teaching-topic-card__meta,
 .pm-teaching-segment-list,
 .pm-teaching-credits__list {
@@ -2962,95 +2747,6 @@ a.pm-teaching-topic-card--available:active {
   font-size: var(--pm-chip-font-size);
   font-weight: 600;
   line-height: 1.1;
-}
-
-.pm-teaching-topic-card__action {
-  margin-top: auto;
-}
-
-.pm-teaching-topic-card--compact .pm-card__action,
-.pm-teaching-topic-card--compact .pm-teaching-topic-card__action {
-  margin-top: auto;
-  padding-top: 0;
-}
-
-.pm-teaching-topic-card--compact .pm-card__body > .pm-card__action,
-.pm-teaching-topic-card--compact .pm-card__body > .pm-teaching-topic-card__action {
-  margin-top: auto;
-  padding-top: 0;
-  align-self: start;
-}
-
-.pm-teaching-topic-card__status {
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.7rem;
-  padding: 0.18rem 0.72rem;
-  border: 1px solid color-mix(in srgb, var(--pm-border-subtle) 92%, transparent);
-  border-radius: var(--pm-radius-pill);
-  background: color-mix(in srgb, var(--pm-surface-paper) 88%, var(--pm-surface-hover) 12%);
-  color: var(--book-muted);
-  font-size: var(--pm-chip-font-size);
-  font-weight: 600;
-  line-height: 1.1;
-}
-
-.pm-teaching-topic-card--compact .pm-teaching-topic-card__status {
-  display: inline-flex;
-  align-items: center;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: color-mix(in srgb, var(--book-muted) 88%, var(--pm-surface-paper) 12%);
-  font-size: 0.95rem;
-  font-weight: 500;
-  line-height: 1.35;
-}
-
-.pm-teaching-topic-card--available:hover,
-a.pm-teaching-topic-card:focus-visible {
-  background: color-mix(in srgb, var(--pm-surface-paper) 84%, var(--promat-secondary-container) 16%);
-  border-color: color-mix(in srgb, var(--pm-border-default) 60%, var(--promat-secondary) 40%);
-  border-top-color: color-mix(in srgb, var(--promat-secondary) 84%, var(--pm-border-subtle) 16%);
-  box-shadow: var(--pm-card-shadow);
-  transform: translateY(-1px);
-}
-
-.pm-teaching-topic-card--pending {
-  border-top-color: color-mix(in srgb, var(--pm-border-default) 84%, var(--promat-secondary) 16%);
-  background: color-mix(in srgb, var(--pm-surface-paper) 95%, var(--pm-surface-hover) 5%);
-  color: color-mix(in srgb, var(--book-fg) 72%, var(--book-muted));
-  box-shadow: none;
-  cursor: default;
-}
-
-.pm-teaching-topic-card--pending .pm-card__title,
-.pm-teaching-topic-card--pending .pm-card__text {
-  color: inherit;
-}
-
-.pm-teaching-topic-card--pending .pm-card__title {
-  color: color-mix(in srgb, var(--book-fg) 84%, var(--book-muted) 16%);
-}
-
-.pm-teaching-topic-card--pending .pm-teaching-topic-card__pill {
-  border-color: color-mix(in srgb, var(--pm-border-subtle) 92%, transparent);
-  background: color-mix(in srgb, var(--pm-surface-paper) 90%, var(--pm-surface-hover) 10%);
-  color: color-mix(in srgb, var(--book-fg) 68%, var(--book-muted));
-}
-
-.pm-teaching-language-row .pm-interaction__arrow,
-.pm-teaching-topic-card .pm-interaction__arrow {
-  transition: transform var(--promat-transition-fast);
-}
-
-.pm-teaching-language-row:hover .pm-interaction__arrow,
-.pm-teaching-language-row--available:focus-visible .pm-interaction__arrow,
-.pm-teaching-topic-card--available:hover .pm-interaction__arrow,
-a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
-  transform: translateX(0.12rem);
 }
 
 .pm-teaching-credits__person-name,
@@ -3235,21 +2931,6 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   color: var(--book-muted);
 }
 
-@media (min-width: 760px) {
-  .pm-teaching-language-row__body--available {
-    column-gap: var(--pm-teaching-language-row-desktop-column-gap);
-    align-items: center;
-  }
-
-  .pm-teaching-language-row__body--pending {
-    align-items: center;
-  }
-
-  .pm-teaching-language-row__status {
-    overflow-wrap: anywhere;
-  }
-}
-
 @media (max-width: 759px) {
   .pm-teaching-page--overview .pm-content-header,
   .pm-teaching-page--overview .pm-teaching-overview__intro,
@@ -3275,32 +2956,6 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
     width: 100%;
     max-width: none;
     margin-inline: auto;
-  }
-
-  .pm-teaching-language-row__status {
-    min-width: 0;
-    text-align: left;
-    white-space: nowrap;
-  }
-
-  .pm-teaching-language-row__body--available {
-    grid-template-columns: minmax(0, 1fr) max-content;
-    align-items: start;
-    column-gap: clamp(0.85rem, 3vw, 1.1rem);
-  }
-
-  .pm-teaching-language-row__body--pending {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.22rem;
-  }
-
-  .pm-teaching-language-row__badge {
-    white-space: normal;
-  }
-
-  .pm-teaching-language-row__action {
-    align-self: center;
-    justify-self: end;
   }
 
   .pm-teaching-page--hub .pm-breadcrumb__list,
