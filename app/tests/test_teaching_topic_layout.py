@@ -87,15 +87,29 @@ def test_retired_page_level_width_mechanisms_stay_gone() -> None:
     assert "data-topic-slug" not in _css("30_components.css"), "no per-topic CSS exceptions"
 
 
-def test_running_text_keeps_a_reading_measure_inside_the_editorial_width() -> None:
+def test_editorial_elements_share_the_column_width_without_a_character_measure_cap() -> None:
+    layout = _css("20_layout.css")
+    neutralizer = _rule(layout, ".pm-teaching-block-stack > .pm-teaching-block.pm-reading")
+    assert "width: 100%;" in neutralizer and "max-width: none;" in neutralizer
     components = _css("30_components.css")
-    text = _rule(
-        components,
+    # no ch-based cap is left on any editorial teaching text or box inside the topic layout
+    for selector in (
+        ".pm-teaching-further-reading__description",
+        ".pm-teaching-further-reading__item-text",
+        ".pm-teaching-block--text-plain .promat-content-block__text",
         ".pm-teaching-block--text > .promat-content-block__text,\n.pm-teaching-block--rich-text .pm-teaching-rich-text__body",
-    )
-    assert "var(--pm-layout-reading-width)" in text
-    reading = re.search(r"--pm-layout-reading-width:\s*(\d+)ch;", _css("00_tokens.css"))
-    assert reading and 65 <= int(reading.group(1)) <= 75
+        ".pm-teaching-block--citation .pm-admonition__text,\n.pm-teaching-block--citation .pm-teaching-citation__meta",
+    ):
+        match = re.search(r"(?:^|\n)" + re.escape(selector) + r"\s*\{([^}]*)\}", components)
+        assert not match or "max-width" not in match.group(1), selector
+    for selector, body in re.findall(r"(?:^|\n)([^{}\n][^{}]*)\{([^{}]*)\}", components + _css("20_layout.css")):
+        if "teaching" in selector or "audio-" in selector:
+            assert "--pm-layout-reading-width" not in body, f"reading-width cap inside the topic layout: {selector.strip()}"
+    # the token itself stays available for other page types
+    assert re.search(r"--pm-layout-reading-width:\s*72ch;", _css("00_tokens.css"))
+    assert "width: min(100%, var(--pm-layout-reading-width));" in _rule(layout, ".pm-reading")
+    # the component-internal lead of audio sections keeps its own measure (component unchanged)
+    assert "max-width: 72ch;" in _rule(components, ".audio-section-description")
     audio = _rule(components, ".audio-section")
     assert "width: 100%;" in audio and "max-width: none;" in audio
 

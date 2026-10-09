@@ -1001,6 +1001,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-inline: auto;
 }
 
+/* Inside the topic layout the editorial/component grid column is the only width: no 72ch reading cap on blocks. */
 .pm-teaching-block-stack > .pm-teaching-block.pm-reading {
   width: 100%;
   max-width: none;

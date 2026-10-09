@@ -2171,10 +2171,6 @@ a.pm-teaching-topic-card--available:active {
   margin: 0;
 }
 
-.pm-teaching-block--text-plain .promat-content-block__text {
-  max-width: min(100%, var(--pm-layout-reading-width));
-}
-
 .pm-teaching-page--topic .pm-teaching-topic-meta__details {
   max-width: 100%;
 }
@@ -3058,27 +3054,6 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   margin: 0;
 }
 
-/* Running text keeps a readable measure (about 72 characters) inside the wider content column;
-   panels, audio sections, embeds and info boxes use the full column width. */
-.pm-teaching-block--text > .promat-content-block__text,
-.pm-teaching-block--rich-text .pm-teaching-rich-text__body {
-  max-width: min(100%, var(--pm-layout-reading-width));
-}
-
-.pm-teaching-page--topic .pm-teaching-block--citation {
-  width: 100%;
-  max-width: none;
-}
-
-.pm-teaching-page--topic .pm-teaching-block--citation .pm-admonition {
-  width: 100%;
-}
-
-.pm-teaching-block--citation .pm-admonition__text,
-.pm-teaching-block--citation .pm-teaching-citation__meta {
-  max-width: min(100%, 65ch);
-}
-
 .pm-teaching-block--overview .pm-admonition {
   box-shadow: none;
 }
@@ -3152,7 +3127,6 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
 }
 
 .pm-teaching-further-reading__description {
-  max-width: min(100%, 68ch);
   color: var(--pm-teaching-further-reading-description-color);
   font-family: var(--pm-admonition-body-font);
   font-size: clamp(0.93rem, 0.91rem + 0.06vw, 0.98rem);
@@ -3193,7 +3167,6 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
 }
 
 .pm-teaching-further-reading__item-text {
-  max-width: min(100%, 70ch);
   color: color-mix(in srgb, var(--book-fg) 72%, var(--book-muted) 28%);
   font-family: var(--pm-admonition-body-font);
   font-size: 0.93rem;
