@@ -1439,9 +1439,13 @@ a.promat-card:active .pm-cta-link {
   gap: var(--pm-space-grid);
 }
 
-.pm-teaching-page--hub,
-.pm-teaching-page--topic {
+.pm-teaching-page--hub {
   gap: clamp(1.4rem, 2vw, 1.9rem);
+}
+
+/* Header-to-content and content-to-back-link distance of every topic page: the shared section gap. */
+.pm-teaching-page--topic {
+  gap: var(--pm-layout-section-gap);
 }
 
 .pm-teaching-topic-header {
@@ -1887,13 +1891,8 @@ a.pm-teaching-topic-card--available:active {
   gap: 0;
 }
 
-.pm-teaching-page--topic .pm-teaching-topic-section {
-  display: grid;
-  gap: var(--pm-teaching-topic-block-gap);
-}
-
 .pm-teaching-page--topic .pm-teaching-topic-section + .pm-teaching-topic-section {
-  margin-top: var(--pm-teaching-topic-section-gap);
+  margin-top: var(--pm-layout-section-gap);
 }
 
 .pm-teaching-page--topic .pm-teaching-topic-section--intro {
@@ -2180,64 +2179,6 @@ a.pm-teaching-topic-card--available:active {
   max-width: 100%;
 }
 
-.pm-teaching-page--topic .pm-teaching-block-stack .pm-teaching-rich-text--didactic_close {
-  width: 100%;
-  max-width: none;
-  gap: 0.58rem;
-  padding: clamp(0.92rem, 0.86rem + 0.18vw, 1.06rem);
-  border: 1px solid var(--pm-teaching-further-reading-border);
-  border-radius: var(--pm-teaching-audio-section-radius);
-  background: color-mix(in srgb, var(--promat-wordmark-accent) 7%, var(--pm-surface-paper) 93%);
-  box-shadow: none;
-}
-
-.pm-teaching-page--topic .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body {
-  width: 100%;
-  max-width: none;
-  font-size: clamp(0.94rem, 0.92rem + 0.07vw, 1rem);
-  line-height: 1.56;
-}
-
-.pm-teaching-page--topic .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body ul {
-  width: 100%;
-  margin: 0.58rem 0 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: impulse-list;
-  display: grid;
-  gap: 0.62rem;
-}
-
-.pm-teaching-page--topic .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li {
-  position: relative;
-  padding-inline-start: calc(2.15rem + 0.68rem);
-  min-height: 2.4rem;
-  counter-increment: impulse-list;
-  font-size: 0.94rem;
-  line-height: 1.52;
-}
-
-.pm-teaching-page--topic .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li::before {
-  content: counter(impulse-list, decimal-leading-zero);
-  position: absolute;
-  inset-inline-start: 0;
-  inset-block-start: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.15rem;
-  height: 2.15rem;
-  border: 1px solid var(--pm-border-subtle);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--pm-surface-neutral) 82%, var(--pm-surface-paper) 18%);
-  color: var(--book-muted);
-  font-family: var(--book-font-ui);
-  font-size: 0.69rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.pm-teaching-page--topic .pm-teaching-topic-section:has(.pm-teaching-rich-text--didactic_close) .pm-teaching-section-heading__title::after,
 .pm-teaching-page--topic .pm-teaching-topic-section:has(.pm-teaching-block--teaching-impulses) .pm-teaching-section-heading__title::after {
   background: var(--promat-wordmark-accent);
   opacity: 0.2;
@@ -2374,24 +2315,6 @@ a.pm-teaching-topic-card--available:active {
   }
 
 }
-.pm-teaching-page--topic .pm-teaching-topic-section--topic-citation {
-  gap: 0.9rem;
-}
-
-.pm-teaching-page--topic .pm-teaching-topic-section + .pm-teaching-topic-section--topic-citation {
-  margin-top: 3.6rem;
-}
-
-.pm-teaching-page--topic .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li :where(p) {
-  margin: 0;
-}
-
-.pm-teaching-page--topic .pm-teaching-rich-text--didactic_close .pm-teaching-rich-text__body li strong {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--book-fg);
-}
-
 
 .pm-teaching-block--embed {
   display: grid;
@@ -2851,8 +2774,7 @@ a.pm-teaching-topic-card--available:active {
 }
 
 @media (max-width: 759px) {
-  .pm-teaching-page--topic .pm-teaching-topic-metadata,
-  .pm-teaching-page--topic .pm-teaching-topic-sections {
+  .pm-teaching-page--topic .pm-teaching-topic-metadata {
     box-sizing: border-box;
     width: 100%;
     max-width: none;
@@ -2867,10 +2789,6 @@ a.pm-teaching-topic-card--available:active {
   .pm-teaching-page--topic .pm-content-header__intro {
     max-width: 100%;
     font-size: 1.08rem;
-  }
-
-  .pm-teaching-page--topic .pm-teaching-topic-header {
-    margin-bottom: 2rem;
   }
 
   .pm-teaching-page--topic .pm-teaching-topic-meta__details {

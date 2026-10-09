@@ -845,30 +845,49 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-teaching-topic-header {
-  width: min(100%, 68rem);
-  max-width: 68rem;
+  width: min(100%, var(--pm-layout-component-width));
   margin-inline: auto;
 }
 
 .pm-teaching-topic-metadata {
-  width: min(100%, 56rem);
-  max-width: 56rem;
+  width: min(100%, var(--pm-layout-editorial-width));
   margin-inline: auto;
   justify-self: center;
 }
 
-/* Shared vertical page layout for every Teaching topic page (all languages): one centered column. */
-.pm-teaching-page--topic .pm-teaching-topic-sections {
-  width: min(100%, var(--pm-teaching-topic-content-width));
-  max-width: var(--pm-teaching-topic-content-width);
+/* Shared vertical page layout for every Teaching topic page (all languages).
+   One centered axis with two functional widths: editorial (text and text-based boxes, the default) and
+   component (interactive or complex visual blocks, marked by data-teaching-width="wide" in _teaching_blocks.html).
+   Both start from the same grid, so they are centered on the same axis and content stays left-aligned. */
+.pm-teaching-topic-sections,
+.pm-teaching-block-stack {
+  width: min(100%, var(--pm-layout-component-width));
   margin-inline: auto;
 }
 
-/* Blocks of one section stack vertically; multi-column layouts live inside components only. */
+.pm-teaching-topic-section,
 .pm-teaching-block-stack {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  row-gap: var(--pm-teaching-topic-block-gap);
+  grid-template-columns: [component-start] minmax(0, 1fr) [editorial-start] min(var(--pm-layout-editorial-width), 100%) [editorial-end] minmax(0, 1fr) [component-end];
+}
+
+.pm-teaching-topic-section {
+  row-gap: var(--pm-space-container);
+}
+
+.pm-teaching-topic-section > *,
+.pm-teaching-block-stack > .pm-teaching-block {
+  grid-column: editorial;
+  min-width: 0;
+}
+
+.pm-teaching-topic-section > .pm-teaching-block-stack,
+.pm-teaching-block-stack > .pm-teaching-block[data-teaching-width="wide"] {
+  grid-column: component;
+}
+
+.pm-teaching-block-stack {
+  row-gap: var(--pm-space-container);
 }
 
 .pm-teaching-block {
@@ -959,18 +978,13 @@ body.app-shell.page-landing .md3-content-wrapper {
 .pm-teaching-page--topic .pm-breadcrumb,
 .pm-teaching-page--topic .pm-content-header__title,
 .pm-teaching-page--topic .pm-content-header__intro {
-  width: min(100%, 56rem);
-  max-width: 56rem;
+  width: min(100%, var(--pm-layout-editorial-width));
   justify-self: center;
 }
 
 .pm-teaching-page--overview .pm-content-header__intro,
 .pm-teaching-page--hub .pm-content-header__intro {
   margin-inline: auto;
-}
-
-.pm-teaching-page--topic .pm-teaching-topic-header {
-  margin-bottom: clamp(2.6rem, 4.8vw, 4.15rem);
 }
 
 .pm-teaching-page--hub .pm-teaching-topic-grid {

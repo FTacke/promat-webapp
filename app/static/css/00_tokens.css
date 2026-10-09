@@ -210,9 +210,6 @@
   --pm-admonition-weiterlesen-icon: var(--pm-icon-admonition-book-open);
   --pm-admonition-weiterlesen-icon-color: color-mix(in srgb, var(--book-fg) 76%, var(--book-muted) 24%);
   --pm-admonition-weiterlesen-title-color: color-mix(in srgb, var(--book-fg) 94%, var(--book-muted));
-  --pm-teaching-topic-content-width: 56rem;
-  --pm-teaching-topic-block-gap: clamp(1.1rem, 1rem + 0.5vw, 1.5rem);
-  --pm-teaching-topic-section-gap: clamp(2.4rem, 2rem + 1.4vw, 3.2rem);
   --pm-teaching-further-reading-surface: var(--pm-admonition-weiterlesen-bg);
   --pm-teaching-further-reading-border: var(--pm-admonition-weiterlesen-border);
   --pm-teaching-further-reading-title-color: var(--pm-admonition-weiterlesen-title-color);
@@ -697,6 +694,8 @@
   --pm-icon-settings: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 .99-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51.99H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>');
 
   --pm-layout-reading-width: 72ch;
+  --pm-layout-editorial-width: 46rem;
+  --pm-layout-component-width: 58rem;
   --pm-layout-panel-width-current: var(--promat-panel-width);
   --pm-layout-content-width-current: var(--promat-content-width);
   --pm-layout-shell-gap-current: var(--promat-shell-gap);

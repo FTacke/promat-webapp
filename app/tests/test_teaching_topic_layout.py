@@ -1,4 +1,4 @@
-"""Regressions for the shared vertical Teaching topic layout (2026-10-09): one centered column, flexible components.
+"""Regressions for the shared vertical Teaching topic layout: one centered axis, two functional widths.
 
 Contract: ``docs/spec/platform-data-files.md`` (Teaching topic pages) and ``content/teaching_import/README.md``.
 """
@@ -13,6 +13,7 @@ import yaml
 APP_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = APP_ROOT.parent
 CSS = APP_ROOT / "static" / "css"
+PARTIAL = APP_ROOT / "templates" / "partials" / "_teaching_blocks.html"
 
 
 def _css(name: str) -> str:
@@ -31,28 +32,62 @@ def _rem(value: str) -> float:
     return float(match.group(1))
 
 
-def test_content_column_width_is_a_single_shared_token_in_the_design_range() -> None:
+def test_two_content_widths_are_shared_layout_tokens_in_the_design_range() -> None:
     tokens = _css("00_tokens.css")
-    width = re.search(r"--pm-teaching-topic-content-width:\s*([^;]+);", tokens)
-    assert width, "the shared content-width token is missing"
-    assert 50 <= _rem(width.group(1)) * 16 <= 56 * 16 + 1, "column width must stay around 800-900 px"
-    sections = _rule(_css("20_layout.css"), ".pm-teaching-page--topic .pm-teaching-topic-sections")
-    assert "var(--pm-teaching-topic-content-width)" in sections
-    assert "margin-inline: auto;" in sections
+    editorial = re.search(r"--pm-layout-editorial-width:\s*([^;]+);", tokens)
+    component = re.search(r"--pm-layout-component-width:\s*([^;]+);", tokens)
+    assert editorial and component, "the two shared width tokens are missing"
+    assert 700 <= _rem(editorial.group(1)) * 16 <= 760, "editorial width stays around 700-760 px"
+    assert 900 <= _rem(component.group(1)) * 16 <= 960, "component width stays around 900-960 px"
+    assert tokens.count("--pm-layout-editorial-width:") == 1 and tokens.count("--pm-layout-component-width:") == 1
+    everything = tokens + _css("20_layout.css") + _css("30_components.css")
+    for retired in ("--pm-teaching-topic-content-width", "--pm-teaching-topic-block-gap", "--pm-teaching-topic-section-gap"):
+        assert retired not in everything, f"{retired} duplicates an existing layout/spacing token"
 
 
-def test_block_stack_is_a_single_column_on_every_viewport() -> None:
+def test_widths_come_from_one_grid_and_never_from_literal_values() -> None:
     layout = _css("20_layout.css")
-    stack = _rule(layout, ".pm-teaching-block-stack")
-    assert "grid-template-columns: minmax(0, 1fr);" in stack
+    sections = _rule(layout, ".pm-teaching-topic-sections,\n.pm-teaching-block-stack")
+    assert "width: min(100%, var(--pm-layout-component-width));" in sections
+    assert "margin-inline: auto;" in sections
+    grid = _rule(layout, ".pm-teaching-topic-section,\n.pm-teaching-block-stack")
+    assert "min(var(--pm-layout-editorial-width), 100%)" in grid
+    assert "[editorial-start]" in grid and "[component-start]" in grid
+    default = _rule(layout, ".pm-teaching-topic-section > *,\n.pm-teaching-block-stack > .pm-teaching-block")
+    assert "grid-column: editorial;" in default
+    wide = _rule(
+        layout,
+        '.pm-teaching-topic-section > .pm-teaching-block-stack,\n.pm-teaching-block-stack > .pm-teaching-block[data-teaching-width="wide"]',
+    )
+    assert "grid-column: component;" in wide
+    rules = (sections, grid, default, wide, _rule(layout, ".pm-teaching-topic-section"), _rule(layout, ".pm-teaching-block-stack"))
+    for rule in rules:
+        assert not re.search(r"\d(?:rem|px|ch|vw)\b", rule), f"literal length in {rule!r}"
+    for selector in (".pm-teaching-topic-header", ".pm-teaching-topic-metadata"):
+        assert "var(--pm-layout-" in _rule(layout, selector)
+    assert "56rem" not in layout, "no leftover literal topic width"
+
+
+def test_topic_header_to_content_gap_is_the_shared_section_gap_for_every_topic_page() -> None:
+    components = _css("30_components.css")
+    assert "gap: var(--pm-layout-section-gap);" in _rule(components, ".pm-teaching-page--topic")
+    assert re.search(r"--pm-layout-section-gap:\s*var\(--pm-space-xl\);", _css("00_tokens.css")), "48 px"
+    assert "margin-bottom" not in _rule(_css("20_layout.css"), ".pm-teaching-topic-header")
+    assert "pm-teaching-topic-header {\n    margin-bottom" not in components, "no second, competing header spacing rule"
+    assert "topic-citation" not in components, "the citation section uses the standard section gap"
+
+
+def test_retired_page_level_width_mechanisms_stay_gone() -> None:
     for name in ("20_layout.css", "30_components.css"):
         css = _css(name)
         assert "pm-teaching-block-grid" not in css, "the two-column page grid is retired"
         assert "pm-teaching-block--span-" not in css, "block span modifiers are retired"
         assert "pm-teaching-further-reading-inline-width" not in css, "no narrowed inline widths for page-level blocks"
+        assert "didactic_close" not in css, "the retired rich_text variant has no styles left"
+    assert "data-topic-slug" not in _css("30_components.css"), "no per-topic CSS exceptions"
 
 
-def test_page_level_blocks_use_the_full_column_but_running_text_keeps_a_reading_measure() -> None:
+def test_running_text_keeps_a_reading_measure_inside_the_editorial_width() -> None:
     components = _css("30_components.css")
     text = _rule(
         components,
@@ -61,7 +96,6 @@ def test_page_level_blocks_use_the_full_column_but_running_text_keeps_a_reading_
     assert "var(--pm-layout-reading-width)" in text
     reading = re.search(r"--pm-layout-reading-width:\s*(\d+)ch;", _css("00_tokens.css"))
     assert reading and 65 <= int(reading.group(1)) <= 75
-    assert "max-width: none;" in _rule(components, ".pm-teaching-page--topic .pm-teaching-block--citation")
     audio = _rule(components, ".audio-section")
     assert "width: 100%;" in audio and "max-width: none;" in audio
 
@@ -75,20 +109,28 @@ def test_components_keep_their_internal_columns_and_collapse_on_narrow_viewports
     ), "audio comparison cards and the 2x2 example grid switch to two columns from 760 px"
 
 
-def test_section_rhythm_and_dark_mode_use_shared_tokens_only() -> None:
-    tokens = _css("00_tokens.css")
-    for token in ("--pm-teaching-topic-block-gap", "--pm-teaching-topic-section-gap"):
-        assert token in tokens
-    components = _css("30_components.css")
-    section = _rule(components, ".pm-teaching-page--topic .pm-teaching-topic-section")
-    assert "var(--pm-teaching-topic-block-gap)" in section
-    spacing = _rule(components, ".pm-teaching-page--topic .pm-teaching-topic-section + .pm-teaching-topic-section")
-    assert "var(--pm-teaching-topic-section-gap)" in spacing
-    topic_css = "\n".join(
-        _rule(components, selector)
-        for selector in (".pm-teaching-page--topic .pm-teaching-topic-section", ".pm-teaching-block-stack .pm-teaching-download-card")
-    )
-    assert not re.search(r"#[0-9a-fA-F]{3,8}\b", topic_css), "layout rules must not hardcode colors (light/dark come from tokens)"
+def test_topic_layout_rules_do_not_hardcode_colors() -> None:
+    layout = _css("20_layout.css")
+    for selector in (".pm-teaching-topic-section", ".pm-teaching-block-stack"):
+        assert not re.search(r"#[0-9a-fA-F]{3,8}\b|rgb\(", _rule(layout, selector))
+
+
+def test_width_variant_is_assigned_centrally_by_block_type_in_the_shared_partial() -> None:
+    partial = PARTIAL.read_text(encoding="utf-8")
+    wide = re.search(r"teaching_wide_block_types = \[([^\]]*)\]", partial)
+    assert wide
+    assert set(re.findall(r"'([a-z_]+)'", wide.group(1))) == {
+        "audio_example",
+        "audio_examples",
+        "audio_contrast",
+        "embed",
+        "video",
+        "image",
+        "next_topics",
+        "topic_grid",
+    }
+    blocks = re.findall(r'<(?:section|figure) id="\{\{ block\.id \}\}"([^>]*)>', partial)
+    assert blocks and all('data-teaching-width="{{ block_width }}"' in attrs for attrs in blocks), "every block carries its width variant"
 
 
 def test_topic_content_files_carry_no_per_block_layout_keys() -> None:

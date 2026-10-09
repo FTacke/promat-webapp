@@ -220,10 +220,12 @@ Der Agent darf nicht:
 
 ## Seitenlayout neuer Themenseiten
 
-- Alle Teaching-Themenseiten aller Sprachen nutzen automatisch dasselbe einspaltige, zentrierte Seitenlayout (Spec: `docs/spec/platform-data-files.md`, Teaching topic pages). Eine neue Themenseite definiert nur ihre `blocks` in didaktischer Reihenfolge.
-- Die Reihenfolge der `blocks` ist die Leserichtung der Seite. Ein `section_heading` beginnt einen Abschnitt; Fliesstext, Infoboxen (`overview`, `info_box`, `tip_box`, `warning_box`), `audio_contrast`, `audio_examples`, `embed`, `teaching_impulses`, `further_reading` und `citation` stehen untereinander.
-- Mehrspaltigkeit entsteht nur innerhalb von Komponenten (zwei Aufnahmen je `audio_contrast`-Karte, 2x2-Raster bei `audio_examples`) und wird vom gemeinsamen CSS geregelt.
-- Importierte Bloecke duerfen keinen `layout`-Key (frueher `layout.span`) tragen; der Validator bricht sonst ab. Seitenspezifisches CSS fuer einzelne Themen (z. B. ueber `data-topic-slug`) ist nicht vorgesehen.
+- Alle Teaching-Themenseiten aller Sprachen nutzen automatisch dasselbe einspaltige, zentrierte Seitenlayout mit zwei funktionalen Breiten (Spec: `docs/spec/platform-data-files.md`, Teaching topic pages). Eine neue Themenseite definiert nur ihre `blocks` in didaktischer Reihenfolge; Breiten und Abstaende kommen aus den gemeinsamen Layout-Tokens.
+- **Redaktionelle Inhalte verwenden die schmalere Inhaltsbreite. Erweiterte Breite ist fuer interaktive oder komplexe visuelle Komponenten reserviert, die tatsaechlich davon profitieren.**
+- Redaktionelle Breite (Standard, `--pm-layout-editorial-width`): Einleitung, Fliesstext, Abschnittsueberschriften, `overview`, `info_box`/`tip_box`/`warning_box`, `teaching_impulses`, `further_reading`, `citation`, Downloads.
+- Erweiterte Komponentenbreite (`--pm-layout-component-width`): `audio_contrast`, `audio_examples`, `embed`, `video`, `image`, `next_topics`/`topic_grid`. Die Zuordnung steht zentral im Partial `app/templates/partials/_teaching_blocks.html` (`teaching_wide_block_types`) und nicht in den YAML-Dateien. Ein neuer Blocktyp ist standardmaessig redaktionell und wird nur dann in diese Liste aufgenommen, wenn seine Funktion die Breite braucht (nicht, weil er als Karte oder Box dargestellt wird).
+- Die Reihenfolge der `blocks` ist die Leserichtung der Seite. Ein `section_heading` beginnt einen Abschnitt; alle Bloecke stehen untereinander. Mehrspaltigkeit entsteht nur innerhalb von Komponenten (zwei Aufnahmen je `audio_contrast`-Karte, 2x2-Raster bei `audio_examples`) und wird vom gemeinsamen CSS geregelt.
+- Importierte Bloecke duerfen keinen `layout`-Key (frueher `layout.span`) und keine Breitenangabe tragen; der Validator bricht bei `layout` ab. Seitenspezifisches CSS fuer einzelne Themen (z. B. ueber `data-topic-slug`) und eigene Maximalbreiten sind nicht vorgesehen.
 
 ## Checks nach jedem Import
 

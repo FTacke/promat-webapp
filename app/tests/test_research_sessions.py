@@ -2265,6 +2265,32 @@ def test_every_teaching_topic_edition_uses_the_shared_vertical_layout(url_app: F
         assert 'pm-teaching-block--span-' not in html, route
 
 
+def test_teaching_topic_blocks_use_editorial_or_component_width_by_function(url_app: Flask) -> None:
+    """Text and text-based boxes sit in the editorial width; audio comparisons, example grids and maps in the component width."""
+    client = url_app.test_client()
+    expected = [
+        ("text", "editorial"),
+        ("overview", "editorial"),
+        ("text", "editorial"),
+        ("audio", "wide"),
+        ("audio", "wide"),
+        ("text", "editorial"),
+        ("embed", "wide"),
+        ("admonition", "editorial"),
+        ("embed", "wide"),
+        ("text", "editorial"),
+        ("audio", "wide"),
+        ("text", "editorial"),
+        ("teaching-impulses", "editorial"),
+        ("further-reading", "editorial"),
+        ("citation", "editorial"),
+    ]
+    for ui_lang in ("de", "en"):
+        html = client.get(f"/{ui_lang}/teaching/spanish/which-pronunciation").get_data(as_text=True)
+        blocks = re.findall(r'<section id="[^"]+" data-teaching-width="(wide|editorial)" class="pm-teaching-block pm-teaching-block--([a-z-]+)', html)
+        assert [(kind, width) for width, kind in blocks] == expected, (ui_lang, blocks)
+
+
 def test_teaching_pilot_topic_renders_canonical_vertical_storytelling(url_app: Flask) -> None:
     client = url_app.test_client()
 
