@@ -290,6 +290,10 @@ textarea:focus-visible {
   --pm-icon-mask-source: var(--pm-icon-language);
 }
 
+.pm-icon-mask--arrow-up-right {
+  --pm-icon-mask-source: var(--pm-icon-arrow-up-right);
+}
+
 .pm-icon-mask--section {
   --pm-icon-mask-source: var(--pm-panel-section-icon, var(--pm-icon-start));
 }

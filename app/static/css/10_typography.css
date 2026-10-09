@@ -139,6 +139,36 @@ textarea {
   text-wrap: pretty;
 }
 
+.landing-panel__eyebrow {
+  font-family: var(--pm-type-meta-family);
+  font-size: var(--pm-type-meta-size);
+  line-height: var(--pm-type-meta-line);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pm-landing-panel-eyebrow-color);
+}
+
+.landing-panel__title {
+  margin: 0;
+  font-family: var(--pm-type-display-family);
+  font-size: var(--pm-landing-panel-title-size);
+  line-height: var(--pm-landing-panel-title-line);
+  letter-spacing: var(--pm-landing-panel-title-tracking);
+  font-weight: var(--pm-type-display-weight);
+  color: var(--book-fg);
+  text-wrap: balance;
+}
+
+.landing-panel__text {
+  margin: 0;
+  font-family: var(--pm-type-reading-family);
+  font-size: var(--pm-landing-panel-text-size);
+  line-height: var(--pm-landing-panel-text-line);
+  color: var(--book-muted);
+  text-wrap: pretty;
+}
+
 .landing-more {
   font-family: var(--pm-type-meta-family);
   font-size: 0.96rem;
@@ -426,9 +456,7 @@ textarea {
 }
 
 .pm-panel__subheading,
-.pm-card--corpus .pm-card__title,
-.pm-card--entry .pm-card__title,
-.pm-card--with-image .pm-card__title {
+.pm-card--corpus .pm-card__title {
   margin: 0;
   font-family: var(--book-font-ui);
   font-size: clamp(1.14rem, 1.09rem + 0.18vw, 1.24rem);
@@ -437,23 +465,10 @@ textarea {
   font-weight: 600;
 }
 
-.pm-card--corpus .pm-card__text,
-.pm-card--entry .pm-card__text,
-.pm-card--with-image .pm-card__text {
+.pm-card--corpus .pm-card__text {
   font-family: var(--pm-type-reading-family);
   font-size: 0.985rem;
   color: color-mix(in srgb, var(--book-fg) 92%, var(--book-muted));
-}
-
-.pm-card--entry .pm-card__title {
-  font-size: clamp(1.22rem, 1.16rem + 0.22vw, 1.38rem);
-  line-height: 1.25;
-  letter-spacing: -0.015em;
-}
-
-.pm-card--entry .pm-card__text {
-  font-size: 0.96rem;
-  line-height: 1.58;
 }
 
 .pm-card__meta,
@@ -522,10 +537,6 @@ textarea {
   letter-spacing: 0.01em;
   font-weight: 600;
   color: var(--book-link);
-}
-
-.pm-card--entry .pm-card__action {
-  color: var(--pm-entry-cta-color);
 }
 
 .pm-panel__subheading {

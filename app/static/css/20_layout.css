@@ -79,18 +79,11 @@ body.app-shell.page-landing .md3-content-wrapper {
 .landing-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--pm-space-grid);
-  width: min(100%, 50rem);
-  max-width: 50rem;
+  gap: var(--pm-landing-panel-gap);
+  width: min(100%, var(--pm-landing-grid-max-width));
+  max-width: var(--pm-landing-grid-max-width);
   margin-inline: auto;
   align-items: stretch;
-}
-
-.landing-grid > .landing-card {
-  min-height: 100%;
-  width: min(100%, var(--pm-card-max-inline-entry));
-  max-width: var(--pm-card-max-inline-entry);
-  justify-self: center;
 }
 
 .pm-reading {
@@ -775,7 +768,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   }
 
   .landing-grid {
-    gap: var(--pm-space-xl);
+    gap: var(--pm-landing-panel-gap-mobile);
     margin-top: var(--pm-landing-grid-margin-top-mobile);
   }
 

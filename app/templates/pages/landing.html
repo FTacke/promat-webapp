@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'partials/_pm_interactions.html' import render_cta_link_visual, render_navigation_pill %}
+{% from 'partials/_pm_interactions.html' import render_navigation_pill %}
 
 
 {% block content %}
@@ -37,15 +37,16 @@
 
   <section class="landing-grid" aria-label="{{ t('landing.cards.aria_label') }}">
     {% for card in promat_page.landing_cards | default([]) %}
-    <a class="landing-card pm-card pm-card--entry pm-card--entry-{{ card.entry_kind }} pm-card--with-image" href="{{ card.href }}">
-      <div class="pm-card__image">
-        <img src="{{ static_asset(card.image_asset) }}" alt="{{ card.image_alt }}"{% if card.image_width %} width="{{ card.image_width }}" height="{{ card.image_height }}"{% endif %} decoding="async">
+    <a class="landing-panel landing-panel--{{ card.entry_kind }}" href="{{ card.href }}">
+      <div class="landing-panel__head">
+        <span class="landing-panel__eyebrow">{{ card.eyebrow }}</span>
+        <span class="pm-icon-mask pm-icon-mask--arrow-up-right landing-panel__arrow" aria-hidden="true"></span>
       </div>
-      <div class="pm-card__body">
-        <h2 class="pm-card__title">{{ card.title }}</h2>
-        <p class="pm-card__text">{{ card.text }}</p>
-        <span class="pm-card__action">{{ render_cta_link_visual({ 'label': card.link_label, 'tone': 'accent' if card.entry_kind == 'teaching' else 'primary' }) }}</span>
+      <div class="landing-panel__image">
+        <img src="{{ static_asset(card.image_asset) }}" alt="" width="{{ card.image_width }}" height="{{ card.image_height }}" decoding="async">
       </div>
+      <h2 class="landing-panel__title">{{ card.title }}</h2>
+      <p class="landing-panel__text">{{ card.text }}</p>
     </a>
     {% endfor %}
   </section>
