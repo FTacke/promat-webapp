@@ -745,9 +745,8 @@ def test_profile_page_uses_profile_wording_and_structured_exposure(runtime_env: 
     assert page["profile_header"]["session_count_value"] == 1
     person_rows = {row["label"]: row["value"] for row in page["person_section"]["rows"]}
     additional_l1 = str(person_rows["Weitere L1"])
-    assert "Italienisch" in additional_l1 and "Englisch" in additional_l1
-    assert "ISO 639-1: it" in additional_l1 and "ISO 639-1: en" in additional_l1
-    assert "IT, EN" not in additional_l1
+    assert additional_l1 == "Italienisch, Englisch"
+    assert "ISO" not in additional_l1 and "<" not in additional_l1
     assert person_rows["Zusätzliche Sprachen"] == "English, French"
 
     # The documented research note stays; administrative Secure_Person_Intake fields never reach the profile.
@@ -1105,8 +1104,49 @@ def test_speakers_page_card_shows_compact_stays_summary(runtime_env: Path, url_a
 
     card = next(entry for entry in page["cards"] if entry["person_id"] == "ES-L-0008")
     stays_row = next(row for row in card["meta_rows"] if row["label"] == "Sprachaufenthalte")
-    assert stays_row["value"] == "Ja · 3,5 Monate"
-    assert card["table_stays"] == "Ja · 3,5 Monate"
+    assert stays_row["value"] == "3,5 Monate"
+    assert card["table_stays"] == "3,5 Monate"
+
+
+@pytest.mark.parametrize(
+    ("ui_lang", "months", "expected"),
+    [
+        ("de", 1, "1 Monat"),
+        ("de", 3, "3 Monate"),
+        ("de", 0.75, "0,75 Monate"),
+        ("en", 1, "1 month"),
+        ("en", 3, "3 months"),
+        ("en", 0.75, "0.75 months"),
+    ],
+)
+def test_speakers_page_stay_shows_only_the_duration_without_redundant_yes(
+    runtime_env: Path, url_app: Flask, ui_lang: str, months: float, expected: str
+) -> None:
+    session_id = "ES-L-0012-2026-S01"
+    _write_session(
+        runtime_env,
+        "spanish",
+        session_id,
+        _learner_payload(
+            person_id="ES-L-0012",
+            session_id=session_id,
+            recording_year=2026,
+            recording_date="2026-03-10",
+            level_code="B2",
+            context="baseline",
+            task_types=("wordlist",),
+            exposure_entries=[{"country": "Spain", "duration_months": months, "type": "study", "exposure_notes": ""}],
+        ),
+    )
+
+    with url_app.test_request_context():
+        page = build_speakers_page(ui_lang, "spanish", {})
+
+    card = next(entry for entry in page["cards"] if entry["person_id"] == "ES-L-0012")
+    stays_row = next(row for row in card["meta_rows"] if row["label"] in {"Sprachaufenthalte", "Stays in target-language country"})
+    assert stays_row["value"] == expected
+    assert card["table_stays"] == expected
+    assert "Ja" not in stays_row["value"] and "Yes" not in stays_row["value"]
 
 
 def test_speakers_page_card_shows_none_without_exposure(runtime_env: Path, url_app: Flask) -> None:
@@ -3200,7 +3240,7 @@ def test_speakers_page_supports_shared_cards_and_table_views(runtime_env: Path, 
     assert learner_row["session_id"] == learner_session
     assert learner_row["table_level"] == "A2"
     assert "Deutsch" in str(learner_row["table_detail"])
-    assert "ISO 639-1: de" in str(learner_row["table_detail"])
+    assert str(learner_row["table_detail"]) == "Deutsch"
     assert learner_row["table_stays"] == "Ja"
     assert learner_row["profile_label"] == "Profil"
     assert learner_row["profile_href"].endswith(f"/de/research/spanish/speakers/ES-L-0001?session={learner_session}")
@@ -4015,8 +4055,7 @@ def test_player_page_builds_material_bar_and_footer_actions(runtime_env: Path, u
     ]
     badge_labels = [str(badge["label"]) for badge in single_page["summary_cards"][0]["badges"]]
     assert badge_labels[:2] == ["Lernende", "B1 · Selbsteinordnung"]
-    assert len(badge_labels) == 3 and badge_labels[2].startswith('<span class="pm-l1">L1 Deutsch')
-    assert "ISO 639-1: de" in badge_labels[2]
+    assert badge_labels[2:] == ["L1 Deutsch"]
     assert single_page["summary_cards"][0]["badges"][1]["modifiers"] == ["level", "b1"]
     assert [action["action"] for action in single_page["summary_cards"][0]["card_actions"]] == ["profile", "compare-add"]
     assert single_page["summary_cards"][0]["card_actions"][1]["label"] == "Vergleich"

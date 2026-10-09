@@ -4388,52 +4388,6 @@ body[data-page="login"] .pm-auth-secondary--card {
   overflow-wrap: anywhere;
 }
 
-/* Inline info indicator (L1 language names): opens on hover and keyboard focus, and on click or tap. */
-.pm-l1 {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.pm-info-tip--inline {
-  vertical-align: middle;
-}
-
-.pm-info-tip--inline .pm-info-tip__trigger {
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-}
-
-.pm-info-tip--inline .pm-info-tip__trigger:focus-visible {
-  outline: 2px solid var(--book-accent);
-  outline-offset: 2px;
-}
-
-.pm-info-tip.pm-info-tip--inline .pm-info-tip__body {
-  min-width: 0;
-  width: max-content;
-  padding: 0.35rem 0.6rem;
-  white-space: nowrap;
-}
-
-.pm-info-tip.pm-info-tip--inline:hover .pm-info-tip__body,
-.pm-info-tip.pm-info-tip--inline:focus-within .pm-info-tip__body,
-.pm-info-tip.pm-info-tip--inline.is-open .pm-info-tip__body {
-  display: block;
-}
-
-.pm-info-tip.pm-info-tip--inline.is-dismissed .pm-info-tip__body {
-  display: none;
-}
-
-.pm-info-tip.pm-info-tip--inline:hover .pm-info-tip__trigger,
-.pm-info-tip.pm-info-tip--inline.is-open .pm-info-tip__trigger {
-  border-color: var(--book-accent);
-  color: var(--book-accent);
-}
-
 .pm-comparison-material-controls {
   display: flex;
   flex-wrap: wrap;
@@ -4731,10 +4685,10 @@ body[data-page="login"] .pm-auth-secondary--card {
 }
 
 .pm-comparison-speaker-row__meta {
-  flex-wrap: nowrap;
+  /* Badges wrap onto a second line instead of being clipped: long language names (L1) must never be cut off. */
+  flex-wrap: wrap;
   gap: 0.32rem 0.42rem;
   min-width: 0;
-  overflow: hidden;
   font-size: 0.79rem;
   line-height: 1.3;
   font-weight: 400;
@@ -8357,6 +8311,7 @@ dialog.pm-dialog .pm-dialog__surface {
 .pm-profile-metadata__row {
   display: grid;
   gap: 0.3rem;
+  align-content: start;
   min-width: 0;
 }
 
@@ -10448,6 +10403,21 @@ td.wrap-text {
     height: auto;
     max-height: none;
   }
+}
+
+/* ============================================================
+   Native select popups
+   Options take their surface and text colour from the theme tokens; together with the theme-bound color-scheme
+   (00_tokens.css) the popup, its hover/selection highlight and the text stay readable in light and dark mode.
+   ============================================================ */
+select option,
+select optgroup {
+  background-color: var(--pm-surface-paper);
+  color: var(--book-fg);
+}
+
+select option:disabled {
+  color: var(--book-muted);
 }
 
 /* ============================================================

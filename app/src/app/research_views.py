@@ -12,7 +12,7 @@ from flask import g, url_for
 
 from .content_navigation import build_content_header
 from .i18n import translate, translate_many
-from .l1_display import l1_client_payload, l1_label, l1_list_markup, l1_markup
+from .l1_display import l1_label, l1_list_text, l1_text
 from .research_capabilities import (
     PLAYER_RENDER_MODES,
     comparison_default_view_task,
@@ -371,7 +371,7 @@ def _compact_session_stay_summary(session: SessionRecord, ui_lang: str) -> str:
     for entry in session.exposure_entries:
         duration = _format_duration_months(entry.duration_months, ui_lang)
         if duration:
-            return f"{_yes_label(ui_lang)} · {duration}"
+            return duration
     return _yes_label(ui_lang)
 
 
@@ -543,7 +543,7 @@ def _player_summary_badges(session: SessionRecord, ui_lang: str) -> list[dict[st
         level_badge = _meta_badge(level_label, "level", session.level_code.lower())
         if level_badge is not None:
             badges.append(level_badge)
-    l1_badge = _meta_badge(l1_markup(ui_lang, session.l1, prefix="L1 ") if session.l1 else None, "detail")
+    l1_badge = _meta_badge(f"L1 {l1_label(ui_lang, session.l1)}" if session.l1 else None, "detail")
     if l1_badge is not None:
         badges.append(l1_badge)
     return badges
@@ -636,7 +636,7 @@ def _speaker_result_meta_rows(person: PersonRecord, selected_session: SessionRec
             "value": _format_level_summary(person.level_codes),
             "badges": _level_badges(person.level_codes),
         },
-        {"label": "L1", "value": l1_markup(ui_lang, person.l1)},
+        {"label": "L1", "value": l1_text(ui_lang, person.l1)},
         {"label": _gender_label(ui_lang), "value": _label(GENDER_LABEL_KEYS, person.gender or "unknown", ui_lang)},
         {"label": _target_country_stay_label(ui_lang), "value": _compact_session_stay_summary(selected_session, ui_lang)},
     ]
@@ -670,7 +670,7 @@ def _speaker_result_row(person: PersonRecord, selected_session: SessionRecord, u
     table_detail_value = (
         _native_reference_value(person.standard_variety, person.origin_country, ui_lang)
         if person.is_native
-        else l1_markup(ui_lang, person.l1)
+        else l1_text(ui_lang, person.l1)
     )
 
     return {
@@ -1042,10 +1042,10 @@ def _person_section_rows(person: PersonRecord, ui_lang: str) -> list[dict[str, s
     else:
         rows.extend(
             [
-                {"label": "L1", "value": l1_markup(ui_lang, person.l1)},
-                {"label": _l1_additional_label(ui_lang), "value": l1_list_markup(ui_lang, person.l1_additional)},
-                {"label": _mother_l1_label(ui_lang), "value": l1_markup(ui_lang, person.mother_l1)},
-                {"label": _father_l1_label(ui_lang), "value": l1_markup(ui_lang, person.father_l1)},
+                {"label": "L1", "value": l1_text(ui_lang, person.l1)},
+                {"label": _l1_additional_label(ui_lang), "value": l1_list_text(ui_lang, person.l1_additional)},
+                {"label": _mother_l1_label(ui_lang), "value": l1_text(ui_lang, person.mother_l1)},
+                {"label": _father_l1_label(ui_lang), "value": l1_text(ui_lang, person.father_l1)},
                 {"label": _additional_languages_label(ui_lang), "value": _format_additional_languages(person.additional_languages)},
                 {"label": _t(ui_lang, "common.labels.current_region"), "value": person.current_region or "-"},
                 {"label": _t(ui_lang, "common.labels.childhood_region"), "value": person.childhood_region or "-"},
@@ -1560,7 +1560,7 @@ def _build_comparison_session_catalog(language_slug: str, ui_lang: str, sessions
         level_value = "-" if session.is_native else (_format_level(session, ui_lang) or "-")
         l1_value = "-" if session.is_native else (session.l1 or "-")
         l1_additional_values = [] if session.is_native else list(session.l1_additional)
-        l1_payload = l1_client_payload(ui_lang, None if session.is_native else session.l1)
+        l1_session_label = "" if session.is_native else l1_label(ui_lang, session.l1)
         gender_key = (session.gender or "unknown").strip().lower() if isinstance(session.gender, str) else "unknown"
         if session.is_native:
             target_country_stay_key = "unknown"
@@ -1585,11 +1585,10 @@ def _build_comparison_session_catalog(language_slug: str, ui_lang: str, sessions
                 "detailValue": detail_value,
                 "levelValue": level_value,
                 "l1Value": l1_value,
-                "l1Label": l1_payload["label"],
+                "l1Label": l1_session_label,
                 "l1AdditionalValue": _format_additional_languages(tuple(l1_label(ui_lang, value) for value in l1_additional_values)),
                 "l1AdditionalValues": l1_additional_values,
-                "l1BadgeLabel": f"L1: {l1_payload['label']}" if l1_payload["label"] and not session.is_native else "",
-                "l1BadgeTitle": l1_payload["tooltip"],
+                "l1BadgeLabel": f"L1: {l1_session_label}" if l1_session_label else "",
                 "standardVarietyLabel": _standard_variety_label(ui_lang),
                 "standardVarietyValue": _native_reference_value(session.standard_variety, session.origin_country, ui_lang) if session.is_native else "",
                 "recordingDate": _format_recording_date(session),

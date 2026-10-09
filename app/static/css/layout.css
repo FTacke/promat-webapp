@@ -21,7 +21,6 @@ body {
   min-height: 100%;
   background: var(--app-background, Canvas);
   color: var(--md-sys-color-on-background, CanvasText);
-  color-scheme: light dark;
   transition: none !important;
   -webkit-tap-highlight-color: transparent;
   tap-highlight-color: transparent;
@@ -39,7 +38,7 @@ body.app-shell {
     "main"
     "footer";
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr auto;
   background: var(--app-background);
   color: var(--promat-fg);
   overflow-x: visible;

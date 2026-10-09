@@ -1038,7 +1038,7 @@ function init() {
         ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--level pm-comparison-speaker-badge--${escapeHtml((session.levelValue || "").toLowerCase())}">${escapeHtml(levelBadgeText)}</span>`
         : "",
       session.l1BadgeLabel
-        ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--detail"${session.l1BadgeTitle ? ` title="${escapeHtml(session.l1BadgeTitle)}"` : ""}>${escapeHtml(session.l1BadgeLabel)}</span>`
+        ? `<span class="pm-comparison-speaker-badge pm-comparison-speaker-badge--detail">${escapeHtml(session.l1BadgeLabel)}</span>`
         : "",
     ].join("");
   }

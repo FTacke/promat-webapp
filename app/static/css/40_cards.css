@@ -584,6 +584,7 @@ a.pm-card:focus-visible .pm-card__title,
 .pm-speaker-card__meta-item {
   display: grid;
   gap: 0.22rem;
+  align-content: start;
   min-width: 0;
 }
 

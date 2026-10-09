@@ -62,6 +62,33 @@ def test_every_standard_variety_code_has_a_label_in_both_languages() -> None:
         assert missing == [], f"variety label keys missing in {language}"
 
 
+def test_irish_english_standard_variety_is_localized_centrally_and_other_varieties_are_untouched() -> None:
+    key = STANDARD_VARIETY_LABEL_KEYS["ie_std"]
+    assert TRANSLATIONS["de"][key] == "Irisches Englisch"
+    assert TRANSLATIONS["en"][key] == "Irish English"
+    assert "ie_std" in STANDARD_VARIETIES["en"]
+    assert {code: TRANSLATIONS["de"][STANDARD_VARIETY_LABEL_KEYS[code]] for code in ("gb_std", "us_std", "au_std", "nz_std")} == {
+        "gb_std": "Großbritannien",
+        "us_std": "USA",
+        "au_std": "Australien",
+        "nz_std": "Neuseeland",
+    }
+    assert {code: TRANSLATIONS["en"][STANDARD_VARIETY_LABEL_KEYS[code]] for code in ("gb_std", "us_std", "au_std", "nz_std")} == {
+        "gb_std": "United Kingdom",
+        "us_std": "United States",
+        "au_std": "Australia",
+        "nz_std": "New Zealand",
+    }
+
+
+def test_comparison_level_prefix_is_compact_and_still_a_self_assessment() -> None:
+    assert TRANSLATIONS["de"]["research.comparison.self_placement_prefix"] == "Niveau (selbst):"
+    assert TRANSLATIONS["en"]["research.comparison.self_placement_prefix"] == "Level (self):"
+    # Other presentations of the field keep their full wording.
+    assert TRANSLATIONS["de"]["common.labels.level"] == "Selbsteinordnung"
+    assert TRANSLATIONS["en"]["common.labels.level"] == "Self-placement"
+
+
 GOLDEN_KEYS = [
     "person_id", "session_id", "target_language", "speaker_type", "l1", "l1_additional", "mother_l1", "father_l1", "additional_languages",
     "gender", "birth_year", "current_region", "childhood_region", "origin_country", "origin_region", "person_notes", "research_consent_signed",

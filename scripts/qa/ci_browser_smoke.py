@@ -426,63 +426,80 @@ def check_comparison(browser, base: str, report: Report, out: Path) -> None:
         context.close()
 
 
-def check_l1_info_indicator(browser, base: str, report: Report, out: Path) -> None:
-    """L1 codes read as language names; the ISO code sits behind an info indicator (hover, focus, click, tap)."""
-    expected = {"de": ("Deutsch", "ISO 639-1: de"), "en": ("German", "ISO 639-1: de")}
-    for lang, (name, tooltip) in expected.items():
-        for touch in (False, True):
-            width = 390 if touch else 1280
-            context = browser.new_context(viewport={"width": width, "height": 900}, has_touch=touch, is_mobile=touch)
-            page = context.new_page()
-            login(page, base, f"/{lang}/research/spanish/speakers")
-            page.goto(f"{base}/{lang}/research/spanish/speakers", wait_until="networkidle")
-            label = f"[{lang}] l1 indicator ({'touch 390px' if touch else 'desktop'})"
-            tips = page.locator(".pm-l1 .pm-info-tip--inline")
-            if not report.check(tips.count() > 0, f"{label} is rendered on the speakers page"):
-                context.close()
-                continue
-            trigger = tips.first.locator(".pm-info-tip__trigger")
-            body = tips.first.locator(".pm-info-tip__body")
-            report.check(name in page.locator(".pm-l1").first.inner_text(), f"{label} shows the language name {name!r}")
-            report.check(not body.is_visible(), f"{label} keeps the ISO code hidden by default")
-            report.check(trigger.get_attribute("aria-label") not in (None, ""), f"{label} trigger has an accessible name")
-            if touch:
-                trigger.tap()
-            else:
-                trigger.hover()
-            report.check(body.is_visible() and body.inner_text().strip() == tooltip, f"{label} shows {tooltip!r} on {'tap' if touch else 'hover'}")
-            report.check(trigger.get_attribute("aria-describedby") == body.get_attribute("id"), f"{label} links trigger and tooltip")
-            if not touch:
-                page.mouse.move(2, 2)
-                report.check(not body.is_visible(), f"{label} hides the tooltip when the pointer leaves")
-                trigger.focus()
-                report.check(body.is_visible(), f"{label} shows the tooltip on keyboard focus")
-                page.keyboard.press("Escape")
-                report.check(not body.is_visible(), f"{label} dismisses the tooltip with Escape")
-                trigger.evaluate("el => el.blur()")
-                trigger.click()
-                report.check(trigger.get_attribute("aria-expanded") == "true" and body.is_visible(), f"{label} pins the tooltip on click")
-            page.locator("h1").first.click()
-            page.mouse.move(2, 2)
-            report.check(not body.is_visible(), f"{label} closes the tooltip when clicking elsewhere")
-            report.check(page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), f"{label} causes no horizontal overflow")
-            if not touch:
-                trigger.hover()
-                page.screenshot(path=str(out / f"{lang}_l1_tooltip.png"))
-        for theme in ("light", "dark"):
-            context = browser.new_context(viewport={"width": 1280, "height": 900})
-            context.add_init_script(f"try {{ localStorage.setItem('site-theme', '{theme}'); }} catch (e) {{}}")
-            page = context.new_page()
-            login(page, base, f"/{lang}/research/spanish/speakers")
-            page.goto(f"{base}/{lang}/research/spanish/speakers", wait_until="networkidle")
-            trigger = page.locator(".pm-l1 .pm-info-tip__trigger").first
-            trigger.hover()
-            colors = page.evaluate(
-                "() => { const b = document.querySelector('.pm-l1 .pm-info-tip__body'); const s = getComputedStyle(b); return [s.color, s.backgroundColor]; }"
-            )
-            report.check(colors[0] != colors[1], f"[{lang}] l1 tooltip text and background differ in {theme} theme {colors}")
-            page.screenshot(path=str(out / f"{lang}_l1_tooltip_{theme}.png"))
-            context.close()
+def check_presentation_corrections(browser, base: str, report: Report, out: Path) -> None:
+    """Presentation fixes: L1 names without ISO tooltip, compact level badge, top-aligned metadata, footer flow, select theming."""
+    names = {"de": "Deutsch", "en": "German"}
+    prefixes = {"de": "Niveau (selbst):", "en": "Level (self):"}
+    long_value = "Vereinigtes Königreich von Großbritannien und Nordirland (England, Wales, Schottland)"
+    for lang in ("de", "en"):
+        context = browser.new_context(viewport={"width": 1280, "height": 900})
+        page = context.new_page()
+        login(page, base, f"/{lang}/research/spanish/speakers")
+        page.goto(f"{base}/{lang}/research/spanish/speakers", wait_until="networkidle")
+        label = f"[{lang}] speakers"
+        report.check(names[lang] in page.locator(".pm-speaker-card__meta").first.inner_text(), f"{label}: L1 is shown as the language name {names[lang]!r}")
+        report.check(page.locator(".pm-info-tip--inline, .pm-l1, [title*='ISO']").count() == 0, f"{label}: no ISO code tooltip or info indicator next to language names")
+        report.check("ISO 639" not in page.content(), f"{label}: no ISO standard text in the page")
+        # A taller neighbour must not move the label/value pair of a metadata cell.
+        offsets = page.evaluate(
+            """(longValue) => {
+                const items = [...document.querySelectorAll('.pm-speaker-card__meta')][0].querySelectorAll('.pm-speaker-card__meta-item');
+                items[0].querySelector('.pm-speaker-card__meta-value, .pm-speaker-card__meta-badges').textContent = longValue;
+                const top = (item) => Math.round(item.querySelector('.pm-speaker-card__meta-value').getBoundingClientRect().top - item.getBoundingClientRect().top);
+                return [items[0].getBoundingClientRect().height, top(items[1]), top(items[2])];
+            }""",
+            long_value,
+        )
+        report.check(offsets[1] == offsets[2] and offsets[1] < 30, f"{label}: metadata cells next to a taller cell stay top-aligned (value offsets {offsets[1:]})")
+        page.goto(f"{base}/{lang}/research/spanish/comparison", wait_until="networkidle")
+        page.wait_for_selector("[data-comparison-session-toggle]")
+        badge_texts = page.evaluate("() => [...document.querySelectorAll('.pm-comparison-speaker-badge--level')].map((el) => el.textContent.trim())")
+        report.check(bool(badge_texts) and all(text.startswith(prefixes[lang] + " ") for text in badge_texts), f"[{lang}] comparison: level badges read {prefixes[lang]!r} <level> {badge_texts}")
+        report.check("Selbsteinordnung:" not in page.inner_text("main") and "Self-placement:" not in page.inner_text("main"), f"[{lang}] comparison: no long self-placement prefix on speaker cards")
+        clipped = page.evaluate(
+            """() => [...document.querySelectorAll('.pm-comparison-speaker-row__meta')].filter((meta) => {
+                const box = meta.getBoundingClientRect();
+                return getComputedStyle(meta).overflow !== 'visible' || [...meta.children].some((badge) => badge.getBoundingClientRect().right > box.right + 8);
+            }).length"""
+        )
+        report.check(clipped == 0, f"[{lang}] comparison: no speaker badge row clips or overruns its card ({clipped} rows)")
+        toggles = page.locator("[data-comparison-session-toggle]")
+        for index in range(min(3, toggles.count())):
+            page.locator(f'[data-comparison-session-toggle="{toggles.nth(index).get_attribute("data-comparison-session-toggle")}"]').first.click()
+        page.wait_for_timeout(500)
+        flow = page.evaluate(
+            """() => {
+                const bottom = Math.max(...[...document.querySelectorAll('main *')].map((el) => { const r = el.getBoundingClientRect(); return r.height ? r.bottom + scrollY : 0; }));
+                const footer = document.querySelector('#site-footer').getBoundingClientRect().top + scrollY;
+                const wrap = document.querySelector('.pm-comparison-matrix-wrap');
+                const bar = document.querySelector('#top-app-bar');
+                return {bottom, footer, isolation: getComputedStyle(wrap).isolation, barZ: Number(getComputedStyle(bar).zIndex)};
+            }"""
+        )
+        report.check(flow["footer"] >= flow["bottom"] - 1, f"[{lang}] comparison: footer starts after the matrix content ({flow['footer']} >= {flow['bottom']})")
+        report.check(flow["isolation"] == "isolate" and flow["barZ"] > 0, f"[{lang}] comparison: matrix cells are isolated below the top app bar")
+        page.screenshot(path=str(out / f"{lang}_comparison_corrections.png"), full_page=True)
+        context.close()
+
+    # Native <select> popups follow the chosen theme, also when the OS preference is the opposite one.
+    for theme in ("light", "dark"):
+        opposite = "dark" if theme == "light" else "light"
+        context = browser.new_context(viewport={"width": 1280, "height": 900}, color_scheme=opposite)
+        context.add_init_script(f"try {{ localStorage.setItem('site-theme', '{theme}'); }} catch (e) {{}}")
+        page = context.new_page()
+        login(page, base, "/de/research/spanish/comparison")
+        page.wait_for_selector("[data-comparison-material-preset-select]")
+        info = page.evaluate(
+            """() => {
+                const select = document.querySelector('[data-comparison-material-preset-select]');
+                const option = select.querySelector('option');
+                const s = getComputedStyle(select); const o = getComputedStyle(option);
+                return {scheme: s.colorScheme, selectColor: s.color, optionColor: o.color, optionBackground: o.backgroundColor, bodyScheme: getComputedStyle(document.body).colorScheme};
+            }"""
+        )
+        report.check(info["scheme"] == theme and info["bodyScheme"] == theme, f"select popup uses the {theme} color scheme although the OS prefers {opposite} {info}")
+        report.check(info["optionColor"] != info["optionBackground"] and info["optionColor"] == info["selectColor"], f"{theme}: option text and background are distinct theme tokens {info}")
+        context.close()
 
 
 def check_theme_and_mobile(browser, base: str, report: Report, out: Path) -> None:
@@ -535,7 +552,7 @@ def main() -> int:
             check_login_and_player(browser, base, report, args.out)
             check_german_in_preparation(browser, base, report, args.out)
             check_comparison(browser, base, report, args.out)
-            check_l1_info_indicator(browser, base, report, args.out)
+            check_presentation_corrections(browser, base, report, args.out)
             check_theme_and_mobile(browser, base, report, args.out)
             browser.close()
         server.shutdown()

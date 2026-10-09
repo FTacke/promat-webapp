@@ -868,6 +868,8 @@
 :root,
 html[data-theme="light"],
 html[data-theme="auto"][data-system-dark="false"] {
+  /* Native controls (select popups, scrollbars) follow the effective theme, not the OS preference. */
+  color-scheme: light;
   --book-bg: #f7f6f3;
   --book-surface-1: #eeecea;
   --book-surface-2: #e3e0db;
@@ -914,6 +916,7 @@ html[data-theme="auto"][data-system-dark="false"] {
 
 html[data-theme="dark"],
 html[data-theme="auto"][data-system-dark="true"] {
+  color-scheme: dark;
   --book-bg: #1a1d22;
   --book-surface-1: #20242b;
   --book-surface-2: #262b34;

@@ -14,7 +14,7 @@ body.app-shell.page-landing {
   grid-template-areas:
     "main"
     "footer";
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: 1fr auto;
 }
 
 #main-content,
@@ -454,6 +454,9 @@ body.app-shell.page-landing .md3-content-wrapper {
   overflow-x: auto;
   padding-bottom: 0.2rem;
   position: relative;
+  /* The sticky matrix cells use z-index 4-8; keep them in a stacking context of their own so they can never paint over the
+     top app bar, the footer or overlays outside the matrix. */
+  isolation: isolate;
 }
 
 .pm-comparison-matrix-wrap::after {
