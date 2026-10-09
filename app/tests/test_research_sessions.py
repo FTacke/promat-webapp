@@ -1972,7 +1972,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Editionen' not in html
     assert 'pm-teaching-locale-switch' not in html
     assert 'pm-teaching-topic-header' not in html
-    assert 'pm-teaching-block-grid--topic' not in html
+    assert 'pm-teaching-block-stack' not in html
 
 
 def test_teaching_french_hub_uses_current_language_drawer_context(url_app: Flask) -> None:
@@ -2102,10 +2102,9 @@ def test_teaching_topic_renders_public_content_blocks(url_app: Flask, released_t
     assert 'Franz' not in drawer_html
     assert 'Deutsch' not in drawer_html
     assert 'pm-teaching-page--topic' in html
-    assert 'pm-teaching-block-grid' in html
-    assert 'pm-teaching-block--span-3' not in html
-    assert 'pm-teaching-block--span-2' in html
-    assert 'pm-teaching-block--span-1' in html
+    assert 'pm-teaching-block-stack' in html
+    assert 'pm-teaching-block-grid' not in html
+    assert 'pm-teaching-block--span-' not in html
     assert 'R am Silbenende' in html
     assert 'Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zum r am Silben- und Wortende im Spanischen.' in html
     assert html.count('class="pm-back-link') == 2
@@ -2181,7 +2180,92 @@ def test_teaching_which_pronunciation_uses_session_0004_for_seseo_audio(url_app:
         assert audio_response.content_length > 0
 
 
-def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app: Flask) -> None:
+@pytest.mark.parametrize(
+    ("ui_lang", "markers"),
+    [
+        (
+            "de",
+            [
+                "Sorgfältige Aussprache gibt es in allen",
+                "Auf einen Blick",
+                "Hörvergleich",
+                "Mit und ohne Unterscheidung:",
+                "Anders, aber genauso korrekt",
+                "distinción</em></h2>",
+                "https://datawrapper.dwcdn.net/poSnB/9/",
+                "Die Mehrheit ist <em>seseante</em>",
+                "https://datawrapper.dwcdn.net/Uza2n/5/",
+                "Hörbeispiele</h2>",
+                "authentischen Audioausschnitten",
+                "Impulse für den Unterricht</h2>",
+                "pm-teaching-impulses",
+                "pm-teaching-further-reading__title",
+                "data-admonition-variant=\"citation\"",
+            ],
+        ),
+        (
+            "en",
+            [
+                "Careful pronunciation exists in all",
+                "At a glance",
+                "Listening comparison",
+                "With and without distinction:",
+                "https://datawrapper.dwcdn.net/poSnB/9/",
+                "The majority is <em>seseante</em>",
+                "https://datawrapper.dwcdn.net/Uza2n/5/",
+                "authentic audio excerpts",
+                "Classroom prompts</h2>",
+                "pm-teaching-impulses",
+                "pm-teaching-further-reading__title",
+                "data-admonition-variant=\"citation\"",
+            ],
+        ),
+    ],
+)
+def test_teaching_topic_page_keeps_one_vertical_content_order(url_app: Flask, ui_lang: str, markers: list[str]) -> None:
+    """The shared topic layout is a single column: every content block follows the previous one in DOM order."""
+    client = url_app.test_client()
+
+    html = client.get(f"/{ui_lang}/teaching/spanish/which-pronunciation").get_data(as_text=True)
+
+    positions = [html.index(marker) for marker in markers]
+    assert positions == sorted(positions)
+    assert 'pm-teaching-block-grid' not in html
+    assert 'pm-teaching-block--span-' not in html
+    assert html.count('class="pm-teaching-topic-sections"') == 1
+    # one stack per section, never nested stacks or side-by-side page-level wrappers
+    assert 'pm-teaching-block-stack pm-teaching-block-stack' not in html
+    assert html.count('pm-teaching-topic-section__stack pm-teaching-block-stack') == html.count('<section class="pm-teaching-topic-section ')
+    # blocks inside the stack keep the component-internal columns: contrast pairs and the 2x2 example grid
+    assert html.count('audio-grid audio-grid--contrast') == 2
+    assert html.count('audio-grid audio-grid--examples') == 1
+    assert html.count('pm-teaching-audio-example audio-card') == 4
+    assert html.count('data-teaching-mini-player data-audio-state') == 8
+    # the citation block closes the page content before the bottom back link
+    assert html.index('data-admonition-variant="citation"') < html.index('pm-teaching-topic-bottom-nav')
+
+
+def test_every_teaching_topic_edition_uses_the_shared_vertical_layout(url_app: Flask, released_teaching_content: Path) -> None:
+    """The layout is a property of the shared topic template, not of one page: all languages and UI languages get it."""
+    client = url_app.test_client()
+    routes: list[str] = []
+    for locale_file in sorted(released_teaching_content.glob("*/*/??.yaml")):
+        teaching_language, topic_slug, ui_lang = locale_file.parts[-3], locale_file.parts[-2], locale_file.stem
+        if topic_slug == "hubs" or "is_public: false" in locale_file.read_text(encoding="utf-8"):
+            continue
+        routes.append(f"/{ui_lang}/teaching/{teaching_language}/{topic_slug}")
+    assert {route.split("/")[3] for route in routes} >= {"spanish", "french"}
+    for route in routes:
+        response = client.get(route)
+        assert response.status_code == 200, route
+        html = response.get_data(as_text=True)
+        assert 'class="pm-teaching-topic-sections"' in html, route
+        assert 'pm-teaching-topic-section__stack pm-teaching-block-stack' in html, route
+        assert 'pm-teaching-block-grid' not in html, route
+        assert 'pm-teaching-block--span-' not in html, route
+
+
+def test_teaching_pilot_topic_renders_canonical_vertical_storytelling(url_app: Flask) -> None:
     client = url_app.test_client()
 
     response = client.get('/de/teaching/spanish/which-pronunciation')
@@ -2203,10 +2287,10 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert html.count('pm-back-link__pill') == 2
     assert 'class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav"' in html
     assert 'class="pm-teaching-topic-section pm-teaching-topic-section--citation pm-teaching-topic-section--topic-citation"' in html
-    assert 'pm-teaching-topic-section__grid pm-teaching-block-grid pm-teaching-block-grid--topic pm-teaching-topic-section__grid--citation' in html
+    assert 'pm-teaching-topic-section__stack pm-teaching-block-stack' in html
     assert '<em>Seseo</em> und <em>distinción</em>' in html
     assert 'Impulse für den Unterricht' in html
-    assert 'class="pm-teaching-block pm-teaching-block--span-1 pm-teaching-block--teaching-impulses pm-panel pm-reading"' in html
+    assert 'class="pm-teaching-block pm-teaching-block--teaching-impulses pm-panel pm-reading"' in html
     assert html.count('class="pm-teaching-impulses__item"') == 3
     assert 'Erst hören lassen' in html
     assert 'Vor der Erklärung die Hörbeispiele abspielen: Hören die Lernenden einen Unterschied zwischen <em>casa</em> und <em>caza</em>?' in html
@@ -2221,7 +2305,7 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'data-admonition-variant="overview"' in html
     assert html.count('data-admonition-variant="overview"') == 1
     assert html.count('data-admonition-variant="context"') == 1
-    assert 'class="pm-teaching-block pm-teaching-block--span-1 pm-teaching-block--overview"' in html
+    assert 'class="pm-teaching-block pm-teaching-block--overview"' in html
     assert 'class="pm-admonition pm-admonition--overview"' in html
     assert '<h3 class="promat-content-block__title pm-panel__title">Mit und ohne Unterscheidung: <em>casa</em> vs. <em>caza</em></h3>' in html
     assert '<code>ll</code> und <code>y</code>' in html
@@ -2240,8 +2324,9 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert 'class="pm-teaching-section-heading__title"><p>' not in html
     assert '<h3 class="promat-content-block__title pm-panel__title"><p>' not in html
     assert '<h3 class="pm-admonition__title"><p>' not in html
-    assert 'pm-teaching-block-grid' in html
-    assert 'pm-teaching-block--span-3' not in html
+    assert 'pm-teaching-block-stack' in html
+    assert 'pm-teaching-block-grid' not in html
+    assert 'pm-teaching-block--span-' not in html
     assert 'pm-teaching-block--topic-meta' not in html
     assert 'class="pm-teaching-topic-metadata"' in html
     intro_index = html.index('Gibt es die eine richtige Aussprache im Spanischen? Und was heißt das für den Unterricht?')
@@ -2320,7 +2405,7 @@ def test_teaching_pilot_topic_renders_canonical_two_column_storytelling(url_app:
     assert html.count('class="pm-embed-block pm-embed-block--datawrapper pm-teaching-embed-card" data-provider="datawrapper"') == 2
     assert html.count('data-provider="datawrapper"') >= 2
     assert html.count('data-external="1"') >= 2
-    assert html.count('pm-teaching-block--span-1 pm-teaching-block--embed') == 2
+    assert html.count('pm-teaching-block pm-teaching-block--embed') == 2
     assert html.count('pm-teaching-embed-card') >= 2
     assert 'pm-teaching-embed-card__title' not in html
     assert 'class="pm-embed-block__caption"' not in html
@@ -2391,7 +2476,7 @@ def test_teaching_english_which_pronunciation_renders_single_markdown_citation(u
     assert 'class="pm-teaching-topic-section pm-teaching-topic-section--citation pm-teaching-topic-section--topic-citation"' in html
     assert 'class="pm-back-link pm-back-link--bottom pm-teaching-topic-bottom-nav"' in html
     assert 'Classroom prompts' in html
-    assert 'class="pm-teaching-block pm-teaching-block--span-1 pm-teaching-block--teaching-impulses pm-panel pm-reading"' in html
+    assert 'class="pm-teaching-block pm-teaching-block--teaching-impulses pm-panel pm-reading"' in html
     assert html.count('class="pm-teaching-impulses__item"') == 3
     assert 'Listen first' in html
     assert 'Before explaining, play the audio examples: do learners hear a difference between <em>casa</em> and <em>caza</em>?' in html

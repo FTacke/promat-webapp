@@ -218,6 +218,13 @@ Der Agent darf nicht:
 - Legacy-Fallbacks einbauen
 - Backups im Repo anlegen
 
+## Seitenlayout neuer Themenseiten
+
+- Alle Teaching-Themenseiten aller Sprachen nutzen automatisch dasselbe einspaltige, zentrierte Seitenlayout (Spec: `docs/spec/platform-data-files.md`, Teaching topic pages). Eine neue Themenseite definiert nur ihre `blocks` in didaktischer Reihenfolge.
+- Die Reihenfolge der `blocks` ist die Leserichtung der Seite. Ein `section_heading` beginnt einen Abschnitt; Fliesstext, Infoboxen (`overview`, `info_box`, `tip_box`, `warning_box`), `audio_contrast`, `audio_examples`, `embed`, `teaching_impulses`, `further_reading` und `citation` stehen untereinander.
+- Mehrspaltigkeit entsteht nur innerhalb von Komponenten (zwei Aufnahmen je `audio_contrast`-Karte, 2x2-Raster bei `audio_examples`) und wird vom gemeinsamen CSS geregelt.
+- Importierte Bloecke duerfen keinen `layout`-Key (frueher `layout.span`) tragen; der Validator bricht sonst ab. Seitenspezifisches CSS fuer einzelne Themen (z. B. ueber `data-topic-slug`) ist nicht vorgesehen.
+
 ## Checks nach jedem Import
 
 Nach jedem erfolgreichen Import muessen mindestens diese Checks laufen:

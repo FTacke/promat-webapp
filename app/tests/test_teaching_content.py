@@ -249,7 +249,8 @@ def test_build_teaching_topic_page_ignores_unknown_block_types(
     assert "Ignoring unknown teaching block type 'strange_box'" in caplog.text
 
 
-def test_build_teaching_topic_page_applies_layout_span_defaults_and_fallbacks(teaching_app: Flask, tmp_path: Path) -> None:
+def test_build_teaching_topic_page_ignores_retired_layout_span(teaching_app: Flask, tmp_path: Path) -> None:
+    """Topic pages share one vertical layout: blocks carry no per-block layout payload, and a stale ``layout`` key is inert."""
     _write_teaching_manifest(tmp_path)
     _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
     _write_teaching_media(tmp_path, "spanish", "topic-one", "downloads", "test.txt", b"download")
@@ -258,7 +259,7 @@ def test_build_teaching_topic_page_applies_layout_span_defaults_and_fallbacks(te
         "spanish",
         "topic-one",
         "de",
-        "title: Thema eins\nblocks:\n  - type: hero\n    lead: Leitgedanke\n  - type: text\n    layout:\n      span: 1\n    body: Testabsatz\n  - type: rich_text\n    layout:\n      span: 9\n    body: '**Test**'\n  - type: warning_box\n    body: Hinweis\n  - type: download\n    layout:\n      span: '3'\n    href: test.txt\n",
+        "title: Thema eins\nblocks:\n  - type: hero\n    lead: Leitgedanke\n  - type: text\n    layout:\n      span: 1\n    body: Testabsatz\n  - type: rich_text\n    body: '**Test**'\n  - type: warning_box\n    body: Hinweis\n  - type: download\n    href: test.txt\n",
     )
 
     with teaching_app.test_request_context():
@@ -266,12 +267,8 @@ def test_build_teaching_topic_page_applies_layout_span_defaults_and_fallbacks(te
 
     assert page is not None
     assert page["intro"] == "Leitgedanke"
-    assert [(block["type"], block["layout"]["span"]) for block in page["blocks"]] == [
-        ("text", 1),
-        ("rich_text", 2),
-        ("admonition", 1),
-        ("download", 2),
-    ]
+    assert [block["type"] for block in page["blocks"]] == ["text", "rich_text", "admonition", "download"]
+    assert all("layout" not in block for block in page["blocks"])
 
 
 def test_build_teaching_topic_page_groups_blocks_into_sections(teaching_app: Flask, tmp_path: Path) -> None:
@@ -293,7 +290,6 @@ def test_build_teaching_topic_page_groups_blocks_into_sections(teaching_app: Fla
     assert [section["kind"] for section in page["topic_sections"]] == ["intro", "section", "next_topics", "further_reading", "citation"]
     assert [block["type"] for block in page["topic_sections"][0]["blocks"]] == ["text", "admonition"]
     assert page["topic_sections"][1]["heading"]["title"] == "Abschnitt eins"
-    assert [block["layout"]["span"] for block in page["topic_sections"][1]["blocks"]] == [1, 1]
     assert page["topic_sections"][2]["blocks"][0]["type"] == "next_topics"
     assert page["topic_sections"][3]["blocks"][0]["type"] == "further_reading"
     assert page["topic_sections"][4]["blocks"][0]["type"] == "citation"
@@ -316,7 +312,6 @@ def test_build_teaching_topic_page_parses_overview_block_with_list_items(teachin
     assert page is not None
     overview_block = page["blocks"][0]
     assert overview_block["type"] == "overview"
-    assert overview_block["layout"]["span"] == 1
     assert overview_block["title"] == "Auf einen Blick"
     assert overview_block["title_html"] == "Auf einen Blick"
     assert "<ul>" in overview_block["body_html_blocks"][0]
@@ -355,7 +350,6 @@ def test_build_teaching_topic_page_derives_metadata_and_appends_top_level_citati
     }
     url = "https://pronunciation-matters.de/de/teaching/spanish/topic-one"
     assert page["blocks"][-1]["type"] == "citation"
-    assert page["blocks"][-1]["layout"]["span"] == 2
     assert page["blocks"][-1]["citation"] == {
         "title": "Diese Themenseite zitieren",
         "title_html": "Diese Themenseite zitieren",
@@ -430,7 +424,6 @@ def test_build_teaching_topic_page_parses_teaching_impulses(
     assert [block["type"] for block in page["blocks"]] == ["section_heading", "text", "teaching_impulses"]
     assert page["blocks"][0]["title"] == "Impulse für den Unterricht"
     impulses = page["blocks"][2]
-    assert impulses["layout"]["span"] == 1
     assert len(impulses["items"]) == 2
     assert impulses["items"][0]["title"] == "Hören vorbereiten"
     assert impulses["items"][0]["body"] == "Einstieg über Hörbeispiele."
@@ -530,7 +523,6 @@ def test_build_teaching_topic_page_keeps_public_audio_contrast_urls_and_availabi
     assert page is not None
     contrast_block = page["blocks"][0]
     assert contrast_block["type"] == "audio_contrast"
-    assert contrast_block["layout"]["span"] == 2
     assert len(contrast_block["examples"]) == 2
     assert contrast_block["examples"][0]["audio"] == "/teaching/spanish/audio/variation/distincion-casa-caza.mp3"
     assert contrast_block["examples"][1]["audio"] == "/teaching/spanish/audio/variation/seseo-casa-caza.mp3"
@@ -566,7 +558,6 @@ def test_build_teaching_topic_page_keeps_public_audio_examples_source_token_ids_
     assert page is not None
     examples_block = page["blocks"][0]
     assert examples_block["type"] == "audio_examples"
-    assert examples_block["layout"]["span"] == 2
     assert examples_block["source"]["label"] == "CO.RA.PAN"
     assert examples_block["source"]["url"] == "https://corapan.hispanistica.com"
     assert len(examples_block["examples"]) == 2

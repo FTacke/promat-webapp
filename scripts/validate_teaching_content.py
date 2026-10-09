@@ -130,6 +130,15 @@ def _validate_topic_media(
                     )
 
 
+def _validate_topic_layout(errors: list[str], teaching_lang: str, topic_slug: str, topic: dict[str, Any]) -> None:
+    """Topic pages have one shared vertical layout; a per-block ``layout`` key (the retired ``span``) is an error."""
+    for block_index, raw_block in enumerate(topic.get("blocks", []), start=1):
+        if isinstance(raw_block, dict) and "layout" in raw_block:
+            errors.append(
+                f"Retired block key 'layout' in {teaching_lang}/{topic_slug} block {block_index}: topic pages use the shared vertical layout; remove it"
+            )
+
+
 def _validate_topic_equivalents(
     errors: list[str],
     teaching_lang: str,
@@ -376,6 +385,7 @@ def main() -> int:
                     errors.append(f"Missing topic file for hub reference: {topic_path.relative_to(REPO_ROOT)}")
                     continue
                 _validate_topic_media(errors, teaching_lang, topic_slug, topic)
+                _validate_topic_layout(errors, teaching_lang, topic_slug, topic)
                 _validate_topic_equivalents(errors, teaching_lang, ui_lang, topic_slug, topic, available_ui_langs)
 
         validate_publication_front_matter(errors, publication, teaching_lang, available_ui_langs, seen_resource_ids)

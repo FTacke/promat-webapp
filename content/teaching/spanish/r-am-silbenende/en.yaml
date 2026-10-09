@@ -28,18 +28,12 @@ metadata:
 
 blocks:
   - type: topic_meta
-    layout:
-      span: 2
 
   - type: text
-    layout:
-      span: 1
     body: |
       A short explanatory introduction can be added here later: what is relevant for teaching about `r` at the end of syllables or words? Which listening goals are central?
 
   - type: overview
-    layout:
-      span: 1
     title: At a glance
     items:
       - The key points of the topic page can later be summarized here briefly.
@@ -47,75 +41,51 @@ blocks:
       - The points should later be phrased briefly, concretely, and with a listening focus.
 
   - type: section_heading
-    layout:
-      span: 2
     title: Listening comparison
 
   - type: text
-    layout:
-      span: 2
     body: |
       Audio examples can later be added here, for example contrasting word or sentence contexts.
 
   - type: audio_examples
-    layout:
-      span: 2
     title: Listening comparison
     lead: |
       This can later make audible how `r` at the end of syllables or words is realized in short contexts.
     empty_state: Audio examples have not yet been added.
 
   - type: section_heading
-    layout:
-      span: 2
     title: Teaching context
 
   - type: text
-    layout:
-      span: 1
     body: |
       Consequences for pronunciation goals, listening comprehension, and exercise design can be summarized here later.
 
   - type: tip_box
-    layout:
-      span: 1
     title: Teaching perspective
     body: |
       A didactic focus can be added here later, for example why listening in context is more important than isolated sound description.
 
   - type: section_heading
-    layout:
-      span: 2
     title: Subject-specific background
 
   - type: text
-    layout:
-      span: 1
     variant: plain
     body: |
       This section can later provide a concise subject-specific explanation: which variants, terms, or connections are important for this topic?
 
   - type: info_box
-    layout:
-      span: 1
     title: Background knowledge
     body: |
       This box can later contain curated background information that brings together key points and makes them quickly usable for teachers.
 
   - type: section_heading
-    layout:
-      span: 2
     title: Teaching impulses
 
   - type: text
-    layout:
-      span: 1
     body: |
       Concrete classroom impulses can be added here later.
 
   - type: teaching_impulses
-    layout:
-      span: 1
     items:
       - title: Prepare for listening
         body: A short classroom prompt can later be added here that describes how to start with listening examples.
@@ -125,19 +95,13 @@ blocks:
         body: A prompt can later be added here for how the phenomenon is carried over into practice or reflection.
 
   - type: section_heading
-    layout:
-      span: 2
     title: Teaching material
 
   - type: text
-    layout:
-      span: 1
     body: |
       A description can be added here later of what material will be included and how it can be used in teaching.
 
   - type: download
-    layout:
-      span: 1
     title: Material
     description: |
       A worksheet, handout, or further teaching material can be linked here later.

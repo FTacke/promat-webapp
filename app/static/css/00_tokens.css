@@ -210,8 +210,9 @@
   --pm-admonition-weiterlesen-icon: var(--pm-icon-admonition-book-open);
   --pm-admonition-weiterlesen-icon-color: color-mix(in srgb, var(--book-fg) 76%, var(--book-muted) 24%);
   --pm-admonition-weiterlesen-title-color: color-mix(in srgb, var(--book-fg) 94%, var(--book-muted));
-  --pm-teaching-further-reading-inline-width: 85%;
-  --pm-teaching-further-reading-max-width: 56rem;
+  --pm-teaching-topic-content-width: 56rem;
+  --pm-teaching-topic-block-gap: clamp(1.1rem, 1rem + 0.5vw, 1.5rem);
+  --pm-teaching-topic-section-gap: clamp(2.4rem, 2rem + 1.4vw, 3.2rem);
   --pm-teaching-further-reading-surface: var(--pm-admonition-weiterlesen-bg);
   --pm-teaching-further-reading-border: var(--pm-admonition-weiterlesen-border);
   --pm-teaching-further-reading-title-color: var(--pm-admonition-weiterlesen-title-color);

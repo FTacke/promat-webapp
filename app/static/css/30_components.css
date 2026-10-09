@@ -1889,11 +1889,11 @@ a.pm-teaching-topic-card--available:active {
 
 .pm-teaching-page--topic .pm-teaching-topic-section {
   display: grid;
-  gap: 1.5rem;
+  gap: var(--pm-teaching-topic-block-gap);
 }
 
 .pm-teaching-page--topic .pm-teaching-topic-section + .pm-teaching-topic-section {
-  margin-top: 3rem;
+  margin-top: var(--pm-teaching-topic-section-gap);
 }
 
 .pm-teaching-page--topic .pm-teaching-topic-section--intro {
@@ -1901,28 +1901,16 @@ a.pm-teaching-topic-card--available:active {
   padding-top: 0;
 }
 
-.pm-teaching-page--topic .pm-teaching-topic-section__grid,
-.pm-teaching-page--topic .pm-teaching-topic-section .pm-teaching-block-grid--topic {
-  row-gap: 1.5rem;
-}
-
-.pm-teaching-page--topic .pm-teaching-topic-section--intro > .pm-teaching-topic-section__grid,
-.pm-teaching-page--topic .pm-teaching-topic-section--section > .pm-teaching-topic-section__grid,
-.pm-teaching-page--topic .pm-teaching-topic-section--next_topics > .pm-teaching-topic-section__grid,
-.pm-teaching-page--topic .pm-teaching-topic-section--topic_grid > .pm-teaching-topic-section__grid,
-.pm-teaching-page--topic .pm-teaching-topic-section--citation > .pm-teaching-topic-section__grid {
-  padding-top: 0;
-}
-
-.pm-teaching-page--topic .pm-teaching-topic-section--citation > .pm-teaching-topic-section__grid {
-  justify-items: center;
-}
-
 .pm-teaching-section-heading__title {
   position: relative;
   width: 100%;
   max-width: none;
   margin: 0;
+}
+
+.pm-teaching-page--topic .pm-teaching-section-heading__title {
+  justify-self: start;
+  max-width: 100%;
 }
 
 .pm-teaching-page--topic .pm-teaching-section-heading__title,
@@ -2185,18 +2173,16 @@ a.pm-teaching-topic-card--available:active {
 }
 
 .pm-teaching-block--text-plain .promat-content-block__text {
-  max-width: min(100%, 82ch);
+  max-width: min(100%, var(--pm-layout-reading-width));
 }
 
 .pm-teaching-page--topic .pm-teaching-topic-meta__details {
   max-width: 100%;
 }
 
-.pm-teaching-page--topic .pm-teaching-block-grid .pm-teaching-rich-text--didactic_close {
-  width: min(var(--pm-teaching-further-reading-inline-width), var(--pm-teaching-further-reading-max-width));
-  max-width: 100%;
-  margin-inline: auto;
-  justify-self: center;
+.pm-teaching-page--topic .pm-teaching-block-stack .pm-teaching-rich-text--didactic_close {
+  width: 100%;
+  max-width: none;
   gap: 0.58rem;
   padding: clamp(0.92rem, 0.86rem + 0.18vw, 1.06rem);
   border: 1px solid var(--pm-teaching-further-reading-border);
@@ -2387,15 +2373,6 @@ a.pm-teaching-topic-card--available:active {
     gap: 0.42rem;
   }
 
-  .pm-teaching-page--topic .pm-teaching-rich-text--didactic_close {
-    width: 100%;
-    max-width: none;
-  }
-
-  .pm-teaching-page--topic .pm-teaching-block--citation {
-    width: 100%;
-    max-width: none;
-  }
 }
 .pm-teaching-page--topic .pm-teaching-topic-section--topic-citation {
   gap: 0.9rem;
@@ -2424,7 +2401,9 @@ a.pm-teaching-topic-card--available:active {
 .audio-section {
   display: grid;
   gap: 0;
-  margin-inline: auto;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
   border: 1px solid var(--pm-teaching-audio-section-border);
   border-top: 4px solid var(--pm-teaching-audio-section-accent);
   border-radius: var(--pm-teaching-audio-section-radius);
@@ -2873,7 +2852,7 @@ a.pm-teaching-topic-card--available:active {
 
 @media (max-width: 759px) {
   .pm-teaching-page--topic .pm-teaching-topic-metadata,
-  .pm-teaching-page--topic .pm-teaching-block-grid {
+  .pm-teaching-page--topic .pm-teaching-topic-sections {
     box-sizing: border-box;
     width: 100%;
     max-width: none;
@@ -2925,7 +2904,7 @@ a.pm-teaching-topic-card--available:active {
   }
 }
 
-.pm-teaching-block-grid .pm-teaching-download-card {
+.pm-teaching-block-stack .pm-teaching-download-card {
   --pm-card-background: color-mix(in srgb, var(--pm-surface-paper) 92%, var(--book-paper) 8%);
   --pm-card-border-color: color-mix(in srgb, var(--pm-border-default) 84%, var(--book-paper) 16%);
   --pm-card-padding-inline: clamp(1rem, 0.96rem + 0.16vw, 1.2rem);
@@ -3161,19 +3140,16 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   margin: 0;
 }
 
-.pm-teaching-block--span-2.pm-teaching-block--text > .promat-content-block__text,
-.pm-teaching-block--span-3.pm-teaching-block--text > .promat-content-block__text,
-.pm-teaching-block--span-2.pm-teaching-block--rich-text .pm-teaching-rich-text__body,
-.pm-teaching-block--span-3.pm-teaching-block--rich-text .pm-teaching-rich-text__body,
-.pm-teaching-block--citation .pm-admonition__text,
-.pm-teaching-block--citation .pm-teaching-citation__meta {
-  max-width: min(100%, 82ch);
+/* Running text keeps a readable measure (about 72 characters) inside the wider content column;
+   panels, audio sections, embeds and info boxes use the full column width. */
+.pm-teaching-block--text > .promat-content-block__text,
+.pm-teaching-block--rich-text .pm-teaching-rich-text__body {
+  max-width: min(100%, var(--pm-layout-reading-width));
 }
 
 .pm-teaching-page--topic .pm-teaching-block--citation {
-  width: min(var(--pm-teaching-further-reading-inline-width), var(--pm-teaching-further-reading-max-width));
-  max-width: 100%;
-  margin-inline: auto;
+  width: 100%;
+  max-width: none;
 }
 
 .pm-teaching-page--topic .pm-teaching-block--citation .pm-admonition {
@@ -3338,12 +3314,6 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   }
 }
 
-@media (max-width: 900px) {
-  .audio-section {
-    width: 100%;
-  }
-}
-
 .pm-teaching-reading-links {
   display: grid;
   gap: 0.65rem;
@@ -3489,8 +3459,6 @@ a.pm-teaching-topic-card:focus-visible .pm-interaction__arrow {
   }
 
   .pm-teaching-page .audio-section {
-    width: 100%;
-    max-width: none;
     padding-inline: clamp(1rem, 4vw, 1.25rem);
   }
 }

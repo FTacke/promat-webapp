@@ -838,8 +838,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   max-width: 100%;
 }
 
-.pm-teaching-content-wide,
-.pm-teaching-block-grid {
+.pm-teaching-content-wide {
   width: min(100%, 70rem);
   max-width: 70rem;
   margin-inline: auto;
@@ -858,21 +857,18 @@ body.app-shell.page-landing .md3-content-wrapper {
   justify-self: center;
 }
 
-.pm-teaching-page--topic .pm-teaching-block-grid {
-  width: min(100%, 66rem);
-  max-width: 66rem;
-}
-
-.pm-teaching-page--topic .pm-teaching-block--further-reading {
-  width: min(var(--pm-teaching-further-reading-inline-width), var(--pm-teaching-further-reading-max-width));
-  max-width: 100%;
+/* Shared vertical page layout for every Teaching topic page (all languages): one centered column. */
+.pm-teaching-page--topic .pm-teaching-topic-sections {
+  width: min(100%, var(--pm-teaching-topic-content-width));
+  max-width: var(--pm-teaching-topic-content-width);
   margin-inline: auto;
 }
 
-.pm-teaching-block-grid {
+/* Blocks of one section stack vertically; multi-column layouts live inside components only. */
+.pm-teaching-block-stack {
   display: grid;
-  row-gap: clamp(1rem, 2vw, 1.45rem);
-  column-gap: var(--pm-space-grid);
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--pm-teaching-topic-block-gap);
 }
 
 .pm-teaching-block {
@@ -991,7 +987,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-inline: auto;
 }
 
-.pm-teaching-block-grid > .pm-teaching-block.pm-reading {
+.pm-teaching-block-stack > .pm-teaching-block.pm-reading {
   width: 100%;
   max-width: none;
   margin-inline: 0;
@@ -1014,16 +1010,6 @@ body.app-shell.page-landing .md3-content-wrapper {
 
   .pm-teaching-topic-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .pm-teaching-block-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-  }
-
-  .pm-teaching-block--span-2,
-  .pm-teaching-block--span-3 {
-    grid-column: 1 / -1;
   }
 
   .pm-teaching-credits__groups {

@@ -654,61 +654,6 @@ def _embed_payload(raw_block: dict[str, Any]) -> dict[str, Any] | None:
     return payload
 
 
-_BLOCK_LAYOUT_SPAN_DEFAULTS: dict[str, int] = {
-    "hero": 2,
-    "section_heading": 2,
-    "text": 2,
-    "rich_text": 2,
-    "admonition": 1,
-    "image": 1,
-    "topic_meta": 2,
-    "overview": 1,
-    "info_box": 1,
-    "tip_box": 1,
-    "warning_box": 1,
-    "audio_example": 1,
-    "audio_examples": 2,
-    "audio_contrast": 2,
-    "download": 1,
-    "embed": 2,
-    "video": 2,
-    "further_reading": 2,
-    "teaching_impulses": 1,
-    "credits": 2,
-    "next_topics": 2,
-    "topic_grid": 2,
-    "citation": 2,
-}
-
-
-def _block_layout_span(block_type: str, raw_block: dict[str, Any]) -> int:
-    default_span = _BLOCK_LAYOUT_SPAN_DEFAULTS.get(block_type, 2)
-    raw_layout = raw_block.get("layout")
-    if not isinstance(raw_layout, dict):
-        return default_span
-
-    raw_span = raw_layout.get("span")
-    if isinstance(raw_span, bool):
-        return default_span
-    if isinstance(raw_span, int):
-        if raw_span in {1, 2}:
-            return raw_span
-        if raw_span == 3:
-            return 2
-        return default_span
-
-    raw_span_text = _as_text(raw_span)
-    if raw_span_text in {"1", "2"}:
-        return int(raw_span_text)
-    if raw_span_text == "3":
-        return 2
-    return default_span
-
-
-def _block_layout_payload(block_type: str, raw_block: dict[str, Any]) -> dict[str, int]:
-    return {"span": _block_layout_span(block_type, raw_block)}
-
-
 def _parse_iso_date(value: Any) -> date | None:
     raw_value = _as_text(value)
     if not raw_value:
@@ -1002,7 +947,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "section_heading",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": title,
                         "lead": _as_text(raw_block.get("lead")),
                     }, "title", "lead")
@@ -1016,7 +960,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "overview",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "body_html_blocks": [list_block],
                     }, "title")
@@ -1031,7 +974,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "text",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "eyebrow": _as_text(raw_block.get("eyebrow")),
                         "variant": _as_text(raw_block.get("variant") or raw_block.get("surface")),
                         "title": _as_text(raw_block.get("title")),
@@ -1046,7 +988,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "rich_text",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "variant": _as_text(raw_block.get("variant")),
                         "body_html": render_markdown_block(body),
@@ -1069,7 +1010,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "image",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "src": src,
                         "alt": alt,
                         "caption": _as_text(raw_block.get("caption")),
@@ -1083,7 +1023,6 @@ def _topic_blocks(
                     {
                         "type": "embed",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "provider": payload["provider"],
                         "src": payload["src"],
                         "height": payload["height"],
@@ -1131,7 +1070,6 @@ def _topic_blocks(
                     {
                         "type": "admonition",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "item": _set_inline_markdown_fields({
                             "id": block_id,
                             "variant": variant,
@@ -1158,7 +1096,6 @@ def _topic_blocks(
                     {
                         "type": "admonition",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "item": _set_inline_markdown_fields({
                             "id": block_id,
                             "variant": variant_map[block_type],
@@ -1189,7 +1126,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "audio_examples",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "lead": _as_text(raw_block.get("lead")),
                         "lead_html": _markdown_inline(raw_block.get("lead")),
@@ -1224,7 +1160,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "audio_examples",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "eyebrow": _as_text(raw_block.get("eyebrow")),
                         "title": title,
                         "lead": lead,
@@ -1252,7 +1187,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "audio_contrast",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "lead": _as_text(raw_block.get("lead")),
                         "lead_html": _markdown_inline(raw_block.get("lead")),
@@ -1269,7 +1203,6 @@ def _topic_blocks(
                     {
                         "type": "download",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "download": payload,
                     }
                 )
@@ -1281,7 +1214,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "teaching_impulses",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "items": items,
                     }, "title")
@@ -1296,7 +1228,6 @@ def _topic_blocks(
                     {
                         "type": "credits",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "groups": [
                             {"key": "coordinator", "title": translate(ui_lang, "teaching.credits.coordinator"), "people": coordinator},
                             {"key": "authors", "title": translate(ui_lang, "teaching.credits.authors"), "people": authors},
@@ -1312,7 +1243,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "next_topics",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "cards": cards,
                     }, "title")
@@ -1326,7 +1256,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "topic_grid",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "cards": cards,
                     }, "title")
@@ -1341,7 +1270,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "video",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "title_plain": render_markdown_plain_text(raw_block.get("title")) or _as_text(raw_block.get("title")),
                         "src": src,
@@ -1360,7 +1288,6 @@ def _topic_blocks(
                     _set_inline_markdown_fields({
                         "type": "further_reading",
                         "id": block_id,
-                        "layout": _block_layout_payload(block_type, raw_block),
                         "title": _as_text(raw_block.get("title")),
                         "description": _as_text(raw_block.get("description")),
                         "description_html": _markdown_inline(raw_block.get("description")),
@@ -1387,7 +1314,6 @@ def _topic_blocks(
             {
                 "type": "citation",
                 "id": f"{topic_slug}-block-citation",
-                "layout": {"span": _BLOCK_LAYOUT_SPAN_DEFAULTS["citation"]},
                 "citation": top_level_citation,
             }
         )

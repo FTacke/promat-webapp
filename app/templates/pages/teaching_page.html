@@ -113,7 +113,7 @@
       <h2 id="{{ section.heading.id }}" class="pm-teaching-section-heading__title">{{ section.heading.title_html | safe if section.heading.title_html else section.heading.title }}</h2>
       {% endif %}
       {% if section.blocks %}
-      <div class="pm-teaching-topic-section__grid pm-teaching-block-grid pm-teaching-block-grid--topic{{ ' pm-teaching-topic-section__grid--citation' if section.kind == 'citation' else '' }}">
+      <div class="pm-teaching-topic-section__stack pm-teaching-block-stack">
         {% for block in section.blocks %}
         {{ render_block(block, teaching_labels) }}
         {% endfor %}
@@ -128,7 +128,7 @@
   </nav>
   {% endif %}
   {% elif promat_page.blocks %}
-  <div class="pm-teaching-block-grid{{ ' pm-teaching-block-grid--topic' if teaching_view == 'topic' else '' }}">
+  <div class="pm-teaching-block-stack">
     {% for block in promat_page.blocks %}
     {{ render_block(block, teaching_labels) }}
     {% endfor %}
