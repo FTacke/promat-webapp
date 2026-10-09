@@ -124,3 +124,58 @@ test('resolveActiveTimedItem never falls back to the global last item during sen
   assert.deepEqual(resolveActiveTimedItem(items, 3500), { itemId: 'd_03', itemIndex: 2 });
   assert.deepEqual(resolveActiveTimedItem(items, -10), { itemId: null, itemIndex: -1 });
 });
+
+import {
+  COMPARISON_LANG_HANDOFF_MAX_AGE_MS,
+  saveComparisonLangHandoff,
+  takeComparisonLangHandoff,
+} from '../../static/js/modules/research/comparison-lang-handoff.js';
+
+function memoryStorage() {
+  const data = new Map();
+  return {
+    getItem: (key) => (data.has(key) ? data.get(key) : null),
+    setItem: (key, value) => data.set(key, String(value)),
+    removeItem: (key) => data.delete(key),
+    size: () => data.size,
+  };
+}
+
+test('language-switch handoff restores speakers and preset once, validated against the catalog', () => {
+  const storage = memoryStorage();
+  const valid = new Set(['ES-L-0001-2026-S01', 'ES-N-0001-2026-S01']);
+  assert.equal(
+    saveComparisonLangHandoff(storage, {
+      corpus: 'spanish',
+      sessionIds: ['ES-L-0001-2026-S01', 'ES-L-9999-2026-S01', 'ES-L-0001-2026-S01'],
+      presetId: 'builtin:phonemes',
+      now: 1000,
+    }),
+    true,
+  );
+  const restored = takeComparisonLangHandoff(storage, { corpus: 'spanish', validSessionIds: valid, now: 2000 });
+  assert.deepEqual(restored, { sessionIds: ['ES-L-0001-2026-S01'], presetId: 'builtin:phonemes' });
+  assert.equal(storage.size(), 0, 'the entry is consumed');
+  assert.deepEqual(takeComparisonLangHandoff(storage, { corpus: 'spanish', validSessionIds: valid, now: 2001 }), {
+    sessionIds: [],
+    presetId: null,
+  });
+});
+
+test('language-switch handoff never crosses corpora, never outlives its window and ignores empty selections', () => {
+  const storage = memoryStorage();
+  const valid = new Set(['ES-L-0001-2026-S01']);
+  saveComparisonLangHandoff(storage, { corpus: 'spanish', sessionIds: ['ES-L-0001-2026-S01'], now: 1000 });
+  assert.deepEqual(takeComparisonLangHandoff(storage, { corpus: 'french', validSessionIds: valid, now: 1500 }).sessionIds, []);
+  assert.equal(storage.size(), 0, 'a mismatching reader still clears the entry');
+
+  saveComparisonLangHandoff(storage, { corpus: 'spanish', sessionIds: ['ES-L-0001-2026-S01'], now: 1000 });
+  assert.deepEqual(
+    takeComparisonLangHandoff(storage, { corpus: 'spanish', validSessionIds: valid, now: 1000 + COMPARISON_LANG_HANDOFF_MAX_AGE_MS + 1 }).sessionIds,
+    [],
+  );
+
+  assert.equal(saveComparisonLangHandoff(storage, { corpus: 'spanish', sessionIds: [], now: 1000 }), false);
+  assert.equal(storage.size(), 0);
+  assert.equal(saveComparisonLangHandoff(null, { corpus: 'spanish', sessionIds: ['x'] }), false);
+});

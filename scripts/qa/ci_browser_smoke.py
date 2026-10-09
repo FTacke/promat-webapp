@@ -15,6 +15,8 @@ Checks (German and English where a language applies):
 * the player boots (its transport control works), shows "Alle Items"/"All items" as the selected set and keeps it;
 * the comparison keeps the chosen set when speakers are toggled, adds no ``set_id`` to the URL and never calls
   ``/private-copy`` without an item edit;
+* the comparison keeps selected speakers and the view task across a DE/EN switch and back, and never hands them to
+  another corpus;
 * the matrix row play control turns into a stop control, stop ends playback, the audio never overlaps;
 * dark and light theme both apply; no horizontal overflow at 390 px on the key pages;
 * French and English corpora open in the player (fixture sessions of every corpus);
@@ -426,6 +428,58 @@ def check_comparison(browser, base: str, report: Report, out: Path) -> None:
         context.close()
 
 
+def check_language_switch_state(browser, base: str, report: Report, out: Path) -> None:
+    """Switching the UI language keeps the comparison workspace (speakers, view task) and never leaks across corpora."""
+    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    context.add_init_script(AUDIO_STUB)
+    page = context.new_page()
+    problems: list[str] = []
+    page.on("pageerror", lambda error: problems.append(f"pageerror: {error}"))
+    path = "/de/research/spanish/comparison?task=text"
+    login(page, base, path)
+    page.goto(base + path, wait_until="networkidle")
+    page.wait_for_selector("[data-comparison-session-toggle]")
+    selected_selector = "[data-comparison-selected-sessions] [data-comparison-session-toggle]"
+
+    def selected_ids() -> list[str]:
+        page.wait_for_timeout(300)
+        return sorted(page.eval_on_selector_all(selected_selector, "els => els.map(e => e.getAttribute('data-comparison-session-toggle'))"))
+
+    toggles = page.locator("[data-comparison-session-toggle]")
+    chosen = [toggles.nth(index).get_attribute("data-comparison-session-toggle") for index in range(2)]
+    for session_id in chosen:
+        page.locator(f'[data-comparison-session-toggle="{session_id}"]').first.click()
+        page.wait_for_timeout(400)
+    before = selected_ids()
+    report.check(sorted(chosen) == before, f"speakers are selected before the switch ({before})")
+
+    for target, source in (("en", "de"), ("de", "en")):
+        with page.expect_navigation(wait_until="networkidle"):
+            page.click(f'[data-ui-lang-link="{target}"]')
+        page.wait_for_selector("[data-comparison-session-toggle]")
+        query = parse_qs(urlparse(page.url).query)
+        report.check(urlparse(page.url).path == "/%s/research/spanish/comparison" % target, f"{source}->{target} stays on the comparison ({page.url})")
+        report.check(query.get("task") == ["text"], f"{source}->{target} keeps the view task in the URL ({page.url})")
+        report.check(selected_ids() == before, f"{source}->{target} keeps the selected speakers ({selected_ids()} vs {before})")
+        report.check("set_id" not in query, f"{source}->{target} adds no set_id to the URL")
+    page.screenshot(path=str(out / "language_switch_comparison.png"), full_page=True)
+
+    # Control: another corpus never receives the Spanish selection, and the handoff is consumed by the first reader.
+    page.evaluate(
+        """(ids) => sessionStorage.setItem('pm.comparison.langSwitch', JSON.stringify({corpus: 'spanish', sessionIds: ids, presetId: null, at: Date.now()}))""",
+        before,
+    )
+    page.goto(base + "/de/research/french/comparison", wait_until="networkidle")
+    page.wait_for_selector("[data-comparison-session-toggle]")
+    report.check(selected_ids() == [], f"another corpus gets no speakers from the Spanish handoff ({selected_ids()})")
+    report.check(page.evaluate("sessionStorage.getItem('pm.comparison.langSwitch')") is None, "the handoff entry is consumed")
+    page.goto(base + path, wait_until="networkidle")
+    page.wait_for_selector("[data-comparison-session-toggle]")
+    report.check(selected_ids() == [], "a plain reload without a language switch starts empty again")
+    report.check(not problems, f"language switch runs without page errors {problems[:2]}")
+    context.close()
+
+
 def check_presentation_corrections(browser, base: str, report: Report, out: Path) -> None:
     """Presentation fixes: L1 names without ISO tooltip, compact level badge, top-aligned metadata, footer flow, select theming."""
     names = {"de": "Deutsch", "en": "German"}
@@ -552,6 +606,7 @@ def main() -> int:
             check_login_and_player(browser, base, report, args.out)
             check_german_in_preparation(browser, base, report, args.out)
             check_comparison(browser, base, report, args.out)
+            check_language_switch_state(browser, base, report, args.out)
             check_presentation_corrections(browser, base, report, args.out)
             check_theme_and_mobile(browser, base, report, args.out)
             browser.close()

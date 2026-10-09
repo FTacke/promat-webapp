@@ -6,6 +6,11 @@ import {
   parseComparisonUrlState,
   shouldExposeComparisonSetId,
 } from "../modules/research/comparison-url-state.js";
+import {
+  safeSessionStorage,
+  saveComparisonLangHandoff,
+  takeComparisonLangHandoff,
+} from "../modules/research/comparison-lang-handoff.js";
 
 let requestFailedLabel = "";
 
@@ -824,10 +829,34 @@ function init() {
     try {
       const payload = await requestJson(`${state.setApiBaseHref}/${encodeURIComponent(state.requestedSetId)}`);
       applySet(payload.set, { implicit: false, explicitMaterial: true });
+      await restoreLangSwitchHandoff({ restorePreset: false });
     } catch (error) {
       isBootstrappingWorkspace = false;
       transientMessage = error.message || saveErrorFallbackLabel;
       render();
+    }
+  }
+
+  // A UI-language switch reloads the page; speakers and a built-in material preset live only in memory, so the previous
+  // page hands them over (see comparison-lang-handoff.js). Saved sets and filters already travel in the URL.
+  function currentBuiltInPresetId() {
+    const presetId = activeSet && !activeSet.set_id ? activeSet.source_preset_id : null;
+    return presetId && materialPresetLookup.has(presetId) ? presetId : null;
+  }
+
+  async function restoreLangSwitchHandoff({ restorePreset = true } = {}) {
+    const handoff = takeComparisonLangHandoff(safeSessionStorage(), {
+      corpus: state.languageSlug,
+      validSessionIds: new Set(sessionLookup.keys()),
+    });
+    // A stored draft keeps its own speakers on the server; a loaded set defines the material by its id.
+    const storedSessions = activeSet ? (activeSet.workbench_state.sessions || []).length : 0;
+    if (handoff.sessionIds.length && !storedSessions && !isDraftRecord(activeSet)) {
+      setLocalSessions(handoff.sessionIds);
+    }
+    const preset = restorePreset && handoff.presetId ? materialPresetLookup.get(handoff.presetId) : null;
+    if (preset && !preset.setId) {
+      await switchMaterialWithoutDraft(handoff.presetId);
     }
   }
 
@@ -839,6 +868,7 @@ function init() {
 
     try {
       applySet(buildImplicitDefaultWorkspace(), { implicit: true });
+      await restoreLangSwitchHandoff();
     } catch (error) {
       isBootstrappingWorkspace = false;
       transientMessage = error.message || saveErrorFallbackLabel;
@@ -1889,6 +1919,16 @@ function init() {
   } else {
     bootstrapDefaultWorkspace();
   }
+
+  document.addEventListener("click", (event) => {
+    if (event.target.closest && event.target.closest("a[data-ui-lang-link]")) {
+      saveComparisonLangHandoff(safeSessionStorage(), {
+        corpus: state.languageSlug,
+        sessionIds: selectedSessionIds(),
+        presetId: currentBuiltInPresetId(),
+      });
+    }
+  });
 
   window.addEventListener("beforeunload", () => {
     stopPlayback();
