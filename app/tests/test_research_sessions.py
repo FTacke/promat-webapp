@@ -2915,7 +2915,9 @@ def test_spanish_design_editions_share_structure_lists_and_references() -> None:
             de_entries, en_entries = section["bullets_html"]["de"], section["bullets_html"]["en"]
             assert len(de_entries) == len(en_entries) == 20
             # same references (titles stay untranslated); only the bibliographic abbreviations are localised
-            localise = lambda entry: entry.replace("(Hg.)", "(eds.)").replace("o. J.", "n.d.").replace("2., überarb. Aufl.", "2nd rev. ed.")
+            def localise(entry: str) -> str:
+                return entry.replace("(Hg.)", "(eds.)").replace("o. J.", "n.d.").replace("2., überarb. Aufl.", "2nd rev. ed.")
+
             assert [localise(entry) for entry in de_entries] == en_entries
             assert not any(word in entry for entry in en_entries for word in ("Hg.", "o. J.", "überarb."))
     footnotes = SPANISH_DESIGN_PAGE_CONTENT["footnotes_html"]
