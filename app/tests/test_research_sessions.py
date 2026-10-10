@@ -1958,7 +1958,10 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert re.search(r'<a class="pm-teaching-topic-card pm-nav-surface pm-teaching-topic-card--available[^"]*" href="/de/teaching/spanish/which-pronunciation">', html)
     assert re.search(r'<article class="pm-teaching-topic-card pm-teaching-topic-card--pending[^"]*">', html)
     assert html.count('pm-nav-surface__arrow') == html.count('pm-teaching-topic-card--available')
-    assert 'In Vorbereitung: Aussprache und Hörverstehen rund um das r am Silben- und Wortende.' in html
+    # The description does not repeat the status line that every pending card carries separately.
+    assert 'Aussprache und Hörverstehen rund um das r am Silben- und Wortende.' in html
+    assert 'In Vorbereitung: ' not in html
+    assert html.count('class="pm-teaching-topic-card__status">In Vorbereitung</p>') == html.count('<article class="pm-teaching-topic-card pm-teaching-topic-card--pending') >= 1
     first_group_html = _extract_section_by_labelledby(html, 'teaching-group-1')
     assert 'Welche Aussprache unterrichten?' in first_group_html
     assert 'Weiches Spanisch, hartes Deutsch' in first_group_html
@@ -1968,7 +1971,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
     assert 'Das spanische r' in second_group_html
     assert 'R am Silbenende' in second_group_html
-    assert 'In Vorbereitung: Aussprache und Hörverstehen rund um das r am Silben- und Wortende.' in second_group_html
+    assert '>Aussprache und Hörverstehen rund um das r am Silben- und Wortende.</p>' in second_group_html
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html
     assert 'Editionen' not in html
     assert 'pm-teaching-locale-switch' not in html
@@ -2966,6 +2969,26 @@ def test_teaching_topic_cards_are_flat_navigation_surfaces_and_group_headings_ar
     assert "font-size: var(--pm-type-group-title-size);" in components_css
     # anchor jumps clear the real height of the sticky top bar
     assert "--pm-shell-top-offset: var(--promat-topbar-height);" in tokens_css
+
+
+def test_teaching_overview_spacing_comes_from_named_spacing_tokens(url_app: Flask) -> None:
+    client = url_app.test_client()
+    tokens = client.get("/static/css/00_tokens.css").get_data(as_text=True)
+    layout = client.get("/static/css/20_layout.css").get_data(as_text=True)
+    components = client.get("/static/css/30_components.css").get_data(as_text=True)
+
+    for declaration in (
+        "--pm-teaching-intro-gap: var(--pm-space-container);",
+        "--pm-teaching-group-header-gap: var(--pm-space-xs);",
+        "--pm-teaching-group-gap: var(--pm-space-lg);",
+        "--pm-teaching-group-stack-gap: calc(var(--pm-space-xl) + var(--pm-space-xs));",
+    ):
+        assert declaration in tokens
+    assert re.search(r"@media \(min-width: 721px\) \{\s*:root \{\s*--pm-teaching-group-stack-gap: calc\(var\(--pm-space-xl\) \+ var\(--pm-space-text\)\)", tokens)
+    assert "gap: var(--pm-teaching-group-header-gap);" in layout and "gap: var(--pm-teaching-group-stack-gap);" in layout
+    assert ".pm-teaching-page--hub .pm-teaching-group-stack {" in components
+    # the distance to the citation is untouched: still the page gap plus the citation gap
+    assert "margin-top: var(--pm-teaching-citation-gap);" in components
 
 
 def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask) -> None:

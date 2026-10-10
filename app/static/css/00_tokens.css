@@ -176,8 +176,10 @@
   --pm-content-table-col-2: 27%;
   --pm-content-table-col-3: 43%;
   --pm-teaching-overview-gap: clamp(1.7rem, 1.4rem + 1vw, 2.4rem);
-  --pm-teaching-group-stack-gap: clamp(2.3rem, 2rem + 1vw, 3.1rem);
-  --pm-teaching-group-gap: 1.15rem;
+  --pm-teaching-intro-gap: var(--pm-space-container);
+  --pm-teaching-group-stack-gap: calc(var(--pm-space-xl) + var(--pm-space-xs));
+  --pm-teaching-group-header-gap: var(--pm-space-xs);
+  --pm-teaching-group-gap: var(--pm-space-lg);
   --pm-teaching-citation-gap: var(--pm-space-lg);
   --pm-type-group-title-size: 1.22rem;
   --pm-type-group-title-weight: 600;
@@ -859,6 +861,12 @@
 
   --promat-transition-fast: 160ms ease;
   --promat-transition-slow: 240ms ease;
+}
+
+@media (min-width: 721px) {
+  :root {
+    --pm-teaching-group-stack-gap: calc(var(--pm-space-xl) + var(--pm-space-text));
+  }
 }
 
 @media (min-width: 980px) {

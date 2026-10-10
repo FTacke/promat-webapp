@@ -1513,6 +1513,11 @@ a.promat-card:active .pm-cta-link {
   gap: var(--pm-teaching-overview-gap);
 }
 
+/* Extra air between the introduction and the first topic group (the page gap alone is the distance to every other block). */
+.pm-teaching-page--hub .pm-teaching-group-stack {
+  margin-top: var(--pm-teaching-intro-gap);
+}
+
 /* The citation closes the overview with clear air above it. */
 .pm-teaching-page--hub .promat-content-section--citation {
   margin-top: var(--pm-teaching-citation-gap);

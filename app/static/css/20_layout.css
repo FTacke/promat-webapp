@@ -905,7 +905,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .pm-teaching-topic-group__header {
   display: grid;
-  gap: 0.3rem;
+  gap: var(--pm-teaching-group-header-gap);
 }
 
 .pm-teaching-language-list,
