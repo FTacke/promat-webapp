@@ -523,11 +523,11 @@ PROJECT_PAGES_CONTENT: dict[str, dict[str, object]] = {
 SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
     "title": {
         "de": "Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von Pronunciation Matters",
-        "en": "Spanish learner pronunciation: elicitation design and task protocol",
+        "en": "Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of Pronunciation Matters",
     },
     "title_html": {
         "de": "Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von <em>Pronunciation Matters</em>",
-        "en": None,
+        "en": "Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of <em>Pronunciation Matters</em>",
     },
     "article_header": {
         "de": {
@@ -540,7 +540,16 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                 "Erhebungsdesign",
             ],
         },
-        "en": None,
+        "en": {
+            "abstract_html": "This article presents the data collection design of the Spanish learner corpus of <em>Pronunciation Matters</em>. Drawing on established corpus-phonological protocols and the experience of the predecessor project MAR.ELE, it explains the development of a phonologically motivated wordlist, a controlled sentence list and a supplementary interview component. The focus is on the systematic elicitation of selected pronunciation phenomena, the comparability of isolated and sentence-bound realisations, and the adaptation of the tasks to the prerequisites of Spanish learners. The article justifies the central selection decisions and discusses the scope and limitations of the protocol.",
+            "keywords": [
+                "Spanish as a foreign language",
+                "learner phonetics",
+                "corpus phonology",
+                "pronunciation",
+                "data collection design",
+            ],
+        },
     },
     "nav_current_label": {
         "de": "Erhebungsdesign",
@@ -556,7 +565,7 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
         {
             "heading": {
                 "de": "Forschungskontext und Zielsetzung",
-                "en": "Starting point",
+                "en": "Research context and aims",
             },
             "paragraphs_html": {
                 "de": [
@@ -569,10 +578,13 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Leitend sind daher Intelligibilität, kontrollierte Elizitation, empirische Vergleichbarkeit und eine für Lernende sinnvolle Materialgestaltung.",
                 ],
                 "en": [
-                    'The Spanish corpus of <em>Pronunciation Matters</em> is situated at the intersection of two developments: corpus-phonological elicitation designs that aim to document pronunciation in controlled and comparable ways, and ELE didactics as well as university-level phonetics and phonology, where pronunciation as an object of learning and learner pronunciation as an object of research are increasingly being addressed explicitly.<sup class="pm-footnote-ref" id="fnref-spanish-design-1-en"><a href="#fn-spanish-design-1-en" aria-label="Footnote 1">1</a></sup> Empirical data on learner pronunciation do not emerge without prior structuring: they are shaped by task formats that determine which linguistic units are read or spoken, under what conditions this takes place, and how comparable the resulting recordings are. The aim is therefore a task protocol that elicits central phenomena of Spanish learner pronunciation systematically, without overburdening the elicitation with unnecessarily difficult vocabulary, complex reading passages, or an implicit orientation toward first-language target norms.',
-                    'The fact that pronunciation as an object of learning and learner pronunciation as an object of research are increasingly being integrated into Spanish phonetics and phonology is also visible in major introductions within German-language Hispanic linguistics: Pustka (2021) includes a dedicated chapter on pronunciation in foreign language teaching at the beginning of her corpus-linguistic introduction; Gabriel/Meisenburg/Selig (2025), in the second, revised edition, add a new chapter on Spanish as a foreign language in the German-speaking context, with sections on segmental aspects and prosody. <em>Pronunciation Matters</em> builds on this development and complements it with a platform that makes controlled learner data available for empirical research, research-oriented university teaching, and didactically oriented follow-up questions.',
-                    "The didactic perspective also follows foundational work on pronunciation teaching in ELE, especially Gil Fernández (2007), as well as practice-oriented contributions on foreign-accent features in the classroom such as Benet/Pešková (2017). More recent work in ELE didactics likewise defines pronunciation not primarily through approximation to first-language norms, but through intelligibility, comprehensibility, and communicative function (cf. Santamaría Busto 2024; Bárkányi/Galindo Merino/Pérez-Bernabeu 2024).",
-                    "This double positioning leads to the central design decision of the Spanish task protocol: existing models provide important groundwork, but can only partly be transferred directly to the targeted study of learner pronunciation. This concerns lexical difficulty, content-related distraction in reading passages, and the question of which pronunciation phenomena need to be elicited repeatedly and under controlled conditions. The guiding principles are therefore intelligibility, controlled elicitation, empirical comparability, and materials that make sense for learners.",
+                    'The Spanish corpus of <em>Pronunciation Matters</em> is situated where two developments meet: on the one hand, corpus-phonological elicitation designs that aim to document pronunciation in a controlled and comparable way; on the other, ELE didactics and university-level phonetics and phonology, in which pronunciation as an object of learning and learner pronunciation as an object of research are increasingly being considered explicitly.<sup class="pm-footnote-ref" id="fnref-spanish-design-1-en"><a href="#fn-spanish-design-1-en" aria-label="Footnote 1">1</a></sup> Empirical data on learner pronunciation do not arise without prior structuring: they are shaped by task formats that determine which linguistic units are read or spoken, under what conditions this happens and how comparable the resulting recordings are.',
+                    "The aim is therefore a task protocol that systematically elicits central phenomena of Spanish learner pronunciation without overburdening the elicitation with unnecessarily difficult vocabulary, complex reading passages or an implicit orientation towards first-language target norms.",
+                    "That pronunciation as an object of learning and learner pronunciation as an object of research are now being integrated more strongly into Spanish phonetics and phonology is also evident in relevant introductions in German-language Hispanic studies: Pustka (2021) devotes a separate chapter to “pronunciation in foreign language teaching” right at the beginning of her corpus-linguistic introduction; Gabriel/Meisenburg/Selig (2025), in the second, revised edition, include for the first time a separate chapter on “Spanish as a foreign language in the German-speaking context”, with sections on segmental aspects and prosody.",
+                    "<em>Pronunciation Matters</em> builds on this development and complements it with a platform that makes controlled learner data available for empirical research, research-oriented university teaching and didactic follow-up questions.",
+                    "The didactic perspective also connects with foundational work on teaching pronunciation in ELE, in particular Gil Fernández (2007), and with practice-oriented contributions on dealing with foreign accent in the classroom such as Benet/Pešková (2017). More recent ELE-didactic work, too, defines pronunciation not primarily through approximation to first-language norms, but through intelligibility, comprehensibility and communicative function (cf. Santamaría Busto 2024; Bárkányi/Galindo Merino/Pérez-Bernabeu 2024).",
+                    "This twofold positioning leads to the central design decision of the Spanish task protocol: existing models offer important groundwork, but can only partly be adopted directly for the targeted study of learner pronunciation. This concerns above all lexical difficulty, content-related distraction through reading passages, and the question of which phonetic phenomena have to be elicited repeatedly and under controlled conditions.",
+                    "The guiding principles are therefore intelligibility, controlled elicitation, empirical comparability and a material design that makes sense for learners.",
                 ],
             },
         },
@@ -589,12 +601,10 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Auch der in MAR.ELE verwendete Text war als Vergleichstext nützlich, erwies sich aber für die Zielgruppe als zu voraussetzungsreich. Die Überarbeitung des Erhebungsprotokolls beruht somit wesentlich auf den praktischen Erfahrungen mit den bisherigen Materialien und den dabei erkennbar gewordenen methodischen Schwierigkeiten.",
                 ],
                 "en": [
-                    _link_marele(
-                        'An important intermediate step was the earlier project MAR.ELE – Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg. In that smaller pilot project, 22 recordings with students from Marburg University were produced. MAR.ELE made Spanish learner pronunciation accessible as corpus material and open to empirical analysis. At the same time, practical work with this corpus also revealed the limits of a design that had been adopted too directly. Those experiences were decisive for the more extensive revision in the present project and are closely tied to the broader project development outlined on <a href="/en/project/about">What this project is about</a>.'
-                    ),
-                    _link_marele(
-                        "For MAR.ELE, the wordlist from the (I)FEC project was adopted in full in order to remain compatible with an established corpus-phonological design for Spanish. Methodologically, that made sense, but it also exposed clear problems in work with learners: some items turned out to be unnecessary lexical stumbling blocks, while other phenomena that are particularly revealing for learner pronunciation were not distributed optimally or were not represented strongly enough. The reading passage used in MAR.ELE was useful as a comparison text, but turned out to be too demanding for the target group. The current design therefore responds not out of mere preference for a different model, but to concrete experience gained in practice."
-                    ),
+                    'An important intermediate step was the earlier project <a href="https://hispanistica.com/projects/marele/">MAR.ELE</a> – <em>Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg</em>. In this smaller preliminary project, 22 recordings were made with students of Marburg University. MAR.ELE served to make Spanish learner pronunciation accessible as corpus material and open to empirical analysis.',
+                    'In practical work with this corpus, however, the limits of a heavily adopted design also became visible. These very experiences were decisive for the further revision in the present project and are closely connected with the general project development, which can be read about <a href="/en/project">here</a>.',
+                    "For MAR.ELE, the wordlist of the (I)FEC project was adopted in full in order to ensure compatibility with an established corpus-phonological design for Spanish. That was methodologically sensible, but it also showed clear limits in work with learners: some items proved to be unnecessary lexical stumbling blocks, which showed up, among other things, in repeated reading attempts, slips of the tongue (such as sound and syllable transpositions), sound substitutions, spontaneous reactions such as laughing or smiling, and occasional abandoned readings. In such cases it was not always possible to determine unambiguously whether conspicuous realisations were due to systematic pronunciation patterns or to difficulties in grasping the written word form. At the same time, some phenomena that are particularly revealing for learner pronunciation were not sufficiently or not evenly represented in the material.",
+                    "The text used in MAR.ELE was also useful as a comparison text, but proved too demanding for the target group. The revision of the elicitation protocol is thus essentially based on practical experience with the earlier materials and the methodological difficulties that became apparent in the process.",
                 ],
             },
         },
@@ -609,8 +619,8 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Diese Standardisierung schafft die Grundlage dafür, Ausspracheproduktionen verschiedener Sprecher und Lernendengruppen miteinander zu vergleichen. Die ergänzende Erfassung sprachbiographischer Angaben ermöglicht es, die erhobenen Realisierungen im jeweiligen Sprachlernkontext einzuordnen. Für <em>Pronunciation Matters</em> musste das Prinzip der Standardisierung jedoch an ein spezifisches Erkenntnisinteresse angepasst werden: Im Zentrum steht kein allgemeines Referenzkorpus für das spanische Lautsystem, sondern ein Lernendenkorpus, das möglichst störungsarme Daten zur Untersuchung von Aussprachemustern und didaktisch relevanten Kontrasten bereitstellen soll.",
                 ],
                 "en": [
-                    "A central goal of corpus-phonological projects is to elicit speech data in ways that make them comparable across projects. This logic also underlies established protocols such as PFC/IPFC for French and the related Spanish project (I)FEC. The starting point is Labov’s distinction between different degrees of self-monitoring or attention paid to speech: controlled reading tasks, wordlists, texts, and more open speech formats produce different types of data which, taken together, make it possible to describe phonological variation more comprehensively (cf. Labov 1972; Detey/Durand/Laks/Lyche 2016; Racine/Zay/Detey/Kawaguchi 2012; Pustka et al. 2018).",
-                    "This kind of standardisation is methodologically useful because it creates comparability. For <em>Pronunciation Matters</em>, however, this ideal had to be balanced against a different research interest: the aim is not a general reference corpus for the Spanish sound system, but a learner corpus that provides data on pronunciation patterns, intelligibility, and didactically relevant contrasts with as few interfering factors as possible.",
+                    "A central aim of corpus-phonological projects is to elicit speech data in a way that is comparable across projects. This logic also underlies established protocols such as PFC/IPFC for French and the Spanish project (I)FEC that builds on it. The starting point is Labov’s distinction between different degrees of self-monitoring, or attention paid to one’s own speech: controlled reading tasks, wordlists, texts and more open conversational formats produce different types of data which, taken together, allow a more differentiated picture of phonetic variation (cf. Labov 1972; Detey/Durand/Laks/Lyche 2016; Racine/Zay/Detey/Kawaguchi 2012; Pustka et al. 2018).",
+                    "This standardisation creates the basis for comparing the pronunciation productions of different speakers and learner groups. The additional recording of language-biographical information makes it possible to place the elicited realisations in their respective language-learning context. For <em>Pronunciation Matters</em>, however, the principle of standardisation had to be adapted to a specific research interest: the focus is not on a general reference corpus for the Spanish sound system, but on a learner corpus that is to provide data with as little interference as possible for studying pronunciation patterns and didactically relevant contrasts.",
                 ],
             },
         },
@@ -621,13 +631,7 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
             },
             "paragraphs_html": {
                 "de": None,
-                "en": [
-                    'The (I)FEC wordlist was designed for a broad corpus-phonological programme. It aims to capture numerous phenomena of the Spanish sound system, regional variation, and possible contrasts. For a learner corpus, this breadth is only partly useful. Some items are phonologically interesting, but turned out to be unnecessary stumbling blocks for learners or had little practical analytic value: morphologically complex forms such as <em>estudiéis</em>, rare diphthongs or triphthongs in items such as <em>bou</em>, <em>miau</em>, and <em>guau</em>, loanwords such as <em>kétchup</em> and <em>iceberg</em>, or lexically marginal words such as <em>ñandú</em>, <em>yunque</em>, and <em>ciempiés</em>.<sup class="pm-footnote-ref" id="fnref-spanish-design-2-en"><a href="#fn-spanish-design-2-en" aria-label="Footnote 2">2</a></sup> Such words can shift the task away from pronunciation and toward lexical knowledge, reading confidence, or uncertainty when dealing with unfamiliar forms.',
-                    'The new wordlist therefore deliberately moves away from the ideal of adopting the full protocol unchanged. At the same time, it remains strongly indebted to (I)FEC: 58 different word forms from (I)FEC were retained.<sup class="pm-footnote-ref" id="fnref-spanish-design-3-en"><a href="#fn-spanish-design-3-en" aria-label="Footnote 3">3</a></sup> The sequence of a randomised main part with individual lexical items followed by a final block of minimal or pseudo-minimal pairs was also kept. At the same time, 32 word forms were newly added in order to adapt the list more closely to learners and to the planned analyses.<sup class="pm-footnote-ref" id="fnref-spanish-design-4-en"><a href="#fn-spanish-design-4-en" aria-label="Footnote 4">4</a></sup> These include items that improve the coverage of specific consonantal phenomena, for instance word-final /d/ in <em>ciudad</em>, <em>usted</em>, and <em>verdad</em>. In (I)FEC, final /d/ is not covered systematically; in <em>Pronunciation Matters</em>, this phenomenon was therefore expanded deliberately.',
-                    "The wordlist was therefore not reinvented, but revised in a targeted way. What matters are intelligibility, systematic realisations, and relevant contrasts, not orientation toward a first-language target norm or maximal coverage of the sound system. The list comprises 92 items: a main part with individual lexical items (86) and a clearly separated final block of minimal or pseudo-minimal pairs (6). The items are selected on phonological grounds, but filtered for learner suitability. Preference was given to high-frequency words, words appropriate to early learning levels, and forms that are as orthographically transparent as possible. Relevant phenomena should be represented repeatedly, usually by three to five items, so that individual tokens are not overinterpreted.",
-                    "The selection of target phenomena is based on central descriptive domains of Spanish phonetics and phonology: segmental contrasts, syllable structure, word stress, grapheme–phoneme relations, and prosodic embedding. For the linguistic description of these domains, Pustka (2021) and Gabriel/Meisenburg/Selig (2025) provide important reference points. At the same time, the selection of items takes into account didactic work that understands the oral form as part of lexical knowledge and closely links pronunciation, phonological awareness, and vocabulary work (cf. Hidalgo Gallardo/Pérez Serrano 2024).",
-                    "In Spanish, the interface between orthography and pronunciation is particularly relevant because the apparent transparency of sound–spelling correspondences should not be overestimated didactically (cf. Díez Plaza 2024).",
-                ],
+                "en": None,
             },
             "blocks": {
                 "de": [
@@ -708,7 +712,84 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                         "ref": "spanish-final-wordlist",
                     },
                 ],
-                "en": None,
+                "en": [
+                    {
+                        "type": "paragraph_html",
+                        "html": "The (I)FEC wordlist is designed for a broad corpus-phonological programme. It is meant to capture numerous phenomena of the Spanish sound system, regional variation and possible contrasts. For a learner corpus, this breadth is only partly useful.",
+                    },
+                    {
+                        "type": "paragraph_html",
+                        "html": 'Some items are phonologically interesting but proved to be unnecessary stumbling blocks for learners or had practically no analytical use: morphologically complex forms such as <em>estudiéis</em>, rare diphthongs or triphthongs in items such as <em>bou</em>, <em>miau</em> and <em>guau</em>, loanwords such as <em>kétchup</em> and <em>iceberg</em>, or lexically marginal words such as <em>ñandú</em>, <em>yunque</em> and <em>ciempiés</em>.<sup class="pm-footnote-ref" id="fnref-spanish-design-2-en"><a href="#fn-spanish-design-2-en" aria-label="Footnote 2">2</a></sup> Such words can mean that the elicitation no longer primarily captures pronunciation, but word knowledge, reading confidence, or uncertainty with unfamiliar forms distracts from the actual focus.',
+                    },
+                    {
+                        "type": "paragraph_html",
+                        "html": 'The new wordlist therefore deliberately abandons the ideal of adopting the protocol in full. It remains, however, strongly tied to (I)FEC: 58 distinct word forms from (I)FEC were retained.<sup class="pm-footnote-ref" id="fnref-spanish-design-3-en"><a href="#fn-spanish-design-3-en" aria-label="Footnote 3">3</a></sup> The sequence of a randomised main part with individual lexemes and a final block of contrast groups was also kept. At the same time, 31 word forms were newly added in order to adapt the list better to learners and to the planned analyses.<sup class="pm-footnote-ref" id="fnref-spanish-design-4-en"><a href="#fn-spanish-design-4-en" aria-label="Footnote 4">4</a></sup> These include, among others, items that improve the coverage of certain consonant phenomena, for example final /d/ in <em>ciudad</em>, <em>usted</em> and <em>verdad</em>. Since word-final /d/ is not systematically covered in (I)FEC, it was deliberately given greater weight in designing the wordlist for <em>Pronunciation Matters</em>.',
+                    },
+                    {
+                        "type": "paragraph_html",
+                        "html": "The wordlist was thus not invented anew, but revised in a targeted way. What matters are intelligibility, systematic realisations and relevant contrasts. The list comprises 92 task items: 86 individual words and a final block of six contrast groups. Among them are phonological contrasts such as <em>caro – carro</em> and <em>pero – perro</em>, orthographic contrasts such as <em>ola – hola</em> and <em>bienes – vienes</em>, and the accent triple <em>número – numero – numeró</em>. The items are selected on phonological grounds, but filtered to suit learners.",
+                    },
+                    {
+                        "type": "paragraph_html",
+                        "html": "Preference is given to high-frequency words that match early learning levels and are as orthographically transparent as possible. Relevant phenomena should be represented repeatedly, as a rule by three to five items, so that individual observations are not over-interpreted.",
+                    },
+                    {
+                        "type": "paragraph_html",
+                        "html": "In compiling the wordlist, phonetic-phonological and didactic considerations were combined. Central areas of description in Spanish phonetics and phonology were taken into account, including segmental contrasts, syllable structure, word stress, grapheme–phoneme relations and prosodic embedding. Important reference points here are Pustka (2021) and Gabriel/Meisenburg/Selig (2025). From a didactic perspective, too, grapheme–phoneme relations are of particular importance in Spanish, since the comparatively high transparency of spelling–sound correspondences must not be equated with unproblematic pronunciation (cf. Díez Plaza 2024). In addition, the design takes into account work that understands phonetic form as a component of lexical knowledge and closely links pronunciation, phonological awareness and vocabulary work (cf. Hidalgo Gallardo/Pérez Serrano 2024).",
+                    },
+                    {
+                        "type": "paragraph_html",
+                        "html": "How these selection criteria are reflected in the compilation of the stimuli is illustrated by the following examples:",
+                    },
+                    {
+                        "type": "table",
+                        "columns": [
+                            "Phenomenon area",
+                            "Words and contrasts (selection)",
+                            "Perspective of investigation",
+                        ],
+                        "rows": [
+                            [
+                                "Allophony of /b/ and graphemes ⟨b⟩/⟨v⟩",
+                                "<em>labio, vino, lavar, vida</em>",
+                                "Plosive and approximant realisations in different phonetic contexts; possible orthographically influenced pronunciation of ⟨v⟩",
+                            ],
+                            [
+                                "Rhotic contrasts",
+                                "<em>caro – carro; pero – perro; reloj</em>",
+                                "Single and multiple vibrants and their positional conditions",
+                            ],
+                            [
+                                "Diphthongs",
+                                "<em>viuda, deuda, tierra, baile</em>",
+                                "Realisation of different vowel combinations within the syllable",
+                            ],
+                            [
+                                "Hiatus",
+                                "<em>caída, oído, oír, reír</em>",
+                                "Realisation of heterosyllabic vowel sequences",
+                            ],
+                            [
+                                "Consonants in word-final position",
+                                "<em>ciudad, usted, verdad</em>",
+                                "Retention, weakening or deletion of final /d/",
+                            ],
+                            [
+                                "Lexical stress",
+                                "<em>número – numero – numeró</em>",
+                                "Distinction of stress positions that carry a difference in meaning",
+                            ],
+                        ],
+                    },
+                    {
+                        "type": "paragraph_html",
+                        "html": 'The targeted combination of the stimuli makes it possible to examine individual pronunciation phenomena in different phonetic contexts and, where appropriate, to compare their realisation between isolated words and sentence-bound production.<sup class="pm-footnote-ref" id="fnref-spanish-design-5-en"><a href="#fn-spanish-design-5-en" aria-label="Footnote 5">5</a></sup>',
+                    },
+                    {
+                        "type": "content_element",
+                        "ref": "spanish-final-wordlist",
+                    },
+                ],
             },
             "content_elements": [
                 {
@@ -720,7 +801,7 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     },
                     "summary_html": {
                         "de": "Die spanische Wortliste umfasst 92 Aufgabenitems: 86 Einzelwörter und sechs abschließende Kontrastgruppen.",
-                        "en": "The Spanish wordlist contains 92 items: 86 individual lexical items and 6 minimal or pseudo-minimal pairs.",
+                        "en": "The Spanish wordlist comprises 92 task items: 86 individual words and six final contrast groups.",
                     },
                     "items": [
                         {"label": "1", "text": "mesa"},
@@ -834,10 +915,12 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Hinzu kommt ein strukturelles Problem: Zusammenhängende Texte bilden relevante Phänomene selten gleichmäßig ab. Manche Phänomene treten mehrfach auf, andere gar nicht oder nur zufällig. Gerade lernendentypische Ausspracheprobleme sind darin nicht systematisch genug vertreten. Ein Lesetext ist daher für globale Leseaussprache, Rhythmus und prosodische Beobachtungen interessant, aber nicht optimal, wenn bestimmte Lernendenphänomene kontrolliert und mehrfach erhoben werden sollen.",
                 ],
                 "en": [
-                    "For the second task area, too, the question was whether an existing reading passage should be adopted. In phonetic tradition, <em>The North Wind and the Sun</em> is an established comparison text that has long been used in the context of the International Phonetic Association (cf. International Phonetic Association 1999). The advantage is obvious: if many projects use the same text, data become easier to compare. At the same time, this textual tradition is itself not unproblematic. For the Spanish version, Coloma (2015) shows why the standard text was not optimally balanced and proposes a modified version that contains additional phonemes, has fewer word repetitions, and is phonetically more balanced. The discussion of alternative versions of such comparison texts also shows that even established standard texts are always phonologically and didactically selective (cf. Deterding 2006; Coloma 2015).",
-                    "The (I)FEC project also does not simply use the IPA standard text, but developed its own reading passage. This text is useful for a general corpus-phonological protocol, but only partially suitable for a learner corpus. It contains 381 words and is therefore very long for many learners; the reading task may accordingly become tiring. In addition, it contains numerous lexically, syntactically, or semantically demanding passages, such as <em>se agrava</em>, <em>perrera</em>, <em>lugar de los hechos</em>, <em>inspeccionar</em>, <em>suntuosa</em>, or sentences such as <em>Tan suntuosa por fuera, y por dentro parece un zoológico obtenido por la caza nocturna en selvas y pantanos</em>. Comparable problems also appeared in the MAR.ELE text, whose selection was inspired by Andrea Pešková’s <em>Archivo de los acentos en el ELE</em>. The modified excerpt from <em>El Principito</em> used there, designed partly with very different phenomena in mind, contains forms such as <em>sinnúmero</em>, <em>lúgubre</em>, <em>inquirió</em>, <em>compadecido</em>, and <em>vergüenza</em>.",
-                    "Such texts are not intended to test vocabulary, text comprehension, literary reading experience, attention, or fatigue. For learners who read them aloud, however, these factors become part of the task in practice. They can interfere with the pronunciation data and make interpretation more difficult: it is not always clear whether a striking realisation reflects a pronunciation pattern, uncertainty while reading, unfamiliar vocabulary, or overload caused by the text.",
-                    "There is also a structural problem: connected texts rarely cover relevant phenomena evenly. Some phenomena occur repeatedly, while others are absent or appear only by chance. Learner-specific pronunciation issues in particular are not represented systematically enough. A reading passage is therefore useful for observing global read speech, rhythm, and prosodic patterns, but it is not optimal when specific learner phenomena need to be elicited repeatedly and under controlled conditions.",
+                    "For the second task area, too, the question arose whether an existing reading passage should be adopted. In the phonetic tradition, <em>El viento norte y el sol</em> is an established comparison text that has long been used in the context of the International Phonetic Association (cf. International Phonetic Association 1999). The advantage is obvious: if many projects use the same text, data become easier to compare. At the same time, the text tradition itself is not unproblematic.",
+                    "Coloma (2015) shows for the Spanish version why even the standard text was not optimally balanced, and proposes a modified version that contains additional phonemes, has fewer word repetitions and is phonetically better balanced. The discussion about alternative versions of such comparison texts shows at the same time that even established standard texts are always phonologically and didactically selective (cf. Deterding 2006; Coloma 2015).",
+                    "(I)FEC, too, does not simply use the IPA standard text but its own reading passage. This text is sensible for a general corpus-phonological protocol, but likewise only of limited suitability for a learner corpus. It comprises 381 words and is therefore very long for many learners; the reading task can accordingly be tiring.",
+                    "In addition, there are numerous lexically, syntactically or semantically demanding passages, for example <em>se agrava</em>, <em>perrera</em>, <em>lugar de los hechos</em>, <em>inspeccionar</em>, <em>suntuosa</em> or sentences such as <em>Tan suntuosa por fuera, y por dentro parece un zoológico obtenido por la caza nocturna en selvas y pantanos</em>. Comparable problems also appeared in the MAR.ELE text, whose selection was modelled on Andrea Pešková’s <em>Archivo de los acentos en el ELE</em>. The modified excerpt from <em>El Principito</em> used there, with a view to partly quite different phenomena, contains, among others, forms such as <em>sinnúmero</em>, <em>lúgubre</em>, <em>inquirió</em>, <em>compadecido</em> and <em>vergüenza</em>.",
+                    "Such texts are not meant to test vocabulary, text comprehension, literary reading experience, attention and fatigue. For learners reading aloud, however, these factors de facto become part of the task. They can overlay the pronunciation data and make interpretation more difficult: one cannot always tell whether a conspicuous realisation goes back to a pronunciation pattern or to uncertainty in reading, to unknown vocabulary or to being overwhelmed by the text.",
+                    "A structural problem is added: connected texts rarely represent relevant phenomena evenly. Some phenomena occur several times, others not at all or only by chance. Learner-typical pronunciation problems in particular are not represented systematically enough in them. A reading passage is therefore of interest for global reading pronunciation, rhythm and prosodic observations, but it is not optimal when certain learner phenomena are to be elicited repeatedly and under controlled conditions.",
                 ],
             },
         },
@@ -855,10 +938,11 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Die Satzliste ist vielmehr eine kontrollierte Alternative zum klassischen Lesetext: weniger komplex als ein zusammenhängender narrativer Text, aber aussagekräftiger als isolierte Einzelwörter, weil Satzrhythmus, Satzakzent und Intonation mit ins Spiel kommen und zumindest ansatzweise analysierbar werden. Die drei Satztypen eröffnen dabei erste Vergleiche intonatorischer Realisierungen. Da die Äußerungen jedoch nicht in spezifische pragmatische Kontexte eingebettet sind, erlaubt das Material keine systematische Untersuchung diskurspragmatisch differenzierter Intonationsmuster.",
                 ],
                 "en": [
-                    "For <em>Pronunciation Matters</em>, a sentence list was therefore developed instead of a traditional reading passage. It does not replace the wordlist, but complements it functionally. The sentence list tests whether pronunciation patterns observed in isolated words remain stable under simple sentence-prosodic conditions. Each sentence therefore contains exactly two items from the wordlist. These items appear in the same lexical form; inflection is only allowed if it remains phonologically neutral and does not introduce a new target phenomenon. The sentence list therefore does not introduce new pronunciation phenomena, but recombines known items in controlled sentence contexts.",
-                    "The sentence list thus follows a progression from controlled production toward more complex sentence contexts and treats intelligibility and comprehensibility as central reference points (cf. Marrero 2024; Santamaría Busto 2024). The link between phonological awareness and oral production in communicative tasks also provides a connection to Fullana/Pujolà (2024).",
-                    "The list contains about 50 sentences: 30 declarative sentences, 10 yes/no questions, and 10 wh-questions. The sentences mostly contain 8–14 words, are syntactically simple, and are oriented toward A1–B1 vocabulary. Embedded clauses, chains of subordinate clauses, idiomatic expressions, stylistically marked formulations, and semantically distracting content are avoided.",
-                    "This does not create a substitute for free speech data. Freer speech is often collected additionally in corpus-phonological traditions, but for beginners and many learner groups it is not always the right context for testing specific segmental phenomena systematically. The sentence list is rather a controlled alternative to a traditional reading passage: less complex than a connected narrative text, but more informative than isolated individual words, because sentence rhythm, sentence stress, and intonation come into play and become at least partly analysable.",
+                    "For <em>Pronunciation Matters</em>, a sentence list was therefore developed instead of a traditional reading passage. It does not replace the wordlist but complements it functionally. The sentence list tests whether pronunciation patterns observed in isolated words also remain stable under simple sentence-prosodic conditions. In constructing the sentences, two specifically selected items from the wordlist were used as a basis for each. These items generally appear in the same word form; inflection is permitted only where it remains phonologically neutral and does not introduce a new target phenomenon. Occasionally, further word forms from the wordlist occur without being intended as additional target items. The sentence list thus introduces no new primary target phenomena, but through embedding in utterances opens up additional phonetic and prosodic contexts, especially at word boundaries.",
+                    "The sentence list thus follows a progression logic from controlled production to more complex sentence contexts and takes intelligibility and comprehensibility seriously as central reference points (cf. Marrero 2024; Santamaría Busto 2024). The link between phonological awareness and oral production in communicative tasks also offers a connection to Fullana/Pujolà (2024).",
+                    "The list contains about 50 sentences: 30 declarative sentences, 10 yes/no questions and 10 wh-questions. The sentences are mostly 8–14 words long, syntactically simple and oriented towards A1–B1. Embedded clauses, cascades of subordinate clauses, idiomatic expressions, stylistically conspicuous formulations and semantically strongly distracting content are avoided.",
+                    "This does not create a substitute for free speech data. Freer speech is often additionally elicited in corpus-phonological traditions, but for beginners and many learner groups it is not always the right place to examine certain segmental phenomena systematically.",
+                    "The sentence list is rather a controlled alternative to the traditional reading passage: less complex than a connected narrative text, but more informative than isolated single words, because sentence rhythm, sentence stress and intonation come into play and become analysable, at least to some extent. The three sentence types allow first comparisons of intonational realisations. Since the utterances are not embedded in specific pragmatic contexts, however, the material does not permit a systematic investigation of discourse-pragmatically differentiated intonation patterns.",
                 ],
             },
             "content_elements": [
@@ -871,7 +955,7 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     },
                     "summary_html": {
                         "de": "Die spanische Satzliste umfasst 50 Sätze: 30 Aussagesätze, 10 Entscheidungsfragen und 10 W-Fragen. Jeder Satz wurde mit zwei primären Zielitems aus der Wortliste konzipiert; vereinzelt treten weitere Wortlistenformen auf.",
-                        "en": "The Spanish sentence list contains 50 sentences: 30 declaratives, 10 yes/no questions, and 10 wh-questions. Each sentence contains exactly two items from the wordlist.",
+                        "en": "The Spanish sentence list comprises 50 sentences: 30 declarative sentences, 10 yes/no questions and 10 wh-questions. Each sentence was designed with two primary target items from the wordlist; occasionally, further wordlist forms occur.",
                     },
                     "items": [
                         {"label": "D1", "text": "Hoy miro el reloj con calma antes de salir."},
@@ -939,15 +1023,15 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Auf diese Weise werden die dokumentierten Ausspracheproduktionen um subjektive Wahrnehmungen und Einschätzungen ergänzt, die zusätzliche Einblicke in das Aussprachebewusstsein der Lernenden ermöglichen. Die Interviewkomponente knüpft damit an Arbeiten an, die phonologische Bewusstheit und metakognitive Reflexion als wichtige Bestandteile der Aussprachearbeit verstehen (vgl. Blanco Canales 2024).",
                 ],
                 "en": [
-                    "The interview is, finally, a project-wide extension of the design. It adds a reflective component to the controlled reading tasks: learners are not only recorded, but also asked about their own pronunciation, perceived difficulties, and striking phenomena observed during the recording process. This means that the corpus includes not only external observation, but also the learners’ own perspective. For the study of learner pronunciation, this is especially important because it documents not only realisations, but also metalinguistic judgments and subjective perceptions of difficulty. The interview component can also be linked to work that understands phonological awareness and metacognitive reflection as part of pronunciation work (cf. Blanco Canales 2024).",
-                    'At the same time, the interview component shows that the Spanish corpus is part of a broader working structure in which research, data collection, and material development are thought together from the outset. Information on the contributors to the overall project is gathered on <a href="/en/project/team">Team &amp; contributors</a>.',
+                    "The project-wide interview supplements the controlled reading tasks with the learners’ perspective on their own pronunciation. It is not conducted in the target language but serves metalinguistic reflection: besides general assessments of their own pronunciation and perceived difficulties, specific conspicuous features from the preceding reading tasks can also be taken up and discussed together. Unlike the fixed wordlists and sentence lists, the course of the conversation thus partly depends on observations made during the respective elicitation.",
+                    "In this way, the documented pronunciation productions are supplemented by subjective perceptions and assessments that provide additional insights into learners’ pronunciation awareness. The interview component thus connects with work that regards phonological awareness and metacognitive reflection as important components of pronunciation work (cf. Blanco Canales 2024).",
                 ],
             },
         },
         {
             "heading": {
                 "de": "Fazit: Potenziale und Grenzen des Erhebungsdesigns",
-                "en": "Scope and limitations of the protocol",
+                "en": "Conclusion: Potential and limitations of the data collection design",
             },
             "paragraphs_html": {
                 "de": [
@@ -956,8 +1040,9 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Die Konzeption ist somit das Ergebnis einer bewussten Abwägung zwischen phonologischer Abdeckung, Vergleichbarkeit, Lernendenorientierung und praktischer Durchführbarkeit. Gerade diese Verbindung soll eine möglichst vielseitige wissenschaftliche Nutzung der erhobenen Sprachdaten ermöglichen.",
                 ],
                 "en": [
-                    "The protocol developed here does not claim to be perfect for every possible research question. It was designed with learners in mind and attempts to elicit central pronunciation phenomena, especially in the area of consonantism, in a systematic and comparable way. Depending on the research interest, <em>Pronunciation Matters</em> therefore provides suitable research material or at least a starting point for further analyses.",
-                    "If a single phenomenon is to be investigated in great depth, a separate, specifically designed data collection may still be necessary. The online corpus made available to the scholarly community is intended to allow many questions to be tested first on the basis of real learner data, to support pilot studies, and to prepare pretests. Like any more general corpus, it remains limited and is the result of necessary compromises between comparability, learner orientation, phenomenon coverage, and practical feasibility.",
+                    "The data collection design presented here combines the systematic elicitation of selected pronunciation phenomena with a material design oriented towards the prerequisites of Spanish learners. The focus is on the comparability of the elicited productions and on the coverage of central phonetic-phonological phenomena, in particular in the area of consonantism. The Spanish corpus of <em>Pronunciation Matters</em> thus offers an empirical basis for different questions in learner phonetics and pronunciation didactics.",
+                    "As a more generally conceived elicitation protocol, however, it cannot and is not meant to replace investigations tailored to individual phenomena. For in-depth analyses, more specific tasks and additional data will remain necessary depending on the research interest. The corpus made available for research nevertheless makes it possible to investigate numerous questions first on the basis of authentic learner data, to test initial hypotheses and to prepare further studies.",
+                    "The design is thus the result of a deliberate weighing of phonological coverage, comparability, learner orientation and practical feasibility. This very combination is meant to enable the broadest possible scholarly use of the elicited speech data.",
                 ],
             },
         },
@@ -1010,7 +1095,7 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
                     "Pustka, Elissa / Gabriel, Christoph / Meisenburg, Trudel / Burkard, Monja / Dziallas, Kristina (2018): „(Inter-)Fonología del Español Contemporáneo (I)FEC: Metodología de un programa de investigación para la fonología de corpus“. <em>Loquens</em> 5(1), e046.",
                     "Racine, Isabelle / Zay, Françoise / Detey, Sylvain / Kawaguchi, Yuji (2012): „Des atouts d’un corpus multitâches pour l’étude de la phonologie en L2: l’exemple du projet ‚Interphonologie du français contemporain‘ (IPFC)“. In: Kamiyama, Takeki / Kawaguchi, Yuji / Minegishi, Makoto (Hg.): <em>Corpus-based Analysis and Diachronic Linguistics</em>. Amsterdam: John Benjamins, 1–19.",
                     "Santamaría Busto, Enrique (2024): „Hacia una evaluación comunicativa y eficaz de la pronunciación del español“. In: Bárkányi, Zsuzsanna / Galindo Merino, M. Mar / Pérez-Bernabeu, Aarón (Hg.): <em>La integración de la pronunciación en el aula de ELE</em>. Amsterdam/Philadelphia: John Benjamins, 190–206.",
-                    f'Tacke, Felix (2023–2024): <em>MAR.ELE – Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg</em>. Marburg: Philipps-Universität Marburg. Online: <a href="{MARELE_PROJECT_URL}">{MARELE_PROJECT_URL}</a>',
+                    'Tacke, Felix (2023–2024): <em>MAR.ELE – Corpus sobre la pronunciación del español por aprendientes de ELE en Marburg</em>. Marburg: Philipps-Universität Marburg. Online: <a href="https://hispanistica.com/projects/marele/">https://hispanistica.com/projects/marele/</a>',
                 ],
             },
         },
@@ -1040,14 +1125,14 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
             {
                 "id": "fn-spanish-design-5-de",
                 "label": "5",
-                "html": "Für entsprechende Analysen stehen im Forschungsbereich von Pronunciation Matters kuratierte Phänomensets zur Verfügung, die ausgewählte Wort- und Satzitems zusammenführen. Darüber hinaus können Forschende die Items für spezifische Fragestellungen individuell kombinieren.",
+                "html": "Für entsprechende Analysen stehen im Forschungsbereich von <em>Pronunciation Matters</em> kuratierte Phänomensets zur Verfügung, die ausgewählte Wort- und Satzitems zusammenführen. Darüber hinaus können Forschende die Items für spezifische Fragestellungen individuell kombinieren.",
             },
         ],
         "en": [
             {
                 "id": "fn-spanish-design-1-en",
                 "label": "1",
-                "html": 'For the overall project, its development, platform logic, methodological infrastructure, and collaborative setup, see the project pages <a href="/en/project/about">What this project is about</a>, <a href="/en/project/structure">Project structure</a>, <a href="/en/project/data-methods">Data &amp; methods</a>, and <a href="/en/project/team">Team &amp; contributors</a>.',
+                "html": 'For the project as a whole, its genesis, platform logic, methodological infrastructure and the collaboration involved, see the project pages <a href="/en/project/about">What this project is about</a>, <a href="/en/project/structure">Project structure</a>, <a href="/en/project/data-methods">Data &amp; methods</a> and <a href="/en/project/team">Team &amp; contributors</a>.',
             },
             {
                 "id": "fn-spanish-design-2-en",
@@ -1062,7 +1147,12 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
             {
                 "id": "fn-spanish-design-4-en",
                 "label": "4",
-                "html": "Newly added word forms: <em>mesa</em>, <em>neutro</em>, <em>ciudad</em>, <em>lavar</em>, <em>avión</em>, <em>jamón</em>, <em>gente</em>, <em>regla</em>, <em>euforia</em>, <em>oír</em>, <em>usted</em>, <em>giro</em>, <em>cuidado</em>, <em>solo</em>, <em>vacío</em>, <em>traer</em>, <em>jefe</em>, <em>vida</em>, <em>ustedes</em>, <em>tirar</em>, <em>carro</em>, <em>tierra</em>, <em>tampoco</em>, <em>hambre</em>, <em>suave</em>, <em>barrio</em>, <em>verdad</em>, <em>caro</em>, <em>bien</em>, <em>ola</em>, <em>hola</em>, <em>bienes</em>.",
+                "html": "Newly added word forms (31): <em>mesa</em>, <em>neutro</em>, <em>ciudad</em>, <em>lavar</em>, <em>avión</em>, <em>jamón</em>, <em>gente</em>, <em>regla</em>, <em>euforia</em>, <em>oír</em>, <em>usted</em>, <em>giro</em>, <em>cuidado</em>, <em>solo</em>, <em>vacío</em>, <em>traer</em>, <em>jefe</em>, <em>vida</em>, <em>ustedes</em>, <em>tirar</em>, <em>carro</em>, <em>tierra</em>, <em>tampoco</em>, <em>hambre</em>, <em>suave</em>, <em>barrio</em>, <em>verdad</em>, <em>caro</em>, <em>ola</em>, <em>hola</em>, <em>bienes</em>.",
+            },
+            {
+                "id": "fn-spanish-design-5-en",
+                "label": "5",
+                "html": "For corresponding analyses, curated phenomenon sets that bring together selected word and sentence items are available in the research area of <em>Pronunciation Matters</em>. In addition, researchers can combine the items individually for specific research questions.",
             },
         ],
     },

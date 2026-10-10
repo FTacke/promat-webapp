@@ -29,11 +29,11 @@ Die freigegebene Neufassung des Aufsatzes „Die Aussprache von Spanischlernende
 - Zitierblock, Kopier-Text, `<title>`, `citation_title` und JSON-LD kommen weiter aus der Registry-/Seitenlogik und tragen jetzt automatisch den neuen Titel; der alte Zitierblock der Vorlage wurde nicht übernommen.
 - Links der Vorlage auf `https://pronunciation-matters.de/de/project…` wurden zu internen kanonischen Pfaden (`/de/project/about`, `/structure`, `/data-methods`, `/team`); die Linktexte sind unverändert.
 - Fußnote 5 nennt „Pronunciation Matters“ in der Vorlage ohne Kursivierung; wortgleich übernommen, der Hausstil-Test nimmt genau diese Stelle aus.
-- Die englische Ausgabe wurde nicht angefasst (keine eigenständige Übersetzung): sie zeigt weiter den alten Text mit 4 Fußnoten, ohne Abstract-Kopf; nur die Navigationsbezeichnung ist `Data Collection Design`.
+- Nachtrag (derselbe Tag, auf ausdrücklichen Auftrag): Die englische Ausgabe wurde auf Grundlage der verbindlichen deutschen Fassung neu übersetzt und mit demselben Mechanismus eingespielt (Titel *Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of Pronunciation Matters*, Abstract und Keywords, 8 Abschnitte, Tabelle, 5 Fußnoten). Wort-, Satzliste und Literatur sind mit der deutschen Ausgabe identisch; Abschnittsüberschriften, die ein Test bereits fixierte, blieben unverändert. Fußnote 5 trägt in beiden Sprachen den kursiven Projektnamen (Hausstil), die Test-Ausnahme dafür entfällt.
 
 ## Abweichungen
 
-- Die Regel „finished surfaces in de und en gemeinsam“ ist für den Aufsatztext bewusst nicht erfüllt (Auftrag: keine Übersetzung). Der Testvergleich der Fußnotenanzahl DE = EN entfällt deshalb.
+- keine (die englische Ausgabe ist nachgezogen; ein Strukturtest sichert Gleichstand von Abschnitten, Tabelle, Listen, Literatur und Fußnoten).
 - `test_runtime_packaging.py::test_legal_pages_render_in_image_layout…` schlägt auch auf unverändertem HEAD fehl und ist nicht Teil dieses Runs.
 
 ## Verifikation

@@ -2739,7 +2739,7 @@ def test_project_about_page_embeds_video_and_hides_intro(
         (
             "en",
             "The Spanish corpus of <em>Pronunciation Matters</em> is situated",
-            "The list comprises 92 items",
+            "The list comprises 92 task items",
             "What this project is about",
             "Project structure",
             "Data &amp; methods",
@@ -2832,15 +2832,48 @@ def test_spanish_design_article_sections_table_and_lists_follow_the_approved_art
     assert "https://pronunciation-matters.de/de/project" not in html
 
 
-def test_spanish_design_english_edition_keeps_its_text_without_german_abstract(url_app: Flask) -> None:
+def test_spanish_design_english_edition_mirrors_the_german_article(url_app: Flask) -> None:
     client = url_app.test_client()
 
     html = client.get("/en/research/spanish/design").get_data(as_text=True)
 
-    assert "pm-article-header" not in html
-    assert "Der Beitrag stellt" not in html
     assert 'aria-current="page">Data Collection Design</span>' in html
-    assert "Spanish learner pronunciation: elicitation design and task protocol" in html
+    assert "Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of <em>Pronunciation Matters</em></h1>" in html
+    assert "Der Beitrag stellt" not in html
+    head = html[html.index('<div class="pm-article-header pm-reading">'):html.index('<div class="promat-page__sections">')]
+    markers = ["Author:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Year of publication:", '<time datetime="2026">2026</time>', "Last updated:", '<time datetime="2026-10-10">2026-10-10</time>', ">Abstract</h2>", "This article presents the data collection design", ">Keywords</p>"]
+    positions = [head.index(marker) for marker in markers]
+    assert positions == sorted(positions)
+    headings = re.findall(r'<h2 class="promat-content-block__title pm-panel__title">([^<]+)</h2>', html)
+    assert headings == [
+        "Research context and aims",
+        "Previous work and empirical starting point",
+        "Methodological starting point",
+        "Design of the wordlist",
+        "Limitations of traditional reading passages",
+        "The sentence list as a controlled alternative",
+        "Interview",
+        "Conclusion: Potential and limitations of the data collection design",
+        "References",
+    ]
+
+
+def test_spanish_design_editions_share_structure_lists_and_references() -> None:
+    sections = SPANISH_DESIGN_PAGE_CONTENT["sections"]
+    de_blocks, en_blocks = (SPANISH_DESIGN_PAGE_CONTENT["sections"][3]["blocks"][lang] for lang in ("de", "en"))
+    assert [b["type"] for b in de_blocks] == [b["type"] for b in en_blocks]
+    de_table = next(b for b in de_blocks if b["type"] == "table")
+    en_table = next(b for b in en_blocks if b["type"] == "table")
+    assert len(de_table["columns"]) == len(en_table["columns"]) and len(de_table["rows"]) == len(en_table["rows"])
+    assert [row[1] for row in de_table["rows"]] == [row[1] for row in en_table["rows"]]  # the Spanish stimuli are shared
+    for section in sections:
+        if section.get("bullets_html"):
+            assert section["bullets_html"]["de"] == section["bullets_html"]["en"]
+    footnotes = SPANISH_DESIGN_PAGE_CONTENT["footnotes_html"]
+    assert len(footnotes["de"]) == len(footnotes["en"]) == 5
+    header = SPANISH_DESIGN_PAGE_CONTENT["article_header"]
+    assert len(header["de"]["keywords"]) == len(header["en"]["keywords"]) == 5
+    assert len(sections) == 9
 
 
 @pytest.mark.parametrize("language_slug", ["french", "german", "english"])
@@ -2919,12 +2952,12 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
         ),
         (
             "en",
-            "Spanish learner pronunciation: elicitation design and task protocol",
+            "Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of <em>Pronunciation Matters</em>",
             "Cite this article",
             "https://pronunciation-matters.de/en/research/spanish/design",
             "Copy citation",
-            'Tacke, Felix (2026). “Spanish learner pronunciation: elicitation design and task protocol”. In: Felix Tacke (ed.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/en/research/spanish/design">https://pronunciation-matters.de/en/research/spanish/design</a>',
-            "Tacke, Felix (2026). “Spanish learner pronunciation: elicitation design and task protocol”. In: Felix Tacke (ed.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/en/research/spanish/design",
+            'Tacke, Felix (2026). “Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of Pronunciation Matters”. In: Felix Tacke (ed.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/en/research/spanish/design">https://pronunciation-matters.de/en/research/spanish/design</a>',
+            "Tacke, Felix (2026). “Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of Pronunciation Matters”. In: Felix Tacke (ed.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/en/research/spanish/design",
             "Data Collection Design",
         ),
     ],
@@ -2988,10 +3021,10 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
             "Sentence list",
             "Show",
             "Footnotes",
-            "The Spanish wordlist contains 92 items: 86 individual lexical items and 6 minimal or pseudo-minimal pairs.",
+            "The Spanish wordlist comprises 92 task items: 86 individual words and six final contrast groups.",
             ("Methodological starting point", "Design of the wordlist", "Limitations of traditional reading passages", "The sentence list as a controlled alternative"),
             "Back to footnote reference",
-            4,
+            5,
         ),
     ],
 )
@@ -3038,9 +3071,7 @@ def test_spanish_design_page_renders_expandable_material_and_footnotes_in_conten
     assert html.index('class="pm-footnotes pm-reading"') < html.index('class="promat-content-block__list pm-literature"')
     sections_html = html[html.index('<div class="promat-page__sections">'):html.index("</article>")]
     reading_sections_html = sections_html[:sections_html.index("promat-content-section--citation")]
-    # Footnote 5 of the approved German article names the platform without emphasis; the approved wording stays verbatim.
-    unemphasised = reading_sections_html.replace("<em>Pronunciation Matters</em>", "").replace("im Forschungsbereich von Pronunciation Matters kuratierte", "")
-    assert "Pronunciation Matters" not in unemphasised
+    assert "Pronunciation Matters" not in reading_sections_html.replace("<em>Pronunciation Matters</em>", "")
 
 
 def _design_article_paragraphs_html(ui_lang: str) -> str:
