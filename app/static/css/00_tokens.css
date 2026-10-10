@@ -198,6 +198,13 @@
   --pm-admonition-citation-icon: var(--pm-icon-admonition-quote);
   --pm-admonition-citation-icon-color: color-mix(in srgb, var(--book-muted) 68%, var(--book-fg) 32%);
   --pm-admonition-citation-title-color: var(--book-fg);
+  --pm-article-abstract-bg: color-mix(in srgb, var(--pm-surface-paper) 93%, var(--promat-wordmark-accent) 7%);
+  --pm-article-abstract-border: color-mix(in srgb, var(--pm-border-default) 70%, transparent);
+  --pm-article-abstract-accent: color-mix(in srgb, var(--promat-wordmark-accent) 62%, var(--pm-border-default) 38%);
+  --pm-article-abstract-accent-width: 3px;
+  --pm-article-abstract-padding-block: clamp(1rem, 0.94rem + 0.3vw, 1.3rem);
+  --pm-article-abstract-padding-inline: clamp(1.05rem, 0.96rem + 0.4vw, 1.5rem);
+  --pm-article-abstract-text-size: 0.97em;
   --pm-admonition-summary-bg: color-mix(in srgb, var(--pm-surface-paper) 98%, var(--book-bg) 2%);
   --pm-admonition-summary-border: color-mix(in srgb, var(--pm-border-default) 88%, transparent);
   --pm-admonition-summary-accent: color-mix(in srgb, var(--pm-border-default) 78%, transparent);

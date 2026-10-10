@@ -87,7 +87,7 @@ languages:
       status: published
       creators: [felix-tacke]
       date_published: "2026"
-      date_modified: null
+      date_modified: "2026-10-10"
       license: null
       doi: null
     teaching_resource:

@@ -145,6 +145,9 @@ TEACHING_PAGE_ORDER: tuple[tuple[str, str], ...] = (
 
 def _localized(value: Any, ui_lang: str) -> Any:
     if isinstance(value, dict):
+        if ui_lang in value and value[ui_lang] is None:
+            # An explicit `None` means "this edition has no such element" and must not fall back to the default language.
+            return None
         return value.get(ui_lang) or value.get(DEFAULT_UI_LANGUAGE) or next(iter(value.values()))
     return value
 
@@ -168,6 +171,53 @@ def citation_block(resource: dict[str, Any] | None, ui_lang: str) -> dict[str, A
         "title": get_text(ui_lang, f"citation.heading.{resource['resource_type']}"),
         "body_html_blocks": [f"<p>{citation['html']}</p>"],
         "copy_text": citation["text"],
+    }
+
+
+def _article_header(content: dict[str, Any] | None, resource: dict[str, Any] | None, ui_lang: str) -> dict[str, Any] | None:
+    """Byline, dates, abstract and keywords of a scholarly article page; ``None`` for an edition without an abstract.
+
+    Authors, institution and dates are read from the publication registry (never typed on the page); the abstract and
+    the keywords are article content of the edition.
+    """
+    if not content or not resource:
+        return None
+    creators = resource["creators"]
+    institutions = list(dict.fromkeys(str(c["affiliation"]) for c in creators if c.get("affiliation")))
+    if not institutions and (resource.get("publisher") or {}).get("name"):
+        institutions = [str(resource["publisher"]["name"])]
+    details: list[dict[str, str]] = []
+    if institutions:
+        details.append({"key": "institution", "label": get_text(ui_lang, "research.design.article.institution"), "value": ", ".join(institutions)})
+    published = str(resource.get("date_published") or "")[:4]
+    if published:
+        details.append({"key": "published", "label": get_text(ui_lang, "research.design.article.published"), "value": published, "datetime": published})
+    modified = publication.display_date(resource.get("date_modified"), ui_lang)
+    if modified:
+        details.append(
+            {
+                "key": "updated",
+                "label": get_text(ui_lang, "research.design.article.updated"),
+                "value": modified,
+                "datetime": str(resource["date_modified"]),
+            }
+        )
+    return {
+        "meta_label": get_text(ui_lang, "research.design.article.meta"),
+        "metadata": {
+            "authors": {
+                "key": "authors",
+                "label": get_text(ui_lang, "research.design.article.author"),
+                "value": ", ".join(c["name"] for c in creators),
+            }
+            if creators
+            else None,
+            "details": details,
+        },
+        "abstract_label": get_text(ui_lang, "research.design.article.abstract"),
+        "abstract_html": content["abstract_html"],
+        "keywords_label": get_text(ui_lang, "research.design.article.keywords"),
+        "keywords": list(content.get("keywords") or []),
     }
 
 
@@ -607,6 +657,7 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
             resource["description"] = page["meta_description"]
         page["resource"] = resource if resource and resource["citable"] else None
         page["citation"] = citation_block(resource, ui_lang)
+        page["article_header"] = _article_header(page.get("article_header"), resource, ui_lang)
         return page
 
     if language_slug != "spanish":

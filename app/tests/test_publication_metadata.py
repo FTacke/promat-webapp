@@ -195,7 +195,7 @@ def test_titles_are_unique_localized_and_without_duplicated_branding(client) -> 
         assert parts[-1] == "Pronunciation Matters"
     assert titles["/de/teaching/spanish/which-pronunciation"].startswith("Welche Aussprache unterrichten?")
     assert titles["/en/teaching/spanish/which-pronunciation"].startswith("Which pronunciation should you teach?")
-    assert _attr(_head(client, "/en/research/french/design"), r"<title>(.*?)</title>")[0] == "Design: French corpus · Pronunciation Matters"
+    assert _attr(_head(client, "/en/research/french/design"), r"<title>(.*?)</title>")[0] == "Data Collection Design: French corpus · Pronunciation Matters"
 
 
 def test_descriptions_are_localized_and_resource_specific(client) -> None:

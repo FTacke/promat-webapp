@@ -2,11 +2,39 @@
 {% from 'partials/_corpus_card.html' import render_corpus_card %}
 {% from 'partials/_admonition.html' import render_admonition %}
 
+{#- Table of a content section. `html_cells` marks cells that carry inline markup (e.g. <em>); a labelled, focusable scroll region keeps wide tables keyboard-accessible. -#}
+{% macro render_content_table(table, html_cells=false, label='') -%}
+<div class="pm-research-table-wrap promat-content-block__table-wrap"{% if label %} role="region" tabindex="0" aria-label="{{ label }}"{% endif %}>
+  <table class="pm-research-table promat-content-block__table">
+    <thead>
+      <tr>
+        {% for column in table.columns %}
+        <th scope="col">{{ column | safe if html_cells else column }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in table.rows %}
+      <tr>
+        {% for cell in row %}
+        <td>{{ cell | safe if html_cells else cell }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{%- endmacro %}
+
 
 {% block content %}
 <article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }}" aria-labelledby="promat-page-title">
   {% set content_header = promat_page.content_header %}
   {% include 'partials/_content_header.html' %}
+
+  {% if promat_page.article_header %}
+  {% include 'partials/_article_header.html' %}
+  {% endif %}
 
   {% if promat_page.hero_links %}
   <nav class="promat-page__actions pm-reading pm-stack--inline" aria-label="Schnellzugriffe">
@@ -59,26 +87,44 @@
       {% set footnotes_state.rendered = true %}
     {% endif %}
     <section class="promat-content-section">
-      {% set has_block_body = section.paragraphs or section.paragraphs_html or section.body_html or section.content_elements or section.bullets or section.bullets_html or section.table or section.media_embed %}
+      {% set has_block_body = section.paragraphs or section.paragraphs_html or section.body_html or section.content_elements or section.bullets or section.bullets_html or section.table or section.media_embed or section.blocks %}
       {% if has_block_body %}
       <div class="promat-content-block pm-panel pm-reading">
         {% if section.heading %}
         <h2 class="promat-content-block__title pm-panel__title">{{ section.heading }}</h2>
         {% endif %}
+        {% if section.blocks %}
+        {#- Ordered body: paragraphs, tables and list elements in the sequence of the article. -#}
+        {% for block in section.blocks %}
+          {% if block.type == 'paragraph_html' %}
+          <p class="promat-content-block__text">{{ block.html | safe }}</p>
+          {% elif block.type == 'table' %}
+          {{ render_content_table(block, html_cells=true, label=section.heading) }}
+          {% elif block.type == 'content_element' %}
+            {% for content_element in section.content_elements | default([]) if content_element.id == block.ref %}
+              {% if content_element.type == 'pm_expandable_text' %}
+                {% include 'partials/_reading_expandable.html' %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        {% endfor %}
+        {% endif %}
         {% for paragraph in section.paragraphs | default([]) %}
         <p class="promat-content-block__text">{{ paragraph }}</p>
         {% endfor %}
-        {% for paragraph in section.paragraphs_html | default([]) %}
+        {% for paragraph in (section.paragraphs_html or []) %}
         <p class="promat-content-block__text">{{ paragraph | safe }}</p>
         {% endfor %}
         {% if section.body_html %}
         <div class="promat-content-block__body">{{ section.body_html | safe }}</div>
         {% endif %}
+        {% if not section.blocks %}
         {% for content_element in section.content_elements | default([]) %}
           {% if content_element.type == 'pm_expandable_text' %}
             {% include 'partials/_reading_expandable.html' %}
           {% endif %}
         {% endfor %}
+        {% endif %}
         {% if section.bullets %}
         <ul class="promat-content-block__list{{ ' ' ~ section.list_class if section.list_class else '' }}">
           {% for bullet in section.bullets %}
@@ -94,26 +140,7 @@
         </ul>
         {% endif %}
         {% if section.table %}
-        <div class="pm-research-table-wrap promat-content-block__table-wrap">
-          <table class="pm-research-table promat-content-block__table">
-            <thead>
-              <tr>
-                {% for column in section.table.columns %}
-                <th scope="col">{{ column }}</th>
-                {% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in section.table.rows %}
-              <tr>
-                {% for cell in row %}
-                <td>{{ cell }}</td>
-                {% endfor %}
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        {{ render_content_table(section.table) }}
         {% endif %}
         {% if section.media_embed %}
         <figure class="pm-embed-block">

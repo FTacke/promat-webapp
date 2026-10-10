@@ -1728,7 +1728,11 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
     mobile_nav_start = html.index('pm-research-language-root__pill-nav')
     mobile_nav_end = html.index('</nav>', mobile_nav_start)
     mobile_nav_html = html[mobile_nav_start:mobile_nav_end]
-    expected_nav_labels = ["Design", "Sprecher:innen", "Vergleich", "Phänomene"] if ui_lang == "de" else ["Design", "Speakers", "Comparison", "Phenomena"]
+    expected_nav_labels = (
+        ["Erhebungsdesign", "Sprecher:innen", "Vergleich", "Phänomene"]
+        if ui_lang == "de"
+        else ["Data Collection Design", "Speakers", "Comparison", "Phenomena"]
+    )
     assert [mobile_nav_html.index(label) for label in expected_nav_labels] == sorted(mobile_nav_html.index(label) for label in expected_nav_labels)
     assert 'pm-research-language-root__list' not in html
     assert 'pm-research-language-root__item' not in html
@@ -2726,7 +2730,7 @@ def test_project_about_page_embeds_video_and_hides_intro(
         (
             "de",
             "Das spanische Korpus von <em>Pronunciation Matters</em> setzt dort an",
-            "Die Liste umfasst 92 Items",
+            "Die Liste umfasst 92 Aufgabenitems",
             "Worum es geht",
             "Projektaufbau",
             "Daten &amp; Methodik",
@@ -2772,6 +2776,96 @@ def test_spanish_design_page_is_localized_links_to_project_pages_and_has_no_intr
     assert f'href="/{ui_lang}/project/team"' in html
 
 
+def test_spanish_design_article_head_shows_byline_dates_abstract_and_keywords(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    html = client.get("/de/research/spanish/design").get_data(as_text=True)
+
+    title = "Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von <em>Pronunciation Matters</em>"
+    assert f'class="promat-page__title pm-content-header__title">{title}</h1>' in html
+    assert "<title>Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von Pronunciation Matters · Pronunciation Matters</title>" in html
+    head = html[html.index('<div class="pm-article-header pm-reading">'):html.index('<div class="promat-page__sections">')]
+    # order: byline and dates, then the set-off abstract, then the keywords
+    markers = ["Autor:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Publikationsjahr:", '<time datetime="2026">2026</time>', "Zuletzt aktualisiert:", '<time datetime="2026-10-10">10.10.2026</time>', ">Zusammenfassung</h2>", "Der Beitrag stellt das Erhebungsdesign", ">Schlagwörter</p>"]
+    positions = [head.index(marker) for marker in markers]
+    assert positions == sorted(positions)
+    keywords = re.findall(r'<li class="pm-article-abstract__keyword">([^<]+)</li>', head)
+    assert keywords == ["Spanisch als Fremdsprache", "Lernendenphonetik", "Korpusphonologie", "Aussprache", "Erhebungsdesign"]
+    assert 'aria-labelledby="pm-article-abstract-title"' in head
+    # the approved wording carries no editorial or implementation notes
+    for note in ("Änderungsmarkierung", "Navigation (außerhalb des Aufsatzes)", "Implementierung", "<strong>", "<b>"):
+        assert note not in html[html.index("<article"):html.index("</article>")]
+
+
+def test_spanish_design_article_sections_table_and_lists_follow_the_approved_article(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    html = client.get("/de/research/spanish/design").get_data(as_text=True)
+
+    headings = re.findall(r'<h2 class="promat-content-block__title pm-panel__title">([^<]+)</h2>', html)
+    assert headings == [
+        "Forschungskontext und Zielsetzung",
+        "Vorarbeiten und empirische Ausgangslage",
+        "Methodische Grundidee",
+        "Konzeption der Wortliste",
+        "Grenzen klassischer Lesetexte",
+        "Satzliste als kontrollierte Alternative",
+        "Interview",
+        "Fazit: Potenziale und Grenzen des Erhebungsdesigns",
+        "Literatur",
+    ]
+    # phenomenon table: six rows, between the introducing sentence and the closing paragraph with footnote 5
+    table = html[html.index('<table class="pm-research-table promat-content-block__table">'):html.index("</table>")]
+    assert table.count("<tr>") == 7  # header + six phenomena
+    assert "<em>número – numero – numeró</em>" in table
+    assert html.index("verdeutlichen die folgenden Beispiele:") < html.index("<table") < html.index('id="fnref-spanish-design-5-de"') < html.index('id="spanish-final-wordlist-title"')
+    # item lists: 92 wordlist items and 50 sentences in the approved order
+    wordlist = html[html.index('id="spanish-final-wordlist-content"'):html.index('id="spanish-final-sentence-list-content"')]
+    assert len(re.findall('class="pm-expandable__item"', wordlist)) == 92
+    assert re.search(r'label">87</span>\s*<span class="pm-expandable__text">número – numero – numeró</span>', wordlist)
+    sentences = html[html.index('id="spanish-final-sentence-list-content"'):html.index("</article>")]
+    assert re.findall(r'<span class="pm-expandable__label">([A-Z]+\d+)</span>', sentences)[:3] == ["D1", "D2", "D3"]
+    assert len(re.findall('class="pm-expandable__item"', sentences)) == 50
+    # internal links of the approved text point to canonical project pages
+    for target in ("/de/project/about", "/de/project/structure", "/de/project/data-methods", "/de/project/team"):
+        assert f'href="{target}"' in html
+    assert "https://pronunciation-matters.de/de/project" not in html
+
+
+def test_spanish_design_english_edition_keeps_its_text_without_german_abstract(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    html = client.get("/en/research/spanish/design").get_data(as_text=True)
+
+    assert "pm-article-header" not in html
+    assert "Der Beitrag stellt" not in html
+    assert 'aria-current="page">Data Collection Design</span>' in html
+    assert "Spanish learner pronunciation: elicitation design and task protocol" in html
+
+
+@pytest.mark.parametrize("language_slug", ["french", "german", "english"])
+@pytest.mark.parametrize(("ui_lang", "label"), [("de", "Erhebungsdesign"), ("en", "Data Collection Design")])
+def test_design_navigation_label_is_shared_by_all_corpora_without_changing_urls(url_app: Flask, ui_lang: str, label: str, language_slug: str) -> None:
+    client = url_app.test_client()
+
+    response = client.get(f"/{ui_lang}/research/{language_slug}/design")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f'aria-current="page">{label}</span>' in html
+    assert f"{label}: " in html[html.index("<h1"):html.index("</h1>")]
+    assert f'href="/{ui_lang}/research/{language_slug}/design"' in html
+
+
+def test_explicit_none_marks_an_edition_without_the_element() -> None:
+    from app.routes.public_content import _deep_localize
+
+    content = {"abstract": {"de": {"text": "x"}, "en": None}, "title": {"de": "a", "en": "b"}, "missing": {"de": "only"}}
+
+    assert _deep_localize(content, "de") == {"abstract": {"text": "x"}, "title": "a", "missing": "only"}
+    assert _deep_localize(content, "en") == {"abstract": None, "title": "b", "missing": "only"}
+
+
 def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask) -> None:
     client = url_app.test_client()
 
@@ -2811,16 +2905,17 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
 
 
 @pytest.mark.parametrize(
-    ("ui_lang", "page_title", "citation_heading", "citation_url", "copy_label", "citation_html", "copy_text"),
+    ("ui_lang", "page_title", "citation_heading", "citation_url", "copy_label", "citation_html", "copy_text", "nav_label"),
     [
         (
             "de",
-            "Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll",
+            "Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von <em>Pronunciation Matters</em>",
             "Diesen Aufsatz zitieren",
             "https://pronunciation-matters.de/de/research/spanish/design",
             "Zitat kopieren",
-            'Tacke, Felix (2026). „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: Felix Tacke (Hrsg.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/de/research/spanish/design">https://pronunciation-matters.de/de/research/spanish/design</a>',
-            "Tacke, Felix (2026). „Aussprache von Spanischlernenden: Erhebungsdesign und Aufgabenprotokoll“. In: Felix Tacke (Hrsg.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/de/research/spanish/design",
+            'Tacke, Felix (2026). „Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von Pronunciation Matters“. In: Felix Tacke (Hrsg.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/de/research/spanish/design">https://pronunciation-matters.de/de/research/spanish/design</a>',
+            "Tacke, Felix (2026). „Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von Pronunciation Matters“. In: Felix Tacke (Hrsg.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/de/research/spanish/design",
+            "Erhebungsdesign",
         ),
         (
             "en",
@@ -2830,6 +2925,7 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
             "Copy citation",
             'Tacke, Felix (2026). “Spanish learner pronunciation: elicitation design and task protocol”. In: Felix Tacke (ed.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/en/research/spanish/design">https://pronunciation-matters.de/en/research/spanish/design</a>',
             "Tacke, Felix (2026). “Spanish learner pronunciation: elicitation design and task protocol”. In: Felix Tacke (ed.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/en/research/spanish/design",
+            "Data Collection Design",
         ),
     ],
 )
@@ -2842,6 +2938,7 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
     copy_label: str,
     citation_html: str,
     copy_text: str,
+    nav_label: str,
 ) -> None:
     client = url_app.test_client()
 
@@ -2850,7 +2947,7 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert f'<h1 id="promat-page-title" class="promat-page__title pm-content-header__title">{page_title}</h1>' in html
-    assert 'aria-current="page">Design</span>' in html
+    assert f'aria-current="page">{nav_label}</span>' in html
     assert f'<h3 class="pm-admonition__title">{citation_heading}</h3>' in html
     assert 'class="promat-content-section promat-content-section--citation pm-reading pm-teaching-page--topic"' in html
     assert html.count('data-admonition-variant="citation"') == 1
@@ -2871,6 +2968,7 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
         "wordlist_summary",
         "section_headings",
         "backref_label",
+        "footnote_count",
     ),
     [
         (
@@ -2879,9 +2977,10 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
             "Satzliste",
             "Anzeigen",
             "Fußnoten",
-            "Die spanische Wortliste umfasst 92 Items: 86 Einzellexeme und 6 Minimal- bzw. Pseudominimalpaare.",
+            "Die spanische Wortliste umfasst 92 Aufgabenitems: 86 Einzelwörter und sechs abschließende Kontrastgruppen.",
             ("Methodische Grundidee", "Konzeption der Wortliste", "Grenzen klassischer Lesetexte", "Satzliste als kontrollierte Alternative"),
             "Zurück zur Fußnotenreferenz",
+            5,
         ),
         (
             "en",
@@ -2892,6 +2991,7 @@ def test_spanish_design_page_uses_dedicated_title_and_closing_shared_citation(
             "The Spanish wordlist contains 92 items: 86 individual lexical items and 6 minimal or pseudo-minimal pairs.",
             ("Methodological starting point", "Design of the wordlist", "Limitations of traditional reading passages", "The sentence list as a controlled alternative"),
             "Back to footnote reference",
+            4,
         ),
     ],
 )
@@ -2905,6 +3005,7 @@ def test_spanish_design_page_renders_expandable_material_and_footnotes_in_conten
     wordlist_summary: str,
     section_headings: tuple[str, ...],
     backref_label: str,
+    footnote_count: int,
 ) -> None:
     client = url_app.test_client()
 
@@ -2926,33 +3027,38 @@ def test_spanish_design_page_renders_expandable_material_and_footnotes_in_conten
     assert html.index(wordlist_title) < html.index(section_headings[2])
     assert html.index(sentence_list_title) < html.index(">Interview<")
     assert f'id="pm-footnotes-heading">{footnotes_heading}</h2>' in html
-    for number in range(1, 5):
+    for number in range(1, footnote_count + 1):
         assert f'id="fnref-spanish-design-{number}-{ui_lang}"' in html
         assert f'href="#fn-spanish-design-{number}-{ui_lang}"' in html
         assert f'id="fn-spanish-design-{number}-{ui_lang}"' in html
         assert f'href="#fnref-spanish-design-{number}-{ui_lang}"' in html
     assert f"fn-spanish-design-1-{ui_lang}-{ui_lang}" not in html
-    assert html.count('class="pm-footnotes__backref"') == 4
+    assert html.count('class="pm-footnotes__backref"') == footnote_count
     assert f'aria-label="{backref_label}"' in html
     assert html.index('class="pm-footnotes pm-reading"') < html.index('class="promat-content-block__list pm-literature"')
     sections_html = html[html.index('<div class="promat-page__sections">'):html.index("</article>")]
     reading_sections_html = sections_html[:sections_html.index("promat-content-section--citation")]
-    assert "Pronunciation Matters" not in reading_sections_html.replace("<em>Pronunciation Matters</em>", "")
+    # Footnote 5 of the approved German article names the platform without emphasis; the approved wording stays verbatim.
+    unemphasised = reading_sections_html.replace("<em>Pronunciation Matters</em>", "").replace("im Forschungsbereich von Pronunciation Matters kuratierte", "")
+    assert "Pronunciation Matters" not in unemphasised
 
 
-def test_spanish_design_footnote_data_has_complete_bilingual_numeric_links() -> None:
-    footnote_counts: list[int] = []
+def _design_article_paragraphs_html(ui_lang: str) -> str:
+    """All paragraph HTML of one edition of the design article, whether a section uses `paragraphs_html` or ordered `blocks`."""
+    chunks: list[str] = []
+    for section in SPANISH_DESIGN_PAGE_CONTENT["sections"]:
+        chunks.extend(section.get("paragraphs_html", {}).get(ui_lang) or [])
+        chunks.extend(block["html"] for block in (section.get("blocks") or {}).get(ui_lang) or [] if block["type"] == "paragraph_html")
+    return "\n".join(chunks)
 
+
+def test_spanish_design_footnote_data_has_complete_numeric_links_per_edition() -> None:
     for ui_lang, aria_prefix in (("de", "Fußnote"), ("en", "Footnote")):
         footnotes = SPANISH_DESIGN_PAGE_CONTENT["footnotes_html"][ui_lang]
         footnote_ids = [footnote["id"] for footnote in footnotes]
         labels = [footnote["label"] for footnote in footnotes]
         expected_labels = [str(number) for number in range(1, len(footnotes) + 1)]
-        paragraphs_html = "\n".join(
-            paragraph
-            for section in SPANISH_DESIGN_PAGE_CONTENT["sections"]
-            for paragraph in section.get("paragraphs_html", {}).get(ui_lang, [])
-        )
+        paragraphs_html = _design_article_paragraphs_html(ui_lang)
         href_targets = re.findall(r'href="#(fn-spanish-design-\d+-(?:de|en))"', paragraphs_html)
         ref_ids = re.findall(r'id="(fnref-spanish-design-\d+-(?:de|en))"', paragraphs_html)
 
@@ -2967,9 +3073,6 @@ def test_spanish_design_footnote_data_has_complete_bilingual_numeric_links() -> 
                 f'id="fnref-spanish-design-{number}-{ui_lang}">'
                 f'<a href="#fn-spanish-design-{number}-{ui_lang}" aria-label="{aria_prefix} {number}">{number}</a>'
             ) in paragraphs_html
-        footnote_counts.append(len(footnotes))
-
-    assert footnote_counts[0] == footnote_counts[1]
 
 
 def test_reading_expandable_uses_shared_responsive_component_styles(url_app: Flask) -> None:
@@ -3148,8 +3251,8 @@ def test_research_detail_page_uses_full_breadcrumb_from_depth_three(url_app: Fla
     assert 'data-depth="3"' in html
     assert 'href="/de/research"' in html
     assert 'href="/de/research/spanish"' in html
-    assert 'aria-current="page">Design</span>' in html
-    assert '>Zusammenfassung<' not in html
+    assert 'aria-current="page">Erhebungsdesign</span>' in html
+    assert 'id="pm-article-abstract-title">Zusammenfassung</h2>' in html
 
 
 @pytest.mark.parametrize("ui_lang", ["de", "en"])

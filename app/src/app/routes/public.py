@@ -403,7 +403,7 @@ def _build_content_header(
             "label": panel["context_back_label"],
         }
 
-    return build_shared_content_header(
+    header = build_shared_content_header(
         page_name=page_name,
         title=page["title"],
         intro=page.get("intro"),
@@ -418,6 +418,10 @@ def _build_content_header(
         current_label=page.get("nav_current_label"),
         back_link=back_link,
     )
+    if page.get("title_html"):
+        # Pages may mark the project name in an article title (`<em>`); breadcrumbs and `<title>` stay plain text.
+        header["title_html"] = page["title_html"]
+    return header
 
 
 def _resolve_href_key(href_key: str, ui_lang: str) -> str:

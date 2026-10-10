@@ -1094,6 +1094,78 @@ textarea:focus-visible {
   line-height: var(--pm-type-reading-line);
 }
 
+/* Scholarly article head (design article): byline and dates, set-off abstract, keywords. */
+.pm-article-header {
+  display: grid;
+  gap: var(--pm-space-sm);
+  margin-block: 0 var(--pm-space-sm);
+}
+
+.pm-article-meta .pm-teaching-topic-meta {
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  line-height: 1.4;
+}
+
+.pm-article-meta .pm-teaching-topic-meta__label {
+  color: var(--book-muted);
+}
+
+.pm-article-abstract {
+  box-sizing: border-box;
+  padding: var(--pm-article-abstract-padding-block) var(--pm-article-abstract-padding-inline);
+  border: 1px solid var(--pm-article-abstract-border);
+  border-inline-start: var(--pm-article-abstract-accent-width) solid var(--pm-article-abstract-accent);
+  border-radius: var(--pm-radius-container);
+  background: var(--pm-article-abstract-bg);
+}
+
+.pm-article-abstract__title,
+.pm-article-abstract__keywords-label {
+  margin: 0;
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.pm-article-abstract__text {
+  margin: var(--pm-space-xs) 0 0;
+  font-size: var(--pm-article-abstract-text-size);
+  line-height: var(--pm-type-reading-line);
+}
+
+.pm-article-abstract__keywords {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin-top: var(--pm-space-sm);
+  padding-top: var(--pm-space-xs);
+  border-top: 1px solid var(--pm-article-abstract-border);
+}
+
+.pm-article-abstract__keywords-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--book-font-ui);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.pm-article-abstract__keyword + .pm-article-abstract__keyword::before {
+  content: "·";
+  margin-inline: 0.45em;
+  color: var(--book-muted);
+}
+
 .pm-expandable__viewport {
   position: relative;
 }

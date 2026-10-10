@@ -177,11 +177,14 @@ body.app-shell.page-landing .md3-content-wrapper {
 
 .promat-page__sections {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--pm-layout-section-gap);
 }
 
 .promat-content-section {
   display: grid;
+  /* minmax(0, 1fr): a wide table scrolls inside its wrapper instead of stretching the whole column */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--pm-space-container);
 }
 

@@ -110,6 +110,7 @@ This file is the binding source of truth for the active research capability mode
 
 - All active corpora share the same page slugs and the same access model.
 - Surface-mode differences describe whether a protected page currently renders productive content or a protected placeholder; they must not weaken auth behavior.
+- The navigation, breadcrumb and page-title label of `design` is `Erhebungsdesign` (de) / `Data Collection Design` (en) for all four corpora; the route slug stays `design`.
 - `design` is the public page of every corpus. A corpus with a design article renders it as a citable resource; a corpus without one shows a plain "in preparation" state that is not indexable and not citable (see `platform-data-files.md`, *Publication Metadata*). Developer placeholder copy is not part of the public `design` page.
 - For the active Spanish protected workbench pages, `speakers` and `comparison` stay on their productive final surfaces even when canonical runtime session data is currently empty.
 - In that empty-runtime case, `speakers` must render its normal final page with a plain empty state instead of protected planning copy or dummy cards.

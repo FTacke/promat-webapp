@@ -152,6 +152,14 @@ def _iso(value: Any) -> str | None:
     return text if _DATE_PATTERN.match(text) else None
 
 
+def display_date(value: Any, ui_lang: str) -> str:
+    """A full ISO date for visible use: `TT.MM.JJJJ` in German, ISO in every other UI language; `""` for years or gaps."""
+    iso = _iso(value)
+    if not iso or len(iso) != 10:
+        return ""
+    return f"{iso[8:]}.{iso[5:7]}.{iso[:4]}" if ui_lang == "de" else iso
+
+
 # --- resource model -------------------------------------------------------------------------------------------
 
 
