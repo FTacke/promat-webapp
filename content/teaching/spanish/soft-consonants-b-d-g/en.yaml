@@ -1,0 +1,137 @@
+resource_id: promat-teaching-es-soft-consonants-b-d-g
+title: 'Soft consonants: b, d and g'
+summary: Why /b/, /d/ and /g/ are often articulated without a complete closure in Spanish.
+description: The phonemes /b/, /d/ and /g/ and their realisations as stops and approximants [β ð ɣ] – with listening comparisons from the corpus.
+equivalents:
+  de: soft-consonants-b-d-g
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
+blocks:
+- type: topic_meta
+- type: text
+  body: '*labio*, *cuidado*, *logro*: in Spanish the letters `b`, `d` and `g` often stand for sounds in which the closure is not quite completed. As a result the sound is softer than a German *b*, *d* or *g*.'
+- type: overview
+  title: At a glance
+  items:
+  - '/b/, /d/ and /g/ each have two context-dependent realisations: stops [b d g] and approximants [β ð ɣ].'
+  - In an approximant, the articulators approach each other without forming a complete closure.
+  - 'The distribution differs between the three phonemes: “soft between vowels, hard elsewhere” is not a sufficient rule.'
+- type: section_heading
+  title: Listen and discover
+- type: text
+  body: Two recordings of the same word. Listen to the `b` in the middle of the word.
+- type: audio_contrast
+  title: '*labio*: closure or soft sound?'
+  lead: Does the *b* in *labio* sound more like a short pop or more like a soft friction?
+  transcript: labio
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W21
+    audio: corpus/p5-labio-ref.mp3
+    token_id: ES-N-0001 · W21
+  - label: Learner (B1)
+    subtitle: L1 German · W21
+    audio: corpus/p5-labio-learner.mp3
+    token_id: ES-L-0013 · W21
+- type: solution
+  body: |-
+    In *labio*, /b/ stands between vowels. The approximant [β] is usual there: [ˈla.βjo]. The lips approach each other but do not close completely; there is no small “pop”, but a soft friction or buzz.
+
+    With a complete closure [b], by contrast, you hear a brief release burst. The recordings were not selected by whether they show the difference – decide by ear.
+- type: section_heading
+  title: Stop or approximant?
+- type: text
+  body: |-
+    Each of the three phonemes occurs in two variants:
+
+    - **/b/:** [b] after a pause and after a nasal (*un beso*, *también*); otherwise [β], also after /l/ and between vowels (*lavar* [la.ˈβaɾ], *el vino* [el.ˈβi.no]).
+    - **/d/:** [d] after a pause, after a nasal and after /l/ (*dos*, *conde*, *toldo*); otherwise [ð] (*vida* [ˈbi.ða], *cuidado* [kwi.ˈða.ðo], *verdad* [beɾ.ˈðað]).
+    - **/g/:** [g] after a pause and after a nasal (*gato*, *tengo*); otherwise [ɣ] (*logro* [ˈlo.ɣɾo], *algo* [ˈal.ɣo]).
+- type: text
+  body: 'What matters is the entire phonetic environment, not word position alone. A word after a pause begins with [b], [d] or [g]; the same onset inside an utterance after a vowel becomes [β], [ð] or [ɣ]: *vino* [ˈbi.no], but *de vino* [de.ˈβi.no]. In fast speech approximants are often strongly reduced; [ð] in particular can weaken to the point of deletion (*cansado* [kan.ˈsa.o]). How the rule plays out in a given case varies with speed, stress and region.'
+- type: info_box
+  title: Two things that are not the same
+  body: 'The fact that `b` and `v` write the same phoneme in Spanish is a matter of orthography ([B or V?](/en/teaching/spanish/b-or-v)). The softness described here concerns phonetic realisation: it depends on context, not on the letter. German-speaking learners often produce /b d g/ with stronger closures than would be typical in the corresponding Spanish context – this is a common observation that should be checked against individual recordings.'
+- type: section_heading
+  title: More comparisons from the corpus
+- type: text
+  body: The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+- type: audio_contrast
+  title: '*cuidado*: [ð]'
+  lead: 'How does the *d* in *cuidado* sound: sharply closed or soft and loose?'
+  transcript: cuidado
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W33
+    audio: corpus/p5-cuidado-ref.mp3
+    token_id: ES-N-0001 · W33
+  - label: Learner (B1)
+    subtitle: L1 German · W33
+    audio: corpus/p5-cuidado-learner.mp3
+    token_id: ES-L-0013 · W33
+- type: audio_contrast
+  title: '*logro*: [ɣ]'
+  lead: Is the *g* in *logro* pronounced with a complete closure?
+  transcript: logro
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W35
+    audio: corpus/p5-logro-ref.mp3
+    token_id: ES-N-0001 · W35
+  - label: Learner (B1)
+    subtitle: L1 German · W35
+    audio: corpus/p5-logro-learner.mp3
+    token_id: ES-L-0013 · W35
+- type: audio_contrast
+  title: '*algo* on its own and in a sentence'
+  lead: Does the *g* in *algo* stay equally soft on its own and in the sentence?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W48
+    audio: corpus/p5-algo-ref-isoliert.mp3
+    note: Isolated word
+    token_id: ES-N-0001 · W48
+  - label: Native-speaker reference
+    subtitle: Spain · D9
+    audio: corpus/p5-algo-ref-satz.mp3
+    note: 'In the sentence: *Algo* tan caro no siempre vale la pena.'
+    token_id: ES-N-0001 · D9
+- type: audio_contrast
+  title: '*vino* on its own and in *de vino*'
+  lead: Does the *v* sound different on its own than in *de vino*?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W38
+    audio: corpus/p5-vino-ref-isoliert.mp3
+    note: Isolated word
+    token_id: ES-N-0001 · W38
+  - label: Native-speaker reference
+    subtitle: Spain · QY1
+    audio: corpus/p5-vino-ref-satz.mp3
+    note: 'In the sentence: ¿El vaso está lleno *de vino* ahora?'
+    token_id: ES-N-0001 · QY1
+- type: section_heading
+  title: For the classroom
+- type: tip_box
+  title: 'Quick task: comparing articulations'
+  body: |-
+    1. **[β]:** the lips approach each other without closing. Say *labio*, *lavar*.
+    2. **[ð]:** the tongue tip approaches the upper front teeth without touching them. Say *vida*, *cuidado*.
+    3. **[ɣ]:** the back of the tongue approaches the soft palate without touching it. Say *logro*, *algo*.
+
+    Check in a mirror or with a partner: for [β] a narrow gap remains between the lips, for [b] they close. Then compare the words with the recordings.
+- type: further_reading
+  title: Further exploration
+  description: Related pages on soft consonants.
+  items:
+  - title: B or V? In Spanish, they sound the same!
+    text: Why `b` and `v` write the same phoneme and how spelling can mislead.
+    cta: Go to topic page
+    href: /en/teaching/spanish/b-or-v
+  - title: Context-dependent sounds in the digital textbook
+    text: The realisation of /b d g/ as stops and approximants, with audio examples from MAR.ELE (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/aussprache/#kontextabhangige-mal-so-mal-so-laute

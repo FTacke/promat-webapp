@@ -1867,14 +1867,14 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask, releas
     assert 'pm-teaching-language-row__action' not in html
     assert 'pm-teaching-language-row__badge' not in html
     assert '>Öffnen<' not in html
-    assert html.index('>Spanisch<') < html.index('2 Themenseiten') < html.index('pm-nav-surface__arrow')
+    assert html.index('>Spanisch<') < html.index('7 Themenseiten') < html.index('pm-nav-surface__arrow')
     assert html.index('>Englisch<') < html.index('In Vorbereitung')
     assert 'href="/de/teaching/spanish"' in html
     assert 'href="/de/teaching/english"' not in html
     assert 'href="/de/teaching/french"' in html
     assert 'href="/de/teaching/german"' not in html
     assert 'aria-disabled' not in html
-    assert '2 Themenseiten' in html
+    assert '7 Themenseiten' in html
     assert '3 Themenseiten' in html
     assert html.count('In Vorbereitung') == 2
     assert html.index('>Spanisch<') < html.index('>Englisch<') < html.index('>Französisch<') < html.index('>Deutsch<')
@@ -1932,7 +1932,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'pm-nav-pill__label">Sprachauswahl</span>' in html
     assert 'class="pm-teaching-topic-group pm-teaching-content-wide"' in html
     assert 'pm-card-grid pm-teaching-topic-grid' in html
-    assert html.count('pm-teaching-topic-grid--compact') >= 2
+    assert html.count('pm-teaching-topic-grid--compact') >= 1
     assert 'Grundlagen' in html
     assert 'Aussprachemodellen, Variation und didaktischen Entscheidungen' in html
     assert 'Laute und Artikulation' in html
@@ -1942,41 +1942,43 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Von Felix Tacke' not in html
     assert 'pm-teaching-topic-card__byline' not in html
     assert 'R am Silbenende' in html
-    assert html.count('pm-teaching-topic-card--available') == 2
-    assert html.count('pm-teaching-topic-card--pending') == 2
-    assert html.count('pm-teaching-topic-card--compact') == 4
-    assert 'href="/de/teaching/spanish/which-pronunciation"' in html
-    assert 'href="/de/teaching/spanish/soft-spanish-hard-german"' not in html
-    assert 'href="/de/teaching/spanish/r"' not in html
-    assert 'href="/de/teaching/spanish/r-am-silbenende"' in html
-    assert html.count('In Vorbereitung') >= 2
+    assert html.count('pm-teaching-topic-card--available') == 7
+    assert html.count('pm-teaching-topic-card--pending') == 0
+    assert html.count('pm-teaching-topic-card--compact') == 7
+    for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g', 'accent-changes-everything'):
+        assert f'href="/de/teaching/spanish/{slug}"' in html
     assert 'pm-teaching-topic-card__meta' not in html
     assert 'pm-teaching-topic-card__pill' not in html
     assert 'Themenmetadaten' not in html
-    # Available topics are whole-card links with the shared arrow (no "Öffnen" link); pending ones are plain panels.
+    # Available topics are whole-card links with the shared arrow (no "Öffnen" link).
     assert 'pm-teaching-topic-card__action' not in html
     assert re.search(r'<a class="pm-teaching-topic-card pm-nav-surface pm-teaching-topic-card--available[^"]*" href="/de/teaching/spanish/which-pronunciation">', html)
-    assert re.search(r'<article class="pm-teaching-topic-card pm-teaching-topic-card--pending[^"]*">', html)
     assert html.count('pm-nav-surface__arrow') == html.count('pm-teaching-topic-card--available')
-    # The description does not repeat the status line that every pending card carries separately.
-    assert 'Aussprache und Hörverstehen rund um das r am Silben- und Wortende.' in html
-    assert 'In Vorbereitung: ' not in html
-    assert html.count('class="pm-teaching-topic-card__status">In Vorbereitung</p>') == html.count('<article class="pm-teaching-topic-card pm-teaching-topic-card--pending') >= 1
+    assert 'Beschreibung folgt.' not in html
     first_group_html = _extract_section_by_labelledby(html, 'teaching-group-1')
     assert 'Welche Aussprache unterrichten?' in first_group_html
     assert 'Weiches Spanisch, hartes Deutsch' in first_group_html
-    assert 'Beschreibung folgt.' in first_group_html
     assert 'Das spanische r' not in first_group_html
-    assert 'R am Silbenende' not in first_group_html
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
-    assert 'Das spanische r' in second_group_html
-    assert 'R am Silbenende' in second_group_html
-    assert '>Aussprache und Hörverstehen rund um das r am Silben- und Wortende.</p>' in second_group_html
+    order = ['Das spanische r', 'R am Silbenende', 'B oder V? Im Spanischen klingt beides gleich!', 'Weiche Konsonanten: b, d und g', 'Ein Akzent verändert alles']
+    positions = [second_group_html.index(title) for title in order]
+    assert positions == sorted(positions)
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html
     assert 'Editionen' not in html
     assert 'pm-teaching-locale-switch' not in html
     assert 'pm-teaching-topic-header' not in html
     assert 'pm-teaching-block-stack' not in html
+
+
+def test_pending_topic_cards_do_not_repeat_the_status_in_their_description(url_app: Flask) -> None:
+    client = url_app.test_client()
+
+    for ui_lang, status in (("de", "In Vorbereitung"), ("en", "In preparation")):
+        html = client.get(f"/{ui_lang}/teaching/french").get_data(as_text=True)
+        pending = html.count('<article class="pm-teaching-topic-card pm-teaching-topic-card--pending')
+        assert pending >= 3
+        assert html.count(f'class="pm-teaching-topic-card__status">{status}</p>') == pending
+        assert f"{status}: " not in html
 
 
 def test_teaching_french_hub_uses_current_language_drawer_context(url_app: Flask) -> None:
@@ -2019,12 +2021,10 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'Spanish r' in html
     assert 'Pronunciation topics with examples and classroom prompts.' in html
     assert 'Syllable-final r' in html
-    assert html.count('pm-teaching-topic-card--available') == 2
-    assert html.count('pm-teaching-topic-card--pending') == 2
-    assert 'In preparation' in html
-    assert 'href="/en/teaching/spanish/soft-spanish-hard-german"' not in html
-    assert 'href="/en/teaching/spanish/r"' not in html
-    assert 'href="/en/teaching/spanish/r-am-silbenende"' in html
+    assert html.count('pm-teaching-topic-card--available') == 7
+    assert html.count('pm-teaching-topic-card--pending') == 0
+    for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g', 'accent-changes-everything'):
+        assert f'href="/en/teaching/spanish/{slug}"' in html
     assert 'Which pronunciation counts?' not in html
     assert 'Weiches Spanisch, hartes Deutsch' not in html
     drawer_html = _extract_element_by_id(html, "dialog", "navigation-drawer-modal")
@@ -2081,7 +2081,7 @@ def test_teaching_topic_media_route_blocks_parent_traversal(url_app: Flask) -> N
 def test_teaching_unpublished_topic_is_not_found(url_app: Flask) -> None:
     client = url_app.test_client()
 
-    response = client.get("/en/teaching/spanish/r")
+    response = client.get("/en/teaching/french/liaison")
 
     assert response.status_code == 404
 
@@ -2089,28 +2089,28 @@ def test_teaching_unpublished_topic_is_not_found(url_app: Flask) -> None:
 def test_teaching_topic_renders_public_content_blocks(url_app: Flask, released_teaching_content: Path) -> None:
     client = url_app.test_client()
 
-    response = client.get("/de/teaching/spanish/r-am-silbenende")
+    response = client.get("/de/teaching/french/liaison")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     drawer_html = _extract_element_by_id(html, "dialog", "navigation-drawer-modal")
-    assert re.search(r'promat-panel__mobile-context-title">Spanisch<', drawer_html) is not None
+    assert re.search(r'promat-panel__mobile-context-title">Französisch<', drawer_html) is not None
     assert re.search(
-        r'href="/de/teaching/spanish"[^>]*class="promat-panel__link pm-nav__item is-active pm-nav__item--active"[^>]*>\s*<span class="promat-panel__item-label">Themenseiten</span>',
+        r'href="/de/teaching/french"[^>]*class="promat-panel__link pm-nav__item is-active pm-nav__item--active"[^>]*>\s*<span class="promat-panel__item-label">Themenseiten</span>',
         drawer_html,
         re.S,
     ) is not None
-    assert 'R am Silbenende' not in drawer_html
+    assert 'Die Liaison' not in drawer_html
     assert 'Welche Aussprache unterrichten?' not in drawer_html
     assert 'Englisch' not in drawer_html
-    assert 'Franz' not in drawer_html
+    assert 'Spanisch' not in drawer_html
     assert 'Deutsch' not in drawer_html
     assert 'pm-teaching-page--topic' in html
     assert 'pm-teaching-block-stack' in html
     assert 'pm-teaching-block-grid' not in html
     assert 'pm-teaching-block--span-' not in html
-    assert 'R am Silbenende' in html
-    assert 'Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zum r am Silben- und Wortende im Spanischen.' in html
+    assert 'Die Liaison' in html
+    assert 'Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zur Liaison im Französischen.' in html
     assert html.count('class="pm-back-link') == 2
     assert html.count('pm-back-link__pill') == 2
     assert 'class="pm-teaching-topic-metadata"' in html
@@ -2157,8 +2157,8 @@ def test_teaching_topic_renders_public_content_blocks(url_app: Flask, released_t
     assert 'Material noch nicht hinterlegt' in html
     assert html.index('Auf einen Blick') < html.index('Hörvergleich') < html.index('Unterrichtsperspektive') < html.index('Hören vorbereiten') < html.index('Material noch nicht hinterlegt')
     assert html.count('pm-teaching-topic-card--available') == 0
-    assert 'href="/en/teaching/spanish/r-am-silbenende?lang=en"' in html
-    assert 'href="/teaching-media/spanish/r-am-silbenende/downloads/' not in html
+    assert 'href="/en/teaching/french/liaison?lang=en"' in html
+    assert 'href="/teaching-media/french/liaison/downloads/' not in html
 
 
 def test_teaching_which_pronunciation_uses_session_0004_for_seseo_audio(url_app: Flask) -> None:
@@ -2804,7 +2804,7 @@ def test_spanish_design_article_head_shows_byline_dates_abstract_and_keywords(ur
     abstract = head[head.index('<section class="pm-article-abstract'):]
     assert "pm-admonition" not in abstract and "pm-card" not in abstract and "pm-panel" not in abstract
     css = client.get("/static/css/30_components.css").get_data(as_text=True)
-    rule = css[css.index(".pm-article-masthead {"):css.index(".pm-expandable__viewport {")]
+    rule = css[css.index(".pm-article-masthead {"):css.index("/* Teaching solution of a listening question")]
     for decoration in ("border", "background", "box-shadow", "padding:"):
         assert decoration not in rule.replace("border-bottom", "").replace("padding-bottom", "")
     # the approved wording carries no editorial or implementation notes
@@ -2987,8 +2987,7 @@ def test_teaching_overview_spacing_comes_from_named_spacing_tokens(url_app: Flas
     assert re.search(r"@media \(min-width: 721px\) \{\s*:root \{\s*--pm-teaching-group-stack-gap: calc\(var\(--pm-space-xl\) \+ var\(--pm-space-text\)\)", tokens)
     assert "gap: var(--pm-teaching-group-header-gap);" in layout and "gap: var(--pm-teaching-group-stack-gap);" in layout
     assert ".pm-teaching-page--hub .pm-teaching-group-stack {" in components
-    # the distance to the citation is untouched: still the page gap plus the citation gap
-    assert "margin-top: var(--pm-teaching-citation-gap);" in components
+    assert "--pm-teaching-citation-gap" not in tokens and "--pm-teaching-citation-gap" not in components  # hubs carry no citation box
 
 
 def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask) -> None:

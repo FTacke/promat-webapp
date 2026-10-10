@@ -217,7 +217,10 @@ RESOURCE_PAGES = {
     "/{lang}/research/spanish/design": "ScholarlyArticle",
     "/{lang}/teaching/spanish": "Collection",
     "/{lang}/teaching/spanish/which-pronunciation": ["Article", "LearningResource"],
+    "/{lang}/teaching/spanish/b-or-v": ["Article", "LearningResource"],
 }
+# Language hubs keep their resource metadata but are navigation pages without a citation box.
+HUB_PAGES = ("/{lang}/teaching/spanish",)
 
 
 def check_publication_metadata(browser, base: str, report: Report, out: Path) -> None:
@@ -252,7 +255,10 @@ def check_publication_metadata(browser, base: str, report: Report, out: Path) ->
                 structured = {}
             report.check(structured.get("@type") == schema_type and structured.get("url") == expected, f"[{lang}] {path} JSON-LD type and url ({structured.get('@type')})")
             report.check(bool((structured.get("isPartOf") or {}).get("@id", "").startswith(CANONICAL_ORIGIN)), f"[{lang}] {path} JSON-LD isPartOf")
-            report.check(len(dom["copy"]) == 1 and dom["copy"][0].endswith(expected), f"[{lang}] {path} offers one citation ending with its own URL")
+            if template in HUB_PAGES:
+                report.check(dom["copy"] == [], f"[{lang}] {path} is a navigation page without a citation box")
+            else:
+                report.check(len(dom["copy"]) == 1 and dom["copy"][0].endswith(expected), f"[{lang}] {path} offers one citation ending with its own URL")
             if len(dom["copy"]) == 1:
                 page.locator("[data-copy-text]").first.click()
                 page.wait_for_timeout(300)

@@ -1,0 +1,631 @@
+# Curated corpus recordings of the Spanish Teaching topic pages (declaration; see scripts/teaching_audio_slots.py).
+#
+# Edit a recording (session / item) here, then run `python scripts/teaching_audio_slots.py --export` and commit the changed
+# media file and its `sha256`. The topic pages name only the media file, never a session, so replacing a recording
+# needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes`; the
+# `selection` of the first release was made automatically (typical duration, no outliers) and is NOT phonetically
+# verified: it is a neutral comparison, not a claim about a specific learner realisation.
+
+corpus: spanish
+selection: 'automatic first release: typical duration per item, teaching_consent_signed: yes; no phonetic verification'
+comparisons:
+- id: p1-hambre
+  topic: soft-spanish-hard-german
+  phenomenon: Vokalischer Anschluss über die Wortgrenze
+  target: tiene hambre
+  question: Wo ist eine kurze Unterbrechung zu hören – und in welcher Aufnahme?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: d_27
+    file: corpus/p1-hambre-ref.mp3
+    sha256: 300dbc98bde48c368adf84f497861ee98733b455098ad6a95335a47688ad27fd
+  - slot: learner
+    category: learner
+    session_id: ES-L-0007-2026-S01
+    item:
+      task: text
+      id: d_27
+    file: corpus/p1-hambre-learner.mp3
+    sha256: ded6ad30049d718525023c3681d42d08daa880b0ddb70caabc48dca708d04cf9
+- id: p1-oye
+  topic: soft-spanish-hard-german
+  phenomenon: Vokalischer Anschluss über die Wortgrenze
+  target: se oye
+  question: Sind *se* und *oye* hörbar voneinander getrennt?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: d_07
+    file: corpus/p1-oye-ref.mp3
+    sha256: 2482281cafb1d37efbd7ebbebe964990e8d670e4f77d1e69772bc2e4ab148292
+  - slot: learner
+    category: learner
+    session_id: ES-L-0007-2026-S01
+    item:
+      task: text
+      id: d_07
+    file: corpus/p1-oye-learner.mp3
+    sha256: 9cf216fff19853ee2cca2ce5ae9e9ca363779fe355c91cec9af95f582f3faf8c
+- id: p1-euforia
+  topic: soft-spanish-hard-german
+  phenomenon: Vokalischer Anschluss über die Wortgrenze
+  target: la euforia
+  question: Wie schließt *euforia* an *la* an?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: d_17
+    file: corpus/p1-euforia-ref.mp3
+    sha256: c30d3336b72d08f69117398384a618d714de86ab8f5404f7dcfaca11d66086e0
+  - slot: learner
+    category: learner
+    session_id: ES-L-0007-2026-S01
+    item:
+      task: text
+      id: d_17
+    file: corpus/p1-euforia-learner.mp3
+    sha256: 39b7ae5ed72df54f6d6e4ff17b7b41b674f9f40eb99de068a906bf167597dd19
+- id: p1-oir
+  topic: soft-spanish-hard-german
+  phenomenon: Vokalischer Anschluss über die Wortgrenze
+  target: puedo oír
+  question: 'Zwei *o* stoßen aufeinander: Gibt es zwischen *puedo* und *oír* eine Zäsur?'
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: d_18
+    file: corpus/p1-oir-ref.mp3
+    sha256: 8a9b77af0c1e09e5560a242f168157e8e2bd4a43a7d919da5e53cff6c4c1962d
+  - slot: learner
+    category: learner
+    session_id: ES-L-0007-2026-S01
+    item:
+      task: text
+      id: d_18
+    file: corpus/p1-oir-learner.mp3
+    sha256: ec2ffb2f71bf13a07552d0fbf174023a7ebe317c790f2fd5de4e45141de107a0
+- id: p1-obtiene
+  topic: soft-spanish-hard-german
+  phenomenon: Vokalischer Anschluss über die Wortgrenze
+  target: que obtiene
+  question: Wo setzt *obtiene* nach *que* ein?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: qw_08
+    file: corpus/p1-obtiene-ref.mp3
+    sha256: 9094fb1c238c10dbc7e5cc2c1cab7b796d547989da8644cd2bf9bbf5855fc3b9
+  - slot: learner
+    category: learner
+    session_id: ES-L-0007-2026-S01
+    item:
+      task: text
+      id: qw_08
+    file: corpus/p1-obtiene-learner.mp3
+    sha256: 7b1ddacbab1966ec6511ba0c5126acb025ddb8d4979ebbcee16cce95c820fe4d
+- id: p2-caro
+  topic: r
+  phenomenon: Einfacher und mehrfacher Vibrant
+  target: caro – carro
+  question: Wie oft schlägt die Zungenspitze im ersten, wie oft im zweiten Wort an?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_088
+    file: corpus/p2-caro-ref.mp3
+    sha256: 6973847210bc123b12495da140ddb15a622b0d74ad886d55532a0f4638829fa0
+  - slot: learner
+    category: learner
+    session_id: ES-L-0012-2026-S01
+    item:
+      task: wordlist
+      id: wl_088
+    file: corpus/p2-caro-learner.mp3
+    sha256: 35d59a90374f822f2db2f3ceae0a09294399855be2a39360a58de3892fa8a48f
+- id: p2-pero
+  topic: r
+  phenomenon: Einfacher und mehrfacher Vibrant
+  target: pero – perro
+  question: Welches der beiden Wörter hat den längeren r-Laut?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_090
+    file: corpus/p2-pero-ref.mp3
+    sha256: 6f0e9576cab13eec0f4aa52981e8d55284d270e44a3911a687077700980dd303
+  - slot: learner
+    category: learner
+    session_id: ES-L-0012-2026-S01
+    item:
+      task: wordlist
+      id: wl_090
+    file: corpus/p2-pero-learner.mp3
+    sha256: b61f50df88aa2ba233d0537104ed6fb9d3a3e342c37d70e15e49f7b31ca0fb64
+- id: p2-reloj
+  topic: r
+  phenomenon: Mehrfacher Vibrant am Wortanfang
+  target: reloj / miro el reloj
+  question: Wie oft schlägt die Zunge beim *r* von *reloj* an – allein und im Satz? Und wie klingt dagegen das *r* in *miro*?
+  recordings:
+  - slot: ref-isoliert
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_002
+    file: corpus/p2-reloj-ref-isoliert.mp3
+    sha256: 39d294ce3ca6e9a0679f187a9285084774b69e137a471e3be7792505748519f1
+  - slot: ref-satz
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: text
+      id: d_01
+    file: corpus/p2-reloj-ref-satz.mp3
+    sha256: 002d6a9371a06c6e5c13789e47c00417c630f7940fa5fd165970ddb713643713
+  - slot: learner-isoliert
+    category: learner
+    session_id: ES-L-0012-2026-S01
+    item:
+      task: wordlist
+      id: wl_002
+    file: corpus/p2-reloj-learner-isoliert.mp3
+    sha256: 28c049a911a6e181e7469711a72d9634541de9d8617cfd3d3ed4acd72328e580
+  - slot: learner-satz
+    category: learner
+    session_id: ES-L-0012-2026-S01
+    item:
+      task: text
+      id: d_01
+    file: corpus/p2-reloj-learner-satz.mp3
+    sha256: 6a7398c7296e4285daf83966256a0997387efd0f8afe3b63d23b89b8ae5161d0
+- id: p3-reir
+  topic: r-am-silbenende
+  phenomenon: Wortfinales r
+  target: reír
+  question: 'Wie endet das Wort: mit einem Konsonanten oder mit einem Vokal?'
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_076
+    file: corpus/p3-reir-ref.mp3
+    sha256: a76910c2cebe9ec6f4bee5c4e80d344b24390393810629e8f78fa2e1900adf61
+  - slot: learner
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: wordlist
+      id: wl_076
+    file: corpus/p3-reir-learner.mp3
+    sha256: bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725
+- id: p3-flor
+  topic: r-am-silbenende
+  phenomenon: Wortfinales r
+  target: flor
+  question: Gibt es am Wortende noch einen Zungenkontakt?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_016
+    file: corpus/p3-flor-ref.mp3
+    sha256: 87a66ce6eea55b84804cf882aaf2db52e2e07b4d4d26298eddcadbaaea71482a
+  - slot: learner
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: wordlist
+      id: wl_016
+    file: corpus/p3-flor-learner.mp3
+    sha256: 47916916f6519f667a95164d0bb19e926c5e010d824a08757d7da68b16866f86
+- id: p3-enfermo
+  topic: r-am-silbenende
+  phenomenon: Silbenfinales r vor Konsonant
+  target: enfermo
+  question: Ist das *r* in *enfermo* als eigener Laut zu hören, bevor das *m* folgt?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_050
+    file: corpus/p3-enfermo-ref.mp3
+    sha256: d6021cd5675c97cac59ad27644db89d803d30a23b1ea8f01da1350c3f32fce46
+  - slot: learner
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: wordlist
+      id: wl_050
+    file: corpus/p3-enfermo-learner.mp3
+    sha256: e0ef6cdd5f4bd19243c2ab6f26eb4ed7b3e1c373d588bccd8d3343b1aeed2807
+- id: p3-cuidar
+  topic: r-am-silbenende
+  phenomenon: Wortfinales r vor Vokal im Folgewort
+  target: cuidar / cuidar un perro
+  question: Gehört das *r* in *cuidar un* zum Ende von *cuidar* oder zum Anfang von *un*?
+  recordings:
+  - slot: ref-isoliert
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_058
+    file: corpus/p3-cuidar-ref-isoliert.mp3
+    sha256: c20bfcc6cbb773ec13372c79fcedcf955863e16af0464473eaf7a76bb887a769
+  - slot: ref-satz
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: text
+      id: d_05
+    file: corpus/p3-cuidar-ref-satz.mp3
+    sha256: e13c09b99accb62504ea30dc0a209e0659bcb2a0c9f21d8ba7f4e4864ba0a022
+  - slot: learner-isoliert
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: wordlist
+      id: wl_058
+    file: corpus/p3-cuidar-learner-isoliert.mp3
+    sha256: 0caf9438928571b7e80a19ce8895290de616e01307bc2943bbd17a1a62d0f016
+  - slot: learner-satz
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: text
+      id: d_05
+    file: corpus/p3-cuidar-learner-satz.mp3
+    sha256: 723ebccae92adc0df8a63163bede36d07d6fac821a016728c7f9bd3755669201
+- id: p3-lavar
+  topic: r-am-silbenende
+  phenomenon: Wortfinales r vor Konsonant im Folgewort
+  target: lavar / lavar la ropa
+  question: Hören Sie das *r* in *lavar* auch dann, wenn *la* folgt?
+  recordings:
+  - slot: ref-isoliert
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/p3-lavar-ref-isoliert.mp3
+    sha256: 7d7cf9a0bc43a0d324b2652c8aabf5aaf012c5e805c1a321d94426f567afa7b7
+  - slot: ref-satz
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: text
+      id: d_21
+    file: corpus/p3-lavar-ref-satz.mp3
+    sha256: 964f753234571e17abfbf8555c0d1dec537ed8f6e7b549356b3d4be962e9d207
+- id: p4-bienes
+  topic: b-or-v
+  phenomenon: Homophonie von <b> und <v>
+  target: bienes – vienes
+  question: Hören Sie einen Unterschied zwischen dem ersten und dem zweiten Wort?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: wordlist
+      id: wl_092
+    file: corpus/p4-bienes-ref.mp3
+    sha256: b106dac33ac14dc7679698a4f34f570cd7ab50b09b92e660b18c38bb4a668ba1
+  - slot: learner
+    category: learner
+    session_id: ES-L-0017-2026-S01
+    item:
+      task: wordlist
+      id: wl_092
+    file: corpus/p4-bienes-learner.mp3
+    sha256: 73492f5d31afa9bc2537aaf04f7d273e02cc10100e33774fcc6975496bac9b45
+- id: p4-vino
+  topic: b-or-v
+  phenomenon: Geschriebenes <v> am Wortanfang und im Satz
+  target: vino / de vino
+  question: Klingt das *v* in *vino* wie das deutsche *w* in *Wasser*?
+  recordings:
+  - slot: ref-isoliert
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: wordlist
+      id: wl_038
+    file: corpus/p4-vino-ref-isoliert.mp3
+    sha256: 17d4dac442b9a9a6e4cdce6cdaf3badf87e644781d35bad3d1cc278c81d2cb16
+  - slot: ref-satz
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: qy_01
+    file: corpus/p4-vino-ref-satz.mp3
+    sha256: e18f6bed5467ab9fcc145d3a3f82a90026b8c0532fcd62f6312c82e65d494d7b
+  - slot: learner-isoliert
+    category: learner
+    session_id: ES-L-0017-2026-S01
+    item:
+      task: wordlist
+      id: wl_038
+    file: corpus/p4-vino-learner-isoliert.mp3
+    sha256: 8da8b516f5fa3b088653f475e0a7a0eb475b3218d88ceafc644d45eba853f139
+  - slot: learner-satz
+    category: learner
+    session_id: ES-L-0017-2026-S01
+    item:
+      task: text
+      id: qy_01
+    file: corpus/p4-vino-learner-satz.mp3
+    sha256: d277545311b625d5e45463cbb583c88f598e22b2bffacd0a33f97b1633d9b354
+- id: p4-vida
+  topic: b-or-v
+  phenomenon: Geschriebenes <v> am Wortanfang
+  target: vida
+  question: Mit welchem Laut beginnt *vida*?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: wordlist
+      id: wl_045
+    file: corpus/p4-vida-ref.mp3
+    sha256: de25bd78444cbb8a48aed11f1952a135253958f4f0b0a216c8184399bc06fe19
+  - slot: learner
+    category: learner
+    session_id: ES-L-0017-2026-S01
+    item:
+      task: wordlist
+      id: wl_045
+    file: corpus/p4-vida-learner.mp3
+    sha256: 593d4d6d868e69b9029e19f28fb6608008e32e2c3f5fc0fd4446481d61b9f8cc
+- id: p4-lavar
+  topic: b-or-v
+  phenomenon: Geschriebenes <v> zwischen Vokalen
+  target: lavar
+  question: Hören Sie das *v* in *lavar* als Verschluss oder als weicheren Laut?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/p4-lavar-ref.mp3
+    sha256: de6e962ceeb055685bd98164a996f9f3643bc29da2c5b73a92347ea89a108f3e
+  - slot: learner
+    category: learner
+    session_id: ES-L-0017-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/p4-lavar-learner.mp3
+    sha256: 18e2bf6cfdc2bb9a3959c655381660aa78b6c0746136629370d007f4bfa01770
+- id: p5-labio
+  topic: soft-consonants-b-d-g
+  phenomenon: Approximant [β]
+  target: labio
+  question: Klingt das *b* in *labio* eher wie ein kurzer Knall oder eher wie ein weiches Reiben?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_021
+    file: corpus/p5-labio-ref.mp3
+    sha256: 832133c4ede92ddbb530a7fcbf057b38ac9cf0359860af3179cbe2ea88d070c3
+  - slot: learner
+    category: learner
+    session_id: ES-L-0013-2026-S01
+    item:
+      task: wordlist
+      id: wl_021
+    file: corpus/p5-labio-learner.mp3
+    sha256: 737d9d578dcf2d0bde433da07206d5a5f561aaf0cc39b653e07c4f50b031a2dc
+- id: p5-cuidado
+  topic: soft-consonants-b-d-g
+  phenomenon: Approximant [ð]
+  target: cuidado
+  question: 'Wie klingt das *d* in *cuidado*: hart abgesetzt oder weich und locker?'
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_033
+    file: corpus/p5-cuidado-ref.mp3
+    sha256: f30fe61d71c7ea481c36aea4840e890c10b1d1e1618069105941bb80ecc691cc
+  - slot: learner
+    category: learner
+    session_id: ES-L-0013-2026-S01
+    item:
+      task: wordlist
+      id: wl_033
+    file: corpus/p5-cuidado-learner.mp3
+    sha256: e58c7238520608daf0c2e903b82e2e7d6dcae0025dc8670b57f03171995fbb18
+- id: p5-logro
+  topic: soft-consonants-b-d-g
+  phenomenon: Approximant [ɣ]
+  target: logro
+  question: Wird das *g* in *logro* mit vollständigem Verschluss gesprochen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_035
+    file: corpus/p5-logro-ref.mp3
+    sha256: 3acffb6254ac44cf352572ceb0fcaa16ce8266da365e31b48a71b999aa02b7c7
+  - slot: learner
+    category: learner
+    session_id: ES-L-0013-2026-S01
+    item:
+      task: wordlist
+      id: wl_035
+    file: corpus/p5-logro-learner.mp3
+    sha256: 93bc219fa2e4a0a8166a547f04ecc26e46d1f880bb222fc384244005e2070b10
+- id: p5-algo
+  topic: soft-consonants-b-d-g
+  phenomenon: Approximant [ɣ] nach /l/
+  target: algo / Algo tan caro
+  question: Bleibt das *g* in *algo* allein und im Satz gleich weich?
+  recordings:
+  - slot: ref-isoliert
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_048
+    file: corpus/p5-algo-ref-isoliert.mp3
+    sha256: cb9c6526398136a72e7443dbe2730fc1eb8fffef78336a2cb894ebd52db38292
+  - slot: ref-satz
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: text
+      id: d_09
+    file: corpus/p5-algo-ref-satz.mp3
+    sha256: 0f0bcb4fd8b5918e9c3a86f2d73054e4d0752ff422c304ab3f61a72b56f3462f
+- id: p5-vino
+  topic: soft-consonants-b-d-g
+  phenomenon: Plosiv [b] und Approximant [β] bei /b/
+  target: vino / de vino
+  question: Klingt das *v* allein anders als in *de vino*?
+  recordings:
+  - slot: ref-isoliert
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_038
+    file: corpus/p5-vino-ref-isoliert.mp3
+    sha256: 19c753deb25935a4779332ea62b17ef05eb47fe244ffc01b7ee7a75017c7542a
+  - slot: ref-satz
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: text
+      id: qy_01
+    file: corpus/p5-vino-ref-satz.mp3
+    sha256: cbeea5a1c86d8acde0bbba6df55e3f117f032cd3769223e97954848931af7399
+- id: p6-numero3
+  topic: accent-changes-everything
+  phenomenon: Lexikalischer Wortakzent
+  target: número – numero – numeró
+  question: Welche Silbe ist in jedem der drei Wörter betont?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_087
+    file: corpus/p6-numero3-ref.mp3
+    sha256: b1283532e13382ddcecd3e8280f16874bf75114011fa7597f8e91d98c2656b0a
+  - slot: learner
+    category: learner
+    session_id: ES-L-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_087
+    file: corpus/p6-numero3-learner.mp3
+    sha256: 57edc59a3d066d3573d0a8372b8238d81c1165d4b3e7f7179f02d54c25335631
+- id: p6-qw10
+  topic: accent-changes-everything
+  phenomenon: 'Wortakzent im Satz: Betonung auf der ersten Silbe'
+  target: número
+  question: Auf welcher Silbe liegt die Betonung von *número*?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: text
+      id: qw_10
+    file: corpus/p6-qw10-ref.mp3
+    sha256: d43b03ae4a4b6d5bb67e706dcb15ed1eae77d0372bc9b1ec582eabd8ec4ce43d
+  - slot: learner
+    category: learner
+    session_id: ES-L-0005-2026-S01
+    item:
+      task: text
+      id: qw_10
+    file: corpus/p6-qw10-learner.mp3
+    sha256: 48b90f1d3514805c5f22cdb7057d2921bb5e41404dca80f9f6ef02f81fc9196b
+- id: p6-qw8
+  topic: accent-changes-everything
+  phenomenon: 'Wortakzent im Satz: Betonung auf der zweiten Silbe'
+  target: numero
+  question: Auf welcher Silbe liegt die Betonung von *numero*?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: text
+      id: qw_08
+    file: corpus/p6-qw8-ref.mp3
+    sha256: 32e9455be404acc495e587ed640cc55deccb867332bb1b04f9ab4ec3907c760e
+  - slot: learner
+    category: learner
+    session_id: ES-L-0005-2026-S01
+    item:
+      task: text
+      id: qw_08
+    file: corpus/p6-qw8-learner.mp3
+    sha256: 2d5437a125a43722bab3383af64983cd0603fa8002136be75735c9aba83ed93d
+- id: p6-d30
+  topic: accent-changes-everything
+  phenomenon: 'Wortakzent im Satz: Betonung auf der dritten Silbe'
+  target: numeró
+  question: Auf welcher Silbe liegt die Betonung von *numeró*?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: text
+      id: d_30
+    file: corpus/p6-d30-ref.mp3
+    sha256: b59e41a38781521f1f698148b1729f88eae40ab735553a415f729310924c7c0c
+  - slot: learner
+    category: learner
+    session_id: ES-L-0005-2026-S01
+    item:
+      task: text
+      id: d_30
+    file: corpus/p6-d30-learner.mp3
+    sha256: 5bf03bd79cd056e72b74cd91c05c5a3d0ddd5b02b0493c60860cde8222992ac3

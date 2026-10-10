@@ -40,13 +40,12 @@ PUBLIC_PATHS = (
     "/de/teaching",
     "/en/teaching",
     "/de/teaching/spanish",
-    "/de/teaching/spanish/which-pronunciation",
-    "/en/teaching/spanish/which-pronunciation",
     "/de/research/spanish/design",
     "/en/research/spanish/design",
 )
 PROTECTED_PATHS = ("/de/research/spanish/speakers", "/en/research/spanish/comparison", "/de/research/spanish/player/x/wordlist")
-CITED_PAGES = ("/de/teaching/spanish/which-pronunciation", "/en/teaching/spanish/which-pronunciation")
+SPANISH_TOPICS = ("which-pronunciation", "soft-spanish-hard-german", "r", "r-am-silbenende", "b-or-v", "soft-consonants-b-d-g", "accent-changes-everything")
+CITED_PAGES = tuple(f"/{lang}/teaching/spanish/{slug}" for slug in SPANISH_TOPICS for lang in ("de", "en"))
 # Citable resources: canonical URL, one JSON-LD block and a generated citation that names exactly this URL.
 RESOURCE_PAGES = (
     *CITED_PAGES,
@@ -57,6 +56,9 @@ RESOURCE_PAGES = (
     "/de/teaching/spanish",
     "/en/teaching/spanish",
 )
+# Teaching hubs keep their resource metadata (canonical, JSON-LD) but show no citation box.
+TEACHING_HUB_PAGES = ("/de/teaching/spanish", "/en/teaching/spanish")
+CITATION_PAGES = tuple(path for path in RESOURCE_PAGES if path not in TEACHING_HUB_PAGES)
 UNKNOWN_RESOURCE_PATHS = ("/de/teaching/spanish/this-topic-does-not-exist",)
 
 Response = tuple[int, dict[str, str], str]
@@ -129,7 +131,8 @@ def run_checks(fetch: Fetch, *, canonical_origin: str) -> list[str]:
 
     titles = {path: _title(fetch(path)[2]) for path in CITED_PAGES}
     for path, title in titles.items():
-        topic_file = TEACHING_ROOT / "spanish" / "which-pronunciation" / f"{path.split('/')[1]}.yaml"
+        _, ui_lang, _, _, slug = path.split("/")
+        topic_file = TEACHING_ROOT / "spanish" / slug / f"{ui_lang}.yaml"
         expected = _topic_title(topic_file)
         if expected and expected not in title:
             failures.append(f"GET {path}: <title> {title!r} does not contain the page title {expected!r}")
@@ -156,7 +159,12 @@ def run_checks(fetch: Fetch, *, canonical_origin: str) -> list[str]:
         if not isinstance(structured, dict) or structured.get("url") != expected_url or not structured.get("identifier"):
             failures.append(f"GET {path}: missing or inconsistent JSON-LD (url/identifier)")
 
-    for path in RESOURCE_PAGES:
+    for path in TEACHING_HUB_PAGES:
+        status, _headers, body = fetch(path)
+        if status == 200 and ("data-copy-text" in body or "pm-admonition--citation" in body):
+            failures.append(f"GET {path}: a teaching hub must not show a citation box")
+
+    for path in CITATION_PAGES:
         status, _headers, body = fetch(path)
         if status != 200:
             continue

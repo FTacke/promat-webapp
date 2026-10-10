@@ -1,0 +1,134 @@
+resource_id: promat-teaching-es-b-or-v
+title: B oder V? Im Spanischen klingt beides gleich!
+summary: Warum die Buchstaben `b` und `v` im Spanischen dasselbe Phonem repräsentieren – und weshalb die Schreibung Lernende in die Irre führen kann.
+description: 'Die Grapheme <b> und <v> stehen im Spanischen für dasselbe Phonem /b/: Homophonie, Schriftbildinterferenz und Hörvergleiche aus dem Korpus.'
+equivalents:
+  en: b-or-v
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
+blocks:
+- type: topic_meta
+- type: text
+  body: '*bienes* oder *vienes*? Im Deutschen stehen `b` und `v` für verschiedene Laute – im Spanischen nicht. Beide Buchstaben schreiben dasselbe Phonem /b/. Wer ein spanisches `v` wie das deutsche *w* in *Wasser* spricht, folgt der Schrift, nicht der spanischen Aussprache.'
+- type: overview
+  title: Auf einen Blick
+  items:
+  - Die Grapheme <b> und <v> repräsentieren im Spanischen dasselbe Phonem /b/.
+  - '*bienes* und *vienes* sind verschieden geschrieben und bedeuten Verschiedenes, klingen aber gleich (Homophone).'
+  - Wie /b/ ausgesprochen wird, hängt vom lautlichen Kontext ab ([b] oder [β]) – nicht davon, ob `b` oder `v` geschrieben steht.
+- type: section_heading
+  title: Hören und entdecken
+- type: text
+  body: Zwei Aufnahmen desselben Wortpaares, ohne Schriftbild. Hören Sie einen Unterschied zwischen dem ersten und dem zweiten Wort?
+- type: audio_contrast
+  title: Zwei Wörter – ein Unterschied?
+  lead: Hören Sie einen Unterschied zwischen dem ersten und dem zweiten Wort?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · W92
+    audio: corpus/p4-bienes-ref.mp3
+    token_id: ES-N-0004 · W92
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W92
+    audio: corpus/p4-bienes-learner.mp3
+    token_id: ES-L-0017 · W92
+- type: solution
+  body: |-
+    Gesprochen wurden *bienes* („Güter“) und *vienes* („du kommst“, von *venir*). In gewöhnlicher spanischer Aussprache sind beide Wörter homophon: [ˈbje.nes]. Der Unterschied liegt allein in der Schreibung – ohne Kontext lässt sich aus der Aussprache nicht erkennen, welches Wort gemeint ist.
+
+    Hörten Sie in einer Aufnahme bei *vienes* einen reibenden, labiodentalen Laut [v] (wie in *Wasser*), läge eine Schriftbildaussprache vor. Das ist nicht in jeder Lernendenaufnahme der Fall.
+- type: section_heading
+  title: Schrift, Phonem und Laut auseinanderhalten
+- type: text
+  body: |-
+    Drei Ebenen sind zu trennen:
+
+    - **Orthographie:** Das Spanische schreibt `b` und `v`. Die Unterscheidung beruht auf der Wortgeschichte (lateinisch *b* und *v*) und ist nicht systematisch vorhersagbar; daher Homophonenpaare wie *barón* – *varón*, *botar* – *votar*.
+    - **Phonologie:** Es gibt nur ein Phonem /b/. Ein Gegensatz /b/ – /v/ besteht im Standardspanischen nicht.
+    - **Phonetik:** /b/ wird nach Pause und nach Nasal als Verschlusslaut [b] gesprochen, sonst als Approximant [β] (Lippen nähern sich ohne Verschluss): *vino* [ˈbi.no], aber *de vino* [de.ˈβi.no]. Dieser Wechsel ist unabhängig von der Schreibung.
+- type: text
+  body: 'Deutschsprachige Lernende kennen `v` als [f] (*Vater*) oder [v] (*Vase*). Die vertraute Schrift-Laut-Zuordnung auf das Spanische zu übertragen, führt zu [v] statt [b] oder [β]. Auch [β] klingt nie wie [v]: Es ist ein bilabialer Laut, bei [v] berühren die oberen Schneidezähne die Unterlippe.'
+- type: info_box
+  title: Ein Hinweis zur Variation
+  body: Im Standardspanischen fallen `b` und `v` zusammen. Vereinzelt unterscheiden zweisprachige Sprecher:innen, etwa mit Katalanisch oder Valencianisch, beide Laute auch im Spanischen. Das ist eine Frage des Sprachkontakts und keine Aussprachenorm für den Unterricht.
+- type: section_heading
+  title: Weitere Vergleiche aus dem Korpus
+- type: text
+  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+- type: audio_contrast
+  title: '*vino* allein und in *de vino*'
+  lead: Klingt das *v* in *vino* wie das deutsche *w* in *Wasser*?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · W38
+    audio: corpus/p4-vino-ref-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-N-0004 · W38
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · QY1
+    audio: corpus/p4-vino-ref-satz.mp3
+    note: 'Im Satz: ¿El vaso está lleno *de vino* ahora?'
+    token_id: ES-N-0004 · QY1
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W38
+    audio: corpus/p4-vino-learner-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-L-0017 · W38
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · QY1
+    audio: corpus/p4-vino-learner-satz.mp3
+    note: 'Im Satz: ¿El vaso está lleno *de vino* ahora?'
+    token_id: ES-L-0017 · QY1
+- type: audio_contrast
+  title: '*vida*'
+  lead: Mit welchem Laut beginnt *vida*?
+  transcript: vida
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · W45
+    audio: corpus/p4-vida-ref.mp3
+    token_id: ES-N-0004 · W45
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W45
+    audio: corpus/p4-vida-learner.mp3
+    token_id: ES-L-0017 · W45
+- type: audio_contrast
+  title: '*lavar*'
+  lead: Hören Sie das *v* in *lavar* als Verschluss oder als weicheren Laut?
+  transcript: lavar
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · W9
+    audio: corpus/p4-lavar-ref.mp3
+    token_id: ES-N-0004 · W9
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W9
+    audio: corpus/p4-lavar-learner.mp3
+    token_id: ES-L-0017 · W9
+- type: section_heading
+  title: Für den Unterricht
+- type: tip_box
+  title: 'Kurzaufgabe: Hörzuordnung und Schriftbild'
+  body: |-
+    1. Die Lehrkraft spricht *bienes* oder *vienes* (ohne Schriftbild); die Lernenden notieren, welches Wort sie gehört haben – und merken, dass das nicht möglich ist.
+    2. Die Schreibweisen werden aufgedeckt. Gemeinsam wird besprochen: Warum haben wir `v` als [v] erwartet?
+    3. Weitere Paare wie *barón* – *varón* oder *botar* – *votar* zeigen: Nur der Kontext verrät das gemeinte Wort.
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Seiten zu b/v und zur Lautvariation.
+  items:
+  - title: 'Weiche Konsonanten: b, d und g'
+    text: Wann /b/ als [b] und wann als [β] gesprochen wird – dazu [ð] und [ɣ].
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/soft-consonants-b-d-g
+  - title: 'Fehlerlinguistik: Einfluss des Schriftbilds'
+    text: Wie Lernende Schrift-Laut-Zuordnungen aus der Erstsprache übertragen, am Beispiel von `v` in *vivir*.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/fehlerlinguistik/#einfluss-des-schriftbilds
+  - title: 'Orthographie: b und v'
+    text: Warum die Unterscheidung von `b` und `v` nicht systematisch ableitbar ist.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/orthographie/#unsystematische-alternanzen-b-vs-v

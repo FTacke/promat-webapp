@@ -1,31 +1,123 @@
+resource_id: promat-teaching-es-r
 title: Das spanische r
-summary: Beschreibung folgt.
-description: Überblick über die wichtigsten Realisierungen des spanischen r und ihre Relevanz für die Unterrichtsplanung.
+summary: Ein Zungenschlag oder mehrere? Warum *caro* und *carro* unterschiedlich klingen.
+description: 'Die beiden spanischen r-Phoneme /ɾ/ und /r/: Artikulation, Stellungsbedingungen und Hörvergleiche aus dem Korpus mit einer kurzen Unterrichtsaufgabe.'
 equivalents:
   en: r
-is_public: false
-credits:
-  coordinator:
-    - name: PROMAT Teaching
-      role: Redaktion
-      affiliation: PROMAT
-  authors:
-    - name: Felix Tacke
-      role: Rohbaukonzept
-      affiliation: PROMAT
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
 blocks:
-  - type: hero
-    eyebrow: Artikulation
-    title: Das spanische r
-    lead: Tap und Trill brauchen im Unterricht unterschiedliche Aufgabenformate und unterschiedliche Geduld.
-  - type: rich_text
-    title: Was Lernende unterscheiden sollten
-    body: |
-      Lernende profitieren von einer klaren Unterscheidung zwischen dem **einfachen Schlaglaut** und dem **gerollten r**.
+- type: topic_meta
+- type: text
+  body: |-
+    *caro* oder *carro*? Ein Buchstabe mehr – und ein anderes Wort. Das Spanische unterscheidet zwei r-Laute, deren Gegensatz zwischen Vokalen Bedeutung trägt: *pero* („aber“) und *perro* („Hund“), *caro* („teuer“) und *carro* („Wagen“).
 
-      Für den Unterricht ist wichtiger, *wann* eine Unterscheidung hörbar relevant wird, als eine vollständige phonetische Terminologie von Anfang an.
-  - type: topic_grid
-    title: Vertiefen
-    topics:
-      - r-am-silbenende
-  - type: credits
+    Für deutschsprachige Lernende ist das doppelt schwierig: Das gewohnte deutsche r wird oft weiter hinten im Mund gebildet (uvular) und nach Vokalen häufig vokalisiert. Beide spanischen r-Laute entstehen dagegen mit der Zungenspitze.
+- type: overview
+  title: Auf einen Blick
+  items:
+  - '/ɾ/, der einfache Vibrant: ein kurzer Kontakt der Zungenspitze am Zahndamm.'
+  - '/r/, der mehrfache Vibrant: mehrere schnelle Kontakte hintereinander.'
+  - Nur zwischen Vokalen unterscheiden die beiden Laute Wörter; am Wortanfang erscheint [r], am Wortende üblicherweise [ɾ].
+- type: section_heading
+  title: Hören und entdecken
+- type: text
+  body: 'Zwei Aufnahmen desselben Wortpaares, ohne Schriftbild. Hören Sie auf die Zungenschläge: einer im ersten Wort, mehrere im zweiten?'
+- type: audio_contrast
+  title: Zwei Wörter, zwei r-Laute
+  lead: Wie oft schlägt die Zungenspitze im ersten, wie oft im zweiten Wort an?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W88
+    audio: corpus/p2-caro-ref.mp3
+    token_id: ES-N-0002 · W88
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · W88
+    audio: corpus/p2-caro-learner.mp3
+    token_id: ES-L-0012 · W88
+- type: solution
+  body: |-
+    Die Aufnahmen enthalten das Minimalpaar *caro* – *carro*. Im ersten Wort schlägt die Zungenspitze einmal an: [ˈka.ɾo]. Im zweiten Wort schwingt sie mehrfach: [ˈka.ro].
+
+    Hören Sie genau hin, wie die Lernendenaufnahme das zweite Wort realisiert: als mehrfach vibrierendes r, als einzelner Schlag oder mit einem anderen r-Laut? Die Aufnahmen wurden nicht danach ausgewählt, wie gut oder schlecht der Kontrast gelingt.
+- type: audio_contrast
+  title: '*pero* – *perro*'
+  lead: Welches der beiden Wörter hat den längeren r-Laut?
+  transcript: pero – perro
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W90
+    audio: corpus/p2-pero-ref.mp3
+    token_id: ES-N-0002 · W90
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · W90
+    audio: corpus/p2-pero-learner.mp3
+    token_id: ES-L-0012 · W90
+- type: section_heading
+  title: Zwei Phoneme, zwei Artikulationen
+- type: text
+  body: |-
+    Das Spanische besitzt zwei rhotische Phoneme. Beide werden mit der Zungenspitze gebildet:
+
+    - **/ɾ/** (einfacher Vibrant, „tap“): Die Zungenspitze berührt für einen sehr kurzen Moment die Alveolen (Zahndamm) und löst sich sofort wieder.
+    - **/r/** (mehrfacher Vibrant, „trill“): Die Zungenspitze liegt locker nahe am Zahndamm und wird vom Luftstrom in Schwingung versetzt; meist entstehen zwei bis drei kurze Kontakte.
+- type: text
+  body: '**Stellungsbedingungen.** Nur zwischen Vokalen stehen /ɾ/ und /r/ in Opposition: *pero* [ˈpe.ɾo] – *perro* [ˈpe.ro]. Am Wortanfang (*reloj*, *rojo*) und nach *n*, *l*, *s* (*honra*, *alrededor*, *israelí*) erscheint nur der mehrfache Laut; geschrieben wird dort ein einzelnes `r`. Nach einem Konsonanten innerhalb einer Gruppe (*tres*, *brazo*) und am Silben- oder Wortende (*mar*, *carta*) steht üblicherweise der einfache Vibrant. Die Schreibung bildet also nur den bedeutungsunterscheidenden Gegensatz zwischen Vokalen ab: `r` und `rr` sind kein 1:1-Abbild der beiden Laute.'
+- type: info_box
+  title: Nicht jedes r klingt gleich
+  body: Die beschriebenen Realisierungen sind Bezugspunkte, keine Vorschrift. In Teilen Lateinamerikas (etwa Mexiko, Costa Rica, Chile, Andenraum) wird das mehrfache r häufig assibiliert, also mit reibendem Anteil gesprochen. In Puerto Rico ist ein hinteres, velares r verbreitet. Auch am Wortende und in schneller Rede schwankt die Realisierung. Regionale Variation ist kein Aussprachefehler – bei Lernendenaufnahmen lässt sie sich allerdings nicht ohne Weiteres von Übertragungseffekten trennen.
+- type: section_heading
+  title: Weitere Vergleiche aus dem Korpus
+- type: text
+  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+- type: audio_contrast
+  title: '*reloj* allein und im Satz'
+  lead: Wie oft schlägt die Zunge beim *r* von *reloj* an – allein und im Satz? Und wie klingt dagegen das *r* in *miro*?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W2
+    audio: corpus/p2-reloj-ref-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-N-0002 · W2
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · D1
+    audio: corpus/p2-reloj-ref-satz.mp3
+    note: 'Im Satz: Hoy *miro* el *reloj* con calma antes de salir.'
+    token_id: ES-N-0002 · D1
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · W2
+    audio: corpus/p2-reloj-learner-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-L-0012 · W2
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · D1
+    audio: corpus/p2-reloj-learner-satz.mp3
+    note: 'Im Satz: Hoy *miro* el *reloj* con calma antes de salir.'
+    token_id: ES-L-0012 · D1
+- type: section_heading
+  title: Für den Unterricht
+- type: tip_box
+  title: 'Kurzaufgabe: Hördiskrimination'
+  body: |-
+    1. Die Lehrkraft spricht oder spielt Paare wie *caro* / *carro* und *pero* / *perro* in zufälliger Reihenfolge.
+    2. Die Lernenden zeigen mit einem Finger (einfacher Schlag) oder mit mehreren (mehrfacher Schlag), was sie hören.
+    3. Danach sprechen alle die Paare nach und vergleichen Zungenposition und Dauer der Vibration: Wo berührt die Zungenspitze den Zahndamm, und wie lange?
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Seiten zum r im Spanischen.
+  items:
+  - title: R am Silbenende
+    text: Was mit dem r am Silben- und Wortende geschieht – und wie sich das von der deutschen R-Vokalisierung unterscheidet.
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/r-am-silbenende
+  - title: Die R-Laute im digitalen Lehrbuch
+    text: Überblick über die anders artikulierten Laute des Spanischen, darunter die beiden r-Laute.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
+  - title: Welche Aussprache unterrichten?
+    text: Regionale Variation und die Frage nach der Zielaussprache.
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/which-pronunciation

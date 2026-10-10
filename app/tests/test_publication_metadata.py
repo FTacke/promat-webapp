@@ -144,7 +144,7 @@ def test_registry_validation_rejects_broken_bibliographic_data(tmp_path, monkeyp
 def test_unknown_and_unpublished_topics_are_not_found(client) -> None:
     assert client.get("/de/teaching/spanish/does-not-exist").status_code == 404
     assert client.get("/de/teaching/spanish/Which-Pronunciation").status_code == 404
-    for draft in ("/de/teaching/french/liaison", "/en/teaching/french/liaison", "/de/teaching/spanish/r-am-silbenende", "/de/teaching/spanish/r"):
+    for draft in ("/de/teaching/french/liaison", "/en/teaching/french/liaison", "/de/teaching/french/gleitlaute"):
         assert client.get(draft).status_code == 404, draft
     assert client.get("/de/teaching/klingon/anything").status_code == 404
 
@@ -312,8 +312,13 @@ def test_generated_citations_follow_the_four_levels(client) -> None:
     assert _copy_text(client, "/en/research/french") == [
         f"Reinhardt, Janina (2026–). Pronunciation Matters: French Learner Pronunciation Corpus. In: Felix Tacke (ed.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/en/research/french"
     ]
-    assert _copy_text(client, "/de/teaching/spanish") == [
-        f"Tacke, Felix (2026–). Pronunciation Matters: Spanish Pronunciation Teaching Resources. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/de/teaching/spanish"
+    # teaching hubs are navigation pages: no citation box (the resource still feeds canonical and JSON-LD)
+    for hub in ("/de/teaching/spanish", "/en/teaching/spanish", "/de/teaching/french", "/en/teaching/english", "/de/teaching/german"):
+        assert _copy_text(client, hub) == [], hub
+        assert "pm-admonition--citation" not in client.get(hub).get_data(as_text=True), hub
+    assert 'application/ld+json' in client.get("/de/teaching/spanish").get_data(as_text=True)
+    assert _copy_text(client, "/de/teaching/spanish/b-or-v") == [
+        f"Tacke, Felix (2026). „B oder V? Im Spanischen klingt beides gleich!“. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/de/teaching/spanish/b-or-v"
     ]
     assert _copy_text(client, "/de/teaching/spanish/which-pronunciation") == [
         f"Tacke, Felix (2026). „Welche Aussprache unterrichten?“. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/de/teaching/spanish/which-pronunciation"

@@ -1,0 +1,134 @@
+resource_id: promat-teaching-es-b-or-v
+title: B or V? In Spanish, they sound the same!
+summary: Why the letters `b` and `v` represent the same phoneme in Spanish – and why spelling can mislead learners.
+description: 'The graphemes <b> and <v> stand for the same phoneme /b/ in Spanish: homophony, spelling interference and listening comparisons from the corpus.'
+equivalents:
+  de: b-or-v
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
+blocks:
+- type: topic_meta
+- type: text
+  body: '*bienes* or *vienes*? In German, `b` and `v` stand for different sounds – in Spanish they do not. Both letters write the same phoneme /b/. Anyone who pronounces a Spanish `v` like the German *w* in *Wasser* is following the spelling, not Spanish pronunciation.'
+- type: overview
+  title: At a glance
+  items:
+  - The graphemes <b> and <v> represent the same phoneme /b/ in Spanish.
+  - '*bienes* and *vienes* are spelled differently and mean different things, but sound the same (homophones).'
+  - How /b/ is pronounced depends on the phonetic context ([b] or [β]) – not on whether `b` or `v` is written.
+- type: section_heading
+  title: Listen and discover
+- type: text
+  body: Two recordings of the same pair of words, without the written form. Do you hear a difference between the first and the second word?
+- type: audio_contrast
+  title: Two words – any difference?
+  lead: Do you hear a difference between the first and the second word?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Mexico · W92
+    audio: corpus/p4-bienes-ref.mp3
+    token_id: ES-N-0004 · W92
+  - label: Learner (A2)
+    subtitle: L1 German · W92
+    audio: corpus/p4-bienes-learner.mp3
+    token_id: ES-L-0017 · W92
+- type: solution
+  body: |-
+    The words spoken are *bienes* (“goods”) and *vienes* (“you come”, from *venir*). In ordinary Spanish pronunciation the two words are homophones: [ˈbje.nes]. The difference lies in spelling alone – without context, the pronunciation does not reveal which word is meant.
+
+    If you heard a fricative, labiodental sound [v] (as in German *Wasser*) in *vienes* in either recording, that would be a spelling pronunciation. This is not the case in every learner recording.
+- type: section_heading
+  title: Keeping spelling, phoneme and sound apart
+- type: text
+  body: |-
+    Three levels need to be kept apart:
+
+    - **Orthography:** Spanish writes `b` and `v`. The distinction rests on word history (Latin *b* and *v*) and cannot be predicted systematically; hence homophone pairs such as *barón* – *varón* and *botar* – *votar*.
+    - **Phonology:** There is only one phoneme /b/. A contrast /b/ – /v/ does not exist in standard Spanish.
+    - **Phonetics:** /b/ is pronounced as the stop [b] after a pause and after a nasal, otherwise as the approximant [β] (the lips approach each other without closing): *vino* [ˈbi.no], but *de vino* [de.ˈβi.no]. This alternation is independent of spelling.
+- type: text
+  body: 'German-speaking learners know `v` as [f] (*Vater*) or [v] (*Vase*). Transferring this familiar letter-sound mapping to Spanish leads to [v] instead of [b] or [β]. Even [β] never sounds like [v]: it is bilabial, whereas for [v] the upper teeth touch the lower lip.'
+- type: info_box
+  title: A note on variation
+  body: In standard Spanish `b` and `v` coincide. Occasionally, bilingual speakers, for example with Catalan or Valencian, also distinguish the two sounds in Spanish. This is a matter of language contact and not a pronunciation norm for the classroom.
+- type: section_heading
+  title: More comparisons from the corpus
+- type: text
+  body: The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+- type: audio_contrast
+  title: '*vino* on its own and in *de vino*'
+  lead: Does the *v* in *vino* sound like the German *w* in *Wasser*?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Mexico · W38
+    audio: corpus/p4-vino-ref-isoliert.mp3
+    note: Isolated word
+    token_id: ES-N-0004 · W38
+  - label: Native-speaker reference
+    subtitle: Mexico · QY1
+    audio: corpus/p4-vino-ref-satz.mp3
+    note: 'In the sentence: ¿El vaso está lleno *de vino* ahora?'
+    token_id: ES-N-0004 · QY1
+  - label: Learner (A2)
+    subtitle: L1 German · W38
+    audio: corpus/p4-vino-learner-isoliert.mp3
+    note: Isolated word
+    token_id: ES-L-0017 · W38
+  - label: Learner (A2)
+    subtitle: L1 German · QY1
+    audio: corpus/p4-vino-learner-satz.mp3
+    note: 'In the sentence: ¿El vaso está lleno *de vino* ahora?'
+    token_id: ES-L-0017 · QY1
+- type: audio_contrast
+  title: '*vida*'
+  lead: Which sound does *vida* begin with?
+  transcript: vida
+  examples:
+  - label: Native-speaker reference
+    subtitle: Mexico · W45
+    audio: corpus/p4-vida-ref.mp3
+    token_id: ES-N-0004 · W45
+  - label: Learner (A2)
+    subtitle: L1 German · W45
+    audio: corpus/p4-vida-learner.mp3
+    token_id: ES-L-0017 · W45
+- type: audio_contrast
+  title: '*lavar*'
+  lead: Do you hear the *v* in *lavar* as a closure or as a softer sound?
+  transcript: lavar
+  examples:
+  - label: Native-speaker reference
+    subtitle: Mexico · W9
+    audio: corpus/p4-lavar-ref.mp3
+    token_id: ES-N-0004 · W9
+  - label: Learner (A2)
+    subtitle: L1 German · W9
+    audio: corpus/p4-lavar-learner.mp3
+    token_id: ES-L-0017 · W9
+- type: section_heading
+  title: For the classroom
+- type: tip_box
+  title: 'Quick task: matching by ear, then by spelling'
+  body: |-
+    1. The teacher says *bienes* or *vienes* (without showing the spelling); learners note which word they heard – and notice that this cannot be done.
+    2. The spellings are revealed. Discuss together: why did we expect `v` to be [v]?
+    3. Further pairs such as *barón* – *varón* or *botar* – *votar* show that only context reveals the intended word.
+- type: further_reading
+  title: Further exploration
+  description: Related pages on b/v and sound variation.
+  items:
+  - title: 'Soft consonants: b, d and g'
+    text: When /b/ is pronounced [b] and when [β] – plus [ð] and [ɣ].
+    cta: Go to topic page
+    href: /en/teaching/spanish/soft-consonants-b-d-g
+  - title: 'Error linguistics: the influence of spelling'
+    text: How learners transfer letter-sound mappings from their first language, using `v` in *vivir* as an example (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/fehlerlinguistik/#einfluss-des-schriftbilds
+  - title: 'Orthography: b and v'
+    text: Why the distinction between `b` and `v` cannot be derived systematically (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/orthographie/#unsystematische-alternanzen-b-vs-v

@@ -1,10 +1,123 @@
-title: Spanish r
-summary: Description to follow.
-description: Overview of tap, trill, and typical learning difficulties.
+resource_id: promat-teaching-es-r
+title: The Spanish r
+summary: One tongue tap or several? Why *caro* and *carro* sound different.
+description: 'The two Spanish r phonemes /ɾ/ and /r/: articulation, positional conditions and listening comparisons from the corpus with a short classroom task.'
 equivalents:
   de: r
-is_public: false
 metadata:
-  authors:
-    - Felix Tacke
-blocks: []
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
+blocks:
+- type: topic_meta
+- type: text
+  body: |-
+    *caro* or *carro*? One more letter – and a different word. Spanish distinguishes two r sounds whose contrast between vowels carries meaning: *pero* (“but”) and *perro* (“dog”), *caro* (“expensive”) and *carro* (“cart”).
+
+    For German-speaking learners this is doubly difficult: the familiar German r is often produced further back in the mouth (uvular) and is frequently vocalised after vowels. Both Spanish r sounds, by contrast, are made with the tip of the tongue.
+- type: overview
+  title: At a glance
+  items:
+  - '/ɾ/, the single tap: a brief contact of the tongue tip against the alveolar ridge.'
+  - '/r/, the multiple vibrant (trill): several rapid contacts in a row.'
+  - Only between vowels do the two sounds distinguish words; at the beginning of a word [r] appears, at the end of a word usually [ɾ].
+- type: section_heading
+  title: Listen and discover
+- type: text
+  body: 'Two recordings of the same pair of words, without the written form. Listen for the tongue taps: one in the first word, several in the second?'
+- type: audio_contrast
+  title: Two words, two r sounds
+  lead: How often does the tongue tip strike in the first word, and how often in the second?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W88
+    audio: corpus/p2-caro-ref.mp3
+    token_id: ES-N-0002 · W88
+  - label: Learner (B1)
+    subtitle: L1 German · W88
+    audio: corpus/p2-caro-learner.mp3
+    token_id: ES-L-0012 · W88
+- type: solution
+  body: |-
+    The recordings contain the minimal pair *caro* – *carro*. In the first word the tongue tip strikes once: [ˈka.ɾo]. In the second word it vibrates several times: [ˈka.ro].
+
+    Listen closely to how the learner recording produces the second word: as a trilled r, as a single tap, or with a different r sound? The recordings were not selected by how well or badly the contrast is produced.
+- type: audio_contrast
+  title: '*pero* – *perro*'
+  lead: Which of the two words has the longer r sound?
+  transcript: pero – perro
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W90
+    audio: corpus/p2-pero-ref.mp3
+    token_id: ES-N-0002 · W90
+  - label: Learner (B1)
+    subtitle: L1 German · W90
+    audio: corpus/p2-pero-learner.mp3
+    token_id: ES-L-0012 · W90
+- type: section_heading
+  title: Two phonemes, two articulations
+- type: text
+  body: |-
+    Spanish has two rhotic phonemes. Both are produced with the tip of the tongue:
+
+    - **/ɾ/** (single vibrant, “tap”): the tongue tip touches the alveolar ridge for a very short moment and releases immediately.
+    - **/r/** (multiple vibrant, “trill”): the tongue tip rests loosely close to the alveolar ridge and is set vibrating by the airstream; usually two to three brief contacts occur.
+- type: text
+  body: '**Positional conditions.** Only between vowels do /ɾ/ and /r/ contrast: *pero* [ˈpe.ɾo] – *perro* [ˈpe.ro]. At the beginning of a word (*reloj*, *rojo*) and after *n*, *l*, *s* (*honra*, *alrededor*, *israelí*) only the trill occurs; a single `r` is written there. After a consonant within a cluster (*tres*, *brazo*) and at the end of a syllable or word (*mar*, *carta*) the single tap is usual. Spelling therefore only reflects the meaning-distinguishing contrast between vowels: `r` and `rr` are not a one-to-one image of the two sounds.'
+- type: info_box
+  title: Not every r sounds the same
+  body: The realisations described are points of reference, not rules. In parts of Latin America (for example Mexico, Costa Rica, Chile, the Andean region) the trill is often assibilated, that is, produced with a fricative component. In Puerto Rico a back, velar r is widespread. At the end of a word and in fast speech the realisation also varies. Regional variation is not a pronunciation error – in learner recordings, however, it cannot easily be separated from transfer effects.
+- type: section_heading
+  title: More comparisons from the corpus
+- type: text
+  body: The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+- type: audio_contrast
+  title: '*reloj* on its own and in a sentence'
+  lead: How often does the tongue strike in the *r* of *reloj* – on its own and in the sentence? And how does the *r* in *miro* sound by comparison?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Spain · W2
+    audio: corpus/p2-reloj-ref-isoliert.mp3
+    note: Isolated word
+    token_id: ES-N-0002 · W2
+  - label: Native-speaker reference
+    subtitle: Spain · D1
+    audio: corpus/p2-reloj-ref-satz.mp3
+    note: 'In the sentence: Hoy *miro* el *reloj* con calma antes de salir.'
+    token_id: ES-N-0002 · D1
+  - label: Learner (B1)
+    subtitle: L1 German · W2
+    audio: corpus/p2-reloj-learner-isoliert.mp3
+    note: Isolated word
+    token_id: ES-L-0012 · W2
+  - label: Learner (B1)
+    subtitle: L1 German · D1
+    audio: corpus/p2-reloj-learner-satz.mp3
+    note: 'In the sentence: Hoy *miro* el *reloj* con calma antes de salir.'
+    token_id: ES-L-0012 · D1
+- type: section_heading
+  title: For the classroom
+- type: tip_box
+  title: 'Quick task: listening discrimination'
+  body: |-
+    1. The teacher says or plays pairs such as *caro* / *carro* and *pero* / *perro* in random order.
+    2. Learners hold up one finger (single tap) or several (multiple taps) to show what they hear.
+    3. Then everyone repeats the pairs and compares tongue position and the duration of the vibration: where does the tongue tip touch the alveolar ridge, and for how long?
+- type: further_reading
+  title: Further exploration
+  description: Related pages on the r in Spanish.
+  items:
+  - title: Syllable-final r
+    text: What happens to the r at the end of a syllable or word – and how this differs from German r-vocalisation.
+    cta: Go to topic page
+    href: /en/teaching/spanish/r-am-silbenende
+  - title: The r sounds in the digital textbook
+    text: Overview of the Spanish sounds that are articulated differently, including the two r sounds (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
+  - title: Which pronunciation should you teach?
+    text: Regional variation and the question of the target pronunciation.
+    cta: Go to topic page
+    href: /en/teaching/spanish/which-pronunciation

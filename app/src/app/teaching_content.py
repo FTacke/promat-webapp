@@ -1134,6 +1134,19 @@ def _topic_blocks(
                     }, "title", "lead")
                 )
             continue
+        if block_type == "solution":
+            # Collapsible solution of a listening question: native <details>, no script; the body is Markdown prose.
+            body_html_blocks = _markdown_blocks(raw_block.get("body"))
+            if body_html_blocks:
+                blocks.append(
+                    _set_inline_markdown_fields({
+                        "type": "solution",
+                        "id": block_id,
+                        "title": _as_text(raw_block.get("title")),
+                        "body_html_blocks": body_html_blocks,
+                    }, "title")
+                )
+            continue
         if block_type == "audio_examples":
             inherited_transcript = _as_text(raw_block.get("transcript"))
             block_source = _audio_source_payload(raw_block.get("source"))
@@ -1586,7 +1599,9 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         "teaching_switch_items": _teaching_switch_items(effective_ui_lang, teaching_lang),
         "content_header": content_header,
         "resource": area_resource if area_resource and area_resource["citable"] else None,
-        "citation": _citation_payload(effective_ui_lang, area_resource),
+        # Language hubs are orientation pages: no citation box (the bibliographic resource above still feeds
+        # canonical/JSON-LD metadata); citations are offered on single topic pages only.
+        "citation": None,
         "meta_description": render_markdown_plain_text(overview_intro or lead) or None,
         "meta_alternates": {
             edition: url_for("public.teaching_language_root", ui_lang=edition, language_slug=teaching_lang)

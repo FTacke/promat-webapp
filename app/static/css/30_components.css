@@ -1160,6 +1160,66 @@ textarea:focus-visible {
   line-height: 1.5;
 }
 
+/* Teaching solution of a listening question: a native <details> that stays quiet until opened. */
+.pm-teaching-solution__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pm-space-xs);
+  min-height: var(--pm-touch-target-min);
+  color: var(--pm-text-accent);
+  font-family: var(--pm-type-nav-family);
+  font-size: var(--pm-type-nav-size);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.pm-teaching-solution__summary::-webkit-details-marker {
+  display: none;
+}
+
+.pm-teaching-solution__summary:focus-visible {
+  outline: var(--pm-nav-focus-outline);
+  outline-offset: var(--pm-nav-focus-offset);
+  border-radius: var(--pm-nav-surface-radius);
+}
+
+.pm-teaching-solution__icon {
+  transition: transform var(--promat-transition-fast);
+}
+
+.pm-teaching-solution[open] .pm-teaching-solution__icon {
+  transform: rotate(180deg);
+}
+
+.pm-teaching-solution__label--hide,
+.pm-teaching-solution[open] .pm-teaching-solution__label--show {
+  display: none;
+}
+
+.pm-teaching-solution[open] .pm-teaching-solution__label--hide {
+  display: inline;
+}
+
+.pm-teaching-solution__body {
+  display: grid;
+  gap: var(--pm-space-container);
+  margin-top: var(--pm-space-xs);
+  padding: var(--pm-space-sm) var(--pm-space-container);
+  border-radius: var(--pm-nav-surface-radius);
+  background: var(--pm-nav-surface-quiet);
+}
+
+.pm-teaching-solution__body > * {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-teaching-solution__icon {
+    transition: none;
+  }
+}
+
 .pm-expandable__viewport {
   position: relative;
 }
@@ -1516,11 +1576,6 @@ a.promat-card:active .pm-cta-link {
 /* Extra air between the introduction and the first topic group (the page gap alone is the distance to every other block). */
 .pm-teaching-page--hub .pm-teaching-group-stack {
   margin-top: var(--pm-teaching-intro-gap);
-}
-
-/* The citation closes the overview with clear air above it. */
-.pm-teaching-page--hub .promat-content-section--citation {
-  margin-top: var(--pm-teaching-citation-gap);
 }
 
 /* Header-to-content and content-to-back-link distance of every topic page: the shared section gap. */

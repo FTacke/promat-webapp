@@ -1,0 +1,118 @@
+resource_id: promat-teaching-es-accent-changes-everything
+title: Ein Akzent verändert alles
+summary: Wie die Betonung eines Wortes seine Bedeutung verändert – am Beispiel von *número*, *numero* und *numeró*.
+description: Der lexikalische Wortakzent im Spanischen am Tripel *número* – *numero* – *numeró*, mit Hörvergleichen im isolierten Wort und im Satz.
+equivalents:
+  en: accent-changes-everything
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
+blocks:
+- type: topic_meta
+- type: text
+  body: '*número*, *numero*, *numeró*: dieselben Buchstaben, dieselben Laute – und drei verschiedene Wörter. Was sie unterscheidet, ist die Silbe, auf der die Betonung liegt. Im Spanischen kann die Position des Wortakzents Bedeutung unterscheiden.'
+- type: overview
+  title: Auf einen Blick
+  items:
+  - '*número* (Zahl, Nummer): Betonung auf der ersten Silbe.'
+  - '*numero* (ich nummeriere): Betonung auf der zweiten Silbe.'
+  - '*numeró* (er/sie nummerierte): Betonung auf der dritten Silbe.'
+- type: section_heading
+  title: Hören und entdecken
+- type: text
+  body: Zwei Aufnahmen, in denen drei Wörter nacheinander gesprochen werden, ohne Schriftbild. Hören Sie, welche Silbe jeweils betont ist – die erste, die zweite oder die dritte?
+- type: audio_contrast
+  title: Drei Wörter, drei Betonungen
+  lead: Welche Silbe ist in jedem der drei Wörter betont?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Chile · W87
+    audio: corpus/p6-numero3-ref.mp3
+    token_id: ES-N-0005 · W87
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · W87
+    audio: corpus/p6-numero3-learner.mp3
+    token_id: ES-L-0005 · W87
+- type: solution
+  body: |-
+    Die Reihenfolge ist *número* – *numero* – *numeró*:
+
+    - *número* [ˈnu.me.ɾo]: Betonung auf der ersten Silbe – „Zahl“, „Nummer“.
+    - *numero* [nu.ˈme.ɾo]: Betonung auf der zweiten Silbe – „ich nummeriere“.
+    - *numeró* [nu.me.ˈɾo]: Betonung auf der dritten Silbe – „er/sie nummerierte“.
+
+    Die Wörter sind nicht allein durch Lautstärke zu unterscheiden. Hören Sie auch auf Dauer und Tonhöhe der betonten Silbe.
+- type: section_heading
+  title: Wortakzent im Spanischen
+- type: text
+  body: 'Der **Wortakzent** ist die Hervorhebung einer Silbe innerhalb des Wortes. Im Spanischen ist er **lexikalisch**: Seine Position gehört zum Wort und kann Bedeutung unterscheiden. Akustisch ist er nicht einfach „lauter sprechen“: Dauer, Grundfrequenz (Tonhöhe) und Intensität tragen zur Prominenz bei, und ihr Zusammenspiel hängt vom Satzkontext ab. Anders als im Deutschen werden unbetonte Vokale im Spanischen kaum zum Schwa reduziert: Alle drei Vokale in *número* bleiben deutlich *u*, *e* und *o*.'
+- type: text
+  body: 'Das Akzentzeichen (die *tilde*) macht die Betonungsposition in der Schrift sichtbar. Sie steht nur dort, wo das Wort von der Grundregel abweicht: Wörter auf Vokal, *n* oder *s* sind regelhaft auf der vorletzten Silbe betont (*numero*), andere auf der letzten. *número* und *numeró* weichen davon ab und tragen deshalb ein Zeichen. Diese Seite behandelt den Wortakzent, nicht die Regeln der Akzentschreibung im Einzelnen.'
+- type: info_box
+  title: Hören, nicht nur lesen
+  body: Das Zeichen hilft beim Lesen und Schreiben. Beim Hören müssen Lernende die Betonung ohne Schriftbild erkennen und beim Sprechen selbst herstellen. Im Satz kommen Satzakzent und Intonation hinzu, die die Wortbetonung überlagern können.
+- type: section_heading
+  title: Weitere Vergleiche aus dem Korpus
+- type: text
+  body: Alle drei Formen wurden gezielt als Kontrast erhoben und stehen zusätzlich je in einem kontrollierten Satz. Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+- type: audio_contrast
+  title: '*número* im Satz'
+  lead: Auf welcher Silbe liegt die Betonung von *número*?
+  transcript: ¿Por qué quieres tirar ese *número* de teléfono?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Chile · QW10
+    audio: corpus/p6-qw10-ref.mp3
+    token_id: ES-N-0005 · QW10
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · QW10
+    audio: corpus/p6-qw10-learner.mp3
+    token_id: ES-L-0005 · QW10
+- type: audio_contrast
+  title: '*numero* im Satz'
+  lead: Auf welcher Silbe liegt die Betonung von *numero*?
+  transcript: ¿Cómo *numero* los puntos que obtiene cada equipo?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Chile · QW8
+    audio: corpus/p6-qw8-ref.mp3
+    token_id: ES-N-0005 · QW8
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · QW8
+    audio: corpus/p6-qw8-learner.mp3
+    token_id: ES-L-0005 · QW8
+- type: audio_contrast
+  title: '*numeró* im Satz'
+  lead: Auf welcher Silbe liegt die Betonung von *numeró*?
+  transcript: El profesor explicó la regla y *numeró* ejemplos.
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Chile · D30
+    audio: corpus/p6-d30-ref.mp3
+    token_id: ES-N-0005 · D30
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · D30
+    audio: corpus/p6-d30-learner.mp3
+    token_id: ES-L-0005 · D30
+- type: section_heading
+  title: Für den Unterricht
+- type: tip_box
+  title: 'Kurzaufgabe: dreimal derselbe Satzrahmen'
+  body: |-
+    1. Die Lernenden sprechen *número – numero – numeró* und verändern nur die Betonung. Zum Mitklopfen: Auf die betonte Silbe klopfen.
+    2. Die Lehrkraft spielt die Aufnahmen aus dem Satzvergleich ohne Schriftbild; die Lernenden zeigen mit Fingern (1, 2 oder 3), welche Silbe betont ist.
+    3. Danach werden die Bedeutungen zugeordnet: Zahl – ich nummeriere – er/sie nummerierte.
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Informationen zu Wortakzent und Akzentschreibung.
+  items:
+  - title: Wortakzent im digitalen Lehrbuch
+    text: Das Kapitel Orthographie erklärt Wortakzent und Tilde und verwendet *número*, *numero* und *numeró* als Beispiel.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/orthographie/#wortakzent
+  - title: Die Tilde – der orthographische Akzent
+    text: Wann das Akzentzeichen geschrieben wird – Schritt für Schritt.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/orthographie/#die-tilde-der-orthographische-akzent

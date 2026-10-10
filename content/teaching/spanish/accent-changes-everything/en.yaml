@@ -1,0 +1,118 @@
+resource_id: promat-teaching-es-accent-changes-everything
+title: An accent changes everything
+summary: How the stress of a word changes its meaning – using *número*, *numero* and *numeró* as an example.
+description: Lexical word stress in Spanish illustrated by the triplet *número* – *numero* – *numeró*, with listening comparisons in isolation and in sentences.
+equivalents:
+  de: accent-changes-everything
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
+blocks:
+- type: topic_meta
+- type: text
+  body: '*número*, *numero*, *numeró*: the same letters, the same sounds – and three different words. What sets them apart is the syllable that carries the stress. In Spanish, the position of word stress can distinguish meaning.'
+- type: overview
+  title: At a glance
+  items:
+  - '*número* (number): stress on the first syllable.'
+  - '*numero* (I number): stress on the second syllable.'
+  - '*numeró* (he/she numbered): stress on the third syllable.'
+- type: section_heading
+  title: Listen and discover
+- type: text
+  body: 'Two recordings in which three words are spoken one after another, without the written form. Which syllable is stressed in each: the first, the second or the third?'
+- type: audio_contrast
+  title: Three words, three stress patterns
+  lead: Which syllable is stressed in each of the three words?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Chile · W87
+    audio: corpus/p6-numero3-ref.mp3
+    token_id: ES-N-0005 · W87
+  - label: Learner (B1)
+    subtitle: L1 German · W87
+    audio: corpus/p6-numero3-learner.mp3
+    token_id: ES-L-0005 · W87
+- type: solution
+  body: |-
+    The order is *número* – *numero* – *numeró*:
+
+    - *número* [ˈnu.me.ɾo]: stress on the first syllable – “number”.
+    - *numero* [nu.ˈme.ɾo]: stress on the second syllable – “I number”.
+    - *numeró* [nu.me.ˈɾo]: stress on the third syllable – “he/she numbered”.
+
+    The words cannot be told apart by loudness alone. Listen also to the duration and pitch of the stressed syllable.
+- type: section_heading
+  title: Word stress in Spanish
+- type: text
+  body: '**Word stress** is the prominence of one syllable within a word. In Spanish it is **lexical**: its position belongs to the word and can distinguish meaning. Acoustically it is not simply “speaking louder”: duration, fundamental frequency (pitch) and intensity all contribute to prominence, and how they interact depends on the sentence context. Unlike in German, unstressed vowels in Spanish are hardly reduced to schwa: all three vowels in *número* remain clearly *u*, *e* and *o*.'
+- type: text
+  body: 'The written accent (the *tilde*) makes the stress position visible in writing. It appears only where a word departs from the default rule: words ending in a vowel, *n* or *s* are regularly stressed on the second-to-last syllable (*numero*), others on the last. *número* and *numeró* deviate from this and therefore carry a mark. This page deals with word stress, not with the rules of accent spelling in detail.'
+- type: info_box
+  title: Listening, not just reading
+  body: The mark helps with reading and writing. When listening, learners must recognise stress without the written form, and when speaking they must produce it themselves. In sentences, sentence stress and intonation come in and can overlay word stress.
+- type: section_heading
+  title: More comparisons from the corpus
+- type: text
+  body: All three forms were deliberately elicited as a contrast and also appear in a controlled sentence each. The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+- type: audio_contrast
+  title: '*número* in a sentence'
+  lead: Which syllable carries the stress of *número*?
+  transcript: ¿Por qué quieres tirar ese *número* de teléfono?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Chile · QW10
+    audio: corpus/p6-qw10-ref.mp3
+    token_id: ES-N-0005 · QW10
+  - label: Learner (B1)
+    subtitle: L1 German · QW10
+    audio: corpus/p6-qw10-learner.mp3
+    token_id: ES-L-0005 · QW10
+- type: audio_contrast
+  title: '*numero* in a sentence'
+  lead: Which syllable carries the stress of *numero*?
+  transcript: ¿Cómo *numero* los puntos que obtiene cada equipo?
+  examples:
+  - label: Native-speaker reference
+    subtitle: Chile · QW8
+    audio: corpus/p6-qw8-ref.mp3
+    token_id: ES-N-0005 · QW8
+  - label: Learner (B1)
+    subtitle: L1 German · QW8
+    audio: corpus/p6-qw8-learner.mp3
+    token_id: ES-L-0005 · QW8
+- type: audio_contrast
+  title: '*numeró* in a sentence'
+  lead: Which syllable carries the stress of *numeró*?
+  transcript: El profesor explicó la regla y *numeró* ejemplos.
+  examples:
+  - label: Native-speaker reference
+    subtitle: Chile · D30
+    audio: corpus/p6-d30-ref.mp3
+    token_id: ES-N-0005 · D30
+  - label: Learner (B1)
+    subtitle: L1 German · D30
+    audio: corpus/p6-d30-learner.mp3
+    token_id: ES-L-0005 · D30
+- type: section_heading
+  title: For the classroom
+- type: tip_box
+  title: 'Quick task: one frame, three words'
+  body: |-
+    1. Learners say *número – numero – numeró* and change only the stress. To keep the beat: tap on the stressed syllable.
+    2. The teacher plays the sentence recordings without the written form; learners show with their fingers (1, 2 or 3) which syllable is stressed.
+    3. Then the meanings are matched: number – I number – he/she numbered.
+- type: further_reading
+  title: Further exploration
+  description: Further information on word stress and accent spelling.
+  items:
+  - title: Word stress in the digital textbook
+    text: The orthography chapter explains word stress and the tilde, using *número*, *numero* and *numeró* as an example (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/orthographie/#wortakzent
+  - title: The tilde – the orthographic accent
+    text: When the accent mark is written – step by step (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/orthographie/#die-tilde-der-orthographische-akzent

@@ -276,6 +276,21 @@
   <section id="{{ block.id }}" data-teaching-width="{{ block_width }}" class="pm-teaching-block pm-teaching-block--admonition">
     {{ render_admonition(block.item) }}
   </section>
+  {% elif block.type == 'solution' %}
+  <section id="{{ block.id }}" data-teaching-width="{{ block_width }}" class="pm-teaching-block pm-teaching-block--solution pm-reading">
+    <details class="pm-teaching-solution">
+      <summary class="pm-teaching-solution__summary">
+        <span class="pm-teaching-solution__label pm-teaching-solution__label--show">{{ block.title_html | safe if block.title_html else labels.solution_show }}</span>
+        <span class="pm-teaching-solution__label pm-teaching-solution__label--hide">{{ labels.solution_hide }}</span>
+        <span class="material-symbols-rounded pm-teaching-solution__icon" aria-hidden="true">expand_more</span>
+      </summary>
+      <div class="pm-teaching-solution__body">
+        {% for block_html in block.body_html_blocks %}
+        <div class="promat-content-block__text pm-teaching-copy-block">{{ block_html | safe }}</div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
   {% elif block.type == 'overview' %}
   <section id="{{ block.id }}" data-teaching-width="{{ block_width }}" class="pm-teaching-block pm-teaching-block--overview">
     {{ render_admonition({

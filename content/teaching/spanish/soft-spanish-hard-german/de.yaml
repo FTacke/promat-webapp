@@ -1,32 +1,141 @@
+resource_id: promat-teaching-es-soft-spanish-hard-german
 title: Weiches Spanisch, hartes Deutsch
-summary: Beschreibung folgt.
-description: Kontrastive Hinweise für Unterrichtssituationen, in denen deutsche Artikulationsgewohnheiten spanische Zielmuster überformen.
+summary: Warum Spanisch oft fließender klingt und wie der deutsche Knacklaut die Aussprache spanischer Wörter und Wortfolgen beeinflusst.
+description: Wie der deutsche Knacklaut [ʔ] spanische Wortfolgen beeinflussen kann – mit Hörvergleichen aus dem Korpus und einer kurzen Unterrichtsaufgabe.
 equivalents:
   en: soft-spanish-hard-german
-is_public: false
-credits:
-  authors:
-    - name: Felix Tacke
-      role: Rohbaukonzept
-      affiliation: PROMAT
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
 blocks:
-  - type: hero
-    eyebrow: Kontrast
-    title: Weiches Spanisch, hartes Deutsch
-    lead: Kleine Artikulationsunterschiede erzeugen große Höreindrücke und sollten früh explizit gemacht werden.
-  - type: text
-    title: Beobachtungsauftrag
-    body: |
-      Viele Lernende setzen spanische Laute zu fest oder zu hart an.
+- type: topic_meta
+- type: text
+  body: |-
+    Warum klingt Deutsch häufig etwas abgehackter als Spanisch?
 
-      Der Unterricht profitiert davon, wenn Kontraste zuerst hörbar und erst danach terminologisch beschrieben werden.
-  - type: tip_box
-    title: Unterrichtsimpuls
-    body: |
-      Arbeite mit kurzen Minimalpaaren und Nachsprechsequenzen.
+    „Weich“ und „hart“ sind Höreindrücke, keine phonetischen Fachbegriffe. Diese Seite macht den Eindruck an einem einzigen, gut hörbaren Detail fest: dem Übergang zwischen Vokalen an Wortgrenzen.
 
-      Lasse Lernende den Unterschied zwischen deutscher Spannung und spanischer Lockerheit zuerst imitieren, bevor Regeln eingeführt werden.
-  - type: next_topics
-    title: Anschluss
-    topics:
-      - r-am-silbenende
+    Im Deutschen wird vor vokalisch beginnenden Wörtern oder Silben häufig ein **Knacklaut** [ʔ] gesprochen: Die Stimmlippen schließen sich kurz und öffnen sich dann wieder. Im Spanischen ist ein solcher harter Neueinsatz in der gewöhnlichen verbundenen Rede dagegen nicht charakteristisch – Vokale werden über Wortgrenzen hinweg meist glatt aneinander angeschlossen.
+- type: overview
+  title: Auf einen Blick
+  items:
+  - Der deutsche Knacklaut [ʔ] markiert häufig den Neueinsatz vokalisch beginnender Wörter und Silben.
+  - Im Spanischen werden Wörter in der verbundenen Rede zu größeren Lauteinheiten verknüpft; an vokalischen Wortgrenzen fehlt in der Regel der glottale Verschluss.
+  - Lernende übertragen das deutsche Muster gelegentlich auf das Spanische. Das lässt sich hören – aber nicht in jeder Aufnahme.
+- type: section_heading
+  title: Hören und entdecken
+- type: text
+  body: 'Zwei Aufnahmen desselben Satzes. Achten Sie auf die Stelle zwischen *tiene* und *hambre*: Das `h` ist im Spanischen stumm, an der Wortgrenze treffen also zwei Vokale aufeinander.'
+- type: audio_contrast
+  title: '*tiene hambre*: glatt oder mit Unterbrechung?'
+  lead: Wo ist eine kurze Unterbrechung zu hören – und in welcher Aufnahme?
+  transcript: Cuando el chico *tiene hambre*, pierde el control.
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · D27
+    audio: corpus/p1-hambre-ref.mp3
+    token_id: ES-N-0004 · D27
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · D27
+    audio: corpus/p1-hambre-learner.mp3
+    token_id: ES-L-0007 · D27
+- type: solution
+  body: |-
+    Gehört wird, ob zwischen *tiene* und *hambre* ein glottaler Verschluss liegt. In verbundener Aussprache gehen beide Wörter ineinander über: [ˈtje.ne.ˈam.bɾe]. Mit Knacklaut entsteht dagegen eine kurze Unterbrechung vor dem *a*: [ˈtje.ne.ˈʔam.bɾe].
+
+    Die Aufnahmen wurden nicht ausgewählt, um einen Fehler vorzuführen. Ob und wie deutlich ein Knacklaut zu hören ist, unterscheidet sich von Aufnahme zu Aufnahme – hören Sie deshalb auch die weiteren Vergleiche.
+- type: section_heading
+  title: Warum klingt das unterschiedlich?
+- type: text
+  body: |-
+    Im Spanischen bilden Wörter beim Sprechen größere lautliche Einheiten. Silbengrenzen fallen oft nicht mit Wortgrenzen zusammen: In *los amigos* wird das *s* zum Anlaut der nächsten Silbe [lo.sa.ˈmi.ɣos] (*enlace*). Treffen zwei Vokale aufeinander, wie in *tiene hambre* oder *se oye*, werden sie ohne glottalen Verschluss angeschlossen.
+
+    Im Deutschen ist dagegen der Neueinsatz mit [ʔ] bei vokalischem Anlaut verbreitet: *die Ente* [diː ˈʔɛn.tə]. Deutschsprachige Lernende können dieses Muster auf das Spanische übertragen – *si entiendo bien* wird dann [si.ʔen.ˈtjen.do.ˈβjen] statt [si.en.ˈtjen.do.ˈβjen]. Zusätzliche Unterbrechungen verändern den Rhythmus und lassen die Rede abgehackter wirken.
+- type: info_box
+  title: Was dieser Vergleich nicht behauptet
+  body: |-
+    - „Weich“ und „hart“ beschreiben einen Höreindruck, keine phonetische Kategorie. Es geht nicht um eine pauschale Gegenüberstellung beider Sprachen.
+    - Auch im Deutschen sind Wortverbindungen ohne Knacklaut möglich; der Neueinsatz ist nicht obligatorisch.
+    - Auch spanischsprachige Menschen können kontextabhängig glottalisieren, etwa bei emphatischer Betonung oder nach einer Pause.
+    - Was an Vokalgrenzen zusätzlich geschehen kann (Verschmelzung, Gleitlaute, Hiatus), ist ein eigenes Thema und wird hier nicht behandelt.
+    - Nicht jede Lernendenaufnahme zeigt einen Knacklaut.
+- type: section_heading
+  title: Weitere Vergleiche aus dem Korpus
+- type: text
+  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+- type: audio_contrast
+  title: '*se oye*'
+  lead: Sind *se* und *oye* hörbar voneinander getrennt?
+  transcript: Es difícil juzgar solo por lo que *se oye*.
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · D7
+    audio: corpus/p1-oye-ref.mp3
+    token_id: ES-N-0004 · D7
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · D7
+    audio: corpus/p1-oye-learner.mp3
+    token_id: ES-L-0007 · D7
+- type: audio_contrast
+  title: '*la euforia*'
+  lead: Wie schließt *euforia* an *la* an?
+  transcript: '*La euforia* le hizo traer más bebidas de lo necesario.'
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · D17
+    audio: corpus/p1-euforia-ref.mp3
+    token_id: ES-N-0004 · D17
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · D17
+    audio: corpus/p1-euforia-learner.mp3
+    token_id: ES-L-0007 · D17
+- type: audio_contrast
+  title: '*puedo oír*'
+  lead: 'Zwei *o* stoßen aufeinander: Gibt es zwischen *puedo* und *oír* eine Zäsur?'
+  transcript: '*Puedo oír* bien cuando ella se ríe bajito.'
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · D18
+    audio: corpus/p1-oir-ref.mp3
+    token_id: ES-N-0004 · D18
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · D18
+    audio: corpus/p1-oir-learner.mp3
+    token_id: ES-L-0007 · D18
+- type: audio_contrast
+  title: '*que obtiene*'
+  lead: Wo setzt *obtiene* nach *que* ein?
+  transcript: ¿Cómo numero los puntos *que obtiene* cada equipo?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Mexiko · QW8
+    audio: corpus/p1-obtiene-ref.mp3
+    token_id: ES-N-0004 · QW8
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · QW8
+    audio: corpus/p1-obtiene-learner.mp3
+    token_id: ES-L-0007 · QW8
+- type: section_heading
+  title: Für den Unterricht
+- type: tip_box
+  title: 'Kurzaufgabe: erst abgehackt, dann fließend'
+  body: |-
+    1. Wählen Sie drei Wortfolgen: *tiene hambre*, *se oye*, *la euforia*.
+    2. Die Lernenden sprechen jede Folge zuerst mit bewusst hörbarer Unterbrechung zwischen den Wörtern, dann fließend – als wäre es ein einziges Wort.
+    3. Anschließend nehmen sie beide Varianten mit dem Smartphone auf und vergleichen sie mit den Referenzaufnahmen oben.
+
+    Leitfrage: Wo spüren Sie den Neueinsatz im Hals, und wo verschwindet er?
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Seiten zu Aussprachemodellen und zum Knacklaut.
+  items:
+  - title: Aussprache im digitalen Lehrbuch
+    text: Das Kapitel behandelt vokalische Wortanfänge mit und ohne Knacklaut, unter anderem am Beispiel *o hay* mit Hörbeispielen aus MAR.ELE.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/aussprache/
+  - title: Welche Aussprache unterrichten?
+    text: Welche Realisierung gilt als Maßstab – und warum regionale Variation keine Fehlerhierarchie bedeutet.
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/which-pronunciation

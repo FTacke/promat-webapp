@@ -1,108 +1,150 @@
-teaching_lang: spanish
-topic_slug: r-am-silbenende
-ui_lang: de
-status: draft
-
+resource_id: promat-teaching-es-r-am-silbenende
 title: R am Silbenende
-summary: "Aussprache und Hörverstehen rund um das r am Silben- und Wortende."
-description: Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zum r am Silben- und Wortende im Spanischen.
-
+summary: Warum das spanische r am Silben- und Wortende häufig konsonantisch ausgesprochen wird – und wie sich dies von der deutschen R-Vokalisierung unterscheidet.
+description: 'Das r am Silben- und Wortende im Spanischen: konsonantische Realisierung, Stellungen vor Pause, Konsonant und Vokal sowie Hörvergleiche aus dem Korpus.'
 equivalents:
   en: r-am-silbenende
-
-card:
-  title: R am Silbenende
-  description: "Aussprache und Hörverstehen rund um das r am Silben- und Wortende."
-
-hub:
-  group: Laute und Artikulation
-  status: draft
-
 metadata:
-  authors:
-    - NN
-  status:
-    - In Vorbereitung
-  created: 2025-07-06
-  updated: 2026-03-05
-
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
 blocks:
-  - type: topic_meta
+- type: topic_meta
+- type: text
+  body: 'Am Wortende verschwindet das r? Im Deutschen ist das tatsächlich oft so: Nach Vokal wird /r/ in vielen Standardaussprachen vokalisiert, *wir* klingt dann [viːɐ̯], *Lehrer* [ˈleːʁɐ]. Im Spanischen bleibt das r am Silben- und Wortende dagegen in vielen Varietäten ein konsonantischer Laut.'
+- type: overview
+  title: Auf einen Blick
+  items:
+  - 'Deutsch: /r/ wird in der Silbencoda häufig zu einem vokalischen Laut [ɐ̯] (*wir*, *Lehrer*).'
+  - 'Spanisch: In vielen Varietäten bleibt das r auch am Silben- und Wortende konsonantisch; das einfache alveolare [ɾ] ist ein wichtiger Referenzlaut.'
+  - Die tatsächliche Realisierung hängt von Position, Kontext und Region ab.
+- type: section_heading
+  title: Hören und entdecken
+- type: text
+  body: Zweimal dasselbe Wort, das auf *r* endet. Achten Sie auf das Wortende.
+- type: audio_contrast
+  title: '*reír*: Wie endet das Wort?'
+  lead: 'Wie endet das Wort: mit einem Konsonanten oder mit einem Vokal?'
+  transcript: reír
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W76
+    audio: corpus/p3-reir-ref.mp3
+    token_id: ES-N-0001 · W76
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W76
+    audio: corpus/p3-reir-learner.mp3
+    token_id: ES-L-0019 · W76
+- type: solution
+  body: |-
+    Eine konsonantische Realisierung endet mit einem kurzen Zungenkontakt am Zahndamm: [re.ˈiɾ]. Eine vokalisierte Variante endet dagegen mit einem schwa-ähnlichen Vokal ohne Zungenkontakt, etwa [ʁe.ˈi.ɐ̯]. Im digitalen Lehrbuch von Hispanistica steht für *reír* genau diese Gegenüberstellung: Zielaussprache [re.ˈiɾ] gegenüber einer Lernendenaussprache [ʁe.ˈɪɐ].
 
-  - type: text
-    body: |
-      Hier kann später ein kurzer erklärender Einstieg stehen: Was ist am `r` am Silben- oder Wortende für den Unterricht relevant? Welche Hörziele stehen im Mittelpunkt?
+    Ob die Lernendenaufnahme hier konsonantisch oder vokalisch endet, ist nicht vorgegeben: Die Aufnahmen wurden nicht danach ausgewählt. Entscheiden Sie nach Gehör.
+- type: section_heading
+  title: Was am Silben- und Wortende geschieht
+- type: text
+  body: |-
+    Im Spanischen wird /r/ am Silben- und Wortende üblicherweise als einfacher Vibrant [ɾ] realisiert. Drei Umgebungen sind zu unterscheiden:
 
-  - type: overview
-    title: Auf einen Blick
-    items:
-      - Hier können später die wichtigsten Punkte der Themenseite knapp zusammengefasst werden.
-      - Der Block kann zeigen, was Lehrkräfte für die Unterrichtsplanung beachten sollten.
-      - Die Punkte sollten später kurz, konkret und hörorientiert formuliert werden.
+    - **Vor einer Pause:** *flor* [ˈfloɾ]. Das Wort endet mit dem r; in emphatischer Rede oder in manchen Varietäten kann es länger, mehrfach oder mit Reibung gesprochen werden.
+    - **Silbenfinal vor einem Konsonanten:** *enfermo* [en.ˈfeɾ.mo], *lavar la ropa* [la.ˈβaɾ.la.ˈro.pa]. Das r bildet die Silbencoda und bleibt ein eigener konsonantischer Laut.
+    - **Wortfinal vor einem Wort, das mit Vokal beginnt:** *cuidar un perro*. Das r rückt in der verbundenen Rede an den Anfang der nächsten Silbe: [kwi.ˈða.ɾun.ˈpe.ro] (Resilbifizierung). Hier steht es zwischen Vokalen – isoliert klingt *cuidar* also anders als in *cuidar un*.
+- type: text
+  body: '**Deutsche Vokalisierung und spanisches r.** Wer die deutsche Vokalisierung auf *flor*, *reír* oder *cuidar* überträgt, erzeugt ein Wortende ohne Zungenkontakt, etwa [ˈflo.ɐ̯]. Das fällt hörbar aus dem spanischen Muster. Dass ein Laut ausbleibt, ist jedoch nicht automatisch ein Übertragungsfehler.'
+- type: info_box
+  title: Lernendenmuster oder regionale Variation?
+  body: Spanisches /r/ am Silben- und Wortende ist nicht überall und immer [ɾ]. In Teilen der Karibik wird es etwa abgeschwächt, getilgt oder lateralisiert (in Puerto Rico kann *puerta* wie [ˈpwel.ta] klingen), und in einigen Regionen Lateinamerikas tritt eine assibilierte Variante auf. Eine ausbleibende oder abweichende Realisierung kann also regionale Variation sein. Ob eine Lernendenaufnahme auf Übertragung aus dem Deutschen zurückgeht, lässt sich allein aus der Aufnahme nicht sagen.
+- type: section_heading
+  title: Weitere Vergleiche aus dem Korpus
+- type: text
+  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+- type: audio_contrast
+  title: '*flor*'
+  lead: Gibt es am Wortende noch einen Zungenkontakt?
+  transcript: flor
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W16
+    audio: corpus/p3-flor-ref.mp3
+    token_id: ES-N-0001 · W16
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W16
+    audio: corpus/p3-flor-learner.mp3
+    token_id: ES-L-0019 · W16
+- type: audio_contrast
+  title: '*enfermo*'
+  lead: Ist das *r* in *enfermo* als eigener Laut zu hören, bevor das *m* folgt?
+  transcript: enfermo
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W50
+    audio: corpus/p3-enfermo-ref.mp3
+    token_id: ES-N-0001 · W50
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W50
+    audio: corpus/p3-enfermo-learner.mp3
+    token_id: ES-L-0019 · W50
+- type: audio_contrast
+  title: '*cuidar* allein und in *cuidar un perro*'
+  lead: Gehört das *r* in *cuidar un* zum Ende von *cuidar* oder zum Anfang von *un*?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W58
+    audio: corpus/p3-cuidar-ref-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-N-0001 · W58
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · D5
+    audio: corpus/p3-cuidar-ref-satz.mp3
+    note: 'Im Satz: *Cuidar un* perro exige tiempo y atención diaria.'
+    token_id: ES-N-0001 · D5
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · W58
+    audio: corpus/p3-cuidar-learner-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-L-0019 · W58
+  - label: Lernende:r (A2)
+    subtitle: L1 Deutsch · D5
+    audio: corpus/p3-cuidar-learner-satz.mp3
+    note: 'Im Satz: *Cuidar un* perro exige tiempo y atención diaria.'
+    token_id: ES-L-0019 · D5
+- type: audio_contrast
+  title: '*lavar* allein und in *lavar la ropa*'
+  lead: Hören Sie das *r* in *lavar* auch dann, wenn *la* folgt?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W9
+    audio: corpus/p3-lavar-ref-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-N-0001 · W9
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · D21
+    audio: corpus/p3-lavar-ref-satz.mp3
+    note: 'Im Satz: Con mucho cuidado se puso a *lavar la* ropa.'
+    token_id: ES-N-0001 · D21
+- type: section_heading
+  title: Für den Unterricht
+- type: tip_box
+  title: 'Kurzaufgabe: konsonantisch enden'
+  body: |-
+    1. Die Lernenden sprechen Wörter mit finalem r nach (*flor*, *reír*, *lavar*, *cuidar*) und beenden sie mit einem kurzen Zungenkontakt – ohne zusätzlichen Vokal am Ende.
+    2. Danach sprechen sie *cuidar un perro* als zusammenhängende Lautfolge und achten darauf, wohin das r wandert.
 
-  - type: section_heading
-    title: Hörvergleich
-
-  - type: text
-    body: |
-      Hier können später Audio-Beispiele eingebunden werden, etwa kontrastive Wort- oder Satzkontexte.
-
-  - type: audio_examples
-    title: Hörvergleich
-    lead: |
-      Hier kann später hörbar gemacht werden, wie `r` am Silben- oder Wortende in kurzen Kontexten realisiert wird.
-    empty_state: Audio-Beispiele noch nicht hinterlegt
-
-  - type: section_heading
-    title: Fachliche Einordnung
-
-  - type: text
-    variant: plain
-    body: |
-      Hier können später fachliche Hintergründe knapp eingeordnet werden: Welche Varianten, Begriffe oder Zusammenhänge sind für das Thema wichtig?
-
-  - type: info_box
-    title: Hintergrundwissen
-    body: |
-      Hier kann später eine kuratierte fachliche Information stehen, die zentrale Zusammenhänge bündelt und für Lehrkräfte schnell nutzbar macht.
-
-  - type: section_heading
-    title: Einordnung für den Unterricht
-
-  - type: text
-    body: |
-      Hier können später Konsequenzen für Ausspracheziele, Hörverstehen und Übungsdesign knapp zusammengefasst werden.
-
-  - type: tip_box
-    title: Unterrichtsperspektive
-    body: |
-      Hier kann später ein didaktischer Fokus stehen, z. B. warum das Hören im Kontext wichtiger ist als isolierte Lautbeschreibung.
-
-  - type: section_heading
-    title: Impulse für den Unterricht
-
-  - type: text
-    body: |
-      Hier können später konkrete Unterrichtsimpulse ergänzt werden.
-
-  - type: teaching_impulses
-    items:
-      - title: Hören vorbereiten
-        body: Hier kann später ein kurzer Unterrichtsimpuls stehen, der den Einstieg über Hörbeispiele beschreibt.
-      - title: Beobachtung sichern
-        body: Hier kann später ein Impuls stehen, wie Lernende ihre Höreindrücke sammeln oder vergleichen.
-      - title: Transfer ermöglichen
-        body: Hier kann später ein Impuls stehen, wie das Phänomen in Übung oder Reflexion überführt wird.
-
-  - type: section_heading
-    title: Material für den Unterricht
-
-  - type: text
-    body: |
-      Hier kann später beschrieben werden, welches Material ergänzt wird und wie es im Unterricht eingesetzt werden kann.
-
-  - type: download
-    title: Material
-    description: |
-      Hier kann später ein Arbeitsblatt, Handout oder weiteres Unterrichtsmaterial verlinkt werden.
-    status: Material noch nicht hinterlegt
+    Leitfrage: Spüren Sie die Zungenspitze am Zahndamm, bevor der nächste Vokal beginnt?
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Seiten zum r und zur Aussprachevariation.
+  items:
+  - title: Das spanische r
+    text: Die beiden r-Phoneme /ɾ/ und /r/ und der Gegensatz *caro* – *carro*.
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/r
+  - title: Die R-Laute im digitalen Lehrbuch
+    text: Behandelt das r am Wortende, unter anderem mit dem Hörbeispiel *reír*.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
+  - title: Welche Aussprache unterrichten?
+    text: Regionale Variation ernst nehmen, ohne sie als Fehler zu behandeln.
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/which-pronunciation

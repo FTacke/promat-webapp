@@ -180,7 +180,6 @@
   --pm-teaching-group-stack-gap: calc(var(--pm-space-xl) + var(--pm-space-xs));
   --pm-teaching-group-header-gap: var(--pm-space-xs);
   --pm-teaching-group-gap: var(--pm-space-lg);
-  --pm-teaching-citation-gap: var(--pm-space-lg);
   --pm-type-group-title-size: 1.22rem;
   --pm-type-group-title-weight: 600;
   --pm-type-group-title-line: 1.25;

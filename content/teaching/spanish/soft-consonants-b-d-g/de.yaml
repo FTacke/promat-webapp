@@ -1,0 +1,137 @@
+resource_id: promat-teaching-es-soft-consonants-b-d-g
+title: 'Weiche Konsonanten: b, d und g'
+summary: Warum /b/, /d/ und /g/ im Spanischen häufig ohne vollständigen Verschluss artikuliert werden.
+description: Die Phoneme /b/, /d/ und /g/ und ihre Realisierungen als Verschlusslaute und Approximanten [β ð ɣ] – mit Hörvergleichen aus dem Korpus.
+equivalents:
+  en: soft-consonants-b-d-g
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-10
+blocks:
+- type: topic_meta
+- type: text
+  body: '*labio*, *cuidado*, *logro*: Die Buchstaben `b`, `d` und `g` stehen im Spanischen oft für Laute, bei denen der Verschluss nicht ganz zustande kommt. Der Laut klingt dadurch weicher als ein deutsches *b*, *d* oder *g*.'
+- type: overview
+  title: Auf einen Blick
+  items:
+  - '/b/, /d/ und /g/ haben je zwei kontextabhängige Realisierungen: Verschlusslaute [b d g] und Approximanten [β ð ɣ].'
+  - Bei einem Approximanten nähern sich die Artikulationsorgane einander an, ohne einen vollständigen Verschluss zu bilden.
+  - 'Die Verteilung unterscheidet sich zwischen den drei Phonemen: „zwischen Vokalen weich, sonst hart“ reicht als Regel nicht aus.'
+- type: section_heading
+  title: Hören und entdecken
+- type: text
+  body: Zwei Aufnahmen desselben Wortes. Hören Sie auf das `b` in der Wortmitte.
+- type: audio_contrast
+  title: '*labio*: Verschluss oder weicher Laut?'
+  lead: Klingt das *b* in *labio* eher wie ein kurzer Knall oder eher wie ein weiches Reiben?
+  transcript: labio
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W21
+    audio: corpus/p5-labio-ref.mp3
+    token_id: ES-N-0001 · W21
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · W21
+    audio: corpus/p5-labio-learner.mp3
+    token_id: ES-L-0013 · W21
+- type: solution
+  body: |-
+    In *labio* steht /b/ zwischen Vokalen. Üblich ist dort der Approximant [β]: [ˈla.βjo]. Die Lippen nähern sich einander an, schließen sich aber nicht vollständig; es gibt keinen kleinen „Knall“, sondern ein weiches Reiben oder Summen.
+
+    Bei einem vollständigen Verschluss [b] hören Sie dagegen einen kurzen Verschlusslösungsknall. Die Aufnahmen wurden nicht danach ausgewählt, ob sie den Unterschied zeigen – entscheiden Sie nach Gehör.
+- type: section_heading
+  title: Plosiv oder Approximant?
+- type: text
+  body: |-
+    Jedes der drei Phoneme tritt in zwei Varianten auf:
+
+    - **/b/:** [b] nach Pause und nach Nasal (*un beso*, *también*); sonst [β], auch nach /l/ und zwischen Vokalen (*lavar* [la.ˈβaɾ], *el vino* [el.ˈβi.no]).
+    - **/d/:** [d] nach Pause, nach Nasal und nach /l/ (*dos*, *conde*, *toldo*); sonst [ð] (*vida* [ˈbi.ða], *cuidado* [kwi.ˈða.ðo], *verdad* [beɾ.ˈðað]).
+    - **/g/:** [g] nach Pause und nach Nasal (*gato*, *tengo*); sonst [ɣ] (*logro* [ˈlo.ɣɾo], *algo* [ˈal.ɣo]).
+- type: text
+  body: 'Entscheidend ist die gesamte lautliche Umgebung, nicht allein die Wortposition. Ein Wort nach einer Pause beginnt mit [b], [d] oder [g]; derselbe Anlaut innerhalb einer Äußerung nach einem Vokal wird zu [β], [ð] oder [ɣ]: *vino* [ˈbi.no], aber *de vino* [de.ˈβi.no]. In schneller Rede sind Approximanten oft stark reduziert; besonders [ð] kann bis zum Schwund abgeschwächt werden (*cansado* [kan.ˈsa.o]). Wie die Regel im Einzelfall umgesetzt wird, schwankt mit Tempo, Betonung und Region.'
+- type: info_box
+  title: Zwei Dinge, die nicht dasselbe sind
+  body: 'Dass `b` und `v` im Spanischen dasselbe Phonem schreiben, ist ein Thema der Orthographie ([B oder V?](/de/teaching/spanish/b-or-v)). Die hier beschriebene Weichheit betrifft die phonetische Realisierung: Sie hängt vom Kontext ab, nicht vom Buchstaben. Deutschsprachige Lernende sprechen /b d g/ häufig mit stärkeren Verschlüssen, als sie im jeweiligen spanischen Kontext üblich wären – das ist eine verbreitete Beobachtung, die an einzelnen Aufnahmen geprüft werden sollte.'
+- type: section_heading
+  title: Weitere Vergleiche aus dem Korpus
+- type: text
+  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+- type: audio_contrast
+  title: '*cuidado*: [ð]'
+  lead: 'Wie klingt das *d* in *cuidado*: hart abgesetzt oder weich und locker?'
+  transcript: cuidado
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W33
+    audio: corpus/p5-cuidado-ref.mp3
+    token_id: ES-N-0001 · W33
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · W33
+    audio: corpus/p5-cuidado-learner.mp3
+    token_id: ES-L-0013 · W33
+- type: audio_contrast
+  title: '*logro*: [ɣ]'
+  lead: Wird das *g* in *logro* mit vollständigem Verschluss gesprochen?
+  transcript: logro
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W35
+    audio: corpus/p5-logro-ref.mp3
+    token_id: ES-N-0001 · W35
+  - label: Lernende:r (B1)
+    subtitle: L1 Deutsch · W35
+    audio: corpus/p5-logro-learner.mp3
+    token_id: ES-L-0013 · W35
+- type: audio_contrast
+  title: '*algo* allein und im Satz'
+  lead: Bleibt das *g* in *algo* allein und im Satz gleich weich?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W48
+    audio: corpus/p5-algo-ref-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-N-0001 · W48
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · D9
+    audio: corpus/p5-algo-ref-satz.mp3
+    note: 'Im Satz: *Algo* tan caro no siempre vale la pena.'
+    token_id: ES-N-0001 · D9
+- type: audio_contrast
+  title: '*vino* allein und in *de vino*'
+  lead: Klingt das *v* allein anders als in *de vino*?
+  examples:
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · W38
+    audio: corpus/p5-vino-ref-isoliert.mp3
+    note: Einzelwort
+    token_id: ES-N-0001 · W38
+  - label: Muttersprachliche Referenz
+    subtitle: Spanien · QY1
+    audio: corpus/p5-vino-ref-satz.mp3
+    note: 'Im Satz: ¿El vaso está lleno *de vino* ahora?'
+    token_id: ES-N-0001 · QY1
+- type: section_heading
+  title: Für den Unterricht
+- type: tip_box
+  title: 'Kurzaufgabe: Artikulationsvergleich'
+  body: |-
+    1. **[β]:** Die Lippen nähern sich einander, ohne sich zu schließen. *labio*, *lavar* sprechen.
+    2. **[ð]:** Die Zungenspitze nähert sich den oberen Schneidezähnen, ohne sie zu berühren. *vida*, *cuidado* sprechen.
+    3. **[ɣ]:** Der Zungenrücken nähert sich dem weichen Gaumen, ohne ihn zu berühren. *logro*, *algo* sprechen.
+
+    Kontrolle im Spiegel oder mit einem Partner: Bei [β] bleibt zwischen den Lippen ein schmaler Spalt, bei [b] schließen sie sich. Danach die Wörter mit den Aufnahmen vergleichen.
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Seiten zu den weichen Konsonanten.
+  items:
+  - title: B oder V? Im Spanischen klingt beides gleich!
+    text: Warum `b` und `v` dasselbe Phonem schreiben und wie das Schriftbild in die Irre führen kann.
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/b-or-v
+  - title: Kontextabhängige Laute im digitalen Lehrbuch
+    text: Die Realisierung von /b d g/ als Plosive und Approximanten mit Hörbeispielen aus MAR.ELE.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/aussprache/#kontextabhangige-mal-so-mal-so-laute
