@@ -2784,14 +2784,21 @@ def test_spanish_design_article_head_shows_byline_dates_abstract_and_keywords(ur
     title = "Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von <em>Pronunciation Matters</em>"
     assert f'class="promat-page__title pm-content-header__title">{title}</h1>' in html
     assert "<title>Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von Pronunciation Matters · Pronunciation Matters</title>" in html
-    head = html[html.index('<div class="pm-article-header pm-reading">'):html.index('<div class="promat-page__sections">')]
+    head = html[html.index('<div class="pm-article-masthead">'):html.index('<div class="promat-page__sections">')]
     # order: byline and dates, then the set-off abstract, then the keywords
-    markers = ["Autor:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Publikationsjahr:", '<time datetime="2026">2026</time>', "Zuletzt aktualisiert:", '<time datetime="2026-10-10">10.10.2026</time>', ">Zusammenfassung</h2>", "Der Beitrag stellt das Erhebungsdesign", ">Schlagwörter</p>"]
+    markers = ["Autor:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Publikationsjahr:", '<time datetime="2026">2026</time>', "Zuletzt aktualisiert:", '<time datetime="2026-10-10">10.10.2026</time>', ">Zusammenfassung</h2>", "Der Beitrag stellt das Erhebungsdesign", "Schlagwörter:"]
     positions = [head.index(marker) for marker in markers]
     assert positions == sorted(positions)
-    keywords = re.findall(r'<li class="pm-article-abstract__keyword">([^<]+)</li>', head)
-    assert keywords == ["Spanisch als Fremdsprache", "Lernendenphonetik", "Korpusphonologie", "Aussprache", "Erhebungsdesign"]
+    keywords = re.search(r'<span class="pm-article-abstract__keyword-list">([^<]+)</span>', head).group(1)
+    assert keywords.split(" · ") == ["Spanisch als Fremdsprache", "Lernendenphonetik", "Korpusphonologie", "Aussprache", "Erhebungsdesign"]
     assert 'aria-labelledby="pm-article-abstract-title"' in head
+    # the abstract is plain article text: no container, card or callout component
+    abstract = head[head.index('<section class="pm-article-abstract'):]
+    assert "pm-admonition" not in abstract and "pm-card" not in abstract and "pm-panel" not in abstract
+    css = client.get("/static/css/30_components.css").get_data(as_text=True)
+    rule = css[css.index(".pm-article-masthead {"):css.index(".pm-expandable__viewport {")]
+    for decoration in ("border", "background", "box-shadow", "padding:"):
+        assert decoration not in rule.replace("border-bottom", "").replace("padding-bottom", "")
     # the approved wording carries no editorial or implementation notes
     for note in ("Änderungsmarkierung", "Navigation (außerhalb des Aufsatzes)", "Implementierung", "<strong>", "<b>"):
         assert note not in html[html.index("<article"):html.index("</article>")]
@@ -2840,8 +2847,8 @@ def test_spanish_design_english_edition_mirrors_the_german_article(url_app: Flas
     assert 'aria-current="page">Data Collection Design</span>' in html
     assert "Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of <em>Pronunciation Matters</em></h1>" in html
     assert "Der Beitrag stellt" not in html
-    head = html[html.index('<div class="pm-article-header pm-reading">'):html.index('<div class="promat-page__sections">')]
-    markers = ["Author:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Year of publication:", '<time datetime="2026">2026</time>', "Last updated:", '<time datetime="2026-10-10">2026-10-10</time>', ">Abstract</h2>", "This article presents the data collection design", ">Keywords</p>"]
+    head = html[html.index('<div class="pm-article-masthead">'):html.index('<div class="promat-page__sections">')]
+    markers = ["Author:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Year of publication:", '<time datetime="2026">2026</time>', "Last updated:", '<time datetime="2026-10-10">2026-10-10</time>', ">Abstract</h2>", "This article presents the data collection design", "Keywords:"]
     positions = [head.index(marker) for marker in markers]
     assert positions == sorted(positions)
     headings = re.findall(r'<h2 class="promat-content-block__title pm-panel__title">([^<]+)</h2>', html)
@@ -2897,6 +2904,24 @@ def test_explicit_none_marks_an_edition_without_the_element() -> None:
 
     assert _deep_localize(content, "de") == {"abstract": {"text": "x"}, "title": "a", "missing": "only"}
     assert _deep_localize(content, "en") == {"abstract": None, "title": "b", "missing": "only"}
+
+
+def test_teaching_topic_cards_are_flat_navigation_surfaces_and_group_headings_are_quiet(url_app: Flask) -> None:
+    client = url_app.test_client()
+    cards_css = client.get("/static/css/40_cards.css").get_data(as_text=True)
+    components_css = client.get("/static/css/30_components.css").get_data(as_text=True)
+    tokens_css = client.get("/static/css/00_tokens.css").get_data(as_text=True)
+
+    card_rule = cards_css[cards_css.index(".pm-teaching-topic-card {"):cards_css.index(".pm-teaching-topic-card__body {")]
+    assert "border:" not in card_rule and "border-top" not in card_rule and "box-shadow" not in card_rule
+    assert "var(--pm-teaching-topic-card-pending-surface)" in card_rule
+    for removed in ("topic-card-accent", "topic-card-border", "topic-card-hover-border", "topic-card-pending-border"):
+        assert removed not in tokens_css and removed not in cards_css
+    # the group heading carries no underline mark on the overview; the topic page keeps its own heading style
+    assert ".pm-teaching-page--hub .pm-teaching-topic-group__title::after" not in components_css
+    assert "font-size: var(--pm-type-group-title-size);" in components_css
+    # anchor jumps clear the real height of the sticky top bar
+    assert "--pm-shell-top-offset: var(--promat-topbar-height);" in tokens_css
 
 
 def test_spanish_design_page_uses_dedicated_literature_list_class(url_app: Flask) -> None:

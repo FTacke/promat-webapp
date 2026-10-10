@@ -689,32 +689,24 @@ a.pm-nav-surface:focus-visible .pm-nav-surface__arrow {
   min-width: 0;
 }
 
-/* Teaching topic cards: compact content cards. Available topics are whole-card links; topics in preparation are quiet
-   panels with a status line. Only the available state carries the thin accent line and the arrow. */
+/* Teaching topic cards: flat navigation surfaces like the language rows (no border, shadow or accent line). Available
+   topics are whole-card links with a faint accent tint and the arrow; topics in preparation are neutral grey panels with
+   a status line and no navigation signal. */
 .pm-teaching-topic-card {
   --pm-nav-surface-bg: var(--pm-teaching-topic-card-surface);
   --pm-nav-surface-bg-hover: var(--pm-teaching-topic-card-hover-surface);
   display: block;
   width: 100%;
   min-width: 0;
-  border: 1px solid var(--pm-teaching-topic-card-border);
-  border-top: var(--pm-teaching-topic-card-accent-bar) solid var(--pm-teaching-topic-card-accent);
   border-radius: var(--pm-nav-surface-radius);
   background: var(--pm-nav-surface-bg);
   color: var(--book-fg);
   text-decoration: none;
-  transition: background var(--promat-transition-fast), border-color var(--promat-transition-fast);
-}
-
-a.pm-teaching-topic-card:hover,
-a.pm-teaching-topic-card:focus-visible {
-  border-color: var(--pm-teaching-topic-card-hover-border);
-  border-top-color: var(--pm-teaching-topic-card-accent);
+  transition: background var(--promat-transition-fast);
 }
 
 .pm-teaching-topic-card--pending {
   --pm-nav-surface-bg: var(--pm-teaching-topic-card-pending-surface);
-  border-color: var(--pm-teaching-topic-card-pending-border);
   color: var(--pm-nav-text-pending);
 }
 

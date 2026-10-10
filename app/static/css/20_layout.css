@@ -40,6 +40,7 @@ body.app-shell.page-landing .md3-content-wrapper {
 .promat-page,
 .pm-content {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--pm-layout-section-gap);
   max-width: min(100%, var(--pm-layout-content-width-current));
   margin: 0 auto;
@@ -897,10 +898,14 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-teaching-overview__intro,
-.pm-teaching-overview__prompt,
-.pm-teaching-topic-group__header {
+.pm-teaching-overview__prompt {
   display: grid;
   gap: var(--pm-space-xs);
+}
+
+.pm-teaching-topic-group__header {
+  display: grid;
+  gap: 0.3rem;
 }
 
 .pm-teaching-language-list,
@@ -918,14 +923,14 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-teaching-group-stack {
-  gap: clamp(2.4rem, 2rem + 1vw, 3.3rem);
+  gap: clamp(1.7rem, 1.45rem + 0.8vw, 2.3rem);
 }
 
 .pm-teaching-topic-group {
   width: min(100%, 68rem);
   max-width: 68rem;
   margin-inline: auto;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .pm-teaching-page--overview .pm-content-header,

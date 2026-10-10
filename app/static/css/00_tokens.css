@@ -165,18 +165,17 @@
   --pm-overview-body-color: color-mix(in srgb, var(--book-fg) 88%, var(--book-muted) 12%);
   --pm-overview-divider-color: color-mix(in srgb, var(--promat-wordmark-accent) 18%, transparent);
   --pm-overview-bullet-color: var(--pm-overview-accent);
-  --pm-teaching-topic-card-accent: color-mix(in srgb, var(--promat-wordmark-accent) 50%, var(--pm-border-default));
-  --pm-teaching-topic-card-accent-bar: 2px;
   --pm-teaching-topic-card-surface: var(--pm-nav-surface-accent);
-  --pm-teaching-topic-card-border: var(--pm-border-subtle);
   --pm-teaching-topic-card-hover-surface: var(--pm-nav-surface-accent-hover);
-  --pm-teaching-topic-card-hover-border: var(--pm-border-default);
   --pm-teaching-topic-card-action: color-mix(in srgb, var(--pm-text-accent) 76%, var(--book-fg) 24%);
   --pm-teaching-topic-card-action-hover: color-mix(in srgb, var(--pm-text-accent) 88%, var(--book-fg) 12%);
   --pm-teaching-topic-card-pending-surface: var(--pm-nav-surface-quiet);
-  --pm-teaching-topic-card-pending-border: var(--pm-border-subtle);
   --pm-teaching-topic-card-pending-text: color-mix(in srgb, var(--book-muted) 78%, var(--book-fg) 22%);
-  --pm-teaching-topic-card-pending-status: color-mix(in srgb, var(--book-muted) 82%, var(--pm-teaching-topic-card-accent) 18%);
+  --pm-teaching-topic-card-pending-status: var(--pm-nav-text-pending);
+  --pm-type-group-title-size: 1.22rem;
+  --pm-type-group-title-weight: 600;
+  --pm-type-group-title-line: 1.25;
+  --pm-type-group-description-size: 0.98rem;
   --pm-teaching-status-surface: color-mix(in srgb, var(--pm-surface-paper) 90%, var(--book-adm-praxis) 10%);
   --pm-teaching-status-border: color-mix(in srgb, var(--pm-border-default) 82%, var(--book-adm-praxis) 18%);
   --pm-teaching-status-icon: color-mix(in srgb, var(--book-fg) 48%, var(--book-adm-praxis) 52%);
@@ -198,13 +197,6 @@
   --pm-admonition-citation-icon: var(--pm-icon-admonition-quote);
   --pm-admonition-citation-icon-color: color-mix(in srgb, var(--book-muted) 68%, var(--book-fg) 32%);
   --pm-admonition-citation-title-color: var(--book-fg);
-  --pm-article-abstract-bg: color-mix(in srgb, var(--pm-surface-paper) 93%, var(--promat-wordmark-accent) 7%);
-  --pm-article-abstract-border: color-mix(in srgb, var(--pm-border-default) 70%, transparent);
-  --pm-article-abstract-accent: color-mix(in srgb, var(--promat-wordmark-accent) 62%, var(--pm-border-default) 38%);
-  --pm-article-abstract-accent-width: 3px;
-  --pm-article-abstract-padding-block: clamp(1rem, 0.94rem + 0.3vw, 1.3rem);
-  --pm-article-abstract-padding-inline: clamp(1.05rem, 0.96rem + 0.4vw, 1.5rem);
-  --pm-article-abstract-text-size: 0.97em;
   --pm-admonition-summary-bg: color-mix(in srgb, var(--pm-surface-paper) 98%, var(--book-bg) 2%);
   --pm-admonition-summary-border: color-mix(in srgb, var(--pm-border-default) 88%, transparent);
   --pm-admonition-summary-accent: color-mix(in srgb, var(--pm-border-default) 78%, transparent);
@@ -414,7 +406,7 @@
   --pm-touch-target-min: 44px;
   --pm-topbar-action-size: 44px;
   --pm-topbar-utility-gap: 8px;
-  --pm-shell-top-offset: 64px;
+  --pm-shell-top-offset: var(--promat-topbar-height); /* the sticky top bar: anchor jumps must clear its real height */
   --pm-page-inline-padding: 16px;
   --pm-section-block-gap: 32px;
   --pm-grid-gap: 16px;

@@ -1,0 +1,12 @@
+{# Abstract and keywords of a scholarly article page: plain article text, no container. #}
+{% set article = promat_page.article_header %}
+<section class="pm-article-abstract pm-reading" aria-labelledby="pm-article-abstract-title">
+  <h2 class="pm-article-abstract__title" id="pm-article-abstract-title">{{ article.abstract_label }}</h2>
+  <p class="pm-article-abstract__text promat-content-block__text">{{ article.abstract_html | safe }}</p>
+  {% if article.keywords %}
+  <p class="pm-article-abstract__keywords">
+    <span class="pm-article-abstract__keywords-label">{{ article.keywords_label }}:</span>
+    <span class="pm-article-abstract__keyword-list">{{ article.keywords | join(' · ') }}</span>
+  </p>
+  {% endif %}
+</section>

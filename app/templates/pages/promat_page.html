@@ -30,10 +30,14 @@
 {% block content %}
 <article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }}" aria-labelledby="promat-page-title">
   {% set content_header = promat_page.content_header %}
-  {% include 'partials/_content_header.html' %}
-
   {% if promat_page.article_header %}
-  {% include 'partials/_article_header.html' %}
+  <div class="pm-article-masthead">
+    {% include 'partials/_content_header.html' %}
+    {% include 'partials/_article_meta.html' %}
+  </div>
+  {% include 'partials/_article_abstract.html' %}
+  {% else %}
+  {% include 'partials/_content_header.html' %}
   {% endif %}
 
   {% if promat_page.hero_links %}

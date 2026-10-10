@@ -1094,37 +1094,58 @@ textarea:focus-visible {
   line-height: var(--pm-type-reading-line);
 }
 
-/* Scholarly article head (design article): byline and dates, set-off abstract, keywords. */
-.pm-article-header {
+/* Scholarly article front matter (design article): title, byline and dates, abstract and keywords set as plain article
+   text. No container, tint or accent stripe; the hierarchy comes from type size, weight and spacing only. */
+.pm-article-masthead {
   display: grid;
-  gap: var(--pm-space-sm);
-  margin-block: 0 var(--pm-space-sm);
+  gap: 0;
+}
+
+.pm-article-masthead .pm-content-header {
+  padding-bottom: var(--pm-space-xs);
+}
+
+.pm-article-meta {
+  width: min(100%, var(--pm-layout-reading-width));
+  margin-inline: auto;
 }
 
 .pm-article-meta .pm-teaching-topic-meta {
-  font-family: var(--book-font-ui);
-  font-size: var(--pm-type-meta-size);
-  line-height: 1.4;
+  justify-items: start;
+  gap: 0.2rem;
+  text-align: left;
+  font-family: var(--pm-type-nav-family);
+  font-size: var(--pm-type-nav-size);
+  line-height: 1.5;
+}
+
+.pm-article-meta .pm-teaching-topic-meta__authors,
+.pm-article-meta .pm-teaching-topic-meta__details {
+  justify-content: flex-start;
+}
+
+.pm-article-meta .pm-teaching-topic-meta__details {
+  column-gap: 1.4rem;
+}
+
+/* Wrapped rows must not end in a dangling separator: the items are spaced by the column gap instead. */
+.pm-article-meta .pm-teaching-topic-meta__separator {
+  display: none;
 }
 
 .pm-article-meta .pm-teaching-topic-meta__label {
   color: var(--book-muted);
 }
 
-.pm-article-abstract {
-  box-sizing: border-box;
-  padding: var(--pm-article-abstract-padding-block) var(--pm-article-abstract-padding-inline);
-  border: 1px solid var(--pm-article-abstract-border);
-  border-inline-start: var(--pm-article-abstract-accent-width) solid var(--pm-article-abstract-accent);
-  border-radius: var(--pm-radius-container);
-  background: var(--pm-article-abstract-bg);
+.pm-article-meta .pm-teaching-topic-meta__authors .pm-teaching-topic-meta__value {
+  font-weight: 600;
 }
 
 .pm-article-abstract__title,
 .pm-article-abstract__keywords-label {
   margin: 0;
   color: var(--book-muted);
-  font-family: var(--book-font-ui);
+  font-family: var(--pm-type-meta-family);
   font-size: var(--pm-type-meta-size);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -1133,38 +1154,20 @@ textarea:focus-visible {
 }
 
 .pm-article-abstract__text {
-  margin: var(--pm-space-xs) 0 0;
-  font-size: var(--pm-article-abstract-text-size);
-  line-height: var(--pm-type-reading-line);
+  margin-top: var(--pm-space-xs);
 }
 
 .pm-article-abstract__keywords {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.2rem 0.6rem;
-  margin-top: var(--pm-space-sm);
-  padding-top: var(--pm-space-xs);
-  border-top: 1px solid var(--pm-article-abstract-border);
-}
-
-.pm-article-abstract__keywords-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.1rem 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--book-font-ui);
-  font-size: 0.92rem;
+  margin: var(--pm-space-sm) 0 0;
+  font-family: var(--pm-type-reading-family);
+  font-size: var(--pm-reading-material-summary-font-size);
   line-height: 1.5;
 }
 
-.pm-article-abstract__keyword + .pm-article-abstract__keyword::before {
-  content: "·";
-  margin-inline: 0.45em;
-  color: var(--book-muted);
+.pm-article-abstract__keywords-label {
+  margin-inline-end: 0.5em;
 }
+
 
 .pm-expandable__viewport {
   position: relative;
@@ -1516,7 +1519,7 @@ a.promat-card:active .pm-cta-link {
 }
 
 .pm-teaching-page--hub {
-  gap: clamp(1.4rem, 2vw, 1.9rem);
+  gap: clamp(1.1rem, 1.6vw, 1.5rem);
 }
 
 /* Header-to-content and content-to-back-link distance of every topic page: the shared section gap. */
@@ -1818,8 +1821,7 @@ a.promat-card:active .pm-cta-link {
   max-width: 100%;
 }
 
-.pm-teaching-page--topic .pm-teaching-section-heading__title,
-.pm-teaching-page--hub .pm-teaching-topic-group__title {
+.pm-teaching-page--topic .pm-teaching-section-heading__title {
   position: relative;
   display: inline-block;
   width: auto;
@@ -1828,8 +1830,7 @@ a.promat-card:active .pm-cta-link {
   z-index: 0;
 }
 
-.pm-teaching-page--topic .pm-teaching-section-heading__title::after,
-.pm-teaching-page--hub .pm-teaching-topic-group__title::after {
+.pm-teaching-page--topic .pm-teaching-section-heading__title::after {
   content: "";
   position: absolute;
   bottom: 0.12em;
@@ -1845,10 +1846,17 @@ a.promat-card:active .pm-cta-link {
   background: var(--book-title-accent-dark);
 }
 
-.pm-teaching-page--hub .pm-teaching-topic-group__title::after {
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--book-title-accent-dark);
+/* Topic overview: quiet group headings (no underline mark); the cards below carry the structure. */
+.pm-teaching-page--hub .pm-teaching-topic-group__title {
+  font-size: var(--pm-type-group-title-size);
+  font-weight: var(--pm-type-group-title-weight);
+  line-height: var(--pm-type-group-title-line);
+}
+
+.pm-teaching-page--hub .pm-teaching-topic-group__description {
+  font-size: var(--pm-type-group-description-size);
+  line-height: 1.5;
+  text-wrap: balance;
 }
 
 .pm-teaching-section-heading__lead,
