@@ -186,34 +186,23 @@ def _article_header(content: dict[str, Any] | None, resource: dict[str, Any] | N
     institutions = list(dict.fromkeys(str(c["affiliation"]) for c in creators if c.get("affiliation")))
     if not institutions and (resource.get("publisher") or {}).get("name"):
         institutions = [str(resource["publisher"]["name"])]
-    details: list[dict[str, str]] = []
+    rows: list[list[dict[str, str]]] = []
+    if creators:
+        rows.append([{"key": "authors", "label": get_text(ui_lang, "research.design.article.author"), "value": ", ".join(c["name"] for c in creators), "emphasis": "strong"}])
     if institutions:
-        details.append({"key": "institution", "label": get_text(ui_lang, "research.design.article.institution"), "value": ", ".join(institutions)})
+        rows.append([{"key": "institution", "label": get_text(ui_lang, "research.design.article.institution"), "value": "; ".join(institutions)}])
+    dates: list[dict[str, str]] = []
     published = str(resource.get("date_published") or "")[:4]
     if published:
-        details.append({"key": "published", "label": get_text(ui_lang, "research.design.article.published"), "value": published, "datetime": published})
+        dates.append({"key": "published", "label": get_text(ui_lang, "research.design.article.published"), "value": published, "datetime": published})
     modified = publication.display_date(resource.get("date_modified"), ui_lang)
     if modified:
-        details.append(
-            {
-                "key": "updated",
-                "label": get_text(ui_lang, "research.design.article.updated"),
-                "value": modified,
-                "datetime": str(resource["date_modified"]),
-            }
-        )
+        dates.append({"key": "updated", "label": get_text(ui_lang, "research.design.article.updated"), "value": modified, "datetime": str(resource["date_modified"])})
+    if dates:
+        rows.append(dates)
     return {
         "meta_label": get_text(ui_lang, "research.design.article.meta"),
-        "metadata": {
-            "authors": {
-                "key": "authors",
-                "label": get_text(ui_lang, "research.design.article.author"),
-                "value": ", ".join(c["name"] for c in creators),
-            }
-            if creators
-            else None,
-            "details": details,
-        },
+        "meta_rows": rows,
         "abstract_label": get_text(ui_lang, "research.design.article.abstract"),
         "abstract_html": content["abstract_html"],
         "keywords_label": get_text(ui_lang, "research.design.article.keywords"),

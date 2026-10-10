@@ -172,6 +172,13 @@
   --pm-teaching-topic-card-pending-surface: var(--pm-nav-surface-quiet);
   --pm-teaching-topic-card-pending-text: color-mix(in srgb, var(--book-muted) 78%, var(--book-fg) 22%);
   --pm-teaching-topic-card-pending-status: var(--pm-nav-text-pending);
+  --pm-content-table-col-1: 30%;
+  --pm-content-table-col-2: 27%;
+  --pm-content-table-col-3: 43%;
+  --pm-teaching-overview-gap: clamp(1.7rem, 1.4rem + 1vw, 2.4rem);
+  --pm-teaching-group-stack-gap: clamp(2.3rem, 2rem + 1vw, 3.1rem);
+  --pm-teaching-group-gap: 1.15rem;
+  --pm-teaching-citation-gap: var(--pm-space-lg);
   --pm-type-group-title-size: 1.22rem;
   --pm-type-group-title-weight: 600;
   --pm-type-group-title-line: 1.25;

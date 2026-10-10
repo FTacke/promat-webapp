@@ -923,14 +923,14 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-teaching-group-stack {
-  gap: clamp(1.7rem, 1.45rem + 0.8vw, 2.3rem);
+  gap: var(--pm-teaching-group-stack-gap);
 }
 
 .pm-teaching-topic-group {
   width: min(100%, 68rem);
   max-width: 68rem;
   margin-inline: auto;
-  gap: 0.8rem;
+  gap: var(--pm-teaching-group-gap);
 }
 
 .pm-teaching-page--overview .pm-content-header,

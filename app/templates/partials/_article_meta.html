@@ -1,5 +1,10 @@
-{# Byline and dates of a scholarly article page (design article). Built by routes/public_content.py::_article_header. #}
-{% from 'partials/_teaching_blocks.html' import render_topic_metadata_rows %}
+{# Byline and dates of a scholarly article page (design article): author, institution, then year and last update. Built by routes/public_content.py::_article_header. #}
 <section class="pm-article-meta" aria-label="{{ promat_page.article_header.meta_label }}">
-  {{ render_topic_metadata_rows(promat_page.article_header.metadata) }}
+  {% for row in promat_page.article_header.meta_rows %}
+  <p class="pm-article-meta__row">
+    {% for item in row %}
+    <span class="pm-article-meta__item" data-key="{{ item.key }}"><span class="pm-article-meta__label">{{ item.label }}:</span> <span class="pm-article-meta__value{{ ' pm-article-meta__value--strong' if item.emphasis == 'strong' else '' }}">{% if item.datetime %}<time datetime="{{ item.datetime }}">{{ item.value }}</time>{% else %}{{ item.value }}{% endif %}</span></span>
+    {% endfor %}
+  </p>
+  {% endfor %}
 </section>

@@ -2786,12 +2786,17 @@ def test_spanish_design_article_head_shows_byline_dates_abstract_and_keywords(ur
     assert "<title>Die Aussprache von Spanischlernenden erfassen: Das Erhebungsdesign des spanischen Korpus von Pronunciation Matters · Pronunciation Matters</title>" in html
     head = html[html.index('<div class="pm-article-masthead">'):html.index('<div class="promat-page__sections">')]
     # order: byline and dates, then the set-off abstract, then the keywords
-    markers = ["Autor:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Publikationsjahr:", '<time datetime="2026">2026</time>', "Zuletzt aktualisiert:", '<time datetime="2026-10-10">10.10.2026</time>', ">Zusammenfassung</h2>", "Der Beitrag stellt das Erhebungsdesign", "Schlagwörter:"]
+    markers = ["Autor:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Publikationsjahr:", '<time datetime="2026">2026</time>', "Zuletzt aktualisiert:", '<time datetime="2026-10-10">10.10.2026</time>', ">Zusammenfassung</h2>", "Der Beitrag stellt das Erhebungsdesign", ">Schlagwörter</h3>"]
     positions = [head.index(marker) for marker in markers]
     assert positions == sorted(positions)
-    keywords = re.search(r'<span class="pm-article-abstract__keyword-list">([^<]+)</span>', head).group(1)
+    keywords = re.search(r'<p class="pm-article-abstract__keyword-list"[^>]*>([^<]+)</p>', head).group(1)
     assert keywords.split(" · ") == ["Spanisch als Fremdsprache", "Lernendenphonetik", "Korpusphonologie", "Aussprache", "Erhebungsdesign"]
     assert 'aria-labelledby="pm-article-abstract-title"' in head
+    # byline: author, institution, then year and last update on one row; the keyword label has its own line
+    meta = head[head.index('<section class="pm-article-meta"'):head.index('</section>')]
+    rows = re.findall(r'<p class="pm-article-meta__row">(.*?)</p>', meta, re.S)
+    assert [re.findall(r'data-key="([a-z]+)"', row) for row in rows] == [["authors"], ["institution"], ["published", "updated"]]
+    assert head.index(">Schlagwörter</h3>") < head.index('class="pm-article-abstract__keyword-list"')
     # the abstract is plain article text: no container, card or callout component
     abstract = head[head.index('<section class="pm-article-abstract'):]
     assert "pm-admonition" not in abstract and "pm-card" not in abstract and "pm-panel" not in abstract
@@ -2822,7 +2827,8 @@ def test_spanish_design_article_sections_table_and_lists_follow_the_approved_art
         "Literatur",
     ]
     # phenomenon table: six rows, between the introducing sentence and the closing paragraph with footnote 5
-    table = html[html.index('<table class="pm-research-table promat-content-block__table">'):html.index("</table>")]
+    table = html[html.index('<table class="pm-research-table promat-content-block__table'):html.index("</table>")]
+    assert "promat-content-block__table--phenomena" in table and table.count("<col>") == 3
     assert table.count("<tr>") == 7  # header + six phenomena
     assert "<em>número – numero – numeró</em>" in table
     assert html.index("verdeutlichen die folgenden Beispiele:") < html.index("<table") < html.index('id="fnref-spanish-design-5-de"') < html.index('id="spanish-final-wordlist-title"')
@@ -2845,10 +2851,10 @@ def test_spanish_design_english_edition_mirrors_the_german_article(url_app: Flas
     html = client.get("/en/research/spanish/design").get_data(as_text=True)
 
     assert 'aria-current="page">Data Collection Design</span>' in html
-    assert "Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of <em>Pronunciation Matters</em></h1>" in html
+    assert "Capturing the Pronunciation of Learners of Spanish: Data Collection Design for the Spanish Corpus of <em>Pronunciation Matters</em></h1>" in html
     assert "Der Beitrag stellt" not in html
     head = html[html.index('<div class="pm-article-masthead">'):html.index('<div class="promat-page__sections">')]
-    markers = ["Author:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Year of publication:", '<time datetime="2026">2026</time>', "Last updated:", '<time datetime="2026-10-10">2026-10-10</time>', ">Abstract</h2>", "This article presents the data collection design", "Keywords:"]
+    markers = ["Author:", "Felix Tacke", "Institution:", "Philipps-Universität Marburg", "Year of publication:", '<time datetime="2026">2026</time>', "Last updated:", '<time datetime="2026-10-10">2026-10-10</time>', ">Abstract</h2>", "This article presents the data collection design", ">Keywords</h3>"]
     positions = [head.index(marker) for marker in markers]
     assert positions == sorted(positions)
     headings = re.findall(r'<h2 class="promat-content-block__title pm-panel__title">([^<]+)</h2>', html)
@@ -2865,6 +2871,37 @@ def test_spanish_design_english_edition_mirrors_the_german_article(url_app: Flas
     ]
 
 
+def test_spanish_design_english_edition_is_edited_academic_english_with_consistent_title(url_app: Flask) -> None:
+    client = url_app.test_client()
+    html = client.get("/en/research/spanish/design").get_data(as_text=True)
+    article = html[html.index("<article"):html.index("</article>")]
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", article))
+
+    title = "Capturing the Pronunciation of Learners of Spanish: Data Collection Design for the Spanish Corpus of Pronunciation Matters"
+    assert f"<title>{title} · Pronunciation Matters</title>" in html
+    assert f'<meta name="citation_title" content="{title}">' in html
+    assert f"“{title}”" in html  # the generated citation, visible and copy text
+    assert html.count(f'data-copy-text="Tacke, Felix (2026). “{title}”.') == 1
+    # approved wording fixes of the English edition stay in place
+    for outdated in ("first-language target norms", "sentence-bound", "heavily adopted", "vibrants", "consonantism", "global reading pronunciation",
+                     "Spanish learners", "The Data Collection Design of the Spanish Corpus", "can mean that the elicitation", "about 50 sentences", "Hg.", "o. J."):
+        assert outdated not in text, outdated
+    for expected in ("native-speaker target norms", "realisations in isolated words and in sentence contexts", "Taps and trills", "The list comprises 50 sentences"):
+        assert expected in text, expected
+    # intelligibility and comprehensibility stay distinct; ELE is introduced before its first stand-alone use
+    assert "intelligibility" in text and "comprehensibility" in text
+    first_ele = re.search(r"(?<![.\w])ELE\b", text)
+    assert first_ele is not None and "español como lengua extranjera" in text[max(0, first_ele.start() - 45):first_ele.start()]
+    assert "(eds.)" in text and "n.d." in text and "2nd rev. ed." in text
+
+
+def test_spanish_design_german_edition_states_the_exact_sentence_count(url_app: Flask) -> None:
+    html = url_app.test_client().get("/de/research/spanish/design").get_data(as_text=True)
+
+    assert "Die Liste umfasst 50 Sätze: 30 Aussagesätze, 10 Entscheidungsfragen und 10 W-Fragen." in html
+    assert "etwa 50" not in html
+
+
 def test_spanish_design_editions_share_structure_lists_and_references() -> None:
     sections = SPANISH_DESIGN_PAGE_CONTENT["sections"]
     de_blocks, en_blocks = (SPANISH_DESIGN_PAGE_CONTENT["sections"][3]["blocks"][lang] for lang in ("de", "en"))
@@ -2875,7 +2912,12 @@ def test_spanish_design_editions_share_structure_lists_and_references() -> None:
     assert [row[1] for row in de_table["rows"]] == [row[1] for row in en_table["rows"]]  # the Spanish stimuli are shared
     for section in sections:
         if section.get("bullets_html"):
-            assert section["bullets_html"]["de"] == section["bullets_html"]["en"]
+            de_entries, en_entries = section["bullets_html"]["de"], section["bullets_html"]["en"]
+            assert len(de_entries) == len(en_entries) == 20
+            # same references (titles stay untranslated); only the bibliographic abbreviations are localised
+            localise = lambda entry: entry.replace("(Hg.)", "(eds.)").replace("o. J.", "n.d.").replace("2., überarb. Aufl.", "2nd rev. ed.")
+            assert [localise(entry) for entry in de_entries] == en_entries
+            assert not any(word in entry for entry in en_entries for word in ("Hg.", "o. J.", "überarb."))
     footnotes = SPANISH_DESIGN_PAGE_CONTENT["footnotes_html"]
     assert len(footnotes["de"]) == len(footnotes["en"]) == 5
     header = SPANISH_DESIGN_PAGE_CONTENT["article_header"]
@@ -2977,12 +3019,12 @@ def test_spanish_design_page_links_existing_bibliography_urls(url_app: Flask, ui
         ),
         (
             "en",
-            "Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of <em>Pronunciation Matters</em>",
+            "Capturing the Pronunciation of Learners of Spanish: Data Collection Design for the Spanish Corpus of <em>Pronunciation Matters</em>",
             "Cite this article",
             "https://pronunciation-matters.de/en/research/spanish/design",
             "Copy citation",
-            'Tacke, Felix (2026). “Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of Pronunciation Matters”. In: Felix Tacke (ed.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/en/research/spanish/design">https://pronunciation-matters.de/en/research/spanish/design</a>',
-            "Tacke, Felix (2026). “Capturing the Pronunciation of Spanish Learners: The Data Collection Design of the Spanish Corpus of Pronunciation Matters”. In: Felix Tacke (ed.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/en/research/spanish/design",
+            'Tacke, Felix (2026). “Capturing the Pronunciation of Learners of Spanish: Data Collection Design for the Spanish Corpus of Pronunciation Matters”. In: Felix Tacke (ed.), <em>Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching</em>. Philipps-Universität Marburg. <a href="https://pronunciation-matters.de/en/research/spanish/design">https://pronunciation-matters.de/en/research/spanish/design</a>',
+            "Tacke, Felix (2026). “Capturing the Pronunciation of Learners of Spanish: Data Collection Design for the Spanish Corpus of Pronunciation Matters”. In: Felix Tacke (ed.), Pronunciation Matters: A Multilingual Platform for Learner Pronunciation Research and Teaching. Philipps-Universität Marburg. https://pronunciation-matters.de/en/research/spanish/design",
             "Data Collection Design",
         ),
     ],

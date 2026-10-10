@@ -5,7 +5,10 @@
 {#- Table of a content section. `html_cells` marks cells that carry inline markup (e.g. <em>); a labelled, focusable scroll region keeps wide tables keyboard-accessible. -#}
 {% macro render_content_table(table, html_cells=false, label='') -%}
 <div class="pm-research-table-wrap promat-content-block__table-wrap"{% if label %} role="region" tabindex="0" aria-label="{{ label }}"{% endif %}>
-  <table class="pm-research-table promat-content-block__table">
+  <table class="pm-research-table promat-content-block__table{{ ' promat-content-block__table--' ~ table.layout if table.layout else '' }}">
+    {% if table.layout %}
+    <colgroup>{% for column in table.columns %}<col>{% endfor %}</colgroup>
+    {% endif %}
     <thead>
       <tr>
         {% for column in table.columns %}
