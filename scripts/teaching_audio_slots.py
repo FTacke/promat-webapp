@@ -53,6 +53,11 @@ def sha256_of(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def runtime_available(sessions_root: Path) -> bool:
+    """True when ``sessions_root`` holds Spanish corpus sessions (the folder alone may exist as an empty placeholder)."""
+    return any((sessions_root / CORPUS).glob("ES-*/metadata.json"))
+
+
 def load_slots(path: Path = SLOTS_FILE) -> dict[str, Any]:
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
 
@@ -168,7 +173,7 @@ def main() -> int:
     parser.add_argument("--sessions-root", type=Path, default=DEFAULT_SESSIONS_ROOT, help="runtime sessions root (default: data/sessions)")
     args = parser.parse_args()
     data = load_slots()
-    sessions_root = args.sessions_root if (args.sessions_root / CORPUS).is_dir() else None
+    sessions_root = args.sessions_root if runtime_available(args.sessions_root) else None
     if args.export:
         if sessions_root is None:
             print(f"No runtime sessions under {args.sessions_root}", file=sys.stderr)

@@ -155,6 +155,6 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
 
 def test_slot_sources_are_released_sessions_when_the_local_runtime_is_present() -> None:
     sessions_root = REPO_ROOT / "data" / "sessions"
-    if not (sessions_root / "spanish").is_dir():
+    if not slots.runtime_available(sessions_root):
         pytest.skip("local research runtime not present")
     assert slots.check(slots.load_slots(), sessions_root) == []
