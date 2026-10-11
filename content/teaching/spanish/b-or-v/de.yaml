@@ -109,13 +109,15 @@ blocks:
     audio: corpus/p4-lavar-learner.mp3
     token_id: ES-L-0017 · W9
 - type: section_heading
-  title: Für den Unterricht
-- type: tip_box
-  title: 'Kurzaufgabe: Hörzuordnung und Schriftbild'
-  body: |-
-    1. Die Lehrkraft spricht *bienes* oder *vienes* (ohne Schriftbild); die Lernenden notieren, welches Wort sie gehört haben – und merken, dass das nicht möglich ist.
-    2. Die Schreibweisen werden aufgedeckt. Gemeinsam wird besprochen: Warum haben wir `v` als [v] erwartet?
-    3. Weitere Paare wie *barón* – *varón* oder *botar* – *votar* zeigen: Nur der Kontext verrät das gemeinte Wort.
+  title: 'Impulse für den Unterricht'
+- type: teaching_impulses
+  items:
+  - title: 'Ohne Schriftbild hören'
+    body: 'Die Lehrkraft spricht *bienes* oder *vienes* (ohne Schriftbild); die Lernenden notieren, welches Wort sie gehört haben – und merken, dass das nicht möglich ist.'
+  - title: 'Schreibweisen aufdecken'
+    body: 'Die Schreibweisen werden aufgedeckt. Gemeinsam wird besprochen: Warum haben wir `v` als [v] erwartet?'
+  - title: 'Weitere Paare einbeziehen'
+    body: 'Weitere Paare wie *barón* – *varón* oder *botar* – *votar* zeigen: Nur der Kontext verrät das gemeinte Wort.'
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Seiten zu b/v und zur Lautvariation.

@@ -114,15 +114,17 @@ blocks:
     note: 'In the sentence: ¿El vaso está lleno *de vino* ahora?'
     token_id: ES-N-0001 · QY1
 - type: section_heading
-  title: For the classroom
-- type: tip_box
-  title: 'Quick task: comparing articulations'
-  body: |-
-    1. **[β]:** the lips approach each other without closing. Say *labio*, *lavar*.
-    2. **[ð]:** the tongue tip approaches the upper front teeth without touching them. Say *vida*, *cuidado*.
-    3. **[ɣ]:** the back of the tongue approaches the soft palate without touching it. Say *logro*, *algo*.
-
-    Check in a mirror or with a partner: for [β] a narrow gap remains between the lips, for [b] they close. Then compare the words with the recordings.
+  title: 'Classroom prompts'
+- type: teaching_impulses
+  items:
+  - title: 'Lips: [β]'
+    body: 'The lips approach each other without closing. Say *labio*, *lavar*.'
+  - title: 'Tongue tip: [ð]'
+    body: 'The tongue tip approaches the upper front teeth without touching them. Say *vida*, *cuidado*.'
+  - title: 'Back of the tongue: [ɣ]'
+    body: 'The back of the tongue approaches the soft palate without touching it. Say *logro*, *algo*.'
+  - title: 'Check and compare'
+    body: 'In a mirror or with a partner: for [β] a narrow gap remains between the lips, for [b] they close. Then compare the words with the recordings.'
 - type: further_reading
   title: Further exploration
   description: Related pages on soft consonants.

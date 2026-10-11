@@ -109,13 +109,15 @@ blocks:
     audio: corpus/p4-lavar-learner.mp3
     token_id: ES-L-0017 · W9
 - type: section_heading
-  title: For the classroom
-- type: tip_box
-  title: 'Quick task: matching by ear, then by spelling'
-  body: |-
-    1. The teacher says *bienes* or *vienes* (without showing the spelling); learners note which word they heard – and notice that this cannot be done.
-    2. The spellings are revealed. Discuss together: why did we expect `v` to be [v]?
-    3. Further pairs such as *barón* – *varón* or *botar* – *votar* show that only context reveals the intended word.
+  title: 'Classroom prompts'
+- type: teaching_impulses
+  items:
+  - title: 'Listen without the spelling'
+    body: 'The teacher says *bienes* or *vienes* (without showing the spelling); learners note which word they heard – and notice that this cannot be done.'
+  - title: 'Reveal the spellings'
+    body: 'The spellings are revealed. Discuss together: why did we expect `v` to be [v]?'
+  - title: 'Add further pairs'
+    body: 'Further pairs such as *barón* – *varón* or *botar* – *votar* show that only context reveals the intended word.'
 - type: further_reading
   title: Further exploration
   description: Related pages on b/v and sound variation.

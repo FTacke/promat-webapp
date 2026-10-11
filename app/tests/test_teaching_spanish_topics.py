@@ -32,6 +32,7 @@ TOPICS = {
     "soft-consonants-b-d-g": {"de": "Weiche Konsonanten: b, d und g", "en": "Soft consonants: b, d and g"},
     "accent-changes-everything": {"de": "Ein Akzent verändert alles", "en": "An accent changes everything"},
 }
+IMPULSES = {"soft-spanish-hard-german": 3, "r": 3, "r-am-silbenende": 2, "b-or-v": 3, "soft-consonants-b-d-g": 4, "accent-changes-everything": 3}
 TOPIC_DIR = REPO_ROOT / "content" / "teaching" / "spanish"
 PAIRS = [(slug, lang) for slug in TOPICS for lang in ("de", "en")]
 
@@ -79,8 +80,13 @@ def test_topic_page_renders_with_title_citation_and_sections(client, slug: str, 
     # didactic skeleton: listen, solution, explanation, corpus comparisons, classroom task, further reading
     assert html.count('class="pm-teaching-solution"') == (3 if slug == "soft-spanish-hard-german" else 1)
     assert html.count("pm-teaching-block--audio-contrast") >= 3
-    assert "pm-teaching-block--teaching-impulses" not in html  # the classroom task is one tip box
-    assert "pm-admonition--tip" in html
+    # classroom prompts: one numbered impulse list under the shared accent-underlined heading, no tip box
+    assert html.count('class="pm-teaching-block pm-teaching-block--teaching-impulses pm-panel pm-reading"') == 1
+    assert html.count('class="pm-teaching-impulses__item"') == IMPULSES[slug]
+    assert html.count('class="pm-teaching-impulses__item-title"') == IMPULSES[slug]
+    assert "pm-admonition--tip" not in html and "Kurzaufgabe" not in html and "Quick task" not in html and "Für den Unterricht" not in html
+    heading = "Impulse für den Unterricht" if lang == "de" else "Classroom prompts"
+    assert re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html).count(heading) == 1
     assert "pm-teaching-further-reading" in html
     assert 'class="pm-teaching-audio-contrast__example' in html
     assert "is-unavailable" not in html and "audio-card-status" not in html
@@ -158,6 +164,17 @@ def test_soft_spanish_page_has_the_three_comparisons_in_order_with_marele_first(
     assert titles == expected
     assert "Auf einen Blick" not in html and "At a glance" not in html
     assert "https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen" in html
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_soft_spanish_classroom_prompts_are_the_three_numbered_impulses(client, lang: str) -> None:
+    html = _html(client, lang, "soft-spanish-hard-german")
+    titles = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
+    assert titles == (["Erst hören, dann erklären", "Aussprache bewusst erproben", "Sprachen vergleichen"] if lang == "de"
+                      else ["Listen first, explain later", "Try out pronunciation deliberately", "Compare languages"])
+    # the old summary sentence of the three comparisons is gone; the impulses come after the last solution and before the further reading
+    assert "Die drei Hörvergleiche veranschaulichen" not in html and "The three listening comparisons illustrate" not in html
+    assert html.rindex('<details class="pm-teaching-solution">') < html.index("pm-teaching-impulses") < html.index("pm-teaching-further-reading")
 
 
 def test_marele_recordings_are_declared_with_origin_and_the_checked_mapping() -> None:

@@ -46,3 +46,9 @@ Siehe Abschlussbericht im Chat; Browser-Pass in `tmp/ui-qa/2026-10-11-soft-spani
 - Alle drei `audio_contrast`-Blöcke tragen jetzt einen Titel (damit Audio-Icon und Titelhierarchie wie im Vergleichsmodul von *Welche Aussprache unterrichten?*): `Mit und ohne Knacklaut: *o hay*`, `Ohne zusätzlichen Neueinsatz: *tiene hambre*`, `Resilbifizierung: *sus amigos*` (EN gleichwertig). Keine neue Komponente, kein CSS.
 - Abschnittsüberschriften entdoppelt (`Hören und entdecken`, `Noch ein Beispiel: *tiene hambre*`, `Wenn Silben die Wortgrenze überschreiten`); Hörfragen kurz und neutral (Registerfeld `question` in `audio-slots.yaml` angepasst, Aufnahmen und Sprecherzuordnung unverändert).
 - Zielwortfolge in den Satz-Chips (D27, D24) fett-kursiv hervorgehoben; Auflösung zu *sus amigos* um die Doppeldefinition gekürzt.
+
+## Nachtrag: Unterrichtsimpulse vereinheitlicht
+
+- Alle sechs neuen spanischen Themenseiten (DE/EN) nutzen für den Unterrichtsteil den bestehenden Block `teaching_impulses` unter der Überschrift `Impulse für den Unterricht` / `Classroom prompts` (wie *Welche Aussprache unterrichten?*, unverändert); die bisherigen `tip_box`-Kurzaufgaben und die zweite Überschrift `Für den Unterricht` entfielen. Kein CSS, keine neue Komponente.
+- Bestehende Aufgaben wurden 1:1 in nummerierte Impulse übertragen (nur kurze Impulstitel ergänzt; Leitfrage von *R am Silbenende* im zweiten Impuls, Kontrollhinweis von *Weiche Konsonanten* als vierter Impuls).
+- *Weiches Spanisch, hartes Deutsch*: drei neue Impulse (Erst hören, dann erklären / Aussprache bewusst erproben / Sprachen vergleichen) mit kurzem Einleitungssatz; der Sammelsatz zu den drei Hörbeispielen entfiel. Der Sprachvergleich bleibt bewusst offen formuliert.

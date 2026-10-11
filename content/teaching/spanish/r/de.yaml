@@ -98,13 +98,15 @@ blocks:
     note: 'Im Satz: Hoy *miro* el *reloj* con calma antes de salir.'
     token_id: ES-L-0012 · D1
 - type: section_heading
-  title: Für den Unterricht
-- type: tip_box
-  title: 'Kurzaufgabe: Hördiskrimination'
-  body: |-
-    1. Die Lehrkraft spricht oder spielt Paare wie *caro* / *carro* und *pero* / *perro* in zufälliger Reihenfolge.
-    2. Die Lernenden zeigen mit einem Finger (einfacher Schlag) oder mit mehreren (mehrfacher Schlag), was sie hören.
-    3. Danach sprechen alle die Paare nach und vergleichen Zungenposition und Dauer der Vibration: Wo berührt die Zungenspitze den Zahndamm, und wie lange?
+  title: 'Impulse für den Unterricht'
+- type: teaching_impulses
+  items:
+  - title: 'Paare vorspielen'
+    body: 'Die Lehrkraft spricht oder spielt Paare wie *caro* / *carro* und *pero* / *perro* in zufälliger Reihenfolge.'
+  - title: 'Schlagzahl anzeigen'
+    body: 'Die Lernenden zeigen mit einem Finger (einfacher Schlag) oder mit mehreren (mehrfacher Schlag), was sie hören.'
+  - title: 'Nachsprechen und vergleichen'
+    body: 'Danach sprechen alle die Paare nach und vergleichen Zungenposition und Dauer der Vibration: Wo berührt die Zungenspitze den Zahndamm, und wie lange?'
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Seiten zum r im Spanischen.

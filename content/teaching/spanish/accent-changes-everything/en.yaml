@@ -97,13 +97,15 @@ blocks:
     audio: corpus/p6-d30-learner.mp3
     token_id: ES-L-0005 · D30
 - type: section_heading
-  title: For the classroom
-- type: tip_box
-  title: 'Quick task: one frame, three words'
-  body: |-
-    1. Learners say *número – numero – numeró* and change only the stress. To keep the beat: tap on the stressed syllable.
-    2. The teacher plays the sentence recordings without the written form; learners show with their fingers (1, 2 or 3) which syllable is stressed.
-    3. Then the meanings are matched: number – I number – he/she numbered.
+  title: 'Classroom prompts'
+- type: teaching_impulses
+  items:
+  - title: 'Change only the stress'
+    body: 'Learners say *número – numero – numeró* and change only the stress. To keep the beat: tap on the stressed syllable.'
+  - title: 'Identify the stressed syllable'
+    body: 'The teacher plays the sentence recordings without the written form; learners show with their fingers (1, 2 or 3) which syllable is stressed.'
+  - title: 'Match the meanings'
+    body: 'Then the meanings are matched: number – I number – he/she numbered.'
 - type: further_reading
   title: Further exploration
   description: Further information on word stress and accent spelling.

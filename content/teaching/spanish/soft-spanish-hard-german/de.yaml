@@ -83,12 +83,18 @@ blocks:
   title: 'Auflösung: Was ist zu hören?'
   body: |-
     Entscheidend ist, ob das /s/ zur folgenden Silbe gehört (*su‑sa‑mi‑gos*) oder am Ende von *sus* bleibt. Im ersten Fall sind die beiden Wörter lautlich eng verknüpft.
-- type: tip_box
-  title: Für den Unterricht
-  body: |-
-    Die drei Hörvergleiche veranschaulichen unterschiedliche Formen des lautlichen Anschlusses: den fehlenden glottalen Neueinsatz bei *o hay* und *tiene hambre* sowie die Resilbifizierung bei *sus amigos*.
-
-    Im Unterricht können die Aufnahmen zunächst ohne Erklärung verglichen werden. Anschließend lassen sich die Unterschiede gemeinsam beschreiben und die Wortfolgen nachsprechen.
+- type: section_heading
+  title: 'Impulse für den Unterricht'
+- type: text
+  body: 'Die Hörvergleiche eignen sich, um die Aufmerksamkeit auf oft unbemerkte Unterschiede zwischen den Sprachen zu lenken und die phonetische Sprachbewusstheit zu schärfen.'
+- type: teaching_impulses
+  items:
+  - title: 'Erst hören, dann erklären'
+    body: 'Die Aufnahmen zunächst ohne Erklärung abspielen. Wo sind Unterbrechungen hörbar, wo werden Laute fließend verbunden? Die Beobachtungen gemeinsam sammeln und anschließend linguistisch einordnen.'
+  - title: 'Aussprache bewusst erproben'
+    body: 'Den deutschen Knacklaut etwa an *die Ente* bewusst artikulieren und mit *o hay* oder *tiene hambre* kontrastieren. Anschließend die spanischen Wortfolgen ohne zusätzlichen Neueinsatz nachsprechen und bei *sus amigos* die Resilbifizierung erproben.'
+  - title: 'Sprachen vergleichen'
+    body: 'Den Blick auf weitere Fremdsprachen erweitern: Wie werden Wortgrenzen im Französischen, Italienischen oder Englischen realisiert? Wo treten glottale Neueinsätze auf, wo werden Laute verbunden? Solche Vergleiche machen unterschiedliche Aussprachemuster bewusst und fördern die sprachübergreifende Reflexion.'
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Seiten zu Aussprachemodellen und zum Knacklaut.

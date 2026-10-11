@@ -124,14 +124,13 @@ blocks:
     note: 'Im Satz: Con mucho cuidado se puso a *lavar la* ropa.'
     token_id: ES-N-0001 · D21
 - type: section_heading
-  title: Für den Unterricht
-- type: tip_box
-  title: 'Kurzaufgabe: konsonantisch enden'
-  body: |-
-    1. Die Lernenden sprechen Wörter mit finalem r nach (*flor*, *reír*, *lavar*, *cuidar*) und beenden sie mit einem kurzen Zungenkontakt – ohne zusätzlichen Vokal am Ende.
-    2. Danach sprechen sie *cuidar un perro* als zusammenhängende Lautfolge und achten darauf, wohin das r wandert.
-
-    Leitfrage: Spüren Sie die Zungenspitze am Zahndamm, bevor der nächste Vokal beginnt?
+  title: 'Impulse für den Unterricht'
+- type: teaching_impulses
+  items:
+  - title: 'Wortfinales r nachsprechen'
+    body: 'Die Lernenden sprechen Wörter mit finalem r nach (*flor*, *reír*, *lavar*, *cuidar*) und beenden sie mit einem kurzen Zungenkontakt – ohne zusätzlichen Vokal am Ende.'
+  - title: 'Über die Wortgrenze verbinden'
+    body: 'Danach sprechen sie *cuidar un perro* als zusammenhängende Lautfolge und achten darauf, wohin das r wandert. Leitfrage: Spüren Sie die Zungenspitze am Zahndamm, bevor der nächste Vokal beginnt?'
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Seiten zum r und zur Aussprachevariation.

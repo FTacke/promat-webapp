@@ -124,14 +124,13 @@ blocks:
     note: 'In the sentence: Con mucho cuidado se puso a *lavar la* ropa.'
     token_id: ES-N-0001 · D21
 - type: section_heading
-  title: For the classroom
-- type: tip_box
-  title: 'Quick task: ending with a consonant'
-  body: |-
-    1. Learners repeat words with a final r (*flor*, *reír*, *lavar*, *cuidar*) and end them with a brief tongue contact – without an additional vowel at the end.
-    2. They then say *cuidar un perro* as one continuous sequence of sounds and pay attention to where the r moves.
-
-    Guiding question: do you feel the tongue tip at the alveolar ridge before the next vowel begins?
+  title: 'Classroom prompts'
+- type: teaching_impulses
+  items:
+  - title: 'Repeat word-final r'
+    body: 'Learners repeat words with a final r (*flor*, *reír*, *lavar*, *cuidar*) and end them with a brief tongue contact – without an additional vowel at the end.'
+  - title: 'Link across the word boundary'
+    body: 'They then say *cuidar un perro* as one continuous sequence of sounds and pay attention to where the r moves. Guiding question: do you feel the tongue tip at the alveolar ridge before the next vowel begins?'
 - type: further_reading
   title: Further exploration
   description: Related pages on the r and on pronunciation variation.

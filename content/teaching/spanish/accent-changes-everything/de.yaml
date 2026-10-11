@@ -97,13 +97,15 @@ blocks:
     audio: corpus/p6-d30-learner.mp3
     token_id: ES-L-0005 · D30
 - type: section_heading
-  title: Für den Unterricht
-- type: tip_box
-  title: 'Kurzaufgabe: dreimal derselbe Satzrahmen'
-  body: |-
-    1. Die Lernenden sprechen *número – numero – numeró* und verändern nur die Betonung. Zum Mitklopfen: Auf die betonte Silbe klopfen.
-    2. Die Lehrkraft spielt die Aufnahmen aus dem Satzvergleich ohne Schriftbild; die Lernenden zeigen mit Fingern (1, 2 oder 3), welche Silbe betont ist.
-    3. Danach werden die Bedeutungen zugeordnet: Zahl – ich nummeriere – er/sie nummerierte.
+  title: 'Impulse für den Unterricht'
+- type: teaching_impulses
+  items:
+  - title: 'Nur die Betonung verändern'
+    body: 'Die Lernenden sprechen *número – numero – numeró* und verändern nur die Betonung. Zum Mitklopfen: Auf die betonte Silbe klopfen.'
+  - title: 'Betonte Silbe erkennen'
+    body: 'Die Lehrkraft spielt die Aufnahmen aus dem Satzvergleich ohne Schriftbild; die Lernenden zeigen mit Fingern (1, 2 oder 3), welche Silbe betont ist.'
+  - title: 'Bedeutungen zuordnen'
+    body: 'Danach werden die Bedeutungen zugeordnet: Zahl – ich nummeriere – er/sie nummerierte.'
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Informationen zu Wortakzent und Akzentschreibung.

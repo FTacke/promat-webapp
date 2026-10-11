@@ -98,13 +98,15 @@ blocks:
     note: 'In the sentence: Hoy *miro* el *reloj* con calma antes de salir.'
     token_id: ES-L-0012 · D1
 - type: section_heading
-  title: For the classroom
-- type: tip_box
-  title: 'Quick task: listening discrimination'
-  body: |-
-    1. The teacher says or plays pairs such as *caro* / *carro* and *pero* / *perro* in random order.
-    2. Learners hold up one finger (single tap) or several (multiple taps) to show what they hear.
-    3. Then everyone repeats the pairs and compares tongue position and the duration of the vibration: where does the tongue tip touch the alveolar ridge, and for how long?
+  title: 'Classroom prompts'
+- type: teaching_impulses
+  items:
+  - title: 'Play the pairs'
+    body: 'The teacher says or plays pairs such as *caro* / *carro* and *pero* / *perro* in random order.'
+  - title: 'Show the number of taps'
+    body: 'Learners hold up one finger (single tap) or several (multiple taps) to show what they hear.'
+  - title: 'Repeat and compare'
+    body: 'Then everyone repeats the pairs and compares tongue position and the duration of the vibration: where does the tongue tip touch the alveolar ridge, and for how long?'
 - type: further_reading
   title: Further exploration
   description: Related pages on the r in Spanish.

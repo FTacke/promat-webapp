@@ -114,15 +114,17 @@ blocks:
     note: 'Im Satz: ¿El vaso está lleno *de vino* ahora?'
     token_id: ES-N-0001 · QY1
 - type: section_heading
-  title: Für den Unterricht
-- type: tip_box
-  title: 'Kurzaufgabe: Artikulationsvergleich'
-  body: |-
-    1. **[β]:** Die Lippen nähern sich einander, ohne sich zu schließen. *labio*, *lavar* sprechen.
-    2. **[ð]:** Die Zungenspitze nähert sich den oberen Schneidezähnen, ohne sie zu berühren. *vida*, *cuidado* sprechen.
-    3. **[ɣ]:** Der Zungenrücken nähert sich dem weichen Gaumen, ohne ihn zu berühren. *logro*, *algo* sprechen.
-
-    Kontrolle im Spiegel oder mit einem Partner: Bei [β] bleibt zwischen den Lippen ein schmaler Spalt, bei [b] schließen sie sich. Danach die Wörter mit den Aufnahmen vergleichen.
+  title: 'Impulse für den Unterricht'
+- type: teaching_impulses
+  items:
+  - title: 'Lippen: [β]'
+    body: 'Die Lippen nähern sich einander, ohne sich zu schließen. *labio*, *lavar* sprechen.'
+  - title: 'Zungenspitze: [ð]'
+    body: 'Die Zungenspitze nähert sich den oberen Schneidezähnen, ohne sie zu berühren. *vida*, *cuidado* sprechen.'
+  - title: 'Zungenrücken: [ɣ]'
+    body: 'Der Zungenrücken nähert sich dem weichen Gaumen, ohne ihn zu berühren. *logro*, *algo* sprechen.'
+  - title: 'Kontrolle und Vergleich'
+    body: 'Im Spiegel oder mit einem Partner: Bei [β] bleibt zwischen den Lippen ein schmaler Spalt, bei [b] schließen sie sich. Danach die Wörter mit den Aufnahmen vergleichen.'
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Seiten zu den weichen Konsonanten.
