@@ -27,11 +27,12 @@ blocks:
   title: Three words, three stress patterns
   lead: Which syllable is stressed in each of the three words?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Chile · W87
     audio: corpus/p6-numero3-ref.mp3
     token_id: ES-N-0005 · W87
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · W87
     audio: corpus/p6-numero3-learner.mp3
     token_id: ES-L-0005 · W87
@@ -56,17 +57,18 @@ blocks:
 - type: section_heading
   title: More comparisons from the corpus
 - type: text
-  body: All three forms were deliberately elicited as a contrast and also appear in a controlled sentence each. The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+  body: All three forms were deliberately elicited as a contrast and also appear in a controlled sentence each. The same words and sentences, spoken by a reference speaker and by a learner (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
 - type: audio_contrast
   title: '*número* in a sentence'
   lead: Which syllable carries the stress of *número*?
   transcript: ¿Por qué quieres tirar ese *número* de teléfono?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Chile · QW10
     audio: corpus/p6-qw10-ref.mp3
     token_id: ES-N-0005 · QW10
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · QW10
     audio: corpus/p6-qw10-learner.mp3
     token_id: ES-L-0005 · QW10
@@ -75,11 +77,12 @@ blocks:
   lead: Which syllable carries the stress of *numero*?
   transcript: ¿Cómo *numero* los puntos que obtiene cada equipo?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Chile · QW8
     audio: corpus/p6-qw8-ref.mp3
     token_id: ES-N-0005 · QW8
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · QW8
     audio: corpus/p6-qw8-learner.mp3
     token_id: ES-L-0005 · QW8
@@ -88,11 +91,12 @@ blocks:
   lead: Which syllable carries the stress of *numeró*?
   transcript: El profesor explicó la regla y *numeró* ejemplos.
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Chile · D30
     audio: corpus/p6-d30-ref.mp3
     token_id: ES-N-0005 · D30
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · D30
     audio: corpus/p6-d30-learner.mp3
     token_id: ES-L-0005 · D30

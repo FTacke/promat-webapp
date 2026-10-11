@@ -28,11 +28,12 @@ blocks:
   lead: Does the *b* in *labio* sound more like a short pop or more like a soft friction?
   transcript: labio
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W21
     audio: corpus/p5-labio-ref.mp3
     token_id: ES-N-0001 · W21
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · W21
     audio: corpus/p5-labio-learner.mp3
     token_id: ES-L-0013 · W21
@@ -58,17 +59,18 @@ blocks:
 - type: section_heading
   title: More comparisons from the corpus
 - type: text
-  body: The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+  body: The same words and sentences, spoken by a reference speaker and by a learner (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
 - type: audio_contrast
   title: '*cuidado*: [ð]'
   lead: 'How does the *d* in *cuidado* sound: sharply closed or soft and loose?'
   transcript: cuidado
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W33
     audio: corpus/p5-cuidado-ref.mp3
     token_id: ES-N-0001 · W33
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · W33
     audio: corpus/p5-cuidado-learner.mp3
     token_id: ES-L-0013 · W33
@@ -77,11 +79,12 @@ blocks:
   lead: Is the *g* in *logro* pronounced with a complete closure?
   transcript: logro
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W35
     audio: corpus/p5-logro-ref.mp3
     token_id: ES-N-0001 · W35
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · W35
     audio: corpus/p5-logro-learner.mp3
     token_id: ES-L-0013 · W35
@@ -89,12 +92,12 @@ blocks:
   title: '*algo* on its own and in a sentence'
   lead: Does the *g* in *algo* stay equally soft on its own and in the sentence?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W48
     audio: corpus/p5-algo-ref-isoliert.mp3
     note: Isolated word
     token_id: ES-N-0001 · W48
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · D9
     audio: corpus/p5-algo-ref-satz.mp3
     note: 'In the sentence: *Algo* tan caro no siempre vale la pena.'
@@ -103,12 +106,12 @@ blocks:
   title: '*vino* on its own and in *de vino*'
   lead: Does the *v* sound different on its own than in *de vino*?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W38
     audio: corpus/p5-vino-ref-isoliert.mp3
     note: Isolated word
     token_id: ES-N-0001 · W38
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · QY1
     audio: corpus/p5-vino-ref-satz.mp3
     note: 'In the sentence: ¿El vaso está lleno *de vino* ahora?'

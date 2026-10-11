@@ -27,11 +27,12 @@ blocks:
   title: Drei Wörter, drei Betonungen
   lead: Welche Silbe ist in jedem der drei Wörter betont?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Chile · W87
     audio: corpus/p6-numero3-ref.mp3
     token_id: ES-N-0005 · W87
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · W87
     audio: corpus/p6-numero3-learner.mp3
     token_id: ES-L-0005 · W87
@@ -56,17 +57,18 @@ blocks:
 - type: section_heading
   title: Weitere Vergleiche aus dem Korpus
 - type: text
-  body: Alle drei Formen wurden gezielt als Kontrast erhoben und stehen zusätzlich je in einem kontrollierten Satz. Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+  body: Alle drei Formen wurden gezielt als Kontrast erhoben und stehen zusätzlich je in einem kontrollierten Satz. Dieselben Wörter und Sätze, gesprochen von einer Referenzsprecher:in und von einer lernenden Person (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
 - type: audio_contrast
   title: '*número* im Satz'
   lead: Auf welcher Silbe liegt die Betonung von *número*?
   transcript: ¿Por qué quieres tirar ese *número* de teléfono?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Chile · QW10
     audio: corpus/p6-qw10-ref.mp3
     token_id: ES-N-0005 · QW10
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · QW10
     audio: corpus/p6-qw10-learner.mp3
     token_id: ES-L-0005 · QW10
@@ -75,11 +77,12 @@ blocks:
   lead: Auf welcher Silbe liegt die Betonung von *numero*?
   transcript: ¿Cómo *numero* los puntos que obtiene cada equipo?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Chile · QW8
     audio: corpus/p6-qw8-ref.mp3
     token_id: ES-N-0005 · QW8
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · QW8
     audio: corpus/p6-qw8-learner.mp3
     token_id: ES-L-0005 · QW8
@@ -88,11 +91,12 @@ blocks:
   lead: Auf welcher Silbe liegt die Betonung von *numeró*?
   transcript: El profesor explicó la regla y *numeró* ejemplos.
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Chile · D30
     audio: corpus/p6-d30-ref.mp3
     token_id: ES-N-0005 · D30
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · D30
     audio: corpus/p6-d30-learner.mp3
     token_id: ES-L-0005 · D30

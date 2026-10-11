@@ -27,11 +27,12 @@ blocks:
   title: Two words – any difference?
   lead: Do you hear a difference between the first and the second word?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Mexico · W92
     audio: corpus/p4-bienes-ref.mp3
     token_id: ES-N-0004 · W92
-  - label: Learner (A2)
+  - role: learner
+    level: A2
     subtitle: L1 German · W92
     audio: corpus/p4-bienes-learner.mp3
     token_id: ES-L-0017 · W92
@@ -57,27 +58,29 @@ blocks:
 - type: section_heading
   title: More comparisons from the corpus
 - type: text
-  body: The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+  body: The same words and sentences, spoken by a reference speaker and by a learner (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
 - type: audio_contrast
   title: '*vino* on its own and in *de vino*'
   lead: Does the *v* in *vino* sound like the German *w* in *Wasser*?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Mexico · W38
     audio: corpus/p4-vino-ref-isoliert.mp3
     note: Isolated word
     token_id: ES-N-0004 · W38
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Mexico · QY1
     audio: corpus/p4-vino-ref-satz.mp3
     note: 'In the sentence: ¿El vaso está lleno *de vino* ahora?'
     token_id: ES-N-0004 · QY1
-  - label: Learner (A2)
+  - role: learner
+    level: A2
     subtitle: L1 German · W38
     audio: corpus/p4-vino-learner-isoliert.mp3
     note: Isolated word
     token_id: ES-L-0017 · W38
-  - label: Learner (A2)
+  - role: learner
+    level: A2
     subtitle: L1 German · QY1
     audio: corpus/p4-vino-learner-satz.mp3
     note: 'In the sentence: ¿El vaso está lleno *de vino* ahora?'
@@ -87,11 +90,12 @@ blocks:
   lead: Which sound does *vida* begin with?
   transcript: vida
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Mexico · W45
     audio: corpus/p4-vida-ref.mp3
     token_id: ES-N-0004 · W45
-  - label: Learner (A2)
+  - role: learner
+    level: A2
     subtitle: L1 German · W45
     audio: corpus/p4-vida-learner.mp3
     token_id: ES-L-0017 · W45
@@ -100,11 +104,12 @@ blocks:
   lead: Do you hear the *v* in *lavar* as a closure or as a softer sound?
   transcript: lavar
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Mexico · W9
     audio: corpus/p4-lavar-ref.mp3
     token_id: ES-N-0004 · W9
-  - label: Learner (A2)
+  - role: learner
+    level: A2
     subtitle: L1 German · W9
     audio: corpus/p4-lavar-learner.mp3
     token_id: ES-L-0017 · W9

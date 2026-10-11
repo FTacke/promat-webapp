@@ -30,11 +30,12 @@ blocks:
   title: Zwei Wörter, zwei r-Laute
   lead: Wie oft schlägt die Zungenspitze im ersten, wie oft im zweiten Wort an?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W88
     audio: corpus/p2-caro-ref.mp3
     token_id: ES-N-0002 · W88
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · W88
     audio: corpus/p2-caro-learner.mp3
     token_id: ES-L-0012 · W88
@@ -48,11 +49,12 @@ blocks:
   lead: Welches der beiden Wörter hat den längeren r-Laut?
   transcript: pero – perro
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W90
     audio: corpus/p2-pero-ref.mp3
     token_id: ES-N-0002 · W90
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · W90
     audio: corpus/p2-pero-learner.mp3
     token_id: ES-L-0012 · W90
@@ -72,27 +74,29 @@ blocks:
 - type: section_heading
   title: Weitere Vergleiche aus dem Korpus
 - type: text
-  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+  body: Dieselben Wörter und Sätze, gesprochen von einer Referenzsprecher:in und von einer lernenden Person (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
 - type: audio_contrast
   title: '*reloj* allein und im Satz'
   lead: Wie oft schlägt die Zunge beim *r* von *reloj* an – allein und im Satz? Und wie klingt dagegen das *r* in *miro*?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W2
     audio: corpus/p2-reloj-ref-isoliert.mp3
     note: Einzelwort
     token_id: ES-N-0002 · W2
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · D1
     audio: corpus/p2-reloj-ref-satz.mp3
     note: 'Im Satz: Hoy *miro* el *reloj* con calma antes de salir.'
     token_id: ES-N-0002 · D1
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · W2
     audio: corpus/p2-reloj-learner-isoliert.mp3
     note: Einzelwort
     token_id: ES-L-0012 · W2
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · D1
     audio: corpus/p2-reloj-learner-satz.mp3
     note: 'Im Satz: Hoy *miro* el *reloj* con calma antes de salir.'

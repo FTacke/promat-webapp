@@ -132,11 +132,11 @@ def test_internal_links_of_further_reading_resolve(client, slug: str) -> None:
 
 def test_listening_comparisons_name_speaker_category_and_item(client) -> None:
     html = _html(client, "de", "soft-spanish-hard-german")
-    assert "Muttersprachliche Referenz" in html and "Lernende:r" in html
+    assert "Referenzsprecher:in" in html and "Lernende:r" in html
     assert "Pronunciation Matters · D27" in html and "Pronunciation Matters · D24" in html
     assert "Mexiko" not in html and "(B1)" not in html  # no fixed speaker identities: the recordings stay replaceable
     html = _html(client, "en", "r")
-    assert "Native-speaker reference" in html and "Learner (B1)" in html and "Spain · W88" in html and "L1 German · W88" in html
+    assert "Reference speaker" in html and "Learner (B1)" in html and "Spain · W88" in html and "L1 German · W88" in html
     assert html.count('<details class="pm-teaching-solution">') == 1  # closed by default: no autoplay, no revealed solution
 
 
@@ -151,7 +151,7 @@ def test_soft_spanish_page_has_the_three_comparisons_in_order_with_marele_first(
     assert "MAR.ELE" not in html.split("pm-teaching-block")[0]  # neither the meta description nor the page subtitle names it
     # the reference recording is announced first in every comparison, the learner recording second
     labels = re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html)
-    assert labels == (["Muttersprachliche Referenz", "Lernende:r"] if lang == "de" else ["Native-speaker reference", "Learner"]) * 3
+    assert labels == (["Referenzsprecher:in", "Lernende:r"] if lang == "de" else ["Reference speaker", "Learner"]) * 3
     # recurring solution, closed by default, and the target word sequence of D24 is "sus amigos" (not "mis amigos")
     assert html.count('<details class="pm-teaching-solution">') == 3
     assert ("Auflösung: Was ist zu hören?" if lang == "de" else "Solution: What can be heard?") in html
@@ -242,6 +242,20 @@ def test_marele_recordings_are_declared_with_origin_and_the_checked_mapping() ->
     assert all("session_id" not in r and "item" not in r for r in by_slot.values())
     corpus = {c["id"]: {r["slot"]: r["item"]["id"] for r in c["recordings"]} for c in slots.load_slots()["comparisons"] if c["topic"] == "soft-spanish-hard-german" and c["id"] != "p1-ohay"}
     assert corpus == {"p1-hambre": {"ref": "d_27", "learner": "d_27"}, "p1-amigos": {"ref": "d_24", "learner": "d_24"}}
+
+
+@pytest.mark.parametrize(("slug", "lang"), PAIRS)
+def test_speaker_terms_are_central_and_non_normative(client, slug: str, lang: str) -> None:
+    html = _html(client, lang, slug)
+    reference, learner = ("Referenzsprecher:in", "Lernende:r") if lang == "de" else ("Reference speaker", "Learner")
+    titles = re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html)
+    assert titles and set(titles) <= {reference, learner} | {f"{learner} ({level})" for level in ("A1", "A2", "B1", "B2", "C1", "C2")}
+    assert titles[0] == reference and titles.count(reference) >= len(titles) - titles.count(reference)  # some comparisons are reference-only
+    for term in ("Muttersprach", "muttersprach", "Muttersprecher", "Native-speaker", "native-speaker", "Modellaussprache", "Modellsprecher"):
+        assert term not in html, term
+    # the topic sources name the role, not the wording (the terms live in the translation layer)
+    source = (TOPIC_DIR / slug / f"{lang}.yaml").read_text(encoding="utf-8")
+    assert "label: Muttersprach" not in source and "label: Native-speaker" not in source and "role: reference" in source and "role: learner" in source
 
 
 def test_hubs_list_all_topics_in_the_requested_order() -> None:

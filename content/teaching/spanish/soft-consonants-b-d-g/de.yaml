@@ -28,11 +28,12 @@ blocks:
   lead: Klingt das *b* in *labio* eher wie ein kurzer Knall oder eher wie ein weiches Reiben?
   transcript: labio
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W21
     audio: corpus/p5-labio-ref.mp3
     token_id: ES-N-0001 · W21
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · W21
     audio: corpus/p5-labio-learner.mp3
     token_id: ES-L-0013 · W21
@@ -58,17 +59,18 @@ blocks:
 - type: section_heading
   title: Weitere Vergleiche aus dem Korpus
 - type: text
-  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+  body: Dieselben Wörter und Sätze, gesprochen von einer Referenzsprecher:in und von einer lernenden Person (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
 - type: audio_contrast
   title: '*cuidado*: [ð]'
   lead: 'Wie klingt das *d* in *cuidado*: hart abgesetzt oder weich und locker?'
   transcript: cuidado
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W33
     audio: corpus/p5-cuidado-ref.mp3
     token_id: ES-N-0001 · W33
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · W33
     audio: corpus/p5-cuidado-learner.mp3
     token_id: ES-L-0013 · W33
@@ -77,11 +79,12 @@ blocks:
   lead: Wird das *g* in *logro* mit vollständigem Verschluss gesprochen?
   transcript: logro
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W35
     audio: corpus/p5-logro-ref.mp3
     token_id: ES-N-0001 · W35
-  - label: Lernende:r (B1)
+  - role: learner
+    level: B1
     subtitle: L1 Deutsch · W35
     audio: corpus/p5-logro-learner.mp3
     token_id: ES-L-0013 · W35
@@ -89,12 +92,12 @@ blocks:
   title: '*algo* allein und im Satz'
   lead: Bleibt das *g* in *algo* allein und im Satz gleich weich?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W48
     audio: corpus/p5-algo-ref-isoliert.mp3
     note: Einzelwort
     token_id: ES-N-0001 · W48
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · D9
     audio: corpus/p5-algo-ref-satz.mp3
     note: 'Im Satz: *Algo* tan caro no siempre vale la pena.'
@@ -103,12 +106,12 @@ blocks:
   title: '*vino* allein und in *de vino*'
   lead: Klingt das *v* allein anders als in *de vino*?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W38
     audio: corpus/p5-vino-ref-isoliert.mp3
     note: Einzelwort
     token_id: ES-N-0001 · W38
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · QY1
     audio: corpus/p5-vino-ref-satz.mp3
     note: 'Im Satz: ¿El vaso está lleno *de vino* ahora?'

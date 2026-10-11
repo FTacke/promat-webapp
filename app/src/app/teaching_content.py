@@ -570,12 +570,29 @@ def _image_delivery(teaching_lang: str, topic_slug: str, value: Any) -> tuple[st
     return webp_src, size[0] if size else None, size[1] if size else None
 
 
+SPEAKER_ROLES = ("reference", "learner")
+
+
+def _speaker_role_label(ui_lang: str, raw_item: dict[str, Any]) -> str:
+    """Shared label of a recording by its speaker role (``reference`` | ``learner``, optional ``level`` such as ``B1``).
+
+    The wording ("Referenzsprecher:in" / "Lernende:r", "Reference speaker" / "Learner") lives only in the translation layer,
+    so every Teaching page, present or future, uses the same terms; a topic names the role, not the word."""
+    role = _as_text(raw_item.get("role"))
+    if not ui_lang or role not in SPEAKER_ROLES:
+        return ""
+    label = translate(ui_lang, f"teaching.speaker.{role}")
+    level = _as_text(raw_item.get("level"))
+    return f"{label} ({level})" if level else label
+
+
 def _audio_example_payload(
     teaching_lang: str,
     topic_slug: str,
     raw_item: dict[str, Any],
     *,
     inherited_transcript: str = "",
+    ui_lang: str = "",
 ) -> dict[str, Any]:
     audio_url = _resolve_topic_media_url(teaching_lang, topic_slug, "audio", raw_item.get("audio"))
     is_available = _topic_media_is_available(teaching_lang, topic_slug, "audio", raw_item.get("audio"))
@@ -583,7 +600,7 @@ def _audio_example_payload(
     note = _as_text(raw_item.get("note"))
     return _set_inline_markdown_fields({
         "lang": _content_lang_code(teaching_lang),
-        "label": _as_text(raw_item.get("label")) or _as_text(raw_item.get("title")),
+        "label": _as_text(raw_item.get("label")) or _speaker_role_label(ui_lang, raw_item) or _as_text(raw_item.get("title")),
         "title": _as_text(raw_item.get("title")),
         "subtitle": _as_text(raw_item.get("subtitle")),
         "audio": audio_url if is_available else "",
@@ -1156,6 +1173,7 @@ def _topic_blocks(
                 topic_slug,
                 raw_block,
                 inherited_transcript=_as_text(raw_block.get("transcript")),
+                ui_lang=ui_lang,
             )
             block_source = _audio_source_payload(raw_block.get("source"))
             if any((example["label"], example["title"], example["audio"], example["transcript"], example["note"], example["token_id"], example["segments"])):
@@ -1196,6 +1214,7 @@ def _topic_blocks(
                     topic_slug,
                     item,
                     inherited_transcript=inherited_transcript,
+                    ui_lang=ui_lang,
                 )
                 for item in raw_block.get("examples", [])
                 if isinstance(item, dict)
@@ -1228,6 +1247,7 @@ def _topic_blocks(
                     topic_slug,
                     item,
                     inherited_transcript=inherited_transcript,
+                    ui_lang=ui_lang,
                 )
                 for item in raw_block.get("examples", [])
                 if isinstance(item, dict)

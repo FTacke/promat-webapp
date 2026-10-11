@@ -30,11 +30,12 @@ blocks:
   title: Two words, two r sounds
   lead: How often does the tongue tip strike in the first word, and how often in the second?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W88
     audio: corpus/p2-caro-ref.mp3
     token_id: ES-N-0002 · W88
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · W88
     audio: corpus/p2-caro-learner.mp3
     token_id: ES-L-0012 · W88
@@ -48,11 +49,12 @@ blocks:
   lead: Which of the two words has the longer r sound?
   transcript: pero – perro
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W90
     audio: corpus/p2-pero-ref.mp3
     token_id: ES-N-0002 · W90
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · W90
     audio: corpus/p2-pero-learner.mp3
     token_id: ES-L-0012 · W90
@@ -72,27 +74,29 @@ blocks:
 - type: section_heading
   title: More comparisons from the corpus
 - type: text
-  body: The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
+  body: The same words and sentences, spoken by a reference speaker and by a learner (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
 - type: audio_contrast
   title: '*reloj* on its own and in a sentence'
   lead: How often does the tongue strike in the *r* of *reloj* – on its own and in the sentence? And how does the *r* in *miro* sound by comparison?
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · W2
     audio: corpus/p2-reloj-ref-isoliert.mp3
     note: Isolated word
     token_id: ES-N-0002 · W2
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Spain · D1
     audio: corpus/p2-reloj-ref-satz.mp3
     note: 'In the sentence: Hoy *miro* el *reloj* con calma antes de salir.'
     token_id: ES-N-0002 · D1
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · W2
     audio: corpus/p2-reloj-learner-isoliert.mp3
     note: Isolated word
     token_id: ES-L-0012 · W2
-  - label: Learner (B1)
+  - role: learner
+    level: B1
     subtitle: L1 German · D1
     audio: corpus/p2-reloj-learner-satz.mp3
     note: 'In the sentence: Hoy *miro* el *reloj* con calma antes de salir.'

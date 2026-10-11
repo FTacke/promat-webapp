@@ -65,3 +65,9 @@ Siehe Abschlussbericht im Chat; Browser-Pass in `tmp/ui-qa/2026-10-11-soft-spani
 - Bestandsaufnahme: im Teaching-Bereich gibt es genau eine Rasterillustration (`glottal-stop-larynx-hand.png`, 1,8 MB, auf 480 px dargestellt); die zwei SVGs der Seite *Welche Aussprache unterrichten?* sind Vektoren (und nicht referenziert), `promat.png`, Favicon und Landing-Karten gehören nicht zum Teaching-Bereich.
 - Derivat: `glottal-stop-larynx-hand.webp`, 960 × 720 px (2 × 480), Qualität 92 nach Vergleich der Stufen 70–95 (PSNR 44,5 dB; bei 2-facher Vergrößerung an Haaren, Handlinien und Lavendelverläufen nicht vom Master zu unterscheiden; Farbstich < 0,3/255). Master unverändert (SHA-256 `46b2d048…062a6`).
 - Auslieferung über den gemeinsamen Block `image` (`<picture>`, Master als Fallback, `width`/`height`, lazy); Route liefert `.webp` mit festem Mimetype. Deklaration `content/teaching/image-derivatives.yaml`, Werkzeug `scripts/teaching_images.py`, Runbook `docs/runbooks/teaching-illustrations.md`.
+
+## Nachtrag: einheitliche Sprecherbezeichnungen im Teaching-Bereich
+
+- Zentral: i18n-Schlüssel `teaching.speaker.reference` (`Referenzsprecher:in` / `Reference speaker`) und `teaching.speaker.learner` (`Lernende:r` / `Learner`); Audiobeispiele in den Themenquellen nennen nur noch `role: reference|learner` (optional `level: B1`), die Beschriftung entsteht in `teaching_content._speaker_role_label`. Ein explizites `label` hat weiterhin Vorrang (Varietäten wie *Distinción*/*Seseo*).
+- Alle sieben spanischen Seiten (DE/EN) umgestellt; die Einleitungssätze der Korpusvergleiche sprechen von „einer Referenzsprecher:in und einer lernenden Person“ / „a reference speaker and a learner“. Niveauangaben (A2/B1) und Regions-/L1-Untertitel blieben unverändert.
+- Unverändert: Korpusdaten, Sprecher-IDs, interne Kategorien (`reference`/`learner`, `speaker_type`), Audio-Slots, Research-Oberfläche (dort bleibt z. B. `Native speakers` als Forschungskategorie), Projektseiten.

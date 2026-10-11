@@ -28,11 +28,12 @@ blocks:
   lead: 'Wie endet das Wort: mit einem Konsonanten oder mit einem Vokal?'
   transcript: reír
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W76
     audio: corpus/p3-reir-ref.mp3
     token_id: ES-N-0001 · W76
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W76
     audio: corpus/p3-reir-learner.mp3
     token_id: ES-L-0019 · W76
@@ -58,17 +59,18 @@ blocks:
 - type: section_heading
   title: Weitere Vergleiche aus dem Korpus
 - type: text
-  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+  body: Dieselben Wörter und Sätze, gesprochen von einer Referenzsprecher:in und von einer lernenden Person (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
 - type: audio_contrast
   title: '*flor*'
   lead: Gibt es am Wortende noch einen Zungenkontakt?
   transcript: flor
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W16
     audio: corpus/p3-flor-ref.mp3
     token_id: ES-N-0001 · W16
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W16
     audio: corpus/p3-flor-learner.mp3
     token_id: ES-L-0019 · W16
@@ -77,11 +79,12 @@ blocks:
   lead: Ist das *r* in *enfermo* als eigener Laut zu hören, bevor das *m* folgt?
   transcript: enfermo
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W50
     audio: corpus/p3-enfermo-ref.mp3
     token_id: ES-N-0001 · W50
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W50
     audio: corpus/p3-enfermo-learner.mp3
     token_id: ES-L-0019 · W50
@@ -89,22 +92,24 @@ blocks:
   title: '*cuidar* allein und in *cuidar un perro*'
   lead: Gehört das *r* in *cuidar un* zum Ende von *cuidar* oder zum Anfang von *un*?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W58
     audio: corpus/p3-cuidar-ref-isoliert.mp3
     note: Einzelwort
     token_id: ES-N-0001 · W58
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · D5
     audio: corpus/p3-cuidar-ref-satz.mp3
     note: 'Im Satz: *Cuidar un* perro exige tiempo y atención diaria.'
     token_id: ES-N-0001 · D5
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W58
     audio: corpus/p3-cuidar-learner-isoliert.mp3
     note: Einzelwort
     token_id: ES-L-0019 · W58
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · D5
     audio: corpus/p3-cuidar-learner-satz.mp3
     note: 'Im Satz: *Cuidar un* perro exige tiempo y atención diaria.'
@@ -113,12 +118,12 @@ blocks:
   title: '*lavar* allein und in *lavar la ropa*'
   lead: Hören Sie das *r* in *lavar* auch dann, wenn *la* folgt?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · W9
     audio: corpus/p3-lavar-ref-isoliert.mp3
     note: Einzelwort
     token_id: ES-N-0001 · W9
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Spanien · D21
     audio: corpus/p3-lavar-ref-satz.mp3
     note: 'Im Satz: Con mucho cuidado se puso a *lavar la* ropa.'

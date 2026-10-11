@@ -27,11 +27,12 @@ blocks:
   title: Zwei Wörter – ein Unterschied?
   lead: Hören Sie einen Unterschied zwischen dem ersten und dem zweiten Wort?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Mexiko · W92
     audio: corpus/p4-bienes-ref.mp3
     token_id: ES-N-0004 · W92
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W92
     audio: corpus/p4-bienes-learner.mp3
     token_id: ES-L-0017 · W92
@@ -57,27 +58,29 @@ blocks:
 - type: section_heading
   title: Weitere Vergleiche aus dem Korpus
 - type: text
-  body: Dieselben Wörter und Sätze, gesprochen von einer muttersprachlichen Referenzaufnahme und von einer Lernendenaufnahme (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
+  body: Dieselben Wörter und Sätze, gesprochen von einer Referenzsprecher:in und von einer lernenden Person (Erstsprache Deutsch). Die Aufnahmen stammen aus den kontrollierten Wort- und Satzlisten von *Pronunciation Matters*; die Auswahl ist exemplarisch und beansprucht keine Repräsentativität.
 - type: audio_contrast
   title: '*vino* allein und in *de vino*'
   lead: Klingt das *v* in *vino* wie das deutsche *w* in *Wasser*?
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Mexiko · W38
     audio: corpus/p4-vino-ref-isoliert.mp3
     note: Einzelwort
     token_id: ES-N-0004 · W38
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Mexiko · QY1
     audio: corpus/p4-vino-ref-satz.mp3
     note: 'Im Satz: ¿El vaso está lleno *de vino* ahora?'
     token_id: ES-N-0004 · QY1
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W38
     audio: corpus/p4-vino-learner-isoliert.mp3
     note: Einzelwort
     token_id: ES-L-0017 · W38
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · QY1
     audio: corpus/p4-vino-learner-satz.mp3
     note: 'Im Satz: ¿El vaso está lleno *de vino* ahora?'
@@ -87,11 +90,12 @@ blocks:
   lead: Mit welchem Laut beginnt *vida*?
   transcript: vida
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Mexiko · W45
     audio: corpus/p4-vida-ref.mp3
     token_id: ES-N-0004 · W45
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W45
     audio: corpus/p4-vida-learner.mp3
     token_id: ES-L-0017 · W45
@@ -100,11 +104,12 @@ blocks:
   lead: Hören Sie das *v* in *lavar* als Verschluss oder als weicheren Laut?
   transcript: lavar
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Mexiko · W9
     audio: corpus/p4-lavar-ref.mp3
     token_id: ES-N-0004 · W9
-  - label: Lernende:r (A2)
+  - role: learner
+    level: A2
     subtitle: L1 Deutsch · W9
     audio: corpus/p4-lavar-learner.mp3
     token_id: ES-L-0017 · W9

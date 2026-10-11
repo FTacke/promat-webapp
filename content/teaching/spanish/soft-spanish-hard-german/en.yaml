@@ -22,10 +22,10 @@ blocks:
   lead: What distinguishes the two pronunciations?
   transcript: '*o hay*'
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: MAR.ELE
     audio: marele/o-hay-ref.mp3
-  - label: Learner
+  - role: learner
     subtitle: MAR.ELE
     audio: marele/o-hay-learner.mp3
 - type: solution
@@ -55,10 +55,10 @@ blocks:
   lead: Is an additional glottal stop audible between the two words?
   transcript: Cuando el chico ***tiene hambre***, pierde el control.
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-ref.mp3
-  - label: Learner
+  - role: learner
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-learner.mp3
 - type: solution
@@ -78,10 +78,10 @@ blocks:
   lead: How does the /s/ of *sus* connect to the following vowel?
   transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
   examples:
-  - label: Native-speaker reference
+  - role: reference
     subtitle: Pronunciation Matters · D24
     audio: corpus/p1-amigos-ref.mp3
-  - label: Learner
+  - role: learner
     subtitle: Pronunciation Matters · D24
     audio: corpus/p1-amigos-learner.mp3
 - type: solution

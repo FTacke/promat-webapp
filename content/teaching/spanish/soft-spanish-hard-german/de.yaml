@@ -22,10 +22,10 @@ blocks:
   lead: Was unterscheidet die beiden Aussprachen?
   transcript: '*o hay*'
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: MAR.ELE
     audio: marele/o-hay-ref.mp3
-  - label: Lernende:r
+  - role: learner
     subtitle: MAR.ELE
     audio: marele/o-hay-learner.mp3
 - type: solution
@@ -55,10 +55,10 @@ blocks:
   lead: Ist zwischen den beiden Wörtern ein zusätzlicher Knacklaut zu hören?
   transcript: Cuando el chico ***tiene hambre***, pierde el control.
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-ref.mp3
-  - label: Lernende:r
+  - role: learner
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-learner.mp3
 - type: solution
@@ -78,10 +78,10 @@ blocks:
   lead: Wie verbindet sich das /s/ von *sus* mit dem folgenden Vokal?
   transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
   examples:
-  - label: Muttersprachliche Referenz
+  - role: reference
     subtitle: Pronunciation Matters · D24
     audio: corpus/p1-amigos-ref.mp3
-  - label: Lernende:r
+  - role: learner
     subtitle: Pronunciation Matters · D24
     audio: corpus/p1-amigos-learner.mp3
 - type: solution
