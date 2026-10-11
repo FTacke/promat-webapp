@@ -135,6 +135,24 @@ def test_build_teaching_topic_page_keeps_image_block_without_alt(
     assert "missing alt text" in caplog.text
 
 
+def test_build_teaching_topic_page_image_block_carries_caption_and_credit(teaching_app: Flask, tmp_path: Path) -> None:
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "images", "example.png", b"image")
+    topic_source = (
+        "title: Thema eins\nblocks:\n  - type: image\n    src: example.png\n    alt: Zeichnung\n"
+        "    caption: Untertitel *eins*\n    credit: 'Illustration: Jemand · 2026'\n"
+    )
+    _write_teaching_topic(tmp_path, "spanish", "topic-one", "de", topic_source)
+
+    with teaching_app.test_request_context():
+        page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
+
+    image_block = next(block for block in page["blocks"] if block["type"] == "image")
+    assert image_block["caption_html"] == "Untertitel <em>eins</em>"
+    assert image_block["credit"] == "Illustration: Jemand · 2026" and image_block["credit_html"] == "Illustration: Jemand · 2026"
+
+
 def test_render_markdown_inline_renders_emphasis_code_and_links() -> None:
     rendered = teaching_content.render_markdown_inline("Der *seseo* nutzt `s` und [Link](https://example.test).")
 

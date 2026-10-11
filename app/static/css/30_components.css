@@ -3056,20 +3056,40 @@ a.promat-card:active .pm-cta-link {
   padding-left: 1rem;
 }
 
+/* Illustration with caption and credit: centered, calm, no frame. The light paper tone of the illustrations matches the
+   light page background; in dark mode the image keeps its light ground as a softly rounded, slightly dimmed plate. */
 .pm-teaching-figure {
   display: grid;
   gap: 0.75rem;
+  justify-self: center;
+  width: min(100%, 30rem);
   margin: 0;
 }
 
 .pm-teaching-figure__image {
+  display: block;
   width: 100%;
+  height: auto;
   border-radius: var(--pm-radius-container);
-  border: 1px solid var(--pm-border-default);
+}
+
+:root[data-theme="dark"] .pm-teaching-figure__image,
+:root[data-theme="auto"][data-system-dark="true"] .pm-teaching-figure__image {
+  filter: brightness(0.9);
 }
 
 .pm-teaching-figure__caption {
+  display: grid;
+  gap: 0.3rem;
   color: var(--book-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.pm-teaching-figure__credit {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  opacity: 0.85;
 }
 
 @media (max-width: 759px) {

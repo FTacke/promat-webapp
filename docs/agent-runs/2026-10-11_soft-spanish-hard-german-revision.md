@@ -52,3 +52,10 @@ Siehe Abschlussbericht im Chat; Browser-Pass in `tmp/ui-qa/2026-10-11-soft-spani
 - Alle sechs neuen spanischen Themenseiten (DE/EN) nutzen für den Unterrichtsteil den bestehenden Block `teaching_impulses` unter der Überschrift `Impulse für den Unterricht` / `Classroom prompts` (wie *Welche Aussprache unterrichten?*, unverändert); die bisherigen `tip_box`-Kurzaufgaben und die zweite Überschrift `Für den Unterricht` entfielen. Kein CSS, keine neue Komponente.
 - Bestehende Aufgaben wurden 1:1 in nummerierte Impulse übertragen (nur kurze Impulstitel ergänzt; Leitfrage von *R am Silbenende* im zweiten Impuls, Kontrollhinweis von *Weiche Konsonanten* als vierter Impuls).
 - *Weiches Spanisch, hartes Deutsch*: drei neue Impulse (Erst hören, dann erklären / Aussprache bewusst erproben / Sprachen vergleichen) mit kurzem Einleitungssatz; der Sammelsatz zu den drei Hörbeispielen entfiel. Der Sprachvergleich bleibt bewusst offen formuliert.
+
+## Nachtrag: Glottis-Illustration
+
+- `glottis.png` (Repository-Root, unverändert übernommen, 1448 × 1086, 1,8 MB) liegt jetzt unter `content/teaching/spanish/soft-spanish-hard-german/media/images/glottal-stop-larynx-hand.png`; die Arbeitskopie im Root ist entfernt. Eine Datei für DE und EN.
+- Eingebunden mit dem vorhandenen `image`-Block hinter dem Abschnitt „Warum klingt das unterschiedlich?“ (vor „Noch ein Beispiel“). Der Block wurde zentral um das optionale Feld `credit` (Bildnachweis) erweitert und ruhiger gestaltet (zentriert, max. 30 rem, kein Rahmen/Schatten; im Dark Mode abgerundete, leicht abgedunkelte Platte). Der Block war bisher auf keiner Seite im Einsatz.
+- Der Nachweis steht im Feld `credit` der Themenquelle; die Architektur hat keinen Medienmetadaten-Speicher, die PNG-Datei selbst wurde nicht verändert.
+- Offen: Die Datei ist mit 1,8 MB groß (lazy geladen). Eine verlustfreie bzw. WebP-Variante wäre möglich, wurde wegen „genau diese Datei“ nicht gemacht.

@@ -243,8 +243,11 @@
   {% elif block.type == 'image' %}
   <figure id="{{ block.id }}" data-teaching-width="{{ block_width }}" class="pm-teaching-block pm-teaching-figure">
     <img src="{{ block.src }}" alt="{{ block.alt }}" class="pm-teaching-figure__image" loading="lazy">
-    {% if block.caption %}
-    <figcaption class="pm-teaching-figure__caption">{{ block.caption_html | safe if block.caption_html else block.caption }}</figcaption>
+    {% if block.caption or block.credit %}
+    <figcaption class="pm-teaching-figure__caption">
+      {% if block.caption %}<span class="pm-teaching-figure__caption-text">{{ block.caption_html | safe if block.caption_html else block.caption }}</span>{% endif %}
+      {% if block.credit %}<span class="pm-teaching-figure__credit">{{ block.credit_html | safe if block.credit_html else block.credit }}</span>{% endif %}
+    </figcaption>
     {% endif %}
   </figure>
   {% elif block.type == 'embed' %}

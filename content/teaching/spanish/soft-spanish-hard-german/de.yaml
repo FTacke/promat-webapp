@@ -41,6 +41,11 @@ blocks:
     Im Deutschen beginnen wir vokalisch anlautende Wörter häufig mit einem kurzen Verschluss der Stimmlippen – dem **Knacklaut [ʔ]**. So etwa bei *die Ente*. Im Spanischen werden Wörter dagegen meist über ihre Grenzen hinweg fließend miteinander verbunden.
 
     Ein solcher Neueinsatz ist im Spanischen nicht grundsätzlich ausgeschlossen, gehört aber nicht zum gewöhnlichen Aussprachemuster in zusammenhängender Rede.
+- type: image
+  src: glottal-stop-larynx-hand.png
+  alt: 'Zeichnung einer Frau im Halbprofil, die mit Daumen und Fingern leicht den Hals auf Höhe des Kehlkopfs berührt; der Bereich des Kehlkopfs ist violett hervorgehoben.'
+  caption: 'Der Knacklaut [ʔ] entsteht durch einen kurzen Verschluss der Stimmlippen im Kehlkopf. Die Handhaltung veranschaulicht den Artikulationsort.'
+  credit: 'Illustration: Felix Tacke (Konzept und Prompting), KI-generiert · Pronunciation Matters (2026)'
 - type: section_heading
   title: 'Noch ein Beispiel: *tiene hambre*'
 - type: text

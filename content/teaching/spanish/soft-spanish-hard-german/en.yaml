@@ -41,6 +41,11 @@ blocks:
     In German, words that begin with a vowel are often started with a brief closure of the vocal folds – the **glottal stop [ʔ]**, as in *die Ente*. In Spanish, by contrast, words are usually linked smoothly across word boundaries.
 
     A fresh onset of this kind is not categorically excluded in Spanish, but it is not part of the usual pronunciation pattern in connected speech.
+- type: image
+  src: glottal-stop-larynx-hand.png
+  alt: 'Drawing of a woman in partial profile lightly touching her neck at the level of the larynx with her thumb and fingers; the laryngeal area is highlighted in violet.'
+  caption: 'The glottal stop [ʔ] is produced by briefly closing the vocal folds in the larynx. The hand gesture illustrates the place of articulation.'
+  credit: 'Illustration: Felix Tacke (concept and prompting), AI-generated · Pronunciation Matters (2026)'
 - type: section_heading
   title: 'Another example: *tiene hambre*'
 - type: text

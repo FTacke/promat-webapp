@@ -1013,7 +1013,8 @@ def _topic_blocks(
                         "src": src,
                         "alt": alt,
                         "caption": _as_text(raw_block.get("caption")),
-                    }, "caption")
+                        "credit": _as_text(raw_block.get("credit")),
+                    }, "caption", "credit")
                 )
             continue
         if block_type == "embed":

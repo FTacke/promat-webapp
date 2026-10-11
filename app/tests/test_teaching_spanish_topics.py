@@ -177,6 +177,34 @@ def test_soft_spanish_classroom_prompts_are_the_three_numbered_impulses(client, 
     assert html.rindex('<details class="pm-teaching-solution">') < html.index("pm-teaching-impulses") < html.index("pm-teaching-further-reading")
 
 
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_glottal_stop_illustration_sits_between_the_explanation_and_tiene_hambre(client, lang: str) -> None:
+    html = _html(client, lang, "soft-spanish-hard-german")
+    src = "/teaching-media/spanish/soft-spanish-hard-german/images/glottal-stop-larynx-hand.png"
+    assert html.count(f'<img src="{src}"') == 1
+    figure = re.search(r'<figure id="[^"]+" data-teaching-width="wide" class="pm-teaching-block pm-teaching-figure">(.*?)</figure>', html, re.S).group(1)
+    alt = html_module.unescape(re.search(r'alt="([^"]+)"', figure).group(1))
+    caption = html_module.unescape(re.search(r'pm-teaching-figure__caption-text">(.*?)</span>', figure, re.S).group(1))
+    credit = html_module.unescape(re.search(r'pm-teaching-figure__credit">(.*?)</span>', figure, re.S).group(1))
+    if lang == "de":
+        assert caption == "Der Knacklaut [ʔ] entsteht durch einen kurzen Verschluss der Stimmlippen im Kehlkopf. Die Handhaltung veranschaulicht den Artikulationsort."
+        assert credit == "Illustration: Felix Tacke (Konzept und Prompting), KI-generiert · Pronunciation Matters (2026)"
+        assert "Kehlkopf" in alt
+    else:
+        assert caption == "The glottal stop [ʔ] is produced by briefly closing the vocal folds in the larynx. The hand gesture illustrates the place of articulation."
+        assert credit == "Illustration: Felix Tacke (concept and prompting), AI-generated · Pronunciation Matters (2026)"
+        assert "larynx" in alt
+    assert "Illustration:" not in alt and "KI-generiert" not in alt and "AI-generated" not in alt  # the credit is not repeated in the alt text
+    # order: explanation heading, illustration, then the next section
+    why = "Warum klingt das unterschiedlich?" if lang == "de" else "Why do they sound different?"
+    assert html.index(why) < html.index(src) < html.index("tiene hambre</em></h2>")
+    response = client.get(src)
+    assert response.status_code == 200 and response.mimetype == "image/png"
+    # one shared file for both editions, and no working copy left in the repository root
+    assert len(list(TOPIC_DIR.glob("soft-spanish-hard-german/media/images/*.png"))) == 1
+    assert not (REPO_ROOT / "glottis.png").exists()
+
+
 def test_marele_recordings_are_declared_with_origin_and_the_checked_mapping() -> None:
     comparison = next(c for c in slots.load_slots()["comparisons"] if c["id"] == "p1-ohay")
     by_slot = {r["slot"]: r for r in comparison["recordings"]}
