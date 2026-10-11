@@ -1,0 +1,12 @@
+# Web derivatives (WebP) of the raster illustrations of the Teaching topic pages (declaration; see scripts/teaching_images.py).
+#
+# The master (PNG/JPEG) stays untouched; the derivative beside it is what the shared image block delivers. Rebuild with
+# `python scripts/teaching_images.py --build` after replacing a master; `--check` (and a pytest) fails on a stale entry.
+
+derivatives:
+- master: spanish/soft-spanish-hard-german/media/images/glottal-stop-larynx-hand.png
+  master_sha256: 46b2d048503ff43fe478395e1a0897ca2bb98af72e92c952bbcd73f412f062a6
+  derivative: spanish/soft-spanish-hard-german/media/images/glottal-stop-larynx-hand.webp
+  derivative_sha256: d35121f1f18c2ea4f07029b9dc6ccaa3b392117126f0c819f3f4779beb02ba0f
+  width: 960
+  quality: 92

@@ -7,6 +7,7 @@ from html.parser import HTMLParser
 import logging
 import os
 import re
+import struct
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -538,6 +539,37 @@ def _content_lang_code(teaching_lang: str) -> str:
     return str((get_language(teaching_lang) or {}).get("lang_code") or "")
 
 
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def _png_size(path: Path) -> tuple[int, int] | None:
+    """(width, height) from the PNG header; ``None`` for any other format."""
+    try:
+        with path.open("rb") as handle:
+            head = handle.read(24)
+    except OSError:
+        return None
+    if len(head) < 24 or head[:8] != PNG_SIGNATURE or head[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", head[16:24])
+
+
+def _image_delivery(teaching_lang: str, topic_slug: str, value: Any) -> tuple[str, int | None, int | None]:
+    """Delivery details of an image block: URL of the WebP derivative beside a raster master (if any) and the
+    intrinsic size of the master, which lets the browser reserve the space before the image has loaded.
+    The master stays the ``<img>`` fallback; see ``scripts/teaching_images.py``."""
+    name = _as_text(value).replace("\\", "/")
+    if not name or urlparse(name).scheme or name.startswith("/"):
+        return "", None, None
+    master = resolve_teaching_topic_media_artifact(teaching_lang, topic_slug, "images", name)
+    size = _png_size(master) if master is not None else None
+    webp_name = str(Path(name).with_suffix(".webp")).replace("\\", "/")
+    webp_src = ""
+    if Path(name).suffix.lower() in {".png", ".jpg", ".jpeg"}:
+        webp_src = _resolve_topic_media_url(teaching_lang, topic_slug, "images", webp_name)
+    return webp_src, size[0] if size else None, size[1] if size else None
+
+
 def _audio_example_payload(
     teaching_lang: str,
     topic_slug: str,
@@ -1006,11 +1038,15 @@ def _topic_blocks(
                         ui_lang,
                         topic_slug,
                     )
+                webp_src, width, height = _image_delivery(teaching_lang, topic_slug, raw_block.get("src"))
                 blocks.append(
                     _set_inline_markdown_fields({
                         "type": "image",
                         "id": block_id,
                         "src": src,
+                        "webp_src": webp_src,
+                        "width": width,
+                        "height": height,
                         "alt": alt,
                         "caption": _as_text(raw_block.get("caption")),
                         "credit": _as_text(raw_block.get("credit")),

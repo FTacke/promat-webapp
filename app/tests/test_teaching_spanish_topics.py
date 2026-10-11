@@ -205,6 +205,32 @@ def test_glottal_stop_illustration_sits_between_the_explanation_and_tiene_hambre
     assert not (REPO_ROOT / "glottis.png").exists()
 
 
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_glottal_stop_illustration_is_delivered_as_webp_with_the_master_as_fallback(client, lang: str) -> None:
+    html = _html(client, lang, "soft-spanish-hard-german")
+    base = "/teaching-media/spanish/soft-spanish-hard-german/images/glottal-stop-larynx-hand"
+    assert f'<source type="image/webp" srcset="{base}.webp">' in html
+    assert f'<img src="{base}.png"' in html and 'width="1448" height="1086" loading="lazy"' in html
+    webp = client.get(f"{base}.webp")
+    assert webp.status_code == 200 and webp.mimetype == "image/webp"
+    master = client.get(f"{base}.png")
+    assert master.status_code == 200 and master.mimetype == "image/png"
+    assert webp.content_length < master.content_length / 10  # >90 % smaller than the master
+    assert webp.content_length < 100_000
+
+
+def test_illustration_masters_are_untouched_and_derivatives_are_declared() -> None:
+    import teaching_images as images
+
+    assert images.check(images.load_manifest()) == []
+    master = TOPIC_DIR / "soft-spanish-hard-german" / "media" / "images" / "glottal-stop-larynx-hand.png"
+    # the master is the original upload, byte for byte (SHA-256 of the committed file of 2026-10-11)
+    assert images.sha256_of(master) == "46b2d048503ff43fe478395e1a0897ca2bb98af72e92c952bbcd73f412f062a6"
+    assert images.png_size(master) == (1448, 1086)
+    webp = master.with_suffix(".webp")
+    assert images.webp_size(webp) == (960, 720)
+
+
 def test_marele_recordings_are_declared_with_origin_and_the_checked_mapping() -> None:
     comparison = next(c for c in slots.load_slots()["comparisons"] if c["id"] == "p1-ohay")
     by_slot = {r["slot"]: r for r in comparison["recordings"]}

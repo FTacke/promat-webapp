@@ -1395,7 +1395,9 @@ def teaching_topic_media(teaching_lang: str, topic_slug: str, media_type: str, f
     if asset_file is None:
         abort(404)
 
-    return send_file(asset_file, conditional=True, etag=False)
+    # WebP derivatives of illustrations: do not depend on the host's mimetypes table
+    mimetype = "image/webp" if asset_file.suffix.lower() == ".webp" else None
+    return send_file(asset_file, mimetype=mimetype, conditional=True, etag=False)
 
 
 @blueprint.get("/<ui_lang>/teaching/<language_slug>")

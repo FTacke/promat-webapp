@@ -242,7 +242,14 @@
   </section>
   {% elif block.type == 'image' %}
   <figure id="{{ block.id }}" data-teaching-width="{{ block_width }}" class="pm-teaching-block pm-teaching-figure">
-    <img src="{{ block.src }}" alt="{{ block.alt }}" class="pm-teaching-figure__image" loading="lazy">
+    {%- if block.webp_src %}
+    <picture>
+      <source type="image/webp" srcset="{{ block.webp_src }}">
+      <img src="{{ block.src }}" alt="{{ block.alt }}" class="pm-teaching-figure__image"{% if block.width and block.height %} width="{{ block.width }}" height="{{ block.height }}"{% endif %} loading="lazy" decoding="async">
+    </picture>
+    {%- else %}
+    <img src="{{ block.src }}" alt="{{ block.alt }}" class="pm-teaching-figure__image"{% if block.width and block.height %} width="{{ block.width }}" height="{{ block.height }}"{% endif %} loading="lazy" decoding="async">
+    {%- endif %}
     {% if block.caption or block.credit %}
     <figcaption class="pm-teaching-figure__caption">
       {% if block.caption %}<span class="pm-teaching-figure__caption-text">{{ block.caption_html | safe if block.caption_html else block.caption }}</span>{% endif %}

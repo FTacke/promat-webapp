@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+import struct
 
 import pytest
 from flask import Flask
@@ -151,6 +152,30 @@ def test_build_teaching_topic_page_image_block_carries_caption_and_credit(teachi
     image_block = next(block for block in page["blocks"] if block["type"] == "image")
     assert image_block["caption_html"] == "Untertitel <em>eins</em>"
     assert image_block["credit"] == "Illustration: Jemand · 2026" and image_block["credit_html"] == "Illustration: Jemand · 2026"
+
+
+def _png_header(width: int, height: int) -> bytes:
+    return b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", width, height)
+
+
+def test_image_block_delivers_the_webp_derivative_beside_the_master(teaching_app: Flask, tmp_path: Path) -> None:
+    _write_teaching_manifest(tmp_path)
+    _write_teaching_hub(tmp_path, "spanish", "de", "title: Spanisch\ntopics:\n  - topic-one\n")
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "images", "figure.png", _png_header(1448, 1086))
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "images", "figure.webp", b"webp")
+    _write_teaching_media(tmp_path, "spanish", "topic-one", "images", "plain.png", _png_header(200, 100))
+    _write_teaching_topic(
+        tmp_path, "spanish", "topic-one", "de",
+        "title: Thema eins\nblocks:\n  - type: image\n    src: figure.png\n    alt: A\n  - type: image\n    src: plain.png\n    alt: B\n",
+    )
+
+    with teaching_app.test_request_context():
+        page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
+
+    with_webp, without_webp = [block for block in page["blocks"] if block["type"] == "image"]
+    assert with_webp["src"].endswith("/images/figure.png") and with_webp["webp_src"].endswith("/images/figure.webp")
+    assert (with_webp["width"], with_webp["height"]) == (1448, 1086)
+    assert without_webp["webp_src"] == "" and (without_webp["width"], without_webp["height"]) == (200, 100)
 
 
 def test_render_markdown_inline_renders_emphasis_code_and_links() -> None:

@@ -332,7 +332,11 @@ def validate_unreferenced_media(errors: list[str], warnings: list[str], teaching
             # {media_type}/{path inside the type}; references may name the path with or without the type folder.
             parts = relative_to_media.parts
             inner = "/".join(parts[1:])
-            if any(inner in text or "/".join(parts) in text for text in strings):
+            candidates = [inner]
+            if media_file.suffix.lower() == ".webp":
+                # web derivative of a raster illustration: referenced through its master (scripts/teaching_images.py)
+                candidates += [str(Path(inner).with_suffix(suffix)).replace("\\", "/") for suffix in (".png", ".jpg", ".jpeg")]
+            if any(candidate in text for candidate in candidates for text in strings) or any("/".join(parts) in text for text in strings):
                 continue
             key = media_file.relative_to(CONTENT_ROOT).as_posix()
             orphans.add(key)
