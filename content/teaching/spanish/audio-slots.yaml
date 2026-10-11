@@ -14,7 +14,7 @@ comparisons:
   topic: soft-spanish-hard-german
   phenomenon: Glottaler Neueinsatz und vokalischer Anschluss über die Wortgrenze
   target: o hay
-  question: Was unterscheidet die beiden Aussprachen von *o hay*?
+  question: Was unterscheidet die beiden Aussprachen?
   recordings:
   - slot: ref
     category: reference
@@ -36,7 +36,7 @@ comparisons:
   topic: soft-spanish-hard-german
   phenomenon: Vokalischer Anschluss über die Wortgrenze
   target: tiene hambre
-  question: Wie schließt *hambre* an *tiene* an?
+  question: Ist zwischen den beiden Wörtern ein zusätzlicher Knacklaut zu hören?
   recordings:
   - slot: ref
     category: reference
@@ -58,7 +58,7 @@ comparisons:
   topic: soft-spanish-hard-german
   phenomenon: Resilbifizierung eines wortfinalen Konsonanten vor Vokal
   target: sus amigos
-  question: Wie schließt *amigos* an *sus* an?
+  question: Wie verbindet sich das /s/ von *sus* mit dem folgenden Vokal?
   recordings:
   - slot: ref
     category: reference

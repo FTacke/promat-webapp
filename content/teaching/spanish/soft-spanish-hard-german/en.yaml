@@ -14,11 +14,12 @@ blocks:
 - type: text
   body: Why does German often sound a little more “clipped” than Spanish? A small sound that often goes unnoticed plays an important part.
 - type: section_heading
-  title: 'Listening comparison: *o hay*'
+  title: Listen and discover
 - type: text
   body: The two recordings of the same Spanish word sequence show a striking difference.
 - type: audio_contrast
-  lead: What distinguishes the two pronunciations of *o hay*?
+  title: 'With and without a glottal stop: *o hay*'
+  lead: What distinguishes the two pronunciations?
   transcript: '*o hay*'
   examples:
   - label: Native-speaker reference
@@ -43,10 +44,11 @@ blocks:
 - type: section_heading
   title: 'Another example: *tiene hambre*'
 - type: text
-  body: In *tiene hambre*, too, two vowels meet across a word boundary. In ordinary connected speech they are normally joined without an additional glottal stop.
+  body: Here, too, two vowels meet across a word boundary. In ordinary connected speech they are joined without an additional glottal stop.
 - type: audio_contrast
-  lead: How does *hambre* connect to *tiene*?
-  transcript: Cuando el chico *tiene hambre*, pierde el control.
+  title: 'No additional fresh onset: *tiene hambre*'
+  lead: Is an additional glottal stop audible between the two words?
+  transcript: Cuando el chico ***tiene hambre***, pierde el control.
   examples:
   - label: Native-speaker reference
     subtitle: Pronunciation Matters · D27
@@ -58,17 +60,18 @@ blocks:
   title: 'Solution: What can be heard?'
   body: What matters is whether an additional glottal closure can be heard between *tiene* and *hambre*, or whether the vowels are joined without such a fresh onset.
 - type: section_heading
-  title: 'When syllables cross the word boundary: *sus amigos*'
+  title: When syllables cross the word boundary
 - type: text
   body: |-
-    Smooth linking does not concern vowels alone. A word-final consonant can also be linked to the following vowel.
+    Smooth linking is not limited to vowels that meet at a word boundary. A word-final consonant can also be linked to the following vowel.
 
     In *sus amigos*, the /s/ of *sus* is linked to the initial /a/ of *amigos*: **su‑sa‑mi‑gos**.
 
     This phenomenon is called **resyllabification** (Spanish: *resilabificación*). The syllable boundary no longer coincides with the word boundary.
 - type: audio_contrast
-  lead: How does *amigos* connect to *sus*?
-  transcript: Con su familia es un ángel y con *sus amigos* un diablo.
+  title: 'Resyllabification: *sus amigos*'
+  lead: How does the /s/ of *sus* connect to the following vowel?
+  transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
   examples:
   - label: Native-speaker reference
     subtitle: Pronunciation Matters · D24
@@ -79,9 +82,7 @@ blocks:
 - type: solution
   title: 'Solution: What can be heard?'
   body: |-
-    In resyllabification, the word-final /s/ forms a syllable together with the following vowel. The words are thereby closely bound together in the stream of speech.
-
-    What matters is whether the /s/ belongs to the following syllable (*su‑sa‑mi‑gos*) or stays at the end of *sus*.
+    What matters is whether the /s/ belongs to the following syllable (*su‑sa‑mi‑gos*) or stays at the end of *sus*. In the first case, the two words are closely bound together in sound.
 - type: tip_box
   title: For the classroom
   body: |-

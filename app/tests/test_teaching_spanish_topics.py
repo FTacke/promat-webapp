@@ -149,7 +149,13 @@ def test_soft_spanish_page_has_the_three_comparisons_in_order_with_marele_first(
     # recurring solution, closed by default, and the target word sequence of D24 is "sus amigos" (not "mis amigos")
     assert html.count('<details class="pm-teaching-solution">') == 3
     assert ("Auflösung: Was ist zu hören?" if lang == "de" else "Solution: What can be heard?") in html
-    assert "<em>sus amigos</em>" in html and "mis amigos" not in html
+    assert "<em><strong>sus amigos</strong></em>" in html and "mis amigos" not in html
+    # every comparison box carries the audio icon and a title: same module as the comparisons of "which-pronunciation"
+    assert html.count("audio-section-icon") == 3 and html.count("promat-content-block__title pm-panel__title") >= 3
+    titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
+    expected = (["Mit und ohne Knacklaut: <em>o hay</em>", "Ohne zusätzlichen Neueinsatz: <em>tiene hambre</em>", "Resilbifizierung: <em>sus amigos</em>"] if lang == "de"
+                else ["With and without a glottal stop: <em>o hay</em>", "No additional fresh onset: <em>tiene hambre</em>", "Resyllabification: <em>sus amigos</em>"])
+    assert titles == expected
     assert "Auf einen Blick" not in html and "At a glance" not in html
     assert "https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen" in html
 

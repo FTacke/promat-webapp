@@ -40,3 +40,9 @@ Beste Referenz-/Lernendenaufnahme für D27 und D24 (Austausch: `audio-slots.yaml
 ## Verifikation
 
 Siehe Abschlussbericht im Chat; Browser-Pass in `tmp/ui-qa/2026-10-11-soft-spanish/` (DE/EN × 1280/390 px × hell/dunkel, keine Konsolenfehler, keine 4xx, kein Überlauf, Auflösungen öffnen/schließen; Regressionscheck der übrigen sechs Themenseiten).
+
+## Nachtrag: Feinschliff der Hörvergleichskästen
+
+- Alle drei `audio_contrast`-Blöcke tragen jetzt einen Titel (damit Audio-Icon und Titelhierarchie wie im Vergleichsmodul von *Welche Aussprache unterrichten?*): `Mit und ohne Knacklaut: *o hay*`, `Ohne zusätzlichen Neueinsatz: *tiene hambre*`, `Resilbifizierung: *sus amigos*` (EN gleichwertig). Keine neue Komponente, kein CSS.
+- Abschnittsüberschriften entdoppelt (`Hören und entdecken`, `Noch ein Beispiel: *tiene hambre*`, `Wenn Silben die Wortgrenze überschreiten`); Hörfragen kurz und neutral (Registerfeld `question` in `audio-slots.yaml` angepasst, Aufnahmen und Sprecherzuordnung unverändert).
+- Zielwortfolge in den Satz-Chips (D27, D24) fett-kursiv hervorgehoben; Auflösung zu *sus amigos* um die Doppeldefinition gekürzt.

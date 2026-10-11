@@ -14,11 +14,12 @@ blocks:
 - type: text
   body: Warum klingt Deutsch häufig etwas „abgehackter“ als Spanisch? Ein kleiner, oft unbemerkter Laut spielt dabei eine wichtige Rolle.
 - type: section_heading
-  title: 'Hörvergleich: *o hay*'
+  title: Hören und entdecken
 - type: text
   body: Die beiden Aufnahmen derselben spanischen Wortfolge zeigen einen auffälligen Unterschied.
 - type: audio_contrast
-  lead: Was unterscheidet die beiden Aussprachen von *o hay*?
+  title: 'Mit und ohne Knacklaut: *o hay*'
+  lead: Was unterscheidet die beiden Aussprachen?
   transcript: '*o hay*'
   examples:
   - label: Muttersprachliche Referenz
@@ -43,10 +44,11 @@ blocks:
 - type: section_heading
   title: 'Noch ein Beispiel: *tiene hambre*'
 - type: text
-  body: Auch bei *tiene hambre* treffen zwei Vokale über eine Wortgrenze hinweg aufeinander. Im gewöhnlichen Sprachfluss werden sie normalerweise ohne zusätzlichen Knacklaut miteinander verbunden.
+  body: Auch hier treffen zwei Vokale über eine Wortgrenze hinweg aufeinander. Im gewöhnlichen Sprachfluss werden sie ohne zusätzlichen Knacklaut verbunden.
 - type: audio_contrast
-  lead: Wie schließt *hambre* an *tiene* an?
-  transcript: Cuando el chico *tiene hambre*, pierde el control.
+  title: 'Ohne zusätzlichen Neueinsatz: *tiene hambre*'
+  lead: Ist zwischen den beiden Wörtern ein zusätzlicher Knacklaut zu hören?
+  transcript: Cuando el chico ***tiene hambre***, pierde el control.
   examples:
   - label: Muttersprachliche Referenz
     subtitle: Pronunciation Matters · D27
@@ -58,17 +60,18 @@ blocks:
   title: 'Auflösung: Was ist zu hören?'
   body: Entscheidend ist, ob zwischen *tiene* und *hambre* ein zusätzlicher glottaler Verschluss zu hören ist oder ob die Vokale ohne einen solchen Neueinsatz verbunden werden.
 - type: section_heading
-  title: 'Wenn Silben die Wortgrenze überschreiten: *sus amigos*'
+  title: Wenn Silben die Wortgrenze überschreiten
 - type: text
   body: |-
-    Der fließende Anschluss betrifft nicht nur Vokale. Auch ein Konsonant am Wortende kann mit dem folgenden Vokal verbunden werden.
+    Der fließende Anschluss betrifft nicht nur aufeinandertreffende Vokale. Auch ein Konsonant am Wortende kann mit dem folgenden Vokal verbunden werden.
 
     Bei *sus amigos* wird das /s/ von *sus* mit dem anlautenden /a/ von *amigos* verbunden: **su‑sa‑mi‑gos**.
 
     Dieses Phänomen nennt man **Resilbifizierung** (spanisch: *resilabificación*). Die Silbengrenze stimmt dabei nicht mehr mit der Wortgrenze überein.
 - type: audio_contrast
-  lead: Wie schließt *amigos* an *sus* an?
-  transcript: Con su familia es un ángel y con *sus amigos* un diablo.
+  title: 'Resilbifizierung: *sus amigos*'
+  lead: Wie verbindet sich das /s/ von *sus* mit dem folgenden Vokal?
+  transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
   examples:
   - label: Muttersprachliche Referenz
     subtitle: Pronunciation Matters · D24
@@ -79,9 +82,7 @@ blocks:
 - type: solution
   title: 'Auflösung: Was ist zu hören?'
   body: |-
-    Bei der Resilbifizierung bildet das wortfinale /s/ zusammen mit dem folgenden Vokal eine Silbe. Die Wörter werden dadurch lautsprachlich eng miteinander verknüpft.
-
-    Entscheidend ist, ob das /s/ zur folgenden Silbe gehört (*su‑sa‑mi‑gos*) oder am Ende von *sus* bleibt.
+    Entscheidend ist, ob das /s/ zur folgenden Silbe gehört (*su‑sa‑mi‑gos*) oder am Ende von *sus* bleibt. Im ersten Fall sind die beiden Wörter lautlich eng verknüpft.
 - type: tip_box
   title: Für den Unterricht
   body: |-
