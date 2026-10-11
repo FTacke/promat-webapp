@@ -11,6 +11,10 @@ names those media files, so a recording is replaced by changing the session or i
 media (files present, SHA-256, every file referenced by the topic sources, listening questions quoted on the page) and,
 when a local runtime is available, the release conditions of every source session.
 
+Recordings from the predecessor corpus MAR.ELE are not part of the research runtime: they carry an ``origin`` entry
+(corpus, source file, transcription) instead of ``session_id`` and ``item``, are copied once into the topic
+media by hand (the source repository stays untouched) and are only verified here (file present, SHA-256, referenced).
+
 Release conditions (``docs/spec/intake-workbook.md``: ``teaching_consent_signed`` is an eligibility flag for manual
 selection, never an automatic switch): the session must carry ``teaching_consent_signed: yes`` and ``needs_review:
 false``, a reference recording must come from a native speaker and a learner recording from a learner session. Source:
@@ -45,7 +49,8 @@ HEADER = """# Curated corpus recordings of the Spanish Teaching topic pages (dec
 # media file and its `sha256`. The topic pages name only the media file, never a session, so replacing a recording
 # needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes`; the
 # `selection` of the first release was made automatically (typical duration, no outliers) and is NOT phonetically
-# verified: it is a neutral comparison, not a claim about a specific learner realisation.
+# verified: it is a neutral comparison, not a claim about a specific learner realisation. Recordings with an `origin`
+# entry come from the predecessor corpus MAR.ELE (not from the research runtime); they are not touched by --export.
 """
 
 
@@ -69,6 +74,11 @@ def dump_slots(data: dict[str, Any], path: Path = SLOTS_FILE) -> None:
 
 def media_path(topic: str, file: str) -> Path:
     return CONTENT_ROOT / CORPUS / topic / "media" / "audio" / file
+
+
+def is_external(recording: dict[str, Any]) -> bool:
+    """True for a recording of another corpus (MAR.ELE) that has no source session in the research runtime."""
+    return bool(recording.get("origin"))
 
 
 def source_path(sessions_root: Path, recording: dict[str, Any]) -> Path:
@@ -116,11 +126,18 @@ def check(data: dict[str, Any], sessions_root: Path | None = None) -> list[str]:
         if category not in CATEGORIES:
             problems.append(f"{where}: category must be one of {CATEGORIES}")
             continue
-        if not str(recording.get("session_id", "")).startswith(SESSION_PREFIX[category]):
-            problems.append(f"{where}: session {recording.get('session_id')!r} does not fit category {category!r}")
-        pattern = ITEM_ID.get(item.get("task", ""))
-        if pattern is None or not pattern.match(str(item.get("id", ""))):
-            problems.append(f"{where}: invalid corpus item {item!r}")
+        external = is_external(recording)
+        if external:
+            origin = recording["origin"]
+            missing = [key for key in ("corpus", "source_file") if not str(origin.get(key) or "").strip()]
+            if missing or recording.get("session_id") or item:
+                problems.append(f"{where}: external recording needs origin corpus/source_file and no session or item ({missing})")
+        else:
+            if not str(recording.get("session_id", "")).startswith(SESSION_PREFIX[category]):
+                problems.append(f"{where}: session {recording.get('session_id')!r} does not fit category {category!r}")
+            pattern = ITEM_ID.get(item.get("task", ""))
+            if pattern is None or not pattern.match(str(item.get("id", ""))):
+                problems.append(f"{where}: invalid corpus item {item!r}")
         key = (topic, recording["file"])
         if key in seen_files:
             problems.append(f"{where}: media file {recording['file']} declared twice")
@@ -132,7 +149,7 @@ def check(data: dict[str, Any], sessions_root: Path | None = None) -> list[str]:
             problems.append(f"{where}: sha256 differs from {target.relative_to(REPO_ROOT)} (run --export or update the entry)")
         if recording["file"] not in sources[topic]:
             problems.append(f"{where}: {recording['file']} is not referenced by the topic sources of {topic}")
-        if sessions_root is not None:
+        if sessions_root is not None and not external:
             problems.extend(f"{where}: {problem}" for problem in session_problems(sessions_root, recording))
             origin = source_path(sessions_root, recording)
             if not origin.is_file():
@@ -150,6 +167,8 @@ def export(data: dict[str, Any], sessions_root: Path) -> list[str]:
     """Copy the declared recordings from the local runtime into the topic media and refresh their hashes."""
     problems: list[str] = []
     for comparison, recording in iter_recordings(data):
+        if is_external(recording):
+            continue
         where = f"{comparison['id']}/{recording['slot']}"
         problems.extend(f"{where}: {problem}" for problem in session_problems(sessions_root, recording))
         origin = source_path(sessions_root, recording)
@@ -158,6 +177,8 @@ def export(data: dict[str, Any], sessions_root: Path) -> list[str]:
     if problems:
         return problems
     for _comparison, recording in iter_recordings(data):
+        if is_external(recording):
+            continue
         target = media_path(_comparison["topic"], recording["file"])
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source_path(sessions_root, recording), target)

@@ -1922,6 +1922,11 @@ a.promat-card:active .pm-cta-link {
   margin-block: 0;
 }
 
+/* Paragraphs of one text block are separate copy blocks; without this rule their first/last-child reset leaves no gap. */
+.pm-teaching-copy-block + .pm-teaching-copy-block {
+  margin-top: var(--pm-reading-paragraph-gap);
+}
+
 .pm-teaching-section-heading__lead,
 .pm-teaching-citation__label,
 .pm-teaching-reading-links__item {

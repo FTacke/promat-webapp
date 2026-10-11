@@ -77,7 +77,7 @@ def test_topic_page_renders_with_title_citation_and_sections(client, slug: str, 
     assert html.count("pm-admonition--citation") == 1
     assert "Beschreibung folgt" not in html and "Hier kann später" not in html and "noch ausgearbeitet" not in html
     # didactic skeleton: listen, solution, explanation, corpus comparisons, classroom task, further reading
-    assert html.count('class="pm-teaching-solution"') == 1
+    assert html.count('class="pm-teaching-solution"') == (3 if slug == "soft-spanish-hard-german" else 1)
     assert html.count("pm-teaching-block--audio-contrast") >= 3
     assert "pm-teaching-block--teaching-impulses" not in html  # the classroom task is one tip box
     assert "pm-admonition--tip" in html
@@ -105,9 +105,9 @@ def test_every_recording_of_a_page_is_public_audio(client, slug: str, lang: str)
     html = _html(client, lang, slug)
     sources = sorted(set(re.findall(r'<source src="([^"]+)" type="audio/mpeg">', html)))
     expected = {ex["audio"] for b in _blocks(slug, lang) if b["type"] == "audio_contrast" for ex in b["examples"]}
-    assert len(sources) == len(expected) >= 8
+    assert len(sources) == len(expected) >= (6 if slug == "soft-spanish-hard-german" else 8)
     for source in sources:
-        assert source.startswith(f"/teaching-media/spanish/{slug}/audio/corpus/")
+        assert source.startswith((f"/teaching-media/spanish/{slug}/audio/corpus/", f"/teaching-media/spanish/{slug}/audio/marele/"))
         response = client.get(source)
         assert response.status_code == 200 and response.mimetype == "audio/mpeg" and response.content_length > 5000
 
@@ -126,11 +126,45 @@ def test_internal_links_of_further_reading_resolve(client, slug: str) -> None:
 
 def test_listening_comparisons_name_speaker_category_and_item(client) -> None:
     html = _html(client, "de", "soft-spanish-hard-german")
-    assert "Muttersprachliche Referenz" in html and "Lernende:r (B1)" in html
-    assert "Mexiko · D27" in html and "L1 Deutsch · D27" in html
+    assert "Muttersprachliche Referenz" in html and "Lernende:r" in html
+    assert "Pronunciation Matters · D27" in html and "Pronunciation Matters · D24" in html
+    assert "Mexiko" not in html and "(B1)" not in html  # no fixed speaker identities: the recordings stay replaceable
     html = _html(client, "en", "r")
     assert "Native-speaker reference" in html and "Learner (B1)" in html and "Spain · W88" in html and "L1 German · W88" in html
     assert html.count('<details class="pm-teaching-solution">') == 1  # closed by default: no autoplay, no revealed solution
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_soft_spanish_page_has_the_three_comparisons_in_order_with_marele_first(client, lang: str) -> None:
+    html = _html(client, lang, "soft-spanish-hard-german")
+    # o hay (MAR.ELE) first, then tiene hambre (D27), then sus amigos (D24)
+    positions = [html.index(f"audio/{name}") for name in ("marele/o-hay-ref", "marele/o-hay-learner", "corpus/p1-hambre-ref", "corpus/p1-hambre-learner", "corpus/p1-amigos-ref", "corpus/p1-amigos-learner")]
+    assert positions == sorted(positions)
+    assert "hispanistica.com/projects/marele" not in html  # origin is named as plain text, not linked (MAR.ELE site is being retired)
+    assert html.count("pm-teaching-audio-contrast__example-subtitle\">MAR.ELE<") == 2
+    assert "MAR.ELE" not in html.split("pm-teaching-block")[0]  # neither the meta description nor the page subtitle names it
+    # the reference recording is announced first in every comparison, the learner recording second
+    labels = re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html)
+    assert labels == (["Muttersprachliche Referenz", "Lernende:r"] if lang == "de" else ["Native-speaker reference", "Learner"]) * 3
+    # recurring solution, closed by default, and the target word sequence of D24 is "sus amigos" (not "mis amigos")
+    assert html.count('<details class="pm-teaching-solution">') == 3
+    assert ("Auflösung: Was ist zu hören?" if lang == "de" else "Solution: What can be heard?") in html
+    assert "<em>sus amigos</em>" in html and "mis amigos" not in html
+    assert "Auf einen Blick" not in html and "At a glance" not in html
+    assert "https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen" in html
+
+
+def test_marele_recordings_are_declared_with_origin_and_the_checked_mapping() -> None:
+    comparison = next(c for c in slots.load_slots()["comparisons"] if c["id"] == "p1-ohay")
+    by_slot = {r["slot"]: r for r in comparison["recordings"]}
+    # glottis_l1 = target pronunciation [o.ˈai] (reference), glottis_ele = learner pronunciation [ʔo.ʔai]
+    assert by_slot["ref"]["category"] == "reference" and by_slot["ref"]["origin"]["source_file"].endswith("marele/glottis_l1.mp3")
+    assert by_slot["learner"]["category"] == "learner" and by_slot["learner"]["origin"]["source_file"].endswith("marele/glottis_ele.mp3")
+    assert {r["origin"]["corpus"] for r in by_slot.values()} == {"MAR.ELE"}
+    assert [r["origin"]["transcription"] for r in (by_slot["ref"], by_slot["learner"])] == ["[o.ˈai]", "[ʔo.ʔai]"]
+    assert all("session_id" not in r and "item" not in r for r in by_slot.values())
+    corpus = {c["id"]: {r["slot"]: r["item"]["id"] for r in c["recordings"]} for c in slots.load_slots()["comparisons"] if c["topic"] == "soft-spanish-hard-german" and c["id"] != "p1-ohay"}
+    assert corpus == {"p1-hambre": {"ref": "d_27", "learner": "d_27"}, "p1-amigos": {"ref": "d_24", "learner": "d_24"}}
 
 
 def test_hubs_list_all_topics_in_the_requested_order() -> None:
@@ -146,11 +180,12 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
     data = slots.load_slots()
     assert slots.check(data) == []
     declared = {(c["topic"], r["file"]) for c, r in slots.iter_recordings(data)}
-    on_disk = {(path.parents[3].name, f"corpus/{path.name}") for path in TOPIC_DIR.glob("*/media/audio/corpus/*.mp3")}
-    assert declared == on_disk and len(declared) == 58
+    on_disk = {(path.parents[3].name, f"{path.parent.name}/{path.name}") for kind in ("corpus", "marele") for path in TOPIC_DIR.glob(f"*/media/audio/{kind}/*.mp3")}
+    assert declared == on_disk and len(declared) == 54
     for comparison, recording in slots.iter_recordings(data):
         assert recording["category"] in ("reference", "learner")
-        assert recording["session_id"].startswith(slots.SESSION_PREFIX[recording["category"]])
+        if not slots.is_external(recording):
+            assert recording["session_id"].startswith(slots.SESSION_PREFIX[recording["category"]])
 
 
 def test_slot_sources_are_released_sessions_when_the_local_runtime_is_present() -> None:

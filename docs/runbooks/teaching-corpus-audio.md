@@ -22,6 +22,8 @@ Die kuratierten Hörvergleiche der spanischen Phänomen-Themenseiten (`content/t
 4. `python scripts/teaching_audio_slots.py --check`, `python scripts/validate_teaching_content.py` und `pytest app/tests/test_teaching_spanish_topics.py` ausführen.
 5. Geänderte MP3 und `audio-slots.yaml` committen.
 
+MAR.ELE-Aufnahmen (Vorgängerkorpus, nicht in der Runtime): Der Eintrag trägt statt `session_id`/`item` einen `origin` (`corpus`, `source_file`, `transcription`) und die Datei liegt unter `media/audio/marele/`. Sie wird einmal von Hand aus dem Quellrepository kopiert (Quelle bleibt unverändert), `sha256` im Eintrag nachtragen; `--export` überspringt diese Einträge, `--check` prüft Datei, Hash und Seitenverweis. Die Seite nennt die Herkunft als Text `MAR.ELE`, ohne Link.
+
 Neue Vergleiche oder Hörfragen: den Eintrag unter `comparisons` ergänzen (die `question` muss wörtlich im `lead` des Vergleichsblocks der Seite stehen) und den Block in `de.yaml`/`en.yaml` mit den Dateinamen `corpus/…` anlegen.
 
 ## Verifikation

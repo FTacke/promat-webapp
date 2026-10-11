@@ -4,16 +4,39 @@
 # media file and its `sha256`. The topic pages name only the media file, never a session, so replacing a recording
 # needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes`; the
 # `selection` of the first release was made automatically (typical duration, no outliers) and is NOT phonetically
-# verified: it is a neutral comparison, not a claim about a specific learner realisation.
+# verified: it is a neutral comparison, not a claim about a specific learner realisation. Recordings with an `origin`
+# entry come from the predecessor corpus MAR.ELE (not from the research runtime); they are not touched by --export.
 
 corpus: spanish
 selection: 'automatic first release: typical duration per item, teaching_consent_signed: yes; no phonetic verification'
 comparisons:
+- id: p1-ohay
+  topic: soft-spanish-hard-german
+  phenomenon: Glottaler Neueinsatz und vokalischer Anschluss über die Wortgrenze
+  target: o hay
+  question: Was unterscheidet die beiden Aussprachen von *o hay*?
+  recordings:
+  - slot: ref
+    category: reference
+    origin:
+      corpus: MAR.ELE
+      source_file: linguistik.hispanistica/docs/assets/audiofiles/marele/glottis_l1.mp3
+      transcription: '[o.ˈai]'
+    file: marele/o-hay-ref.mp3
+    sha256: 99d68befaa259003ca109be9cb2f074bf7b4d9699fb030de4d647efdffd19efd
+  - slot: learner
+    category: learner
+    origin:
+      corpus: MAR.ELE
+      source_file: linguistik.hispanistica/docs/assets/audiofiles/marele/glottis_ele.mp3
+      transcription: '[ʔo.ʔai]'
+    file: marele/o-hay-learner.mp3
+    sha256: 9473ae38215b41dd795fe3e4ba843f4b54351dbf12333ffa7d60ddf6960d403a
 - id: p1-hambre
   topic: soft-spanish-hard-german
   phenomenon: Vokalischer Anschluss über die Wortgrenze
   target: tiene hambre
-  question: Wo ist eine kurze Unterbrechung zu hören – und in welcher Aufnahme?
+  question: Wie schließt *hambre* an *tiene* an?
   recordings:
   - slot: ref
     category: reference
@@ -31,94 +54,28 @@ comparisons:
       id: d_27
     file: corpus/p1-hambre-learner.mp3
     sha256: ded6ad30049d718525023c3681d42d08daa880b0ddb70caabc48dca708d04cf9
-- id: p1-oye
+- id: p1-amigos
   topic: soft-spanish-hard-german
-  phenomenon: Vokalischer Anschluss über die Wortgrenze
-  target: se oye
-  question: Sind *se* und *oye* hörbar voneinander getrennt?
+  phenomenon: Resilbifizierung eines wortfinalen Konsonanten vor Vokal
+  target: sus amigos
+  question: Wie schließt *amigos* an *sus* an?
   recordings:
   - slot: ref
     category: reference
     session_id: ES-N-0004-2026-S01
     item:
       task: text
-      id: d_07
-    file: corpus/p1-oye-ref.mp3
-    sha256: 2482281cafb1d37efbd7ebbebe964990e8d670e4f77d1e69772bc2e4ab148292
+      id: d_24
+    file: corpus/p1-amigos-ref.mp3
+    sha256: 9ffef9af8ffad52e8a1e283fb01898735b0249adf09a481c90bdb4a4745a9e9e
   - slot: learner
     category: learner
     session_id: ES-L-0007-2026-S01
     item:
       task: text
-      id: d_07
-    file: corpus/p1-oye-learner.mp3
-    sha256: 9cf216fff19853ee2cca2ce5ae9e9ca363779fe355c91cec9af95f582f3faf8c
-- id: p1-euforia
-  topic: soft-spanish-hard-german
-  phenomenon: Vokalischer Anschluss über die Wortgrenze
-  target: la euforia
-  question: Wie schließt *euforia* an *la* an?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: text
-      id: d_17
-    file: corpus/p1-euforia-ref.mp3
-    sha256: c30d3336b72d08f69117398384a618d714de86ab8f5404f7dcfaca11d66086e0
-  - slot: learner
-    category: learner
-    session_id: ES-L-0007-2026-S01
-    item:
-      task: text
-      id: d_17
-    file: corpus/p1-euforia-learner.mp3
-    sha256: 39b7ae5ed72df54f6d6e4ff17b7b41b674f9f40eb99de068a906bf167597dd19
-- id: p1-oir
-  topic: soft-spanish-hard-german
-  phenomenon: Vokalischer Anschluss über die Wortgrenze
-  target: puedo oír
-  question: 'Zwei *o* stoßen aufeinander: Gibt es zwischen *puedo* und *oír* eine Zäsur?'
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: text
-      id: d_18
-    file: corpus/p1-oir-ref.mp3
-    sha256: 8a9b77af0c1e09e5560a242f168157e8e2bd4a43a7d919da5e53cff6c4c1962d
-  - slot: learner
-    category: learner
-    session_id: ES-L-0007-2026-S01
-    item:
-      task: text
-      id: d_18
-    file: corpus/p1-oir-learner.mp3
-    sha256: ec2ffb2f71bf13a07552d0fbf174023a7ebe317c790f2fd5de4e45141de107a0
-- id: p1-obtiene
-  topic: soft-spanish-hard-german
-  phenomenon: Vokalischer Anschluss über die Wortgrenze
-  target: que obtiene
-  question: Wo setzt *obtiene* nach *que* ein?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: text
-      id: qw_08
-    file: corpus/p1-obtiene-ref.mp3
-    sha256: 9094fb1c238c10dbc7e5cc2c1cab7b796d547989da8644cd2bf9bbf5855fc3b9
-  - slot: learner
-    category: learner
-    session_id: ES-L-0007-2026-S01
-    item:
-      task: text
-      id: qw_08
-    file: corpus/p1-obtiene-learner.mp3
-    sha256: 7b1ddacbab1966ec6511ba0c5126acb025ddb8d4979ebbcee16cce95c820fe4d
+      id: d_24
+    file: corpus/p1-amigos-learner.mp3
+    sha256: 9fb2c30d3319da62b806434034fe5d888df08cc97b921aaa14fbad56e6f318cf
 - id: p2-caro
   topic: r
   phenomenon: Einfacher und mehrfacher Vibrant

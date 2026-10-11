@@ -1,140 +1,101 @@
 resource_id: promat-teaching-es-soft-spanish-hard-german
 title: Soft Spanish, hard German
-summary: Why Spanish often sounds more fluent, and how the German glottal stop can influence the pronunciation of Spanish words and word sequences.
-description: How the German glottal stop [ʔ] can affect Spanish word sequences – with listening comparisons from the corpus and a short classroom task.
+summary: Why Spanish often sounds more fluent than German – and what the glottal stop has to do with it.
+description: Why Spanish often sounds more fluent than German – and what the glottal stop has to do with it.
 equivalents:
   de: soft-spanish-hard-german
 metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-10
+  updated: 2026-10-11
 blocks:
 - type: topic_meta
 - type: text
-  body: |-
-    Why does German often sound more clipped than Spanish?
-
-    “Soft” and “hard” are impressions of listeners, not phonetic terms. This page ties the impression to one clearly audible detail: the transition between vowels at word boundaries.
-
-    In German, a **glottal stop** [ʔ] is often produced before words or syllables that begin with a vowel: the vocal folds close briefly and then open again. In ordinary connected Spanish speech, such a hard onset is not characteristic – vowels are usually joined smoothly across word boundaries.
-- type: overview
-  title: At a glance
-  items:
-  - The German glottal stop [ʔ] often marks the onset of words and syllables that begin with a vowel.
-  - In connected Spanish speech, words are linked into larger sound units; at vowel-to-vowel word boundaries a glottal closure is usually absent.
-  - Learners sometimes transfer the German pattern to Spanish. This can be heard – but not in every recording.
+  body: Why does German often sound a little more “clipped” than Spanish? A small sound that often goes unnoticed plays an important part.
 - type: section_heading
-  title: Listen and discover
+  title: 'Listening comparison: *o hay*'
 - type: text
-  body: 'Two recordings of the same sentence. Listen to the spot between *tiene* and *hambre*: the `h` is silent in Spanish, so two vowels meet at the word boundary.'
+  body: The two recordings of the same Spanish word sequence show a striking difference.
 - type: audio_contrast
-  title: '*tiene hambre*: smooth or interrupted?'
-  lead: Where can you hear a brief interruption – and in which recording?
+  lead: What distinguishes the two pronunciations of *o hay*?
+  transcript: '*o hay*'
+  examples:
+  - label: Native-speaker reference
+    subtitle: MAR.ELE
+    audio: marele/o-hay-ref.mp3
+  - label: Learner
+    subtitle: MAR.ELE
+    audio: marele/o-hay-learner.mp3
+- type: solution
+  title: 'Solution: What can be heard?'
+  body: |-
+    In the learner recording, brief closures can be heard before both vowels – so-called glottal stops [ʔ]. They are absent from the Spanish reference recording, which makes the word sequence sound more fluent.
+
+    Reference: [o.ˈai] · Learner recording: [ʔo.ʔai]
+- type: section_heading
+  title: Why do they sound different?
+- type: text
+  body: |-
+    In German, words that begin with a vowel are often started with a brief closure of the vocal folds – the **glottal stop [ʔ]**, as in *die Ente*. In Spanish, by contrast, words are usually linked smoothly across word boundaries.
+
+    A fresh onset of this kind is not categorically excluded in Spanish, but it is not part of the usual pronunciation pattern in connected speech.
+- type: section_heading
+  title: 'Another example: *tiene hambre*'
+- type: text
+  body: In *tiene hambre*, too, two vowels meet across a word boundary. In ordinary connected speech they are normally joined without an additional glottal stop.
+- type: audio_contrast
+  lead: How does *hambre* connect to *tiene*?
   transcript: Cuando el chico *tiene hambre*, pierde el control.
   examples:
   - label: Native-speaker reference
-    subtitle: Mexico · D27
+    subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-ref.mp3
-    token_id: ES-N-0004 · D27
-  - label: Learner (B1)
-    subtitle: L1 German · D27
+  - label: Learner
+    subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-learner.mp3
-    token_id: ES-L-0007 · D27
 - type: solution
-  body: |-
-    What you are listening for is whether a glottal closure lies between *tiene* and *hambre*. In connected speech the two words run into each other: [ˈtje.ne.ˈam.bɾe]. With a glottal stop, a brief interruption arises before the *a*: [ˈtje.ne.ˈʔam.bɾe].
-
-    The recordings were not chosen to demonstrate an error. Whether, and how clearly, a glottal stop is audible differs from recording to recording – so listen to the other comparisons as well.
+  title: 'Solution: What can be heard?'
+  body: What matters is whether an additional glottal closure can be heard between *tiene* and *hambre*, or whether the vowels are joined without such a fresh onset.
 - type: section_heading
-  title: Why does it sound different?
+  title: 'When syllables cross the word boundary: *sus amigos*'
 - type: text
   body: |-
-    In Spanish, words form larger sound units when spoken. Syllable boundaries often do not coincide with word boundaries: in *los amigos* the *s* becomes the onset of the next syllable [lo.sa.ˈmi.ɣos] (*enlace*). When two vowels meet, as in *tiene hambre* or *se oye*, they are joined without a glottal closure.
+    Smooth linking does not concern vowels alone. A word-final consonant can also be linked to the following vowel.
 
-    In German, by contrast, a fresh start with [ʔ] before a vowel is widespread: *die Ente* [diː ˈʔɛn.tə]. German-speaking learners may carry this pattern over into Spanish – *si entiendo bien* then becomes [si.ʔen.ˈtjen.do.ˈβjen] instead of [si.en.ˈtjen.do.ˈβjen]. Additional interruptions change the rhythm and make speech sound more clipped.
-- type: info_box
-  title: What this comparison does not claim
+    In *sus amigos*, the /s/ of *sus* is linked to the initial /a/ of *amigos*: **su‑sa‑mi‑gos**.
+
+    This phenomenon is called **resyllabification** (Spanish: *resilabificación*). The syllable boundary no longer coincides with the word boundary.
+- type: audio_contrast
+  lead: How does *amigos* connect to *sus*?
+  transcript: Con su familia es un ángel y con *sus amigos* un diablo.
+  examples:
+  - label: Native-speaker reference
+    subtitle: Pronunciation Matters · D24
+    audio: corpus/p1-amigos-ref.mp3
+  - label: Learner
+    subtitle: Pronunciation Matters · D24
+    audio: corpus/p1-amigos-learner.mp3
+- type: solution
+  title: 'Solution: What can be heard?'
   body: |-
-    - “Soft” and “hard” describe an auditory impression, not a phonetic category. This is not a blanket contrast between the two languages.
-    - German also allows word junctions without a glottal stop; the fresh start is not obligatory.
-    - Spanish speakers, too, can glottalise depending on context, for instance under emphatic stress or after a pause.
-    - What else can happen at vowel boundaries (merging, glides, hiatus) is a topic of its own and is not covered here.
-    - Not every learner recording contains a glottal stop.
-- type: section_heading
-  title: More comparisons from the corpus
-- type: text
-  body: The same words and sentences, spoken by a native-speaker reference recording and by a learner recording (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
-- type: audio_contrast
-  title: '*se oye*'
-  lead: Are *se* and *oye* audibly separated from each other?
-  transcript: Es difícil juzgar solo por lo que *se oye*.
-  examples:
-  - label: Native-speaker reference
-    subtitle: Mexico · D7
-    audio: corpus/p1-oye-ref.mp3
-    token_id: ES-N-0004 · D7
-  - label: Learner (B1)
-    subtitle: L1 German · D7
-    audio: corpus/p1-oye-learner.mp3
-    token_id: ES-L-0007 · D7
-- type: audio_contrast
-  title: '*la euforia*'
-  lead: How does *euforia* connect to *la*?
-  transcript: '*La euforia* le hizo traer más bebidas de lo necesario.'
-  examples:
-  - label: Native-speaker reference
-    subtitle: Mexico · D17
-    audio: corpus/p1-euforia-ref.mp3
-    token_id: ES-N-0004 · D17
-  - label: Learner (B1)
-    subtitle: L1 German · D17
-    audio: corpus/p1-euforia-learner.mp3
-    token_id: ES-L-0007 · D17
-- type: audio_contrast
-  title: '*puedo oír*'
-  lead: 'Two *o* sounds meet: is there a break between *puedo* and *oír*?'
-  transcript: '*Puedo oír* bien cuando ella se ríe bajito.'
-  examples:
-  - label: Native-speaker reference
-    subtitle: Mexico · D18
-    audio: corpus/p1-oir-ref.mp3
-    token_id: ES-N-0004 · D18
-  - label: Learner (B1)
-    subtitle: L1 German · D18
-    audio: corpus/p1-oir-learner.mp3
-    token_id: ES-L-0007 · D18
-- type: audio_contrast
-  title: '*que obtiene*'
-  lead: Where does *obtiene* begin after *que*?
-  transcript: ¿Cómo numero los puntos *que obtiene* cada equipo?
-  examples:
-  - label: Native-speaker reference
-    subtitle: Mexico · QW8
-    audio: corpus/p1-obtiene-ref.mp3
-    token_id: ES-N-0004 · QW8
-  - label: Learner (B1)
-    subtitle: L1 German · QW8
-    audio: corpus/p1-obtiene-learner.mp3
-    token_id: ES-L-0007 · QW8
-- type: section_heading
-  title: For the classroom
+    In resyllabification, the word-final /s/ forms a syllable together with the following vowel. The words are thereby closely bound together in the stream of speech.
+
+    What matters is whether the /s/ belongs to the following syllable (*su‑sa‑mi‑gos*) or stays at the end of *sus*.
 - type: tip_box
-  title: 'Quick task: first clipped, then fluent'
+  title: For the classroom
   body: |-
-    1. Choose three word sequences: *tiene hambre*, *se oye*, *la euforia*.
-    2. Learners say each sequence first with a deliberately audible break between the words, then fluently – as if it were a single word.
-    3. They then record both versions on a smartphone and compare them with the reference recordings above.
+    The three listening comparisons illustrate different forms of phonetic linking: the absence of a glottal onset in *o hay* and *tiene hambre*, and resyllabification in *sus amigos*.
 
-    Guiding question: where do you feel the fresh start in your throat, and where does it disappear?
+    In class, the recordings can first be compared without any explanation. The differences can then be described together and the word sequences repeated aloud.
 - type: further_reading
   title: Further exploration
   description: Related pages on pronunciation models and the glottal stop.
   items:
   - title: Pronunciation in the digital textbook
-    text: The chapter discusses vowel-initial words with and without a glottal stop, including the example *o hay* with audio examples from MAR.ELE (in German).
+    text: Further explanations and more listening examples are offered by the chapter **Aussprache** (pronunciation) in the digital textbook *Linguistik im Spanischunterricht* (in German).
     cta: Learn more
-    href: https://linguistik.hispanistica.com/aussprache/
+    href: https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen
   - title: Which pronunciation should you teach?
     text: Which realisation counts as the benchmark – and why regional variation is not a hierarchy of mistakes.
     cta: Go to topic page
