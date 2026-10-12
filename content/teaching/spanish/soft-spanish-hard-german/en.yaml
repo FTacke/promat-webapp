@@ -8,17 +8,13 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-11
+  updated: 2026-10-12
 blocks:
 - type: topic_meta
 - type: text
-  body: Why does German often sound a little more “clipped” than Spanish? A small sound that often goes unnoticed plays an important part.
-- type: section_heading
-  title: Listen and discover
-- type: text
-  body: The two recordings of the same Spanish word sequence show a striking difference.
+  body: A German accent in Spanish is not revealed by individual sounds alone. Sometimes it is small, barely noticed differences that change the sound of an entire utterance. Three listening comparisons make such subtleties audible – and show how they can be taken up in the classroom.
 - type: audio_contrast
-  title: 'With and without a glottal stop: *o hay*'
+  title: 'Listening comparison: *o hay*'
   lead: What distinguishes the two pronunciations?
   transcript: '*o hay*'
   examples:
@@ -31,28 +27,23 @@ blocks:
 - type: solution
   title: 'Solution: What can be heard?'
   body: |-
-    In the learner recording, brief closures can be heard before both vowels – so-called glottal stops [ʔ]. They are absent from the Spanish reference recording, which makes the word sequence sound more fluent.
-
-    Reference: [o.ˈai] · Learner recording: [ʔo.ʔai]
+    In the reference speaker's pronunciation, the vowels of *o hay* are linked smoothly: [o.ˈai]. The learner's pronunciation, by contrast, shows a typical feature of German: the **glottal stop [ʔ]**, which often occurs before words and syllables that begin with a vowel. The additional glottal stops [ʔo.ʔai] give the word sequence the sound that is often described as “hard” or “clipped”.
 - type: section_heading
-  title: Why do they sound different?
+  title: How is the glottal stop produced?
 - type: text
-  body: |-
-    In German, words that begin with a vowel are often started with a brief closure of the vocal folds – the **glottal stop [ʔ]**, as in *die Ente*. In Spanish, by contrast, words are usually linked smoothly across word boundaries.
-
-    A fresh onset of this kind is not categorically excluded in Spanish, but it is not part of the usual pronunciation pattern in connected speech.
+  body: The glottal stop [ʔ] is produced by a brief closure of the vocal folds in the larynx. In German it frequently occurs before words that begin with a vowel, as in *die Ente* [diː ˈʔɛntə].
 - type: image
   src: glottal-stop-larynx-hand.png
   alt: 'Drawing of a woman in partial profile lightly touching her neck at the level of the larynx with her thumb and fingers; the laryngeal area is highlighted in violet.'
-  caption: 'The glottal stop [ʔ] is produced by briefly closing the vocal folds in the larynx. The hand gesture illustrates the place of articulation.'
+  caption: 'The hand gesture indicates the position of the larynx, where the glottal stop is produced.'
   credit: 'Illustration: Felix Tacke (concept and prompting), AI-generated · Pronunciation Matters (2026)'
 - type: section_heading
-  title: 'Another example: *tiene hambre*'
+  title: Where can learners produce glottal stops?
 - type: text
-  body: Here, too, two vowels meet across a word boundary. In ordinary connected speech they are joined without an additional glottal stop.
+  body: In German, syllables that begin with a vowel are also often started with a glottal stop. German-speaking learners sometimes transfer this pattern to Spanish – especially where two vowels meet. This applies both **between words** (*o hay*, *tiene hambre*) and **within a word**, as in *reír*.
 - type: audio_contrast
-  title: 'No additional fresh onset: *tiene hambre*'
-  lead: Is an additional glottal stop audible between the two words?
+  title: 'Listening comparison: *tiene hambre*'
+  lead: How are the vowels joined at the word boundary?
   transcript: Cuando el chico ***tiene hambre***, pierde el control.
   examples:
   - role: reference
@@ -61,21 +52,16 @@ blocks:
   - role: learner
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-learner.mp3
-- type: solution
-  title: 'Solution: What can be heard?'
-  body: What matters is whether an additional glottal closure can be heard between *tiene* and *hambre*, or whether the vowels are joined without such a fresh onset.
 - type: section_heading
-  title: When syllables cross the word boundary
+  title: When word boundaries blur
 - type: text
   body: |-
-    Smooth linking is not limited to vowels that meet at a word boundary. A word-final consonant can also be linked to the following vowel.
+    In Spanish, it is not only vowels meeting at a boundary that are linked smoothly. When a word ends in a consonant and the next one begins with a vowel, the consonant is normally assigned to the following syllable. So *sus amigos* becomes **su‑sa‑mi‑gos** in speech: the /s/ of *sus* forms a syllable with the /a/ of *amigos*. This phenomenon is called **resyllabification** (Spanish: *resilabificación*).
 
-    In *sus amigos*, the /s/ of *sus* is linked to the initial /a/ of *amigos*: **su‑sa‑mi‑gos**.
-
-    This phenomenon is called **resyllabification** (Spanish: *resilabificación*). The syllable boundary no longer coincides with the word boundary.
+    German-speaking learners, by contrast, sometimes orient themselves more strongly to the individual word boundaries and pronounce the words more clearly separated from one another. This, too, can create a more “clipped” impression.
 - type: audio_contrast
-  title: 'Resyllabification: *sus amigos*'
-  lead: How does the /s/ of *sus* connect to the following vowel?
+  title: 'Listening comparison: *sus amigos*'
+  lead: How smoothly are *sus* and *amigos* linked?
   transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
   examples:
   - role: reference
@@ -84,10 +70,6 @@ blocks:
   - role: learner
     subtitle: Pronunciation Matters · D24
     audio: corpus/p1-amigos-learner.mp3
-- type: solution
-  title: 'Solution: What can be heard?'
-  body: |-
-    What matters is whether the /s/ belongs to the following syllable (*su‑sa‑mi‑gos*) or stays at the end of *sus*. In the first case, the two words are closely bound together in sound.
 - type: section_heading
   title: 'Classroom prompts'
 - type: text

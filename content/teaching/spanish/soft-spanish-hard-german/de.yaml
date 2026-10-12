@@ -8,17 +8,13 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-11
+  updated: 2026-10-12
 blocks:
 - type: topic_meta
 - type: text
-  body: Warum klingt Deutsch häufig etwas „abgehackter“ als Spanisch? Ein kleiner, oft unbemerkter Laut spielt dabei eine wichtige Rolle.
-- type: section_heading
-  title: Hören und entdecken
-- type: text
-  body: Die beiden Aufnahmen derselben spanischen Wortfolge zeigen einen auffälligen Unterschied.
+  body: Ein deutscher Akzent im Spanischen zeigt sich nicht nur an einzelnen Lauten. Manchmal sind es kleine, kaum bemerkte Unterschiede, die den Klang einer ganzen Äußerung verändern. Drei Hörvergleiche machen solche Feinheiten hörbar – und zeigen, wie man sie im Unterricht aufgreifen kann.
 - type: audio_contrast
-  title: 'Mit und ohne Knacklaut: *o hay*'
+  title: 'Hörvergleich: *o hay*'
   lead: Was unterscheidet die beiden Aussprachen?
   transcript: '*o hay*'
   examples:
@@ -31,28 +27,23 @@ blocks:
 - type: solution
   title: 'Auflösung: Was ist zu hören?'
   body: |-
-    In der Lernendenaufnahme sind vor beiden Vokalen kurze Verschlüsse zu hören, sogenannte Knacklaute [ʔ]. In der spanischsprachigen Referenzaufnahme fehlen sie; die Wortfolge klingt dadurch fließender.
-
-    Referenz: [o.ˈai] · Lernendenaufnahme: [ʔo.ʔai]
+    In der Aussprache der Referenzsprecher:in werden die Vokale von *o hay* fließend miteinander verbunden: [o.ˈai]. In der Aussprache der lernenden Person zeigt sich dagegen ein typisches Merkmal des Deutschen: der **Knacklaut [ʔ]**, der häufig vor vokalisch beginnenden Wörtern und Silben auftritt. Durch die zusätzlichen Knacklaute [ʔo.ʔai] erhält die Wortfolge den oft als „hart“ oder „abgehackt“ beschriebenen Klang.
 - type: section_heading
-  title: Warum klingt das unterschiedlich?
+  title: Wie entsteht der Knacklaut?
 - type: text
-  body: |-
-    Im Deutschen beginnen wir vokalisch anlautende Wörter häufig mit einem kurzen Verschluss der Stimmlippen – dem **Knacklaut [ʔ]**. So etwa bei *die Ente*. Im Spanischen werden Wörter dagegen meist über ihre Grenzen hinweg fließend miteinander verbunden.
-
-    Ein solcher Neueinsatz ist im Spanischen nicht grundsätzlich ausgeschlossen, gehört aber nicht zum gewöhnlichen Aussprachemuster in zusammenhängender Rede.
+  body: Der Knacklaut [ʔ] entsteht durch einen kurzen Verschluss der Stimmlippen im Kehlkopf. Im Deutschen tritt er häufig vor vokalisch beginnenden Wörtern auf, etwa bei *die Ente* [diː ˈʔɛntə].
 - type: image
   src: glottal-stop-larynx-hand.png
   alt: 'Zeichnung einer Frau im Halbprofil, die mit Daumen und Fingern leicht den Hals auf Höhe des Kehlkopfs berührt; der Bereich des Kehlkopfs ist violett hervorgehoben.'
-  caption: 'Der Knacklaut [ʔ] entsteht durch einen kurzen Verschluss der Stimmlippen im Kehlkopf. Die Handhaltung veranschaulicht den Artikulationsort.'
+  caption: 'Die Handhaltung veranschaulicht die Lage des Kehlkopfs, in dem der Knacklaut gebildet wird.'
   credit: 'Illustration: Felix Tacke (Konzept und Prompting), KI-generiert · Pronunciation Matters (2026)'
 - type: section_heading
-  title: 'Noch ein Beispiel: *tiene hambre*'
+  title: Wo können Knacklaute bei Lernenden auftreten?
 - type: text
-  body: Auch hier treffen zwei Vokale über eine Wortgrenze hinweg aufeinander. Im gewöhnlichen Sprachfluss werden sie ohne zusätzlichen Knacklaut verbunden.
+  body: Im Deutschen beginnen auch vokalisch anlautende Silben häufig mit einem Knacklaut. Deutschsprachige Lernende übertragen dieses Muster mitunter auf das Spanische – besonders dort, wo zwei Vokale aufeinandertreffen. Das gilt sowohl **zwischen Wörtern** (*o hay*, *tiene hambre*) als auch **innerhalb eines Wortes**, etwa bei *reír*.
 - type: audio_contrast
-  title: 'Ohne zusätzlichen Neueinsatz: *tiene hambre*'
-  lead: Ist zwischen den beiden Wörtern ein zusätzlicher Knacklaut zu hören?
+  title: 'Hörvergleich: *tiene hambre*'
+  lead: Wie werden die Vokale an der Wortgrenze miteinander verbunden?
   transcript: Cuando el chico ***tiene hambre***, pierde el control.
   examples:
   - role: reference
@@ -61,21 +52,16 @@ blocks:
   - role: learner
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-learner.mp3
-- type: solution
-  title: 'Auflösung: Was ist zu hören?'
-  body: Entscheidend ist, ob zwischen *tiene* und *hambre* ein zusätzlicher glottaler Verschluss zu hören ist oder ob die Vokale ohne einen solchen Neueinsatz verbunden werden.
 - type: section_heading
-  title: Wenn Silben die Wortgrenze überschreiten
+  title: Wenn Wortgrenzen verschwimmen
 - type: text
   body: |-
-    Der fließende Anschluss betrifft nicht nur aufeinandertreffende Vokale. Auch ein Konsonant am Wortende kann mit dem folgenden Vokal verbunden werden.
+    Im Spanischen werden nicht nur aufeinandertreffende Vokale fließend miteinander verbunden. Endet ein Wort auf einen Konsonanten und beginnt das nächste mit einem Vokal, wird der Konsonant normalerweise der folgenden Silbe zugeordnet. So wird aus *sus amigos* beim Sprechen **su‑sa‑mi‑gos**: Das /s/ von *sus* bildet mit dem /a/ von *amigos* eine Silbe. Dieses Phänomen nennt man **Resilbifizierung** (spanisch: *resilabificación*).
 
-    Bei *sus amigos* wird das /s/ von *sus* mit dem anlautenden /a/ von *amigos* verbunden: **su‑sa‑mi‑gos**.
-
-    Dieses Phänomen nennt man **Resilbifizierung** (spanisch: *resilabificación*). Die Silbengrenze stimmt dabei nicht mehr mit der Wortgrenze überein.
+    Deutschsprachige Lernende orientieren sich dagegen mitunter stärker an den einzelnen Wortgrenzen und sprechen die Wörter deutlicher voneinander getrennt aus. Auch dadurch kann ein „abgehackterer“ Höreindruck entstehen.
 - type: audio_contrast
-  title: 'Resilbifizierung: *sus amigos*'
-  lead: Wie verbindet sich das /s/ von *sus* mit dem folgenden Vokal?
+  title: 'Hörvergleich: *sus amigos*'
+  lead: Wie fließend werden *sus* und *amigos* miteinander verbunden?
   transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
   examples:
   - role: reference
@@ -84,10 +70,6 @@ blocks:
   - role: learner
     subtitle: Pronunciation Matters · D24
     audio: corpus/p1-amigos-learner.mp3
-- type: solution
-  title: 'Auflösung: Was ist zu hören?'
-  body: |-
-    Entscheidend ist, ob das /s/ zur folgenden Silbe gehört (*su‑sa‑mi‑gos*) oder am Ende von *sus* bleibt. Im ersten Fall sind die beiden Wörter lautlich eng verknüpft.
 - type: section_heading
   title: 'Impulse für den Unterricht'
 - type: text

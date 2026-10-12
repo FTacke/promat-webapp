@@ -78,7 +78,7 @@ def test_topic_page_renders_with_title_citation_and_sections(client, slug: str, 
     assert html.count("pm-admonition--citation") == 1
     assert "Beschreibung folgt" not in html and "Hier kann später" not in html and "noch ausgearbeitet" not in html
     # didactic skeleton: listen, solution, explanation, corpus comparisons, classroom task, further reading
-    assert html.count('class="pm-teaching-solution"') == (3 if slug == "soft-spanish-hard-german" else 1)
+    assert html.count('class="pm-teaching-solution"') == 1  # soft-spanish-hard-german keeps its single solution (o hay)
     assert html.count("pm-teaching-block--audio-contrast") >= 3
     # classroom prompts: one numbered impulse list under the shared accent-underlined heading, no tip box
     assert html.count('class="pm-teaching-block pm-teaching-block--teaching-impulses pm-panel pm-reading"') == 1
@@ -152,16 +152,27 @@ def test_soft_spanish_page_has_the_three_comparisons_in_order_with_marele_first(
     # the reference recording is announced first in every comparison, the learner recording second
     labels = re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html)
     assert labels == (["Referenzsprecher:in", "Lernende:r"] if lang == "de" else ["Reference speaker", "Learner"]) * 3
-    # recurring solution, closed by default, and the target word sequence of D24 is "sus amigos" (not "mis amigos")
-    assert html.count('<details class="pm-teaching-solution">') == 3
+    # only the o hay comparison keeps a collapsible solution (closed by default); D27 and D24 apply what was explained
+    assert html.count('<details class="pm-teaching-solution">') == 1
+    assert html.index('<details class="pm-teaching-solution">') < html.index("corpus/p1-hambre-ref")
     assert ("Auflösung: Was ist zu hören?" if lang == "de" else "Solution: What can be heard?") in html
+    assert html.count("pm-teaching-audio-contrast__transcript-text") == 3  # the dynamic word-sequence chip stays in every comparison
+    assert "[o.ˈai]" in html and "[ʔo.ʔai]" in html and "[diː ˈʔɛntə]" in html  # IPA of the o hay solution and of die Ente
+    # target word sequence of D24 is "sus amigos" (not "mis amigos")
     assert "<em><strong>sus amigos</strong></em>" in html and "mis amigos" not in html
     # every comparison box carries the audio icon and a title: same module as the comparisons of "which-pronunciation"
     assert html.count("audio-section-icon") == 3 and html.count("promat-content-block__title pm-panel__title") >= 3
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
-    expected = (["Mit und ohne Knacklaut: <em>o hay</em>", "Ohne zusätzlichen Neueinsatz: <em>tiene hambre</em>", "Resilbifizierung: <em>sus amigos</em>"] if lang == "de"
-                else ["With and without a glottal stop: <em>o hay</em>", "No additional fresh onset: <em>tiene hambre</em>", "Resyllabification: <em>sus amigos</em>"])
+    expected = (["Hörvergleich: <em>o hay</em>", "Hörvergleich: <em>tiene hambre</em>", "Hörvergleich: <em>sus amigos</em>"] if lang == "de"
+                else ["Listening comparison: <em>o hay</em>", "Listening comparison: <em>tiene hambre</em>", "Listening comparison: <em>sus amigos</em>"])
     assert titles == expected
+    # editorial progression: orientation -> o hay -> articulation -> transfer contexts -> resyllabification -> classroom prompts
+    headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
+    assert headings == (["Wie entsteht der Knacklaut?", "Wo können Knacklaute bei Lernenden auftreten?", "Wenn Wortgrenzen verschwimmen", "Impulse für den Unterricht"] if lang == "de"
+                        else ["How is the glottal stop produced?", "Where can learners produce glottal stops?", "When word boundaries blur", "Classroom prompts"])
+    assert "Hören und entdecken" not in html and "Listen and discover" not in html
+    assert html.index("pm-teaching-block--audio-contrast") < html.index(headings[0])  # the first comparison follows the orientation text directly
+    assert "reír" in html and "su\u2011sa\u2011mi\u2011gos" in html
     assert "Auf einen Blick" not in html and "At a glance" not in html
     assert "https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen" in html
 
@@ -187,17 +198,18 @@ def test_glottal_stop_illustration_sits_between_the_explanation_and_tiene_hambre
     caption = html_module.unescape(re.search(r'pm-teaching-figure__caption-text">(.*?)</span>', figure, re.S).group(1))
     credit = html_module.unescape(re.search(r'pm-teaching-figure__credit">(.*?)</span>', figure, re.S).group(1))
     if lang == "de":
-        assert caption == "Der Knacklaut [ʔ] entsteht durch einen kurzen Verschluss der Stimmlippen im Kehlkopf. Die Handhaltung veranschaulicht den Artikulationsort."
+        assert caption == "Die Handhaltung veranschaulicht die Lage des Kehlkopfs, in dem der Knacklaut gebildet wird."
         assert credit == "Illustration: Felix Tacke (Konzept und Prompting), KI-generiert · Pronunciation Matters (2026)"
         assert "Kehlkopf" in alt
     else:
-        assert caption == "The glottal stop [ʔ] is produced by briefly closing the vocal folds in the larynx. The hand gesture illustrates the place of articulation."
+        assert caption == "The hand gesture indicates the position of the larynx, where the glottal stop is produced."
         assert credit == "Illustration: Felix Tacke (concept and prompting), AI-generated · Pronunciation Matters (2026)"
         assert "larynx" in alt
     assert "Illustration:" not in alt and "KI-generiert" not in alt and "AI-generated" not in alt  # the credit is not repeated in the alt text
     # order: explanation heading, illustration, then the next section
-    why = "Warum klingt das unterschiedlich?" if lang == "de" else "Why do they sound different?"
-    assert html.index(why) < html.index(src) < html.index("tiene hambre</em></h2>")
+    how = "Wie entsteht der Knacklaut?" if lang == "de" else "How is the glottal stop produced?"
+    next_heading = "Wo können Knacklaute bei Lernenden auftreten?" if lang == "de" else "Where can learners produce glottal stops?"
+    assert html.index(how) < html.index(src) < html.index(next_heading)
     response = client.get(src)
     assert response.status_code == 200 and response.mimetype == "image/png"
     # one shared file for both editions, and no working copy left in the repository root

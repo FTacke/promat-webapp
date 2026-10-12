@@ -36,7 +36,7 @@ comparisons:
   topic: soft-spanish-hard-german
   phenomenon: Vokalischer Anschluss über die Wortgrenze
   target: tiene hambre
-  question: Ist zwischen den beiden Wörtern ein zusätzlicher Knacklaut zu hören?
+  question: Wie werden die Vokale an der Wortgrenze miteinander verbunden?
   recordings:
   - slot: ref
     category: reference
@@ -58,7 +58,7 @@ comparisons:
   topic: soft-spanish-hard-german
   phenomenon: Resilbifizierung eines wortfinalen Konsonanten vor Vokal
   target: sus amigos
-  question: Wie verbindet sich das /s/ von *sus* mit dem folgenden Vokal?
+  question: Wie fließend werden *sus* und *amigos* miteinander verbunden?
   recordings:
   - slot: ref
     category: reference

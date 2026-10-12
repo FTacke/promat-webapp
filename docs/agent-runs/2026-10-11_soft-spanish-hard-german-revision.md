@@ -71,3 +71,11 @@ Siehe Abschlussbericht im Chat; Browser-Pass in `tmp/ui-qa/2026-10-11-soft-spani
 - Zentral: i18n-Schlüssel `teaching.speaker.reference` (`Referenzsprecher:in` / `Reference speaker`) und `teaching.speaker.learner` (`Lernende:r` / `Learner`); Audiobeispiele in den Themenquellen nennen nur noch `role: reference|learner` (optional `level: B1`), die Beschriftung entsteht in `teaching_content._speaker_role_label`. Ein explizites `label` hat weiterhin Vorrang (Varietäten wie *Distinción*/*Seseo*).
 - Alle sieben spanischen Seiten (DE/EN) umgestellt; die Einleitungssätze der Korpusvergleiche sprechen von „einer Referenzsprecher:in und einer lernenden Person“ / „a reference speaker and a learner“. Niveauangaben (A2/B1) und Regions-/L1-Untertitel blieben unverändert.
 - Unverändert: Korpusdaten, Sprecher-IDs, interne Kategorien (`reference`/`learner`, `speaker_type`), Audio-Slots, Research-Oberfläche (dort bleibt z. B. `Native speakers` als Forschungskategorie), Projektseiten.
+
+## Nachtrag: redaktionelle Endfassung (2026-10-12)
+
+- Seitenanfang: neuer Orientierungstext; Zwischenüberschrift „Hören und entdecken“ und der Satz zu den beiden Aufnahmen entfielen, der erste Hörvergleich (*o hay*, Kastentitel `Hörvergleich: *o hay*`) folgt direkt.
+- Abschnitte: `Wie entsteht der Knacklaut?` (ein Absatz, Illustration mit verkürzter Bildunterschrift) → `Wo können Knacklaute bei Lernenden auftreten?` (Transferkontexte, *reír* nur als Textbeispiel) → Hörvergleich *tiene hambre* → `Wenn Wortgrenzen verschwimmen` (Resilbifizierung als reguläres spanisches Muster, Lernende „mitunter“ stärker an Wortgrenzen orientiert) → Hörvergleich *sus amigos* → Impulse (unverändert).
+- Nur *o hay* behält die aufklappbare Auflösung (neuer Text mit beiden IPA-Transkriptionen, ohne separate Transkriptionszeile); die Auflösungen zu D27 und D24 entfielen. Wortfolge-Chips bleiben in allen drei Kästen (im Browser geprüft: idle → playing → paused).
+- Abweichung vom Wortlaut: In der Auflösung steht „der Referenzsprecher:in“ / „der lernenden Person“ statt „des Referenzsprechers“ / „des Lernenden“ (kein Geschlecht der Sprecher:innen belegt; einheitlich mit den Bezeichnungen der Hörkästen).
+- Hörfragen von D27 und D24 im Register `audio-slots.yaml` nachgezogen (`question`); Aufnahmen und Slots unverändert.
