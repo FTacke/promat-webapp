@@ -71,3 +71,6 @@ scripts/research_data_intake/.mfa_cache/
 /app/capture_qa.py
 
 # Temporary root notes
+
+# Ad-hoc production data exports attached to run logs (never versioned)
+docs/agent-runs/*.zip
