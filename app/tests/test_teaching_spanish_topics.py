@@ -191,7 +191,17 @@ def test_soft_spanish_classroom_prompts_are_the_three_numbered_impulses(client, 
     html = _html(client, lang, "soft-spanish-hard-german")
     titles = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
     assert titles == (["Erst hören, dann erklären", "Aussprache bewusst erproben", "Sprachen vergleichen"] if lang == "de"
-                      else ["Listen first, explain later", "Try out pronunciation deliberately", "Compare languages"])
+                      else ["Listen first, explain later", "Explore pronunciation consciously", "Compare languages"])
+    # impulse 02: both resilbification examples and the stepwise utterance series, Spanish examples in italics, arrows kept with the item before
+    bodies = re.findall(r'class="pm-teaching-impulses__item-body">(.*?)</p>', html, re.S)
+    assert len(bodies) == 3
+    nbsp = "\u00a0"
+    series = f"<em>el amigo</em>{nbsp}→ <em>el amigo de Ana</em>{nbsp}→ <em>el amigo de Ana es alto</em>"
+    assert series in bodies[1] and bodies[1].endswith(series + ".")
+    assert "<em>los otros</em>" in bodies[1] and "<em>sus amigos</em>" in bodies[1] and "<em>die Ente</em>" in bodies[1]
+    assert "\u00ad" not in bodies[1]  # no artificial soft hyphens in the example series
+    assert ("Auch einfache, schrittweise erweiterte Äußerungen eignen sich dafür" if lang == "de" else "Simple utterances that gradually increase in length also work well") in bodies[1]
+    assert ("Anschließend spanische Wortfolgen ohne zusätzlichen Knacklaut sprechen" if lang == "de" else "Then practise Spanish word sequences without an additional glottal stop") in bodies[1]
     # the old summary sentence of the three comparisons is gone; the impulses come after the last solution and before the further reading
     assert "Die drei Hörvergleiche veranschaulichen" not in html and "The three listening comparisons illustrate" not in html
     assert html.rindex('<details class="pm-teaching-solution">') < html.index("pm-teaching-impulses") < html.index("pm-teaching-further-reading")
@@ -367,14 +377,19 @@ def test_soft_spanish_page_names_both_authors_in_display_citation_and_structured
 
 
 @pytest.mark.parametrize("lang", ["de", "en"])
-def test_spanish_hub_carries_the_a1_note_and_topic_pages_do_not(client, lang: str) -> None:
+def test_spanish_hub_has_one_compact_introduction_paragraph(client, lang: str) -> None:
     hub = client.get(f"/{lang}/teaching/spanish").get_data(as_text=True)
-    phrase = "Aussprache von Anfang an" if lang == "de" else "Pronunciation from the start"
-    assert hub.count(phrase) == 1 and "ab A1" in hub if lang == "de" else "as early as A1" in hub
-    assert 'pm-teaching-overview__note' in hub
-    for slug in TOPICS:
-        page = _html(client, lang, slug)
-        assert phrase not in page and "A1" not in page
+    intro = re.search(r'<section class="pm-reading pm-teaching-overview__intro"[^>]*>(.*?)</section>', hub, re.S).group(1)
+    paragraphs = re.findall(r'<p class="pm-teaching-overview__intro-text">(.*?)</p>', intro, re.S)
+    expected = ("Die Themenseiten bieten fachliche Orientierung, Hörbeispiele und Anregungen für kurze Ausspracheimpulse im Spanischunterricht. "
+                "Oft genügen dafür zehn Minuten zwischendurch – und viele Phänomene lassen sich mit passenden Beispielen schon ab A1 aufgreifen.") if lang == "de" else (
+                "The topic pages offer linguistic guidance, listening examples, and ideas for short pronunciation activities in Spanish lessons. "
+                "Often, just ten minutes here and there are enough – and many of these features can be introduced as early as A1 with suitable examples.")
+    assert [html_module.unescape(paragraph).strip() for paragraph in paragraphs] == [expected]
+    assert "<strong" not in intro and "<em" not in intro  # no emphasis inside the paragraph, no separate A1 box
+    assert "Aussprache von Anfang an" not in hub and "Pronunciation from the start" not in hub and "pm-teaching-overview__note" not in hub
+    for slug in TOPICS:  # the A1 remark belongs to the overview only
+        assert "A1" not in _html(client, lang, slug)
 
 
 def test_hubs_list_all_topics_in_the_requested_order() -> None:

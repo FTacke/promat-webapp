@@ -1573,11 +1573,6 @@ a.promat-card:active .pm-cta-link {
   gap: var(--pm-teaching-overview-gap);
 }
 
-/* Extra air between the introduction and the first topic group (the page gap alone is the distance to every other block). */
-.pm-teaching-page--hub .pm-teaching-group-stack {
-  margin-top: var(--pm-teaching-intro-gap);
-}
-
 /* Header-to-content and content-to-back-link distance of every topic page: the shared section gap. */
 .pm-teaching-page--topic {
   gap: var(--pm-layout-section-gap);
@@ -1760,23 +1755,13 @@ a.promat-card:active .pm-cta-link {
 .pm-teaching-overview__intro-text {
   margin: 0;
   max-width: min(100%, 60ch);
+  text-wrap: balance;
   color: var(--book-muted);
   font-family: var(--pm-type-reading-family);
   font-size: var(--pm-type-reading-size);
   line-height: var(--pm-type-reading-line);
   letter-spacing: var(--pm-type-reading-tracking);
   font-weight: var(--pm-type-reading-weight);
-}
-
-/* Optional second orientation line of a hub (`overview_note`): same reading type, one step quieter than the intro. */
-.pm-teaching-overview__note {
-  margin-top: 0.7rem;
-  font-size: 0.92em;
-}
-
-.pm-teaching-overview__note strong {
-  color: var(--book-fg);
-  font-weight: 600;
 }
 
 .pm-teaching-page--overview .pm-content-header__intro,

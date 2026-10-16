@@ -53,9 +53,6 @@
   {% if promat_page.overview_intro %}
   <section class="pm-reading pm-teaching-overview__intro" aria-label="{{ t('teaching.overview.intro') }}">
     <p class="pm-teaching-overview__intro-text">{{ promat_page.overview_intro_html | safe if promat_page.overview_intro_html else promat_page.overview_intro }}</p>
-    {% if promat_page.overview_note_html %}
-    <p class="pm-teaching-overview__intro-text pm-teaching-overview__note">{{ promat_page.overview_note_html | safe }}</p>
-    {% endif %}
   </section>
   {% endif %}
 

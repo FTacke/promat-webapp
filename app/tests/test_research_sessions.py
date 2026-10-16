@@ -2978,7 +2978,6 @@ def test_teaching_overview_spacing_comes_from_named_spacing_tokens(url_app: Flas
     components = client.get("/static/css/30_components.css").get_data(as_text=True)
 
     for declaration in (
-        "--pm-teaching-intro-gap: var(--pm-space-container);",
         "--pm-teaching-group-header-gap: var(--pm-space-xs);",
         "--pm-teaching-group-gap: var(--pm-space-lg);",
         "--pm-teaching-group-stack-gap: calc(var(--pm-space-xl) + var(--pm-space-xs));",
@@ -2986,7 +2985,8 @@ def test_teaching_overview_spacing_comes_from_named_spacing_tokens(url_app: Flas
         assert declaration in tokens
     assert re.search(r"@media \(min-width: 721px\) \{\s*:root \{\s*--pm-teaching-group-stack-gap: calc\(var\(--pm-space-xl\) \+ var\(--pm-space-text\)\)", tokens)
     assert "gap: var(--pm-teaching-group-header-gap);" in layout and "gap: var(--pm-teaching-group-stack-gap);" in layout
-    assert ".pm-teaching-page--hub .pm-teaching-group-stack {" in components
+    # the introduction of a hub is one short paragraph; the first group follows at the plain page gap (no extra intro margin)
+    assert "--pm-teaching-intro-gap" not in tokens and "--pm-teaching-intro-gap" not in components
     assert "--pm-teaching-citation-gap" not in tokens and "--pm-teaching-citation-gap" not in components  # hubs carry no citation box
 
 

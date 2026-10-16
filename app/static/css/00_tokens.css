@@ -176,7 +176,6 @@
   --pm-content-table-col-2: 27%;
   --pm-content-table-col-3: 43%;
   --pm-teaching-overview-gap: clamp(1.7rem, 1.4rem + 1vw, 2.4rem);
-  --pm-teaching-intro-gap: var(--pm-space-container);
   --pm-teaching-group-stack-gap: calc(var(--pm-space-xl) + var(--pm-space-xs));
   --pm-teaching-group-header-gap: var(--pm-space-xs);
   --pm-teaching-group-gap: var(--pm-space-lg);

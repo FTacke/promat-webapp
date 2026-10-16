@@ -1607,7 +1607,6 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
     page_title = render_markdown_plain_text(title) or title
     lead = _as_text(index.get("lead"))
     overview_intro = _hub_overview_intro(index)
-    overview_note = _as_text(index.get("overview_note"))
     topic_groups = _hub_topic_groups(teaching_lang, effective_ui_lang)
     topic_count = sum(len(group["cards"]) for group in topic_groups)
     area_resource = publication.teaching_area_resource(teaching_lang, effective_ui_lang, has_public_topics=topic_count > 0)
@@ -1637,8 +1636,6 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         "page_title": page_title,
         "intro": lead,
         "overview_intro": overview_intro,
-        "overview_note": overview_note,
-        "overview_note_html": render_markdown_inline(overview_note) if overview_note else "",
         "page_kind": "material",
         "layout": "teaching",
         "template": "pages/teaching_page.html",
