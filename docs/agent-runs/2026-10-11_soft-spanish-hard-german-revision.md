@@ -79,3 +79,43 @@ Siehe Abschlussbericht im Chat; Browser-Pass in `tmp/ui-qa/2026-10-11-soft-spani
 - Nur *o hay* behält die aufklappbare Auflösung (neuer Text mit beiden IPA-Transkriptionen, ohne separate Transkriptionszeile); die Auflösungen zu D27 und D24 entfielen. Wortfolge-Chips bleiben in allen drei Kästen (im Browser geprüft: idle → playing → paused).
 - Abweichung vom Wortlaut: In der Auflösung steht „der Referenzsprecher:in“ / „der lernenden Person“ statt „des Referenzsprechers“ / „des Lernenden“ (kein Geschlecht der Sprecher:innen belegt; einheitlich mit den Bezeichnungen der Hörkästen).
 - Hörfragen von D27 und D24 im Register `audio-slots.yaml` nachgezogen (`question`); Aufnahmen und Slots unverändert.
+
+## Nachtrag: finale Audio-Kuratierung, Freigaben, Mitautorschaft (2026-10-16)
+
+### Freigabeprüfung (verbindliches Gate, `teaching_audio_slots.py --release-report`, Stand 2026-10-16, Runtime-Metadaten)
+
+| Sprecher-ID | Item | Rolle | Verwendung | `teaching_consent_signed` | `needs_review` | Sprechertyp | Ergebnis |
+|---|---|---|---|---|---|---|---|
+| ES-N-0004-2026-S01 | d_27 | reference | p1-hambre · integrated | yes | False | native_speaker | OK |
+| ES-L-0006-2026-S01 | d_27 | learner | p1-hambre · integrated | yes | False | learner | OK |
+| ES-N-0005-2026-S01 | wl_076 | reference | p1-reir · integrated | yes | False | native_speaker | OK |
+| ES-L-0019-2026-S01 | wl_076 | learner | p1-reir · integrated | yes | False | learner | OK |
+| ES-N-0002-2026-S01 | qy_05 | reference | p1-losotros · integrated | yes | False | native_speaker | OK |
+| ES-L-0007-2026-S01 | qy_05 | learner | p1-losotros · integrated | yes | False | learner | OK |
+| ES-N-0004-2026-S01 | d_24 | reference | p1-amigos · reserve (not integrated) | yes | False | native_speaker | OK |
+| ES-L-0001-2026-S01 | d_24 | learner | p1-amigos · reserve (not integrated) | yes | False | learner | OK |
+| ES-L-0014-2026-S01 | – | learner | ausgeschlossen (`EXCLUDED_SESSIONS`) | no | False | learner | BLOCKED: keine Teaching-Freigabe nachweisbar, nicht verwendet |
+
+Geprüft wurde jeweils die `metadata.json` der Session (Flags, Sprechertyp), das Vorhandensein der Item-MP3 und der Alignment-Eintrag des Items samt Zielwortfolge (`tiene hambre`, `reír`, `los otros`, `sus amigos`). Eine aufnahmespezifische Einschränkung existiert im Datenmodell nicht (die Flags gelten je Session); Freigaben aus früheren Berichten wurden nicht übernommen. ES-L-0014 bleibt ausgeschlossen, ebenso ES-N-0003 und ES-L-0023 (`EXCLUDED_SESSIONS`).
+
+### Kanonische Items
+
+D27 = `d_27` („Cuando el chico tiene hambre, pierde el control.“), Wortliste 76 = `wl_076` („reír“), QY5 = `qy_05` („¿Tampoco los otros quieren venir?“), D24 = `d_24` (nur noch Reserve).
+
+### Audioausschnitte (Cut-outs; Korpusaufnahmen unverändert)
+
+| Ziel | Quelle | Schnitt auf der Item-MP3 | Vorlaufstille | Fades ein/aus | SHA-256 Quelle → Derivat |
+|---|---|---|---|---|---|
+| tiene hambre | ES-N-0004-2026-S01 / d_27 | 968–1672 ms (Länge 704 ms) | 35 ms | 10 / 20 ms | `300dbc98bde4…` → `02a5527c2cc1…` |
+| tiene hambre | ES-L-0006-2026-S01 / d_27 | 1612–2650 ms (Länge 1038 ms) | 0 ms | 10 / 25 ms | `45bf91eb05fb…` → `5a5fb08e1383…` |
+| los otros | ES-N-0002-2026-S01 / qy_05 | 698–1249 ms (Länge 551 ms) | 40 ms | 10 / 20 ms | `95175d97e1ed…` → `37ccb37cf39f…` |
+| los otros | ES-L-0007-2026-S01 / qy_05 | 740–1440 ms (Länge 700 ms) | 40 ms | 10 / 20 ms | `68cbbcdb5819…` → `640bcd62abbb…` |
+
+Schnittpunkte nach Spektrogramm und Energieverlauf der tatsächlichen Realisierung festgelegt, nicht nach den Alignment-Wortzeiten (diese lagen z. B. bei *chico | tiene* in ES-N-0004 um ca. 60 ms im vorangehenden Vokal). Der Beginn liegt in der Verschlussphase des /t/ bzw. am Übergang zum /l/ (Alignment-Grenze ca. 8–20 ms vorgezogen, damit der Anlaut vollständig ist); das Ende liegt hinter dem Auslaut des letzten Worts (Stille bzw. Frikativende) mit kurzem Fade. Zwischen den Wörtern wurde nichts eingefügt oder verändert. Vorlaufstille nur am Clip-Anfang, damit der Einsatz nicht abrupt wirkt (bei den Lernendenaufnahmen von *tiene hambre* liegt der natürliche Verschluss von ca. 60 ms vor). ffmpeg 8.1, MP3 160 kbit/s mono 48 kHz wie die Quelle; die Ableitung ist bitgleich reproduzierbar (Test). *reír* (ES-N-0005, ES-L-0019, `wl_076`) ist bereits isoliert und wird unverändert kopiert. Die Schnitte wurden akustisch (Spektrogramm) geprüft, nicht abgehört: eine Hörkontrolle durch Ana Goás Pérez bleibt sinnvoll.
+
+### Weitere Änderungen
+
+- Seite: vier Hörvergleiche (*o hay*, *tiene hambre*, *reír*, *los otros*), Einleitung „Vier Hörvergleiche“, Resilbifizierungstext mit *sus amigos* und *los otros*; *sus amigos* (D24) ohne Audiokasten, die Medien (`p1-amigos-*`) entfielen; Reserve ES-N-0004 / ES-L-0001 in `audio-slots.yaml` unter `reserves` dokumentiert (kein Medium, Freigabe nach Gate geprüft).
+- Chips zeigen jetzt exakt die gespielte Passage (*o hay*, *tiene hambre*, *reír*, *los otros*).
+- Autorschaft: `metadata.creators: [felix-tacke, ana-goas-perez]` in DE und EN (Registry-Person vorhanden); sichtbare Zeile „Felix Tacke, Ana Goás Pérez“ (gemeinsame Konvention: Namen mit Komma), generierte Zitation „Tacke, Felix & Goás Pérez, Ana (2026)“, JSON-LD mit beiden Autor:innen; Herausgeber der Plattform und Bildnachweis unverändert bei Felix Tacke; andere Seiten unverändert.
+- Spanische Teaching-Übersicht: neues optionales Hub-Feld `overview_note` (zweite, leisere Zeile im Orientierungsbereich) mit dem A1-Grundsatz „Aussprache von Anfang an“ / „Pronunciation from the start“; nur dort, nicht auf Themenseiten.

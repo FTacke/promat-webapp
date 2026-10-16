@@ -133,7 +133,7 @@ def test_internal_links_of_further_reading_resolve(client, slug: str) -> None:
 def test_listening_comparisons_name_speaker_category_and_item(client) -> None:
     html = _html(client, "de", "soft-spanish-hard-german")
     assert "Referenzsprecher:in" in html and "Lernende:r" in html
-    assert "Pronunciation Matters · D27" in html and "Pronunciation Matters · D24" in html
+    assert "Pronunciation Matters · D27" in html and "Pronunciation Matters · W76" in html and "Pronunciation Matters · QY5" in html
     assert "Mexiko" not in html and "(B1)" not in html  # no fixed speaker identities: the recordings stay replaceable
     html = _html(client, "en", "r")
     assert "Reference speaker" in html and "Learner (B1)" in html and "Spain · W88" in html and "L1 German · W88" in html
@@ -141,30 +141,36 @@ def test_listening_comparisons_name_speaker_category_and_item(client) -> None:
 
 
 @pytest.mark.parametrize("lang", ["de", "en"])
-def test_soft_spanish_page_has_the_three_comparisons_in_order_with_marele_first(client, lang: str) -> None:
+def test_soft_spanish_page_has_the_four_comparisons_in_order_with_marele_first(client, lang: str) -> None:
     html = _html(client, lang, "soft-spanish-hard-german")
-    # o hay (MAR.ELE) first, then tiene hambre (D27), then sus amigos (D24)
-    positions = [html.index(f"audio/{name}") for name in ("marele/o-hay-ref", "marele/o-hay-learner", "corpus/p1-hambre-ref", "corpus/p1-hambre-learner", "corpus/p1-amigos-ref", "corpus/p1-amigos-learner")]
-    assert positions == sorted(positions)
+    # o hay (MAR.ELE) first, then tiene hambre (D27), reír (W76), los otros (QY5); sus amigos (D24) has no audio box any more
+    names = ("marele/o-hay-ref", "marele/o-hay-learner", "corpus/p1-hambre-ref", "corpus/p1-hambre-learner", "corpus/p1-reir-ref", "corpus/p1-reir-learner", "corpus/p1-losotros-ref", "corpus/p1-losotros-learner")
+    positions = [html.index(f"audio/{name}") for name in names]
+    assert positions == sorted(positions) and "p1-amigos" not in html and "D24" not in html
+    assert html.count("pm-teaching-block--audio-contrast") == 4
     assert "hispanistica.com/projects/marele" not in html  # origin is named as plain text, not linked (MAR.ELE site is being retired)
     assert html.count("pm-teaching-audio-contrast__example-subtitle\">MAR.ELE<") == 2
     assert "MAR.ELE" not in html.split("pm-teaching-block")[0]  # neither the meta description nor the page subtitle names it
     # the reference recording is announced first in every comparison, the learner recording second
     labels = re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html)
-    assert labels == (["Referenzsprecher:in", "Lernende:r"] if lang == "de" else ["Reference speaker", "Learner"]) * 3
+    assert labels == (["Referenzsprecher:in", "Lernende:r"] if lang == "de" else ["Reference speaker", "Learner"]) * 4
     # only the o hay comparison keeps a collapsible solution (closed by default); D27 and D24 apply what was explained
     assert html.count('<details class="pm-teaching-solution">') == 1
     assert html.index('<details class="pm-teaching-solution">') < html.index("corpus/p1-hambre-ref")
     assert ("Auflösung: Was ist zu hören?" if lang == "de" else "Solution: What can be heard?") in html
-    assert html.count("pm-teaching-audio-contrast__transcript-text") == 3  # the dynamic word-sequence chip stays in every comparison
+    # the dynamic word-sequence chip stays in every comparison and shows exactly the passage that is played
+    chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
+    assert chips == ["<em>o hay</em>", "<em>tiene hambre</em>", "<em>reír</em>", "<em>los otros</em>"]
     assert "[o.ˈai]" in html and "[ʔo.ʔai]" in html and "[diː ˈʔɛntə]" in html  # IPA of the o hay solution and of die Ente
-    # target word sequence of D24 is "sus amigos" (not "mis amigos")
-    assert "<em><strong>sus amigos</strong></em>" in html and "mis amigos" not in html
+    # sus amigos stays a text example next to los otros (no audio box); never "mis amigos"
+    assert "<em>sus amigos</em>" in html and "<em>los otros</em>" in html and "mis amigos" not in html
+    assert "Vier Hörvergleiche" in html if lang == "de" else "Four listening comparisons" in html
+    assert "Drei Hörvergleiche" not in html and "Three listening comparisons" not in html
     # every comparison box carries the audio icon and a title: same module as the comparisons of "which-pronunciation"
-    assert html.count("audio-section-icon") == 3 and html.count("promat-content-block__title pm-panel__title") >= 3
+    assert html.count("audio-section-icon") == 4 and html.count("promat-content-block__title pm-panel__title") >= 4
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
-    expected = (["Hörvergleich: <em>o hay</em>", "Hörvergleich: <em>tiene hambre</em>", "Hörvergleich: <em>sus amigos</em>"] if lang == "de"
-                else ["Listening comparison: <em>o hay</em>", "Listening comparison: <em>tiene hambre</em>", "Listening comparison: <em>sus amigos</em>"])
+    expected = ([f"Hörvergleich: <em>{w}</em>" for w in ("o hay", "tiene hambre", "reír", "los otros")] if lang == "de"
+                else [f"Listening comparison: <em>{w}</em>" for w in ("o hay", "tiene hambre", "reír", "los otros")])
     assert titles == expected
     # editorial progression: orientation -> o hay -> articulation -> transfer contexts -> resyllabification -> classroom prompts
     headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
@@ -172,7 +178,10 @@ def test_soft_spanish_page_has_the_three_comparisons_in_order_with_marele_first(
                         else ["How is the glottal stop produced?", "Where can learners produce glottal stops?", "When word boundaries blur", "Classroom prompts"])
     assert "Hören und entdecken" not in html and "Listen and discover" not in html
     assert html.index("pm-teaching-block--audio-contrast") < html.index(headings[0])  # the first comparison follows the orientation text directly
-    assert "reír" in html and "su\u2011sa\u2011mi\u2011gos" in html
+    assert "su\u2011sa\u2011mi\u2011gos" in html and "lo\u2011so\u2011tros" in html
+    # reír is the second comparison of the transfer section, directly after tiene hambre and without extra text or solution
+    assert html.index("corpus/p1-hambre-learner") < html.index("Listening comparison: <em>reír" if lang == "en" else "Hörvergleich: <em>reír")
+    assert html.index("corpus/p1-reir-learner") < html.index(headings[2])
     assert "Auf einen Blick" not in html and "At a glance" not in html
     assert "https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen" in html
 
@@ -252,8 +261,15 @@ def test_marele_recordings_are_declared_with_origin_and_the_checked_mapping() ->
     assert {r["origin"]["corpus"] for r in by_slot.values()} == {"MAR.ELE"}
     assert [r["origin"]["transcription"] for r in (by_slot["ref"], by_slot["learner"])] == ["[o.ˈai]", "[ʔo.ʔai]"]
     assert all("session_id" not in r and "item" not in r for r in by_slot.values())
-    corpus = {c["id"]: {r["slot"]: r["item"]["id"] for r in c["recordings"]} for c in slots.load_slots()["comparisons"] if c["topic"] == "soft-spanish-hard-german" and c["id"] != "p1-ohay"}
-    assert corpus == {"p1-hambre": {"ref": "d_27", "learner": "d_27"}, "p1-amigos": {"ref": "d_24", "learner": "d_24"}}
+    comparisons = [c for c in slots.load_slots()["comparisons"] if c["topic"] == "soft-spanish-hard-german"]
+    assert [c["id"] for c in comparisons] == ["p1-ohay", "p1-hambre", "p1-reir", "p1-losotros"]
+    corpus = {c["id"]: {r["slot"]: (r["session_id"], r["item"]["id"]) for r in c["recordings"]} for c in comparisons if c["id"] != "p1-ohay"}
+    # the manually curated combinations (phonetic curation by Ana Goás Pérez)
+    assert corpus == {
+        "p1-hambre": {"ref": ("ES-N-0004-2026-S01", "d_27"), "learner": ("ES-L-0006-2026-S01", "d_27")},
+        "p1-reir": {"ref": ("ES-N-0005-2026-S01", "wl_076"), "learner": ("ES-L-0019-2026-S01", "wl_076")},
+        "p1-losotros": {"ref": ("ES-N-0002-2026-S01", "qy_05"), "learner": ("ES-L-0007-2026-S01", "qy_05")},
+    }
 
 
 @pytest.mark.parametrize(("slug", "lang"), PAIRS)
@@ -270,6 +286,94 @@ def test_speaker_terms_are_central_and_non_normative(client, slug: str, lang: st
     assert "label: Muttersprach" not in source and "label: Native-speaker" not in source and "role: reference" in source and "role: learner" in source
 
 
+def test_cropped_recordings_are_declared_with_cut_points_and_source_hashes() -> None:
+    data = slots.load_slots()
+    cropped = {(c["id"], r["slot"]): r for c, r in slots.iter_recordings(data) if r.get("crop")}
+    # tiene hambre (D27) and los otros (QY5) are cut-outs of the item MP3; reír (word list) is already isolated
+    assert set(cropped) == {("p1-hambre", "ref"), ("p1-hambre", "learner"), ("p1-losotros", "ref"), ("p1-losotros", "learner")}
+    for (_comparison, _slot), recording in cropped.items():
+        crop = recording["crop"]
+        assert 0 < crop["start_ms"] < crop["end_ms"] and crop["fade_in_ms"] >= 5 and crop["fade_out_ms"] >= 10
+        assert len(recording["source_sha256"]) == 64 and recording["sha256"] != recording["source_sha256"]
+        assert crop["tool"].startswith("ffmpeg")
+    # every cropped comparison names the words it cuts out; the chips on the page show exactly these words
+    by_id = {c["id"]: c for c in data["comparisons"]}
+    assert by_id["p1-hambre"]["target_tokens"] == ["tiene", "hambre"] and by_id["p1-losotros"]["target_tokens"] == ["los", "otros"]
+    # the clips are short passages, not the full sentences
+    for name, upper_ms in (("p1-hambre-ref", 900), ("p1-hambre-learner", 1200), ("p1-losotros-ref", 700), ("p1-losotros-learner", 800)):
+        size = (TOPIC_DIR / "soft-spanish-hard-german" / "media" / "audio" / "corpus" / f"{name}.mp3").stat().st_size
+        assert 8_000 < size < upper_ms * 20  # 160 kbit/s = 20 bytes per ms
+
+
+def test_cut_outs_are_reproducible_from_the_declared_cut_points(tmp_path) -> None:
+    import shutil as shutil_module
+
+    sessions_root = REPO_ROOT / "data" / "sessions"
+    if shutil_module.which("ffmpeg") is None or not slots.runtime_available(sessions_root):
+        pytest.skip("ffmpeg or the local research runtime is not present")
+    data = slots.load_slots()
+    for comparison, recording in slots.iter_recordings(data):
+        if not recording.get("crop"):
+            continue
+        source = slots.source_path(sessions_root, recording)
+        assert slots.sha256_of(source) == recording["source_sha256"]  # the corpus recording itself is untouched
+        target = tmp_path / Path(recording["file"]).name
+        slots.derive_crop(source, target, recording["crop"])
+        if recording["crop"]["tool"] == f"ffmpeg {slots.ffmpeg_version()}":
+            assert slots.sha256_of(target) == recording["sha256"], recording["file"]  # bit-identical with the same tool version
+
+
+def test_released_sessions_only_and_the_reserve_is_documented_but_not_integrated() -> None:
+    data = slots.load_slots()
+    used = {r["session_id"] for _c, r in slots.iter_recordings(data) if not slots.is_external(r)}
+    reserves = data["reserves"]
+    assert [r["id"] for r in reserves] == ["p1-amigos"]
+    reserve_sessions = {reserves[0]["reference"], reserves[0]["learner"]}
+    assert reserve_sessions == {"ES-N-0004-2026-S01", "ES-L-0001-2026-S01"}
+    # sessions without a Teaching release never appear, neither as recording nor as reserve
+    for excluded in slots.EXCLUDED_SESSIONS:
+        assert excluded not in used and excluded not in reserve_sessions
+    assert "ES-L-0014-2026-S01" in slots.EXCLUDED_SESSIONS
+    # a reserve has no media and no audio box
+    assert not list((TOPIC_DIR / "soft-spanish-hard-german" / "media" / "audio" / "corpus").glob("p1-amigos*"))
+    broken = {**data, "comparisons": [dict(data["comparisons"][0])]}
+    broken["comparisons"][0]["recordings"] = [dict(data["comparisons"][1]["recordings"][1], session_id="ES-L-0014-2026-S01")]
+    broken["comparisons"][0]["topic"] = "soft-spanish-hard-german"
+    assert any("excluded from Teaching use" in problem for problem in slots.check(broken))
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_soft_spanish_page_names_both_authors_in_display_citation_and_structured_data(client, lang: str) -> None:
+    html = _html(client, lang, "soft-spanish-hard-german")
+    assert "Felix Tacke, Ana Goás Pérez" in html  # visible author line (shared convention: names joined by comma)
+    title = "Weiches Spanisch, hartes Deutsch" if lang == "de" else "Soft Spanish, hard German"
+    quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
+    editor = "Hrsg." if lang == "de" else "ed."
+    # generated citation: creators of this page, editor of the platform stays Felix Tacke
+    assert f"Tacke, Felix &amp; Goás Pérez, Ana (2026). {quote_open}{title}{quote_close}. In: Felix Tacke ({editor})" in html
+    ld = re.search(r'<script type="application/ld\+json">(.*?)</script>', html, re.S).group(1)
+    import json as json_module
+    data = json_module.loads(ld)
+    authors = data.get("author") or data.get("creator")
+    names = [a["name"] for a in (authors if isinstance(authors, list) else [authors])]
+    assert names == ["Felix Tacke", "Ana Goás Pérez"] or [n.replace("Prof. Dr. ", "") for n in names] == ["Felix Tacke", "Ana Goás Pérez"]
+    # the shared authorship is page-specific: other topics and the editor of the platform are unchanged
+    other = _html(client, lang, "r")
+    assert "Goás Pérez" not in other.split("pm-teaching-block")[0] and "Goás Pérez, Ana" not in other
+    assert "Illustration: Felix Tacke" in html  # the illustration credit stays with Felix Tacke only
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_spanish_hub_carries_the_a1_note_and_topic_pages_do_not(client, lang: str) -> None:
+    hub = client.get(f"/{lang}/teaching/spanish").get_data(as_text=True)
+    phrase = "Aussprache von Anfang an" if lang == "de" else "Pronunciation from the start"
+    assert hub.count(phrase) == 1 and "ab A1" in hub if lang == "de" else "as early as A1" in hub
+    assert 'pm-teaching-overview__note' in hub
+    for slug in TOPICS:
+        page = _html(client, lang, slug)
+        assert phrase not in page and "A1" not in page
+
+
 def test_hubs_list_all_topics_in_the_requested_order() -> None:
     for lang in ("de", "en"):
         hub = yaml.safe_load((TOPIC_DIR / "hubs" / f"{lang}.yaml").read_text(encoding="utf-8"))
@@ -284,7 +388,7 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
     assert slots.check(data) == []
     declared = {(c["topic"], r["file"]) for c, r in slots.iter_recordings(data)}
     on_disk = {(path.parents[3].name, f"{path.parent.name}/{path.name}") for kind in ("corpus", "marele") for path in TOPIC_DIR.glob(f"*/media/audio/{kind}/*.mp3")}
-    assert declared == on_disk and len(declared) == 54
+    assert declared == on_disk and len(declared) == 56
     for comparison, recording in slots.iter_recordings(data):
         assert recording["category"] in ("reference", "learner")
         if not slots.is_external(recording):

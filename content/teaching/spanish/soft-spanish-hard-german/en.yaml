@@ -7,12 +7,13 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-12
+  updated: 2026-10-16
 blocks:
 - type: topic_meta
 - type: text
-  body: A German accent in Spanish is not revealed by individual sounds alone. Sometimes it is small, barely noticed differences that change the sound of an entire utterance. Three listening comparisons make such subtleties audible – and show how they can be taken up in the classroom.
+  body: A German accent in Spanish is not revealed by individual sounds alone. Sometimes it is small, barely noticed differences that change the sound of an entire utterance. Four listening comparisons make such subtleties audible – and show how they can be taken up in the classroom.
 - type: audio_contrast
   title: 'Listening comparison: *o hay*'
   lead: What distinguishes the two pronunciations?
@@ -44,7 +45,7 @@ blocks:
 - type: audio_contrast
   title: 'Listening comparison: *tiene hambre*'
   lead: How are the vowels joined at the word boundary?
-  transcript: Cuando el chico ***tiene hambre***, pierde el control.
+  transcript: '*tiene hambre*'
   examples:
   - role: reference
     subtitle: Pronunciation Matters · D27
@@ -52,24 +53,35 @@ blocks:
   - role: learner
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-learner.mp3
+- type: audio_contrast
+  title: 'Listening comparison: *reír*'
+  lead: How is the transition between the two vowels realised?
+  transcript: '*reír*'
+  examples:
+  - role: reference
+    subtitle: Pronunciation Matters · W76
+    audio: corpus/p1-reir-ref.mp3
+  - role: learner
+    subtitle: Pronunciation Matters · W76
+    audio: corpus/p1-reir-learner.mp3
 - type: section_heading
   title: When word boundaries blur
 - type: text
   body: |-
-    In Spanish, it is not only vowels meeting at a boundary that are linked smoothly. When a word ends in a consonant and the next one begins with a vowel, the consonant is normally assigned to the following syllable. So *sus amigos* becomes **su‑sa‑mi‑gos** in speech: the /s/ of *sus* forms a syllable with the /a/ of *amigos*. This phenomenon is called **resyllabification** (Spanish: *resilabificación*).
+    In Spanish, it is not only vowels meeting at a boundary that are linked smoothly. When a word ends in a consonant and the next one begins with a vowel, the consonant is normally assigned to the following syllable. So *sus amigos* becomes **su‑sa‑mi‑gos** in speech, and *los otros* correspondingly **lo‑so‑tros**: in each case, the word-final /s/ forms a syllable with the following vowel. This phenomenon is called **resyllabification** (Spanish: *resilabificación*).
 
     German-speaking learners, by contrast, sometimes orient themselves more strongly to the individual word boundaries and pronounce the words more clearly separated from one another. This, too, can create a more “clipped” impression.
 - type: audio_contrast
-  title: 'Listening comparison: *sus amigos*'
-  lead: How smoothly are *sus* and *amigos* linked?
-  transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
+  title: 'Listening comparison: *los otros*'
+  lead: How are *los* and *otros* linked?
+  transcript: '*los otros*'
   examples:
   - role: reference
-    subtitle: Pronunciation Matters · D24
-    audio: corpus/p1-amigos-ref.mp3
+    subtitle: Pronunciation Matters · QY5
+    audio: corpus/p1-losotros-ref.mp3
   - role: learner
-    subtitle: Pronunciation Matters · D24
-    audio: corpus/p1-amigos-learner.mp3
+    subtitle: Pronunciation Matters · QY5
+    audio: corpus/p1-losotros-learner.mp3
 - type: section_heading
   title: 'Classroom prompts'
 - type: text

@@ -7,12 +7,13 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-12
+  updated: 2026-10-16
 blocks:
 - type: topic_meta
 - type: text
-  body: Ein deutscher Akzent im Spanischen zeigt sich nicht nur an einzelnen Lauten. Manchmal sind es kleine, kaum bemerkte Unterschiede, die den Klang einer ganzen Äußerung verändern. Drei Hörvergleiche machen solche Feinheiten hörbar – und zeigen, wie man sie im Unterricht aufgreifen kann.
+  body: Ein deutscher Akzent im Spanischen zeigt sich nicht nur an einzelnen Lauten. Manchmal sind es kleine, kaum bemerkte Unterschiede, die den Klang einer ganzen Äußerung verändern. Vier Hörvergleiche machen solche Feinheiten hörbar – und zeigen, wie man sie im Unterricht aufgreifen kann.
 - type: audio_contrast
   title: 'Hörvergleich: *o hay*'
   lead: Was unterscheidet die beiden Aussprachen?
@@ -44,7 +45,7 @@ blocks:
 - type: audio_contrast
   title: 'Hörvergleich: *tiene hambre*'
   lead: Wie werden die Vokale an der Wortgrenze miteinander verbunden?
-  transcript: Cuando el chico ***tiene hambre***, pierde el control.
+  transcript: '*tiene hambre*'
   examples:
   - role: reference
     subtitle: Pronunciation Matters · D27
@@ -52,24 +53,35 @@ blocks:
   - role: learner
     subtitle: Pronunciation Matters · D27
     audio: corpus/p1-hambre-learner.mp3
+- type: audio_contrast
+  title: 'Hörvergleich: *reír*'
+  lead: Wie wird der Übergang zwischen den beiden Vokalen realisiert?
+  transcript: '*reír*'
+  examples:
+  - role: reference
+    subtitle: Pronunciation Matters · W76
+    audio: corpus/p1-reir-ref.mp3
+  - role: learner
+    subtitle: Pronunciation Matters · W76
+    audio: corpus/p1-reir-learner.mp3
 - type: section_heading
   title: Wenn Wortgrenzen verschwimmen
 - type: text
   body: |-
-    Im Spanischen werden nicht nur aufeinandertreffende Vokale fließend miteinander verbunden. Endet ein Wort auf einen Konsonanten und beginnt das nächste mit einem Vokal, wird der Konsonant normalerweise der folgenden Silbe zugeordnet. So wird aus *sus amigos* beim Sprechen **su‑sa‑mi‑gos**: Das /s/ von *sus* bildet mit dem /a/ von *amigos* eine Silbe. Dieses Phänomen nennt man **Resilbifizierung** (spanisch: *resilabificación*).
+    Im Spanischen werden nicht nur aufeinandertreffende Vokale fließend miteinander verbunden. Endet ein Wort auf einen Konsonanten und beginnt das nächste mit einem Vokal, wird der Konsonant normalerweise der folgenden Silbe zugeordnet. So wird aus *sus amigos* beim Sprechen **su‑sa‑mi‑gos**, aus *los otros* entsprechend **lo‑so‑tros**: Das auslautende /s/ bildet jeweils mit dem folgenden Vokal eine Silbe. Dieses Phänomen nennt man **Resilbifizierung** (spanisch: *resilabificación*).
 
     Deutschsprachige Lernende orientieren sich dagegen mitunter stärker an den einzelnen Wortgrenzen und sprechen die Wörter deutlicher voneinander getrennt aus. Auch dadurch kann ein „abgehackterer“ Höreindruck entstehen.
 - type: audio_contrast
-  title: 'Hörvergleich: *sus amigos*'
-  lead: Wie fließend werden *sus* und *amigos* miteinander verbunden?
-  transcript: Con su familia es un ángel y con ***sus amigos*** un diablo.
+  title: 'Hörvergleich: *los otros*'
+  lead: Wie werden *los* und *otros* miteinander verbunden?
+  transcript: '*los otros*'
   examples:
   - role: reference
-    subtitle: Pronunciation Matters · D24
-    audio: corpus/p1-amigos-ref.mp3
+    subtitle: Pronunciation Matters · QY5
+    audio: corpus/p1-losotros-ref.mp3
   - role: learner
-    subtitle: Pronunciation Matters · D24
-    audio: corpus/p1-amigos-learner.mp3
+    subtitle: Pronunciation Matters · QY5
+    audio: corpus/p1-losotros-learner.mp3
 - type: section_heading
   title: 'Impulse für den Unterricht'
 - type: text

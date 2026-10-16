@@ -2,10 +2,12 @@
 #
 # Edit a recording (session / item) here, then run `python scripts/teaching_audio_slots.py --export` and commit the changed
 # media file and its `sha256`. The topic pages name only the media file, never a session, so replacing a recording
-# needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes`; the
-# `selection` of the first release was made automatically (typical duration, no outliers) and is NOT phonetically
-# verified: it is a neutral comparison, not a claim about a specific learner realisation. Recordings with an `origin`
+# needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes` (checked by
+# `--release-report`). The `selection` of the first release was made automatically; the combinations of
+# `soft-spanish-hard-german` were chosen in a manual phonetic curation (Ana Goás Pérez). Recordings with an `origin`
 # entry come from the predecessor corpus MAR.ELE (not from the research runtime); they are not touched by --export.
+# A `crop` entry renders the target word sequence out of the item MP3 (cut points fixed here, see the script docstring).
+# `reserves` document curatorial alternatives that are NOT integrated (no media, no audio box).
 
 corpus: spanish
 selection: 'automatic first release: typical duration per item, teaching_consent_signed: yes; no phonetic verification'
@@ -36,6 +38,9 @@ comparisons:
   topic: soft-spanish-hard-german
   phenomenon: Vokalischer Anschluss über die Wortgrenze
   target: tiene hambre
+  target_tokens:
+  - tiene
+  - hambre
   question: Wie werden die Vokale an der Wortgrenze miteinander verbunden?
   recordings:
   - slot: ref
@@ -45,37 +50,96 @@ comparisons:
       task: text
       id: d_27
     file: corpus/p1-hambre-ref.mp3
-    sha256: 300dbc98bde48c368adf84f497861ee98733b455098ad6a95335a47688ad27fd
+    crop:
+      start_ms: 968
+      end_ms: 1672
+      lead_silence_ms: 35
+      fade_in_ms: 10
+      fade_out_ms: 20
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: 02a5527c2cc1e99cef4750f73a25c315aab64208a57a8e37e54128c77f54d984
+    source_sha256: 300dbc98bde48c368adf84f497861ee98733b455098ad6a95335a47688ad27fd
   - slot: learner
     category: learner
-    session_id: ES-L-0007-2026-S01
+    session_id: ES-L-0006-2026-S01
     item:
       task: text
       id: d_27
     file: corpus/p1-hambre-learner.mp3
-    sha256: ded6ad30049d718525023c3681d42d08daa880b0ddb70caabc48dca708d04cf9
-- id: p1-amigos
+    crop:
+      start_ms: 1612
+      end_ms: 2650
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 25
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: 5a5fb08e13836b732eb00e9b93f9e8ccb0512d1ce86c3f49cd6fbc97d3e03fba
+    source_sha256: 45bf91eb05fbb7bbfd0ccb78175e5f3df9054fcaf5042dc4cf7bcf25de202377
+- id: p1-reir
   topic: soft-spanish-hard-german
-  phenomenon: Resilbifizierung eines wortfinalen Konsonanten vor Vokal
-  target: sus amigos
-  question: Wie fließend werden *sus* und *amigos* miteinander verbunden?
+  phenomenon: Glottaler Neueinsatz im Hiat innerhalb eines Wortes
+  target: reír
+  target_tokens:
+  - reír
+  question: Wie wird der Übergang zwischen den beiden Vokalen realisiert?
   recordings:
   - slot: ref
     category: reference
-    session_id: ES-N-0004-2026-S01
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_076
+    file: corpus/p1-reir-ref.mp3
+    sha256: d6a4e69ad6fd7cf9a855b885d278a19a3f402ebe3c9bf55e341f4118c9a43348
+  - slot: learner
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: wordlist
+      id: wl_076
+    file: corpus/p1-reir-learner.mp3
+    sha256: bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725
+- id: p1-losotros
+  topic: soft-spanish-hard-german
+  phenomenon: Resilbifizierung eines wortfinalen /s/ vor Vokal
+  target: los otros
+  target_tokens:
+  - los
+  - otros
+  question: Wie werden *los* und *otros* miteinander verbunden?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0002-2026-S01
     item:
       task: text
-      id: d_24
-    file: corpus/p1-amigos-ref.mp3
-    sha256: 9ffef9af8ffad52e8a1e283fb01898735b0249adf09a481c90bdb4a4745a9e9e
+      id: qy_05
+    file: corpus/p1-losotros-ref.mp3
+    crop:
+      start_ms: 698
+      end_ms: 1249
+      lead_silence_ms: 40
+      fade_in_ms: 10
+      fade_out_ms: 20
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: 37ccb37cf39f997e45236f3d77962293be2ca5ee7774f9fe0a6153ede08da8e1
+    source_sha256: 95175d97e1ed4fbe095e822f175d4b45b92df9e6241a6f58ca68919d951d6f1a
   - slot: learner
     category: learner
     session_id: ES-L-0007-2026-S01
     item:
       task: text
-      id: d_24
-    file: corpus/p1-amigos-learner.mp3
-    sha256: 9fb2c30d3319da62b806434034fe5d888df08cc97b921aaa14fbad56e6f318cf
+      id: qy_05
+    file: corpus/p1-losotros-learner.mp3
+    crop:
+      start_ms: 740
+      end_ms: 1440
+      lead_silence_ms: 40
+      fade_in_ms: 10
+      fade_out_ms: 20
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: 640bcd62abbb05fd1a15bc8fa478dbcf61f8051358ef134bc8e9593a11735189
+    source_sha256: 68cbbcdb581961e9bb1909ccb7127d128d6402252840ef4623ca369a55d2af40
 - id: p2-caro
   topic: r
   phenomenon: Einfacher und mehrfacher Vibrant
@@ -586,3 +650,17 @@ comparisons:
       id: d_30
     file: corpus/p6-d30-learner.mp3
     sha256: 5bf03bd79cd056e72b74cd91c05c5a3d0ddd5b02b0493c60860cde8222992ac3
+reserves:
+- id: p1-amigos
+  topic: soft-spanish-hard-german
+  target: sus amigos
+  target_tokens:
+  - sus
+  - amigos
+  item:
+    task: text
+    id: d_24
+  reference: ES-N-0004-2026-S01
+  learner: ES-L-0001-2026-S01
+  status: 'curatorial reserve, not integrated: no audio box and no media on the page; use only after the release gate (--release-report)
+    passes'

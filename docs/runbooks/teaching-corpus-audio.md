@@ -14,6 +14,10 @@ Die kuratierten Hörvergleiche der spanischen Phänomen-Themenseiten (`content/t
 - lokale Runtime mit `data/sessions/spanish/{session_id}/items/{wordlist|text}/{item_id}.mp3` (Items `wl_NNN`, `d_NN`, `qy_NN`, `qw_NN`)
 - die Quellsession trägt `teaching_consent_signed: yes` und `needs_review: false` (Eignungsprüfung; die Auswahl selbst bleibt eine manuelle redaktionelle Entscheidung)
 
+## Freigabe-Gate (verbindlich, vor jedem Export oder Austausch)
+
+`python scripts/teaching_audio_slots.py --release-report` listet jede verwendete (und jede als Reserve geführte) Session-Item-Kombination mit `teaching_consent_signed`, `needs_review`, Sprechertyp, Itemtext und Ergebnis (`OK`/`BLOCKED`). Geprüft wird die Session-`metadata.json` der lokalen Runtime, nicht ein früherer Bericht; Research-Zugang oder vorhandene Audiodateien ersetzen die Teaching-Einwilligung nicht. Sessions in `EXCLUDED_SESSIONS` (z. B. ES-L-0014) sind gesperrt; bei fehlender oder ungeklärter Freigabe wird die Aufnahme nicht eingebunden (kein stiller Sprecherwechsel), der Blocker wird im Run-Bericht dokumentiert. Die Tabelle gehört in den Run-Bericht.
+
 ## Schritte
 
 1. In `audio-slots.yaml` den Eintrag der Aufnahme suchen (`comparisons[].recordings[]`, Felder `session_id` und `item`) und Session oder Item ändern. `category` bleibt `reference` (Session `ES-N-…`) oder `learner` (Session `ES-L-…`); `file` bleibt unverändert, damit die Seiten nicht angepasst werden müssen.
@@ -23,6 +27,10 @@ Die kuratierten Hörvergleiche der spanischen Phänomen-Themenseiten (`content/t
 5. Geänderte MP3 und `audio-slots.yaml` committen.
 
 MAR.ELE-Aufnahmen (Vorgängerkorpus, nicht in der Runtime): Der Eintrag trägt statt `session_id`/`item` einen `origin` (`corpus`, `source_file`, `transcription`) und die Datei liegt unter `media/audio/marele/`. Sie wird einmal von Hand aus dem Quellrepository kopiert (Quelle bleibt unverändert), `sha256` im Eintrag nachtragen; `--export` überspringt diese Einträge, `--check` prüft Datei, Hash und Seitenverweis. Die Seite nennt die Herkunft als Text `MAR.ELE`, ohne Link.
+
+Ausschnitt statt ganzer Satz: Soll nur die Zielwortfolge hörbar sein, den Eintrag um `crop` ergänzen (`start_ms`, `end_ms` auf der Item-MP3, `fade_in_ms`, `fade_out_ms`, optional `lead_silence_ms`) und im Vergleich `target_tokens` setzen. Die Schnittpunkte nach Spektrogramm und Energieverlauf der tatsächlichen Realisierung bestimmen (Alignment-Wortzeiten sind nur ein Anhaltspunkt und können mehrere 10 ms danebenliegen): Anlaut vollständig, Auslaut und Übergänge nicht abgeschnitten, nichts zwischen den Wörtern einfügen, Vorlaufstille nur am Clip-Anfang. `--export` rendert das Derivat mit ffmpeg (bitgleich reproduzierbar mit derselben Version), schreibt `source_sha256` und `sha256`; der Chip (`transcript`) der Seite nennt genau die gespielte Passage. Das Ergebnis ansehen (Spektrogramm) und anhören.
+
+Kuratorische Reserven (nicht eingebunden) stehen unter `reserves` in `audio-slots.yaml`, ohne Medium; auch sie müssen das Freigabe-Gate bestehen.
 
 Neue Vergleiche oder Hörfragen: den Eintrag unter `comparisons` ergänzen (die `question` muss wörtlich im `lead` des Vergleichsblocks der Seite stehen) und den Block in `de.yaml`/`en.yaml` mit den Dateinamen `corpus/…` anlegen.
 
