@@ -119,3 +119,7 @@ Schnittpunkte nach Spektrogramm und Energieverlauf der tatsächlichen Realisieru
 - Chips zeigen jetzt exakt die gespielte Passage (*o hay*, *tiene hambre*, *reír*, *los otros*).
 - Autorschaft: `metadata.creators: [felix-tacke, ana-goas-perez]` in DE und EN (Registry-Person vorhanden); sichtbare Zeile „Felix Tacke, Ana Goás Pérez“ (gemeinsame Konvention: Namen mit Komma), generierte Zitation „Tacke, Felix & Goás Pérez, Ana (2026)“, JSON-LD mit beiden Autor:innen; Herausgeber der Plattform und Bildnachweis unverändert bei Felix Tacke; andere Seiten unverändert.
 - Spanische Teaching-Übersicht: neues optionales Hub-Feld `overview_note` (zweite, leisere Zeile im Orientierungsbereich) mit dem A1-Grundsatz „Aussprache von Anfang an“ / „Pronunciation from the start“; nur dort, nicht auf Themenseiten.
+
+## Nachtrag: *los otros* mit vollem Satz (2026-10-16)
+
+Nach dem Probehören (Ausschnitt gegenüber Volltext) entschied Felix Tacke: *los otros* spielt die vollständigen Aufnahmen von ES-N-0002 und ES-L-0007 (QY5, „¿Tampoco los otros quieren venir?“). Die `crop`-Einträge entfielen; die Dateien sind byte-identisch mit den Item-MP3 der Runtime (kein `source_sha256`, der Slot-Check vergleicht mit der Quelle). Der Chip zeigt den ganzen Satz mit hervorgehobenem *los otros*. Ausschnitte bleiben nur bei *tiene hambre* (D27); die Cut-Tabelle oben gilt daher nur noch für diese beiden Aufnahmen.

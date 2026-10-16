@@ -160,7 +160,7 @@ def test_soft_spanish_page_has_the_four_comparisons_in_order_with_marele_first(c
     assert ("Auflösung: Was ist zu hören?" if lang == "de" else "Solution: What can be heard?") in html
     # the dynamic word-sequence chip stays in every comparison and shows exactly the passage that is played
     chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
-    assert chips == ["<em>o hay</em>", "<em>tiene hambre</em>", "<em>reír</em>", "<em>los otros</em>"]
+    assert chips == ["<em>o hay</em>", "<em>tiene hambre</em>", "<em>reír</em>", "¿Tampoco <em><strong>los otros</strong></em> quieren venir?"]
     assert "[o.ˈai]" in html and "[ʔo.ʔai]" in html and "[diː ˈʔɛntə]" in html  # IPA of the o hay solution and of die Ente
     # sus amigos stays a text example next to los otros (no audio box); never "mis amigos"
     assert "<em>sus amigos</em>" in html and "<em>los otros</em>" in html and "mis amigos" not in html
@@ -289,8 +289,11 @@ def test_speaker_terms_are_central_and_non_normative(client, slug: str, lang: st
 def test_cropped_recordings_are_declared_with_cut_points_and_source_hashes() -> None:
     data = slots.load_slots()
     cropped = {(c["id"], r["slot"]): r for c, r in slots.iter_recordings(data) if r.get("crop")}
-    # tiene hambre (D27) and los otros (QY5) are cut-outs of the item MP3; reír (word list) is already isolated
-    assert set(cropped) == {("p1-hambre", "ref"), ("p1-hambre", "learner"), ("p1-losotros", "ref"), ("p1-losotros", "learner")}
+    # tiene hambre (D27) is a cut-out of the item MP3; reír (word list) is already isolated and los otros (QY5) plays the full sentence
+    assert set(cropped) == {("p1-hambre", "ref"), ("p1-hambre", "learner")}
+    for comparison in data["comparisons"]:
+        if comparison["id"] == "p1-losotros":
+            assert all("crop" not in r and "source_sha256" not in r for r in comparison["recordings"])
     for (_comparison, _slot), recording in cropped.items():
         crop = recording["crop"]
         assert 0 < crop["start_ms"] < crop["end_ms"] and crop["fade_in_ms"] >= 5 and crop["fade_out_ms"] >= 10
@@ -300,7 +303,7 @@ def test_cropped_recordings_are_declared_with_cut_points_and_source_hashes() -> 
     by_id = {c["id"]: c for c in data["comparisons"]}
     assert by_id["p1-hambre"]["target_tokens"] == ["tiene", "hambre"] and by_id["p1-losotros"]["target_tokens"] == ["los", "otros"]
     # the clips are short passages, not the full sentences
-    for name, upper_ms in (("p1-hambre-ref", 900), ("p1-hambre-learner", 1200), ("p1-losotros-ref", 700), ("p1-losotros-learner", 800)):
+    for name, upper_ms in (("p1-hambre-ref", 900), ("p1-hambre-learner", 1200)):
         size = (TOPIC_DIR / "soft-spanish-hard-german" / "media" / "audio" / "corpus" / f"{name}.mp3").stat().st_size
         assert 8_000 < size < upper_ms * 20  # 160 kbit/s = 20 bytes per ms
 

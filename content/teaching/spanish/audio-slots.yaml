@@ -115,15 +115,7 @@ comparisons:
       task: text
       id: qy_05
     file: corpus/p1-losotros-ref.mp3
-    crop:
-      start_ms: 698
-      end_ms: 1249
-      lead_silence_ms: 40
-      fade_in_ms: 10
-      fade_out_ms: 20
-      tool: ffmpeg 8.1-full_build-www.gyan.dev
-    sha256: 37ccb37cf39f997e45236f3d77962293be2ca5ee7774f9fe0a6153ede08da8e1
-    source_sha256: 95175d97e1ed4fbe095e822f175d4b45b92df9e6241a6f58ca68919d951d6f1a
+    sha256: 95175d97e1ed4fbe095e822f175d4b45b92df9e6241a6f58ca68919d951d6f1a
   - slot: learner
     category: learner
     session_id: ES-L-0007-2026-S01
@@ -131,15 +123,7 @@ comparisons:
       task: text
       id: qy_05
     file: corpus/p1-losotros-learner.mp3
-    crop:
-      start_ms: 740
-      end_ms: 1440
-      lead_silence_ms: 40
-      fade_in_ms: 10
-      fade_out_ms: 20
-      tool: ffmpeg 8.1-full_build-www.gyan.dev
-    sha256: 640bcd62abbb05fd1a15bc8fa478dbcf61f8051358ef134bc8e9593a11735189
-    source_sha256: 68cbbcdb581961e9bb1909ccb7127d128d6402252840ef4623ca369a55d2af40
+    sha256: 68cbbcdb581961e9bb1909ccb7127d128d6402252840ef4623ca369a55d2af40
 - id: p2-caro
   topic: r
   phenomenon: Einfacher und mehrfacher Vibrant

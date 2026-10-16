@@ -74,7 +74,7 @@ blocks:
 - type: audio_contrast
   title: 'Listening comparison: *los otros*'
   lead: How are *los* and *otros* linked?
-  transcript: '*los otros*'
+  transcript: '¿Tampoco ***los otros*** quieren venir?'
   examples:
   - role: reference
     subtitle: Pronunciation Matters · QY5
