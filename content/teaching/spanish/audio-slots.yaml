@@ -332,110 +332,6 @@ comparisons:
       id: d_21
     file: corpus/p3-lavar-ref-satz.mp3
     sha256: 964f753234571e17abfbf8555c0d1dec537ed8f6e7b549356b3d4be962e9d207
-- id: p4-bienes
-  topic: b-or-v
-  phenomenon: Homophonie von <b> und <v>
-  target: bienes – vienes
-  question: Hören Sie einen Unterschied zwischen dem ersten und dem zweiten Wort?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: wordlist
-      id: wl_092
-    file: corpus/p4-bienes-ref.mp3
-    sha256: b106dac33ac14dc7679698a4f34f570cd7ab50b09b92e660b18c38bb4a668ba1
-  - slot: learner
-    category: learner
-    session_id: ES-L-0017-2026-S01
-    item:
-      task: wordlist
-      id: wl_092
-    file: corpus/p4-bienes-learner.mp3
-    sha256: 73492f5d31afa9bc2537aaf04f7d273e02cc10100e33774fcc6975496bac9b45
-- id: p4-vino
-  topic: b-or-v
-  phenomenon: Geschriebenes <v> am Wortanfang und im Satz
-  target: vino / de vino
-  question: Klingt das *v* in *vino* wie das deutsche *w* in *Wasser*?
-  recordings:
-  - slot: ref-isoliert
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: wordlist
-      id: wl_038
-    file: corpus/p4-vino-ref-isoliert.mp3
-    sha256: 17d4dac442b9a9a6e4cdce6cdaf3badf87e644781d35bad3d1cc278c81d2cb16
-  - slot: ref-satz
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: text
-      id: qy_01
-    file: corpus/p4-vino-ref-satz.mp3
-    sha256: e18f6bed5467ab9fcc145d3a3f82a90026b8c0532fcd62f6312c82e65d494d7b
-  - slot: learner-isoliert
-    category: learner
-    session_id: ES-L-0017-2026-S01
-    item:
-      task: wordlist
-      id: wl_038
-    file: corpus/p4-vino-learner-isoliert.mp3
-    sha256: 8da8b516f5fa3b088653f475e0a7a0eb475b3218d88ceafc644d45eba853f139
-  - slot: learner-satz
-    category: learner
-    session_id: ES-L-0017-2026-S01
-    item:
-      task: text
-      id: qy_01
-    file: corpus/p4-vino-learner-satz.mp3
-    sha256: d277545311b625d5e45463cbb583c88f598e22b2bffacd0a33f97b1633d9b354
-- id: p4-vida
-  topic: b-or-v
-  phenomenon: Geschriebenes <v> am Wortanfang
-  target: vida
-  question: Mit welchem Laut beginnt *vida*?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: wordlist
-      id: wl_045
-    file: corpus/p4-vida-ref.mp3
-    sha256: de25bd78444cbb8a48aed11f1952a135253958f4f0b0a216c8184399bc06fe19
-  - slot: learner
-    category: learner
-    session_id: ES-L-0017-2026-S01
-    item:
-      task: wordlist
-      id: wl_045
-    file: corpus/p4-vida-learner.mp3
-    sha256: 593d4d6d868e69b9029e19f28fb6608008e32e2c3f5fc0fd4446481d61b9f8cc
-- id: p4-lavar
-  topic: b-or-v
-  phenomenon: Geschriebenes <v> zwischen Vokalen
-  target: lavar
-  question: Hören Sie das *v* in *lavar* als Verschluss oder als weicheren Laut?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0004-2026-S01
-    item:
-      task: wordlist
-      id: wl_009
-    file: corpus/p4-lavar-ref.mp3
-    sha256: de6e962ceeb055685bd98164a996f9f3643bc29da2c5b73a92347ea89a108f3e
-  - slot: learner
-    category: learner
-    session_id: ES-L-0017-2026-S01
-    item:
-      task: wordlist
-      id: wl_009
-    file: corpus/p4-lavar-learner.mp3
-    sha256: 18e2bf6cfdc2bb9a3959c655381660aa78b6c0746136629370d007f4bfa01770
 - id: p5-labio
   topic: soft-consonants-b-d-g
   phenomenon: Approximant [β]
@@ -634,6 +530,61 @@ comparisons:
       id: d_30
     file: corpus/p6-d30-learner.mp3
     sha256: 5bf03bd79cd056e72b74cd91c05c5a3d0ddd5b02b0493c60860cde8222992ac3
+- id: p4-bienes-vienes
+  topic: b-or-v
+  phenomenon: Homophonie von <b> und <v>
+  target: bienes – vienes
+  target_tokens:
+  - bienes
+  - vienes
+  question: Wie klingen *bienes* und *vienes* im Vergleich?
+  recordings:
+  - slot: ref-mx
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: wordlist
+      id: wl_092
+    file: corpus/p4-bienes-ref-mx.mp3
+    sha256: b106dac33ac14dc7679698a4f34f570cd7ab50b09b92e660b18c38bb4a668ba1
+  - slot: ref-cl
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_092
+    file: corpus/p4-bienes-ref-cl.mp3
+    sha256: 044ca4220cea2690b8e71b67040042c7cf9b0dde8cf1bb9e3c2fcca364fbf537
+  - slot: learner
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: wordlist
+      id: wl_092
+    file: corpus/p4-bienes-learner.mp3
+    sha256: c7f0efe42335282d8c72ab49ed1ed53555185bb0e77cec32016540bcc7ec1c2e
+- id: p4-baron-varon
+  topic: b-or-v
+  phenomenon: Orthographisch beeinflusste Aussprache von <v> (spelling pronunciation)
+  target: barón – varón
+  question: Wie werden die beiden Wörter jeweils ausgesprochen?
+  recordings:
+  - slot: ref
+    category: reference
+    origin:
+      corpus: MAR.ELE
+      source_file: linguistik.hispanistica/docs/assets/audiofiles/marele/baron_varon_l1.mp3
+      transcription: '[baˈɾon] – [baˈɾon]'
+    file: marele/baron-varon-ref.mp3
+    sha256: 5154d399dc055f309e9ca65f3ac3e9d206c576d2768761d0827b7a07594bf02c
+  - slot: learner
+    category: learner
+    origin:
+      corpus: MAR.ELE
+      source_file: linguistik.hispanistica/docs/assets/audiofiles/marele/baron_varon_ele.mp3
+      transcription: '[baˈʁon] – *[vaˈʁon]'
+    file: marele/baron-varon-learner.mp3
+    sha256: 6d3a8741de5df10b00329c367c1d00ffc917a926f52aed34e99e0fc0f630065c
 reserves:
 - id: p1-amigos
   topic: soft-spanish-hard-german
@@ -648,3 +599,29 @@ reserves:
   learner: ES-L-0001-2026-S01
   status: 'curatorial reserve, not integrated: no audio box and no media on the page; use only after the release gate (--release-report)
     passes'
+- id: p4-vienes-reserve-0006
+  topic: b-or-v
+  target: bienes – vienes
+  target_tokens:
+  - bienes
+  - vienes
+  item:
+    task: wordlist
+    id: wl_092
+  reference: ES-N-0004-2026-S01
+  learner: ES-L-0006-2026-S01
+  status: curatorial reserve for the learner slot of p4-bienes-vienes, not integrated; check with --release-report before
+    use
+- id: p4-vienes-reserve-0007
+  topic: b-or-v
+  target: bienes – vienes
+  target_tokens:
+  - bienes
+  - vienes
+  item:
+    task: wordlist
+    id: wl_092
+  reference: ES-N-0004-2026-S01
+  learner: ES-L-0007-2026-S01
+  status: curatorial reserve for the learner slot of p4-bienes-vienes, not integrated; check with --release-report before
+    use

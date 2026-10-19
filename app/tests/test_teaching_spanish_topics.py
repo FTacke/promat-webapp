@@ -28,7 +28,7 @@ TOPICS = {
     "soft-spanish-hard-german": {"de": "Weiches Spanisch, hartes Deutsch", "en": "Soft Spanish, hard German"},
     "r": {"de": "Das spanische r", "en": "The Spanish r"},
     "r-am-silbenende": {"de": "R am Silbenende", "en": "Syllable-final r"},
-    "b-or-v": {"de": "B oder V? Im Spanischen klingt beides gleich!", "en": "B or V? In Spanish, they sound the same!"},
+    "b-or-v": {"de": "B oder V? Wenn die Schrift mitredet", "en": "B or V? When spelling has a say"},
     "soft-consonants-b-d-g": {"de": "Weiche Konsonanten: b, d und g", "en": "Soft consonants: b, d and g"},
     "accent-changes-everything": {"de": "Ein Akzent verändert alles", "en": "An accent changes everything"},
 }
@@ -111,7 +111,7 @@ def test_every_recording_of_a_page_is_public_audio(client, slug: str, lang: str)
     html = _html(client, lang, slug)
     sources = sorted(set(re.findall(r'<source src="([^"]+)" type="audio/mpeg">', html)))
     expected = {ex["audio"] for b in _blocks(slug, lang) if b["type"] == "audio_contrast" for ex in b["examples"]}
-    assert len(sources) == len(expected) >= (6 if slug == "soft-spanish-hard-german" else 8)
+    assert len(sources) == len(expected) >= {"soft-spanish-hard-german": 8, "b-or-v": 5}.get(slug, 8)
     for source in sources:
         assert source.startswith((f"/teaching-media/spanish/{slug}/audio/corpus/", f"/teaching-media/spanish/{slug}/audio/marele/"))
         response = client.get(source)
@@ -127,7 +127,7 @@ def test_internal_links_of_further_reading_resolve(client, slug: str) -> None:
                     assert item["href"].startswith(f"/{lang}/teaching/spanish/")
                     assert client.get(item["href"]).status_code == 200
                 else:
-                    assert item["href"].startswith("https://linguistik.hispanistica.com/")
+                    assert item["href"].startswith(("https://linguistik.hispanistica.com/", "https://doi.org/10.1515/"))
 
 
 def test_listening_comparisons_name_speaker_category_and_item(client) -> None:
@@ -340,9 +340,10 @@ def test_released_sessions_only_and_the_reserve_is_documented_but_not_integrated
     data = slots.load_slots()
     used = {r["session_id"] for _c, r in slots.iter_recordings(data) if not slots.is_external(r)}
     reserves = data["reserves"]
-    assert [r["id"] for r in reserves] == ["p1-amigos"]
-    reserve_sessions = {reserves[0]["reference"], reserves[0]["learner"]}
-    assert reserve_sessions == {"ES-N-0004-2026-S01", "ES-L-0001-2026-S01"}
+    assert [r["id"] for r in reserves if r["topic"] == "soft-spanish-hard-german"] == ["p1-amigos"]
+    soft = next(r for r in reserves if r["id"] == "p1-amigos")
+    assert {soft["reference"], soft["learner"]} == {"ES-N-0004-2026-S01", "ES-L-0001-2026-S01"}
+    reserve_sessions = {r[role] for r in reserves for role in ("reference", "learner")}
     # sessions without a Teaching release never appear, neither as recording nor as reserve
     for excluded in slots.EXCLUDED_SESSIONS:
         assert excluded not in used and excluded not in reserve_sessions
@@ -392,6 +393,86 @@ def test_spanish_hub_has_one_compact_introduction_paragraph(client, lang: str) -
         assert "A1" not in _html(client, lang, slug)
 
 
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_b_or_v_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
+    html = _html(client, lang, "b-or-v")
+    de = lang == "de"
+    # headings: letters/sound, two letters -> two sounds; then the classroom prompts (no allophony section of its own)
+    headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
+    assert headings == (["Zwei Buchstaben, ein Laut", "Wenn zwei Buchstaben zu zwei Lauten werden", "Impulse für den Unterricht"] if de
+                        else ["Two letters, one sound", "When two letters become two sounds", "Classroom prompts"])
+    # three listening boxes; the first one directly follows the short orientation text and is the only one with a collapsible solution
+    titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
+    prefix = "Hörvergleich" if de else "Listening comparison"
+    assert titles[:3] == [f"{prefix}: <em>bienes – vienes</em>", f"{prefix}: <em>barón – varón</em>", f"{prefix}: <em>vienes</em>"]
+    assert html.count('<details class="pm-teaching-solution">') == 1
+    assert html.index("pm-teaching-block--audio-contrast") < html.index(headings[0]) and html.index('<details class="pm-teaching-solution">') < html.index(headings[0])
+    chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
+    assert chips == ["<em>bienes – vienes</em>", "<em>barón – varón</em>", "<em>bienes – vienes</em>"]
+    # first box: two reference voices (no learner label), then reference + learner in the MAR.ELE and the corpus box
+    labels = re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html)
+    ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
+    assert labels == [ref, ref, ref, learner, ref, learner]
+    subtitles = re.findall(r'pm-teaching-audio-contrast__example-subtitle">([^<]+)<', html)
+    assert subtitles[:2] == (["Mexiko · W92", "Chile · W92"] if de else ["Mexico · W92", "Chile · W92"])
+    assert subtitles[2:4] == ["MAR.ELE", "MAR.ELE"] and "hispanistica.com/projects/marele" not in html
+    # allophony: a short note with one link to the soft-consonants page, no audio of its own (vino/vida/lavar boxes are gone)
+    assert f'href="/{lang}/teaching/spanish/soft-consonants-b-d-g"' in html and "p4-vino" not in html and "p4-vida" not in html and "p4-lavar" not in html
+    assert client.get(f"/{lang}/teaching/spanish/soft-consonants-b-d-g").status_code == 200
+    # info box: titled, short and without invented quantities
+    box = re.search(r'pm-admonition--context.*?</section>', html, re.S).group(0)
+    box_text = html_module.unescape(re.sub(r"<[^>]+>", " ", box))
+    assert ("auch Erstsprachler:innen sind manchmal unsicher" if de else "even native speakers are sometimes unsure") in box_text
+    assert len(re.findall(r"[.!?](?:\s|$)", box_text)) <= 5 and "Tacke 2020" in box_text
+    for forbidden in ("die meisten", "most native", "Katalan", "Catalan", "Prozent", "per cent"):
+        assert forbidden not in html
+    assert "⟨b⟩ / ⟨v⟩ → /b/" in html  # the quiet typographic summary
+    # the classroom prompts include the reverse direction (writing); the German misspelling is framed as an illustration
+    prompts = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
+    assert prompts == (["Erst hören, dann lesen", "Die Schrift bewusst hinterfragen", "Auch beim Schreiben entstehen Schwierigkeiten"] if de
+                       else ["Listen first, then read", "Question the spelling consciously", "Writing causes difficulties too"])
+    assert "<em>Fater</em>" in html and "<em>tubo</em>" in html and ("nicht als empirischer Befund" if de else "not as an empirical finding") in html
+    # further reading: three textbook chapters and the 2020 publication, each with a short note
+    items = re.findall(r'href="(https://[^"]+)"[^>]*>', html.split('<ul class="pm-teaching-further-reading__list">')[1])
+    assert [u for u in items if "hispanistica.com" in u or "doi.org" in u][:4] == [
+        "https://linguistik.hispanistica.com/orthographie/#unsystematische-alternanzen-b-vs-v",
+        "https://linguistik.hispanistica.com/fehlerlinguistik/#einfluss-des-schriftbilds",
+        "https://linguistik.hispanistica.com/aussprache/#kontextabhangige-mal-so-mal-so-laute",
+        "https://doi.org/10.1515/9783110458084-025",
+    ]
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_b_or_v_authorship_and_citation_are_page_specific(client, lang: str) -> None:
+    html = _html(client, lang, "b-or-v")
+    title = "B oder V? Wenn die Schrift mitredet" if lang == "de" else "B or V? When spelling has a say"
+    quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
+    assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html
+    assert "Goás Pérez" not in html  # authorship is documented per page: Ana Goás Pérez is not a co-author of this page
+    assert html.count("pm-admonition--citation") == 1
+
+
+def test_b_or_v_recordings_are_released_provenance_documented_and_replaceable() -> None:
+    data = slots.load_slots()
+    comparisons = {c["id"]: c for c in data["comparisons"] if c["topic"] == "b-or-v"}
+    assert list(comparisons) == ["p4-bienes-vienes", "p4-baron-varon"]
+    bienes = {r["slot"]: (r["session_id"], r["item"]["id"]) for r in comparisons["p4-bienes-vienes"]["recordings"]}
+    # two reference voices that are not the MAR.ELE reference speakers, and a provisional learner candidate (to be audited)
+    assert bienes == {"ref-mx": ("ES-N-0004-2026-S01", "wl_092"), "ref-cl": ("ES-N-0005-2026-S01", "wl_092"), "learner": ("ES-L-0019-2026-S01", "wl_092")}
+    used = {session for session, _item in bienes.values()}
+    assert not used & {"ES-N-0001-2026-S01", "ES-N-0002-2026-S01", "ES-N-0003-2026-S01"} and "ES-N-0003-2026-S01" in slots.EXCLUDED_SESSIONS  # no Ecuador
+    baron = {r["slot"]: r for r in comparisons["p4-baron-varon"]["recordings"]}
+    assert baron["ref"]["origin"]["source_file"].endswith("marele/baron_varon_l1.mp3") and baron["learner"]["origin"]["source_file"].endswith("marele/baron_varon_ele.mp3")
+    assert baron["ref"]["origin"]["transcription"] == "[baˈɾon] – [baˈɾon]" and baron["learner"]["origin"]["transcription"] == "[baˈʁon] – *[vaˈʁon]"
+    assert all(r["origin"]["corpus"] == "MAR.ELE" and "session_id" not in r for r in baron.values())
+    reserves = {r["id"]: r for r in data["reserves"] if r["topic"] == "b-or-v"}
+    assert {r["learner"] for r in reserves.values()} == {"ES-L-0006-2026-S01", "ES-L-0007-2026-S01"}
+    assert not (slots.EXCLUDED_SESSIONS.keys() & {r["learner"] for r in reserves.values()})
+    # the MAR.ELE originals are copied byte for byte (identical to the committed hashes, never re-encoded)
+    for r in baron.values():
+        assert r["sha256"] == slots.sha256_of(slots.media_path("b-or-v", r["file"]))
+
+
 def test_hubs_list_all_topics_in_the_requested_order() -> None:
     for lang in ("de", "en"):
         hub = yaml.safe_load((TOPIC_DIR / "hubs" / f"{lang}.yaml").read_text(encoding="utf-8"))
@@ -406,7 +487,7 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
     assert slots.check(data) == []
     declared = {(c["topic"], r["file"]) for c, r in slots.iter_recordings(data)}
     on_disk = {(path.parents[3].name, f"{path.parent.name}/{path.name}") for kind in ("corpus", "marele") for path in TOPIC_DIR.glob(f"*/media/audio/{kind}/*.mp3")}
-    assert declared == on_disk and len(declared) == 56
+    assert declared == on_disk and len(declared) == 51
     for comparison, recording in slots.iter_recordings(data):
         assert recording["category"] in ("reference", "learner")
         if not slots.is_external(recording):

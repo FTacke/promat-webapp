@@ -318,7 +318,7 @@ def test_generated_citations_follow_the_four_levels(client) -> None:
         assert "pm-admonition--citation" not in client.get(hub).get_data(as_text=True), hub
     assert 'application/ld+json' in client.get("/de/teaching/spanish").get_data(as_text=True)
     assert _copy_text(client, "/de/teaching/spanish/b-or-v") == [
-        f"Tacke, Felix (2026). „B oder V? Im Spanischen klingt beides gleich!“. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/de/teaching/spanish/b-or-v"
+        f"Tacke, Felix (2026). „B oder V? Wenn die Schrift mitredet“. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/de/teaching/spanish/b-or-v"
     ]
     assert _copy_text(client, "/de/teaching/spanish/which-pronunciation") == [
         f"Tacke, Felix (2026). „Welche Aussprache unterrichten?“. In: Felix Tacke (Hrsg.), {PLATFORM_TITLE}. {PUBLISHER}. {ORIGIN}/de/teaching/spanish/which-pronunciation"
