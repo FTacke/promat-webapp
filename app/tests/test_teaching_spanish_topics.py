@@ -543,12 +543,32 @@ def test_r_at_word_end_curation_is_released_traceable_and_keeps_the_positively_r
     assert not list((TOPIC_DIR / "r-am-silbenende" / "media" / "audio" / "corpus").glob("p3-cuidar*")) and not list((TOPIC_DIR / "r-am-silbenende" / "media" / "audio" / "corpus").glob("p3-lavar*"))
 
 
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_spanish_overview_has_two_sections_in_two_column_grids(client, lang: str) -> None:
+    hub = client.get(f"/{lang}/teaching/spanish").get_data(as_text=True)
+    de = lang == "de"
+    titles = re.findall(r'<h2 id="teaching-group-\d" class="pm-teaching-topic-group__title">([^<]+)</h2>', hub)
+    assert titles == (["Zum Einstieg", "Aussprachephänomene entdecken"] if de else ["Getting started", "Exploring pronunciation features"])
+    grids = re.findall(r'<div class="pm-card-grid pm-teaching-topic-grid([^"]*)">', hub)
+    assert grids == [" pm-teaching-topic-grid--compact"] * 2  # same grid and maximum width for both sections
+    cards = re.findall(rf'href="/{lang}/teaching/spanish/([a-z0-9-]+)"', hub)
+    assert cards == ["which-pronunciation", "soft-spanish-hard-german", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"]
+    assert len(set(cards)) == len(cards) == hub.count("pm-teaching-topic-card--available") == 7  # every existing page exactly once
+    assert "vokal" not in hub.lower() and "vowel" not in hub.lower() and "pm-teaching-topic-card--pending" not in hub  # planned vowel page: no placeholder
+    for slug in cards:
+        assert client.get(f"/{lang}/teaching/spanish/{slug}").status_code == 200
+    # the two-column layout is a property of this hub only: other teaching hubs keep their grids
+    for other in ("french", "german", "english"):
+        source = REPO_ROOT / "content" / "teaching" / other / "hubs" / f"{lang}.yaml"
+        assert not source.exists() or "card_columns" not in source.read_text(encoding="utf-8")
+
+
 def test_hubs_list_all_topics_in_the_requested_order() -> None:
     for lang in ("de", "en"):
         hub = yaml.safe_load((TOPIC_DIR / "hubs" / f"{lang}.yaml").read_text(encoding="utf-8"))
         assert [g["topics"] for g in hub["groups"]] == [
             ["which-pronunciation", "soft-spanish-hard-german"],
-            ["r", "r-am-silbenende", "b-or-v", "soft-consonants-b-d-g", "accent-changes-everything"],
+            ["b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"],
         ]
 
 

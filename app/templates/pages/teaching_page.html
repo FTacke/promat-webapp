@@ -84,7 +84,7 @@
         {% endif %}
       </div>
       {% endif %}
-      <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if group.cards | length < 3 else '' }}">
+      <div class="pm-card-grid pm-teaching-topic-grid{{ ' pm-teaching-topic-grid--compact' if promat_page.topic_group_columns == 2 or group.cards | length < 3 else '' }}">
         {% for card in group.cards %}
         {{ render_teaching_topic_card(card, teaching_labels, 'h2', compact=true) }}
         {% endfor %}

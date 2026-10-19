@@ -1,16 +1,17 @@
 title: "Spanisch: Themenseiten"
 overview_intro: Die Themenseiten bieten fachliche Orientierung, Hörbeispiele und Anregungen für kurze Ausspracheimpulse im Spanischunterricht. Oft genügen dafür zehn Minuten zwischendurch – und viele Phänomene lassen sich mit passenden Beispielen schon ab A1 aufgreifen.
+card_columns: 2
 groups:
-  - title: Grundlagen
-    description: Orientierung zu Aussprachemodellen, Variation und didaktischen Entscheidungen im Unterricht.
+  - title: Zum Einstieg
+    description: Grundlegende Fragen und ein erster Einblick in typische Aussprachephänomene.
     topics:
       - which-pronunciation
       - soft-spanish-hard-german
-  - title: Laute und Artikulation
-    description: Aussprachethemen mit Beispielen und Unterrichtsimpulsen.
+  - title: Aussprachephänomene entdecken
+    description: Konkrete Aussprachemuster verstehen und im Unterricht aufgreifen.
     topics:
-      - r
-      - r-am-silbenende
       - b-or-v
       - soft-consonants-b-d-g
+      - r
+      - r-am-silbenende
       - accent-changes-everything

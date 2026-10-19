@@ -1933,10 +1933,11 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'class="pm-teaching-topic-group pm-teaching-content-wide"' in html
     assert 'pm-card-grid pm-teaching-topic-grid' in html
     assert html.count('pm-teaching-topic-grid--compact') >= 1
-    assert 'Grundlagen' in html
-    assert 'Aussprachemodellen, Variation und didaktischen Entscheidungen' in html
-    assert 'Laute und Artikulation' in html
-    assert 'Aussprachethemen mit Beispielen und Unterrichtsimpulsen.' in html
+    assert 'Zum Einstieg' in html and 'Grundlegende Fragen und ein erster Einblick in typische Aussprachephänomene.' in html
+    assert 'Aussprachephänomene entdecken' in html and 'Konkrete Aussprachemuster verstehen und im Unterricht aufgreifen.' in html
+    assert 'Grundlagen' not in html and 'Laute und Artikulation' not in html
+    assert html.count('class="pm-teaching-topic-group pm-teaching-content-wide"') == 2
+    assert html.count('pm-teaching-topic-grid--compact') == 2  # both groups use the same two-column grid
     assert 'Welche Aussprache unterrichten?' in html
     assert 'Warum <em>seseo</em> und <em>distinción</em> gleichwertige Aussprachen sind – und was das für den Unterricht bedeutet.' in html
     assert 'Von Felix Tacke' not in html
@@ -1959,8 +1960,9 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Welche Aussprache unterrichten?' in first_group_html
     assert 'Weiches Spanisch, hartes Deutsch' in first_group_html
     assert 'Das spanische r' not in first_group_html
+    assert first_group_html.index('Welche Aussprache unterrichten?') < first_group_html.index('Weiches Spanisch, hartes Deutsch')
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
-    order = ['Das spanische r', 'Das r am Wortende', 'B oder V? Wenn die Schrift mitredet', 'Weiche Konsonanten: b, d und g', 'Ein Akzent verändert alles']
+    order = ['B oder V? Wenn die Schrift mitredet', 'Weiche Konsonanten: b, d und g', 'Das spanische r', 'Das r am Wortende', 'Ein Akzent verändert alles']
     positions = [second_group_html.index(title) for title in order]
     assert positions == sorted(positions)
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html
@@ -2019,7 +2021,9 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'pm-teaching-topic-card__byline' not in html
     assert 'Soft Spanish, hard German' in html
     assert 'Spanish r' in html
-    assert 'Pronunciation topics with examples and classroom prompts.' in html
+    assert 'Getting started' in html and 'Fundamental questions and a first look at typical pronunciation features.' in html
+    assert 'Exploring pronunciation features' in html and 'Explore pronunciation patterns and discover ways to address them in the classroom.' in html
+    assert 'Basics' not in html and 'Sounds and articulation' not in html
     assert 'The r at the End of a Word' in html
     assert html.count('pm-teaching-topic-card--available') == 7
     assert html.count('pm-teaching-topic-card--pending') == 0

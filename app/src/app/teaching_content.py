@@ -1643,6 +1643,7 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         "resolved_ui_lang": effective_ui_lang,
         "teaching_lang": teaching_lang,
         "topic_groups": topic_groups,
+        "topic_group_columns": 2 if _as_text(index.get("card_columns")) == "2" else None,
         "empty_state": None
         if topic_count
         else {

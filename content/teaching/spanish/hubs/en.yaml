@@ -1,16 +1,17 @@
 title: "Spanish: Topic pages"
 overview_intro: The topic pages offer linguistic guidance, listening examples, and ideas for short pronunciation activities in Spanish lessons. Often, just ten minutes here and there are enough – and many of these features can be introduced as early as A1 with suitable examples.
+card_columns: 2
 groups:
-  - title: Basics
-    description: Orientation to pronunciation models, variation, and classroom pragmatics.
+  - title: Getting started
+    description: Fundamental questions and a first look at typical pronunciation features.
     topics:
       - which-pronunciation
       - soft-spanish-hard-german
-  - title: Sounds and articulation
-    description: Pronunciation topics with examples and classroom prompts.
+  - title: Exploring pronunciation features
+    description: Explore pronunciation patterns and discover ways to address them in the classroom.
     topics:
-      - r
-      - r-am-silbenende
       - b-or-v
       - soft-consonants-b-d-g
+      - r
+      - r-am-silbenende
       - accent-changes-everything
