@@ -1,154 +1,101 @@
 resource_id: promat-teaching-es-r-am-silbenende
-title: Syllable-final r
-summary: Why the Spanish r is often pronounced as a consonant at the end of a syllable or word – and how this differs from German r-vocalisation.
-description: 'The r at the end of syllables and words in Spanish: consonantal realisation, positions before a pause, a consonant and a vowel, and listening comparisons from the corpus.'
+title: The r at the End of a Word
+summary: Why word-final r sounds different in Spanish and German.
+description: Why word-final r sounds different in Spanish and German.
 equivalents:
   de: r-am-silbenende
 metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-10
+  updated: 2026-10-19
 blocks:
 - type: topic_meta
 - type: text
-  body: 'Does the r disappear at the end of a word? In German it often does: after a vowel, /r/ is vocalised in many standard varieties, so *wir* sounds like [viːɐ̯] and *Lehrer* like [ˈleːʁɐ]. In Spanish, by contrast, the r at the end of a syllable or word remains a consonant in many varieties.'
-- type: overview
-  title: At a glance
-  items:
-  - 'German: /r/ is often realised as a vowel-like sound [ɐ̯] in the syllable coda (*wir*, *Lehrer*).'
-  - 'Spanish: in many varieties the r stays consonantal at the end of a syllable or word; the single alveolar tap [ɾ] is an important reference sound.'
-  - The actual realisation depends on position, context and region.
-- type: section_heading
-  title: Listen and discover
-- type: text
-  body: The same word twice, ending in *r*. Listen to the end of the word.
+  body: In German, the r at the end of a word often hardly sounds like a consonant any more – in Spanish it remains a distinct, audible sound. The first listening comparison shows what that means.
 - type: audio_contrast
-  title: '*reír*: how does the word end?'
-  lead: 'How does the word end: with a consonant or with a vowel?'
-  transcript: reír
-  examples:
-  - role: reference
-    subtitle: Spain · W76
-    audio: corpus/p3-reir-ref.mp3
-    token_id: ES-N-0001 · W76
-  - role: learner
-    level: A2
-    subtitle: L1 German · W76
-    audio: corpus/p3-reir-learner.mp3
-    token_id: ES-L-0019 · W76
-- type: solution
-  body: |-
-    A consonantal realisation ends with a brief tongue contact at the alveolar ridge: [re.ˈiɾ]. A vocalised variant ends instead with a schwa-like vowel without tongue contact, for example [ʁe.ˈi.ɐ̯]. The digital textbook by Hispanistica gives exactly this contrast for *reír*: target pronunciation [re.ˈiɾ] versus a learner pronunciation [ʁe.ˈɪɐ].
-
-    Whether the learner recording here ends consonantally or vocalically is not given in advance: the recordings were not selected on that basis. Decide by ear.
-- type: section_heading
-  title: What happens at the end of syllables and words
-- type: text
-  body: |-
-    In Spanish, /r/ at the end of a syllable or word is usually realised as a single tap [ɾ]. Three environments need to be distinguished:
-
-    - **Before a pause:** *flor* [ˈfloɾ]. The word ends with the r; in emphatic speech or in some varieties it can be longer, multiple or fricative.
-    - **Syllable-final before a consonant:** *enfermo* [en.ˈfeɾ.mo], *lavar la ropa* [la.ˈβaɾ.la.ˈro.pa]. The r forms the syllable coda and remains a consonant of its own.
-    - **Word-final before a word that begins with a vowel:** *cuidar un perro*. In connected speech the r moves to the beginning of the next syllable: [kwi.ˈða.ɾun.ˈpe.ro] (resyllabification). Here it stands between vowels – so *cuidar* sounds different in isolation than in *cuidar un*.
-- type: text
-  body: '**German vocalisation and the Spanish r.** Anyone who transfers German vocalisation to *flor*, *reír* or *cuidar* produces a word ending without tongue contact, for instance [ˈflo.ɐ̯]. This audibly departs from the Spanish pattern. However, the absence of a sound is not automatically a transfer error.'
-- type: info_box
-  title: Learner pattern or regional variation?
-  body: Spanish /r/ at the end of a syllable or word is not always and everywhere [ɾ]. In parts of the Caribbean it is weakened, deleted or lateralised (in Puerto Rico, *puerta* can sound like [ˈpwel.ta]), and in some regions of Latin America an assibilated variant occurs. A missing or deviating realisation can therefore be regional variation. Whether a learner recording reflects transfer from German cannot be told from the recording alone.
-- type: section_heading
-  title: More comparisons from the corpus
-- type: text
-  body: The same words and sentences, spoken by a reference speaker and by a learner (first language German). The recordings come from the controlled word and sentence lists of *Pronunciation Matters*; the selection is illustrative and makes no claim to be representative.
-- type: audio_contrast
-  title: '*flor*'
-  lead: Is there still a tongue contact at the end of the word?
-  transcript: flor
+  title: 'Listening comparison: *flor*'
+  lead: What distinguishes the pronunciation at the end of the word?
+  transcript: '*flor*'
   examples:
   - role: reference
     subtitle: Spain · W16
     audio: corpus/p3-flor-ref.mp3
-    token_id: ES-N-0001 · W16
   - role: learner
-    level: A2
     subtitle: L1 German · W16
     audio: corpus/p3-flor-learner.mp3
-    token_id: ES-L-0019 · W16
+- type: solution
+  title: 'Solution: What can be heard?'
+  body: |-
+    In the reference speaker’s recording, *flor* ends with a brief tap of the tongue against the alveolar ridge: [ˈfloɾ]. The learner, by contrast, lets the word fade out as a vowel without any audible tongue contact, roughly [ˈfloɐ̯] – just as one knows it from the German r at the end of a word.
+- type: section_heading
+  title: When the German r becomes a vowel
+- type: text
+  body: |-
+    In Standard German, this is not a mistake but the normal case: after vowels, /r/ is frequently vocalised. In *sehr* (“very”), the r after the long vowel is heard only as an off-glide, roughly [zeːɐ̯]. In unstressed endings such as in *Vater* and *Lehrer*, the vowel [ɐ] takes its place, the so-called “Vater schwa” (also low schwa): [ˈfaːtɐ], [ˈleːʁɐ]. The two phenomena are related, but not identical in every respect.
+
+    The German word *sehr* thus demonstrates r-vocalisation itself: there is hardly a consonantal r left in it.
+- type: text
+  body: |-
+    Spanish behaves differently. At the end of a word, the r usually remains a consonant, mostly a brief tap [ɾ]: *flor* [ˈfloɾ]. Regionally and depending on context, the realisation can be weaker, longer or different, but as a rule it remains a consonant. Anyone who transfers the German habit will pronounce *flor* more like [ˈfloɐ̯].
+
+    **German:** *sehr* [zeːɐ̯] · *Vater* [ˈfaːtɐ] **Spanish:** *flor* [ˈfloɾ]
+- type: section_heading
+  title: Not only at the end of a word
+- type: text
+  body: German r-vocalisation and its possible transfer concern not only the absolute end of a word but every r at the end of a syllable – including inside a word. In *enfermo*, the r stands before the *m*, in Spanish as a brief tap [en.ˈfeɾ.mo]; vocalised, the word would sound roughly like [en.ˈfeɐ̯.mo]. What *flor* and *enfermo* have in common is the syllable-final position of the r.
 - type: audio_contrast
-  title: '*enfermo*'
-  lead: Can you hear the *r* in *enfermo* as a sound of its own before the *m* follows?
-  transcript: enfermo
+  title: 'Listening comparison: *enfermo*'
+  lead: How is the *r* in *enfermo* pronounced before the *m*?
+  transcript: '*enfermo*'
   examples:
   - role: reference
-    subtitle: Spain · W50
+    subtitle: Mexico · W50
     audio: corpus/p3-enfermo-ref.mp3
-    token_id: ES-N-0001 · W50
   - role: learner
-    level: A2
     subtitle: L1 German · W50
     audio: corpus/p3-enfermo-learner.mp3
-    token_id: ES-L-0019 · W50
-- type: audio_contrast
-  title: '*cuidar* on its own and in *cuidar un perro*'
-  lead: Does the *r* in *cuidar un* belong to the end of *cuidar* or to the beginning of *un*?
-  examples:
-  - role: reference
-    subtitle: Spain · W58
-    audio: corpus/p3-cuidar-ref-isoliert.mp3
-    note: Isolated word
-    token_id: ES-N-0001 · W58
-  - role: reference
-    subtitle: Spain · D5
-    audio: corpus/p3-cuidar-ref-satz.mp3
-    note: 'In the sentence: *Cuidar un* perro exige tiempo y atención diaria.'
-    token_id: ES-N-0001 · D5
-  - role: learner
-    level: A2
-    subtitle: L1 German · W58
-    audio: corpus/p3-cuidar-learner-isoliert.mp3
-    note: Isolated word
-    token_id: ES-L-0019 · W58
-  - role: learner
-    level: A2
-    subtitle: L1 German · D5
-    audio: corpus/p3-cuidar-learner-satz.mp3
-    note: 'In the sentence: *Cuidar un* perro exige tiempo y atención diaria.'
-    token_id: ES-L-0019 · D5
-- type: audio_contrast
-  title: '*lavar* on its own and in *lavar la ropa*'
-  lead: Can you still hear the *r* in *lavar* when *la* follows?
-  examples:
-  - role: reference
-    subtitle: Spain · W9
-    audio: corpus/p3-lavar-ref-isoliert.mp3
-    note: Isolated word
-    token_id: ES-N-0001 · W9
-  - role: reference
-    subtitle: Spain · D21
-    audio: corpus/p3-lavar-ref-satz.mp3
-    note: 'In the sentence: Con mucho cuidado se puso a *lavar la* ropa.'
-    token_id: ES-N-0001 · D21
 - type: section_heading
-  title: 'Classroom prompts'
+  title: Two r sounds in one word
+- type: text
+  body: |-
+    *Reír* (“to laugh”) brings both together. In Spanish, the word begins with a trilled r and ends with a tap: [re.ˈiɾ]. German-speaking learners may transfer two habits at once here: a back [ʁ] at the beginning of the word and vocalisation at the end, roughly [ʁe.ˈɪɐ].
+
+    *Reír* also appears on the topic page [Soft Spanish, hard German](/en/teaching/spanish/soft-spanish-hard-german), seen from another angle – the glottal stop between the two vowels. Here, only the r matters.
+- type: audio_contrast
+  title: 'Listening comparison: *reír*'
+  lead: How do the beginning and the end of the word sound?
+  transcript: '*reír*'
+  examples:
+  - role: reference
+    subtitle: Chile · W76
+    audio: corpus/p3-reir-ref.mp3
+  - role: learner
+    subtitle: L1 German · W76
+    audio: corpus/p3-reir-learner.mp3
+- type: section_heading
+  title: Classroom prompts
 - type: teaching_impulses
   items:
-  - title: 'Repeat word-final r'
-    body: 'Learners repeat words with a final r (*flor*, *reír*, *lavar*, *cuidar*) and end them with a brief tongue contact – without an additional vowel at the end.'
-  - title: 'Link across the word boundary'
-    body: 'They then say *cuidar un perro* as one continuous sequence of sounds and pay attention to where the r moves. Guiding question: do you feel the tongue tip at the alveolar ridge before the next vowel begins?'
+  - title: Discover your own German
+    body: Say familiar words such as *sehr*, *Vater* and *Lehrer* and draw attention to the r-vocalisation that is regular in German. Where can a consonantal r still be heard at the end – and where not?
+  - title: Listen to Spanish word endings consciously
+    body: Use *flor*, *tirar*, *lavar* or other simple words to hear and try out the consonantal word-final r, with a brief tongue contact at the alveolar ridge and no additional vowel at the end.
+  - title: From word ending to syllable
+    body: Use *enfermo* to carry the observation over to the syllable-final position. *Reír* additionally shows that different German r habits – at the beginning and at the end of a word – can work together in a single word.
 - type: further_reading
   title: Further exploration
-  description: Related pages on the r and on pronunciation variation.
+  description: Related pages on the r in Spanish and German.
   items:
-  - title: The Spanish r
-    text: The two r phonemes /ɾ/ and /r/ and the contrast *caro* – *carro*.
-    cta: Go to topic page
-    href: /en/teaching/spanish/r
-  - title: The r sounds in the digital textbook
-    text: Covers the r at the end of a word, including the audio example *reír* (in German).
+  - title: Pronunciation in the digital textbook
+    text: The r sounds of Spanish and German, German r-vocalisation and the example *reír* (in German).
     cta: Learn more
     href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
-  - title: Which pronunciation should you teach?
-    text: Taking regional variation seriously without treating it as an error.
+  - title: The Spanish r
+    text: The single and the multiple tap r – and the contrast *caro* – *carro*.
     cta: Go to topic page
-    href: /en/teaching/spanish/which-pronunciation
+    href: /en/teaching/spanish/r
+  - title: Soft Spanish, hard German
+    text: Another perspective on *reír* and on the sound contrast between German and Spanish.
+    cta: Go to topic page
+    href: /en/teaching/spanish/soft-spanish-hard-german

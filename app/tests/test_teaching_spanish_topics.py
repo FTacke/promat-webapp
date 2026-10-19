@@ -27,12 +27,12 @@ import teaching_audio_slots as slots  # noqa: E402
 TOPICS = {
     "soft-spanish-hard-german": {"de": "Weiches Spanisch, hartes Deutsch", "en": "Soft Spanish, hard German"},
     "r": {"de": "Das spanische r", "en": "The Spanish r"},
-    "r-am-silbenende": {"de": "R am Silbenende", "en": "Syllable-final r"},
+    "r-am-silbenende": {"de": "Das r am Wortende", "en": "The r at the End of a Word"},
     "b-or-v": {"de": "B oder V? Wenn die Schrift mitredet", "en": "B or V? When spelling has a say"},
     "soft-consonants-b-d-g": {"de": "Weiche Konsonanten: b, d und g", "en": "Soft consonants: b, d and g"},
     "accent-changes-everything": {"de": "Ein Akzent verändert alles", "en": "An accent changes everything"},
 }
-IMPULSES = {"soft-spanish-hard-german": 3, "r": 3, "r-am-silbenende": 2, "b-or-v": 3, "soft-consonants-b-d-g": 4, "accent-changes-everything": 3}
+IMPULSES = {"soft-spanish-hard-german": 3, "r": 3, "r-am-silbenende": 3, "b-or-v": 3, "soft-consonants-b-d-g": 4, "accent-changes-everything": 3}
 TOPIC_DIR = REPO_ROOT / "content" / "teaching" / "spanish"
 PAIRS = [(slug, lang) for slug in TOPICS for lang in ("de", "en")]
 
@@ -111,7 +111,7 @@ def test_every_recording_of_a_page_is_public_audio(client, slug: str, lang: str)
     html = _html(client, lang, slug)
     sources = sorted(set(re.findall(r'<source src="([^"]+)" type="audio/mpeg">', html)))
     expected = {ex["audio"] for b in _blocks(slug, lang) if b["type"] == "audio_contrast" for ex in b["examples"]}
-    assert len(sources) == len(expected) >= {"soft-spanish-hard-german": 8, "b-or-v": 5}.get(slug, 8)
+    assert len(sources) == len(expected) >= {"soft-spanish-hard-german": 8, "b-or-v": 5, "r-am-silbenende": 6}.get(slug, 8)
     for source in sources:
         assert source.startswith((f"/teaching-media/spanish/{slug}/audio/corpus/", f"/teaching-media/spanish/{slug}/audio/marele/"))
         response = client.get(source)
@@ -473,6 +473,76 @@ def test_b_or_v_recordings_are_released_provenance_documented_and_replaceable() 
         assert r["sha256"] == slots.sha256_of(slots.media_path("b-or-v", r["file"]))
 
 
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_r_at_word_end_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
+    html = _html(client, lang, "r-am-silbenende")
+    de = lang == "de"
+    headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
+    assert headings == (["Wenn das deutsche r zum Vokal wird", "Nicht nur am Wortende", "Zwei r in einem Wort", "Impulse für den Unterricht"] if de
+                        else ["When the German r becomes a vowel", "Not only at the end of a word", "Two r sounds in one word", "Classroom prompts"])
+    # exactly three listening stations in the agreed order; only the first one has a collapsible solution; the first follows the short intro directly
+    prefix = "Hörvergleich" if de else "Listening comparison"
+    titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
+    assert titles[:3] == [f"{prefix}: <em>flor</em>", f"{prefix}: <em>enfermo</em>", f"{prefix}: <em>reír</em>"] and html.count("pm-teaching-block--audio-contrast") == 3
+    assert html.count('<details class="pm-teaching-solution">') == 1 and html.index('<details class="pm-teaching-solution">') < html.index(headings[0])
+    assert html.index("pm-teaching-block--audio-contrast") < html.index(headings[0])
+    chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
+    assert chips == ["<em>flor</em>", "<em>enfermo</em>", "<em>reír</em>"]
+    ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
+    assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 3
+    subtitles = re.findall(r'pm-teaching-audio-contrast__example-subtitle">([^<]+)<', html)
+    assert subtitles[0::2] == (["Spanien · W16", "Mexiko · W50", "Chile · W76"] if de else ["Spain · W16", "Mexico · W50", "Chile · W76"])
+    # old building blocks are gone: overview box, generic rubric, variation box, cuidar/lavar cards
+    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "cuidar", "lavar la ropa", "p3-cuidar", "p3-lavar", "Lernendenmuster", "Learner pattern", "pm-admonition--context"):
+        assert gone not in html, gone
+    # German phonetics: sehr / Vater / Lehrer with IPA, the Vater schwa named, and the Spanish contrast in IPA
+    for fragment in ("[zeːɐ̯]", "[ˈfaːtɐ]", "[ˈleːʁɐ]", "[ˈfloɾ]", "[en.ˈfeɾ.mo]", "[re.ˈiɾ]", "[ʁe.ˈɪɐ]"):
+        assert fragment in html, fragment
+    assert ("Vater-Schwa" if de else "Vater schwa") in html
+    # cross links: the other topic pages
+    assert f'href="/{lang}/teaching/spanish/soft-spanish-hard-german"' in html and f'href="/{lang}/teaching/spanish/r"' in html
+    assert "https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute" in html
+    prompts = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
+    assert prompts == (["Das eigene Deutsch entdecken", "Spanische Wortenden bewusst hören", "Vom Wortende zur Silbe"] if de
+                       else ["Discover your own German", "Listen to Spanish word endings consciously", "From word ending to syllable"])
+    # the Vertiefung box lists exactly three resources with a short note each
+    items = re.findall(r'pm-teaching-further-reading__item-title">([^<]+)<', html)
+    assert items == (["Aussprache im digitalen Lehrbuch", "Das spanische r", "Weiches Spanisch, hartes Deutsch"] if de
+                     else ["Pronunciation in the digital textbook", "The Spanish r", "Soft Spanish, hard German"])
+    assert client.get(f"/{lang}/teaching/spanish/r").status_code == 200
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_r_at_word_end_citation_and_slug_are_stable(client, lang: str) -> None:
+    html = _html(client, lang, "r-am-silbenende")
+    title = "Das r am Wortende" if lang == "de" else "The r at the End of a Word"
+    quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
+    assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
+    assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/r-am-silbenende" in html  # canonical URL keeps the old slug
+
+
+def test_r_at_word_end_curation_is_released_traceable_and_keeps_the_positively_rated_reir_recording() -> None:
+    data = slots.load_slots()
+    comparisons = {c["id"]: c for c in data["comparisons"] if c["topic"] == "r-am-silbenende"}
+    assert list(comparisons) == ["p3-flor", "p3-enfermo", "p3-reir"]
+    picked = {cid: {r["slot"]: (r["session_id"], r["item"]["id"]) for r in c["recordings"]} for cid, c in comparisons.items()}
+    # three different reference varieties (Spain, Mexico, Chile); learner picks are provisional and replaceable via this register
+    assert picked == {
+        "p3-flor": {"ref": ("ES-N-0002-2026-S01", "wl_016"), "learner": ("ES-L-0006-2026-S01", "wl_016")},
+        "p3-enfermo": {"ref": ("ES-N-0004-2026-S01", "wl_050"), "learner": ("ES-L-0006-2026-S01", "wl_050")},
+        "p3-reir": {"ref": ("ES-N-0005-2026-S01", "wl_076"), "learner": ("ES-L-0019-2026-S01", "wl_076")},
+    }
+    assert not {s for c in picked.values() for s, _i in c.values()} & set(slots.EXCLUDED_SESSIONS)
+    # the W76 learner recording (A2, L1 German) that was rated suitable is unchanged, byte for byte, and also used on the sibling page
+    reir_learner = next(r for r in comparisons["p3-reir"]["recordings"] if r["slot"] == "learner")
+    assert reir_learner["sha256"] == "bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725"
+    sibling = next(r for c in data["comparisons"] if c["id"] == "p1-reir" for r in c["recordings"] if r["slot"] == "learner")
+    assert sibling["sha256"] == reir_learner["sha256"] and sibling["session_id"] == reir_learner["session_id"]
+    reserves = [r for r in data["reserves"] if r["topic"] == "r-am-silbenende"]
+    assert {r["learner"] for r in reserves} == {"ES-L-0001-2026-S01", "ES-L-0019-2026-S01", "ES-L-0004-2026-S01"}
+    assert not list((TOPIC_DIR / "r-am-silbenende" / "media" / "audio" / "corpus").glob("p3-cuidar*")) and not list((TOPIC_DIR / "r-am-silbenende" / "media" / "audio" / "corpus").glob("p3-lavar*"))
+
+
 def test_hubs_list_all_topics_in_the_requested_order() -> None:
     for lang in ("de", "en"):
         hub = yaml.safe_load((TOPIC_DIR / "hubs" / f"{lang}.yaml").read_text(encoding="utf-8"))
@@ -487,7 +557,7 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
     assert slots.check(data) == []
     declared = {(c["topic"], r["file"]) for c, r in slots.iter_recordings(data)}
     on_disk = {(path.parents[3].name, f"{path.parent.name}/{path.name}") for kind in ("corpus", "marele") for path in TOPIC_DIR.glob(f"*/media/audio/{kind}/*.mp3")}
-    assert declared == on_disk and len(declared) == 51
+    assert declared == on_disk and len(declared) == 45
     for comparison, recording in slots.iter_recordings(data):
         assert recording["category"] in ("reference", "learner")
         if not slots.is_external(recording):

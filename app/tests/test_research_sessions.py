@@ -1921,7 +1921,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Franz' not in drawer_html
     assert 'Deutsch' not in drawer_html
     assert 'Welche Aussprache unterrichten?' not in drawer_html
-    assert 'R am Silbenende' not in drawer_html
+    assert 'Das r am Wortende' not in drawer_html
     assert 'pm-teaching-page--hub' in html
     assert 'Spanisch: Themenseiten' in html
     assert 'Spanisch: Aussprache unterrichten' not in html
@@ -1941,7 +1941,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Warum <em>seseo</em> und <em>distinción</em> gleichwertige Aussprachen sind – und was das für den Unterricht bedeutet.' in html
     assert 'Von Felix Tacke' not in html
     assert 'pm-teaching-topic-card__byline' not in html
-    assert 'R am Silbenende' in html
+    assert 'Das r am Wortende' in html
     assert html.count('pm-teaching-topic-card--available') == 7
     assert html.count('pm-teaching-topic-card--pending') == 0
     assert html.count('pm-teaching-topic-card--compact') == 7
@@ -1960,7 +1960,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Weiches Spanisch, hartes Deutsch' in first_group_html
     assert 'Das spanische r' not in first_group_html
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
-    order = ['Das spanische r', 'R am Silbenende', 'B oder V? Wenn die Schrift mitredet', 'Weiche Konsonanten: b, d und g', 'Ein Akzent verändert alles']
+    order = ['Das spanische r', 'Das r am Wortende', 'B oder V? Wenn die Schrift mitredet', 'Weiche Konsonanten: b, d und g', 'Ein Akzent verändert alles']
     positions = [second_group_html.index(title) for title in order]
     assert positions == sorted(positions)
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html
@@ -2020,7 +2020,7 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'Soft Spanish, hard German' in html
     assert 'Spanish r' in html
     assert 'Pronunciation topics with examples and classroom prompts.' in html
-    assert 'Syllable-final r' in html
+    assert 'The r at the End of a Word' in html
     assert html.count('pm-teaching-topic-card--available') == 7
     assert html.count('pm-teaching-topic-card--pending') == 0
     for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g', 'accent-changes-everything'):

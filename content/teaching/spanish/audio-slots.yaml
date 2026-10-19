@@ -206,132 +206,6 @@ comparisons:
       id: d_01
     file: corpus/p2-reloj-learner-satz.mp3
     sha256: 6a7398c7296e4285daf83966256a0997387efd0f8afe3b63d23b89b8ae5161d0
-- id: p3-reir
-  topic: r-am-silbenende
-  phenomenon: Wortfinales r
-  target: reír
-  question: 'Wie endet das Wort: mit einem Konsonanten oder mit einem Vokal?'
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_076
-    file: corpus/p3-reir-ref.mp3
-    sha256: a76910c2cebe9ec6f4bee5c4e80d344b24390393810629e8f78fa2e1900adf61
-  - slot: learner
-    category: learner
-    session_id: ES-L-0019-2026-S01
-    item:
-      task: wordlist
-      id: wl_076
-    file: corpus/p3-reir-learner.mp3
-    sha256: bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725
-- id: p3-flor
-  topic: r-am-silbenende
-  phenomenon: Wortfinales r
-  target: flor
-  question: Gibt es am Wortende noch einen Zungenkontakt?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_016
-    file: corpus/p3-flor-ref.mp3
-    sha256: 87a66ce6eea55b84804cf882aaf2db52e2e07b4d4d26298eddcadbaaea71482a
-  - slot: learner
-    category: learner
-    session_id: ES-L-0019-2026-S01
-    item:
-      task: wordlist
-      id: wl_016
-    file: corpus/p3-flor-learner.mp3
-    sha256: 47916916f6519f667a95164d0bb19e926c5e010d824a08757d7da68b16866f86
-- id: p3-enfermo
-  topic: r-am-silbenende
-  phenomenon: Silbenfinales r vor Konsonant
-  target: enfermo
-  question: Ist das *r* in *enfermo* als eigener Laut zu hören, bevor das *m* folgt?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_050
-    file: corpus/p3-enfermo-ref.mp3
-    sha256: d6021cd5675c97cac59ad27644db89d803d30a23b1ea8f01da1350c3f32fce46
-  - slot: learner
-    category: learner
-    session_id: ES-L-0019-2026-S01
-    item:
-      task: wordlist
-      id: wl_050
-    file: corpus/p3-enfermo-learner.mp3
-    sha256: e0ef6cdd5f4bd19243c2ab6f26eb4ed7b3e1c373d588bccd8d3343b1aeed2807
-- id: p3-cuidar
-  topic: r-am-silbenende
-  phenomenon: Wortfinales r vor Vokal im Folgewort
-  target: cuidar / cuidar un perro
-  question: Gehört das *r* in *cuidar un* zum Ende von *cuidar* oder zum Anfang von *un*?
-  recordings:
-  - slot: ref-isoliert
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_058
-    file: corpus/p3-cuidar-ref-isoliert.mp3
-    sha256: c20bfcc6cbb773ec13372c79fcedcf955863e16af0464473eaf7a76bb887a769
-  - slot: ref-satz
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: text
-      id: d_05
-    file: corpus/p3-cuidar-ref-satz.mp3
-    sha256: e13c09b99accb62504ea30dc0a209e0659bcb2a0c9f21d8ba7f4e4864ba0a022
-  - slot: learner-isoliert
-    category: learner
-    session_id: ES-L-0019-2026-S01
-    item:
-      task: wordlist
-      id: wl_058
-    file: corpus/p3-cuidar-learner-isoliert.mp3
-    sha256: 0caf9438928571b7e80a19ce8895290de616e01307bc2943bbd17a1a62d0f016
-  - slot: learner-satz
-    category: learner
-    session_id: ES-L-0019-2026-S01
-    item:
-      task: text
-      id: d_05
-    file: corpus/p3-cuidar-learner-satz.mp3
-    sha256: 723ebccae92adc0df8a63163bede36d07d6fac821a016728c7f9bd3755669201
-- id: p3-lavar
-  topic: r-am-silbenende
-  phenomenon: Wortfinales r vor Konsonant im Folgewort
-  target: lavar / lavar la ropa
-  question: Hören Sie das *r* in *lavar* auch dann, wenn *la* folgt?
-  recordings:
-  - slot: ref-isoliert
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_009
-    file: corpus/p3-lavar-ref-isoliert.mp3
-    sha256: 7d7cf9a0bc43a0d324b2652c8aabf5aaf012c5e805c1a321d94426f567afa7b7
-  - slot: ref-satz
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: text
-      id: d_21
-    file: corpus/p3-lavar-ref-satz.mp3
-    sha256: 964f753234571e17abfbf8555c0d1dec537ed8f6e7b549356b3d4be962e9d207
 - id: p5-labio
   topic: soft-consonants-b-d-g
   phenomenon: Approximant [β]
@@ -585,6 +459,78 @@ comparisons:
       transcription: '[baˈʁon] – *[vaˈʁon]'
     file: marele/baron-varon-learner.mp3
     sha256: 6d3a8741de5df10b00329c367c1d00ffc917a926f52aed34e99e0fc0f630065c
+- id: p3-flor
+  topic: r-am-silbenende
+  phenomenon: Wortfinales r (Vokalisierung vs. Zungenschlag)
+  target: flor
+  target_tokens:
+  - flor
+  question: Was unterscheidet die Aussprache am Ende des Wortes?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_016
+    file: corpus/p3-flor-ref.mp3
+    sha256: 0fb0caf8167297bbb1123f3b3411262e267233e6fdfcdf680170a9021890adfb
+  - slot: learner
+    category: learner
+    session_id: ES-L-0006-2026-S01
+    item:
+      task: wordlist
+      id: wl_016
+    file: corpus/p3-flor-learner.mp3
+    sha256: 1484200994b9ceb4a9bd2aea4f15c5f3ca067c59771eaf37969fb434501ad3d8
+- id: p3-enfermo
+  topic: r-am-silbenende
+  phenomenon: Silbenfinales r vor Konsonant
+  target: enfermo
+  target_tokens:
+  - enfermo
+  question: Wie wird das *r* in *enfermo* ausgesprochen, bevor das *m* folgt?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: wordlist
+      id: wl_050
+    file: corpus/p3-enfermo-ref.mp3
+    sha256: 4e6bce8e9fee40d2b64a41351b7ea1d42675eaac2f3b55629c830d926ad56f2d
+  - slot: learner
+    category: learner
+    session_id: ES-L-0006-2026-S01
+    item:
+      task: wordlist
+      id: wl_050
+    file: corpus/p3-enfermo-learner.mp3
+    sha256: bf58c6d41e572dbf2bc48ef1ac90f2678e47495d49ddaeae88dc173819c0e4a8
+- id: p3-reir
+  topic: r-am-silbenende
+  phenomenon: Anlautendes und wortfinales r in einem Wort
+  target: reír
+  target_tokens:
+  - reír
+  question: Wie klingen Anfang und Ende des Wortes?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_076
+    file: corpus/p3-reir-ref.mp3
+    sha256: d6a4e69ad6fd7cf9a855b885d278a19a3f402ebe3c9bf55e341f4118c9a43348
+  - slot: learner
+    category: learner
+    session_id: ES-L-0019-2026-S01
+    item:
+      task: wordlist
+      id: wl_076
+    file: corpus/p3-reir-learner.mp3
+    sha256: bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725
 reserves:
 - id: p1-amigos
   topic: soft-spanish-hard-german
@@ -625,3 +571,47 @@ reserves:
   learner: ES-L-0007-2026-S01
   status: curatorial reserve for the learner slot of p4-bienes-vienes, not integrated; check with --release-report before
     use
+- id: p3-flor-reserve-0001
+  topic: r-am-silbenende
+  target: flor
+  target_tokens:
+  - flor
+  item:
+    task: wordlist
+    id: wl_016
+  reference: ES-N-0002-2026-S01
+  learner: ES-L-0001-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p3-flor-reserve-0019
+  topic: r-am-silbenende
+  target: flor
+  target_tokens:
+  - flor
+  item:
+    task: wordlist
+    id: wl_016
+  reference: ES-N-0002-2026-S01
+  learner: ES-L-0019-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p3-enfermo-reserve-0019
+  topic: r-am-silbenende
+  target: enfermo
+  target_tokens:
+  - enfermo
+  item:
+    task: wordlist
+    id: wl_050
+  reference: ES-N-0004-2026-S01
+  learner: ES-L-0019-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p3-enfermo-reserve-0004
+  topic: r-am-silbenende
+  target: enfermo
+  target_tokens:
+  - enfermo
+  item:
+    task: wordlist
+    id: wl_050
+  reference: ES-N-0004-2026-S01
+  learner: ES-L-0004-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
