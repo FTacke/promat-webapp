@@ -1,5 +1,5 @@
 resource_id: promat-teaching-es-soft-consonants-b-d-g
-title: Zu hart gesprochen? b, d und g im Spanischen
+title: 'b, d und g: Zu hart gesprochen?'
 summary: Warum spanische b, d und g oft weicher klingen als im Deutschen – und wann sie es nicht tun.
 description: Warum spanische b, d und g oft weicher klingen als im Deutschen – und wann sie es nicht tun.
 equivalents:
@@ -44,38 +44,51 @@ blocks:
   title: Auch b und g werden weich
 - type: text
   body: |-
-    Dasselbe Prinzip gilt auch für die spanischen Phoneme /b/ und /g/: Je nach Lautumgebung werden sie als Verschlusslaute [b, g] oder als Approximanten [β, ɣ] ausgesprochen. Besonders zwischen Vokalen ist die weichere Artikulation typisch – etwa in *lavar* [la.ˈβaɾ] oder, zwischen Vokal und *r*, in *logro* [ˈlo.ɣɾo].
+    Dasselbe Prinzip gilt auch für die spanischen Phoneme /b/ und /g/: Je nach Lautumgebung werden sie als Verschlusslaute [b, g] oder als Approximanten [β, ɣ] ausgesprochen. Besonders zwischen Vokalen ist die weichere Artikulation typisch – etwa in *lavar* [la.ˈβaɾ]. In *agua* steht das g zwischen [a] und dem Gleitlaut [w]: [ˈa.ɣwa].
 - type: audio_contrast
   title: 'Hörvergleich: *lavar*'
   lead: Wie wird der Konsonant zwischen den beiden *a* ausgesprochen?
   transcript: '*lavar*'
   examples:
   - role: reference
-    subtitle: Chile · W9
+    subtitle: Spanien · W9
     audio: corpus/p5-lavar-ref.mp3
   - role: learner
     subtitle: L1 Deutsch · W9
     audio: corpus/p5-lavar-learner.mp3
 - type: audio_contrast
-  title: 'Hörvergleich: *logro*'
-  lead: Wie wird das *g* in *logro* ausgesprochen?
-  transcript: '*logro*'
+  title: 'Hörvergleich: *con agua*'
+  lead: Wie wird das *g* in den beiden Aufnahmen ausgesprochen?
+  transcript: '*con agua*'
   examples:
   - role: reference
-    subtitle: Spanien · W35
-    audio: corpus/p5-logro-ref.mp3
+    subtitle: MAR.ELE
+    audio: marele/agua-ref.mp3
   - role: learner
-    subtitle: L1 Deutsch · W35
-    audio: corpus/p5-logro-learner.mp3
-- type: section_heading
-  title: Nicht immer weich
+    subtitle: MAR.ELE
+    audio: marele/agua-learner.mp3
+- type: audio_contrast
+  title: 'Hörvergleich: *el bebedor*'
+  lead: Welche Konsonanten klingen in der Referenzaufnahme weicher?
+  transcript: '*el bebedor*'
+  examples:
+  - role: reference
+    subtitle: MAR.ELE
+    audio: marele/bebedor-ref.mp3
+  - role: learner
+    subtitle: MAR.ELE
+    audio: marele/bebedor-learner.mp3
 - type: text
   body: |-
-    Nach einer Sprechpause und nach einem Nasal sind [b, d, g] Verschlusslaute: *un vino* [um.ˈbi.no], aber *de vino* [de.ˈβi.no]. Auch /d/ nach /l/ ist ein Verschlusslaut (*caldo* [ˈkal.do]), während /b/ und /g/ dort approximantisch bleiben (*algo* [ˈal.ɣo]). Welche Variante gesprochen wird, hängt also vom Lautkontext ab und nicht allein vom geschriebenen Buchstaben.
+    In *el bebedor* kommen drei Positionen zusammen: das erste b nach l, das zweite b zwischen Vokalen und das d zwischen Vokalen. In der Referenzaufnahme klingen alle drei weicher, schematisch [el.βe.βe.ˈðoɾ]; die lernende Person spricht sie dagegen mit deutlichem Verschluss. Die weichere Aussprache ist also nicht auf die Position zwischen Vokalen beschränkt.
+- type: info_box
+  title: Wann klingen b, d und g sonst noch weich?
+  body: |-
+    Zwischen Vokalen ist die weichere Aussprache besonders leicht zu beobachten, sie kommt aber auch in anderen Lautumgebungen vor: In *logro* und *regla* wird das g vor einem weiteren Konsonanten gewöhnlich als Approximant [ɣ] gesprochen, ebenso in *algo* nach l. Auch das erste b in *el bebedor* ist nach l typischerweise ein [β].
 
-    **Das spanische [β] ist kein deutsches [v].** Es wird mit beiden Lippen gebildet, nicht mit Zähnen und Unterlippe – mehr zur Rolle der Schrift auf der Themenseite [B oder V? Wenn die Schrift mitredet](/de/teaching/spanish/b-or-v).
+    Die Verteilung ist nicht für alle drei Phoneme gleich: Das d wird nach l gewöhnlich als Verschlusslaut [d] gesprochen (*caldo*), und nach einem Nasal sind b, d und g Verschlusslaute, etwa das g in *tengo* [ˈteŋ.go].
 
-    Vollständige Verschlüsse an Stellen, an denen Spanischsprechende gewöhnlich nur annähern, können – wie die zusätzlichen Knacklaute auf der Themenseite [Weiches Spanisch, hartes Deutsch](/de/teaching/spanish/soft-spanish-hard-german) – zu einem stärker deutsch geprägten Höreindruck beitragen.
+    **Für den Unterricht genügt zunächst die Faustregel: Zwischen Vokalen werden b, d und g im Spanischen meist ohne vollständigen Verschluss ausgesprochen.**
 - type: section_heading
   title: Impulse für den Unterricht
 - type: teaching_impulses
@@ -85,7 +98,7 @@ blocks:
   - title: Verschluss und Annäherung erproben
     body: Mit der Artikulationsgrafik den Unterschied zwischen vollständigem Verschluss und bloßer Annäherung zeigen und bei einfachen Wörtern wie *vida* die unterschiedliche Zungenbewegung bewusst ausprobieren.
   - title: Das Muster übertragen
-    body: An weiteren Wörtern zeigen, dass auch b und g kontextabhängig gesprochen werden. Die Allophonie muss nicht vollständig behandelt werden – schon die Sensibilisierung für den Unterschied ist ein sinnvolles Ziel.
+    body: Von den einfachen Beispielen zu weiteren Kontexten gehen, etwa mit *el bebedor*, wo mehrere Positionen in einer Wortfolge zusammenkommen. Die Allophonie muss nicht vollständig behandelt werden – schon die Sensibilisierung für den Unterschied ist ein sinnvolles Ziel.
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Kapitel des digitalen Lehrbuchs und verwandte Themenseiten.

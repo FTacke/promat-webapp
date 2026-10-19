@@ -1,5 +1,5 @@
 resource_id: promat-teaching-es-soft-consonants-b-d-g
-title: Pronounced too hard? b, d and g in Spanish
+title: 'b, d and g: Pronounced too hard?'
 summary: Why Spanish b, d and g often sound softer than in German – and when they do not.
 description: Why Spanish b, d and g often sound softer than in German – and when they do not.
 equivalents:
@@ -44,38 +44,51 @@ blocks:
   title: b and g become soft, too
 - type: text
   body: |-
-    The same principle applies to the Spanish phonemes /b/ and /g/: depending on the sound environment, they are pronounced as stops [b, g] or as approximants [β, ɣ]. The softer articulation is especially typical between vowels – for instance in *lavar* [la.ˈβaɾ] or, between a vowel and *r*, in *logro* [ˈlo.ɣɾo].
+    The same principle applies to the Spanish phonemes /b/ and /g/: depending on the sound environment, they are pronounced as stops [b, g] or as approximants [β, ɣ]. The softer articulation is especially typical between vowels – for instance in *lavar* [la.ˈβaɾ]. In *agua*, the g stands between [a] and the glide [w]: [ˈa.ɣwa].
 - type: audio_contrast
   title: 'Listening comparison: *lavar*'
   lead: How is the consonant between the two *a* pronounced?
   transcript: '*lavar*'
   examples:
   - role: reference
-    subtitle: Chile · W9
+    subtitle: Spain · W9
     audio: corpus/p5-lavar-ref.mp3
   - role: learner
     subtitle: L1 German · W9
     audio: corpus/p5-lavar-learner.mp3
 - type: audio_contrast
-  title: 'Listening comparison: *logro*'
-  lead: How is the *g* in *logro* pronounced?
-  transcript: '*logro*'
+  title: 'Listening comparison: *con agua*'
+  lead: How is the *g* pronounced in the two recordings?
+  transcript: '*con agua*'
   examples:
   - role: reference
-    subtitle: Spain · W35
-    audio: corpus/p5-logro-ref.mp3
+    subtitle: MAR.ELE
+    audio: marele/agua-ref.mp3
   - role: learner
-    subtitle: L1 German · W35
-    audio: corpus/p5-logro-learner.mp3
-- type: section_heading
-  title: Not always soft
+    subtitle: MAR.ELE
+    audio: marele/agua-learner.mp3
+- type: audio_contrast
+  title: 'Listening comparison: *el bebedor*'
+  lead: Which consonants sound softer in the reference recording?
+  transcript: '*el bebedor*'
+  examples:
+  - role: reference
+    subtitle: MAR.ELE
+    audio: marele/bebedor-ref.mp3
+  - role: learner
+    subtitle: MAR.ELE
+    audio: marele/bebedor-learner.mp3
 - type: text
   body: |-
-    After a pause and after a nasal, [b, d, g] are stops: *un vino* [um.ˈbi.no], but *de vino* [de.ˈβi.no]. /d/ is also a stop after /l/ (*caldo* [ˈkal.do]), whereas /b/ and /g/ remain approximants there (*algo* [ˈal.ɣo]). Which variant is used therefore depends on the sound context, not on the written letter alone.
+    In *el bebedor*, three positions come together: the first b after l, the second b between vowels and the d between vowels. In the reference recording, all three sound softer, schematically [el.βe.βe.ˈðoɾ]; the learner, by contrast, pronounces them with a distinct closure. The softer pronunciation is therefore not limited to the position between vowels.
+- type: info_box
+  title: When else do b, d and g sound soft?
+  body: |-
+    The softer pronunciation is easiest to observe between vowels, but it also occurs in other sound environments: in *logro* and *regla*, the g before another consonant is usually pronounced as the approximant [ɣ], and so it is in *algo* after l. The first b in *el bebedor* is typically a [β] as well, after l.
 
-    **The Spanish [β] is not a German [v].** It is produced with both lips, not with the teeth and the lower lip – more on the role of spelling on the topic page [B or V? When spelling has a say](/en/teaching/spanish/b-or-v).
+    The distribution is not the same for all three phonemes: d is usually pronounced as the stop [d] after l (*caldo*), and after a nasal, b, d and g are stops, for instance the g in *tengo* [ˈteŋ.go].
 
-    Complete closures in places where Spanish speakers usually only approximate can – like the additional glottal stops on the topic page [Soft Spanish, hard German](/en/teaching/spanish/soft-spanish-hard-german) – contribute to a more German-sounding impression.
+    **For the classroom, a rule of thumb is enough at first: between vowels, b, d and g in Spanish are mostly pronounced without a complete closure.**
 - type: section_heading
   title: Classroom prompts
 - type: teaching_impulses
@@ -85,7 +98,7 @@ blocks:
   - title: Try out closure and approximation
     body: Use the articulation diagram to show the difference between a complete closure and mere approximation, and consciously try out the different tongue movement with simple words such as *vida*.
   - title: Transfer the pattern
-    body: Show with further words that b and g, too, are pronounced depending on context. Allophony does not have to be covered completely – raising awareness of the difference is already a worthwhile goal.
+    body: Move from the simple examples to further contexts, for instance with *el bebedor*, where several positions come together in one word sequence. Allophony does not have to be covered completely – raising awareness of the difference is already a worthwhile goal.
 - type: further_reading
   title: Further exploration
   description: Further chapters of the digital textbook and related topic pages.
