@@ -29,7 +29,7 @@ TOPICS = {
     "r": {"de": "Das spanische r", "en": "The Spanish r"},
     "r-am-silbenende": {"de": "Das r am Wortende", "en": "The r at the End of a Word"},
     "b-or-v": {"de": "B oder V? Wenn die Schrift mitredet", "en": "B or V? When spelling has a say"},
-    "soft-consonants-b-d-g": {"de": "b, d und g: Zu hart gesprochen?", "en": "b, d and g: Pronounced too hard?"},
+    "soft-consonants-b-d-g": {"de": "b, d und g: Zu hart ausgesprochen?", "en": "b, d and g: Pronounced too hard?"},
     "accent-changes-everything": {"de": "Ein Akzent verändert alles", "en": "An accent changes everything"},
 }
 IMPULSES = {"soft-spanish-hard-german": 3, "r": 3, "r-am-silbenende": 3, "b-or-v": 3, "soft-consonants-b-d-g": 3, "accent-changes-everything": 3}
@@ -588,8 +588,12 @@ def test_b_d_g_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     html = _html(client, lang, "soft-consonants-b-d-g")
     de = lang == "de"
     headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
-    assert headings == (["Verschluss oder Annäherung?", "Auch b und g werden weich", "Impulse für den Unterricht"] if de
-                        else ["Closure or approximation?", "b and g become soft, too", "Classroom prompts"])
+    assert headings == (["Verschluss oder Annäherung?", "Auch b und g werden weich", "Mehrere Approximanten in einer Wortfolge", "Impulse für den Unterricht"] if de
+                        else ["Closure or approximation?", "b and g become soft, too", "Several approximants in one word sequence", "Classroom prompts"])
+    # the heading sits directly before the el bebedor card, followed by its short introduction; the card keeps the explanation of the three positions
+    assert html.index(headings[2]) < html.index(f'{"Hörvergleich" if de else "Listening comparison"}: <em>el bebedor</em>') and html.index('<em>con agua</em>') < html.index(headings[2])
+    assert ("nicht auf die Stellung zwischen Vokalen beschränkt" if de else "not limited to the position between vowels") in html
+    assert html.count("nicht auf die Position zwischen Vokalen beschränkt" if de else "therefore not limited") == 0
     # four listening stations: d (vida, the only collapsible solution), b (lavar), g (con agua, MAR.ELE), several positions (el bebedor, MAR.ELE)
     prefix = "Hörvergleich" if de else "Listening comparison"
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
@@ -653,7 +657,7 @@ def test_b_d_g_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
 @pytest.mark.parametrize("lang", ["de", "en"])
 def test_b_d_g_authorship_citation_and_slug(client, lang: str) -> None:
     html = _html(client, lang, "soft-consonants-b-d-g")
-    title = "b, d und g: Zu hart gesprochen?" if lang == "de" else "b, d and g: Pronounced too hard?"
+    title = "b, d und g: Zu hart ausgesprochen?" if lang == "de" else "b, d and g: Pronounced too hard?"
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
     assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
     assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/soft-consonants-b-d-g" in html

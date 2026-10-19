@@ -85,3 +85,8 @@ Gezielte Änderungen ohne Redesign; Slugs, URLs, Autorenschaft, Bildnachweis und
 3. *con agua*, *el bebedor* (MAR.ELE): Referenz vs. Lernende; Beschreibung in Text und Infobox bestätigen.
 4. Auflösung zu *vida* bestätigen.
 
+
+## Nachtrag: Finale redaktionelle Korrekturen (2026-10-19)
+
+- **Titel:** DE „b, d und g: Zu hart ausgesprochen?“ (Seitendaten, Zitation, Hub-Karte, Link in `b-or-v`); EN bleibt „b, d and g: Pronounced too hard?“, da „pronounced“ bereits dem deutschen „ausgesprochen“ entspricht. Teaser, Slug und URL unverändert.
+- **Neue Zwischenüberschrift** vor dem Hörvergleich *el bebedor*: „Mehrere Approximanten in einer Wortfolge“ / „Several approximants in one word sequence“ mit kurzer Einleitung (gleiche Überschriftenebene wie die übrigen Abschnitte, kein Infokasten). Der Erklärungstext nach dem Hörvergleich bleibt; sein letzter Satz („nicht auf die Position zwischen Vokalen beschränkt“) entfällt, weil die Einleitung ihn nun sagt. Hörvergleiche, Audiodateien, Grafik, Impulse und Infokasten unverändert.

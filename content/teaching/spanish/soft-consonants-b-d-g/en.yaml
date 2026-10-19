@@ -67,6 +67,11 @@ blocks:
   - role: learner
     subtitle: MAR.ELE
     audio: marele/agua-learner.mp3
+- type: section_heading
+  title: Several approximants in one word sequence
+- type: text
+  body: |-
+    The word sequence *el bebedor* illustrates how several approximant realisations occur in connected speech. It also shows that these are not limited to the position between vowels.
 - type: audio_contrast
   title: 'Listening comparison: *el bebedor*'
   lead: Which consonants sound softer in the reference recording?
@@ -80,7 +85,7 @@ blocks:
     audio: marele/bebedor-learner.mp3
 - type: text
   body: |-
-    In *el bebedor*, three positions come together: the first b after l, the second b between vowels and the d between vowels. In the reference recording, all three sound softer, schematically [el.βe.βe.ˈðoɾ]; the learner, by contrast, pronounces them with a distinct closure. The softer pronunciation is therefore not limited to the position between vowels.
+    In *el bebedor*, three positions come together: the first b after l, the second b between vowels and the d between vowels. In the reference recording, all three sound softer, schematically [el.βe.βe.ˈðoɾ]; the learner, by contrast, pronounces them with a distinct closure.
 - type: info_box
   title: When else do b, d and g sound soft?
   body: |-
