@@ -53,3 +53,14 @@ Die Paarung für *reír* (ES-N-0005 / ES-L-0019, `wl_076`) ist im Gate-Bericht b
 2. *enfermo*: ES-L-0006 und Referenz ES-N-0004 anhören (Zungenschlag vs. Vokalisierung vor *m*); Reserven: ES-L-0019 (A2), ES-L-0004 (A1).
 3. *reír*: Referenz ES-N-0005 (die Lernendenaufnahme ist gesetzt) und die Beschreibung „hinteres [ʁ] am Anfang, Vokalisierung am Ende“ gegenüber der Aufnahme prüfen.
 4. Alle Aussagen der Seite zu diesen Aufnahmen stützen sich auf Spektrogramme; eine Hörabnahme steht aus (Wiedergabe im Browser wurde ausgelöst: alle sechs Player starten, die Chips wechseln auf `playing`).
+
+## Nachtrag: Feinschliff mit viertem Hörvergleich (2026-10-19)
+
+Gezielte redaktionelle Änderungen ohne Redesign; Slug, URL, Autorenschaft, Zitation, Vertiefung, Referenzvariation und die Aufnahmen zu *flor*, *enfermo* und *reír* bleiben unverändert (SHA-256 im Test fixiert).
+
+- **Hörfragen** (DE/EN, Register und Seite identisch): *flor* „Achte auf das r am Wortende. Wie klingt es in den beiden Aufnahmen?“; *lavar* „Achte auf das r am Wortende. Wie klingt es hier?“; *enfermo* „Achte auf das r vor dem m in enfermo. Wie klingt es in den beiden Aufnahmen?“; *reír* „Achte auf das r am Anfang und am Ende. Wie unterscheiden sich die beiden Aufnahmen?“.
+- **Überschriften:** „Nicht nur am Wortende“ → „Wenn auf das r ein Konsonant folgt“; „Zwei r in einem Wort“ → „Besonders knifflig: r am Anfang und am Ende“. Im *enfermo*-Abschnitt „jedes r“ → „häufig auch ein r“ und „als kurzer Zungenschlag“ → „meist als kurzer Zungenschlag“.
+- **Gestrichen:** die isolierte Zeile „Deutsch: sehr · Vater | Spanisch: flor“ (Beispiele und IPA stehen weiter im Fließtext).
+- **Neu: Hörvergleich *lavar*** (Slot `p3-lavar`, W9 = `wl_009`) nach der Erklärung zur R-Vokalisierung, ohne Auflösung. Referenz **ES-N-0001** (Spanien), Lernende **ES-L-0016** (A1, L1 Deutsch); Release-Gate bestanden (Teaching-Einwilligung `yes`, `needs_review: False`, Sprechertyp passend), unveränderte Item-MP3 (kein Zuschnitt). Reserve: ES-L-0005. Impuls 2 nennt *flor* und *lavar* als Hörbeispiele.
+- **Akustische Auswahl (nicht abgehört):** Alle freigegebenen deutschsprachigen Lernenden zu `wl_009` wurden am Wortende per Spektrogramm, Hüllkurve, Stimmhaftigkeit und LPC-Formanten gesichtet. Viele zeigen einen tap-artigen Verschluss mit Burst (u. a. ES-L-0003, -0004, -0007, -0009, -0011, -0018, -0022). ES-L-0016 und ES-L-0005 enden dagegen stimmhaft ohne Verschluss, Burst oder Reibung (ES-L-0016: F1 fällt von ca. 760 auf ca. 300 Hz, F2 ca. 1300–1500 Hz, kein Verschluss); ES-L-0016 wurde wegen der natürlichen Wortlänge gewählt (ES-L-0005: 880 ms, auffällig langsam). Die Referenz ES-N-0001 zeigt am Ende einen klaren Zungenschlag mit Burst. **Ob die Lernendenaufnahme für das Ohr eindeutig vokalisiert klingt, muss Ana Goás Pérez / der Projektverantwortliche abhören.**
+- **Hörliste:** *lavar* ES-L-0016 / ES-N-0001 (vokalisiertes r am Ende?); Reserve ES-L-0005.

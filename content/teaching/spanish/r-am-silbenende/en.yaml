@@ -15,7 +15,7 @@ blocks:
   body: In German, the r at the end of a word often hardly sounds like a consonant any more – in Spanish it remains a distinct, audible sound. The first listening comparison shows what that means.
 - type: audio_contrast
   title: 'Listening comparison: *flor*'
-  lead: What distinguishes the pronunciation at the end of the word?
+  lead: Listen for the *r* at the end of the word. How does it sound in the two recordings?
   transcript: '*flor*'
   examples:
   - role: reference
@@ -38,15 +38,24 @@ blocks:
 - type: text
   body: |-
     Spanish behaves differently. At the end of a word, the r usually remains a consonant, mostly a brief tap [ɾ]: *flor* [ˈfloɾ]. Regionally and depending on context, the realisation can be weaker, longer or different, but as a rule it remains a consonant. Anyone who transfers the German habit will pronounce *flor* more like [ˈfloɐ̯].
-
-    **German:** *sehr* [zeːɐ̯] · *Vater* [ˈfaːtɐ] **Spanish:** *flor* [ˈfloɾ]
+- type: audio_contrast
+  title: 'Listening comparison: *lavar*'
+  lead: Listen for the *r* at the end of the word. How does it sound here?
+  transcript: '*lavar*'
+  examples:
+  - role: reference
+    subtitle: Spain · W9
+    audio: corpus/p3-lavar-ref.mp3
+  - role: learner
+    subtitle: L1 German · W9
+    audio: corpus/p3-lavar-learner.mp3
 - type: section_heading
-  title: Not only at the end of a word
+  title: When a consonant follows the r
 - type: text
-  body: German r-vocalisation and its possible transfer concern not only the absolute end of a word but every r at the end of a syllable – including inside a word. In *enfermo*, the r stands before the *m*, in Spanish as a brief tap [en.ˈfeɾ.mo]; vocalised, the word would sound roughly like [en.ˈfeɐ̯.mo]. What *flor* and *enfermo* have in common is the syllable-final position of the r.
+  body: German r-vocalisation and its possible transfer concern not only the absolute end of a word but often also an r at the end of a syllable – even inside a word. In *enfermo*, the r stands before the *m*, in Spanish usually as a brief tap [en.ˈfeɾ.mo]; vocalised, the word would sound roughly like [en.ˈfeɐ̯.mo]. What *flor* and *enfermo* have in common is the syllable-final position of the r.
 - type: audio_contrast
   title: 'Listening comparison: *enfermo*'
-  lead: How is the *r* in *enfermo* pronounced before the *m*?
+  lead: Listen for the *r* before the *m* in *enfermo*. How does it sound in the two recordings?
   transcript: '*enfermo*'
   examples:
   - role: reference
@@ -56,7 +65,7 @@ blocks:
     subtitle: L1 German · W50
     audio: corpus/p3-enfermo-learner.mp3
 - type: section_heading
-  title: Two r sounds in one word
+  title: 'Especially tricky: r at the beginning and at the end'
 - type: text
   body: |-
     *Reír* (“to laugh”) brings both together. In Spanish, the word begins with a trilled r and ends with a tap: [re.ˈiɾ]. German-speaking learners may transfer two habits at once here: a back [ʁ] at the beginning of the word and vocalisation at the end, roughly [ʁe.ˈɪɐ].
@@ -64,7 +73,7 @@ blocks:
     *Reír* also appears on the topic page [Soft Spanish, hard German](/en/teaching/spanish/soft-spanish-hard-german), seen from another angle – the glottal stop between the two vowels. Here, only the r matters.
 - type: audio_contrast
   title: 'Listening comparison: *reír*'
-  lead: How do the beginning and the end of the word sound?
+  lead: Listen for the *r* at the beginning and at the end. How do the two recordings differ?
   transcript: '*reír*'
   examples:
   - role: reference
@@ -80,7 +89,7 @@ blocks:
   - title: Discover your own German
     body: Say familiar words such as *sehr*, *Vater* and *Lehrer* and draw attention to the r-vocalisation that is regular in German. Where can a consonantal r still be heard at the end – and where not?
   - title: Listen to Spanish word endings consciously
-    body: Use *flor*, *tirar*, *lavar* or other simple words to hear and try out the consonantal word-final r, with a brief tongue contact at the alveolar ridge and no additional vowel at the end.
+    body: Use the listening examples *flor* and *lavar* as well as further simple words such as *tirar* to hear and try out the consonantal word-final r, with a brief tongue contact at the alveolar ridge and no additional vowel at the end.
   - title: From word ending to syllable
     body: Use *enfermo* to carry the observation over to the syllable-final position. *Reír* additionally shows that different German r habits – at the beginning and at the end of a word – can work together in a single word.
 - type: further_reading

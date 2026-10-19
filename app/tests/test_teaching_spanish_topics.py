@@ -111,7 +111,7 @@ def test_every_recording_of_a_page_is_public_audio(client, slug: str, lang: str)
     html = _html(client, lang, slug)
     sources = sorted(set(re.findall(r'<source src="([^"]+)" type="audio/mpeg">', html)))
     expected = {ex["audio"] for b in _blocks(slug, lang) if b["type"] == "audio_contrast" for ex in b["examples"]}
-    assert len(sources) == len(expected) >= {"soft-spanish-hard-german": 8, "b-or-v": 5, "r-am-silbenende": 6, "soft-consonants-b-d-g": 8}.get(slug, 8)
+    assert len(sources) == len(expected) >= {"soft-spanish-hard-german": 8, "b-or-v": 5, "r-am-silbenende": 8, "soft-consonants-b-d-g": 8}.get(slug, 8)
     for source in sources:
         assert source.startswith((f"/teaching-media/spanish/{slug}/audio/corpus/", f"/teaching-media/spanish/{slug}/audio/marele/"))
         response = client.get(source)
@@ -478,22 +478,33 @@ def test_r_at_word_end_page_follows_the_agreed_dramaturgy(client, lang: str) -> 
     html = _html(client, lang, "r-am-silbenende")
     de = lang == "de"
     headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
-    assert headings == (["Wenn das deutsche r zum Vokal wird", "Nicht nur am Wortende", "Zwei r in einem Wort", "Impulse für den Unterricht"] if de
-                        else ["When the German r becomes a vowel", "Not only at the end of a word", "Two r sounds in one word", "Classroom prompts"])
-    # exactly three listening stations in the agreed order; only the first one has a collapsible solution; the first follows the short intro directly
+    assert headings == (["Wenn das deutsche r zum Vokal wird", "Wenn auf das r ein Konsonant folgt", "Besonders knifflig: r am Anfang und am Ende", "Impulse für den Unterricht"] if de
+                        else ["When the German r becomes a vowel", "When a consonant follows the r", "Especially tricky: r at the beginning and at the end", "Classroom prompts"])
+    # exactly four listening stations in the agreed order; only the first one has a collapsible solution; the first follows the short intro directly
     prefix = "Hörvergleich" if de else "Listening comparison"
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
-    assert titles[:3] == [f"{prefix}: <em>flor</em>", f"{prefix}: <em>enfermo</em>", f"{prefix}: <em>reír</em>"] and html.count("pm-teaching-block--audio-contrast") == 3
+    assert titles[:4] == [f"{prefix}: <em>flor</em>", f"{prefix}: <em>lavar</em>", f"{prefix}: <em>enfermo</em>", f"{prefix}: <em>reír</em>"] and html.count("pm-teaching-block--audio-contrast") == 4
+    # lavar sits after the explanation of German r-vocalisation (inside its section) and before the enfermo section
+    assert html.index(headings[0]) < html.index(f"{prefix}: <em>lavar</em>") < html.index(headings[1]) < html.index(f"{prefix}: <em>enfermo</em>")
     assert html.count('<details class="pm-teaching-solution">') == 1 and html.index('<details class="pm-teaching-solution">') < html.index(headings[0])
     assert html.index("pm-teaching-block--audio-contrast") < html.index(headings[0])
     chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
-    assert chips == ["<em>flor</em>", "<em>enfermo</em>", "<em>reír</em>"]
+    assert chips == ["<em>flor</em>", "<em>lavar</em>", "<em>enfermo</em>", "<em>reír</em>"]
+    # the precise listening questions (neutral, no solution taken in advance); only flor has a solution
+    questions = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
+    assert questions == ([
+        "Achte auf das r am Wortende. Wie klingt es in den beiden Aufnahmen?", "Achte auf das r am Wortende. Wie klingt es hier?",
+        "Achte auf das r vor dem m in enfermo. Wie klingt es in den beiden Aufnahmen?", "Achte auf das r am Anfang und am Ende. Wie unterscheiden sich die beiden Aufnahmen?"] if de else [
+        "Listen for the r at the end of the word. How does it sound in the two recordings?", "Listen for the r at the end of the word. How does it sound here?",
+        "Listen for the r before the m in enfermo. How does it sound in the two recordings?", "Listen for the r at the beginning and at the end. How do the two recordings differ?"])
+    # the isolated German/Spanish comparison line after the explanation is gone
+    assert "<strong>Deutsch:</strong>" not in html and "<strong>German:</strong>" not in html and "Nicht nur am Wortende" not in html and "Zwei r in einem Wort" not in html
     ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
-    assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 3
+    assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 4
     subtitles = re.findall(r'pm-teaching-audio-contrast__example-subtitle">([^<]+)<', html)
-    assert subtitles[0::2] == (["Spanien · W16", "Mexiko · W50", "Chile · W76"] if de else ["Spain · W16", "Mexico · W50", "Chile · W76"])
+    assert subtitles[0::2] == (["Spanien · W16", "Spanien · W9", "Mexiko · W50", "Chile · W76"] if de else ["Spain · W16", "Spain · W9", "Mexico · W50", "Chile · W76"])
     # old building blocks are gone: overview box, generic rubric, variation box, cuidar/lavar cards
-    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "cuidar", "lavar la ropa", "p3-cuidar", "p3-lavar", "Lernendenmuster", "Learner pattern", "pm-admonition--context"):
+    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "cuidar", "lavar la ropa", "p3-cuidar", "Lernendenmuster", "Learner pattern", "pm-admonition--context"):
         assert gone not in html, gone
     # German phonetics: sehr / Vater / Lehrer with IPA, the Vater schwa named, and the Spanish contrast in IPA
     for fragment in ("[zeːɐ̯]", "[ˈfaːtɐ]", "[ˈleːʁɐ]", "[ˈfloɾ]", "[en.ˈfeɾ.mo]", "[re.ˈiɾ]", "[ʁe.ˈɪɐ]"):
@@ -524,11 +535,12 @@ def test_r_at_word_end_citation_and_slug_are_stable(client, lang: str) -> None:
 def test_r_at_word_end_curation_is_released_traceable_and_keeps_the_positively_rated_reir_recording() -> None:
     data = slots.load_slots()
     comparisons = {c["id"]: c for c in data["comparisons"] if c["topic"] == "r-am-silbenende"}
-    assert list(comparisons) == ["p3-flor", "p3-enfermo", "p3-reir"]
+    assert list(comparisons) == ["p3-flor", "p3-lavar", "p3-enfermo", "p3-reir"]
     picked = {cid: {r["slot"]: (r["session_id"], r["item"]["id"]) for r in c["recordings"]} for cid, c in comparisons.items()}
-    # three different reference varieties (Spain, Mexico, Chile); learner picks are provisional and replaceable via this register
+    # reference varieties vary between the examples (Spain, Spain, Mexico, Chile); learner picks are provisional and replaceable via this register
     assert picked == {
         "p3-flor": {"ref": ("ES-N-0002-2026-S01", "wl_016"), "learner": ("ES-L-0006-2026-S01", "wl_016")},
+        "p3-lavar": {"ref": ("ES-N-0001-2026-S01", "wl_009"), "learner": ("ES-L-0016-2026-S01", "wl_009")},
         "p3-enfermo": {"ref": ("ES-N-0004-2026-S01", "wl_050"), "learner": ("ES-L-0006-2026-S01", "wl_050")},
         "p3-reir": {"ref": ("ES-N-0005-2026-S01", "wl_076"), "learner": ("ES-L-0019-2026-S01", "wl_076")},
     }
@@ -538,9 +550,17 @@ def test_r_at_word_end_curation_is_released_traceable_and_keeps_the_positively_r
     assert reir_learner["sha256"] == "bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725"
     sibling = next(r for c in data["comparisons"] if c["id"] == "p1-reir" for r in c["recordings"] if r["slot"] == "learner")
     assert sibling["sha256"] == reir_learner["sha256"] and sibling["session_id"] == reir_learner["session_id"]
+    # lavar uses a different learner than flor/enfermo (ES-L-0006); the enfermo pair that was rated very suitable is unchanged, byte for byte
+    by_id = {cid: {r["slot"]: r for r in c["recordings"]} for cid, c in comparisons.items()}
+    assert by_id["p3-lavar"]["learner"]["session_id"] != by_id["p3-flor"]["learner"]["session_id"]
+    assert by_id["p3-enfermo"]["learner"]["sha256"] == "bf58c6d41e572dbf2bc48ef1ac90f2678e47495d49ddaeae88dc173819c0e4a8"
+    assert by_id["p3-enfermo"]["ref"]["sha256"] == "4e6bce8e9fee40d2b64a41351b7ea1d42675eaac2f3b55629c830d926ad56f2d"
+    assert by_id["p3-flor"]["ref"]["sha256"] == "0fb0caf8167297bbb1123f3b3411262e267233e6fdfcdf680170a9021890adfb"
+    assert by_id["p3-flor"]["learner"]["sha256"] == "1484200994b9ceb4a9bd2aea4f15c5f3ca067c59771eaf37969fb434501ad3d8"
     reserves = [r for r in data["reserves"] if r["topic"] == "r-am-silbenende"]
-    assert {r["learner"] for r in reserves} == {"ES-L-0001-2026-S01", "ES-L-0019-2026-S01", "ES-L-0004-2026-S01"}
-    assert not list((TOPIC_DIR / "r-am-silbenende" / "media" / "audio" / "corpus").glob("p3-cuidar*")) and not list((TOPIC_DIR / "r-am-silbenende" / "media" / "audio" / "corpus").glob("p3-lavar*"))
+    assert {r["learner"] for r in reserves} == {"ES-L-0001-2026-S01", "ES-L-0019-2026-S01", "ES-L-0004-2026-S01", "ES-L-0005-2026-S01"}
+    corpus = TOPIC_DIR / "r-am-silbenende" / "media" / "audio" / "corpus"
+    assert not list(corpus.glob("p3-cuidar*")) and sorted(path.name for path in corpus.glob("p3-lavar*")) == ["p3-lavar-learner.mp3", "p3-lavar-ref.mp3"]
 
 
 @pytest.mark.parametrize("lang", ["de", "en"])
@@ -688,7 +708,7 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
     assert slots.check(data) == []
     declared = {(c["topic"], r["file"]) for c, r in slots.iter_recordings(data)}
     on_disk = {(path.parents[3].name, f"{path.parent.name}/{path.name}") for kind in ("corpus", "marele") for path in TOPIC_DIR.glob(f"*/media/audio/{kind}/*.mp3")}
-    assert declared == on_disk and len(declared) == 43
+    assert declared == on_disk and len(declared) == 45
     for comparison, recording in slots.iter_recordings(data):
         assert recording["category"] in ("reference", "learner")
         if not slots.is_external(recording):

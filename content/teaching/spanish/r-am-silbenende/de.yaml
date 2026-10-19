@@ -15,7 +15,7 @@ blocks:
   body: Im Deutschen klingt das r am Wortende oft kaum noch wie ein Konsonant – im Spanischen bleibt es ein eigener, hörbarer Laut. Der erste Hörvergleich zeigt, was damit gemeint ist.
 - type: audio_contrast
   title: 'Hörvergleich: *flor*'
-  lead: Was unterscheidet die Aussprache am Ende des Wortes?
+  lead: Achte auf das *r* am Wortende. Wie klingt es in den beiden Aufnahmen?
   transcript: '*flor*'
   examples:
   - role: reference
@@ -38,15 +38,24 @@ blocks:
 - type: text
   body: |-
     Das Spanische verhält sich anders. Am Wortende bleibt das r gewöhnlich konsonantisch, meist als kurzer Zungenschlag [ɾ]: *flor* [ˈfloɾ]. Regional und je nach Kontext kann die Realisierung schwächer, länger oder anders ausfallen, bleibt aber in der Regel ein Konsonant. Wer die deutsche Gewohnheit überträgt, spricht *flor* eher wie [ˈfloɐ̯].
-
-    **Deutsch:** *sehr* [zeːɐ̯] · *Vater* [ˈfaːtɐ] **Spanisch:** *flor* [ˈfloɾ]
+- type: audio_contrast
+  title: 'Hörvergleich: *lavar*'
+  lead: Achte auf das *r* am Wortende. Wie klingt es hier?
+  transcript: '*lavar*'
+  examples:
+  - role: reference
+    subtitle: Spanien · W9
+    audio: corpus/p3-lavar-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · W9
+    audio: corpus/p3-lavar-learner.mp3
 - type: section_heading
-  title: Nicht nur am Wortende
+  title: Wenn auf das r ein Konsonant folgt
 - type: text
-  body: Die deutsche R-Vokalisierung und ihre mögliche Übertragung betreffen nicht nur den absoluten Wortauslaut, sondern jedes r am Ende einer Silbe – auch im Wortinneren. In *enfermo* steht das r vor dem *m*, im Spanischen als kurzer Zungenschlag [en.ˈfeɾ.mo]; vokalisiert klänge das Wort etwa wie [en.ˈfeɐ̯.mo]. Gemeinsam ist *flor* und *enfermo* die Silbenendposition des r.
+  body: Die deutsche R-Vokalisierung und ihre mögliche Übertragung betreffen nicht nur den absoluten Wortauslaut, sondern häufig auch ein r am Ende einer Silbe – selbst im Wortinneren. In *enfermo* steht das r vor dem *m*, im Spanischen meist als kurzer Zungenschlag [en.ˈfeɾ.mo]; vokalisiert klänge das Wort etwa wie [en.ˈfeɐ̯.mo]. Gemeinsam ist *flor* und *enfermo* die Silbenendposition des r.
 - type: audio_contrast
   title: 'Hörvergleich: *enfermo*'
-  lead: Wie wird das *r* in *enfermo* ausgesprochen, bevor das *m* folgt?
+  lead: Achte auf das *r* vor dem *m* in *enfermo*. Wie klingt es in den beiden Aufnahmen?
   transcript: '*enfermo*'
   examples:
   - role: reference
@@ -56,7 +65,7 @@ blocks:
     subtitle: L1 Deutsch · W50
     audio: corpus/p3-enfermo-learner.mp3
 - type: section_heading
-  title: Zwei r in einem Wort
+  title: 'Besonders knifflig: r am Anfang und am Ende'
 - type: text
   body: |-
     *Reír* bringt beides zusammen. Im Spanischen beginnt das Wort mit einem mehrfach geschlagenen r und endet mit einem Zungenschlag: [re.ˈiɾ]. Deutschsprachige Lernende übertragen hier mitunter gleich zwei Gewohnheiten: ein hinteres [ʁ] am Wortanfang und die Vokalisierung am Wortende, etwa [ʁe.ˈɪɐ].
@@ -64,7 +73,7 @@ blocks:
     Aus einem anderen Blickwinkel – dem Knacklaut zwischen den beiden Vokalen – kommt *reír* auch auf der Themenseite [Weiches Spanisch, hartes Deutsch](/de/teaching/spanish/soft-spanish-hard-german) vor. Hier geht es allein um das r.
 - type: audio_contrast
   title: 'Hörvergleich: *reír*'
-  lead: Wie klingen Anfang und Ende des Wortes?
+  lead: Achte auf das *r* am Anfang und am Ende. Wie unterscheiden sich die beiden Aufnahmen?
   transcript: '*reír*'
   examples:
   - role: reference
@@ -80,7 +89,7 @@ blocks:
   - title: Das eigene Deutsch entdecken
     body: Vertraute Wörter wie *sehr*, *Vater* und *Lehrer* sprechen und auf die im Deutschen reguläre R-Vokalisierung aufmerksam machen. Wo ist am Ende noch ein konsonantisches r zu hören – und wo nicht?
   - title: Spanische Wortenden bewusst hören
-    body: Mit *flor*, *tirar*, *lavar* oder anderen einfachen Wörtern das konsonantische wortfinale r hören und erproben, mit kurzem Zungenkontakt am Zahndamm und ohne zusätzlichen Vokal am Ende.
+    body: Mit den Hörbeispielen *flor* und *lavar* sowie weiteren einfachen Wörtern wie *tirar* das konsonantische wortfinale r hören und erproben, mit kurzem Zungenkontakt am Zahndamm und ohne zusätzlichen Vokal am Ende.
   - title: Vom Wortende zur Silbe
     body: Mit *enfermo* auf die Silbenendposition übertragen. *Reír* zeigt zusätzlich, dass verschiedene deutsche R-Gewohnheiten – am Wortanfang und am Wortende – in einem Wort zusammenwirken können.
 - type: further_reading

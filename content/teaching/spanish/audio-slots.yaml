@@ -355,7 +355,7 @@ comparisons:
   target: flor
   target_tokens:
   - flor
-  question: Was unterscheidet die Aussprache am Ende des Wortes?
+  question: Achte auf das *r* am Wortende. Wie klingt es in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -373,13 +373,37 @@ comparisons:
       id: wl_016
     file: corpus/p3-flor-learner.mp3
     sha256: 1484200994b9ceb4a9bd2aea4f15c5f3ca067c59771eaf37969fb434501ad3d8
+- id: p3-lavar
+  topic: r-am-silbenende
+  phenomenon: Wortfinales r nach /a/ (Zungenschlag vs. Vokalisierung)
+  target: lavar
+  target_tokens:
+  - lavar
+  question: Achte auf das *r* am Wortende. Wie klingt es hier?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/p3-lavar-ref.mp3
+    sha256: 7d7cf9a0bc43a0d324b2652c8aabf5aaf012c5e805c1a321d94426f567afa7b7
+  - slot: learner
+    category: learner
+    session_id: ES-L-0016-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/p3-lavar-learner.mp3
+    sha256: 20e42ba6c4cc2b03a37654040099c8420717583e2c0febc7c0823c9092599639
 - id: p3-enfermo
   topic: r-am-silbenende
   phenomenon: Silbenfinales r vor Konsonant
   target: enfermo
   target_tokens:
   - enfermo
-  question: Wie wird das *r* in *enfermo* ausgesprochen, bevor das *m* folgt?
+  question: Achte auf das *r* vor dem *m* in *enfermo*. Wie klingt es in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -403,7 +427,7 @@ comparisons:
   target: reír
   target_tokens:
   - reír
-  question: Wie klingen Anfang und Ende des Wortes?
+  question: Achte auf das *r* am Anfang und am Ende. Wie unterscheiden sich die beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -640,4 +664,15 @@ reserves:
     id: wl_009
   reference: ES-N-0001-2026-S01
   learner: ES-L-0017-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p3-lavar-reserve-0005
+  topic: r-am-silbenende
+  target: lavar
+  target_tokens:
+  - lavar
+  item:
+    task: wordlist
+    id: wl_009
+  reference: ES-N-0001-2026-S01
+  learner: ES-L-0005-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
