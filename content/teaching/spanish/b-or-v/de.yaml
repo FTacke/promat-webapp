@@ -68,7 +68,7 @@ blocks:
     subtitle: L1 Deutsch · W92
     audio: corpus/p4-bienes-learner.mp3
 - type: text
-  body: 'Welcher Laut tatsächlich zu hören ist, hängt übrigens nicht vom Buchstaben ab, sondern vom Kontext: Das Phonem /b/ wird nach Pause oder Nasal meist als Verschlusslaut [b] gesprochen, sonst als Approximant [β] – *vino* [ˈbi.no], aber *de vino* [de.ˈβi.no]. Mehr dazu auf der Themenseite [Weiche Konsonanten: b, d und g](/de/teaching/spanish/soft-consonants-b-d-g).'
+  body: 'Welcher Laut tatsächlich zu hören ist, hängt übrigens nicht vom Buchstaben ab, sondern vom Kontext: Das Phonem /b/ wird nach Pause oder Nasal meist als Verschlusslaut [b] gesprochen, sonst als Approximant [β] – *vino* [ˈbi.no], aber *de vino* [de.ˈβi.no]. Mehr dazu auf der Themenseite [Zu hart gesprochen? b, d und g im Spanischen](/de/teaching/spanish/soft-consonants-b-d-g).'
 - type: section_heading
   title: Impulse für den Unterricht
 - type: teaching_impulses

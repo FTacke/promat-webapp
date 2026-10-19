@@ -68,7 +68,7 @@ blocks:
     subtitle: L1 German · W92
     audio: corpus/p4-bienes-learner.mp3
 - type: text
-  body: 'Which sound is actually heard does not depend on the letter, by the way, but on the context: after a pause or a nasal, the phoneme /b/ is usually realised as the stop [b], elsewhere as the approximant [β] – *vino* [ˈbi.no], but *de vino* [de.ˈβi.no]. More on this on the topic page [Soft consonants: b, d and g](/en/teaching/spanish/soft-consonants-b-d-g).'
+  body: 'Which sound is actually heard does not depend on the letter, by the way, but on the context: after a pause or a nasal, the phoneme /b/ is usually realised as the stop [b], elsewhere as the approximant [β] – *vino* [ˈbi.no], but *de vino* [de.ˈβi.no]. More on this on the topic page [Pronounced too hard? b, d and g in Spanish](/en/teaching/spanish/soft-consonants-b-d-g).'
 - type: section_heading
   title: Classroom prompts
 - type: teaching_impulses

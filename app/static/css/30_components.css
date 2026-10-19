@@ -3062,6 +3062,11 @@ a.promat-card:active .pm-cta-link {
   margin: 0;
 }
 
+/* Side-by-side drawings (e.g. two articulations) need more width than a portrait illustration: `size: wide`. */
+.pm-teaching-figure--wide {
+  width: min(100%, 46rem);
+}
+
 .pm-teaching-figure__image {
   display: block;
   width: 100%;

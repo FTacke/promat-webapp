@@ -1065,6 +1065,7 @@ def _topic_blocks(
                         "width": width,
                         "height": height,
                         "alt": alt,
+                        "size": "wide" if _as_text(raw_block.get("size")) == "wide" else "",
                         "caption": _as_text(raw_block.get("caption")),
                         "credit": _as_text(raw_block.get("credit")),
                     }, "caption", "credit")

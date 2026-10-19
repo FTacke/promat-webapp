@@ -206,116 +206,6 @@ comparisons:
       id: d_01
     file: corpus/p2-reloj-learner-satz.mp3
     sha256: 6a7398c7296e4285daf83966256a0997387efd0f8afe3b63d23b89b8ae5161d0
-- id: p5-labio
-  topic: soft-consonants-b-d-g
-  phenomenon: Approximant [β]
-  target: labio
-  question: Klingt das *b* in *labio* eher wie ein kurzer Knall oder eher wie ein weiches Reiben?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_021
-    file: corpus/p5-labio-ref.mp3
-    sha256: 832133c4ede92ddbb530a7fcbf057b38ac9cf0359860af3179cbe2ea88d070c3
-  - slot: learner
-    category: learner
-    session_id: ES-L-0013-2026-S01
-    item:
-      task: wordlist
-      id: wl_021
-    file: corpus/p5-labio-learner.mp3
-    sha256: 737d9d578dcf2d0bde433da07206d5a5f561aaf0cc39b653e07c4f50b031a2dc
-- id: p5-cuidado
-  topic: soft-consonants-b-d-g
-  phenomenon: Approximant [ð]
-  target: cuidado
-  question: 'Wie klingt das *d* in *cuidado*: hart abgesetzt oder weich und locker?'
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_033
-    file: corpus/p5-cuidado-ref.mp3
-    sha256: f30fe61d71c7ea481c36aea4840e890c10b1d1e1618069105941bb80ecc691cc
-  - slot: learner
-    category: learner
-    session_id: ES-L-0013-2026-S01
-    item:
-      task: wordlist
-      id: wl_033
-    file: corpus/p5-cuidado-learner.mp3
-    sha256: e58c7238520608daf0c2e903b82e2e7d6dcae0025dc8670b57f03171995fbb18
-- id: p5-logro
-  topic: soft-consonants-b-d-g
-  phenomenon: Approximant [ɣ]
-  target: logro
-  question: Wird das *g* in *logro* mit vollständigem Verschluss gesprochen?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_035
-    file: corpus/p5-logro-ref.mp3
-    sha256: 3acffb6254ac44cf352572ceb0fcaa16ce8266da365e31b48a71b999aa02b7c7
-  - slot: learner
-    category: learner
-    session_id: ES-L-0013-2026-S01
-    item:
-      task: wordlist
-      id: wl_035
-    file: corpus/p5-logro-learner.mp3
-    sha256: 93bc219fa2e4a0a8166a547f04ecc26e46d1f880bb222fc384244005e2070b10
-- id: p5-algo
-  topic: soft-consonants-b-d-g
-  phenomenon: Approximant [ɣ] nach /l/
-  target: algo / Algo tan caro
-  question: Bleibt das *g* in *algo* allein und im Satz gleich weich?
-  recordings:
-  - slot: ref-isoliert
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_048
-    file: corpus/p5-algo-ref-isoliert.mp3
-    sha256: cb9c6526398136a72e7443dbe2730fc1eb8fffef78336a2cb894ebd52db38292
-  - slot: ref-satz
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: text
-      id: d_09
-    file: corpus/p5-algo-ref-satz.mp3
-    sha256: 0f0bcb4fd8b5918e9c3a86f2d73054e4d0752ff422c304ab3f61a72b56f3462f
-- id: p5-vino
-  topic: soft-consonants-b-d-g
-  phenomenon: Plosiv [b] und Approximant [β] bei /b/
-  target: vino / de vino
-  question: Klingt das *v* allein anders als in *de vino*?
-  recordings:
-  - slot: ref-isoliert
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: wordlist
-      id: wl_038
-    file: corpus/p5-vino-ref-isoliert.mp3
-    sha256: 19c753deb25935a4779332ea62b17ef05eb47fe244ffc01b7ee7a75017c7542a
-  - slot: ref-satz
-    category: reference
-    session_id: ES-N-0001-2026-S01
-    item:
-      task: text
-      id: qy_01
-    file: corpus/p5-vino-ref-satz.mp3
-    sha256: cbeea5a1c86d8acde0bbba6df55e3f117f032cd3769223e97954848931af7399
 - id: p6-numero3
   topic: accent-changes-everything
   phenomenon: Lexikalischer Wortakzent
@@ -531,6 +421,78 @@ comparisons:
       id: wl_076
     file: corpus/p3-reir-learner.mp3
     sha256: bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725
+- id: p5-vida
+  topic: soft-consonants-b-d-g
+  phenomenon: 'Intervokalisches /d/: Verschlusslaut [d] vs. Approximant [ð]'
+  target: vida
+  target_tokens:
+  - vida
+  question: Was unterscheidet die Aussprache des *d*?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: wordlist
+      id: wl_045
+    file: corpus/p5-vida-ref.mp3
+    sha256: de25bd78444cbb8a48aed11f1952a135253958f4f0b0a216c8184399bc06fe19
+  - slot: learner
+    category: learner
+    session_id: ES-L-0007-2026-S01
+    item:
+      task: wordlist
+      id: wl_045
+    file: corpus/p5-vida-learner.mp3
+    sha256: aa6cd9568798fd29e34f1d4f085baee2a2f2c5f35aacb746f6a219f06dbe19be
+- id: p5-lavar
+  topic: soft-consonants-b-d-g
+  phenomenon: 'Intervokalisches /b/: [b] vs. [β]'
+  target: lavar
+  target_tokens:
+  - lavar
+  question: Wie wird der Konsonant zwischen den beiden *a* ausgesprochen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/p5-lavar-ref.mp3
+    sha256: a14fc9da6c3250b55befb8fc136fd1f8acb1050fb217acb0033664b46782f578
+  - slot: learner
+    category: learner
+    session_id: ES-L-0006-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/p5-lavar-learner.mp3
+    sha256: f0c35cdeeb5460b996a0ef1c1094aca9ddb14e913c0abfbfc7a2b99a2d38513e
+- id: p5-logro
+  topic: soft-consonants-b-d-g
+  phenomenon: '/g/ zwischen Vokal und /r/: [g] vs. [ɣ]'
+  target: logro
+  target_tokens:
+  - logro
+  question: Wie wird das *g* in *logro* ausgesprochen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_035
+    file: corpus/p5-logro-ref.mp3
+    sha256: 3acffb6254ac44cf352572ceb0fcaa16ce8266da365e31b48a71b999aa02b7c7
+  - slot: learner
+    category: learner
+    session_id: ES-L-0020-2026-S01
+    item:
+      task: wordlist
+      id: wl_035
+    file: corpus/p5-logro-learner.mp3
+    sha256: db3f4a0b31f8d1c965aede18270587e26fe83c60cacf68fca7a6ab8b22cbf6d3
 reserves:
 - id: p1-amigos
   topic: soft-spanish-hard-german
@@ -614,4 +576,70 @@ reserves:
     id: wl_050
   reference: ES-N-0004-2026-S01
   learner: ES-L-0004-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p5-vida-reserve-0020
+  topic: soft-consonants-b-d-g
+  target: vida
+  target_tokens:
+  - vida
+  item:
+    task: wordlist
+    id: wl_045
+  reference: ES-N-0004-2026-S01
+  learner: ES-L-0020-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p5-vida-reserve-0018
+  topic: soft-consonants-b-d-g
+  target: vida
+  target_tokens:
+  - vida
+  item:
+    task: wordlist
+    id: wl_045
+  reference: ES-N-0004-2026-S01
+  learner: ES-L-0018-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p5-lavar-reserve-0010
+  topic: soft-consonants-b-d-g
+  target: lavar
+  target_tokens:
+  - lavar
+  item:
+    task: wordlist
+    id: wl_009
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0010-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p5-lavar-reserve-0017
+  topic: soft-consonants-b-d-g
+  target: lavar
+  target_tokens:
+  - lavar
+  item:
+    task: wordlist
+    id: wl_009
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0017-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p5-logro-reserve-0012
+  topic: soft-consonants-b-d-g
+  target: logro
+  target_tokens:
+  - logro
+  item:
+    task: wordlist
+    id: wl_035
+  reference: ES-N-0001-2026-S01
+  learner: ES-L-0012-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p5-logro-reserve-0008
+  topic: soft-consonants-b-d-g
+  target: logro
+  target_tokens:
+  - logro
+  item:
+    task: wordlist
+    id: wl_035
+  reference: ES-N-0001-2026-S01
+  learner: ES-L-0008-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use

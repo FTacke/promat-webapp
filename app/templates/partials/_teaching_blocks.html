@@ -241,7 +241,7 @@
     <div class="pm-teaching-rich-text__body">{{ block.body_html | safe }}</div>
   </section>
   {% elif block.type == 'image' %}
-  <figure id="{{ block.id }}" data-teaching-width="{{ block_width }}" class="pm-teaching-block pm-teaching-figure">
+  <figure id="{{ block.id }}" data-teaching-width="{{ block_width }}" class="pm-teaching-block pm-teaching-figure{{ ' pm-teaching-figure--wide' if block.size == 'wide' else '' }}">
     {%- if block.webp_src %}
     <picture>
       <source type="image/webp" srcset="{{ block.webp_src }}">

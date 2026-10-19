@@ -150,7 +150,7 @@ def test_build_teaching_topic_page_image_block_carries_caption_and_credit(teachi
         page = teaching_content.build_teaching_topic_page("de", "spanish", "topic-one")
 
     image_block = next(block for block in page["blocks"] if block["type"] == "image")
-    assert image_block["caption_html"] == "Untertitel <em>eins</em>"
+    assert image_block["size"] == "" and image_block["caption_html"] == "Untertitel <em>eins</em>"
     assert image_block["credit"] == "Illustration: Jemand · 2026" and image_block["credit_html"] == "Illustration: Jemand · 2026"
 
 

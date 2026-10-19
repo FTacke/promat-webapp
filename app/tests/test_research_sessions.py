@@ -1962,7 +1962,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Das spanische r' not in first_group_html
     assert first_group_html.index('Welche Aussprache unterrichten?') < first_group_html.index('Weiches Spanisch, hartes Deutsch')
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
-    order = ['B oder V? Wenn die Schrift mitredet', 'Weiche Konsonanten: b, d und g', 'Das spanische r', 'Das r am Wortende', 'Ein Akzent verändert alles']
+    order = ['B oder V? Wenn die Schrift mitredet', 'Zu hart gesprochen? b, d und g im Spanischen', 'Das spanische r', 'Das r am Wortende', 'Ein Akzent verändert alles']
     positions = [second_group_html.index(title) for title in order]
     assert positions == sorted(positions)
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html

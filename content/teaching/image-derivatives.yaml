@@ -4,6 +4,12 @@
 # `python scripts/teaching_images.py --build` after replacing a master; `--check` (and a pytest) fails on a stale entry.
 
 derivatives:
+- master: spanish/soft-consonants-b-d-g/media/images/dental-stop-approximant.png
+  master_sha256: fc477f9f74c128fdc4674231200fdfc1bc3788e329a8ab461d9edd12457916ae
+  derivative: spanish/soft-consonants-b-d-g/media/images/dental-stop-approximant.webp
+  derivative_sha256: 5e89656fdb6bdb5cad9b7b3b9a0000e95c6070ece796dff402ac40d3c6451d38
+  width: 1448
+  quality: 90
 - master: spanish/soft-spanish-hard-german/media/images/glottal-stop-larynx-hand.png
   master_sha256: 46b2d048503ff43fe478395e1a0897ca2bb98af72e92c952bbcd73f412f062a6
   derivative: spanish/soft-spanish-hard-german/media/images/glottal-stop-larynx-hand.webp
