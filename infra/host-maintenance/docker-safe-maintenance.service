@@ -1,0 +1,13 @@
+[Unit]
+Description=Conservative Docker maintenance (old build cache only; never images, containers or volumes)
+Documentation=file:///usr/local/sbin/docker-safe-maintenance
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/docker-safe-maintenance
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=30min
+SyslogIdentifier=docker-safe-maintenance

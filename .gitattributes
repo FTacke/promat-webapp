@@ -1,1 +1,5 @@
 *.sh text eol=lf
+
+# VM maintenance scripts and unit templates are deployed to Linux: keep LF
+scripts/vm_storage_* text eol=lf
+infra/host-maintenance/* text eol=lf

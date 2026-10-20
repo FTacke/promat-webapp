@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly conservative Docker maintenance
+
+[Timer]
+# Sundays 05:45 (+ up to 15 min jitter); after the VS Code cleanup.
+OnCalendar=Sun *-*-* 05:45:00
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

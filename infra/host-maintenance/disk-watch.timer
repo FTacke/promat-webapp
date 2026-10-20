@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly root filesystem usage check
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=3min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

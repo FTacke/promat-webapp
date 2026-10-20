@@ -1,0 +1,10 @@
+[Unit]
+Description=Root filesystem usage check (journal warnings only, never deletes)
+Documentation=file:///usr/local/sbin/disk-watch
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/disk-watch
+Nice=19
+IOSchedulingClass=idle
+SyslogIdentifier=disk-watch

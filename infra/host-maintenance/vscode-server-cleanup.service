@@ -1,0 +1,15 @@
+[Unit]
+Description=Remove stale VS Code Server installations and orphaned .staging directories
+Documentation=file:///usr/local/sbin/vscode-server-cleanup
+
+[Service]
+Type=oneshot
+# Exit 75 = another cleanup run holds the lock: not a failure.
+# Every other non-zero exit (1 errors, 2 refused, 3 process scan incomplete) leaves the unit
+# in "failed" state; disk-watch reports that.
+SuccessExitStatus=75
+ExecStart=/usr/local/sbin/vscode-server-cleanup --apply --format json
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=30min
+SyslogIdentifier=vscode-server-cleanup

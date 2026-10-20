@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly cleanup of stale VS Code Server installations
+
+[Timer]
+# Sundays 05:15 (+ up to 15 min jitter); after the 04:00 PostgreSQL backup timer.
+OnCalendar=Sun *-*-* 05:15:00
+RandomizedDelaySec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
