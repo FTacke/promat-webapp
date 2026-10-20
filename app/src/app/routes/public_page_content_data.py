@@ -435,7 +435,7 @@ PROJECT_PAGES_CONTENT: dict[str, dict[str, object]] = {
                             "de": "Ausführende Koordination",
                             "en": "Executive coordination",
                         },
-                        "text": "Marlon Merte",
+                        "text": "Marlon Merte, B.A.",
                         "modifier": "pm-meta-card--lead",
                         "metadata_rows": {
                             "de": [

@@ -3309,6 +3309,16 @@ def test_team_page_uses_structured_credits_cards_without_legacy_text(
     assert expected_corpus_label in html
 
 
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+@pytest.mark.parametrize("path", ["project/team", "research"])
+def test_marlon_merte_is_always_named_with_his_degree(url_app: Flask, ui_lang: str, path: str) -> None:
+    html = url_app.test_client().get(f"/{ui_lang}/{path}").get_data(as_text=True)
+
+    assert "Marlon Merte, B.A." in html
+    assert not re.search(r"Marlon Merte(?!, B\.A\.)", html)
+    assert "B.A., B.A." not in html
+
+
 REFERENCE_SPEAKER_GROUPS = {
     "de": [
         ("Spanisch", [("Dr. Pedro Alonso García", "Spanien"), ("Mauricio Esteban Bucarey-Altamirano", "Chile"), ("Renata Freyre Castro", "Mexiko"), ("Ana Goás Pérez", "Spanien"), ("Eine weitere Referenzsprecherin", "auf eigenen Wunsch ohne Namensnennung")]),
