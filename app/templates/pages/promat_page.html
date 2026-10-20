@@ -170,7 +170,7 @@
         {% endif %}
       </div>
       {% endif %}
-      {% if section.meta_cards and section.heading %}
+      {% if section.meta_cards and section.heading and not has_block_body %}
       <div class="promat-content-section__heading pm-reading">
         <h2 class="promat-content-block__title pm-panel__title">{{ section.heading }}</h2>
       </div>
@@ -206,6 +206,18 @@
                   <p class="pm-speaker-card__meta-value pm-meta-card__meta-value">{{ row.value }}</p>
                 </div>
                 {% endfor %}
+              </div>
+              {% endif %}
+              {% if card.credit_items %}
+              <div class="pm-meta-card__section{{ ' pm-meta-card__section--divided' if card.title or card.text or card.body_html or card.metadata_rows else '' }}">
+                <ul class="pm-credit-list">
+                  {% for item in card.credit_items %}
+                  <li class="pm-credit-list__item">
+                    <span class="pm-credit-list__name">{{ item.name }}</span>
+                    {% if item.detail %}<span class="pm-credit-list__detail">{{ item.detail }}</span>{% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
               </div>
               {% endif %}
               {% if card.list_items %}

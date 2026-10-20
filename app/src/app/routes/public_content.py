@@ -542,7 +542,8 @@ def build_project_page(ui_lang: str, page_slug: str) -> dict[str, Any] | None:
 def _fill_team_corpus_cards(page: dict[str, Any], ui_lang: str) -> None:
     """The corpus cards of the team page list the same people as the registry; they are generated, not typed."""
     for section in page.get("sections", []):
-        if section.get("meta_cards_layout") != "team-corpus":
+        if section.get("meta_cards_layout") != "team-corpus" or section.get("meta_cards"):
+            # Sections with hand-written cards (e.g. the reference-speaker acknowledgements) share the grid, not the registry fill.
             continue
         section["meta_cards"] = [
             {

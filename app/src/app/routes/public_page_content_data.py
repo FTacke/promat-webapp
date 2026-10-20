@@ -495,25 +495,48 @@ PROJECT_PAGES_CONTENT: dict[str, dict[str, object]] = {
                 "paragraphs_html": {
                     "de": [
                         "<em>Pronunciation Matters</em> dankt allen Studierenden und weiteren Teilnehmenden, die ihre Sprachdaten für das Projekt zur Verfügung gestellt haben.",
-                        "Besonderer Dank gilt den Referenzsprecher:innen. Ihre Aufnahmen bilden wichtige Standardaussprachen ab und dienen als tertium comparationis, damit Lernendenaussprache und Zielaussprache anhand derselben Items verglichen werden können.",
+                        "Besonderer Dank gilt unseren Referenzsprecher:innen, die ihre Stimmen für das Projekt zur Verfügung gestellt haben. Ihre Aufnahmen ermöglichen es, die Aussprache von Lernenden anhand derselben Wörter und Sätze mit der von Erstsprachler:innen zu vergleichen, und dienen damit als <em>tertium comparationis</em>. Zugleich machen sie die Vielfalt der Standardaussprachen innerhalb der einzelnen Sprachen hörbar. Alle vertretenen Standardvarietäten werden dabei als gleichwertig betrachtet – keine gilt als alleinige oder übergeordnete Aussprachenorm.",
                     ],
                     "en": [
                         "<em>Pronunciation Matters</em> thanks all students and other participants who made their speech data available to the project.",
-                        "Special thanks go to the reference speakers. Their recordings represent important standard pronunciations and serve as a tertium comparationis so that learner pronunciation and target pronunciation can be compared using the same items.",
+                        "Special thanks go to our reference speakers, who lent their voices to the project. Their recordings make it possible to compare the pronunciation of learners with that of first-language speakers on the basis of the same words and sentences, and thus serve as a <em>tertium comparationis</em>. At the same time, they make the diversity of standard pronunciations within each language audible. All standard varieties represented are regarded as equally valid – none is treated as the sole or superordinate pronunciation norm.",
                     ],
                 },
-                "bullets": {
-                    "de": [
-                        "Dr. Pedro Alonso",
-                        "Ana Goás Pérez",
-                        "Aoife Holmes-Rein, M.A.",
-                    ],
-                    "en": [
-                        "Dr. Pedro Alonso",
-                        "Ana Goás Pérez",
-                        "Aoife Holmes-Rein, M.A.",
-                    ],
-                },
+                "meta_cards_layout": "team-corpus",
+                "meta_cards": [
+                    {
+                        "title": {"de": "Spanisch", "en": "Spanish"},
+                        "credit_items": [
+                            {"name": "Dr. Pedro Alonso García", "detail": {"de": "Spanien", "en": "Spain"}},
+                            {"name": "Mauricio Esteban Bucarey-Altamirano", "detail": {"de": "Chile", "en": "Chile"}},
+                            {"name": "Renata Freyre Castro", "detail": {"de": "Mexiko", "en": "Mexico"}},
+                            {"name": "Ana Goás Pérez", "detail": {"de": "Spanien", "en": "Spain"}},
+                            {"name": {"de": "Eine weitere Referenzsprecherin", "en": "A further reference speaker"}, "detail": {"de": "auf eigenen Wunsch ohne Namensnennung", "en": "name withheld at her own request"}},
+                        ],
+                    },
+                    {
+                        "title": {"de": "Französisch", "en": "French"},
+                        "credit_items": [
+                            {"name": "Claire Köhling", "detail": {"de": "Frankreich", "en": "France"}},
+                            {"name": "Ianek Mouralis", "detail": {"de": "Frankreich", "en": "France"}},
+                        ],
+                    },
+                    {
+                        "title": {"de": "Deutsch", "en": "German"},
+                        "credit_items": [
+                            {"name": "Sina Beuermann", "detail": {"de": "Deutschland", "en": "Germany"}},
+                            {"name": "Mauri Gökdel", "detail": {"de": "Deutschland", "en": "Germany"}},
+                        ],
+                    },
+                    {
+                        "title": {"de": "Englisch", "en": "English"},
+                        "credit_items": [
+                            {"name": "Victoria Gath", "detail": {"de": "Großbritannien", "en": "Great Britain"}},
+                            {"name": "Dr. Barbara Ann Güldenring", "detail": {"de": "USA", "en": "USA"}},
+                            {"name": "Aoife Holmes-Rein", "detail": {"de": "Irland", "en": "Ireland"}},
+                        ],
+                    },
+                ],
             },
         ],
     },

@@ -309,6 +309,37 @@ a.pm-card:focus-visible .pm-card__title,
   padding-inline-start: 1.1rem;
 }
 
+/* Acknowledged people: name with a quieter detail line beneath it; the list marker is dropped, the list semantics stay. */
+.pm-credit-list {
+  display: grid;
+  gap: 0.78rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pm-credit-list__item {
+  display: grid;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.pm-credit-list__name {
+  color: var(--book-fg);
+  font-family: var(--pm-type-reading-family);
+  font-size: var(--pm-type-reading-size);
+  font-weight: 600;
+  line-height: 1.34;
+  overflow-wrap: anywhere;
+}
+
+.pm-credit-list__detail {
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  line-height: 1.4;
+}
+
 .pm-meta-card--lead .pm-meta-card__body {
   gap: 0.96rem;
 }

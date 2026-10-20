@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+from html import unescape
 from pathlib import Path
 from urllib.parse import quote
 
@@ -3270,7 +3271,7 @@ def test_team_page_uses_structured_credits_cards_without_legacy_text(
     assert '<table' not in html
     assert 'pm-grid--team-lead' in html
     assert 'pm-grid--team-corpus' in html
-    assert html.count('pm-card pm-card--material pm-meta-card') == 6
+    assert html.count('pm-card pm-card--material pm-meta-card') == 10  # 2 lead + 4 corpus + 4 reference-speaker groups
     assert html.count('pm-meta-card--lead') == 2
     assert 'pm-meta-card--info' not in html
     if ui_lang == 'de':
@@ -3300,15 +3301,56 @@ def test_team_page_uses_structured_credits_cards_without_legacy_text(
     assert 'Theresa Fischer, M.A.' in html
     assert 'Dr. Edmund Voges' in html
     assert 'Ariane Wenz' in html
-    assert 'Dr. Pedro Alonso' in html
-    assert 'Ana Goás Pérez' in html
-    assert 'Aoife Holmes-Rein, M.A.' in html
-    assert 'Aoife Holmes-Rein, M.A.' in html
+    assert 'Aoife Holmes-Rein, M.A.' not in html
     assert 'Sprachenzentrum' in html or 'Language Center' in html
     assert 'Dank' in html or 'Acknowledgements' in html
     assert expected_role_label in html
     assert expected_focus_label in html
     assert expected_corpus_label in html
+
+
+REFERENCE_SPEAKER_GROUPS = {
+    "de": [
+        ("Spanisch", [("Dr. Pedro Alonso García", "Spanien"), ("Mauricio Esteban Bucarey-Altamirano", "Chile"), ("Renata Freyre Castro", "Mexiko"), ("Ana Goás Pérez", "Spanien"), ("Eine weitere Referenzsprecherin", "auf eigenen Wunsch ohne Namensnennung")]),
+        ("Französisch", [("Claire Köhling", "Frankreich"), ("Ianek Mouralis", "Frankreich")]),
+        ("Deutsch", [("Sina Beuermann", "Deutschland"), ("Mauri Gökdel", "Deutschland")]),
+        ("Englisch", [("Victoria Gath", "Großbritannien"), ("Dr. Barbara Ann Güldenring", "USA"), ("Aoife Holmes-Rein", "Irland")]),
+    ],
+    "en": [
+        ("Spanish", [("Dr. Pedro Alonso García", "Spain"), ("Mauricio Esteban Bucarey-Altamirano", "Chile"), ("Renata Freyre Castro", "Mexico"), ("Ana Goás Pérez", "Spain"), ("A further reference speaker", "name withheld at her own request")]),
+        ("French", [("Claire Köhling", "France"), ("Ianek Mouralis", "France")]),
+        ("German", [("Sina Beuermann", "Germany"), ("Mauri Gökdel", "Germany")]),
+        ("English", [("Victoria Gath", "Great Britain"), ("Dr. Barbara Ann Güldenring", "USA"), ("Aoife Holmes-Rein", "Ireland")]),
+    ],
+}
+
+
+@pytest.mark.parametrize("ui_lang", ["de", "en"])
+def test_team_page_acknowledges_reference_speakers_by_group(url_app: Flask, ui_lang: str) -> None:
+    html = url_app.test_client().get(f"/{ui_lang}/project/team").get_data(as_text=True)
+
+    # the paragraph names the concept in real emphasis, not only in the source markdown
+    assert '<em>tertium comparationis</em>' in html
+    assert '*tertium' not in html
+    # the section heading stands once above the paragraphs; the cards beneath must not repeat it
+    heading = "Dank" if ui_lang == "de" else "Acknowledgements"
+    assert len(re.findall(rf'<h2[^>]*>\s*{heading}\s*</h2>', html)) == 1
+    assert 'M.A.' not in html[html.index('pm-credit-list') :]
+
+    positions = []
+    for group_title, people in REFERENCE_SPEAKER_GROUPS[ui_lang]:
+        title_position = html.index(f'pm-meta-card__title">{group_title}</h3>')
+        positions.append(title_position)
+        rendered = re.findall(
+            r'<span class="pm-credit-list__name">(.*?)</span>\s*<span class="pm-credit-list__detail">(.*?)</span>',
+            html[title_position : title_position + 2500],
+            flags=re.S,
+        )[: len(people)]
+        # sorted by family name within the group; the unnamed speaker closes the Spanish group; origin only where documented
+        assert [(unescape(n), unescape(d)) for n, d in rendered] == people, group_title
+    assert positions == sorted(positions)
+    assert 'Ecuador' not in html and 'Ecuadorian' not in html and 'ecuatoriano' not in html
+    assert 'Gualotuña' not in html and 'Marcela' not in html
 
 
 def test_team_page_uses_shared_two_column_team_grid_rules(url_app: Flask) -> None:
