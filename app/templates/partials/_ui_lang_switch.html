@@ -1,15 +1,25 @@
+{#- A language whose switch URL is `None` does not exist for the current page (app/src/app/page_languages.py): it is shown
+    as a muted, non-interactive entry without `data-ui-lang-link`, so the client-side switch sync leaves it alone. -#}
+{% macro ui_lang_switch_entry(code, label_key) -%}
+{% set language = t(label_key) %}
+{% if ui_lang_switch_urls[code] %}
+  <a href="{{ ui_lang_switch_urls[code] }}"
+     data-ui-lang-link="{{ code }}"
+     class="promat-topbar__language-link {{ 'is-active' if current_ui_lang == code else '' }}"
+     {% if current_ui_lang == code %}aria-current="page"{% endif %}
+     title="{{ t('shell.topbar.language_current', language=language) if current_ui_lang == code else t('shell.topbar.language_switch_to', language=language) }}"
+     lang="{{ code }}">{{ code | upper }}</a>
+{% else %}
+  <span class="promat-topbar__language-link is-unavailable"
+        role="link"
+        aria-disabled="true"
+        title="{{ t('shell.topbar.language_unavailable', language=language) }}"
+        aria-label="{{ code | upper }}: {{ t('shell.topbar.language_unavailable', language=language) }}"
+        lang="{{ code }}">{{ code | upper }}</span>
+{% endif %}
+{%- endmacro %}
 <div class="promat-topbar__language-switch" role="group" aria-label="{{ t('shell.topbar.language_switch') }}">
-  <a href="{{ ui_lang_switch_urls.de }}"
-     data-ui-lang-link="de"
-     class="promat-topbar__language-link {{ 'is-active' if current_ui_lang == 'de' else '' }}"
-     {% if current_ui_lang == 'de' %}aria-current="page"{% endif %}
-     title="{{ t('shell.topbar.language_current', language=t('shell.topbar.language_de')) if current_ui_lang == 'de' else t('shell.topbar.language_switch_to', language=t('shell.topbar.language_de')) }}"
-     lang="de">DE</a>
+  {{ ui_lang_switch_entry('de', 'shell.topbar.language_de') }}
   <span class="promat-topbar__language-separator" aria-hidden="true">|</span>
-  <a href="{{ ui_lang_switch_urls.en }}"
-     data-ui-lang-link="en"
-     class="promat-topbar__language-link {{ 'is-active' if current_ui_lang == 'en' else '' }}"
-     {% if current_ui_lang == 'en' %}aria-current="page"{% endif %}
-     title="{{ t('shell.topbar.language_current', language=t('shell.topbar.language_en')) if current_ui_lang == 'en' else t('shell.topbar.language_switch_to', language=t('shell.topbar.language_en')) }}"
-     lang="en">EN</a>
+  {{ ui_lang_switch_entry('en', 'shell.topbar.language_en') }}
 </div>

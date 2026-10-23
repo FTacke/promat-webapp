@@ -164,6 +164,15 @@ languages:
       data_as_of: null
       license: null
       doi: null
+    research_design:
+      # Rolf Kreyer's article, imported verbatim from his manuscript (content/research/english/design.json);
+      # published on the platform in English only.
+      resource_id: promat-design-en
+      status: published
+      creators: [rolf-kreyer]
+      date_published: "2026"
+      license: null
+      doi: null
     teaching_resource:
       resource_id: promat-teaching-en
       title: "Pronunciation Matters: English Pronunciation Teaching Resources"

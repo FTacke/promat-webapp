@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -21,6 +22,7 @@ from ..teaching_content import (
     resolve_teaching_edition_ui_lang,
 )
 from .public_page_content_data import (
+    ENGLISH_DESIGN_SUPPLEMENTS,
     PROJECT_PAGES_CONTENT,
     SPANISH_DESIGN_PAGE_CONTENT,
 )
@@ -207,6 +209,11 @@ def _article_header(content: dict[str, Any] | None, resource: dict[str, Any] | N
         "abstract_html": content["abstract_html"],
         "keywords_label": get_text(ui_lang, "research.design.article.keywords"),
         "keywords": list(content.get("keywords") or []),
+        # Manuscript references of imported articles (rendered as `data-source`, checked against the DOCX in tests).
+        "abstract_source": content.get("abstract_source"),
+        "keywords_source": content.get("keywords_source"),
+        "abstract_label_source": content.get("abstract_label_source"),
+        "keywords_label_source": content.get("keywords_label_source"),
     }
 
 
@@ -519,8 +526,105 @@ def build_teaching_select_page(ui_lang: str) -> dict[str, Any]:
 
 PROJECT_PAGES: dict[str, dict[str, Any]] = PROJECT_PAGES_CONTENT
 
-#: Public design articles by corpus. A corpus without an entry shows the plain "in preparation" state.
+#: Public design articles by corpus. A corpus without an entry here or in RESEARCH_DESIGN_ARTICLES shows the plain
+#: "in preparation" state.
 RESEARCH_DESIGN_PAGES: dict[str, dict[str, Any]] = {"spanish": SPANISH_DESIGN_PAGE_CONTENT}
+
+#: Design articles imported verbatim from an author's manuscript (docs/spec/platform-data-files.md, "Research design
+#: articles"): `design.json` from scripts/import_design_article_docx.py, `design_materials.json` (the corpus task
+#: catalogs) from scripts/sync_design_article_materials.py, and the platform copy that frames those materials.
+RESEARCH_DESIGN_ARTICLES: dict[str, dict[str, Any]] = {
+    "english": {
+        "content_dir": Path("content/research/english"),
+        "supplements": ENGLISH_DESIGN_SUPPLEMENTS,
+    },
+}
+
+
+def _content_source_path(relative: Path) -> Path:
+    """Absolute path of a file under the versioned `content/` space (shipped in the image, never `docs/`)."""
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / relative
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(f"content file not found: {relative.as_posix()}")
+
+
+@lru_cache(maxsize=None)
+def _load_design_article_files(language_slug: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    content_dir = RESEARCH_DESIGN_ARTICLES[language_slug]["content_dir"]
+    article = json.loads(_content_source_path(content_dir / "design.json").read_text(encoding="utf-8"))
+    materials = json.loads(_content_source_path(content_dir / "design_materials.json").read_text(encoding="utf-8"))
+    return article, materials
+
+
+def _supplement_element(supplement: dict[str, Any], material: dict[str, Any], ui_lang: str) -> dict[str, Any]:
+    """Expandable list of catalog items, marked as platform material (not part of the author's manuscript)."""
+    items = material["items"]
+    pairs = [item for item in items if " – " in item["text"] or " - " in item["text"]]
+    singles = [item for item in items if item not in pairs]
+    counts = {
+        "item_count": len(items),
+        "first_number": items[0]["item_number"],
+        "last_number": items[-1]["item_number"],
+        "single_count": len(singles),
+        "last_single_number": singles[-1]["item_number"] if singles else "",
+        "pair_count": len(pairs),
+        "first_pair_number": pairs[0]["item_number"] if pairs else "",
+    }
+    return {
+        "type": "pm_expandable_text",
+        "id": supplement["id"],
+        "supplement": material["source"],
+        "eyebrow": get_text(ui_lang, "research.design.supplement.eyebrow"),
+        "title": _localized(supplement["title"], ui_lang),
+        "summary_html": _localized(supplement["summary_html"], ui_lang).format(**counts),
+        "list_layout": supplement.get("list_layout"),
+        "items": [{"label": item["item_number"], "text": item["text"], "item_id": item["item_id"]} for item in items],
+    }
+
+
+def _imported_design_page(language_slug: str, ui_lang: str) -> dict[str, Any]:
+    """Page payload of an imported design article: manuscript blocks unchanged, corpus materials inserted after them."""
+    article, materials = _load_design_article_files(language_slug)
+    supplements = RESEARCH_DESIGN_ARTICLES[language_slug]["supplements"]
+    sections: list[dict[str, Any]] = []
+    for section in article["sections"]:
+        heading = {
+            "heading": section["heading"],
+            "heading_number": section["heading_number"],
+            "heading_source": section["heading_source"],
+        }
+        if "references" in section:
+            sections.append({**heading, "list_class": section["list_class"], "bullets_html": list(section["references"])})
+            continue
+        blocks: list[dict[str, Any]] = []
+        content_elements: list[dict[str, Any]] = []
+        for block in section["blocks"]:
+            blocks.append(block)
+            block_source = block.get("number_source") or block.get("source")
+            for supplement in supplements:
+                if supplement["after_source"] == block_source:
+                    content_elements.append(_supplement_element(supplement, materials[supplement["material"]], ui_lang))
+                    blocks.append({"type": "content_element", "ref": supplement["id"]})
+        sections.append({**heading, "blocks": blocks, "content_elements": content_elements})
+    return {
+        "title": article["title"],
+        "title_html": article["title_html"],
+        "title_source": article["title_source"],
+        "article_header": {
+            "abstract_html": article["abstract_html"],
+            "keywords": article["keywords"],
+            "abstract_source": article["abstract_source"],
+            "keywords_source": article["keywords_source"],
+            # The manuscript's own "Abstract"/"Keywords" labels coincide with the platform labels that are shown.
+            "abstract_label_source": article["abstract_label"]["source"],
+            "keywords_label_source": article["keywords_label"]["source"],
+        },
+        "page_kind": "reading",
+        "access": "public",
+        "sections": sections,
+    }
 
 
 def build_project_page(ui_lang: str, page_slug: str) -> dict[str, Any] | None:
@@ -622,6 +726,10 @@ def build_research_page(ui_lang: str, language_slug: str, page_slug: str) -> dic
 
     if page_slug == "design":
         design_content = RESEARCH_DESIGN_PAGES.get(language_slug)
+        if design_content is None and language_slug in RESEARCH_DESIGN_ARTICLES:
+            design_content = _imported_design_page(language_slug, ui_lang)
+            design_content["nav_current_label"] = page_title
+            design_content["eyebrow"] = f"{get_section_label('research', ui_lang)} · {title}"
         if design_content is None:
             # No design description yet: say so plainly; the page is neither indexable nor a citable resource.
             return {

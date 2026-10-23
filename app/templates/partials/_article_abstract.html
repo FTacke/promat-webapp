@@ -1,12 +1,12 @@
 {# Abstract and keywords of a scholarly article page: plain article text, no container. #}
 {% set article = promat_page.article_header %}
 <section class="pm-article-abstract pm-reading" aria-labelledby="pm-article-abstract-title">
-  <h2 class="pm-article-abstract__title" id="pm-article-abstract-title">{{ article.abstract_label }}</h2>
-  <p class="pm-article-abstract__text promat-content-block__text">{{ article.abstract_html | safe }}</p>
+  <h2 class="pm-article-abstract__title" id="pm-article-abstract-title"{% if article.abstract_label_source %} data-source="{{ article.abstract_label_source }}"{% endif %}>{{ article.abstract_label }}</h2>
+  <p class="pm-article-abstract__text promat-content-block__text"{% if article.abstract_source %} data-source="{{ article.abstract_source }}"{% endif %}>{{ article.abstract_html | safe }}</p>
   {% if article.keywords %}
   <div class="pm-article-abstract__keywords">
-    <h3 class="pm-article-abstract__keywords-label" id="pm-article-keywords-title">{{ article.keywords_label }}</h3>
-    <p class="pm-article-abstract__keyword-list" aria-labelledby="pm-article-keywords-title">{{ article.keywords | join(' · ') }}</p>
+    <h3 class="pm-article-abstract__keywords-label" id="pm-article-keywords-title"{% if article.keywords_label_source %} data-source="{{ article.keywords_label_source }}"{% endif %}>{{ article.keywords_label }}</h3>
+    <p class="pm-article-abstract__keyword-list" aria-labelledby="pm-article-keywords-title"{% if article.keywords_source %} data-source="{{ article.keywords_source }}"{% endif %}>{{ article.keywords | join(' · ') }}</p>
   </div>
   {% endif %}
 </section>

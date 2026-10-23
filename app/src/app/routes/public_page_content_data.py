@@ -1182,3 +1182,32 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
         ],
     },
 }
+
+
+#: Corpus materials shown alongside the imported English design article (content/research/english/design.json).
+#: They are platform additions, not part of the author's manuscript: the items come verbatim from the task catalogs
+#: (content/research/english/design_materials.json), the copy below only frames them. `after_source` names the
+#: manuscript block (DOCX paragraph reference) after which the material is shown. The English design article exists
+#: in English only (app/src/app/page_languages.py), so the copy is English only.
+ENGLISH_DESIGN_SUPPLEMENTS: tuple[dict[str, object], ...] = (
+    {
+        "id": "english-reading-text",
+        "material": "text",
+        "after_source": "p27",
+        # Text segments are phrases, not single words: one column keeps the reading order obvious.
+        "list_layout": "single-column",
+        "title": {"en": "Reading text as used in the recordings"},
+        "summary_html": {
+            "en": "The reading text exactly as stored in the task catalogue of the English corpus and presented to the speakers, in {item_count} segments ({first_number}–{last_number}). The catalogue wording is reproduced unchanged; it is not aligned with text (2) above.",
+        },
+    },
+    {
+        "id": "english-wordlist",
+        "material": "wordlist",
+        "after_source": "p32",
+        "title": {"en": "Word list as used in the recordings"},
+        "summary_html": {
+            "en": "The word list exactly as stored in the task catalogue of the English corpus: {item_count} items, {single_count} single words ({first_number}–{last_single_number}) followed by {pair_count} minimal pairs ({first_pair_number}–{last_number}).",
+        },
+    },
+)

@@ -1,8 +1,13 @@
 <section
-  class="pm-expandable"
+  class="pm-expandable{{ ' pm-expandable--supplement' if content_element.supplement else '' }}{{ ' pm-expandable--single-column' if content_element.list_layout == 'single-column' else '' }}"
   aria-labelledby="{{ content_element.id }}-title"
   data-pm-expandable
+  {%- if content_element.supplement %} data-supplement="{{ content_element.supplement }}"{% endif %}
 >
+  {#- `supplement` = material added by the platform from a corpus task catalog, not part of the article's manuscript. -#}
+  {% if content_element.eyebrow %}
+  <p class="pm-expandable__eyebrow">{{ content_element.eyebrow }}</p>
+  {% endif %}
   <div class="pm-expandable__header">
     <h3 class="pm-expandable__title" id="{{ content_element.id }}-title">{{ content_element.title }}</h3>
     <button
@@ -22,7 +27,7 @@
   <div class="pm-expandable__viewport" id="{{ content_element.id }}-content" data-pm-expandable-viewport>
     <ol class="pm-expandable__list">
       {% for item in content_element['items'] %}
-      <li class="pm-expandable__item">
+      <li class="pm-expandable__item"{% if item.item_id %} data-item-id="{{ item.item_id }}"{% endif %}>
         <span class="pm-expandable__label">{{ item.label }}</span>
         <span class="pm-expandable__text">{{ item.text }}</span>
       </li>

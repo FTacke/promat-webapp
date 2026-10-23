@@ -9,6 +9,7 @@ from typing import Any
 import re
 import time
 import uuid
+from urllib.parse import urlencode
 
 from flask import Blueprint, abort, current_app, g, jsonify, make_response, redirect, render_template, request, send_file, session, url_for
 from itsdangerous import BadSignature, URLSafeSerializer
@@ -24,6 +25,7 @@ from ..auth import services as auth_services
 from ..content_navigation import build_content_header as build_shared_content_header
 from ..extensions import limiter
 from ..i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, resolve_request_ui_language
+from ..page_languages import available_page_path, page_ui_languages, unavailable_ui_language_target
 from ..return_targets import safe_return_target
 from ..research_capabilities import get_research_page_surface_mode
 from ..research_access import requires_research_auth
@@ -71,6 +73,19 @@ from .public_content import (
 from .public_page_content_data import LEGACY_PROJECT_PAGE_REDIRECTS
 
 blueprint = Blueprint("public", __name__)
+
+
+@blueprint.before_request
+def redirect_to_available_ui_language():
+    """A page that does not exist in the requested UI language redirects to its existing edition (page_languages.py).
+
+    The query string is kept except the language selectors (`lang`, `ui_lang`), which named the missing language.
+    """
+    target = unavailable_ui_language_target(request.path)
+    if target is None:
+        return None
+    query = urlencode([(key, value) for key, value in request.args.items(multi=True) if key not in {"lang", "ui_lang"}])
+    return _redirect(f"{target}?{query}" if query else target)
 
 
 _ACCESS_REQUEST_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -421,6 +436,9 @@ def _build_content_header(
     if page.get("title_html"):
         # Pages may mark the project name in an article title (`<em>`); breadcrumbs and `<title>` stay plain text.
         header["title_html"] = page["title_html"]
+    if page.get("title_source"):
+        # Imported manuscripts: the title's DOCX reference, checked character by character in the tests.
+        header["title_source"] = page["title_source"]
     return header
 
 
@@ -458,11 +476,13 @@ def _resolve_href_key(href_key: str, ui_lang: str) -> str:
 
     section_key, language_slug, page_slug = parts
     if section_key == "research":
-        return url_for(
-            "public.research_language_page",
-            ui_lang=ui_lang,
-            language_slug=language_slug,
-            page_slug=page_slug,
+        return available_page_path(
+            url_for(
+                "public.research_language_page",
+                ui_lang=ui_lang,
+                language_slug=language_slug,
+                page_slug=page_slug,
+            )
         )
     if section_key == "teaching":
         return url_for(
@@ -506,11 +526,14 @@ def _panel_items_for_language(section_key: str, language_slug: str, ui_lang: str
         return [
             {
                 "label": get_research_page_label(page_slug, ui_lang),
-                "href": url_for(
-                    "public.research_language_page",
-                    ui_lang=ui_lang,
-                    language_slug=language_slug,
-                    page_slug=page_slug,
+                # A single-language page is linked to its existing edition directly (no redirect hop).
+                "href": available_page_path(
+                    url_for(
+                        "public.research_language_page",
+                        ui_lang=ui_lang,
+                        language_slug=language_slug,
+                        page_slug=page_slug,
+                    )
                 ),
                 "page_slug": page_slug,
                 "is_protected": requires_research_auth(page_slug=page_slug),
@@ -639,10 +662,11 @@ def _build_page_meta(page: dict[str, Any], ui_lang: str, *, indexable: bool, can
     meta["canonical"] = publication.canonical_url(path)
     alternates = page.get("meta_alternates")
     if alternates is None:
+        available = page_ui_languages(path)
         alternates = {
             target: swapped
             for target in SUPPORTED_UI_LANGUAGES
-            if (swapped := _swap_ui_lang(path, ui_lang, target)) is not None
+            if target in available and (swapped := _swap_ui_lang(path, ui_lang, target)) is not None
         }
     # hreflang only for real equivalents, always reciprocal and including the page itself.
     if len(alternates) > 1 and ui_lang in alternates:

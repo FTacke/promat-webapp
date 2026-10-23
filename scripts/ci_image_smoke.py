@@ -37,7 +37,7 @@ from app.teaching_content import list_teaching_languages  # noqa: E402
 
 # (path, expected status). Keep in step with scripts/post_deploy_smoke.py.
 LEGAL_PATHS = ("/impressum", "/de/impressum", "/en/impressum", "/de/privacy", "/en/privacy")
-PUBLIC_PATHS = ("/de", "/en", "/de/teaching", "/en/teaching", "/de/teaching/spanish/which-pronunciation", "/de/research/spanish/design", "/en/research/spanish/design")
+PUBLIC_PATHS = ("/de", "/en", "/de/teaching", "/en/teaching", "/de/teaching/spanish/which-pronunciation", "/de/research/spanish/design", "/en/research/spanish/design", "/en/research/english/design")
 PROTECTED_PATHS = ("/de/research/spanish/speakers", "/de/research/spanish/player/x/wordlist")
 
 

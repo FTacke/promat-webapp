@@ -21,6 +21,7 @@ os.environ.setdefault("PROMAT_PUBLIC_ROOT", str(TEST_REPO_ROOT / "public"))
 
 from app.config.data_conventions import build_person_id, build_session_id, parse_person_id, parse_session_id
 from app import register_context_processors
+from app.page_languages import available_page_path
 from app.research_presets import clear_research_preset_caches
 from app.research_player_runtime import (
     _build_interview_text_segments,
@@ -1714,7 +1715,8 @@ def test_research_language_root_renders_public_landing_with_real_page_links(
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert f'href="/{ui_lang}/research/{language_slug}/design"' in html
+    # A single-language design page (English) is linked to its existing edition (app/src/app/page_languages.py).
+    assert f'href="{available_page_path(f"/{ui_lang}/research/{language_slug}/design")}"' in html
     assert f'href="/{ui_lang}/research/{language_slug}/speakers"' in html
     assert f'href="/{ui_lang}/research/{language_slug}/recordings"' not in html
     assert f'href="/{ui_lang}/research/{language_slug}/comparison"' in html
@@ -2935,9 +2937,10 @@ def test_spanish_design_editions_share_structure_lists_and_references() -> None:
     assert len(sections) == 9
 
 
-@pytest.mark.parametrize("language_slug", ["french", "german", "english"])
+@pytest.mark.parametrize("language_slug", ["french", "german"])
 @pytest.mark.parametrize(("ui_lang", "label"), [("de", "Erhebungsdesign"), ("en", "Data Collection Design")])
 def test_design_navigation_label_is_shared_by_all_corpora_without_changing_urls(url_app: Flask, ui_lang: str, label: str, language_slug: str) -> None:
+    """Corpora without a design article: the pending page is titled with the shared label."""
     client = url_app.test_client()
 
     response = client.get(f"/{ui_lang}/research/{language_slug}/design")
@@ -2947,6 +2950,13 @@ def test_design_navigation_label_is_shared_by_all_corpora_without_changing_urls(
     assert f'aria-current="page">{label}</span>' in html
     assert f"{label}: " in html[html.index("<h1"):html.index("</h1>")]
     assert f'href="/{ui_lang}/research/{language_slug}/design"' in html
+
+
+def test_english_design_article_uses_the_shared_design_label(url_app: Flask) -> None:
+    """The English article keeps the shared navigation label; its own title is the article title."""
+    html = url_app.test_client().get("/en/research/english/design").get_data(as_text=True)
+    assert 'aria-current="page">Data Collection Design</span>' in html
+    assert 'href="/en/research/english/design"' in html
 
 
 def test_explicit_none_marks_an_edition_without_the_element() -> None:
@@ -3438,9 +3448,11 @@ def test_research_detail_page_uses_full_breadcrumb_from_depth_three(url_app: Fla
 def test_research_design_page_stays_public(url_app: Flask, ui_lang: str, language_slug: str) -> None:
     client = url_app.test_client()
 
-    response = client.get(f"/{ui_lang}/research/{language_slug}/design")
+    # A single-language design page redirects to its existing edition first; it must still never ask for a login.
+    response = client.get(f"/{ui_lang}/research/{language_slug}/design", follow_redirects=True)
 
     assert response.status_code == 200
+    assert response.request.path == available_page_path(f"/{ui_lang}/research/{language_slug}/design")
 
 
 @pytest.mark.parametrize("ui_lang", ["de", "en"])

@@ -29,6 +29,36 @@
 </div>
 {%- endmacro %}
 
+{#- Grouped two-column table of an imported article (scripts/import_design_article_docx.py): each group heading is a
+    row header spanning the table; the column headers are platform labels for assistive technology only, the visible
+    table carries nothing but the manuscript's cells. On narrow screens rows stack (see `.pm-article-grouped-table`). -#}
+{% macro render_grouped_table(table, label='') -%}
+<div class="pm-research-table-wrap promat-content-block__table-wrap pm-article-grouped-table-wrap"{% if label %} role="region" tabindex="0" aria-label="{{ label }}"{% endif %}>
+  <table class="pm-research-table promat-content-block__table pm-article-grouped-table" data-source="{{ table.source }}">
+    <colgroup><col><col></colgroup>
+    <thead class="sr-only">
+      <tr>
+        <th scope="col">{{ t('research.design.table.phenomenon') }}</th>
+        <th scope="col">{{ t('research.design.table.evidence') }}</th>
+      </tr>
+    </thead>
+    {% for group in table.groups %}
+    <tbody class="pm-article-grouped-table__group">
+      <tr class="pm-article-grouped-table__group-row">
+        <th scope="colgroup" colspan="2" class="pm-article-grouped-table__group-heading" data-source="{{ group.heading.source }}">{{ group.heading.html | safe }}</th>
+      </tr>
+      {% for row in group.rows %}
+      <tr>
+        <th scope="row" class="pm-article-grouped-table__phenomenon" data-source="{{ row[0].source }}">{{ row[0].html | safe }}</th>
+        <td class="pm-article-grouped-table__evidence" data-source="{{ row[1].source }}">{{ row[1].html | safe }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    {% endfor %}
+  </table>
+</div>
+{%- endmacro %}
+
 
 {% block content %}
 <article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }}" aria-labelledby="promat-page-title">
@@ -98,13 +128,31 @@
       {% if has_block_body %}
       <div class="promat-content-block pm-panel pm-reading">
         {% if section.heading %}
-        <h2 class="promat-content-block__title pm-panel__title">{{ section.heading }}</h2>
+        <h2 class="promat-content-block__title pm-panel__title"{% if section.heading_source %} data-source="{{ section.heading_source }}"{% endif %}>
+          {%- if section.heading_number %}<span class="pm-article-heading__number" data-source-number="{{ section.heading_source }}">{{ section.heading_number }}</span> {% endif -%}
+          {{ section.heading }}</h2>
         {% endif %}
         {% if section.blocks %}
-        {#- Ordered body: paragraphs, tables and list elements in the sequence of the article. -#}
+        {#- Ordered body: paragraphs, tables and list elements in the sequence of the article. `data-source` marks text
+            imported from an author's manuscript (DOCX reference); platform additions never carry it. -#}
         {% for block in section.blocks %}
           {% if block.type == 'paragraph_html' %}
-          <p class="promat-content-block__text">{{ block.html | safe }}</p>
+          <p class="promat-content-block__text"{% if block.source %} data-source="{{ block.source }}"{% endif %}>{{ block.html | safe }}</p>
+          {% elif block.type == 'subheading' %}
+          {#- The subheading number is part of the manuscript's heading text ("2.1<tab>…"), unlike the automatic chapter
+              and example numbers, which carry `data-source-number`. -#}
+          <h3 class="pm-article-subheading" data-source="{{ block.source }}"><span class="pm-article-heading__number">{{ block.number }}</span> {{ block.html | safe }}</h3>
+          {% elif block.type == 'example' %}
+          <div class="pm-article-example">
+            <span class="pm-article-example__number" data-source-number="{{ block.number_source }}">{{ block.number }}</span>
+            <div class="pm-article-example__body">
+              {% for paragraph in block.paragraphs %}
+              <p class="promat-content-block__text pm-article-example__text" data-source="{{ paragraph.source }}">{{ paragraph.html | safe }}</p>
+              {% endfor %}
+            </div>
+          </div>
+          {% elif block.type == 'grouped_table' %}
+          {{ render_grouped_table(block, label=(section.heading_number ~ ' ' ~ section.heading) if section.heading_number else section.heading) }}
           {% elif block.type == 'table' %}
           {{ render_content_table(block, html_cells=true, label=section.heading) }}
           {% elif block.type == 'content_element' %}
@@ -142,7 +190,11 @@
         {% if section.bullets_html %}
         <ul class="promat-content-block__list{{ ' ' ~ section.list_class if section.list_class else '' }}">
           {% for bullet in section.bullets_html %}
+          {% if bullet is mapping %}
+          <li data-source="{{ bullet.source }}">{{ bullet.html | safe }}</li>
+          {% else %}
           <li>{{ bullet | safe }}</li>
+          {% endif %}
           {% endfor %}
         </ul>
         {% endif %}

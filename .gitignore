@@ -74,3 +74,5 @@ scripts/research_data_intake/.mfa_cache/
 
 # Ad-hoc production data exports attached to run logs (never versioned)
 docs/agent-runs/*.zip
+# Author manuscripts (e.g. DOCX of design articles) stay local: not public, only their verbatim import under content/ is versioned.
+docs/author-sources/

@@ -212,6 +212,17 @@ textarea:focus-visible {
   font-weight: 600;
 }
 
+/* A UI language the current page does not exist in (app/src/app/page_languages.py): visibly muted, not a link. */
+.promat-topbar__language-link.is-unavailable,
+.promat-topbar__language-link.is-unavailable:hover {
+  background: none;
+  color: var(--book-muted);
+  opacity: 0.45;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  cursor: not-allowed;
+}
+
 .promat-topbar__language-separator {
   color: var(--book-border-strong);
 }
@@ -1092,6 +1103,134 @@ textarea:focus-visible {
   color: var(--book-muted);
   font-size: var(--pm-reading-material-summary-font-size);
   line-height: var(--pm-type-reading-line);
+}
+
+/* Supplementary corpus material inside an imported article (catalog items, not the author's text): the same
+   expandable, set apart by a quiet tinted ground and an eyebrow that names it as platform material. */
+.pm-expandable--supplement {
+  background: var(--pm-surface-tinted);
+}
+
+.pm-expandable__eyebrow {
+  margin: 0 0 var(--pm-space-xs);
+  color: var(--book-muted);
+  font-family: var(--book-font-ui);
+  font-size: var(--pm-type-meta-size);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pm-expandable--single-column .pm-expandable__list {
+  column-count: 1;
+}
+
+/* Imported scholarly article (docs/spec/platform-data-files.md, "Research design articles"): the manuscript's own
+   chapter and example numbering, its subheadings and its numbered example texts, in the reading type of the page. */
+.pm-article-heading__number {
+  font-variant-numeric: tabular-nums;
+}
+
+.promat-content-block .pm-article-subheading {
+  margin: var(--pm-reading-heading-gap-before-h3) 0 0;
+  font-size: var(--pm-type-reading-h3-size);
+  line-height: var(--pm-type-reading-h3-line);
+  letter-spacing: var(--pm-type-reading-h3-tracking);
+  font-weight: var(--pm-type-reading-h3-weight);
+}
+
+.pm-article-subheading + :where(p, .pm-article-example) {
+  margin-top: var(--pm-reading-heading-gap-after-h3);
+}
+
+.pm-article-example {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr);
+  margin-block: var(--pm-reading-paragraph-gap);
+}
+
+.pm-article-example__number {
+  font-family: var(--pm-type-reading-family);
+  font-size: var(--pm-type-reading-size);
+  line-height: var(--pm-type-reading-line);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-article-example__text {
+  /* Keep the manuscript's spacing (e.g. two spaces between sentences) instead of collapsing it. */
+  white-space: pre-wrap;
+}
+
+.pm-reading .pm-article-example__text + .pm-article-example__text {
+  margin-top: 0;
+}
+
+.pm-article-example + p {
+  margin-top: var(--pm-reading-paragraph-gap);
+}
+
+/* Grouped two-column phenomenon table: group headings span the table, the phenomenon column stays a readable label
+   column, long example lists wrap; below 720px the rows stack so nothing is cut off and the page never scrolls sideways. */
+.pm-research-table.promat-content-block__table.pm-article-grouped-table {
+  min-width: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.pm-article-grouped-table col:nth-child(1) { width: 36%; }
+.pm-article-grouped-table col:nth-child(2) { width: 64%; }
+
+.pm-research-table.promat-content-block__table.pm-article-grouped-table th {
+  font-size: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  overflow-wrap: break-word;
+}
+
+.pm-research-table.pm-article-grouped-table .pm-article-grouped-table__group-heading {
+  padding-top: 1.1rem;
+  border-bottom: 1px solid var(--pm-border-strong);
+  color: var(--book-fg);
+  font-weight: 600;
+}
+
+.pm-research-table.pm-article-grouped-table .pm-article-grouped-table__phenomenon {
+  padding-left: var(--pm-space-sm);
+  color: var(--book-fg);
+  font-weight: 400;
+}
+
+.pm-article-grouped-table__group:first-of-type .pm-article-grouped-table__group-heading {
+  padding-top: 0.4rem;
+}
+
+@media (max-width: 719px) {
+  .pm-article-grouped-table,
+  .pm-article-grouped-table tbody,
+  .pm-article-grouped-table tr,
+  .pm-article-grouped-table th,
+  .pm-article-grouped-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .pm-article-grouped-table colgroup {
+    display: none;
+  }
+
+  .pm-research-table.pm-article-grouped-table .pm-article-grouped-table__phenomenon {
+    padding: 0.7rem 0 0.15rem var(--pm-space-xs);
+    border-bottom: 0;
+    font-weight: 500;
+  }
+
+  .pm-research-table.pm-article-grouped-table .pm-article-grouped-table__evidence {
+    padding: 0 0 0.7rem var(--pm-space-xs);
+  }
+
+  .pm-article-example {
+    grid-template-columns: 2.2rem minmax(0, 1fr);
+  }
 }
 
 /* Scholarly article front matter (design article): title, byline and dates, abstract and keywords set as plain article

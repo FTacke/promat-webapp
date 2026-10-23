@@ -62,3 +62,22 @@ def test_design_article_items_match_the_canonical_task_catalogs(element_id: str,
     assert not differences, differences
     assert not missing, f"article items without catalog counterpart: {missing}"
     assert len(article) == len(catalog), f"article lists {len(article)} items, catalog {len(catalog)}"
+
+
+ENGLISH_MATERIALS = REPO_ROOT / "content" / "research" / "english" / "design_materials.json"
+ENGLISH_CATALOG_DIR = REPO_ROOT / "data" / "config" / "research_player" / "english" / "task_catalogs"
+
+
+@pytest.mark.data
+@pytest.mark.parametrize("task", ["wordlist", "text"])
+def test_english_design_materials_match_the_canonical_task_catalogs(task: str) -> None:
+    """The English article's corpus materials are a verbatim copy (scripts/sync_design_article_materials.py)."""
+    catalog_path = ENGLISH_CATALOG_DIR / f"{task}.json"
+    if not catalog_path.is_file():
+        pytest.skip(f"{catalog_path.name} is operator-owned runtime config and not present here")
+
+    copy = json.loads(ENGLISH_MATERIALS.read_text(encoding="utf-8"))[task]["items"]
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))["items"]
+    assert copy == [
+        {"item_id": item["item_id"], "item_number": str(item["item_number"]), "text": item["text"]} for item in catalog
+    ]

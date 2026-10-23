@@ -1,0 +1,406 @@
+{
+  "_generated": {
+    "by": "scripts/import_design_article_docx.py",
+    "source": "docs/author-sources/english-design/kreyer-english-design-original.docx",
+    "source_sha256": "af31cc6ec01ec21e8c13cefa9f5dbf3009503d0935ec8ec2f0f278869ae15a6d",
+    "note": "Verbatim import of the author's manuscript. Do not edit by hand; correct the manuscript and re-run the importer."
+  },
+  "title": "Capturing the Pronunciation of Learners of English as a Foreign Language: Data Collection Design for the English Corpus of Pronunciation Matters",
+  "title_html": "Capturing the Pronunciation of Learners of English as a Foreign Language: Data Collection Design for the English Corpus of <em>Pronunciation Matters</em>",
+  "title_source": "p0",
+  "abstract_label": {
+    "text": "Abstract",
+    "source": "p2"
+  },
+  "abstract_html": "The present article presents the data collection design of the English component of the <em>Pronunciation Matters</em> project. The focus of this component is on the systematic elicitation of those pronunciation phenomena, that are particularly likely to cause problems for German learners of English. This is done through a list of isolated words as well as a short text. While previous word lists and texts of this kind are typically employed in the phonetic description of the varieties of English, the material presented in this paper was designed with regard to German learners of English and the typical pronunciation problems that they face. The article describes the elicitation materials and justifies the central selection decisions of the protocol.",
+  "abstract_source": "p3",
+  "keywords_label": {
+    "text": "Keywords",
+    "source": "p5"
+  },
+  "keywords": [
+    "English as a foreign language",
+    "learner phonetics",
+    "pronunciation",
+    "data collection design"
+  ],
+  "keywords_source": "p6",
+  "sections": [
+    {
+      "heading": "Introduction",
+      "heading_number": "1.",
+      "heading_source": "p7",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "Any area of linguistic research that studies phonetic aspects of language and language use has made use of standardized texts. Sweet’s (1890: 66-68) ‘The Young Rat’, the International Phonetics Association’s ‘The North Wind and the Sun’ (1999: 39) or Deterding’s ‘The Boy who Cried Wolf’ (2006: 193), for instance, have widely been used for the description of varieties of English. Similarly, standardized texts such as Jones’ (2019: 33) very short 69-words text ‘Please call Stella’ have been used as diagnostic tests for the assessment of learner pronunciation. However, the latter is rather short and is not especially geared towards problem areas that German learner of English might encounter.",
+          "source": "p8"
+        },
+        {
+          "type": "example",
+          "number": "(1)",
+          "number_source": "p9",
+          "paragraphs": [
+            {
+              "html": "Please call Stella. Ask her to bring these things with her from the store:  Six spoons of fresh snow peas, five thick slabs of blue cheese, and maybe a snack for her brother Bob.  We also need a small plastic snake and a big toy frog for the kids.  She can scoop these things into three red bags, and we will go meet her Wednesday at the train station.",
+              "source": "p9"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_html",
+          "html": "The text above, for examples, does not provide any instances of the long central vowel [ɜː] (<em>bird</em>, <em>heard</em> or <em>fur</em>), which, typically, would be replaced by the long close-mid front [øː] (<em>Söhne</em>) and, hence, an important diagnostic for pronunciation proficiency. Similarly, the text does not showcase any examples of the three centering diphthongs of Received Pronunciation, as in <em>fear</em>, <em>fair</em> or <em>pure</em>, all of which might lead to an open schwa, [ɐ], in learner pronunciation. In cases where problematic sounds or phenomena are featured, the text usually lacks diagnostically highly relevant minimal pairs. For instance, in the text we find both <em>snack</em> and <em>bags</em>. While, these two words can help the researcher to identify final devoicing in the word <em>bags</em>, a more careful selection of words including, say, the words <em>snacks</em>, <em>bag</em> and <em>back</em> would help the researcher to get a clearer understanding of whether and in what contexts final devoicing occurs.",
+          "source": "p10"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "For the purposes of the project it was, thus, necessary to design a text that elicits as specifically as possible potential pronunciation problems that German learners of English might encounter.",
+          "source": "p11"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "The next section will first provide an overview of those problems and will then introduce the diagnostic text used for the project.",
+          "source": "p12"
+        }
+      ]
+    },
+    {
+      "heading": "Pronunciation problems for German learners of English",
+      "heading_number": "2.",
+      "heading_source": "p14",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "Following Kreyer (2023) and König and Gast (2018 [2007]) three major problem areas are considered.1) the sound inventory, 2) allophonic contrasts, and 3) phenomena of connected speech and phonotactics. ",
+          "source": "p15"
+        },
+        {
+          "type": "subheading",
+          "number": "2.1",
+          "html": "The sound inventory",
+          "source": "p16"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Problematic sounds are usually (but not always) identified through a contrastive analysis of the German and English phoneme inventory. As for consonants, a frequent problem are the interdental fricatives or <em>th</em>-sounds, i.e. [θ] and [ð]. German learners of English often replace these by [s, f, t] and [z, v, d], respectively. Another problem relates to the r-sounds. While in English these are either realized as voiced alveolar approximants [ɹ] (in RP) or their retroflex counterpart [ɻ] in GenAm, the German ‘r’ is the uvular fricative [ʁ]. A final problem occurs with the voiced labiodental fricative [v], which is somewhat confusing as the German language does have this sound. Nevertheless, German learners of English will often replace that sound with the English voiced labial-velar approximant [w] syllable-initially in stressed syllables. <em>Very vague</em>, [vɛri veɪɡ], might, therefore, be pronounced as <em>wery wague</em>, [wɛri weɪɡ], <em>invited</em> as [ɪnwaɪtɪd], and so on.",
+          "source": "p17"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Concerning vowels, three major differences can be identified. Maybe the most problematic vowel is the ash, [æ], as in <em>cat</em>, <em>mat</em> or bat. As this sound is not part of the German vowel system, German learners would usually resort to the sound [ɛ], as in <em>Kette</em>, <em>Mett</em> or <em>Bett</em>. The confusion is particularly troublesome, as it might lead to severe misunderstandings, a bat is different from a bet, and to beg someone is not the same as to bag someone, etc. Another major issue is the long central vowel [ɜː] of the English language, as in <em>Sir</em>, <em>her</em> and <em>fur</em>. German learners of English who are not used to the motor routines necessary to produce the sound will fall back on a similar German sound, in this case the long close-mid front vowel [øː], as in <em>schön</em>, <em>böse</em> or <em>Höhe</em>. A final problem relates to the two versions of the schwa that the German language has. In addition to the [ǝ] that we find in English, German has another central sound, open or low schwa [ɐ], which is frequently triggered by an ‘r’ in writing and, hence, is sometimes referred to as ‘vocalised r’ as well. The English word faster [fɑːstə] might be pronounced [fɑːstɐ] or [fɑːstɐː] by German learners of English. As shown above, the problem also becomes relevant with centering diphthongs in RP, e.g. <em>fear</em>, <em>fair</em>, or <em>pure</em>.",
+          "source": "p18"
+        },
+        {
+          "type": "subheading",
+          "number": "2.2",
+          "html": "Allophonic contrasts",
+          "source": "p19"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "While problems of the first kind occur because the sound inventories of English and German differ, the second problem area concerns the realization of sounds, i.e. allophonic processes. A major problem for German learners of English is final devoicing: voiced obstruents (i.e. /b, d, g, v, z, ʒ, dʒ/), are devoiced when they occur in syllable-final position. This problem is particularly severe as it can often lead to meaning changes (e.g. <em>mad – mat</em>, <em>bug – buck</em>, <em>dog - doc</em>). Not quite as severe is the problem that English has two allophones of /l/, clear ‘l’ ([l]) and dark or velarized ‘l’ ([ɫ]). In English, the first is found syllable-initially (e.g. <em>leaf</em>) whereas the second occurs at the end of syllables (e.g. <em>feel</em>) or in front of consonants (e.g. <em>felt</em>). The German language uses the clear ‘l’ in all positions. In contrast to final devoicing, this will not result in meaning changes but it will lead to a clearly discernible accent. Finally, related to allphonic contrasts is the realization of the letter combination -<em>ng</em>- in German and English. While in German (apart from a handful of words like <em>Orange</em> and <em>Ingenieur</em>) we always find the phone [ŋ] as a realization, e.g. <em>Ding</em>, <em>Finger</em>, <em>länger</em>, the English language knows two realizations: [ŋg] is used within a morpheme, e.g. <em>finger</em>, and at the end of a morpheme, if this morpheme is followed by comparative -<em>er</em> or superlative -<em>est</em>, as in <em>longer</em> or <em>longest</em>. In other morpheme-final positions -<em>ng</em> is pronounced as in German, namely [ŋ], as in <em>thing</em>.",
+          "source": "p20"
+        },
+        {
+          "type": "subheading",
+          "number": "2.3",
+          "html": "Phenomena of connected speech and phonotactics",
+          "source": "p21"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Connected speech is an area that often gets less attention than the other two. For German learners of English, however, ignoring phenomena of connected speech will result in a strong German accent. Phenomena like weak forms and linking are typically of spoken English but far less pronounced in spoken German. Weak forms are the result of a reduction or elision. Full vowel can be reduced by either pronouncing a shortened version of the same vowel, e.g. <em>he</em> – [hiː] vs. [hɪ], or by substituting the vowel by schwa, e.g. <em>them</em> – [ðɛm] vs. [ðǝm]. Alternatively (or additionally) weak forms can be created through elision, i.e. the leaving out of sounds: <em>he</em>, for instance, can be realized as [ɪ], <em>them</em> as [ǝm]. In the case of rock’n’roll, the reduction of the <em>and</em> has also made its way into writing. While weak forms, to some extent, also feature in spoken German, the second phenomenon of connected speech, linking, does typically not occur in German. In English it very common and we can distinguish different kinds of linking. A major feature is that of resyllabification. It occurs when the first word ends in a consonant and the second begins in a vowel. <em>Find out</em>, for instance, would rather be pronounced as <em>fine doubt</em>. This feature hardly makes it to the EFL classroom, which is a shame as it can help to mitigate the problem of final devoicing: German students may find it difficult to pronounce [faɪnd aʊt] but will have no problems whatsoever with [faɪn daʊt]. Another set of linking strategies in the English language relate to the r-sounds. Non-rhotic accents of English make use of the ‘linking r’, i.e. they pronounce an ‘r’ in writing if it is followed by a vowel. The ‘intrusive r’ is can occur when one word ends in a vowel and the next one begins in a vowel. Both are illustrated by the phrase <em>India or Asia</em>, which can be pronounced as [ɪndiə<strong>ɹ</strong>ɔː<strong>ɹ</strong>eɪʒə] instead of [ɪndiə ɔː eɪʒə]. Linking with approximants, e.g. [ʃǝʊ ʌs] instead of [ʃǝʊ<sup>w</sup>ʌs], is less relevant and will, therefore, be ignored in the diagnostic text. A major problem in the area of phonotactics is the fact that German (apart from loan words) does not have the voiceless alveolar fricative [s] in syllable initial position in front of a vowel, compare German <em>so </em>[zo:] or <em>Sonne</em> [zɔnǝ] and English <em>so</em> [sǝʊ] or <em>sun </em>[sʌn].",
+          "source": "p22"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Having provided a short description of the major pronunciation issues for German learners of English, the next section will discuss the diagnostic text that was used in the project.",
+          "source": "p23"
+        }
+      ]
+    },
+    {
+      "heading": "The diagnostic test, word list and interview",
+      "heading_number": "3.",
+      "heading_source": "p24",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "In contrast to the other projects in <em>Pronunication Matters</em>, the English informants had to read out loud the text first. This is due to the fact that the informants were by and large much more proficient in English than the other informants were in their respective target languages. The problem that Tacke (2026) describes, namely “to tell whether an unexpected realisation reflects a pronunciation pattern, uncertainty in reading, unfamiliar vocabulary or being overwhelmed by the text” will not be relevant for the more advanced learner of English. However, reading a text aloud might still lead to cognitive strain or overload and pronunciations problems might occur because of neighbouring sounds. This why a word list was included in the elicitation data. However, presenting the word list first might have given the informants cues as to the pronunciation phenomena that the project focuses on and might result in a more careful pronunciation of these potential problem areas. The word list was used at a second stage to find out whether problems that show while reading the text (with potential problems of cognitive overload or influence of neighbouring sounds) would persist when words were pronounced in isolation or in the context of minimal pairs. ",
+          "source": "p25"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "The text for pronunciation diagnostics is loosely based on the fable ‘The Boy who Cried Wolf’ but was adapted with the above problem areas in mind. While it is generally preferable to present all relevant phenomena in many different contexts to rule out contextual effects, it is also important to keep the diagnostic text as short as possible so that attention effects do not come into play. The text presented in (2) with its length of 342 words tries to do justice to both aspects.",
+          "source": "p26"
+        },
+        {
+          "type": "example",
+          "number": "(2)",
+          "number_source": "p27",
+          "paragraphs": [
+            {
+              "html": "The Boy who Cried Wolf",
+              "source": "p27"
+            },
+            {
+              "html": "There was once a poor shepherd boy, a child more than a man, who loved sleeping in bed all day. His job was to watch his father’s flocks in the fields next to a vast dark forest with old trees near the foot of a very large mountain. He did not love his job at all. So, one hot afternoon – a pup was chasing birds and bats in the cave nearby – he thought up a good plan, both to get some company for himself and also have a little fun. Raising his fist in the air, he ran down to the village and then he shouted ‘Wolf, Wolf.’ As soon as they heard him, the villagers all rushed from their homes, full of concern for his safety. Two of his younger cousins, Kenny and Annie, even invited him to their home to stay with them for a short while to make sure he was safe. This gave the boy so much pleasure that a few days later he tried exactly the same trick again, and once more he was successful. However, not long after, a violent wolf, full of rage and hunger, had just escaped from the zoo. It was looking for a change from its usual diet of chicken and duck. So, overcoming its fear of being shot, the big bad wolf actually did come out from the forest and began to threaten the sheep. The boy raced down to the village and of course cried out even louder than before: ‘Wolf, wolf, we need to save the sheep’. But even though he screamed at the top of his voice, all the men and women, unfortunately, were convinced that he was trying to fool them a third time. They wouldn’t listen to him any longer and not even raise one finger. They told him, ‘Go away and don’t bother us any further’ and went to the pub to listen to the famous singer that had a gig there. And so the wolf had a feast.",
+              "source": "p28"
+            }
+          ]
+        },
+        {
+          "type": "paragraph_html",
+          "html": "The following table lists the phenomena discussed in section 2 and the relevant portions of text (2).",
+          "source": "p29"
+        },
+        {
+          "type": "grouped_table",
+          "source": "t0",
+          "groups": [
+            {
+              "heading": {
+                "html": "The sound inventory - consontants",
+                "source": "t0r0c0"
+              },
+              "rows": [
+                [
+                  {
+                    "html": "Voiceless interdental fricative [θ]",
+                    "source": "t0r1c0"
+                  },
+                  {
+                    "html": "thought, both, threaten",
+                    "source": "t0r1c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "Voiced interdental fricative [ð]",
+                    "source": "t0r2c0"
+                  },
+                  {
+                    "html": "there, than, father, with, then, they, their, them, this, that, though, third, bother",
+                    "source": "t0r2c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "voiced retroflex approximant [ɻ]",
+                    "source": "t0r3c0"
+                  },
+                  {
+                    "html": "there, poor, more, father’s, dark, forest, trees, near, very, large, afternoon, birds, nearby, for, raising, air, ran, heard, villagers, rushed, from, their, concern, younger, short, sure, pleasure, later, tried, trick, however, rage, hunger, overcoming, fear, threaten, raced, of course, cried, louder, before, screamed, unfortunately, were, trying, third, longer, raise, finger, bother, further, singer",
+                    "source": "t0r3c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "voiced alveolar approximant [ɹ]",
+                    "source": "t0r4c0"
+                  },
+                  {
+                    "html": "Forest, trees, very, raising, ran, rushed, from, tried, trick, rage, threaten, raced, cried, screamed, trying, raise, ",
+                    "source": "t0r4c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "voiced labial-velar approximant [w]",
+                    "source": "t0r5c0"
+                  },
+                  {
+                    "html": "vast, very, village, villagers, invited, violent, voice, convinced",
+                    "source": "t0r5c1"
+                  }
+                ]
+              ]
+            },
+            {
+              "heading": {
+                "html": "The sound inventory - vowels",
+                "source": "t0r6c0"
+              },
+              "rows": [
+                [
+                  {
+                    "html": "short front open [æ]",
+                    "source": "t0r7c0"
+                  },
+                  {
+                    "html": "man, at, bats, plan, ran, Annie, that, exactly, bad, actually, began, than, had",
+                    "source": "t0r7c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "long central vowel [ɜː]",
+                    "source": "t0r8c0"
+                  },
+                  {
+                    "html": "birds, heard, concern, third, further",
+                    "source": "t0r8c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "open or low schwa [ɐ]",
+                    "source": "t0r9c0"
+                  },
+                  {
+                    "html": "there, poor, more, father’s, near, after-noon, birds, nearby, for, air, heard, villagers, their, concern, younger, short, sure, later, however, hunger, over-coming, fear, of course, louder, before, unfortunately, were, third, longer, finger, bother, further, singer",
+                    "source": "t0r9c1"
+                  }
+                ]
+              ]
+            },
+            {
+              "heading": {
+                "html": "Allophonic contrasts",
+                "source": "t0r11c0"
+              },
+              "rows": [
+                [
+                  {
+                    "html": "Final devoicing",
+                    "source": "t0r12c0"
+                  },
+                  {
+                    "html": "<strong>Any voiced obstruent in syllable-final position</strong>, e.g. was, shepherd, child, loved, bed, job, his, fields, old, trees, large, …",
+                    "source": "t0r12c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "dark ‘l’ [ɫ]",
+                    "source": "t0r13c0"
+                  },
+                  {
+                    "html": "Wolf, child, all, old, also, little, full, while, successful, usual, fool, told",
+                    "source": "t0r13c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "realization of -ng- as [ŋg]",
+                    "source": "t0r14c0"
+                  },
+                  {
+                    "html": "hunger, longer, finger",
+                    "source": "t0r14c1"
+                  }
+                ]
+              ]
+            },
+            {
+              "heading": {
+                "html": "Phenomena of connected speech and phonotactics",
+                "source": "t0r16c0"
+              },
+              "rows": [
+                [
+                  {
+                    "html": "Weak forms",
+                    "source": "t0r17c0"
+                  },
+                  {
+                    "html": "<strong>Any function word is <u>potentially</u> a weak form</strong>, e.g. was, a, in, to, his, the, of, at, and, for, have, he, then, as, their, him, with, them, that, from, than, but, us",
+                    "source": "t0r17c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "Linking – resyllabification",
+                    "source": "t0r18c0"
+                  },
+                  {
+                    "html": "<strong>Any combination of XC VX is a <u>potential</u> locus for resyllabification</strong>, e.g. once a, than a, sleeping in, bed all, flocks in, of a, job at, at all, hot afternoon, …",
+                    "source": "t0r18c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "Linking – linking and intrusive ‘r’",
+                    "source": "t0r19c0"
+                  },
+                  {
+                    "html": "for a, fear of, longer and, bother us ",
+                    "source": "t0r19c1"
+                  }
+                ],
+                [
+                  {
+                    "html": "Voiceless alveolar fricative [s] in syllable-initial position before vowels",
+                    "source": "t0r20c0"
+                  },
+                  {
+                    "html": "so, also, soon, safety, safe, successful, save, singer",
+                    "source": "t0r20c1"
+                  }
+                ]
+              ]
+            }
+          ],
+          "skipped_empty_rows": [
+            10,
+            15
+          ]
+        },
+        {
+          "type": "paragraph_html",
+          "html": "The word list consists of 85 single words and 11 minimal pairs. It is extracted from the text to see whether pronunciation problems that occurred are a performance problem or also occur when words are read in isolation. If an error persists even then, we would assume that there is an underlying systemic problem. The minimal pairs 85 to 95 target particularly common or persistent problems. In some cases (e.g. <em>safe</em> – <em>save</em> or <em>bad</em> – <em>bed</em>) both words can also be found in the text. In other cases (e.g. <em>love</em> – <em>laugh</em> or <em>of</em> – <em>off</em>) words that were not in the text were added to identify potential pronunciation problems more clearly.",
+          "source": "p32"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "A post-test interview was used to elicit metalinguistic cognition and reflection. The aim of the interview is to find out to what extent informants are aware of their pronunciation problems and whether their own assessment/awareness aligns with the professional verdict of the researcher. ",
+          "source": "p33"
+        }
+      ]
+    },
+    {
+      "heading": "Conclusion",
+      "heading_number": "4.",
+      "heading_source": "p35",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "The data elicited in the English project allows for the systematic assessment of learner pronunciation of German learners of English. It is particularly useful, as it is geared towards the most typical and most persistent problems in their entirety. In addition, the three step elicitation procedure allows for a careful analysis of the informants’ procedural as opposed to their explicit knowledge. While reading the text aloud, informants will have to rely on the former, while the word list provides more opportunity to apply explicit knowledge about pronunciation, which they can freely talk about in the interview.",
+          "source": "p36"
+        }
+      ]
+    },
+    {
+      "heading": "References",
+      "heading_number": "5.",
+      "heading_source": "p38",
+      "list_class": "pm-literature",
+      "references": [
+        {
+          "html": "IPA (1999). Handbook of the International Phonetic Association. Cambridge: Cambridge University Press.",
+          "source": "p39"
+        },
+        {
+          "html": "Jones, T. (2019). 50 ways to teach pronunciation. Tips for ESL/EFL teachers. Wayzgoose Press.",
+          "source": "p40"
+        },
+        {
+          "html": "König, E. und V. Gast (<sup>4</sup>2018 [2003]). Understanding English-German Contrasts. Berlin: Erich Schmidt.",
+          "source": "p41"
+        },
+        {
+          "html": "Kreyer, R. (2023). The Linguistic Toolkit for Teachers of English. Discovering the Value of Linguistics for Foreign Language Teaching. Tübingen: Narr Francke Attempto.",
+          "source": "p42"
+        },
+        {
+          "html": "Sweet, H. (1890). Primer of Spoken English. Oxford: Clarendon Press.",
+          "source": "p43"
+        },
+        {
+          "html": "Tacke, F. (2026): Capturing the Pronunciation of Learners of Spanish: Data Collection Design for the Spanish Corpus of <em>Pronunciation Matters</em>. Philipps-Universität Marburg.",
+          "source": "p44"
+        }
+      ]
+    }
+  ]
+}

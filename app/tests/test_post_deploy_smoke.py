@@ -83,3 +83,17 @@ def test_deploy_workflow_runs_the_post_deploy_smoke_after_the_deploy_script() ->
 
     assert workflow.index("bash scripts/deploy_prod.sh") < workflow.index("scripts/post_deploy_smoke.py")
     assert "scripts/post_deploy_smoke.py --base-url https://pronunciation-matters.de" in workflow
+
+
+def test_post_deploy_smoke_reports_a_missing_single_language_redirect(real_app_factory) -> None:
+    smoke = _load_smoke()
+    base_fetch = _client_fetch(real_app_factory().test_client())
+
+    def german_placeholder(path: str):
+        if path == "/de/research/english/design":
+            return 200, {}, "<title>Erhebungsdesign</title>"
+        return base_fetch(path)
+
+    failures = smoke.run_checks(german_placeholder, canonical_origin=CANONICAL_ORIGIN)
+
+    assert any("/de/research/english/design" in failure and "302" in failure for failure in failures)

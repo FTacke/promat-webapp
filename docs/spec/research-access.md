@@ -39,7 +39,7 @@ Research page and task capability metadata are defined in `docs/spec/research-ca
 
 ### Corpus-scoped public boundary
 
-- For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page.
+- For all active corpora `spanish`, `french`, `german`, and `english` and for both active UI languages `de` and `en`, `/{ui_lang}/research/{corpus}/design` is the only public corpus-scoped research page. The English design article exists in English only; `/de/research/english/design` redirects to `/en/research/english/design` (`platform-data-files.md`, *Single-language pages*). This is a language rule, not an access exception.
 - The corpus root `/{ui_lang}/research/{corpus}` is a public reduced orientation page. On desktop with the left sidebar visible, the main column stays limited to title, short subtitle, and two short prose paragraphs; signed-out users additionally see the two actions `Zugang beantragen`/`Request access` and `Zum Login`/`Go to login`, while authenticated users do not.
 - On breakpoints where the left sidebar is hidden, the corpus-root main column replaces the longer desktop prose with one short orientation sentence and a compact link-pill block for `design`, `speakers`, `comparison`, and `phenomena`. Those pills reuse the same generic research-navigation order and auth/lock metadata as the sidebar; protected destinations remain visibly muted and locked for signed-out users.
 - All other research pages and detail routes under one concrete corpus path are authenticated research-app surfaces.

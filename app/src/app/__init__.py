@@ -19,6 +19,7 @@ from .branding import BRANDING, format_page_title
 from .analytics import register_analytics
 from .i18n import PREFERRED_UI_LANGUAGE_COOKIE_NAME, normalize_supported_ui_language, resolve_request_ui_language, resolve_ui_language, translate
 from .extensions import register_extensions
+from .page_languages import page_ui_languages
 from .routes import register_blueprints
 from .runtime_paths import get_logs_dir
 from .teaching_content import resolve_teaching_switch_path
@@ -314,9 +315,11 @@ def register_context_processors(app: Flask) -> None:
             "static_asset": static_asset,
             "current_ui_lang": current_ui_lang,
             "default_meta_description": publication.platform_description(current_ui_lang),
+            # `None` marks a UI language the current page does not exist in (page_languages.py); the switch
+            # shows it as unavailable instead of linking to a redirect.
             "ui_lang_switch_urls": {
-                "de": _build_ui_lang_switch_url("de"),
-                "en": _build_ui_lang_switch_url("en"),
+                target: _build_ui_lang_switch_url(target) if target in page_ui_languages(request.path) else None
+                for target in ("de", "en")
             },
             "t": lambda key, **kwargs: translate(current_ui_lang, key, **kwargs),
             **BRANDING,

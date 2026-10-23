@@ -9,6 +9,7 @@ state is changed. The exit code is 0 only if every check passes. It verifies wha
 * the public landing, teaching and research-design pages answer 200 and carry a server-rendered ``<title>``;
 * topic pages whose YAML marks them as draft / not public are not served as pages;
 * a protected research page redirects to the login instead of rendering;
+* the missing edition of a single-language page redirects to the existing one;
 * the citation box of the finished topic page names the page's own canonical URL, and that URL answers 200
   without a redirect.
 
@@ -42,7 +43,10 @@ PUBLIC_PATHS = (
     "/de/teaching/spanish",
     "/de/research/spanish/design",
     "/en/research/spanish/design",
+    "/en/research/english/design",
 )
+# Single-language pages (app/src/app/page_languages.py): the missing edition redirects to the existing one.
+SINGLE_LANGUAGE_REDIRECTS = (("/de/research/english/design", "/en/research/english/design"),)
 PROTECTED_PATHS = ("/de/research/spanish/speakers", "/en/research/spanish/comparison", "/de/research/spanish/player/x/wordlist")
 SPANISH_TOPICS = ("which-pronunciation", "soft-spanish-hard-german", "r", "r-am-silbenende", "b-or-v", "soft-consonants-b-d-g", "accent-changes-everything")
 CITED_PAGES = tuple(f"/{lang}/teaching/spanish/{slug}" for slug in SPANISH_TOPICS for lang in ("de", "en"))
@@ -53,6 +57,7 @@ RESOURCE_PAGES = (
     "/en/research/french",
     "/de/research/spanish/design",
     "/en/research/spanish/design",
+    "/en/research/english/design",
     "/de/teaching/spanish",
     "/en/teaching/spanish",
 )
@@ -123,6 +128,11 @@ def run_checks(fetch: Fetch, *, canonical_origin: str) -> list[str]:
         status, _headers, _body = fetch(path)
         if status == 200:
             failures.append(f"GET {path}: draft topic is publicly served (200)")
+
+    for path, target in SINGLE_LANGUAGE_REDIRECTS:
+        status, headers, _body = fetch(path)
+        if status != 302 or headers.get("location", "") != target:
+            failures.append(f"GET {path}: expected a 302 redirect to {target}, got {status} {headers.get('location', '')!r}")
 
     for path in PROTECTED_PATHS:
         status, headers, _body = fetch(path)

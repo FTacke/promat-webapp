@@ -1,0 +1,771 @@
+{
+  "_generated": {
+    "by": "scripts/sync_design_article_materials.py",
+    "note": "Verbatim copy of the corpus task catalogs. Do not edit by hand; re-run the sync after a catalog change."
+  },
+  "wordlist": {
+    "source": "data/config/research_player/english/task_catalogs/wordlist.json",
+    "items": [
+      {
+        "item_id": "wl_001",
+        "item_number": "1",
+        "text": "so"
+      },
+      {
+        "item_id": "wl_002",
+        "item_number": "2",
+        "text": "big"
+      },
+      {
+        "item_id": "wl_003",
+        "item_number": "3",
+        "text": "bother"
+      },
+      {
+        "item_id": "wl_004",
+        "item_number": "4",
+        "text": "rushed"
+      },
+      {
+        "item_id": "wl_005",
+        "item_number": "5",
+        "text": "cried"
+      },
+      {
+        "item_id": "wl_006",
+        "item_number": "6",
+        "text": "field"
+      },
+      {
+        "item_id": "wl_007",
+        "item_number": "7",
+        "text": "of course"
+      },
+      {
+        "item_id": "wl_008",
+        "item_number": "8",
+        "text": "birds"
+      },
+      {
+        "item_id": "wl_009",
+        "item_number": "9",
+        "text": "love"
+      },
+      {
+        "item_id": "wl_010",
+        "item_number": "10",
+        "text": "invited"
+      },
+      {
+        "item_id": "wl_011",
+        "item_number": "11",
+        "text": "long"
+      },
+      {
+        "item_id": "wl_012",
+        "item_number": "12",
+        "text": "mountain"
+      },
+      {
+        "item_id": "wl_013",
+        "item_number": "13",
+        "text": "concern"
+      },
+      {
+        "item_id": "wl_014",
+        "item_number": "14",
+        "text": "did"
+      },
+      {
+        "item_id": "wl_015",
+        "item_number": "15",
+        "text": "racing"
+      },
+      {
+        "item_id": "wl_016",
+        "item_number": "16",
+        "text": "finger"
+      },
+      {
+        "item_id": "wl_017",
+        "item_number": "17",
+        "text": "bad"
+      },
+      {
+        "item_id": "wl_018",
+        "item_number": "18",
+        "text": "large"
+      },
+      {
+        "item_id": "wl_019",
+        "item_number": "19",
+        "text": "hunger"
+      },
+      {
+        "item_id": "wl_020",
+        "item_number": "20",
+        "text": "zoo"
+      },
+      {
+        "item_id": "wl_021",
+        "item_number": "21",
+        "text": "younger"
+      },
+      {
+        "item_id": "wl_022",
+        "item_number": "22",
+        "text": "overcoming"
+      },
+      {
+        "item_id": "wl_023",
+        "item_number": "23",
+        "text": "once"
+      },
+      {
+        "item_id": "wl_024",
+        "item_number": "24",
+        "text": "flocks"
+      },
+      {
+        "item_id": "wl_025",
+        "item_number": "25",
+        "text": "there"
+      },
+      {
+        "item_id": "wl_026",
+        "item_number": "26",
+        "text": "pleasure"
+      },
+      {
+        "item_id": "wl_027",
+        "item_number": "27",
+        "text": "poor"
+      },
+      {
+        "item_id": "wl_028",
+        "item_number": "28",
+        "text": "them"
+      },
+      {
+        "item_id": "wl_029",
+        "item_number": "29",
+        "text": "safe"
+      },
+      {
+        "item_id": "wl_030",
+        "item_number": "30",
+        "text": "began"
+      },
+      {
+        "item_id": "wl_031",
+        "item_number": "31",
+        "text": "good"
+      },
+      {
+        "item_id": "wl_032",
+        "item_number": "32",
+        "text": "ran"
+      },
+      {
+        "item_id": "wl_033",
+        "item_number": "33",
+        "text": "they"
+      },
+      {
+        "item_id": "wl_034",
+        "item_number": "34",
+        "text": "men"
+      },
+      {
+        "item_id": "wl_035",
+        "item_number": "35",
+        "text": "of"
+      },
+      {
+        "item_id": "wl_036",
+        "item_number": "36",
+        "text": "safety"
+      },
+      {
+        "item_id": "wl_037",
+        "item_number": "37",
+        "text": "vast"
+      },
+      {
+        "item_id": "wl_038",
+        "item_number": "38",
+        "text": "pub"
+      },
+      {
+        "item_id": "wl_039",
+        "item_number": "39",
+        "text": "longer"
+      },
+      {
+        "item_id": "wl_040",
+        "item_number": "40",
+        "text": "save"
+      },
+      {
+        "item_id": "wl_041",
+        "item_number": "41",
+        "text": "than"
+      },
+      {
+        "item_id": "wl_042",
+        "item_number": "42",
+        "text": "all"
+      },
+      {
+        "item_id": "wl_043",
+        "item_number": "43",
+        "text": "usual"
+      },
+      {
+        "item_id": "wl_044",
+        "item_number": "44",
+        "text": "before"
+      },
+      {
+        "item_id": "wl_045",
+        "item_number": "45",
+        "text": "duck"
+      },
+      {
+        "item_id": "wl_046",
+        "item_number": "46",
+        "text": "job"
+      },
+      {
+        "item_id": "wl_047",
+        "item_number": "47",
+        "text": "near"
+      },
+      {
+        "item_id": "wl_048",
+        "item_number": "48",
+        "text": "from"
+      },
+      {
+        "item_id": "wl_049",
+        "item_number": "49",
+        "text": "singer"
+      },
+      {
+        "item_id": "wl_050",
+        "item_number": "50",
+        "text": "convinced"
+      },
+      {
+        "item_id": "wl_051",
+        "item_number": "51",
+        "text": "fields"
+      },
+      {
+        "item_id": "wl_052",
+        "item_number": "52",
+        "text": "plan"
+      },
+      {
+        "item_id": "wl_053",
+        "item_number": "53",
+        "text": "rage"
+      },
+      {
+        "item_id": "wl_054",
+        "item_number": "54",
+        "text": "cousins"
+      },
+      {
+        "item_id": "wl_055",
+        "item_number": "55",
+        "text": "after"
+      },
+      {
+        "item_id": "wl_056",
+        "item_number": "56",
+        "text": "for"
+      },
+      {
+        "item_id": "wl_057",
+        "item_number": "57",
+        "text": "sure"
+      },
+      {
+        "item_id": "wl_058",
+        "item_number": "58",
+        "text": "both"
+      },
+      {
+        "item_id": "wl_059",
+        "item_number": "59",
+        "text": "wolf"
+      },
+      {
+        "item_id": "wl_060",
+        "item_number": "60",
+        "text": "shepherd"
+      },
+      {
+        "item_id": "wl_061",
+        "item_number": "61",
+        "text": "their"
+      },
+      {
+        "item_id": "wl_062",
+        "item_number": "62",
+        "text": "gave"
+      },
+      {
+        "item_id": "wl_063",
+        "item_number": "63",
+        "text": "violent"
+      },
+      {
+        "item_id": "wl_064",
+        "item_number": "64",
+        "text": "though"
+      },
+      {
+        "item_id": "wl_065",
+        "item_number": "65",
+        "text": "even"
+      },
+      {
+        "item_id": "wl_066",
+        "item_number": "66",
+        "text": "shouted"
+      },
+      {
+        "item_id": "wl_067",
+        "item_number": "67",
+        "text": "threaten"
+      },
+      {
+        "item_id": "wl_068",
+        "item_number": "68",
+        "text": "full"
+      },
+      {
+        "item_id": "wl_069",
+        "item_number": "69",
+        "text": "trees"
+      },
+      {
+        "item_id": "wl_070",
+        "item_number": "70",
+        "text": "fear"
+      },
+      {
+        "item_id": "wl_071",
+        "item_number": "71",
+        "text": "while"
+      },
+      {
+        "item_id": "wl_072",
+        "item_number": "72",
+        "text": "also"
+      },
+      {
+        "item_id": "wl_073",
+        "item_number": "73",
+        "text": "chicken"
+      },
+      {
+        "item_id": "wl_074",
+        "item_number": "74",
+        "text": "gig"
+      },
+      {
+        "item_id": "wl_075",
+        "item_number": "75",
+        "text": "louder"
+      },
+      {
+        "item_id": "wl_076",
+        "item_number": "76",
+        "text": "short"
+      },
+      {
+        "item_id": "wl_077",
+        "item_number": "77",
+        "text": "actually"
+      },
+      {
+        "item_id": "wl_078",
+        "item_number": "78",
+        "text": "very"
+      },
+      {
+        "item_id": "wl_079",
+        "item_number": "79",
+        "text": "to fool"
+      },
+      {
+        "item_id": "wl_080",
+        "item_number": "80",
+        "text": "have"
+      },
+      {
+        "item_id": "wl_081",
+        "item_number": "81",
+        "text": "forest"
+      },
+      {
+        "item_id": "wl_082",
+        "item_number": "82",
+        "text": "full"
+      },
+      {
+        "item_id": "wl_083",
+        "item_number": "83",
+        "text": "bed"
+      },
+      {
+        "item_id": "wl_084",
+        "item_number": "84",
+        "text": "heard"
+      },
+      {
+        "item_id": "wl_085",
+        "item_number": "85",
+        "text": "safe – save"
+      },
+      {
+        "item_id": "wl_086",
+        "item_number": "86",
+        "text": "bad – bed"
+      },
+      {
+        "item_id": "wl_087",
+        "item_number": "87",
+        "text": "singer – finger"
+      },
+      {
+        "item_id": "wl_088",
+        "item_number": "88",
+        "text": "love – laugh"
+      },
+      {
+        "item_id": "wl_089",
+        "item_number": "89",
+        "text": "than – then"
+      },
+      {
+        "item_id": "wl_090",
+        "item_number": "90",
+        "text": "of – off"
+      },
+      {
+        "item_id": "wl_091",
+        "item_number": "91",
+        "text": "bat – bad"
+      },
+      {
+        "item_id": "wl_092",
+        "item_number": "92",
+        "text": "race – raise"
+      },
+      {
+        "item_id": "wl_093",
+        "item_number": "93",
+        "text": "pup – pub"
+      },
+      {
+        "item_id": "wl_094",
+        "item_number": "94",
+        "text": "man – men"
+      },
+      {
+        "item_id": "wl_095",
+        "item_number": "95",
+        "text": "Annie - Kenny"
+      }
+    ]
+  },
+  "text": {
+    "source": "data/config/research_player/english/task_catalogs/text.json",
+    "items": [
+      {
+        "item_id": "t_01",
+        "item_number": "T1",
+        "text": "The Boy who Cried Wolf"
+      },
+      {
+        "item_id": "t_02",
+        "item_number": "T2",
+        "text": "There was once a poor shepherd boy, "
+      },
+      {
+        "item_id": "t_03",
+        "item_number": "T3",
+        "text": "a child more than a man, "
+      },
+      {
+        "item_id": "t_04",
+        "item_number": "T4",
+        "text": "who loved sleeping in his bed all day. "
+      },
+      {
+        "item_id": "t_05",
+        "item_number": "T5",
+        "text": "His job was to watch his father’s flocks "
+      },
+      {
+        "item_id": "t_06",
+        "item_number": "T6",
+        "text": "in the fields next to a vast dark forest "
+      },
+      {
+        "item_id": "t_07",
+        "item_number": "T7",
+        "text": "with old trees near the foot of a very large mountain."
+      },
+      {
+        "item_id": "t_08",
+        "item_number": "T8",
+        "text": "He did not love his job at all. "
+      },
+      {
+        "item_id": "t_09",
+        "item_number": "T9",
+        "text": "So, one hot afternoon "
+      },
+      {
+        "item_id": "t_10",
+        "item_number": "T10",
+        "text": "— a pup was chasing birds and bats in the cave nearby — "
+      },
+      {
+        "item_id": "t_11",
+        "item_number": "T11",
+        "text": "he thought to himself "
+      },
+      {
+        "item_id": "t_12",
+        "item_number": "T12",
+        "text": "‘Let someone else do it!’ "
+      },
+      {
+        "item_id": "t_13",
+        "item_number": "T13",
+        "text": "He devised a good plan,"
+      },
+      {
+        "item_id": "t_14",
+        "item_number": "T14",
+        "text": "both to get some company for himself"
+      },
+      {
+        "item_id": "t_15",
+        "item_number": "T15",
+        "text": " and also have a little fun. "
+      },
+      {
+        "item_id": "t_16",
+        "item_number": "T16",
+        "text": "Raising his fist in the air, "
+      },
+      {
+        "item_id": "t_17",
+        "item_number": "T17",
+        "text": "he ran down to the village "
+      },
+      {
+        "item_id": "t_18",
+        "item_number": "T18",
+        "text": "and then he shouted ‘Wolf, Wolf!’ "
+      },
+      {
+        "item_id": "t_19",
+        "item_number": "T19",
+        "text": "As soon as they heard him,"
+      },
+      {
+        "item_id": "t_20",
+        "item_number": "T20",
+        "text": "the villagers all rushed from their homes, "
+      },
+      {
+        "item_id": "t_21",
+        "item_number": "T21",
+        "text": "full of concern for his safety. "
+      },
+      {
+        "item_id": "t_22",
+        "item_number": "T22",
+        "text": "Two of his younger cousins, "
+      },
+      {
+        "item_id": "t_23",
+        "item_number": "T23",
+        "text": "Kenny and Annie,"
+      },
+      {
+        "item_id": "t_24",
+        "item_number": "T24",
+        "text": "even invited him to their home "
+      },
+      {
+        "item_id": "t_25",
+        "item_number": "T25",
+        "text": "to stay with them for a short while "
+      },
+      {
+        "item_id": "t_26",
+        "item_number": "T26",
+        "text": "to make sure he was safe. "
+      },
+      {
+        "item_id": "t_27",
+        "item_number": "T27",
+        "text": "This gave the boy so much pleasure "
+      },
+      {
+        "item_id": "t_28",
+        "item_number": "T28",
+        "text": "that he had to laugh, "
+      },
+      {
+        "item_id": "t_29",
+        "item_number": "T29",
+        "text": "and a few days later "
+      },
+      {
+        "item_id": "t_30",
+        "item_number": "T30",
+        "text": "he tried exactly the same trick again, "
+      },
+      {
+        "item_id": "t_31",
+        "item_number": "T31",
+        "text": "and once more he was successful. "
+      },
+      {
+        "item_id": "t_32",
+        "item_number": "T32",
+        "text": "However, not long after, "
+      },
+      {
+        "item_id": "t_33",
+        "item_number": "T33",
+        "text": "a violent wolf, "
+      },
+      {
+        "item_id": "t_34",
+        "item_number": "T34",
+        "text": "full of hunger and rage, "
+      },
+      {
+        "item_id": "t_35",
+        "item_number": "T35",
+        "text": "had just escaped from the zoo. "
+      },
+      {
+        "item_id": "t_36",
+        "item_number": "T36",
+        "text": "It was looking for a change "
+      },
+      {
+        "item_id": "t_37",
+        "item_number": "T37",
+        "text": "from its usual diet of chicken and duck."
+      },
+      {
+        "item_id": "t_38",
+        "item_number": "T38",
+        "text": "So, overcoming its fear of being shot, "
+      },
+      {
+        "item_id": "t_39",
+        "item_number": "T39",
+        "text": "the big bad wolf actually did come out from the forest"
+      },
+      {
+        "item_id": "t_40",
+        "item_number": "T40",
+        "text": " and began to threaten the sheep. "
+      },
+      {
+        "item_id": "t_41",
+        "item_number": "T41",
+        "text": "The boy raced down to the village "
+      },
+      {
+        "item_id": "t_42",
+        "item_number": "T42",
+        "text": "and of course cried out even louder than before: "
+      },
+      {
+        "item_id": "t_43",
+        "item_number": "T43",
+        "text": "‘Wolf, wolf, we need to save the sheep’. "
+      },
+      {
+        "item_id": "t_44",
+        "item_number": "T44",
+        "text": "But even though he screamed at the top of his voice, "
+      },
+      {
+        "item_id": "t_45",
+        "item_number": "T45",
+        "text": "all the men and women, unfortunately, were convinced "
+      },
+      {
+        "item_id": "t_46",
+        "item_number": "T46",
+        "text": "that he was trying to fool them a third time. "
+      },
+      {
+        "item_id": "t_47",
+        "item_number": "T47",
+        "text": "They wouldn’t listen to him any longer "
+      },
+      {
+        "item_id": "t_48",
+        "item_number": "T48",
+        "text": "and not even raise one finger. "
+      },
+      {
+        "item_id": "t_49",
+        "item_number": "T49",
+        "text": "They told him, "
+      },
+      {
+        "item_id": "t_50",
+        "item_number": "T50",
+        "text": "‘Where is it? "
+      },
+      {
+        "item_id": "t_51",
+        "item_number": "T51",
+        "text": "Show us. "
+      },
+      {
+        "item_id": "t_52",
+        "item_number": "T52",
+        "text": "We can’t see it! "
+      },
+      {
+        "item_id": "t_53",
+        "item_number": "T53",
+        "text": "Go away and don’t bother us any further’ "
+      },
+      {
+        "item_id": "t_54",
+        "item_number": "T54",
+        "text": "and went to the pub "
+      },
+      {
+        "item_id": "t_55",
+        "item_number": "T55",
+        "text": "to listen to the famous singer that had a gig there. "
+      },
+      {
+        "item_id": "t_56",
+        "item_number": "T56",
+        "text": "And so the wolf had a feast."
+      }
+    ]
+  }
+}
