@@ -311,44 +311,59 @@ def test_table_groups_follow_the_manuscript(page_html: str) -> None:
 # --- corpus supplements -------------------------------------------------------------------------------------------
 
 
-def _supplement_items(page_html: str, element_id: str) -> list[tuple[str, str, str]]:
-    section = re.search(rf'<section\s+class="pm-expandable[^"]*"\s+aria-labelledby="{element_id}-title".*?</section>', page_html, re.S)
+def _expandable(page_html: str, element_id: str) -> str:
+    section = re.search(rf'<section\s+class="pm-expandable"\s+aria-labelledby="{element_id}-title".*?</section>', page_html, re.S)
     assert section is not None, element_id
-    return re.findall(
-        r'data-item-id="([^"]+)">\s*<span class="pm-expandable__label">([^<]*)</span>\s*<span class="pm-expandable__text">([^<]*)</span>',
-        section.group(0),
-    )
+    return section.group(0)
 
 
-def test_supplements_show_the_catalog_items_unchanged_and_marked_as_platform_material(page_html: str) -> None:
+def _markup_skeleton(fragment: str) -> list[str]:
+    """Tag and class sequence of a fragment, without texts, ids and data attributes."""
+    return [f"{tag}.{classes}" for tag, classes in re.findall(r'<([a-z0-9]+)(?:\s[^>]*?class="([^"]*)")?[^>]*>', fragment)]
+
+
+def test_wordlist_shows_all_catalog_items_unchanged(page_html: str) -> None:
     from html import unescape
 
+    items = re.findall(
+        r'data-item-id="([^"]+)">\s*<span class="pm-expandable__label">([^<]*)</span>\s*<span class="pm-expandable__text">([^<]*)</span>',
+        _expandable(page_html, "english-wordlist"),
+    )
     materials = json.loads(MATERIALS_JSON.read_text(encoding="utf-8"))
-    for element_id, task in (("english-wordlist", "wordlist"), ("english-reading-text", "text")):
-        expected = [(item["item_id"], item["item_number"], item["text"]) for item in materials[task]["items"]]
-        actual = [(item_id, unescape(label), unescape(text)) for item_id, label, text in _supplement_items(page_html, element_id)]
-        assert actual == expected
-        assert f'data-supplement="data/config/research_player/english/task_catalogs/{task}.json"' in page_html
-    supplements = re.findall(r"<section\s+class=\"pm-expandable pm-expandable--supplement.*?</section>", page_html, re.S)
-    assert len(supplements) == 2
-    for supplement in supplements:
-        assert "data-source=" not in supplement  # never presented as manuscript text
-        assert "Supplementary corpus material" in supplement
+    expected = [(item["item_id"], item["item_number"], item["text"]) for item in materials["wordlist"]["items"]]
+    assert [(item_id, unescape(label), unescape(text)) for item_id, label, text in items] == expected
+    assert len(expected) == 95
+    assert expected[0] == ("wl_001", "1", "so") and expected[-1] == ("wl_095", "95", "Annie - Kenny")
 
 
-def test_supplements_sit_next_to_the_passages_that_discuss_them(page_html: str) -> None:
-    example_2 = page_html.index('data-source-number="p27"')
-    reading_text = page_html.index('aria-labelledby="english-reading-text-title"')
-    table_intro = page_html.index('data-source="p29"')
+def test_wordlist_title_and_summary_follow_the_spanish_pattern(page_html: str) -> None:
+    wordlist = _expandable(page_html, "english-wordlist")
+    assert '<h3 class="pm-expandable__title" id="english-wordlist-title">Wordlist</h3>' in wordlist
+    assert '<p class="pm-expandable__summary">The English wordlist comprises 95 task items: 84 individual words and 11 minimal pairs.</p>' in wordlist
+
+
+def test_wordlist_markup_matches_the_spanish_wordlist(app: Flask, page_html: str) -> None:
+    """Same component, classes and structure as the Spanish wordlist: no eyebrow, no extra modifier, no tint."""
+    spanish = _expandable(app.test_client().get("/en/research/spanish/design").get_data(as_text=True), "spanish-final-wordlist")
+    english = _expandable(page_html, "english-wordlist")
+    spanish_skeleton, english_skeleton = _markup_skeleton(spanish), _markup_skeleton(english)
+    item_start = spanish_skeleton.index("li.pm-expandable__item")
+    assert english_skeleton[:item_start] == spanish_skeleton[:item_start]
+    assert set(english_skeleton[item_start:]) == set(spanish_skeleton[item_start:])
+    assert "data-source=" not in english  # platform material, never presented as manuscript text
+    assert 'data-supplement="data/config/research_player/english/task_catalogs/wordlist.json"' in english
+
+
+def test_wordlist_is_the_only_added_material_and_sits_after_its_paragraph(page_html: str) -> None:
+    assert len(re.findall(r'<section\s+class="pm-expandable[ "]', page_html)) == 1
+    assert "english-reading-text" not in page_html
+    assert "Reading text as used in the recordings" not in page_html
+    assert "Supplementary corpus material" not in page_html and "SUPPLEMENTARY" not in page_html
+    assert "Let someone else do it" not in page_html  # catalog-only wording of the reading text
     wordlist_paragraph = page_html.index('data-source="p32"')
     wordlist = page_html.index('aria-labelledby="english-wordlist-title"')
     interview = page_html.index('data-source="p33"')
-    assert example_2 < reading_text < table_intro < wordlist_paragraph < wordlist < interview
-
-
-def test_supplement_counts_are_derived_from_the_catalog(page_html: str) -> None:
-    assert "95 items, 84 single words (1–84) followed by 11 minimal pairs (85–95)" in page_html
-    assert "in 56 segments (T1–T56)" in page_html
+    assert wordlist_paragraph < wordlist < interview
 
 
 # --- English-only page --------------------------------------------------------------------------------------------

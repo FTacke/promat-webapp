@@ -69,7 +69,7 @@ ENGLISH_CATALOG_DIR = REPO_ROOT / "data" / "config" / "research_player" / "engli
 
 
 @pytest.mark.data
-@pytest.mark.parametrize("task", ["wordlist", "text"])
+@pytest.mark.parametrize("task", ["wordlist"])
 def test_english_design_materials_match_the_canonical_task_catalogs(task: str) -> None:
     """The English article's corpus materials are a verbatim copy (scripts/sync_design_article_materials.py)."""
     catalog_path = ENGLISH_CATALOG_DIR / f"{task}.json"

@@ -3,7 +3,7 @@
 Contract: docs/spec/platform-data-files.md, "Research design articles"; procedure: docs/runbooks/design-article-import.md.
 
 A design article must render without the operator-owned runtime catalogs (CI, image smoke), so it ships its own copy of
-the word list and reading text, exactly as the task catalogs store them: same order, item ids, item numbers and spellings,
+the wordlist, exactly as the task catalog stores it: same order, item ids, item numbers and spellings,
 nothing corrected or merged. ``app/tests/test_design_page_catalog_parity.py`` fails as soon as copy and catalog diverge.
 
 Usage::
@@ -20,8 +20,8 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-#: Catalog tasks copied into the article, in catalog file order.
-TASKS = ("wordlist", "text")
+#: Catalog tasks shown with the article (the reading text is shown as the author's own example, not from the catalog).
+TASKS = ("wordlist",)
 
 
 def catalog_dir(corpus: str) -> Path:

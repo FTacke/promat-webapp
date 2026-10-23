@@ -1191,23 +1191,13 @@ SPANISH_DESIGN_PAGE_CONTENT: dict[str, object] = {
 #: in English only (app/src/app/page_languages.py), so the copy is English only.
 ENGLISH_DESIGN_SUPPLEMENTS: tuple[dict[str, object], ...] = (
     {
-        "id": "english-reading-text",
-        "material": "text",
-        "after_source": "p27",
-        # Text segments are phrases, not single words: one column keeps the reading order obvious.
-        "list_layout": "single-column",
-        "title": {"en": "Reading text as used in the recordings"},
-        "summary_html": {
-            "en": "The reading text exactly as stored in the task catalogue of the English corpus and presented to the speakers, in {item_count} segments ({first_number}–{last_number}). The catalogue wording is reproduced unchanged; it is not aligned with text (2) above.",
-        },
-    },
-    {
+        # Same element and copy pattern as the Spanish wordlist (`spanish-final-wordlist`).
         "id": "english-wordlist",
         "material": "wordlist",
         "after_source": "p32",
-        "title": {"en": "Word list as used in the recordings"},
+        "title": {"en": "Wordlist"},
         "summary_html": {
-            "en": "The word list exactly as stored in the task catalogue of the English corpus: {item_count} items, {single_count} single words ({first_number}–{last_single_number}) followed by {pair_count} minimal pairs ({first_pair_number}–{last_number}).",
+            "en": "The English wordlist comprises {item_count} task items: {single_count} individual words and {pair_count} minimal pairs.",
         },
     },
 )

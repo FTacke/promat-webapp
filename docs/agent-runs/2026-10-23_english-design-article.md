@@ -57,6 +57,14 @@ Rolf Kreyers Beitrag „Capturing the Pronunciation of Learners of English as a 
 
 Die Liste der Fundstellen (Tippfehler, IPA-Zeichen, Literaturangaben) liegt bewusst nicht im öffentlichen Repo, sondern lokal beim Maintainer unter `tmp/author-review/2026-10-23_english-design-pruefpunkte.md`. Ebenso liegt das Manuskript nur lokal (`docs/author-sources/` ist git-ignoriert). Am Text wurde nichts geändert.
 
+## Nachtrag: Erhebungsmaterialien an die spanische Seite angeglichen
+
+- Die englische Wordlist ist jetzt dieselbe Komponente wie die spanische (`pm-expandable`): Titel „Wordlist“, Satz „The English wordlist comprises 95 task items: 84 individual words and 11 minimal pairs.“ (Zahlen aus dem Katalog berechnet), alle 95 Items mit Katalognummern und -schreibweisen. Entfallen sind die Überzeile „Supplementary corpus material“, die Tönung und die zugehörigen CSS-Regeln und i18n-Schlüssel. Die Herkunft steht nur noch unsichtbar in `data-supplement`.
+- Der Block „Reading text as used in the recordings“ (T1–T56) ist entfernt; `design_materials.json` enthält nur noch die Wordlist. Der Text „The Boy who Cried Wolf“ erscheint ausschließlich als Rolfs Beispiel (2). Runtime-Kataloge unter `data/` sind unverändert (geprüft per Prüfsumme vor und nach der Änderung).
+- Die Abweichungen zwischen Beispiel (2) und dem aufgenommenen Katalogtext stehen weiterhin oben im Abschnitt *Abgleich Manuskript ↔ Runtime-Kataloge*.
+- Tests: `test_english_design_article.py` prüft jetzt die Wordlist-Items, Titel und Satz wörtlich, die Markup-Gleichheit mit der spanischen Wordlist (Tag- und Klassenfolge) und dass kein Lesetext-Block und kein Supplement-Label mehr auf der Seite stehen. Der Manuskript-Integritätstest ist unverändert grün, `design.json` ist unverändert (`--check`).
+- Browser: Wordlists Englisch/Spanisch zugeklappt und aufgeklappt, Desktop/Mobil, hell/dunkel nebeneinander verglichen; gleiche Breite (724 px / 358 px), kein horizontales Scrollen.
+
 ## Offene Punkte
 
 - Erscheinungsjahr 2026 im Register bestätigen. Datum der letzten Aktualisierung ist bewusst leer.

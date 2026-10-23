@@ -1,13 +1,10 @@
 <section
-  class="pm-expandable{{ ' pm-expandable--supplement' if content_element.supplement else '' }}{{ ' pm-expandable--single-column' if content_element.list_layout == 'single-column' else '' }}"
+  class="pm-expandable"
   aria-labelledby="{{ content_element.id }}-title"
   data-pm-expandable
   {%- if content_element.supplement %} data-supplement="{{ content_element.supplement }}"{% endif %}
 >
-  {#- `supplement` = material added by the platform from a corpus task catalog, not part of the article's manuscript. -#}
-  {% if content_element.eyebrow %}
-  <p class="pm-expandable__eyebrow">{{ content_element.eyebrow }}</p>
-  {% endif %}
+  {#- `supplement` = the corpus task catalog a list was copied from (platform material, not article manuscript text). -#}
   <div class="pm-expandable__header">
     <h3 class="pm-expandable__title" id="{{ content_element.id }}-title">{{ content_element.title }}</h3>
     <button

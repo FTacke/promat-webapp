@@ -559,7 +559,11 @@ def _load_design_article_files(language_slug: str) -> tuple[dict[str, Any], dict
 
 
 def _supplement_element(supplement: dict[str, Any], material: dict[str, Any], ui_lang: str) -> dict[str, Any]:
-    """Expandable list of catalog items, marked as platform material (not part of the author's manuscript)."""
+    """Expandable list of catalog items in the standard design-article form (like the Spanish wordlist).
+
+    It is platform material, not part of the author's manuscript: it never carries `data-source`, and `supplement`
+    records the catalog it was copied from (`data-supplement`, not visible).
+    """
     items = material["items"]
     pairs = [item for item in items if " – " in item["text"] or " - " in item["text"]]
     singles = [item for item in items if item not in pairs]
@@ -576,10 +580,8 @@ def _supplement_element(supplement: dict[str, Any], material: dict[str, Any], ui
         "type": "pm_expandable_text",
         "id": supplement["id"],
         "supplement": material["source"],
-        "eyebrow": get_text(ui_lang, "research.design.supplement.eyebrow"),
         "title": _localized(supplement["title"], ui_lang),
         "summary_html": _localized(supplement["summary_html"], ui_lang).format(**counts),
-        "list_layout": supplement.get("list_layout"),
         "items": [{"label": item["item_number"], "text": item["text"], "item_id": item["item_id"]} for item in items],
     }
 

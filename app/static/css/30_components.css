@@ -1105,26 +1105,6 @@ textarea:focus-visible {
   line-height: var(--pm-type-reading-line);
 }
 
-/* Supplementary corpus material inside an imported article (catalog items, not the author's text): the same
-   expandable, set apart by a quiet tinted ground and an eyebrow that names it as platform material. */
-.pm-expandable--supplement {
-  background: var(--pm-surface-tinted);
-}
-
-.pm-expandable__eyebrow {
-  margin: 0 0 var(--pm-space-xs);
-  color: var(--book-muted);
-  font-family: var(--book-font-ui);
-  font-size: var(--pm-type-meta-size);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.pm-expandable--single-column .pm-expandable__list {
-  column-count: 1;
-}
-
 /* Imported scholarly article (docs/spec/platform-data-files.md, "Research design articles"): the manuscript's own
    chapter and example numbering, its subheadings and its numbered example texts, in the reading type of the page. */
 .pm-article-heading__number {
