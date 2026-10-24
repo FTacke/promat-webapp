@@ -218,8 +218,6 @@ textarea:focus-visible {
   background: none;
   color: var(--book-muted);
   opacity: 0.45;
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
   cursor: not-allowed;
 }
 
