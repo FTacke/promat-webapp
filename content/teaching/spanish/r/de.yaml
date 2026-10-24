@@ -32,16 +32,13 @@ blocks:
   title: Zwei r-Laute – und die Schrift hilft mit
 - type: text
   body: |-
-    Beide spanischen r-Laute entstehen vorn im Mundraum, mit der Zungenspitze am Zahndamm. Beim einfachen Vibranten [ɾ] schlägt die Zungenspitze nur einmal kurz an. Beim mehrfachen Vibranten [r] liegt sie locker am Zahndamm und wird vom Luftstrom in Schwingung versetzt, sodass mehrere rasche Kontakte entstehen.
-# MEDIEN-PUNKT (offen): Artikulationsgrafik „Spanisches [ɾ]/[r] gegenüber deutschem [ʁ]“ steht noch aus. Sobald eine fachlich geprüfte
-# Grafik vorliegt: Datei unter `media/images/` ablegen, per `python scripts/teaching_images.py --build` die WebP-Ableitung erzeugen
-# und diesen Block anstelle des Kommentars einfügen (siehe docs/agent-runs/2026-10-24_spanish-r-topic-page.md). Keine Platzhaltergrafik.
-# - type: image
-#   src: <dateiname>.png
-#   size: wide
-#   alt: 'Zwei schematische Seitenschnitte des Mundraums: links die Zungenspitze am Zahndamm bei spanischem [ɾ] und [r], rechts der hintere Zungenbereich am Zäpfchen bei deutschem [ʁ].'
-#   caption: 'Die spanischen r-Laute [ɾ] und [r] entstehen durch Bewegungen der Zungenspitze am Zahndamm. Beim im Standarddeutschen verbreiteten [ʁ] liegt die Artikulationsstelle dagegen weiter hinten, im Bereich des Zäpfchens.'
-#   credit: 'Illustration: Felix Tacke (Konzept und Prompting), KI-generiert · Pronunciation Matters (2026)'   # nur, wenn zur Herkunft passend
+    Beide spanischen r-Laute entstehen vorn im Mundraum, mit der Zungenspitze am Zahndamm. Beim einfachen Vibranten [ɾ] schlägt die Zungenspitze nur einmal kurz an. Beim mehrfachen Vibranten [r] liegt sie locker am Zahndamm und wird vom Luftstrom in Schwingung versetzt, sodass mehrere rasche Kontakte entstehen. Im Standarddeutschen wird das r dagegen häufig weiter hinten gebildet, am Zäpfchen.
+- type: image
+  src: spanish-german-r-articulation.png
+  size: wide
+  alt: 'Schematische Seitenschnitte des Mundraums: links die spanischen alveolaren R-Laute [ɾ] und [r] mit vorderer Zungenartikulation, rechts das deutsche uvulare [ʁ] mit weiter hinten liegender Artikulationsstelle.'
+  caption: 'Die spanischen R-Laute [ɾ] und [r] werden mit der Zungenspitze am Zahndamm gebildet. Beim im Standarddeutschen verbreiteten [ʁ] liegt die Artikulationsstelle dagegen weiter hinten, am Zäpfchen. Die schematische Darstellung zeigt den Unterschied der Artikulationsorte.'
+  credit: 'Illustration: Felix Tacke (Konzept und Prompting), KI-generiert · Pronunciation Matters (2026)'
 - type: text
   body: |-
     Zwischen Vokalen unterscheiden die beiden Laute Wörter, und die Schreibung macht das sichtbar: Einfaches ⟨r⟩ steht für [ɾ], ⟨rr⟩ für [r] – *pero* und *perro*, *caro* und *carro*.

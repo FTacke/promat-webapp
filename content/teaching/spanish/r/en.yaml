@@ -32,16 +32,13 @@ blocks:
   title: Two r sounds – and the spelling helps
 - type: text
   body: |-
-    Both Spanish r sounds are made at the front of the mouth, with the tip of the tongue at the alveolar ridge. For the tap [ɾ], the tongue tip strikes the ridge only once, briefly. For the trill [r], it rests loosely at the ridge and is set vibrating by the airstream, so that several rapid contacts occur.
-# OPEN MEDIA ITEM: the articulation graphic “Spanish [ɾ]/[r] versus German [ʁ]” has not been supplied yet. Once a professionally reviewed
-# graphic exists: put the file under `media/images/`, build the WebP derivative with `python scripts/teaching_images.py --build`
-# and insert this block in place of the comment (see docs/agent-runs/2026-10-24_spanish-r-topic-page.md). No placeholder graphic.
-# - type: image
-#   src: <filename>.png
-#   size: wide
-#   alt: 'Two schematic side views of the mouth: on the left, the tongue tip at the alveolar ridge for Spanish [ɾ] and [r]; on the right, the back of the tongue at the uvula for German [ʁ].'
-#   caption: 'The Spanish r sounds [ɾ] and [r] are produced by movements of the tongue tip at the alveolar ridge. For [ʁ], which is common in Standard German, the place of articulation is further back, near the uvula.'
-#   credit: 'Illustration: Felix Tacke (concept and prompting), AI-generated · Pronunciation Matters (2026)'   # only if it matches the actual origin
+    Both Spanish r sounds are made at the front of the mouth, with the tip of the tongue at the alveolar ridge. For the tap [ɾ], the tongue tip strikes the ridge only once, briefly. For the trill [r], it rests loosely at the ridge and is set vibrating by the airstream, so that several rapid contacts occur. In Standard German, by contrast, the r is often produced further back, at the uvula.
+- type: image
+  src: spanish-german-r-articulation.png
+  size: wide
+  alt: 'Schematic side views of the mouth: on the left, the Spanish alveolar r sounds [ɾ] and [r] with the tongue articulating at the front; on the right, the German uvular [ʁ] with a place of articulation further back.'
+  caption: 'The Spanish r sounds [ɾ] and [r] are produced with the tip of the tongue at the alveolar ridge. For [ʁ], which is common in Standard German, the place of articulation is further back, at the uvula. The schematic illustration shows the difference between the places of articulation.'
+  credit: 'Illustration: Felix Tacke (concept and prompting), AI-generated · Pronunciation Matters (2026)'
 - type: text
   body: |-
     Between vowels, the two sounds distinguish words, and the spelling makes this visible: a single ⟨r⟩ stands for [ɾ], ⟨rr⟩ for [r] – *pero* and *perro*, *caro* and *carro*.

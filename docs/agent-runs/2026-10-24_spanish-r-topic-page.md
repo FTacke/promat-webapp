@@ -4,7 +4,7 @@ Datum: 2026-10-24
 
 ## Ziel
 
-Die weitgehend automatisiert entstandene Seite wurde nach dem Blueprint vom 2026-10-19 und dem Qualitätsstandard der drei überarbeiteten Seiten (*Weiches Spanisch, hartes Deutsch*, *Das r am Wortende*, *b, d und g*) vollständig neu strukturiert (DE/EN). Slug, URLs und Autorenschaft (Felix Tacke allein) bleiben unverändert. Die Artikulationsgrafik liegt nicht vor und ist der einzige offene Medienpunkt.
+Die weitgehend automatisiert entstandene Seite wurde nach dem Blueprint vom 2026-10-19 und dem Qualitätsstandard der drei überarbeiteten Seiten (*Weiches Spanisch, hartes Deutsch*, *Das r am Wortende*, *b, d und g*) vollständig neu strukturiert (DE/EN). Slug, URLs und Autorenschaft (Felix Tacke allein) bleiben unverändert. Die Artikulationsgrafik wurde nachträglich integriert (siehe unten).
 
 ## Consulted Sources
 
@@ -62,9 +62,16 @@ In dieser Umgebung ist kein Abhören möglich. Die Auswahl beruht auf einer Sign
 - **Reserven (nicht integriert, im Gate geprüft):** ES-L-0019 (dieselbe Person wie bei *reír*, deren hinterer Anlaut dort positiv bewertet wurde), ES-L-0021, ES-L-0005 (alle drei mit hohem Rauschanteil im Anlaut). Austausch: Session in `audio-slots.yaml` ändern, `python scripts/teaching_audio_slots.py --export`.
 - **Vorgemerkt zum Abhören:** (1) *reloj*: ES-N-0005 und ES-L-0011 – ist das Lernenden-r wirklich uvular? (2) *pero – perro*/*caro*/*carro*: ES-N-0002 und ES-N-0005 – klingt der Kontrast fair und natürlich? (3) Die Auflösung nach Karte 1 beschreibt für beide Aufnahmen „einmal kurz“ (*pero*) und „mehrfach rasch hintereinander“ (*perro*); das ist signalseitig belegt (1 gegenüber 3–4 Kontakten), akustisch aber nicht abgehört.
 
-## Stand der Artikulationsgrafik (offener Medienpunkt)
+## Artikulationsgrafik (nachträglich integriert, 2026-10-24)
 
-Im Repository ist keine freigegebene r-Illustration vorhanden; es wird keine Platzhaltergrafik angezeigt. Der fertige `image`-Block (Alt-Text, Bildunterschrift nach Vorgabe, Bildnachweis nur falls zutreffend) steht als Kommentar an der Einfügestelle in `r/de.yaml` und `r/en.yaml`, nach dem Absatz zur Artikulation. Einbinden: Datei unter `content/teaching/spanish/r/media/images/` ablegen, `python scripts/teaching_images.py --build`, Kommentar durch den Block ersetzen (`credit` nur, wenn zur Herkunft passend). Impuls 02 ist bewusst ohne Verweis auf die Grafik formuliert; nach dem Einbinden kann ergänzt werden: „Die Grafik zeigt …“ / „The graphic shows …“.
+Die vom Projektleiter bereitgestellte Grafik „Spanisch [ɾ]/[r] gegenüber Deutsch [ʁ]“ ist integriert; ursprünglich offener Medienpunkt, damit erledigt.
+
+- **Dateien:** Master `content/teaching/spanish/r/media/images/spanish-german-r-articulation.png` (1448 × 1086, 712 KB), Auslieferung `…/spanish-german-r-articulation.webp` (83 KB, Breite 1448, Qualität 92; deklariert in `content/teaching/image-derivatives.yaml`). DE und EN nutzen dieselbe Ressource. **Hinweis zur Herkunft des Masters:** Der Chat lieferte die Grafik nur als WebP; das PNG ist deren verlustfreie Dekodierung (pixelgleich geprüft). Liegt das Original-PNG vor, genügt es, den Master auszutauschen und `python scripts/teaching_images.py --build` auszuführen (der Test prüft den Master-Hash und muss dann mit angepasst werden).
+- **Position:** Abschnitt *Zwei r-Laute – und die Schrift hilft mit*, direkt nach dem Absatz zu Artikulation und Gegensatz [ɾ]/[r] (jetzt mit dem Übergangssatz „Im Standarddeutschen wird das r dagegen häufig weiter hinten gebildet, am Zäpfchen.“ / „In Standard German, by contrast, the r is often produced further back, at the uvula.“), vor dem Schreibungsabsatz und vor den Karten *caro* und *carro*. Keine neue Überschrift, kein Infokasten; vorhandener `image`-Block (`size: wide`) mit `alt`, `caption` und `credit`.
+- **Texte:** Bildunterschrift DE wörtlich nach Vorgabe, EN gleichwertig; die Unterschrift nennt die gemeinsame Artikulationsstelle von [ɾ] und [r] und keine Zahl von Zungenschlägen. Alt-Text und Nachweis nach Vorgabe (DE/EN).
+- **Fachliche Kontrolle:** Links alveolare Artikulation (Zungenspitze am Zahndamm), rechts hinterer Zungenrücken am Zäpfchen; Beschriftung [ɾ] / [r] und [ʁ] (umgedrehtes Kapitäl-R, nicht das aufrechte uvulare [ʀ]); die Darstellung ist schematisch (so beschriftet), kein medizinisches Schnittbild. **Keine gravierende Unstimmigkeit.** Anmerkungen: (1) Die Bewegungslinien links deuten einen Kontakt an, die Zahl der Schläge ergibt sich daraus nicht. (2) Die Beschriftungen im Bild sind deutsch („Spanisch“, „Deutsch“) und stehen damit auch auf der englischen Seite; Alt-Text und Bildunterschrift sind englisch.
+- **Browser** (Chromium, :8011): DE/EN, Desktop 1366 px und Mobil 390 px, hell und dunkel; das Bild lädt als WebP (`complete`, natürliche Größe 1448 × 1086), Darstellungsgröße 736 × 552 bzw. 358 × 269 (Seitenverhältnis unverändert), zentriert, kein horizontales Scrollen; im Dunkelmodus liegt die helle Bildfläche gedimmt (vorhandene Figure-Regel, unverändert). Hörkarten und Wortfolge-Chips unverändert.
+- **Tests:** `test_spanish_r_articulation_graphic_sits_after_the_explanation_with_exact_texts` (Position, genau eine Figur, Alt/Caption/Credit wörtlich, WebP + PNG-Fallback, Maße, keine Zahl von Schlägen, kein [ʀ]) und `test_spanish_r_graphic_master_is_kept_with_a_declared_webp_derivative`; der frühere Test „keine Platzhaltergrafik“ wurde entsprechend angepasst.
 
 ## Sonstige Änderungen
 

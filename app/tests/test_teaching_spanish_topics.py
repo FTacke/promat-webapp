@@ -563,7 +563,7 @@ def test_spanish_r_page_follows_the_agreed_dramaturgy(client, lang: str) -> None
     for fragment in ("[ˈpeɾo]", "[ˈpero]", "[reˈlox]", "⟨r⟩", "⟨rr⟩", "[ʁ]", "[ɾ]", "[r]"):
         assert fragment in html, fragment
     # removed building blocks: overview box, generic rubric, old comparison titles, the sentence variant D1, and no placeholder graphic
-    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "D1", "Zwei Wörter, zwei r-Laute", "pm-teaching-figure", "Platzhalter", "placeholder", "pm-admonition--tip"):
+    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "D1", "Zwei Wörter, zwei r-Laute", "Platzhalter", "placeholder", "pm-admonition--tip"):
         assert gone not in html, gone
     # orientation intro: short, before the first listening card
     blocks = _blocks("r", lang)
@@ -586,6 +586,59 @@ def test_spanish_r_page_follows_the_agreed_dramaturgy(client, lang: str) -> None
         assert href in html, href
     assert html.count(f'href="/{lang}/teaching/spanish/r-am-silbenende"') == 2  # in the text before the reír card and in the Vertiefung
     assert "claro" in html
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_spanish_r_articulation_graphic_sits_after_the_explanation_with_exact_texts(client, lang: str) -> None:
+    html = _html(client, lang, "r")
+    de = lang == "de"
+    src = "/teaching-media/spanish/r/images/spanish-german-r-articulation"
+    heading = "Zwei r-Laute – und die Schrift hilft mit" if de else "Two r sounds – and the spelling helps"
+    next_heading = "Einfach und mehrfach – auch bei anderen Wörtern" if de else "Tap and trill – in other words, too"
+    # exactly one figure: after the explanation of the articulation (with the transition sentence), before the spelling paragraph and the caro/carro cards
+    assert html.count("<figure") == 1
+    spelling = "Zwischen Vokalen unterscheiden die beiden Laute Wörter" if de else "Between vowels, the two sounds distinguish words"
+    assert html.index(heading) < html.index("Beide spanischen r-Laute" if de else "Both Spanish r sounds") < html.index(f"{src}.png") < html.index(spelling) < html.index(next_heading)
+    assert html.index(f"{src}.png") < html.index("pm-teaching-block--audio-contrast", html.index(next_heading))
+    # no new main heading and no info box for the graphic
+    assert re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html).count(heading) == 1 and "pm-admonition" not in html.split("<figure")[1].split("</figure>")[0]
+    # same shared image component as the [d]/[ð] graphic: wide figure, WebP with PNG master fallback, intrinsic size (no distortion), lazy decoding
+    assert 'pm-teaching-figure pm-teaching-figure--wide">' in html and f'<source type="image/webp" srcset="{src}.webp">' in html
+    assert 'width="1448" height="1086"' in html and 'loading="lazy"' in html
+    figure = re.search(r'<figure id="[^"]+" data-teaching-width="wide" class="pm-teaching-block pm-teaching-figure pm-teaching-figure--wide">(.*?)</figure>', html, re.S).group(1)
+    alt = html_module.unescape(re.search(r'alt="([^"]+)"', figure).group(1))
+    caption = html_module.unescape(re.search(r'pm-teaching-figure__caption-text">(.*?)</span>', figure, re.S).group(1))
+    credit = html_module.unescape(re.search(r'pm-teaching-figure__credit">(.*?)</span>', figure, re.S).group(1))
+    if de:
+        assert alt == ("Schematische Seitenschnitte des Mundraums: links die spanischen alveolaren R-Laute [ɾ] und [r] mit vorderer Zungenartikulation, "
+                       "rechts das deutsche uvulare [ʁ] mit weiter hinten liegender Artikulationsstelle.")
+        assert caption == ("Die spanischen R-Laute [ɾ] und [r] werden mit der Zungenspitze am Zahndamm gebildet. Beim im Standarddeutschen verbreiteten [ʁ] liegt die "
+                           "Artikulationsstelle dagegen weiter hinten, am Zäpfchen. Die schematische Darstellung zeigt den Unterschied der Artikulationsorte.")
+        assert credit == "Illustration: Felix Tacke (Konzept und Prompting), KI-generiert · Pronunciation Matters (2026)"
+        assert "Im Standarddeutschen wird das r dagegen häufig weiter hinten gebildet, am Zäpfchen." in html
+    else:
+        assert alt.startswith("Schematic side views of the mouth:") and "[ɾ]" in alt and "[ʁ]" in alt and "uvular" in alt and "alveolar" in alt
+        assert caption.startswith("The Spanish r sounds [ɾ] and [r] are produced with the tip of the tongue at the alveolar ridge.") and "at the uvula" in caption
+        assert credit == "Illustration: Felix Tacke (concept and prompting), AI-generated · Pronunciation Matters (2026)"
+        assert "In Standard German, by contrast, the r is often produced further back, at the uvula." in html
+    # the caption shows the shared place of articulation, never a number of taps; [ʁ] is not equated with the uvular trill [ʀ]
+    for text in (alt, caption):
+        assert "[ʀ]" not in text and "einmal" not in text and "mehrfach" not in text and "once" not in text and "several" not in text
+    assert client.get(f"{src}.webp").mimetype == "image/webp" and client.get(f"{src}.png").status_code == 200
+
+
+def test_spanish_r_graphic_master_is_kept_with_a_declared_webp_derivative() -> None:
+    import teaching_images as images
+
+    media = TOPIC_DIR / "r" / "media" / "images"
+    assert sorted(path.name for path in media.iterdir()) == ["spanish-german-r-articulation.png", "spanish-german-r-articulation.webp"]
+    master = media / "spanish-german-r-articulation.png"
+    assert images.png_size(master) == (1448, 1086) and images.webp_size(master.with_suffix(".webp")) == (1448, 1086)
+    assert images.sha256_of(master) == "35ce4527b3f3f2fc3d030d99a755422b4feeffbc6302ff3f61633d0f5ae4afd3"
+    assert images.check(images.load_manifest()) == [] and master.with_suffix(".webp").stat().st_size < master.stat().st_size / 5
+    # both language editions use the one image resource; no copy is left in the repository root
+    assert [b["src"] for lang in ("de", "en") for b in _blocks("r", lang) if b["type"] == "image"] == ["spanish-german-r-articulation.png"] * 2
+    assert not list(REPO_ROOT.glob("*articulation*")) and not list(REPO_ROOT.glob("*.webp"))
 
 
 @pytest.mark.parametrize("lang", ["de", "en"])
