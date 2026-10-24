@@ -77,8 +77,8 @@ Im Repository ist keine freigegebene r-Illustration vorhanden; es wird keine Pla
 - `scripts/teaching_audio_slots.py --check`, `--release-report`, `scripts/validate_teaching_content.py`, `scripts/ci_governance_checks.py`: grün.
 - Browser (Chromium, lokale Instanz :8011): `/de` und `/en`, Desktop 1366 px und Mobil 390 px, hell und dunkel, kein horizontales Scrollen. **Wiedergabe:** alle 10 Aufnahmen laden (HTTP 200) und laufen tatsächlich (`play()` → `currentTime` steigt, Dauer 0,98–1,85 s) in beiden Sprachfassungen. Eine akustische Beurteilung war nicht möglich.
 - Wortfolge-Chips zeigen den hörbaren Inhalt (*pero – perro*, *caro*, *carro*, *reloj*, *reír*); alle Clips sind ganze Item-Aufnahmen.
-- Volltest: siehe Abschnitt *Commit und Deployment*.
+- Volltest: `1474 passed, 2 skipped` (vorher `1469 passed`).
 
 ## Commit und Deployment
 
-(wird nach dem Lauf ergänzt)
+Commit `93a2d94` auf `main` gepusht; CI und „Deploy production“ erfolgreich. Live geprüft (`https://pronunciation-matters.de/{de,en}/teaching/spanish/r`): beide Seiten 200, fünf Hörkarten, kanonische URL unverändert, alle zehn Audiodateien 200 `audio/mpeg`, kein „Auf einen Blick“.
