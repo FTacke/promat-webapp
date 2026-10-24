@@ -542,7 +542,7 @@ def test_ready_is_ready_with_a_healthy_backend(real_app_factory) -> None:
 def _public_media_file() -> tuple[str, str, str, str] | None:
     for media_file in sorted(TEACHING_ROOT.glob("*/*/media/*/**/*")):
         teaching_lang, topic_slug, _, media_type, *rest = media_file.relative_to(TEACHING_ROOT).parts
-        if media_file.is_file() and media_type in {"audio", "downloads", "images", "video"}:
+        if media_file.is_file() and media_type in {"audio", "downloads", "images", "video"} and topic_slug != "accent-changes-everything":  # draft topic: not served
             return teaching_lang, topic_slug, media_type, "/".join(rest)
     return None
 

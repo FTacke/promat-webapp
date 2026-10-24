@@ -31,9 +31,10 @@ TOPICS = {
     "r-am-silbenende": {"de": "Das r am Wortende", "en": "The r at the End of a Word"},
     "b-or-v": {"de": "B oder V? Wenn die Schrift mitredet", "en": "B or V? When spelling has a say"},
     "soft-consonants-b-d-g": {"de": "b, d und g: Zu hart ausgesprochen?", "en": "b, d and g: Pronounced too hard?"},
-    "accent-changes-everything": {"de": "Ein Akzent verändert alles", "en": "An accent changes everything"},
 }
-IMPULSES = {"soft-spanish-hard-german": 3, "europe-sounds-different": 3, "r": 3, "r-am-silbenende": 3, "b-or-v": 3, "soft-consonants-b-d-g": 3, "accent-changes-everything": 3}
+# Not yet released (status: draft in both editions): neither listed in the hub nor served; its tests return with the release.
+UNRELEASED = "accent-changes-everything"
+IMPULSES = {"soft-spanish-hard-german": 3, "europe-sounds-different": 3, "r": 3, "r-am-silbenende": 3, "b-or-v": 3, "soft-consonants-b-d-g": 3}
 TOPIC_DIR = REPO_ROOT / "content" / "teaching" / "spanish"
 PAIRS = [(slug, lang) for slug in TOPICS for lang in ("de", "en")]
 
@@ -735,8 +736,9 @@ def test_spanish_overview_has_two_sections_in_two_column_grids(client, lang: str
     grids = re.findall(r'<div class="pm-card-grid pm-teaching-topic-grid([^"]*)">', hub)
     assert grids == [" pm-teaching-topic-grid--compact"] * 2  # same grid and maximum width for both sections
     cards = re.findall(rf'href="/{lang}/teaching/spanish/([a-z0-9-]+)"', hub)
-    assert cards == ["which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"]
-    assert len(set(cards)) == len(cards) == hub.count("pm-teaching-topic-card--available") == 8  # every existing page exactly once
+    assert cards == ["which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende"]
+    assert len(set(cards)) == len(cards) == hub.count("pm-teaching-topic-card--available") == 7  # every released page exactly once; the draft page is not listed
+    assert UNRELEASED not in hub
     assert "pm-teaching-topic-card--pending" not in hub  # no placeholder cards for planned pages
     for slug in cards:
         assert client.get(f"/{lang}/teaching/spanish/{slug}").status_code == 200
@@ -874,7 +876,7 @@ def test_hubs_list_all_topics_in_the_requested_order() -> None:
         hub = yaml.safe_load((TOPIC_DIR / "hubs" / f"{lang}.yaml").read_text(encoding="utf-8"))
         assert [g["topics"] for g in hub["groups"]] == [
             ["which-pronunciation", "soft-spanish-hard-german"],
-            ["europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"],
+            ["europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende"],  # accent-changes-everything: draft, not listed until released
         ]
 
 
@@ -1159,3 +1161,15 @@ def test_spanish_topic_teasers_are_single_sentences_that_do_not_repeat_the_title
         meta = yaml.safe_load((TOPIC_DIR / slug / f"{lang}.yaml").read_text(encoding="utf-8"))
         assert meta["summary"] == teaser == meta["description"]
     assert "im Spanischen meist nicht" not in yaml.safe_load((TOPIC_DIR / "r-am-silbenende" / "de.yaml").read_text(encoding="utf-8"))["summary"]
+
+
+def test_unreleased_accent_topic_is_hidden_from_hub_and_not_served(client) -> None:
+    """The accent page is a draft: not in the hub files (a listed draft would show as a placeholder card), no page, no media; releasing it = remove `status: draft` and list it again."""
+    for lang in ("de", "en"):
+        source = yaml.safe_load((TOPIC_DIR / UNRELEASED / f"{lang}.yaml").read_text(encoding="utf-8"))
+        assert source["status"] == "draft"
+        hub = client.get(f"/{lang}/teaching/spanish").get_data(as_text=True)
+        assert f"/{lang}/teaching/spanish/{UNRELEASED}" not in hub
+        assert client.get(f"/{lang}/teaching/spanish/{UNRELEASED}").status_code == 404
+    media = next((TOPIC_DIR / UNRELEASED / "media" / "audio").rglob("*.mp3"))
+    assert client.get(f"/teaching-media/spanish/{UNRELEASED}/audio/{media.relative_to(TOPIC_DIR / UNRELEASED / 'media' / 'audio').as_posix()}").status_code == 404

@@ -48,7 +48,7 @@ PUBLIC_PATHS = (
 # Single-language pages (app/src/app/page_languages.py): the missing edition redirects to the existing one.
 SINGLE_LANGUAGE_REDIRECTS = (("/de/research/english/design", "/en/research/english/design"),)
 PROTECTED_PATHS = ("/de/research/spanish/speakers", "/en/research/spanish/comparison", "/de/research/spanish/player/x/wordlist")
-SPANISH_TOPICS = ("which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "r", "r-am-silbenende", "b-or-v", "soft-consonants-b-d-g", "accent-changes-everything")
+SPANISH_TOPICS = ("which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "r", "r-am-silbenende", "b-or-v", "soft-consonants-b-d-g")  # accent-changes-everything is a draft (not served) until it is released
 CITED_PAGES = tuple(f"/{lang}/teaching/spanish/{slug}" for slug in SPANISH_TOPICS for lang in ("de", "en"))
 # Citable resources: canonical URL, one JSON-LD block and a generated citation that names exactly this URL.
 RESOURCE_PAGES = (

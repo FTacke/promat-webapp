@@ -1870,14 +1870,14 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask, releas
     assert 'pm-teaching-language-row__action' not in html
     assert 'pm-teaching-language-row__badge' not in html
     assert '>Öffnen<' not in html
-    assert html.index('>Spanisch<') < html.index('8 Themenseiten') < html.index('pm-nav-surface__arrow')
+    assert html.index('>Spanisch<') < html.index('7 Themenseiten') < html.index('pm-nav-surface__arrow')
     assert html.index('>Englisch<') < html.index('In Vorbereitung')
     assert 'href="/de/teaching/spanish"' in html
     assert 'href="/de/teaching/english"' not in html
     assert 'href="/de/teaching/french"' in html
     assert 'href="/de/teaching/german"' not in html
     assert 'aria-disabled' not in html
-    assert '8 Themenseiten' in html
+    assert '7 Themenseiten' in html
     assert '3 Themenseiten' in html
     assert html.count('In Vorbereitung') == 2
     assert html.index('>Spanisch<') < html.index('>Englisch<') < html.index('>Französisch<') < html.index('>Deutsch<')
@@ -1946,10 +1946,10 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Von Felix Tacke' not in html
     assert 'pm-teaching-topic-card__byline' not in html
     assert 'Das r am Wortende' in html
-    assert html.count('pm-teaching-topic-card--available') == 8
+    assert html.count('pm-teaching-topic-card--available') == 7
     assert html.count('pm-teaching-topic-card--pending') == 0
-    assert html.count('pm-teaching-topic-card--compact') == 8
-    for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'europe-sounds-different', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g', 'accent-changes-everything'):
+    assert html.count('pm-teaching-topic-card--compact') == 7
+    for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'europe-sounds-different', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g'):
         assert f'href="/de/teaching/spanish/{slug}"' in html
     assert 'pm-teaching-topic-card__meta' not in html
     assert 'pm-teaching-topic-card__pill' not in html
@@ -1965,7 +1965,8 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Das spanische r' not in first_group_html
     assert first_group_html.index('Welche Aussprache unterrichten?') < first_group_html.index('Weiches Spanisch, hartes Deutsch')
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
-    order = ['B oder V? Wenn die Schrift mitredet', 'b, d und g: Zu hart ausgesprochen?', 'Das spanische r', 'Das r am Wortende', 'Ein Akzent verändert alles']
+    order = ['B oder V? Wenn die Schrift mitredet', 'b, d und g: Zu hart ausgesprochen?', 'Das spanische r', 'Das r am Wortende']
+    assert 'Ein Akzent verändert alles' not in html  # draft page: not listed
     positions = [second_group_html.index(title) for title in order]
     assert positions == sorted(positions)
     assert 'Weiches Spanisch, hartes Deutsch' not in second_group_html
@@ -2028,9 +2029,9 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'Exploring pronunciation features' in html and 'Explore pronunciation patterns and discover ways to address them in the classroom.' in html
     assert 'Basics' not in html and 'Sounds and articulation' not in html
     assert 'The r at the End of a Word' in html
-    assert html.count('pm-teaching-topic-card--available') == 8
+    assert html.count('pm-teaching-topic-card--available') == 7
     assert html.count('pm-teaching-topic-card--pending') == 0
-    for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'europe-sounds-different', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g', 'accent-changes-everything'):
+    for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'europe-sounds-different', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g'):
         assert f'href="/en/teaching/spanish/{slug}"' in html
     assert 'Which pronunciation counts?' not in html
     assert 'Weiches Spanisch, hartes Deutsch' not in html
