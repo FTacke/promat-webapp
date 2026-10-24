@@ -627,73 +627,67 @@ comparisons:
     sha256: 164aa291910e29d9c2101537498c144414ccc796b614e0bc307aa3f943353134
 - id: p7-mismo-album
   topic: europe-sounds-different
-  phenomenon: 'Vokalqualität: spanisches /i/ und /u/ gegenüber deutschen ungespannten Vokalen (zwei hintereinander montierte
-    Einzelwörter)'
+  phenomenon: 'Vokalqualität: spanisches /i/ und /u/ gegenüber deutschen ungespannten Vokalen (MAR.ELE-Aufnahmen, zwei hintereinander
+    montierte Einzelwörter)'
   target: mismo – álbum
   question: Wie unterscheiden sich die Vokale *i* und *u* in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
-    session_id: ES-N-0005-2026-S01
-    file: corpus/p7-mismo-album-ref.mp3
+    origin:
+      corpus: MAR.ELE
+    file: marele/p7-mismo-album-ref.mp3
     join:
       pause_ms: 300
       tool: ffmpeg 8.1-full_build-www.gyan.dev
     parts:
-    - item:
-        task: wordlist
-        id: wl_037
+    - source_file: items/inf-L1-ES_es_040_mismo.mp3
       target_tokens:
       - mismo
       crop:
-        start_ms: 250
-        end_ms: 840
+        start_ms: 550
+        end_ms: 1240
         fade_in_ms: 15
         fade_out_ms: 25
-      source_sha256: 7befa971a6acc42906963f553e4cb0a791bfc975c09bb4cc953150a70e4014d4
-    - item:
-        task: wordlist
-        id: wl_044
+      source_sha256: 1b2239edc4f2de8f8c4a844de965fff34eaa5117f431c396edcb38a3860c3323
+    - source_file: items/inf-L1-ES_es_049_álbum.mp3
       target_tokens:
       - álbum
       crop:
-        start_ms: 250
-        end_ms: 880
+        start_ms: 480
+        end_ms: 1135
         fade_in_ms: 15
         fade_out_ms: 25
-      source_sha256: 666c5520cddd6737a334ea24531be5fbdb9044d1dd8ff1235a9b5ff9dbcbdd9e
-    sha256: c1d33e2f376ade65c6c795d1173b37744565a7cf52bdf7a6abcc54e8fb8aa700
+      source_sha256: ebccfbb63afd65fd506e11d9c9add4f7ab3c79c6b327364efb4b5f41e6de27c8
+    sha256: 585a92f36940296c141a779f5c91afd21e5b6613e1f6ca71002abb424066001f
   - slot: learner
     category: learner
-    session_id: ES-L-0011-2026-S01
-    file: corpus/p7-mismo-album-learner.mp3
+    origin:
+      corpus: MAR.ELE
+    file: marele/p7-mismo-album-learner.mp3
     join:
       pause_ms: 300
       tool: ffmpeg 8.1-full_build-www.gyan.dev
     parts:
-    - item:
-        task: wordlist
-        id: wl_037
+    - source_file: items/inf-019_040_mismo.mp3
       target_tokens:
       - mismo
       crop:
-        start_ms: 210
-        end_ms: 970
+        start_ms: 470
+        end_ms: 1230
         fade_in_ms: 15
         fade_out_ms: 25
-      source_sha256: 36fe40b5e92bb89718748392c043f55d44fdd430d14ec572c493bca626e881a1
-    - item:
-        task: wordlist
-        id: wl_044
+      source_sha256: 385d560cbef16a25d158195829db1879d6ec6ff6f151ca992bec1c0527deb492
+    - source_file: items/inf-019_049_álbum.mp3
       target_tokens:
       - álbum
       crop:
-        start_ms: 255
-        end_ms: 1010
+        start_ms: 465
+        end_ms: 1175
         fade_in_ms: 15
         fade_out_ms: 25
-      source_sha256: 97cf3c24da2a33771fda6b2fc1cf8f3bd663e92e10e72963290960895e64bf84
-    sha256: 0338c9313ffc3acc7e9058a443fc1a3367471f32beb7ee3c489260679784ddf7
+      source_sha256: b6fbba756569416517ddffa5e8a60cac0c105d678830addc71a6de8d0b438d00
+    sha256: d583c950563862765b8d3c81a6ce852b0079feea60d5a89943409a1fecab8d9e
 - id: p7-sueno
   topic: europe-sounds-different
   phenomenon: Diphthong ⟨ue⟩ in einer Silbe gegenüber getrennten Vokalen

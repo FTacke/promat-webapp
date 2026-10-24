@@ -52,13 +52,13 @@ blocks:
   transcript: '*mismo* – *álbum*'
   examples:
   - role: reference
-    subtitle: Chile · W37, W44
+    subtitle: MAR.ELE
     note: Zwei Einzelwörter, hintereinander montiert
-    audio: corpus/p7-mismo-album-ref.mp3
+    audio: marele/p7-mismo-album-ref.mp3
   - role: learner
-    subtitle: L1 Deutsch · W37, W44
+    subtitle: MAR.ELE
     note: Zwei Einzelwörter, hintereinander montiert
-    audio: corpus/p7-mismo-album-learner.mp3
+    audio: marele/p7-mismo-album-learner.mp3
 - type: text
   body: Im Deutschen stehen den gespannten Vokalen [iː] und [uː] die ungespannten [ɪ] und [ʊ] gegenüber, etwa in *bieten* und *bitten* oder im vertrauten *Album*, das mit [ʊ] gesprochen wird. Das Spanische kennt diesen Gegensatz nicht. Werden die ungespannten deutschen Vokale auf spanisches /i/ und /u/ übertragen, kann ein deutlich deutsch beeinflusster Höreindruck entstehen.
 - type: section_heading

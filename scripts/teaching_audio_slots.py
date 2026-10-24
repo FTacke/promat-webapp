@@ -31,6 +31,9 @@ A recording may also be a **montage** of several single-word items of one sessio
 (each with its own ``item``, ``crop`` cut points, optional ``target_tokens`` and ``source_sha256``) and ``join`` (``pause_ms`` of silence
 between the parts). The derivative is rendered with the same ffmpeg chain per part, parts in the declared order, nothing else inserted
 (used for the two-word cards of the vowel page); it is not an utterance of the speaker and the page must say so.
+A montage of the predecessor corpus MAR.ELE carries ``origin`` (corpus) and ``parts`` with ``source_file`` (relative to the MAR.ELE
+webapp backup, ``items/inf-NNN_NNN_word.mp3``) instead of ``item``: ``--export --marele-root PATH`` (or ``PROMAT_MARELE_ROOT``) renders it
+from that backup and refreshes the source hashes; without the backup it is only verified (file, hash, page reference).
 
 Recordings from the predecessor corpus MAR.ELE are not part of the research runtime: they carry an ``origin`` entry
 (corpus, source file, transcription) instead of ``session_id`` and ``item``, are copied once into the topic
@@ -42,6 +45,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -110,11 +114,30 @@ def recording_parts(recording: dict[str, Any]) -> list[dict[str, Any]]:
     """The source parts of a recording: the ``parts`` of a montage, otherwise one part made of ``item``/``crop``/``source_sha256``."""
     if recording.get("parts"):
         return list(recording["parts"])
-    return [{"item": recording.get("item") or {}, "crop": recording.get("crop"), "source_sha256": recording.get("source_sha256")}]
+    return [{"item": recording.get("item") or {}, "crop": recording.get("crop"), "source_sha256": recording.get("source_sha256"), "target_tokens": recording.get("target_tokens")}]
 
 
 def is_montage(recording: dict[str, Any]) -> bool:
     return bool(recording.get("parts"))
+
+
+def external_montage_problems(recording: dict[str, Any]) -> list[str]:
+    """Declaration rules of a montage made from MAR.ELE items (no session, no corpus item)."""
+    problems = []
+    if not str((recording.get("origin") or {}).get("corpus") or "").strip():
+        problems.append("external montage needs origin.corpus")
+    join = recording.get("join") or {}
+    if len(recording.get("parts") or []) < 2 or not isinstance(join.get("pause_ms"), int) or join["pause_ms"] < 0 or recording.get("session_id") or recording.get("item"):
+        problems.append("a montage needs at least two parts, join.pause_ms and no session/item of its own")
+    for part in recording.get("parts") or []:
+        crop = part.get("crop") or {}
+        if not str(part.get("source_file") or "").strip():
+            problems.append("every part of an external montage needs a source_file")
+        if not all(isinstance(crop.get(key), int) for key in CROP_KEYS) or crop.get("end_ms", 0) <= crop.get("start_ms", 0):
+            problems.append("every part of a montage needs a crop with integer start_ms < end_ms")
+        if not re.fullmatch(r"[0-9a-f]{64}", str(part.get("source_sha256") or "")):
+            problems.append("every part needs the source_sha256 of its source file")
+    return problems
 
 
 def source_path(sessions_root: Path, recording: dict[str, Any], item: dict[str, Any] | None = None) -> Path:
@@ -238,7 +261,7 @@ def render_release_report(rows: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
-def check(data: dict[str, Any], sessions_root: Path | None = None) -> list[str]:
+def check(data: dict[str, Any], sessions_root: Path | None = None, marele_root: Path | None = None) -> list[str]:
     """Consistency problems of the declaration; the session conditions are checked when ``sessions_root`` is given."""
     problems: list[str] = []
     seen_files: set[tuple[str, str]] = set()
@@ -256,7 +279,16 @@ def check(data: dict[str, Any], sessions_root: Path | None = None) -> list[str]:
             problems.append(f"{where}: category must be one of {CATEGORIES}")
             continue
         external = is_external(recording)
-        if external:
+        if external and is_montage(recording):
+            problems.extend(f"{where}: {problem}" for problem in external_montage_problems(recording))
+            if marele_root is not None:
+                for part in recording["parts"]:
+                    source = marele_root / str(part.get("source_file") or "")
+                    if not source.is_file():
+                        problems.append(f"{where}: MAR.ELE source missing: {source}")
+                    elif sha256_of(source) != part.get("source_sha256"):
+                        problems.append(f"{where}: the MAR.ELE source {part['source_file']} changed since the cut was made")
+        elif external:
             origin = recording["origin"]
             missing = [key for key in ("corpus", "source_file") if not str(origin.get(key) or "").strip()]
             if missing or recording.get("session_id") or item:
@@ -366,11 +398,14 @@ def derive_montage(sources: list[Path], target: Path, parts: list[dict[str, Any]
     subprocess.run(command, check=True)
 
 
-def export(data: dict[str, Any], sessions_root: Path) -> list[str]:
+def export(data: dict[str, Any], sessions_root: Path, marele_root: Path | None = None) -> list[str]:
     """Copy (or cut) the declared recordings from the local runtime into the topic media and refresh their hashes."""
     problems: list[str] = []
     for comparison, recording in iter_recordings(data):
         if is_external(recording):
+            if is_montage(recording) and marele_root is not None:
+                problems.extend(f"{comparison['id']}/{recording['slot']}: MAR.ELE source missing: {marele_root / part['source_file']}"
+                                for part in recording["parts"] if not (marele_root / part["source_file"]).is_file())
             continue
         where = f"{comparison['id']}/{recording['slot']}"
         problems.extend(f"{where}: {problem}" for problem in session_problems(sessions_root, recording))
@@ -379,6 +414,15 @@ def export(data: dict[str, Any], sessions_root: Path) -> list[str]:
         return problems
     for comparison, recording in iter_recordings(data):
         if is_external(recording):
+            if is_montage(recording) and marele_root is not None:
+                target = media_path(comparison["topic"], recording["file"])
+                target.parent.mkdir(parents=True, exist_ok=True)
+                origins = [marele_root / part["source_file"] for part in recording["parts"]]
+                derive_montage(origins, target, recording["parts"], recording["join"])
+                for part, origin in zip(recording["parts"], origins):
+                    part["source_sha256"] = sha256_of(origin)
+                recording["join"]["tool"] = f"ffmpeg {ffmpeg_version()}"
+                recording["sha256"] = sha256_of(target)
             continue
         target = media_path(comparison["topic"], recording["file"])
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -409,6 +453,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="verify the declaration (default)")
     parser.add_argument("--release-report", action="store_true", help="print the Teaching release check (session, item, consent) as a table")
     parser.add_argument("--sessions-root", type=Path, default=DEFAULT_SESSIONS_ROOT, help="runtime sessions root (default: data/sessions)")
+    parser.add_argument("--marele-root", type=Path, default=os.environ.get("PROMAT_MARELE_ROOT"), help="root of the MAR.ELE webapp backup (only for MAR.ELE montages)")
     args = parser.parse_args()
     data = load_slots()
     sessions_root = args.sessions_root if runtime_available(args.sessions_root) else None
@@ -423,10 +468,10 @@ def main() -> int:
         if sessions_root is None:
             print(f"No runtime sessions under {args.sessions_root}", file=sys.stderr)
             return 1
-        problems = export(data, sessions_root)
+        problems = export(data, sessions_root, args.marele_root)
         print("exported" if not problems else "export refused")
     else:
-        problems = check(data, sessions_root)
+        problems = check(data, sessions_root, args.marele_root)
         print("slots OK" if not problems else "slots FAILED")
     for problem in problems:
         print(" -", problem)

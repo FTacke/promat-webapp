@@ -924,11 +924,11 @@ def test_europe_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 5
     country = ("Spanien", "Chile", "Deutsch") if de else ("Spain", "Chile", "German")
     assert re.findall(r'pm-teaching-audio-contrast__example-subtitle">([^<]+)<', html) == [
-        f"{country[0]} · W80", f"L1 {country[2]} · W80", f"{country[0]} · W22", f"L1 {country[2]} · W22", f"{country[1]} · W37, W44", f"L1 {country[2]} · W37, W44",
+        f"{country[0]} · W80", f"L1 {country[2]} · W80", f"{country[0]} · W22", f"L1 {country[2]} · W22", "MAR.ELE", "MAR.ELE",
         f"{country[0]} · W40", f"L1 {country[2]} · W40", f"{country[0]} · W3", f"L1 {country[2]} · W3"]
     # the combined card: exactly two players, both marked as two single words spliced one after the other (never one connected utterance)
     card = html[pos["mismo"]:pos["sueño"]]  # from the card title to the next card (the explanation text sits inside this stretch)
-    assert sorted(set(re.findall(r'<source src="([^"]+)"', card))) == [f"/teaching-media/spanish/{EUROPE}/audio/corpus/p7-mismo-album-{who}.mp3" for who in ("learner", "ref")]
+    assert sorted(set(re.findall(r'<source src="([^"]+)"', card))) == [f"/teaching-media/spanish/{EUROPE}/audio/marele/p7-mismo-album-{who}.mp3" for who in ("learner", "ref")]
     note = "Zwei Einzelwörter, hintereinander montiert" if de else "Two single words, spliced one after the other"
     assert card.count(note) == 2
     # phonetic statements of the explanation text
@@ -971,13 +971,13 @@ def test_europe_curation_is_released_traceable_and_the_montage_is_declared() -> 
     data = slots.load_slots()
     comparisons = {c["id"]: c for c in data["comparisons"] if c["topic"] == EUROPE}
     assert list(comparisons) == ["p7-europa", "p7-deuda", "p7-mismo-album", "p7-sueno", "p7-viuda"]
-    n1, n2, n5 = "ES-N-0001-2026-S01", "ES-N-0002-2026-S01", "ES-N-0005-2026-S01"
-    l10, l11, l21 = "ES-L-0010-2026-S01", "ES-L-0011-2026-S01", "ES-L-0021-2026-S01"
-    picked = {cid: [(r["slot"], r["category"], r["session_id"]) for r in c["recordings"]] for cid, c in comparisons.items()}
+    n1, n2 = "ES-N-0001-2026-S01", "ES-N-0002-2026-S01"
+    l10, l21 = "ES-L-0010-2026-S01", "ES-L-0021-2026-S01"
+    picked = {cid: [(r["slot"], r["category"], r.get("session_id")) for r in c["recordings"]] for cid, c in comparisons.items()}
     assert picked == {
         "p7-europa": [("ref", "reference", n2), ("learner", "learner", l21)],
         "p7-deuda": [("ref", "reference", n2), ("learner", "learner", l21)],  # same pair as Europa: the second case of the same phenomenon
-        "p7-mismo-album": [("ref", "reference", n5), ("learner", "learner", l11)],
+        "p7-mismo-album": [("ref", "reference", None), ("learner", "learner", None)],  # MAR.ELE single-word items, no ProMat session
         "p7-sueno": [("ref", "reference", n1), ("learner", "learner", l10)],
         "p7-viuda": [("ref", "reference", n1), ("learner", "learner", l10)],
     }
@@ -986,10 +986,11 @@ def test_europe_curation_is_released_traceable_and_the_montage_is_declared() -> 
     assert items == {"p7-europa": ["wl_080"] * 2, "p7-deuda": ["wl_022"] * 2, "p7-sueno": ["wl_040"] * 2, "p7-viuda": ["wl_003"] * 2}
     # discarded candidate words are not part of the page's recordings
     assert not {c["target"] for c in comparisons.values()} & {"ciudad", "cuidado", "tierra", "buscó", "centro", "pastel"}
-    # the montage: two single words of ONE session each, in the order mismo, álbum, with a short declared pause; originals untouched (hashes), tool recorded
+    # the montage: two single-word MAR.ELE items per speaker, in the order mismo, álbum, with a short declared pause; originals untouched (hashes), tool recorded
+    sources = {"ref": ["items/inf-L1-ES_es_040_mismo.mp3", "items/inf-L1-ES_es_049_álbum.mp3"], "learner": ["items/inf-019_040_mismo.mp3", "items/inf-019_049_álbum.mp3"]}
     for recording in comparisons["p7-mismo-album"]["recordings"]:
-        assert "item" not in recording and "crop" not in recording
-        assert [p["item"] for p in recording["parts"]] == [{"task": "wordlist", "id": "wl_037"}, {"task": "wordlist", "id": "wl_044"}]
+        assert recording["origin"] == {"corpus": "MAR.ELE"} and "item" not in recording and "crop" not in recording
+        assert [p["source_file"] for p in recording["parts"]] == sources[recording["slot"]]
         assert [p["target_tokens"] for p in recording["parts"]] == [["mismo"], ["álbum"]]
         assert recording["join"]["pause_ms"] == 300 and recording["join"]["tool"].startswith("ffmpeg")
         for part in recording["parts"]:
@@ -997,12 +998,13 @@ def test_europe_curation_is_released_traceable_and_the_montage_is_declared() -> 
             assert 0 < crop["start_ms"] < crop["end_ms"] and crop["fade_in_ms"] >= 10 and crop["fade_out_ms"] >= 15
             assert re_module.fullmatch(r"[0-9a-f]{64}", part["source_sha256"]) and part["source_sha256"] != recording["sha256"]
     # the page does not present it as one utterance; the clips are short two-word montages, not full sentences
-    corpus = TOPIC_DIR / EUROPE / "media" / "audio" / "corpus"
-    for name, low, high in (("p7-mismo-album-ref", 1400, 1700), ("p7-mismo-album-learner", 1650, 2000)):
-        size = (corpus / f"{name}.mp3").stat().st_size
+    media = TOPIC_DIR / EUROPE / "media" / "audio"
+    for name, low, high in (("p7-mismo-album-ref", 1400, 1900), ("p7-mismo-album-learner", 1500, 2000)):
+        size = (media / "marele" / f"{name}.mp3").stat().st_size
         assert low * 20 < size < high * 20  # 160 kbit/s = 20 bytes per ms
-    declared = sorted(r["file"].split("/")[1] for c in comparisons.values() for r in c["recordings"])
-    assert sorted(path.name for path in corpus.glob("*.mp3")) == declared and len(declared) == 10
+    declared = sorted(r["file"].split("/")[1] for c in comparisons.values() for r in c["recordings"] if r["file"].startswith("corpus/"))
+    assert sorted(path.name for path in (media / "corpus").glob("*.mp3")) == declared and len(declared) == 8
+    assert sorted(path.name for path in (media / "marele").glob("*.mp3")) == ["p7-mismo-album-learner.mp3", "p7-mismo-album-ref.mp3"]
     reserves = {r["id"]: r for r in data["reserves"] if r["topic"] == EUROPE}
     assert sorted(reserves) == sorted(["p7-europa-reserve-0008", "p7-deuda-reserve-0008", "p7-mismo-reserve-0004", "p7-album-reserve-0004", "p7-mismo-reserve-0019",
                                        "p7-album-reserve-0019", "p7-sueno-reserve-0015", "p7-viuda-reserve-0017"])
@@ -1021,27 +1023,49 @@ def test_montage_declaration_rules_are_enforced() -> None:
         mutate(recording)
         return slots.check(candidate)
 
+    # external montage (MAR.ELE)
     assert any("montage needs" in p for p in broken(lambda r: r["join"].pop("pause_ms")))
     assert any("montage needs" in p for p in broken(lambda r: r.update(parts=r["parts"][:1])))
     assert any("every part of a montage needs a crop" in p for p in broken(lambda r: r["parts"][1].pop("crop")))
     assert any("source_sha256" in p for p in broken(lambda r: r["parts"][0].update(source_sha256="")))
-    assert any("invalid corpus item" in p for p in broken(lambda r: r["parts"][0].update(item={"task": "wordlist", "id": "x"})))
+    assert any("source_file" in p for p in broken(lambda r: r["parts"][0].pop("source_file")))
+    assert any("origin.corpus" in p for p in broken(lambda r: r["origin"].update(corpus="")))
     assert any("sha256 differs" in p for p in broken(lambda r: r.update(sha256="0" * 64)))
+
+    # session montage (ProMat corpus items of ONE session): the same rules apply to a declaration made from corpus items
+    def as_session_montage(candidate) -> dict:
+        recording = next(r for c in candidate["comparisons"] if c["id"] == "p7-europa" for r in c["recordings"] if r["slot"] == "learner")
+        crop, item, sha = {"start_ms": 100, "end_ms": 900, "fade_in_ms": 15, "fade_out_ms": 25}, recording.pop("item"), recording["sha256"]
+        recording["parts"] = [{"item": item, "target_tokens": ["europa"], "crop": dict(crop), "source_sha256": sha},
+                              {"item": {"task": "wordlist", "id": "wl_022"}, "target_tokens": ["deuda"], "crop": dict(crop), "source_sha256": sha}]
+        recording["join"] = {"pause_ms": 300, "tool": "ffmpeg"}
+        return recording
+
+    candidate = copy.deepcopy(data)
+    as_session_montage(candidate)
+    assert not any("montage needs" in p for p in slots.check(candidate))
+    candidate = copy.deepcopy(data)
+    as_session_montage(candidate)["join"].pop("pause_ms")
+    assert any("montage needs" in p for p in slots.check(candidate))
+    candidate = copy.deepcopy(data)
+    as_session_montage(candidate)["parts"][0]["item"] = {"task": "wordlist", "id": "x"}
+    assert any("invalid corpus item" in p for p in slots.check(candidate))
 
 
 def test_montage_is_reproducible_from_the_declared_cut_points_and_pause(tmp_path) -> None:
+    import os
     import shutil as shutil_module
     import subprocess
 
-    sessions_root = REPO_ROOT / "data" / "sessions"
-    if shutil_module.which("ffmpeg") is None or not slots.runtime_available(sessions_root):
-        pytest.skip("ffmpeg or the local research runtime is not present")
+    marele_root = Path(os.environ.get("PROMAT_MARELE_ROOT") or r"C:\dev_backup\marele-webapp")
+    if shutil_module.which("ffmpeg") is None or not (marele_root / "items").is_dir():
+        pytest.skip("ffmpeg or the MAR.ELE backup is not present")
     data = slots.load_slots()
     montages = [(c, r) for c, r in slots.iter_recordings(data) if r.get("parts")]
     assert len(montages) == 2
     for _comparison, recording in montages:
-        origins = [slots.source_path(sessions_root, recording, part["item"]) for part in recording["parts"]]
-        assert [slots.sha256_of(o) for o in origins] == [p["source_sha256"] for p in recording["parts"]]  # the corpus recordings are untouched
+        origins = [marele_root / part["source_file"] for part in recording["parts"]]
+        assert [slots.sha256_of(o) for o in origins] == [p["source_sha256"] for p in recording["parts"]]  # the MAR.ELE items are untouched
         target = tmp_path / Path(recording["file"]).name
         slots.derive_montage(origins, target, recording["parts"], recording["join"])
         if recording["join"]["tool"] == f"ffmpeg {slots.ffmpeg_version()}":
@@ -1052,11 +1076,18 @@ def test_montage_is_reproducible_from_the_declared_cut_points_and_pause(tmp_path
             assert abs(seconds - expected) < 0.06  # words, then exactly the declared pause, nothing else
 
 
-def test_montage_parts_are_checked_item_by_item_in_the_release_report() -> None:
+def test_session_montage_parts_are_checked_item_by_item_in_the_release_report() -> None:
+    import copy
+
     sessions_root = REPO_ROOT / "data" / "sessions"
     if not slots.runtime_available(sessions_root):
         pytest.skip("local research runtime not present")
-    rows = [r for r in slots.release_rows(slots.load_slots(), sessions_root) if r["use"].startswith("p7-mismo-album")]
-    assert sorted((r["session"], r["item"]) for r in rows) == sorted(
-        (s, i) for s in ("ES-N-0005-2026-S01", "ES-L-0011-2026-S01") for i in ("wl_037", "wl_044"))
+    data = copy.deepcopy(slots.load_slots())
+    recording = next(r for c in data["comparisons"] if c["id"] == "p7-europa" for r in c["recordings"] if r["slot"] == "learner")
+    crop, item = {"start_ms": 100, "end_ms": 900, "fade_in_ms": 15, "fade_out_ms": 25}, recording.pop("item")
+    recording["parts"] = [{"item": item, "target_tokens": ["europa"], "crop": crop}, {"item": {"task": "wordlist", "id": "wl_022"}, "target_tokens": ["deuda"], "crop": crop}]
+    rows = [r for r in slots.release_rows(data, sessions_root) if r["use"] == "p7-europa · integrated" and r["role"] == "learner"]
+    assert sorted((r["session"], r["item"]) for r in rows) == [("ES-L-0021-2026-S01", "wl_022"), ("ES-L-0021-2026-S01", "wl_080")]
     assert all(r["result"] == "OK" and r["consent"] == "yes" and r["review"] == "False" for r in rows)
+    # the MAR.ELE montage has no ProMat session and therefore no ProMat release row
+    assert not [r for r in slots.release_rows(slots.load_slots(), sessions_root) if r["use"].startswith("p7-mismo-album")]

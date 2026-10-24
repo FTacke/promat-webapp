@@ -51,13 +51,13 @@ blocks:
   transcript: '*mismo* – *álbum*'
   examples:
   - role: reference
-    subtitle: Chile · W37, W44
+    subtitle: MAR.ELE
     note: Two single words, spliced one after the other
-    audio: corpus/p7-mismo-album-ref.mp3
+    audio: marele/p7-mismo-album-ref.mp3
   - role: learner
-    subtitle: L1 German · W37, W44
+    subtitle: MAR.ELE
     note: Two single words, spliced one after the other
-    audio: corpus/p7-mismo-album-learner.mp3
+    audio: marele/p7-mismo-album-learner.mp3
 - type: text
   body: German distinguishes the tense vowels [iː] and [uː] from the lax [ɪ] and [ʊ], for example in *bieten* and *bitten*, or in the familiar *Album*, which is pronounced with [ʊ]. Spanish has no such contrast. If the lax German vowels are carried over to Spanish /i/ and /u/, the result can sound distinctly German-influenced.
 - type: section_heading
