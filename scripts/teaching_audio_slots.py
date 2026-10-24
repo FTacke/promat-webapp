@@ -71,7 +71,8 @@ HEADER = """# Curated corpus recordings of the Spanish Teaching topic pages (dec
 # media file and its `sha256`. The topic pages name only the media file, never a session, so replacing a recording
 # needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes` (checked by
 # `--release-report`). The `selection` of the first release was made automatically; the combinations of
-# `soft-spanish-hard-german` were chosen in a manual phonetic curation (Ana Goás Pérez). Recordings with an `origin`
+# `soft-spanish-hard-german` were chosen in a manual phonetic curation (Ana Goás Pérez); the `r` page was curated by acoustic screening
+# (intensity contour and spectrogram of the r realisations) and is provisional until listened to. Recordings with an `origin`
 # entry come from the predecessor corpus MAR.ELE (not from the research runtime); they are not touched by --export.
 # A `crop` entry renders the target word sequence out of the item MP3 (cut points fixed here, see the script docstring).
 # `reserves` document curatorial alternatives that are NOT integrated (no media, no audio box).

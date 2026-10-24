@@ -30,6 +30,8 @@ MAR.ELE-Aufnahmen (Vorgängerkorpus, nicht in der Runtime): Der Eintrag trägt s
 
 Ausschnitt statt ganzer Satz: Soll nur die Zielwortfolge hörbar sein, den Eintrag um `crop` ergänzen (`start_ms`, `end_ms` auf der Item-MP3, `fade_in_ms`, `fade_out_ms`, optional `lead_silence_ms`) und im Vergleich `target_tokens` setzen. Die Schnittpunkte nach Spektrogramm und Energieverlauf der tatsächlichen Realisierung bestimmen (Alignment-Wortzeiten sind nur ein Anhaltspunkt und können mehrere 10 ms danebenliegen): Anlaut vollständig, Auslaut und Übergänge nicht abgeschnitten, nichts zwischen den Wörtern einfügen, Vorlaufstille nur am Clip-Anfang. `--export` rendert das Derivat mit ffmpeg (bitgleich reproduzierbar mit derselben Version), schreibt `source_sha256` und `sha256`; der Chip (`transcript`) der Seite nennt genau die gespielte Passage. Das Ergebnis ansehen (Spektrogramm) und anhören.
 
+Zwei Referenzstimmen in einem Vergleich (z. B. `pero – perro` auf `r`): beide Einträge mit `category: reference`, `slot: ref_a`/`ref_b`; die Seite beschriftet beide `Referenzsprecher:in` und unterscheidet sie über die Untertitel. Dieselbe Aufnahme auf mehreren Seiten (z. B. *reír* W76): je Seite ein eigener Vergleich mit derselben Session und demselben Item; `--export` erzeugt bitgleiche Kopien, deren `sha256` übereinstimmen muss.
+
 Kuratorische Reserven (nicht eingebunden) stehen unter `reserves` in `audio-slots.yaml`, ohne Medium; auch sie müssen das Freigabe-Gate bestehen.
 
 Neue Vergleiche oder Hörfragen: den Eintrag unter `comparisons` ergänzen (die `question` muss wörtlich im `lead` des Vergleichsblocks der Seite stehen) und den Block in `de.yaml`/`en.yaml` mit den Dateinamen `corpus/…` anlegen.

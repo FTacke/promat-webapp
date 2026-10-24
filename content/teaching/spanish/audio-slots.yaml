@@ -4,7 +4,8 @@
 # media file and its `sha256`. The topic pages name only the media file, never a session, so replacing a recording
 # needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes` (checked by
 # `--release-report`). The `selection` of the first release was made automatically; the combinations of
-# `soft-spanish-hard-german` were chosen in a manual phonetic curation (Ana Goás Pérez). Recordings with an `origin`
+# `soft-spanish-hard-german` were chosen in a manual phonetic curation (Ana Goás Pérez); the `r` page was curated by acoustic screening
+# (intensity contour and spectrogram of the r realisations) and is provisional until listened to. Recordings with an `origin`
 # entry come from the predecessor corpus MAR.ELE (not from the research runtime); they are not touched by --export.
 # A `crop` entry renders the target word sequence out of the item MP3 (cut points fixed here, see the script docstring).
 # `reserves` document curatorial alternatives that are NOT integrated (no media, no audio box).
@@ -124,88 +125,127 @@ comparisons:
       id: qy_05
     file: corpus/p1-losotros-learner.mp3
     sha256: 68cbbcdb581961e9bb1909ccb7127d128d6402252840ef4623ca369a55d2af40
-- id: p2-caro
-  topic: r
-  phenomenon: Einfacher und mehrfacher Vibrant
-  target: caro – carro
-  question: Wie oft schlägt die Zungenspitze im ersten, wie oft im zweiten Wort an?
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: ES-N-0002-2026-S01
-    item:
-      task: wordlist
-      id: wl_088
-    file: corpus/p2-caro-ref.mp3
-    sha256: 6973847210bc123b12495da140ddb15a622b0d74ad886d55532a0f4638829fa0
-  - slot: learner
-    category: learner
-    session_id: ES-L-0012-2026-S01
-    item:
-      task: wordlist
-      id: wl_088
-    file: corpus/p2-caro-learner.mp3
-    sha256: 35d59a90374f822f2db2f3ceae0a09294399855be2a39360a58de3892fa8a48f
 - id: p2-pero
   topic: r
-  phenomenon: Einfacher und mehrfacher Vibrant
+  phenomenon: Einfacher und mehrfacher Vibrant zwischen Vokalen (Minimalpaar)
   target: pero – perro
-  question: Welches der beiden Wörter hat den längeren r-Laut?
+  target_tokens:
+  - pero
+  - perro
+  question: Worin unterscheiden sich die beiden r-Laute?
+  recordings:
+  - slot: ref_a
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_090
+    file: corpus/p2-pero-ref-a.mp3
+    sha256: 6f0e9576cab13eec0f4aa52981e8d55284d270e44a3911a687077700980dd303
+  - slot: ref_b
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_090
+    file: corpus/p2-pero-ref-b.mp3
+    sha256: 3009553a484b34ba396f7c7234d0463a61d6e6d8098f4c2a7292d296ca70b3ef
+- id: p2-caro
+  topic: r
+  phenomenon: Einfacher Vibrant [ɾ] zwischen Vokalen
+  target: caro
+  target_tokens:
+  - caro
+  question: Achte auf das *r*. Wie oft schlägt die Zungenspitze an?
+  recordings:
+  - slot: ref_a
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_085
+    file: corpus/p2-caro-ref-a.mp3
+    sha256: 38f78ea84d43160483650674887a9b89cbd876f164db1d7366915ac800f5802c
+  - slot: ref_b
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_085
+    file: corpus/p2-caro-ref-b.mp3
+    sha256: dcf3b7895f58ae695c2bae9053a34b56ca5e118f230e68c7190c3e04d44eeaac
+- id: p2-carro
+  topic: r
+  phenomenon: Mehrfacher Vibrant [r] zwischen Vokalen
+  target: carro
+  target_tokens:
+  - carro
+  question: Achte auf das *rr*. Wie unterscheidet es sich vom *r* in *caro*?
+  recordings:
+  - slot: ref_a
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_057
+    file: corpus/p2-carro-ref-a.mp3
+    sha256: e5195c23a044e13debe875d246126df7781cd9c7c986e833a2d118218d8ad83c
+  - slot: ref_b
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    item:
+      task: wordlist
+      id: wl_057
+    file: corpus/p2-carro-ref-b.mp3
+    sha256: 47a963d5637edf3ce8ea0aa48162d45ca953f5b639c0d073352a914995f42daf
+- id: p2-reloj
+  topic: r
+  phenomenon: 'Anlautendes r: mehrfacher Vibrant vs. hinterer Reibelaut'
+  target: reloj
+  target_tokens:
+  - reloj
+  question: Wo wird das *r* in den beiden Aufnahmen artikuliert?
   recordings:
   - slot: ref
     category: reference
-    session_id: ES-N-0002-2026-S01
+    session_id: ES-N-0005-2026-S01
     item:
       task: wordlist
-      id: wl_090
-    file: corpus/p2-pero-ref.mp3
-    sha256: 6f0e9576cab13eec0f4aa52981e8d55284d270e44a3911a687077700980dd303
+      id: wl_002
+    file: corpus/p2-reloj-ref.mp3
+    sha256: 2c2a2cc5dbbb4212976615f65968f1434a0af93e0492a45a62e12185f80eea1f
   - slot: learner
     category: learner
-    session_id: ES-L-0012-2026-S01
+    session_id: ES-L-0011-2026-S01
     item:
       task: wordlist
-      id: wl_090
-    file: corpus/p2-pero-learner.mp3
-    sha256: b61f50df88aa2ba233d0537104ed6fb9d3a3e342c37d70e15e49f7b31ca0fb64
-- id: p2-reloj
+      id: wl_002
+    file: corpus/p2-reloj-learner.mp3
+    sha256: 2587ba3539ebb435a91d279298f6585b9f0ada944c10dcee8d192df3b421af94
+- id: p2-reir
   topic: r
-  phenomenon: Mehrfacher Vibrant am Wortanfang
-  target: reloj / miro el reloj
-  question: Wie oft schlägt die Zunge beim *r* von *reloj* an – allein und im Satz? Und wie klingt dagegen das *r* in *miro*?
+  phenomenon: Anlautendes r in reír (dieselbe Lernendenaufnahme wie auf der Seite zum r am Wortende)
+  target: reír
+  target_tokens:
+  - reír
+  question: Achte auf das *r* am Wortanfang. Wie unterscheiden sich die beiden Aufnahmen?
   recordings:
-  - slot: ref-isoliert
+  - slot: ref
     category: reference
-    session_id: ES-N-0002-2026-S01
+    session_id: ES-N-0005-2026-S01
     item:
       task: wordlist
-      id: wl_002
-    file: corpus/p2-reloj-ref-isoliert.mp3
-    sha256: 39d294ce3ca6e9a0679f187a9285084774b69e137a471e3be7792505748519f1
-  - slot: ref-satz
-    category: reference
-    session_id: ES-N-0002-2026-S01
-    item:
-      task: text
-      id: d_01
-    file: corpus/p2-reloj-ref-satz.mp3
-    sha256: 002d6a9371a06c6e5c13789e47c00417c630f7940fa5fd165970ddb713643713
-  - slot: learner-isoliert
+      id: wl_076
+    file: corpus/p2-reir-ref.mp3
+    sha256: d6a4e69ad6fd7cf9a855b885d278a19a3f402ebe3c9bf55e341f4118c9a43348
+  - slot: learner
     category: learner
-    session_id: ES-L-0012-2026-S01
+    session_id: ES-L-0019-2026-S01
     item:
       task: wordlist
-      id: wl_002
-    file: corpus/p2-reloj-learner-isoliert.mp3
-    sha256: 28c049a911a6e181e7469711a72d9634541de9d8617cfd3d3ed4acd72328e580
-  - slot: learner-satz
-    category: learner
-    session_id: ES-L-0012-2026-S01
-    item:
-      task: text
-      id: d_01
-    file: corpus/p2-reloj-learner-satz.mp3
-    sha256: 6a7398c7296e4285daf83966256a0997387efd0f8afe3b63d23b89b8ae5161d0
+      id: wl_076
+    file: corpus/p2-reir-learner.mp3
+    sha256: bd7e35613ab7265ecf821dd22c3b082aa15b56d4c09ddfd5a19656e101e84725
 - id: p6-numero3
   topic: accent-changes-everything
   phenomenon: Lexikalischer Wortakzent
@@ -676,3 +716,36 @@ reserves:
   reference: ES-N-0001-2026-S01
   learner: ES-L-0005-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p2-reloj-reserve-0019
+  topic: r
+  target: reloj
+  target_tokens:
+  - reloj
+  item:
+    task: wordlist
+    id: wl_002
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0019-2026-S01
+  status: curatorial reserve for the learner slot of p2-reloj, not integrated; check with --release-report before use
+- id: p2-reloj-reserve-0021
+  topic: r
+  target: reloj
+  target_tokens:
+  - reloj
+  item:
+    task: wordlist
+    id: wl_002
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0021-2026-S01
+  status: curatorial reserve for the learner slot of p2-reloj, not integrated; check with --release-report before use
+- id: p2-reloj-reserve-0005
+  topic: r
+  target: reloj
+  target_tokens:
+  - reloj
+  item:
+    task: wordlist
+    id: wl_002
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0005-2026-S01
+  status: curatorial reserve for the learner slot of p2-reloj, not integrated; check with --release-report before use
