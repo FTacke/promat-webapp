@@ -32,6 +32,8 @@ Ausschnitt statt ganzer Satz: Soll nur die Zielwortfolge hörbar sein, den Eintr
 
 Zwei Referenzstimmen in einem Vergleich (z. B. `pero – perro` auf `r`): beide Einträge mit `category: reference`, `slot: ref_a`/`ref_b`; die Seite beschriftet beide `Referenzsprecher:in` und unterscheidet sie über die Untertitel. Dieselbe Aufnahme auf mehreren Seiten (z. B. *reír* W76): je Seite ein eigener Vergleich mit derselben Session und demselben Item; `--export` erzeugt bitgleiche Kopien, deren `sha256` übereinstimmen muss.
 
+Montage aus mehreren Einzelwörtern (z. B. *mismo – álbum* auf `europe-sounds-different`): statt `item`/`crop` trägt der Eintrag `parts` (je `item`, `target_tokens`, `crop` mit `start_ms`/`end_ms`/Fades) und `join: {pause_ms}`. Die Schnittpunkte je Wort nach Energieverlauf und Spektrogramm festlegen (Anlaut vollständig, Auslaut inklusive auslautendem Nasal, ca. 50 ms Vorlauf und 70 ms Nachlauf). `--export` rendert alle Teile mit derselben ffmpeg-Kette und fügt nur die deklarierte Stille ein; die wirksame Pause ist `pause_ms` plus Nach- und Vorlauf der Schnitte. Die Seite kennzeichnet die Karte als „Zwei Einzelwörter, hintereinander montiert“, nie als zusammenhängende Äußerung.
+
 Kuratorische Reserven (nicht eingebunden) stehen unter `reserves` in `audio-slots.yaml`, ohne Medium; auch sie müssen das Freigabe-Gate bestehen.
 
 Neue Vergleiche oder Hörfragen: den Eintrag unter `comparisons` ergänzen (die `question` muss wörtlich im `lead` des Vergleichsblocks der Seite stehen) und den Block in `de.yaml`/`en.yaml` mit den Dateinamen `corpus/…` anlegen.

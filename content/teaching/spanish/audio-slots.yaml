@@ -577,6 +577,171 @@ comparisons:
       transcription: '[el.be.be.ˈdoɐ]'
     file: marele/bebedor-learner.mp3
     sha256: 848aecefa5f06888b6e335f87f2520d2a935ef8834f4a2c3f66f1eeffb99b79b
+- id: p7-europa
+  topic: europe-sounds-different
+  phenomenon: '⟨eu⟩ in Europa: spanischer Diphthong [eu̯] gegenüber deutscher Lesung [ɔɪ̯]'
+  target: Europa
+  target_tokens:
+  - europa
+  question: Wie unterscheidet sich die Aussprache der beiden Aufnahmen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_080
+    file: corpus/p7-europa-ref.mp3
+    sha256: b67fed9387f71d53db9fb9964a2b0a7b57c3965fbfaf634f702fcecf7f815e82
+  - slot: learner
+    category: learner
+    session_id: ES-L-0021-2026-S01
+    item:
+      task: wordlist
+      id: wl_080
+    file: corpus/p7-europa-learner.mp3
+    sha256: 5793b25aded2e9d5db531d787593ecdb9cd629b410456e6d96445a3b4ae97ac1
+- id: p7-deuda
+  topic: europe-sounds-different
+  phenomenon: ⟨eu⟩ in deuda (zweiter Beleg)
+  target: deuda
+  target_tokens:
+  - deuda
+  question: Wie wird die Vokalverbindung *eu* ausgesprochen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0002-2026-S01
+    item:
+      task: wordlist
+      id: wl_022
+    file: corpus/p7-deuda-ref.mp3
+    sha256: 45c1e903c74c9219eca8542c715e2a183894a4c7ecc9a5c698fa165dfd4cc906
+  - slot: learner
+    category: learner
+    session_id: ES-L-0021-2026-S01
+    item:
+      task: wordlist
+      id: wl_022
+    file: corpus/p7-deuda-learner.mp3
+    sha256: 164aa291910e29d9c2101537498c144414ccc796b614e0bc307aa3f943353134
+- id: p7-mismo-album
+  topic: europe-sounds-different
+  phenomenon: 'Vokalqualität: spanisches /i/ und /u/ gegenüber deutschen ungespannten Vokalen (zwei hintereinander montierte
+    Einzelwörter)'
+  target: mismo – álbum
+  question: Wie unterscheiden sich die Vokale *i* und *u* in den beiden Aufnahmen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0005-2026-S01
+    file: corpus/p7-mismo-album-ref.mp3
+    join:
+      pause_ms: 300
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    parts:
+    - item:
+        task: wordlist
+        id: wl_037
+      target_tokens:
+      - mismo
+      crop:
+        start_ms: 250
+        end_ms: 840
+        fade_in_ms: 15
+        fade_out_ms: 25
+      source_sha256: 7befa971a6acc42906963f553e4cb0a791bfc975c09bb4cc953150a70e4014d4
+    - item:
+        task: wordlist
+        id: wl_044
+      target_tokens:
+      - álbum
+      crop:
+        start_ms: 250
+        end_ms: 880
+        fade_in_ms: 15
+        fade_out_ms: 25
+      source_sha256: 666c5520cddd6737a334ea24531be5fbdb9044d1dd8ff1235a9b5ff9dbcbdd9e
+    sha256: c1d33e2f376ade65c6c795d1173b37744565a7cf52bdf7a6abcc54e8fb8aa700
+  - slot: learner
+    category: learner
+    session_id: ES-L-0011-2026-S01
+    file: corpus/p7-mismo-album-learner.mp3
+    join:
+      pause_ms: 300
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    parts:
+    - item:
+        task: wordlist
+        id: wl_037
+      target_tokens:
+      - mismo
+      crop:
+        start_ms: 210
+        end_ms: 970
+        fade_in_ms: 15
+        fade_out_ms: 25
+      source_sha256: 36fe40b5e92bb89718748392c043f55d44fdd430d14ec572c493bca626e881a1
+    - item:
+        task: wordlist
+        id: wl_044
+      target_tokens:
+      - álbum
+      crop:
+        start_ms: 255
+        end_ms: 1010
+        fade_in_ms: 15
+        fade_out_ms: 25
+      source_sha256: 97cf3c24da2a33771fda6b2fc1cf8f3bd663e92e10e72963290960895e64bf84
+    sha256: 0338c9313ffc3acc7e9058a443fc1a3367471f32beb7ee3c489260679784ddf7
+- id: p7-sueno
+  topic: europe-sounds-different
+  phenomenon: Diphthong ⟨ue⟩ in einer Silbe gegenüber getrennten Vokalen
+  target: sueño
+  target_tokens:
+  - sueño
+  question: Wie viele Silben sind in den beiden Aufnahmen zu hören?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_040
+    file: corpus/p7-sueno-ref.mp3
+    sha256: f6ef0dfbf2873a6087c29a2e774972d439db0d7f169d390202a725937eb6720f
+  - slot: learner
+    category: learner
+    session_id: ES-L-0010-2026-S01
+    item:
+      task: wordlist
+      id: wl_040
+    file: corpus/p7-sueno-learner.mp3
+    sha256: 7968e726dbb10fb17a0569feeccd75486a25b03b7f5c07a7ba9fec1beb4ea621
+- id: p7-viuda
+  topic: europe-sounds-different
+  phenomenon: Diphthong ⟨iu⟩ in einer Silbe gegenüber getrennten Vokalen
+  target: viuda
+  target_tokens:
+  - viuda
+  question: Bleibt die Vokalfolge *iu* innerhalb einer Silbe?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_003
+    file: corpus/p7-viuda-ref.mp3
+    sha256: 78bc794b1640865c77abdaf97b0f04dfb0b442bfd10d335888839101a7d11c3b
+  - slot: learner
+    category: learner
+    session_id: ES-L-0010-2026-S01
+    item:
+      task: wordlist
+      id: wl_003
+    file: corpus/p7-viuda-learner.mp3
+    sha256: 5a3bb55ed440f052db600d3ec915a4b7cd6d4d3381e7aef54e140dc78616e4e8
 reserves:
 - id: p1-amigos
   topic: soft-spanish-hard-german
@@ -749,3 +914,91 @@ reserves:
   reference: ES-N-0005-2026-S01
   learner: ES-L-0005-2026-S01
   status: curatorial reserve for the learner slot of p2-reloj, not integrated; check with --release-report before use
+- id: p7-europa-reserve-0008
+  topic: europe-sounds-different
+  target: Europa
+  target_tokens:
+  - europa
+  item:
+    task: wordlist
+    id: wl_080
+  reference: ES-N-0002-2026-S01
+  learner: ES-L-0008-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p7-deuda-reserve-0008
+  topic: europe-sounds-different
+  target: deuda
+  target_tokens:
+  - deuda
+  item:
+    task: wordlist
+    id: wl_022
+  reference: ES-N-0002-2026-S01
+  learner: ES-L-0008-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p7-mismo-reserve-0004
+  topic: europe-sounds-different
+  target: mismo
+  target_tokens:
+  - mismo
+  item:
+    task: wordlist
+    id: wl_037
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0004-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p7-album-reserve-0004
+  topic: europe-sounds-different
+  target: álbum
+  target_tokens:
+  - álbum
+  item:
+    task: wordlist
+    id: wl_044
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0004-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p7-mismo-reserve-0019
+  topic: europe-sounds-different
+  target: mismo
+  target_tokens:
+  - mismo
+  item:
+    task: wordlist
+    id: wl_037
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0019-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p7-album-reserve-0019
+  topic: europe-sounds-different
+  target: álbum
+  target_tokens:
+  - álbum
+  item:
+    task: wordlist
+    id: wl_044
+  reference: ES-N-0005-2026-S01
+  learner: ES-L-0019-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p7-sueno-reserve-0015
+  topic: europe-sounds-different
+  target: sueño
+  target_tokens:
+  - sueño
+  item:
+    task: wordlist
+    id: wl_040
+  reference: ES-N-0001-2026-S01
+  learner: ES-L-0015-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
+- id: p7-viuda-reserve-0017
+  topic: europe-sounds-different
+  target: viuda
+  target_tokens:
+  - viuda
+  item:
+    task: wordlist
+    id: wl_003
+  reference: ES-N-0001-2026-S01
+  learner: ES-L-0017-2026-S01
+  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use

@@ -26,13 +26,14 @@ import teaching_audio_slots as slots  # noqa: E402
 
 TOPICS = {
     "soft-spanish-hard-german": {"de": "Weiches Spanisch, hartes Deutsch", "en": "Soft Spanish, hard German"},
+    "europe-sounds-different": {"de": "Europa klingt auf Spanisch anders", "en": "Europe sounds different in Spanish"},
     "r": {"de": "Das spanische r", "en": "The Spanish r"},
     "r-am-silbenende": {"de": "Das r am Wortende", "en": "The r at the End of a Word"},
     "b-or-v": {"de": "B oder V? Wenn die Schrift mitredet", "en": "B or V? When spelling has a say"},
     "soft-consonants-b-d-g": {"de": "b, d und g: Zu hart ausgesprochen?", "en": "b, d and g: Pronounced too hard?"},
     "accent-changes-everything": {"de": "Ein Akzent verändert alles", "en": "An accent changes everything"},
 }
-IMPULSES = {"soft-spanish-hard-german": 3, "r": 3, "r-am-silbenende": 3, "b-or-v": 3, "soft-consonants-b-d-g": 3, "accent-changes-everything": 3}
+IMPULSES = {"soft-spanish-hard-german": 3, "europe-sounds-different": 3, "r": 3, "r-am-silbenende": 3, "b-or-v": 3, "soft-consonants-b-d-g": 3, "accent-changes-everything": 3}
 TOPIC_DIR = REPO_ROOT / "content" / "teaching" / "spanish"
 PAIRS = [(slug, lang) for slug in TOPICS for lang in ("de", "en")]
 
@@ -734,9 +735,9 @@ def test_spanish_overview_has_two_sections_in_two_column_grids(client, lang: str
     grids = re.findall(r'<div class="pm-card-grid pm-teaching-topic-grid([^"]*)">', hub)
     assert grids == [" pm-teaching-topic-grid--compact"] * 2  # same grid and maximum width for both sections
     cards = re.findall(rf'href="/{lang}/teaching/spanish/([a-z0-9-]+)"', hub)
-    assert cards == ["which-pronunciation", "soft-spanish-hard-german", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"]
-    assert len(set(cards)) == len(cards) == hub.count("pm-teaching-topic-card--available") == 7  # every existing page exactly once
-    assert "vokal" not in hub.lower() and "vowel" not in hub.lower() and "pm-teaching-topic-card--pending" not in hub  # planned vowel page: no placeholder
+    assert cards == ["which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"]
+    assert len(set(cards)) == len(cards) == hub.count("pm-teaching-topic-card--available") == 8  # every existing page exactly once
+    assert "pm-teaching-topic-card--pending" not in hub  # no placeholder cards for planned pages
     for slug in cards:
         assert client.get(f"/{lang}/teaching/spanish/{slug}").status_code == 200
     # the two-column layout is a property of this hub only: other teaching hubs keep their grids
@@ -865,7 +866,7 @@ def test_hubs_list_all_topics_in_the_requested_order() -> None:
         hub = yaml.safe_load((TOPIC_DIR / "hubs" / f"{lang}.yaml").read_text(encoding="utf-8"))
         assert [g["topics"] for g in hub["groups"]] == [
             ["which-pronunciation", "soft-spanish-hard-german"],
-            ["b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"],
+            ["europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende", "accent-changes-everything"],
         ]
 
 
@@ -874,7 +875,7 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
     assert slots.check(data) == []
     declared = {(c["topic"], r["file"]) for c, r in slots.iter_recordings(data)}
     on_disk = {(path.parents[3].name, f"{path.parent.name}/{path.name}") for kind in ("corpus", "marele") for path in TOPIC_DIR.glob(f"*/media/audio/{kind}/*.mp3")}
-    assert declared == on_disk and len(declared) == 47
+    assert declared == on_disk and len(declared) == 57
     for comparison, recording in slots.iter_recordings(data):
         assert recording["category"] in ("reference", "learner")
         if not slots.is_external(recording):
@@ -886,3 +887,176 @@ def test_slot_sources_are_released_sessions_when_the_local_runtime_is_present() 
     if not slots.runtime_available(sessions_root):
         pytest.skip("local research runtime not present")
     assert slots.check(slots.load_slots(), sessions_root) == []
+
+
+# --- "Europa klingt auf Spanisch anders" (europe-sounds-different): vowels and diphthongs -------------------------------------
+
+EUROPE = "europe-sounds-different"
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_europe_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
+    html = _html(client, lang, EUROPE)
+    de = lang == "de"
+    headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
+    assert headings == (["Fünf Vokale – nicht ganz wie im Deutschen", "Wenn aus einem Diphthong zwei Silben werden", "Impulse für den Unterricht"] if de
+                        else ["Five vowels – not quite as in German", "When a diphthong turns into two syllables", "Classroom prompts"])
+    # five listening cards in the agreed order; the first follows the short introduction directly and is the only one with a solution
+    prefix = "Hörvergleich" if de else "Listening comparison"
+    titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
+    assert titles[:5] == [f"{prefix}: <em>{w}</em>" for w in ("Europa", "deuda")] + [f"{prefix}: <em>mismo</em> – <em>álbum</em>"] + [f"{prefix}: <em>{w}</em>" for w in ("sueño", "viuda")]
+    assert html.count("pm-teaching-block--audio-contrast") == 5 and html.count('<details class="pm-teaching-solution">') == 1
+    pos = {w: html.index(f"{prefix}: <em>{w}</em>") for w in ("Europa", "deuda", "sueño", "viuda")}
+    pos["mismo"] = html.index(f"{prefix}: <em>mismo</em> – <em>álbum</em>")
+    assert html.index("pm-teaching-block--audio-contrast") < html.index('<details class="pm-teaching-solution">') < pos["deuda"]
+    assert pos["Europa"] < pos["deuda"] < html.index(headings[0]) < pos["mismo"] < html.index(headings[1]) < pos["sueño"] < pos["viuda"] < html.index(headings[2])
+    chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
+    assert chips == ["<em>Europa</em>", "<em>deuda</em>", "<em>mismo</em> – <em>álbum</em>", "<em>sueño</em>", "<em>viuda</em>"]
+    questions = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
+    assert questions == ([
+        "Wie unterscheidet sich die Aussprache der beiden Aufnahmen?", "Wie wird die Vokalverbindung eu ausgesprochen?",
+        "Wie unterscheiden sich die Vokale i und u in den beiden Aufnahmen?", "Wie viele Silben sind in den beiden Aufnahmen zu hören?",
+        "Bleibt die Vokalfolge iu innerhalb einer Silbe?"] if de else [
+        "How does the pronunciation differ in the two recordings?", "How is the vowel sequence eu pronounced?",
+        "How do the vowels i and u differ in the two recordings?", "How many syllables can be heard in the two recordings?",
+        "Does the vowel sequence iu stay within one syllable?"])
+    ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
+    assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 5
+    country = ("Spanien", "Chile", "Deutsch") if de else ("Spain", "Chile", "German")
+    assert re.findall(r'pm-teaching-audio-contrast__example-subtitle">([^<]+)<', html) == [
+        f"{country[0]} · W80", f"L1 {country[2]} · W80", f"{country[0]} · W22", f"L1 {country[2]} · W22", f"{country[1]} · W37, W44", f"L1 {country[2]} · W37, W44",
+        f"{country[0]} · W40", f"L1 {country[2]} · W40", f"{country[0]} · W3", f"L1 {country[2]} · W3"]
+    # the combined card: exactly two players, both marked as two single words spliced one after the other (never one connected utterance)
+    card = html[pos["mismo"]:pos["sueño"]]  # from the card title to the next card (the explanation text sits inside this stretch)
+    assert sorted(set(re.findall(r'<source src="([^"]+)"', card))) == [f"/teaching-media/spanish/{EUROPE}/audio/corpus/p7-mismo-album-{who}.mp3" for who in ("learner", "ref")]
+    note = "Zwei Einzelwörter, hintereinander montiert" if de else "Two single words, spliced one after the other"
+    assert card.count(note) == 2
+    # phonetic statements of the explanation text
+    for fragment in ("[ɔɪ̯]", "[eu̯ˈɾopa]", "[ˈdeu̯ða]", "⟨eu⟩", "[iː]", "[ɪ]", "[ʊ]", "[uː]", "[ˈsweɲo]", "[ˈbjuða]", "fuego", "fu-e-go", "fue-go", "viu-da"):
+        assert fragment in html, fragment
+    assert ("bieten" in html and "Album" in html) and ("das mit [ʊ] gesprochen wird" in html if de else "which is pronounced with [ʊ]" in html)
+    # nothing general, nothing excluded: no overview box, no generic rubric, no graphic, no discarded candidate words
+    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "pm-teaching-figure", "pm-admonition--tip", "ciudad", "cuidado", "tierra", "buscó", "centro", "pastel", "Vokaltrapez", "vowel chart"):
+        assert gone not in html, gone
+    blocks = _blocks(EUROPE, lang)
+    assert [b["type"] for b in blocks[:3]] == ["topic_meta", "text", "audio_contrast"]
+    assert len(re.findall(r"[.!?](?:\s|$)", blocks[1]["body"])) in (2, 3) and len(blocks[1]["body"]) < 420
+    prompts = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
+    assert prompts == (["Vertraute Schreibungen vergleichen", "Vokalqualität bewusst machen", "Diphthonge als eine Silbe sprechen"] if de
+                       else ["Compare familiar spellings", "Make vowel quality conscious", "Say diphthongs as one syllable"])
+    items = re.findall(r'pm-teaching-further-reading__item-title">([^<]+)<', html)
+    assert items == (["Aussprache im digitalen Lehrbuch", "Orthographie im digitalen Lehrbuch", "Weiches Spanisch, hartes Deutsch"] if de
+                     else ["Pronunciation in the digital textbook", "Orthography in the digital textbook", "Soft Spanish, hard German"])
+    for href in ("https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen", "https://linguistik.hispanistica.com/orthographie/#vokale",
+                 f'href="/{lang}/teaching/spanish/soft-spanish-hard-german"'):
+        assert href in html, href
+    assert client.get(f"/{lang}/teaching/spanish/soft-spanish-hard-german").status_code == 200
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_europe_page_title_teaser_citation_and_authorship(client, lang: str) -> None:
+    html = _html(client, lang, EUROPE)
+    title = "Europa klingt auf Spanisch anders" if lang == "de" else "Europe sounds different in Spanish"
+    teaser = "Worauf es bei spanischen Vokalen und Diphthongen ankommt." if lang == "de" else "What matters for Spanish vowels and diphthongs."
+    assert teaser in html and html.count("<h1") == 1 and title in html_module.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1))
+    quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
+    assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
+    assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/{EUROPE}" in html
+    assert ("Europa" if lang == "de" else "Europe") in title  # the title uses the word Europe as the vivid entry in both languages
+
+
+def test_europe_curation_is_released_traceable_and_the_montage_is_declared() -> None:
+    import re as re_module
+
+    data = slots.load_slots()
+    comparisons = {c["id"]: c for c in data["comparisons"] if c["topic"] == EUROPE}
+    assert list(comparisons) == ["p7-europa", "p7-deuda", "p7-mismo-album", "p7-sueno", "p7-viuda"]
+    n1, n2, n5 = "ES-N-0001-2026-S01", "ES-N-0002-2026-S01", "ES-N-0005-2026-S01"
+    l10, l11, l21 = "ES-L-0010-2026-S01", "ES-L-0011-2026-S01", "ES-L-0021-2026-S01"
+    picked = {cid: [(r["slot"], r["category"], r["session_id"]) for r in c["recordings"]] for cid, c in comparisons.items()}
+    assert picked == {
+        "p7-europa": [("ref", "reference", n2), ("learner", "learner", l21)],
+        "p7-deuda": [("ref", "reference", n2), ("learner", "learner", l21)],  # same pair as Europa: the second case of the same phenomenon
+        "p7-mismo-album": [("ref", "reference", n5), ("learner", "learner", l11)],
+        "p7-sueno": [("ref", "reference", n1), ("learner", "learner", l10)],
+        "p7-viuda": [("ref", "reference", n1), ("learner", "learner", l10)],
+    }
+    assert not {s for recs in picked.values() for _slot, _cat, s in recs} & set(slots.EXCLUDED_SESSIONS)
+    items = {cid: [r["item"]["id"] for r in c["recordings"]] for cid, c in comparisons.items() if cid != "p7-mismo-album"}
+    assert items == {"p7-europa": ["wl_080"] * 2, "p7-deuda": ["wl_022"] * 2, "p7-sueno": ["wl_040"] * 2, "p7-viuda": ["wl_003"] * 2}
+    # discarded candidate words are not part of the page's recordings
+    assert not {c["target"] for c in comparisons.values()} & {"ciudad", "cuidado", "tierra", "buscó", "centro", "pastel"}
+    # the montage: two single words of ONE session each, in the order mismo, álbum, with a short declared pause; originals untouched (hashes), tool recorded
+    for recording in comparisons["p7-mismo-album"]["recordings"]:
+        assert "item" not in recording and "crop" not in recording
+        assert [p["item"] for p in recording["parts"]] == [{"task": "wordlist", "id": "wl_037"}, {"task": "wordlist", "id": "wl_044"}]
+        assert [p["target_tokens"] for p in recording["parts"]] == [["mismo"], ["álbum"]]
+        assert recording["join"]["pause_ms"] == 300 and recording["join"]["tool"].startswith("ffmpeg")
+        for part in recording["parts"]:
+            crop = part["crop"]
+            assert 0 < crop["start_ms"] < crop["end_ms"] and crop["fade_in_ms"] >= 10 and crop["fade_out_ms"] >= 15
+            assert re_module.fullmatch(r"[0-9a-f]{64}", part["source_sha256"]) and part["source_sha256"] != recording["sha256"]
+    # the page does not present it as one utterance; the clips are short two-word montages, not full sentences
+    corpus = TOPIC_DIR / EUROPE / "media" / "audio" / "corpus"
+    for name, low, high in (("p7-mismo-album-ref", 1400, 1700), ("p7-mismo-album-learner", 1650, 2000)):
+        size = (corpus / f"{name}.mp3").stat().st_size
+        assert low * 20 < size < high * 20  # 160 kbit/s = 20 bytes per ms
+    declared = sorted(r["file"].split("/")[1] for c in comparisons.values() for r in c["recordings"])
+    assert sorted(path.name for path in corpus.glob("*.mp3")) == declared and len(declared) == 10
+    reserves = {r["id"]: r for r in data["reserves"] if r["topic"] == EUROPE}
+    assert sorted(reserves) == sorted(["p7-europa-reserve-0008", "p7-deuda-reserve-0008", "p7-mismo-reserve-0004", "p7-album-reserve-0004", "p7-mismo-reserve-0019",
+                                       "p7-album-reserve-0019", "p7-sueno-reserve-0015", "p7-viuda-reserve-0017"])
+    assert not {r["learner"] for r in reserves.values()} & set(slots.EXCLUDED_SESSIONS)
+
+
+def test_montage_declaration_rules_are_enforced() -> None:
+    import copy
+
+    data = slots.load_slots()
+    assert slots.check(data) == []
+
+    def broken(mutate) -> list[str]:
+        candidate = copy.deepcopy(data)
+        recording = next(r for _c, r in slots.iter_recordings(candidate) if r.get("parts"))
+        mutate(recording)
+        return slots.check(candidate)
+
+    assert any("montage needs" in p for p in broken(lambda r: r["join"].pop("pause_ms")))
+    assert any("montage needs" in p for p in broken(lambda r: r.update(parts=r["parts"][:1])))
+    assert any("every part of a montage needs a crop" in p for p in broken(lambda r: r["parts"][1].pop("crop")))
+    assert any("source_sha256" in p for p in broken(lambda r: r["parts"][0].update(source_sha256="")))
+    assert any("invalid corpus item" in p for p in broken(lambda r: r["parts"][0].update(item={"task": "wordlist", "id": "x"})))
+    assert any("sha256 differs" in p for p in broken(lambda r: r.update(sha256="0" * 64)))
+
+
+def test_montage_is_reproducible_from_the_declared_cut_points_and_pause(tmp_path) -> None:
+    import shutil as shutil_module
+    import subprocess
+
+    sessions_root = REPO_ROOT / "data" / "sessions"
+    if shutil_module.which("ffmpeg") is None or not slots.runtime_available(sessions_root):
+        pytest.skip("ffmpeg or the local research runtime is not present")
+    data = slots.load_slots()
+    montages = [(c, r) for c, r in slots.iter_recordings(data) if r.get("parts")]
+    assert len(montages) == 2
+    for _comparison, recording in montages:
+        origins = [slots.source_path(sessions_root, recording, part["item"]) for part in recording["parts"]]
+        assert [slots.sha256_of(o) for o in origins] == [p["source_sha256"] for p in recording["parts"]]  # the corpus recordings are untouched
+        target = tmp_path / Path(recording["file"]).name
+        slots.derive_montage(origins, target, recording["parts"], recording["join"])
+        if recording["join"]["tool"] == f"ffmpeg {slots.ffmpeg_version()}":
+            assert slots.sha256_of(target) == recording["sha256"], recording["file"]  # bit-identical with the same tool version
+        if shutil_module.which("ffprobe"):
+            seconds = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(target)], capture_output=True, text=True, check=True).stdout)
+            expected = (sum(p["crop"]["end_ms"] - p["crop"]["start_ms"] for p in recording["parts"]) + recording["join"]["pause_ms"]) / 1000
+            assert abs(seconds - expected) < 0.06  # words, then exactly the declared pause, nothing else
+
+
+def test_montage_parts_are_checked_item_by_item_in_the_release_report() -> None:
+    sessions_root = REPO_ROOT / "data" / "sessions"
+    if not slots.runtime_available(sessions_root):
+        pytest.skip("local research runtime not present")
+    rows = [r for r in slots.release_rows(slots.load_slots(), sessions_root) if r["use"].startswith("p7-mismo-album")]
+    assert sorted((r["session"], r["item"]) for r in rows) == sorted(
+        (s, i) for s in ("ES-N-0005-2026-S01", "ES-L-0011-2026-S01") for i in ("wl_037", "wl_044"))
+    assert all(r["result"] == "OK" and r["consent"] == "yes" and r["review"] == "False" for r in rows)

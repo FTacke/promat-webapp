@@ -1,0 +1,118 @@
+resource_id: promat-teaching-es-europe-sounds-different
+title: Europa klingt auf Spanisch anders
+summary: Worauf es bei spanischen Vokalen und Diphthongen ankommt.
+description: Worauf es bei spanischen Vokalen und Diphthongen ankommt.
+equivalents:
+  en: europe-sounds-different
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-24
+  updated: 2026-10-24
+blocks:
+- type: topic_meta
+- type: text
+  body: Die spanischen Vokale erscheinen deutschsprachigen Lernenden zunächst vertraut. Doch gerade bei Vokalverbindungen kann die deutsche Aussprache in die Quere kommen. Das zeigt sich schon an einem Wort, das in beiden Sprachen fast gleich geschrieben wird.
+- type: audio_contrast
+  title: 'Hörvergleich: *Europa*'
+  lead: Wie unterscheidet sich die Aussprache der beiden Aufnahmen?
+  transcript: '*Europa*'
+  examples:
+  - role: reference
+    subtitle: Spanien · W80
+    audio: corpus/p7-europa-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · W80
+    audio: corpus/p7-europa-learner.mp3
+- type: solution
+  title: 'Auflösung: Was ist zu hören?'
+  body: |-
+    Das deutsche Wort *Europa* wird gewöhnlich mit dem Diphthong [ɔɪ̯] gesprochen. Im Spanischen steht dagegen [eu̯], näherungsweise [eu̯ˈɾopa]. Wer die deutsche Zuordnung von Buchstaben und Lauten auf das spanische Wort überträgt, kann es deutlich deutsch klingen lassen.
+- type: audio_contrast
+  title: 'Hörvergleich: *deuda*'
+  lead: Wie wird die Vokalverbindung *eu* ausgesprochen?
+  transcript: '*deuda*'
+  examples:
+  - role: reference
+    subtitle: Spanien · W22
+    audio: corpus/p7-deuda-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · W22
+    audio: corpus/p7-deuda-learner.mp3
+- type: text
+  body: Auch *deuda* enthält die Buchstabenfolge ⟨eu⟩. Im Spanischen steht dafür der Diphthong [eu̯], näherungsweise [ˈdeu̯ða]; die deutsche Lesung [ɔɪ̯] kann hier ebenso auftreten wie bei *Europa*.
+- type: section_heading
+  title: Fünf Vokale – nicht ganz wie im Deutschen
+- type: text
+  body: |-
+    Das Spanische kommt mit fünf Vokalphonemen aus: /a e i o u/. Wie /i/ und /u/ klingen, zeigen zwei Einzelwörter, die hier hintereinander abgespielt werden: *mismo* und *álbum*.
+- type: audio_contrast
+  title: 'Hörvergleich: *mismo* – *álbum*'
+  lead: Wie unterscheiden sich die Vokale *i* und *u* in den beiden Aufnahmen?
+  transcript: '*mismo* – *álbum*'
+  examples:
+  - role: reference
+    subtitle: Chile · W37, W44
+    note: Zwei Einzelwörter, hintereinander montiert
+    audio: corpus/p7-mismo-album-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · W37, W44
+    note: Zwei Einzelwörter, hintereinander montiert
+    audio: corpus/p7-mismo-album-learner.mp3
+- type: text
+  body: Im Deutschen stehen den gespannten Vokalen [iː] und [uː] die ungespannten [ɪ] und [ʊ] gegenüber, etwa in *bieten* und *bitten* oder im vertrauten *Album*, das mit [ʊ] gesprochen wird. Das Spanische kennt diesen Gegensatz nicht. Werden die ungespannten deutschen Vokale auf spanisches /i/ und /u/ übertragen, kann ein deutlich deutsch beeinflusster Höreindruck entstehen.
+- type: section_heading
+  title: Wenn aus einem Diphthong zwei Silben werden
+- type: text
+  body: |-
+    Bei einem Diphthong stehen zwei Vokale in *einer* Silbe, bei einem Hiatus in zwei Silben. Das spanische *fuego* wird gewöhnlich mit dem Diphthong [we] in einer Silbe gesprochen: *fue-go*. Eine deutsch beeinflusste Aussprache kann die Vokale trennen: *fu-e-go*. Dasselbe gilt für *sueño* [ˈsweɲo], wo statt der einsilbigen Folge *sue-* auch *su-e-* auftreten kann.
+- type: audio_contrast
+  title: 'Hörvergleich: *sueño*'
+  lead: Wie viele Silben sind in den beiden Aufnahmen zu hören?
+  transcript: '*sueño*'
+  examples:
+  - role: reference
+    subtitle: Spanien · W40
+    audio: corpus/p7-sueno-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · W40
+    audio: corpus/p7-sueno-learner.mp3
+- type: text
+  body: Bei der Vokalfolge ⟨iu⟩ stellt sich dieselbe Frage. *Viuda* [ˈbjuða] hat zwei Silben, *viu-da*, nicht drei.
+- type: audio_contrast
+  title: 'Hörvergleich: *viuda*'
+  lead: Bleibt die Vokalfolge *iu* innerhalb einer Silbe?
+  transcript: '*viuda*'
+  examples:
+  - role: reference
+    subtitle: Spanien · W3
+    audio: corpus/p7-viuda-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · W3
+    audio: corpus/p7-viuda-learner.mp3
+- type: section_heading
+  title: Impulse für den Unterricht
+- type: teaching_impulses
+  items:
+  - title: Vertraute Schreibungen vergleichen
+    body: An *Europa* und *deuda* zeigen, dass dieselbe Buchstabenfolge ⟨eu⟩ in zwei Sprachen unterschiedlich ausgesprochen wird – im Deutschen [ɔɪ̯], im Spanischen [eu̯]. Zuerst hören, dann die Schreibung betrachten.
+  - title: Vokalqualität bewusst machen
+    body: Mit *mismo* und *álbum* die spanischen Vokale [i] und [u] von den deutschen ungespannten Varianten [ɪ] und [ʊ] abgrenzen, etwa im Vergleich mit dem deutschen *Album*.
+  - title: Diphthonge als eine Silbe sprechen
+    body: Mit *sueño*, *viuda* und dem Lehrbuchbeispiel *fuego* die Silbenstruktur spanischer Diphthonge veranschaulichen, etwa durch Silbenklatschen.
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Kapitel des digitalen Lehrbuchs und eine verwandte Themenseite.
+  items:
+  - title: Aussprache im digitalen Lehrbuch
+    text: Vokalqualität, Diphthonge und Hiatus sowie typische Transferfehler.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen
+  - title: Orthographie im digitalen Lehrbuch
+    text: Wie vertraute Schriftbilder die Aussprache beeinflussen, etwa bei ⟨eu⟩ in *Europa* und *deuda*.
+    cta: Mehr erfahren
+    href: https://linguistik.hispanistica.com/orthographie/#vokale
+  - title: Weiches Spanisch, hartes Deutsch
+    text: Aufeinanderfolgende Vokale – und warum das Spanische keinen Knacklaut vor Vokalen kennt.
+    cta: Zur Themenseite
+    href: /de/teaching/spanish/soft-spanish-hard-german

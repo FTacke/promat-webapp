@@ -1,0 +1,116 @@
+resource_id: promat-teaching-es-europe-sounds-different
+title: Europe sounds different in Spanish
+summary: What matters for Spanish vowels and diphthongs.
+description: What matters for Spanish vowels and diphthongs.
+equivalents:
+  de: europe-sounds-different
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-24
+  updated: 2026-10-24
+blocks:
+- type: topic_meta
+- type: text
+  body: Spanish vowels seem familiar to German-speaking learners at first. But especially with vowel sequences, German pronunciation can get in the way. That already shows in a word that is spelled almost the same in both languages.
+- type: audio_contrast
+  title: 'Listening comparison: *Europa*'
+  lead: How does the pronunciation differ in the two recordings?
+  transcript: '*Europa*'
+  examples:
+  - role: reference
+    subtitle: Spain · W80
+    audio: corpus/p7-europa-ref.mp3
+  - role: learner
+    subtitle: L1 German · W80
+    audio: corpus/p7-europa-learner.mp3
+- type: solution
+  title: 'Solution: What can be heard?'
+  body: |-
+    The German word *Europa* is usually pronounced with the diphthong [ɔɪ̯]. In Spanish, the diphthong is [eu̯], roughly [eu̯ˈɾopa]. Anyone who carries the German correspondence between letters and sounds over to the Spanish word can make it sound distinctly German.
+- type: audio_contrast
+  title: 'Listening comparison: *deuda*'
+  lead: How is the vowel sequence *eu* pronounced?
+  transcript: '*deuda*'
+  examples:
+  - role: reference
+    subtitle: Spain · W22
+    audio: corpus/p7-deuda-ref.mp3
+  - role: learner
+    subtitle: L1 German · W22
+    audio: corpus/p7-deuda-learner.mp3
+- type: text
+  body: '*Deuda* also contains the letter sequence ⟨eu⟩. In Spanish, it stands for the diphthong [eu̯], roughly [ˈdeu̯ða]; the German reading [ɔɪ̯] can occur here just as in *Europa*.'
+- type: section_heading
+  title: Five vowels – not quite as in German
+- type: text
+  body: 'Spanish gets by with five vowel phonemes: /a e i o u/. How /i/ and /u/ sound is shown by two single words played one after the other: *mismo* and *álbum*.'
+- type: audio_contrast
+  title: 'Listening comparison: *mismo* – *álbum*'
+  lead: How do the vowels *i* and *u* differ in the two recordings?
+  transcript: '*mismo* – *álbum*'
+  examples:
+  - role: reference
+    subtitle: Chile · W37, W44
+    note: Two single words, spliced one after the other
+    audio: corpus/p7-mismo-album-ref.mp3
+  - role: learner
+    subtitle: L1 German · W37, W44
+    note: Two single words, spliced one after the other
+    audio: corpus/p7-mismo-album-learner.mp3
+- type: text
+  body: German distinguishes the tense vowels [iː] and [uː] from the lax [ɪ] and [ʊ], for example in *bieten* and *bitten*, or in the familiar *Album*, which is pronounced with [ʊ]. Spanish has no such contrast. If the lax German vowels are carried over to Spanish /i/ and /u/, the result can sound distinctly German-influenced.
+- type: section_heading
+  title: When a diphthong turns into two syllables
+- type: text
+  body: 'In a diphthong, two vowels share *one* syllable; in a hiatus, they belong to two syllables. Spanish *fuego* is usually pronounced with the diphthong [we] in one syllable: *fue-go*. A German-influenced pronunciation may separate the vowels: *fu-e-go*. The same applies to *sueño* [ˈsweɲo], where *su-e-* can occur instead of the single-syllable sequence *sue-*.'
+- type: audio_contrast
+  title: 'Listening comparison: *sueño*'
+  lead: How many syllables can be heard in the two recordings?
+  transcript: '*sueño*'
+  examples:
+  - role: reference
+    subtitle: Spain · W40
+    audio: corpus/p7-sueno-ref.mp3
+  - role: learner
+    subtitle: L1 German · W40
+    audio: corpus/p7-sueno-learner.mp3
+- type: text
+  body: The same question arises with the vowel sequence ⟨iu⟩. *Viuda* [ˈbjuða] has two syllables, *viu-da*, not three.
+- type: audio_contrast
+  title: 'Listening comparison: *viuda*'
+  lead: Does the vowel sequence *iu* stay within one syllable?
+  transcript: '*viuda*'
+  examples:
+  - role: reference
+    subtitle: Spain · W3
+    audio: corpus/p7-viuda-ref.mp3
+  - role: learner
+    subtitle: L1 German · W3
+    audio: corpus/p7-viuda-learner.mp3
+- type: section_heading
+  title: Classroom prompts
+- type: teaching_impulses
+  items:
+  - title: Compare familiar spellings
+    body: Use *Europa* and *deuda* to show that the same letter sequence ⟨eu⟩ is pronounced differently in two languages – [ɔɪ̯] in German, [eu̯] in Spanish. Listen first, then look at the spelling.
+  - title: Make vowel quality conscious
+    body: Use *mismo* and *álbum* to set the Spanish vowels [i] and [u] apart from the lax German variants [ɪ] and [ʊ], for example in comparison with the German *Album*.
+  - title: Say diphthongs as one syllable
+    body: Use *sueño*, *viuda* and the textbook example *fuego* to illustrate the syllable structure of Spanish diphthongs, for example by clapping the syllables.
+- type: further_reading
+  title: Further exploration
+  description: Further chapters of the digital textbook and a related topic page.
+  items:
+  - title: Pronunciation in the digital textbook
+    text: Vowel quality, diphthongs and hiatus, and typical transfer errors (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen
+  - title: Orthography in the digital textbook
+    text: How familiar spellings influence pronunciation, for example ⟨eu⟩ in *Europa* and *deuda* (in German).
+    cta: Learn more
+    href: https://linguistik.hispanistica.com/orthographie/#vokale
+  - title: Soft Spanish, hard German
+    text: Vowels in sequence – and why Spanish has no glottal stop before vowels.
+    cta: Go to topic page
+    href: /en/teaching/spanish/soft-spanish-hard-german
