@@ -28,11 +28,11 @@ blocks:
     title: Hörvergleich
   - type: text
     body: |
-      Wie klingt der Unterschied? Die folgenden Aufnahmen zeigen dasselbe Wortpaar und dieselbe Wortreihe – einmal mit *distinción*, einmal mit *seseo*.
+      Die folgenden Aufnahmen zeigen dasselbe Wortpaar und dieselbe Wortreihe – einmal mit *distinción*, einmal mit *seseo*.
       Für den Unterricht ist entscheidend, beide Realisierungen – *distinción* und *seseo* – als gleichberechtigte Variation hörbar zu machen.
   - type: audio_contrast
-    title: "Mit und ohne Unterscheidung: *casa* vs. *caza*"
-    lead: "Der Vergleich zeigt, dass `z/c` und `s` – je nach Herkunft der Sprecher:innen – unterschiedlich oder gleich ausgesprochen werden."
+    title: "Hörvergleich: *casa – caza*"
+    lead: "Wie werden die beiden Wörter in den Aufnahmen ausgesprochen?"
     transcript: "casa – caza"
     examples:
       - label: "*Distinción*"
@@ -44,8 +44,8 @@ blocks:
         audio: variation/seseo-casa-caza-es-n-0004-2026-s01.mp3
         note: "*casa* und *caza* werden gleich ausgesprochen."
   - type: audio_contrast
-    title: "Anders, aber genauso korrekt"
-    lead: "Anhand dieser Wortreihe wird die Aussprache mit Interdentallaut und als `s` besonders deutlich hörbar."
+    title: "Hörvergleich: *gracias – ciudad – paz – ración*"
+    lead: "Die Wortreihe zeigt die Aussprache mit Interdentallaut und als `s` an weiteren Wörtern."
     transcript: "gracias – ciudad – paz – ración"
     examples:
       - label: "*Distinción*"
@@ -88,7 +88,7 @@ blocks:
       Kurze Ausschnitte aus Radiosendungen zeigen, dass der *seseo* in vielen Varietäten die normale Aussprache ist.
   - type: audio_examples
     title: "Der *seseo* in authentischen Audioausschnitten"
-    lead: "In diesen Beispielen hört man Radiosprecher:innen aus Hispanoamerika. Sie veranschaulichen, wie normal es ist, `z` und `c` vor `e/i` als `s` zu realisieren."
+    lead: "Die Beispiele stammen aus verschiedenen hispanoamerikanischen Varietäten."
     source:
       label: CO.RA.PAN
       url: https://corapan.hispanistica.com

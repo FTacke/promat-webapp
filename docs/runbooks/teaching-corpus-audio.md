@@ -38,7 +38,7 @@ Montage aus MAR.ELE-Einzelwörtern: statt `item` tragen die `parts` ein `source_
 
 Kuratorische Reserven (nicht eingebunden) stehen unter `reserves` in `audio-slots.yaml`, ohne Medium; auch sie müssen das Freigabe-Gate bestehen.
 
-Neue Vergleiche oder Hörfragen: den Eintrag unter `comparisons` ergänzen (die `question` muss wörtlich im `lead` des Vergleichsblocks der Seite stehen) und den Block in `de.yaml`/`en.yaml` mit den Dateinamen `corpus/…` anlegen.
+Neue Vergleiche oder Hörfragen: den Eintrag unter `comparisons` ergänzen (eine `question` ist nur bei Karten mit Beobachtungsfrage nötig und muss wörtlich im `lead` des Vergleichsblocks der Seite stehen; Karten mit erläuterndem Satz bekommen keine) und den Block in `de.yaml`/`en.yaml` mit den Dateinamen `corpus/…` anlegen.
 
 ## Verifikation
 

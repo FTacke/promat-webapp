@@ -71,10 +71,10 @@ blocks:
   title: Mehrere Approximanten in einer Wortfolge
 - type: text
   body: |-
-    Die Wortfolge *el bebedor* veranschaulicht, wie mehrere approximantische Realisierungen im zusammenhängenden Sprechen auftreten. Dabei zeigt sich auch, dass diese nicht auf die Stellung zwischen Vokalen beschränkt sind.
+    Im zusammenhängenden Sprechen können mehrere Approximanten aufeinanderfolgen – und sie sind nicht auf die Stellung zwischen Vokalen beschränkt.
 - type: audio_contrast
   title: 'Hörvergleich: *el bebedor*'
-  lead: Welche Konsonanten klingen in der Referenzaufnahme weicher?
+  lead: 'Die Wortfolge zeigt drei approximantische Realisierungen: [β] nach /l/ und zwischen Vokalen sowie [ð] zwischen Vokalen.'
   transcript: '*el bebedor*'
   examples:
   - role: reference
@@ -85,7 +85,7 @@ blocks:
     audio: marele/bebedor-learner.mp3
 - type: text
   body: |-
-    In *el bebedor* kommen drei Positionen zusammen: das erste b nach l, das zweite b zwischen Vokalen und das d zwischen Vokalen. In der Referenzaufnahme klingen alle drei weicher, schematisch [el.βe.βe.ˈðoɾ]; die lernende Person spricht sie dagegen mit deutlichem Verschluss.
+    In der Referenzaufnahme klingen alle drei weicher, schematisch [el.βe.βe.ˈðoɾ]; die lernende Person spricht sie dagegen mit deutlichem Verschluss.
 - type: info_box
   title: Wann klingen b, d und g sonst noch weich?
   body: |-

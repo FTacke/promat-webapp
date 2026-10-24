@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r
 title: The Spanish r
-summary: Why the Spanish r does not sound like the German one – and how to tell [ɾ] and [r] apart in the classroom.
-description: Why the Spanish r does not sound like the German one – and how to tell [ɾ] and [r] apart in the classroom.
+summary: Two Spanish r sounds – and why the German r sounds different.
+description: Two Spanish r sounds – and why the German r sounds different.
 equivalents:
   de: r
 metadata:
@@ -48,7 +48,7 @@ blocks:
   title: Tap and trill – in other words, too
 - type: audio_contrast
   title: 'Listening comparison: *caro*'
-  lead: Listen for the *r*. How often does the tip of the tongue strike?
+  lead: How does the tapped *r* sound for the two reference speakers?
   transcript: '*caro*'
   examples:
   - role: reference
@@ -59,7 +59,7 @@ blocks:
     audio: corpus/p2-caro-ref-b.mp3
 - type: audio_contrast
   title: 'Listening comparison: *carro*'
-  lead: Listen for the *rr*. How does it differ from the *r* in *caro*?
+  lead: How does the trilled *rr* sound for the two reference speakers?
   transcript: '*carro*'
   examples:
   - role: reference
@@ -75,7 +75,7 @@ blocks:
     In Standard German, the r is usually produced at the back: as a uvular fricative [ʁ] at the uvula, not with the tip of the tongue. Regionally, however, German also has r sounds produced at the front. Anyone who transfers the back habit may sometimes pronounce an initial r, as in *reloj*, further back instead of as the trill [r].
 - type: audio_contrast
   title: 'Listening comparison: *reloj*'
-  lead: Where is the *r* articulated in the two recordings?
+  lead: How does the *r* at the beginning of the word differ in the two recordings?
   transcript: '*reloj*'
   examples:
   - role: reference
@@ -89,7 +89,7 @@ blocks:
     *Reír* begins and ends with an r. German-speaking learners may sometimes carry over two habits here: a back r at the beginning of the word and a vocalised one at the end. Here, the focus is on the beginning of the word; the end of the word is treated in more detail on the topic page [The r at the End of a Word](/en/teaching/spanish/r-am-silbenende).
 - type: audio_contrast
   title: 'Listening comparison: *reír*'
-  lead: Listen for the *r* at the beginning of the word. How do the two recordings differ?
+  lead: How does the *r* at the beginning of the word sound in the two recordings?
   transcript: '*reír*'
   examples:
   - role: reference

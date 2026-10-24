@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-europe-sounds-different
 title: Europe sounds different in Spanish
-summary: What matters for Spanish vowels and diphthongs.
-description: What matters for Spanish vowels and diphthongs.
+summary: How familiar spellings and sound patterns influence pronunciation in Spanish.
+description: How familiar spellings and sound patterns influence pronunciation in Spanish.
 equivalents:
   de: europe-sounds-different
 metadata:
@@ -15,7 +15,7 @@ blocks:
   body: Spanish vowels seem familiar to German-speaking learners at first. But especially with vowel sequences, German pronunciation can get in the way. That already shows in a word that is spelled almost the same in both languages.
 - type: audio_contrast
   title: 'Listening comparison: *Europa*'
-  lead: How does the pronunciation differ in the two recordings?
+  lead: How does the letter sequence *eu* sound in the two recordings?
   transcript: '*Europa*'
   examples:
   - role: reference
@@ -30,7 +30,7 @@ blocks:
     The German word *Europa* is usually pronounced with the diphthong [ɔɪ̯]. In Spanish, the diphthong is [eu̯], roughly [eu̯ˈɾopa]. Anyone who carries the German correspondence between letters and sounds over to the Spanish word can make it sound distinctly German.
 - type: audio_contrast
   title: 'Listening comparison: *deuda*'
-  lead: How is the vowel sequence *eu* pronounced?
+  lead: How is the vowel sequence *eu* pronounced in *deuda*?
   transcript: '*deuda*'
   examples:
   - role: reference

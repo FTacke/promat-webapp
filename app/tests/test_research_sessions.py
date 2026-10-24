@@ -2200,8 +2200,8 @@ def test_teaching_which_pronunciation_uses_session_0004_for_seseo_audio(url_app:
                 "Sorgfältige Aussprache gibt es in allen",
                 "Auf einen Blick",
                 "Hörvergleich",
-                "Mit und ohne Unterscheidung:",
-                "Anders, aber genauso korrekt",
+                "Hörvergleich: <em>casa – caza</em>",
+                "Hörvergleich: <em>gracias – ciudad – paz – ración</em>",
                 "distinción</em></h2>",
                 "https://datawrapper.dwcdn.net/poSnB/9/",
                 "Die Mehrheit ist <em>seseante</em>",
@@ -2220,7 +2220,7 @@ def test_teaching_which_pronunciation_uses_session_0004_for_seseo_audio(url_app:
                 "Careful pronunciation exists in all",
                 "At a glance",
                 "Listening comparison",
-                "With and without distinction:",
+                "Listening comparison: <em>casa – caza</em>",
                 "https://datawrapper.dwcdn.net/poSnB/9/",
                 "The majority is <em>seseante</em>",
                 "https://datawrapper.dwcdn.net/Uza2n/5/",
@@ -2344,7 +2344,7 @@ def test_teaching_pilot_topic_renders_canonical_vertical_storytelling(url_app: F
     assert html.count('data-admonition-variant="context"') == 1
     assert 'class="pm-teaching-block pm-teaching-block--overview"' in html
     assert 'class="pm-admonition pm-admonition--overview"' in html
-    assert '<h3 class="promat-content-block__title pm-panel__title">Mit und ohne Unterscheidung: <em>casa</em> vs. <em>caza</em></h3>' in html
+    assert '<h3 class="promat-content-block__title pm-panel__title">Hörvergleich: <em>casa – caza</em></h3>' in html
     assert '<code>ll</code> und <code>y</code>' in html
     assert 'class="pm-teaching-further-reading__title">Vertiefung</h2>' in html
     assert 'class="pm-teaching-further-reading__list"' in html
@@ -2377,9 +2377,9 @@ def test_teaching_pilot_topic_renders_canonical_vertical_storytelling(url_app: F
     assert 'pm-teaching-section-heading__lead' not in html
     assert 'pm-teaching-block--section-heading' not in html
     assert 'Weiter im Hub' not in html
-    assert html.index('Hörvergleich') < html.index('Mit und ohne Unterscheidung:')
-    assert html.index('Mit und ohne Unterscheidung:') < html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3')
-    assert html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3') < html.index('Anders, aber genauso korrekt')
+    assert html.index('Hörvergleich') < html.index('Hörvergleich: <em>casa – caza</em>')
+    assert html.index('Hörvergleich: <em>casa – caza</em>') < html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3')
+    assert html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3') < html.index('Hörvergleich: <em>gracias – ciudad – paz – ración</em>')
     assert html.index('gracias – ciudad – paz – ración') < html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-word-series.mp3')
     assert html.index('Der Unterschied, den die Aufnahmen zeigen, betrifft nicht einzelne Wörter') < html.index('src="https://datawrapper.dwcdn.net/poSnB/9/"')
     assert html.index('src="https://datawrapper.dwcdn.net/poSnB/9/"') < html.index('Merksatz: Wer ')

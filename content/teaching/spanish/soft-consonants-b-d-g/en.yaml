@@ -71,10 +71,10 @@ blocks:
   title: Several approximants in one word sequence
 - type: text
   body: |-
-    The word sequence *el bebedor* illustrates how several approximant realisations occur in connected speech. It also shows that these are not limited to the position between vowels.
+    In connected speech, several approximants can follow one another – and they are not limited to the position between vowels.
 - type: audio_contrast
   title: 'Listening comparison: *el bebedor*'
-  lead: Which consonants sound softer in the reference recording?
+  lead: 'The word sequence shows three approximant realisations: [β] after /l/ and between vowels, and [ð] between vowels.'
   transcript: '*el bebedor*'
   examples:
   - role: reference
@@ -85,7 +85,7 @@ blocks:
     audio: marele/bebedor-learner.mp3
 - type: text
   body: |-
-    In *el bebedor*, three positions come together: the first b after l, the second b between vowels and the d between vowels. In the reference recording, all three sound softer, schematically [el.βe.βe.ˈðoɾ]; the learner, by contrast, pronounces them with a distinct closure.
+    In the reference recording, all three sound softer, schematically [el.βe.βe.ˈðoɾ]; the learner, by contrast, pronounces them with a distinct closure.
 - type: info_box
   title: When else do b, d and g sound soft?
   body: |-

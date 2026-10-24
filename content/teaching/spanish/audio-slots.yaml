@@ -156,7 +156,7 @@ comparisons:
   target: caro
   target_tokens:
   - caro
-  question: Achte auf das *r*. Wie oft schlägt die Zungenspitze an?
+  question: Wie klingt das einfache *r* bei den beiden Referenzsprecher:innen?
   recordings:
   - slot: ref_a
     category: reference
@@ -180,7 +180,7 @@ comparisons:
   target: carro
   target_tokens:
   - carro
-  question: Achte auf das *rr*. Wie unterscheidet es sich vom *r* in *caro*?
+  question: Wie klingt das mehrfache *r* bei den beiden Referenzsprecher:innen?
   recordings:
   - slot: ref_a
     category: reference
@@ -204,7 +204,7 @@ comparisons:
   target: reloj
   target_tokens:
   - reloj
-  question: Wo wird das *r* in den beiden Aufnahmen artikuliert?
+  question: Wie unterscheidet sich das *r* am Wortanfang in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -228,7 +228,7 @@ comparisons:
   target: reír
   target_tokens:
   - reír
-  question: Achte auf das *r* am Wortanfang. Wie unterscheiden sich die beiden Aufnahmen?
+  question: Wie klingt das *r* am Wortanfang in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -341,7 +341,7 @@ comparisons:
   target_tokens:
   - bienes
   - vienes
-  question: Wie klingen *bienes* und *vienes* im Vergleich?
+  question: Was fällt bei den Anlauten von *bienes* und *vienes* auf?
   recordings:
   - slot: ref-mx
     category: reference
@@ -371,7 +371,7 @@ comparisons:
   topic: b-or-v
   phenomenon: Orthographisch beeinflusste Aussprache von <v> (spelling pronunciation)
   target: barón – varón
-  question: Wie werden die beiden Wörter jeweils ausgesprochen?
+  question: Unterscheidet sich der Anlaut der beiden Wörter in den Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -395,7 +395,7 @@ comparisons:
   target: flor
   target_tokens:
   - flor
-  question: Achte auf das *r* am Wortende. Wie klingt es in den beiden Aufnahmen?
+  question: Wie klingt das *r* am Wortende in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -419,7 +419,7 @@ comparisons:
   target: lavar
   target_tokens:
   - lavar
-  question: Achte auf das *r* am Wortende. Wie klingt es hier?
+  question: Wie wird das auslautende *r* in den beiden Aufnahmen realisiert?
   recordings:
   - slot: ref
     category: reference
@@ -443,7 +443,7 @@ comparisons:
   target: enfermo
   target_tokens:
   - enfermo
-  question: Achte auf das *r* vor dem *m* in *enfermo*. Wie klingt es in den beiden Aufnahmen?
+  question: Wie klingt das *r* vor *m* in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -467,7 +467,7 @@ comparisons:
   target: reír
   target_tokens:
   - reír
-  question: Achte auf das *r* am Anfang und am Ende. Wie unterscheiden sich die beiden Aufnahmen?
+  question: Wie klingen das *r* am Wortanfang und das *r* am Wortende in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -559,7 +559,6 @@ comparisons:
   topic: soft-consonants-b-d-g
   phenomenon: '/b/ nach /l/, /b/ und /d/ zwischen Vokalen: Approximanten [β β ð] vs. Verschlusslaute'
   target: el bebedor
-  question: Welche Konsonanten klingen in der Referenzaufnahme weicher?
   recordings:
   - slot: ref
     category: reference
@@ -583,7 +582,7 @@ comparisons:
   target: Europa
   target_tokens:
   - europa
-  question: Wie unterscheidet sich die Aussprache der beiden Aufnahmen?
+  question: Wie klingt die Buchstabenfolge *eu* in den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
@@ -607,7 +606,7 @@ comparisons:
   target: deuda
   target_tokens:
   - deuda
-  question: Wie wird die Vokalverbindung *eu* ausgesprochen?
+  question: Wie wird die Vokalverbindung *eu* in *deuda* ausgesprochen?
   recordings:
   - slot: ref
     category: reference

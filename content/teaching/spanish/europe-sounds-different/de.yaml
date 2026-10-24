@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-europe-sounds-different
 title: Europa klingt auf Spanisch anders
-summary: Worauf es bei spanischen Vokalen und Diphthongen ankommt.
-description: Worauf es bei spanischen Vokalen und Diphthongen ankommt.
+summary: Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen.
+description: Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen.
 equivalents:
   en: europe-sounds-different
 metadata:
@@ -15,7 +15,7 @@ blocks:
   body: Die spanischen Vokale erscheinen deutschsprachigen Lernenden zunächst vertraut. Doch gerade bei Vokalverbindungen kann die deutsche Aussprache in die Quere kommen. Das zeigt sich schon an einem Wort, das in beiden Sprachen fast gleich geschrieben wird.
 - type: audio_contrast
   title: 'Hörvergleich: *Europa*'
-  lead: Wie unterscheidet sich die Aussprache der beiden Aufnahmen?
+  lead: Wie klingt die Buchstabenfolge *eu* in den beiden Aufnahmen?
   transcript: '*Europa*'
   examples:
   - role: reference
@@ -30,7 +30,7 @@ blocks:
     Das deutsche Wort *Europa* wird gewöhnlich mit dem Diphthong [ɔɪ̯] gesprochen. Im Spanischen steht dagegen [eu̯], näherungsweise [eu̯ˈɾopa]. Wer die deutsche Zuordnung von Buchstaben und Lauten auf das spanische Wort überträgt, kann es deutlich deutsch klingen lassen.
 - type: audio_contrast
   title: 'Hörvergleich: *deuda*'
-  lead: Wie wird die Vokalverbindung *eu* ausgesprochen?
+  lead: Wie wird die Vokalverbindung *eu* in *deuda* ausgesprochen?
   transcript: '*deuda*'
   examples:
   - role: reference

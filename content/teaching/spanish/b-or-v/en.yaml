@@ -15,7 +15,7 @@ blocks:
   body: Spanish writes ⟨b⟩ and ⟨v⟩, yet both letters stand for the same sound. That is unfamiliar to learners – and it tempts them to follow the spelling. The listening comparisons show what this sounds like.
 - type: audio_contrast
   title: 'Listening comparison: *bienes – vienes*'
-  lead: How do *bienes* and *vienes* sound by comparison?
+  lead: What stands out about the initial sounds of *bienes* and *vienes*?
   transcript: '*bienes – vienes*'
   examples:
   - role: reference
@@ -45,7 +45,7 @@ blocks:
   body: 'The expectation that different letters must denote different sounds is familiar from other languages – and it can guide pronunciation. One example:'
 - type: audio_contrast
   title: 'Listening comparison: *barón – varón*'
-  lead: How is each of the two words pronounced?
+  lead: Does the initial sound of the two words differ in the recordings?
   transcript: '*barón – varón*'
   examples:
   - role: reference
@@ -57,7 +57,7 @@ blocks:
 - type: text
   body: 'The reference speaker pronounces *barón* and *varón* alike: [baˈɾon]. In the learner’s recording, by contrast, *varón* gets a sound of its own: [vaˈʁon] instead of [baˈʁon]. Here the pronunciation follows the spelling – a case of *spelling pronunciation*.'
 - type: audio_contrast
-  title: 'Listening comparison: *vienes*'
+  title: 'Listening comparison: *bienes – vienes*'
   lead: How is the *v* in *vienes* pronounced?
   transcript: '*bienes – vienes*'
   examples:

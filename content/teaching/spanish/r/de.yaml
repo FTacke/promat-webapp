@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r
 title: Das spanische r
-summary: Warum das spanische r nicht wie das deutsche klingt – und wie man [ɾ] und [r] im Unterricht unterscheiden kann.
-description: Warum das spanische r nicht wie das deutsche klingt – und wie man [ɾ] und [r] im Unterricht unterscheiden kann.
+summary: Zwei spanische r-Laute – und warum das deutsche r anders klingt.
+description: Zwei spanische r-Laute – und warum das deutsche r anders klingt.
 equivalents:
   en: r
 metadata:
@@ -48,7 +48,7 @@ blocks:
   title: Einfach und mehrfach – auch bei anderen Wörtern
 - type: audio_contrast
   title: 'Hörvergleich: *caro*'
-  lead: Achte auf das *r*. Wie oft schlägt die Zungenspitze an?
+  lead: Wie klingt das einfache *r* bei den beiden Referenzsprecher:innen?
   transcript: '*caro*'
   examples:
   - role: reference
@@ -59,7 +59,7 @@ blocks:
     audio: corpus/p2-caro-ref-b.mp3
 - type: audio_contrast
   title: 'Hörvergleich: *carro*'
-  lead: Achte auf das *rr*. Wie unterscheidet es sich vom *r* in *caro*?
+  lead: Wie klingt das mehrfache *r* bei den beiden Referenzsprecher:innen?
   transcript: '*carro*'
   examples:
   - role: reference
@@ -75,7 +75,7 @@ blocks:
     Im Standarddeutschen wird das r meist hinten gebildet: als uvularer Reibelaut [ʁ] am Zäpfchen, nicht mit der Zungenspitze. Regional gibt es im Deutschen allerdings auch vorn gebildete r-Laute. Wer die hintere Gewohnheit überträgt, spricht ein anlautendes r wie in *reloj* mitunter weiter hinten statt als mehrfachen Vibranten [r].
 - type: audio_contrast
   title: 'Hörvergleich: *reloj*'
-  lead: Wo wird das *r* in den beiden Aufnahmen artikuliert?
+  lead: Wie unterscheidet sich das *r* am Wortanfang in den beiden Aufnahmen?
   transcript: '*reloj*'
   examples:
   - role: reference
@@ -89,7 +89,7 @@ blocks:
     *Reír* beginnt und endet mit einem r. Deutschsprachige Lernende können hier mitunter zwei Gewohnheiten übertragen: ein hinteres r am Wortanfang und ein vokalisiertes am Wortende. Hier geht es um den Wortanfang; das Wortende behandelt die Themenseite [Das r am Wortende](/de/teaching/spanish/r-am-silbenende) ausführlicher.
 - type: audio_contrast
   title: 'Hörvergleich: *reír*'
-  lead: Achte auf das *r* am Wortanfang. Wie unterscheiden sich die beiden Aufnahmen?
+  lead: Wie klingt das *r* am Wortanfang in den beiden Aufnahmen?
   transcript: '*reír*'
   examples:
   - role: reference

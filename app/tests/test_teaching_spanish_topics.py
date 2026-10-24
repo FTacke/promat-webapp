@@ -406,7 +406,7 @@ def test_b_or_v_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     # three listening boxes; the first one directly follows the short orientation text and is the only one with a collapsible solution
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
     prefix = "Hörvergleich" if de else "Listening comparison"
-    assert titles[:3] == [f"{prefix}: <em>bienes – vienes</em>", f"{prefix}: <em>barón – varón</em>", f"{prefix}: <em>vienes</em>"]
+    assert titles[:3] == [f"{prefix}: <em>bienes – vienes</em>", f"{prefix}: <em>barón – varón</em>", f"{prefix}: <em>bienes – vienes</em>"]
     assert html.count('<details class="pm-teaching-solution">') == 1
     assert html.index("pm-teaching-block--audio-contrast") < html.index(headings[0]) and html.index('<details class="pm-teaching-solution">') < html.index(headings[0])
     chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
@@ -495,10 +495,10 @@ def test_r_at_word_end_page_follows_the_agreed_dramaturgy(client, lang: str) -> 
     # the precise listening questions (neutral, no solution taken in advance); only flor has a solution
     questions = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
     assert questions == ([
-        "Achte auf das r am Wortende. Wie klingt es in den beiden Aufnahmen?", "Achte auf das r am Wortende. Wie klingt es hier?",
-        "Achte auf das r vor dem m in enfermo. Wie klingt es in den beiden Aufnahmen?", "Achte auf das r am Anfang und am Ende. Wie unterscheiden sich die beiden Aufnahmen?"] if de else [
-        "Listen for the r at the end of the word. How does it sound in the two recordings?", "Listen for the r at the end of the word. How does it sound here?",
-        "Listen for the r before the m in enfermo. How does it sound in the two recordings?", "Listen for the r at the beginning and at the end. How do the two recordings differ?"])
+        "Wie klingt das r am Wortende in den beiden Aufnahmen?", "Wie wird das auslautende r in den beiden Aufnahmen realisiert?",
+        "Wie klingt das r vor m in den beiden Aufnahmen?", "Wie klingen das r am Wortanfang und das r am Wortende in den beiden Aufnahmen?"] if de else [
+        "How does the r at the end of the word sound in the two recordings?", "How is the word-final r realised in the two recordings?",
+        "How does the r before m sound in the two recordings?", "How do the r at the beginning and the r at the end of the word sound in the two recordings?"])
     # the isolated German/Spanish comparison line after the explanation is gone
     assert "<strong>Deutsch:</strong>" not in html and "<strong>German:</strong>" not in html and "Nicht nur am Wortende" not in html and "Zwei r in einem Wort" not in html
     ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
@@ -550,10 +550,10 @@ def test_spanish_r_page_follows_the_agreed_dramaturgy(client, lang: str) -> None
     # open, neutral listening questions (the first does not give away the number of tongue taps)
     questions = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
     assert questions == ([
-        "Worin unterscheiden sich die beiden r-Laute?", "Achte auf das r. Wie oft schlägt die Zungenspitze an?", "Achte auf das rr. Wie unterscheidet es sich vom r in caro?",
-        "Wo wird das r in den beiden Aufnahmen artikuliert?", "Achte auf das r am Wortanfang. Wie unterscheiden sich die beiden Aufnahmen?"] if de else [
-        "How do the two r sounds differ?", "Listen for the r. How often does the tip of the tongue strike?", "Listen for the rr. How does it differ from the r in caro?",
-        "Where is the r articulated in the two recordings?", "Listen for the r at the beginning of the word. How do the two recordings differ?"])
+        "Worin unterscheiden sich die beiden r-Laute?", "Wie klingt das einfache r bei den beiden Referenzsprecher:innen?", "Wie klingt das mehrfache r bei den beiden Referenzsprecher:innen?",
+        "Wie unterscheidet sich das r am Wortanfang in den beiden Aufnahmen?", "Wie klingt das r am Wortanfang in den beiden Aufnahmen?"] if de else [
+        "How do the two r sounds differ?", "How does the tapped r sound for the two reference speakers?", "How does the trilled rr sound for the two reference speakers?",
+        "How does the r at the beginning of the word differ in the two recordings?", "How does the r at the beginning of the word sound in the two recordings?"])
     # speaker labels follow the real speaker status: reference-reference pairs never say "learner"
     ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
     assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref] * 7 + [learner, ref, learner]
@@ -649,8 +649,8 @@ def test_spanish_r_page_citation_authorship_and_teaser(client, lang: str) -> Non
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
     assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html  # authorship unchanged: Felix Tacke only
     assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/r" in html
-    teaser = ("Warum das spanische r nicht wie das deutsche klingt – und wie man [ɾ] und [r] im Unterricht unterscheiden kann." if lang == "de"
-              else "Why the Spanish r does not sound like the German one – and how to tell [ɾ] and [r] apart in the classroom.")
+    teaser = ("Zwei spanische r-Laute – und warum das deutsche r anders klingt." if lang == "de"
+              else "Two Spanish r sounds – and why the German r sounds different.")
     assert teaser in html_module.unescape(html)
 
 
@@ -757,6 +757,14 @@ def test_b_d_g_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     assert html.index(headings[2]) < html.index(f'{"Hörvergleich" if de else "Listening comparison"}: <em>el bebedor</em>') and html.index('<em>con agua</em>') < html.index(headings[2])
     assert ("nicht auf die Stellung zwischen Vokalen beschränkt" if de else "not limited to the position between vowels") in html
     assert html.count("nicht auf die Position zwischen Vokalen beschränkt" if de else "therefore not limited") == 0
+    # question cards (vida, lavar, con agua) and an explanatory statement for the summarising el bebedor card (no question, no repeated list of positions after the card)
+    leads = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
+    assert leads == ([
+        "Was unterscheidet die Aussprache des d?", "Wie wird der Konsonant zwischen den beiden a ausgesprochen?", "Wie wird das g in den beiden Aufnahmen ausgesprochen?",
+        "Die Wortfolge zeigt drei approximantische Realisierungen: [β] nach /l/ und zwischen Vokalen sowie [ð] zwischen Vokalen."] if de else [
+        "What distinguishes the pronunciation of the d?", "How is the consonant between the two a pronounced?", "How is the g pronounced in the two recordings?",
+        "The word sequence shows three approximant realisations: [β] after /l/ and between vowels, and [ð] between vowels."])
+    assert ("das erste b nach l" if de else "the first b after l") not in html
     # four listening stations: d (vida, the only collapsible solution), b (lavar), g (con agua, MAR.ELE), several positions (el bebedor, MAR.ELE)
     prefix = "Hörvergleich" if de else "Listening comparison"
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
@@ -914,10 +922,10 @@ def test_europe_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     assert chips == ["<em>Europa</em>", "<em>deuda</em>", "<em>mismo</em> – <em>álbum</em>", "<em>sueño</em>", "<em>viuda</em>"]
     questions = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
     assert questions == ([
-        "Wie unterscheidet sich die Aussprache der beiden Aufnahmen?", "Wie wird die Vokalverbindung eu ausgesprochen?",
+        "Wie klingt die Buchstabenfolge eu in den beiden Aufnahmen?", "Wie wird die Vokalverbindung eu in deuda ausgesprochen?",
         "Wie unterscheiden sich die Vokale i und u in den beiden Aufnahmen?", "Wie viele Silben sind in den beiden Aufnahmen zu hören?",
         "Bleibt die Vokalfolge iu innerhalb einer Silbe?"] if de else [
-        "How does the pronunciation differ in the two recordings?", "How is the vowel sequence eu pronounced?",
+        "How does the letter sequence eu sound in the two recordings?", "How is the vowel sequence eu pronounced in deuda?",
         "How do the vowels i and u differ in the two recordings?", "How many syllables can be heard in the two recordings?",
         "Does the vowel sequence iu stay within one syllable?"])
     ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
@@ -957,7 +965,8 @@ def test_europe_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
 def test_europe_page_title_teaser_citation_and_authorship(client, lang: str) -> None:
     html = _html(client, lang, EUROPE)
     title = "Europa klingt auf Spanisch anders" if lang == "de" else "Europe sounds different in Spanish"
-    teaser = "Worauf es bei spanischen Vokalen und Diphthongen ankommt." if lang == "de" else "What matters for Spanish vowels and diphthongs."
+    teaser = ("Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen." if lang == "de"
+              else "How familiar spellings and sound patterns influence pronunciation in Spanish.")
     assert teaser in html and html.count("<h1") == 1 and title in html_module.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1))
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
     assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
@@ -1091,3 +1100,62 @@ def test_session_montage_parts_are_checked_item_by_item_in_the_release_report() 
     assert all(r["result"] == "OK" and r["consent"] == "yes" and r["review"] == "False" for r in rows)
     # the MAR.ELE montage has no ProMat session and therefore no ProMat release row
     assert not [r for r in slots.release_rows(slots.load_slots(), sessions_root) if r["use"].startswith("p7-mismo-album")]
+
+
+SEVEN_SPANISH_PAGES = ("which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende")
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+def test_listening_cards_follow_the_shared_editorial_standard(lang: str) -> None:
+    """Neutral card titles, no imperatives, no result in the title; a card may carry a question OR an explanatory sentence (no question is required)."""
+    prefix = "Hörvergleich: " if lang == "de" else "Listening comparison: "
+    imperatives = ("Achte auf", "Achtet auf", "Hör genau", "Hört genau", "Versuche", "Versucht", "Listen for", "Listen carefully", "Pay attention", "Try to", "Notice")
+    forbidden_title_fragments = ("vs.", "Mit und ohne", "With and without", "genauso korrekt", "just as correct")
+    for slug in SEVEN_SPANISH_PAGES:
+        cards = [b for b in _blocks(slug, lang) if b["type"] == "audio_contrast"]
+        assert cards, slug
+        for card in cards:
+            title, chip = str(card["title"]), str(card.get("transcript") or "")
+            assert title.startswith(prefix), (slug, title)
+            assert not any(fragment in title for fragment in forbidden_title_fragments), (slug, title)
+            if "¿" not in chip:  # a card whose chip is a whole sentence names only its target words in the title (los otros)
+                assert title[len(prefix):].replace("*", "") == chip.replace("*", ""), (slug, title, chip)
+            lead = str(card.get("lead") or "")
+            assert not lead.startswith(imperatives), (slug, lead)
+            assert not any(word in lead for word in imperatives), (slug, lead)
+        # nothing on the page addresses pupils directly
+        for block in _blocks(slug, lang):
+            if block["type"] == "text":
+                assert not str(block["body"]).lstrip().startswith(imperatives), slug
+
+
+def test_listening_cards_have_identical_function_and_audio_in_both_languages() -> None:
+    for slug in SEVEN_SPANISH_PAGES:
+        de_cards = [b for b in _blocks(slug, "de") if b["type"] == "audio_contrast"]
+        en_cards = [b for b in _blocks(slug, "en") if b["type"] == "audio_contrast"]
+        assert len(de_cards) == len(en_cards), slug
+        for de_card, en_card in zip(de_cards, en_cards):
+            assert de_card.get("transcript") == en_card.get("transcript"), slug
+            assert [e["audio"] for e in de_card["examples"]] == [e["audio"] for e in en_card["examples"]], slug
+            assert bool(de_card.get("lead")) == bool(en_card.get("lead")), slug  # question/explanation on both or neither
+            assert str(de_card.get("lead", "")).endswith("?") == str(en_card.get("lead", "")).endswith("?"), (slug, de_card.get("lead"))
+
+
+def test_spanish_topic_teasers_are_single_sentences_that_do_not_repeat_the_title() -> None:
+    import re as re_module
+
+    for slug in SEVEN_SPANISH_PAGES:
+        for lang in ("de", "en"):
+            meta = yaml.safe_load((TOPIC_DIR / slug / f"{lang}.yaml").read_text(encoding="utf-8"))
+            summary = str(meta["summary"])
+            assert len(re_module.findall(r"[.!?](?:\s|$)", summary)) <= 1, (slug, lang, summary)
+            assert summary.rstrip(".?!").lower() != str(meta["title"]).rstrip(".?!").lower(), (slug, lang)
+    expected = {
+        ("europe-sounds-different", "de"): "Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen.",
+        ("r", "de"): "Zwei spanische r-Laute – und warum das deutsche r anders klingt.",
+        ("r-am-silbenende", "de"): "Warum das deutsche r häufig zum Vokal wird, das spanische aber konsonantisch bleibt.",
+    }
+    for (slug, lang), teaser in expected.items():
+        meta = yaml.safe_load((TOPIC_DIR / slug / f"{lang}.yaml").read_text(encoding="utf-8"))
+        assert meta["summary"] == teaser == meta["description"]
+    assert "im Spanischen meist nicht" not in yaml.safe_load((TOPIC_DIR / "r-am-silbenende" / "de.yaml").read_text(encoding="utf-8"))["summary"]

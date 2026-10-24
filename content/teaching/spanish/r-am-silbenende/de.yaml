@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r-am-silbenende
 title: Das r am Wortende
-summary: Warum das r am Wortende im Spanischen anders klingt als im Deutschen.
-description: Warum das r am Wortende im Spanischen anders klingt als im Deutschen.
+summary: Warum das deutsche r häufig zum Vokal wird, das spanische aber konsonantisch bleibt.
+description: Warum das deutsche r häufig zum Vokal wird, das spanische aber konsonantisch bleibt.
 equivalents:
   en: r-am-silbenende
 metadata:
@@ -15,7 +15,7 @@ blocks:
   body: Im Deutschen klingt das r am Wortende oft kaum noch wie ein Konsonant – im Spanischen bleibt es ein eigener, hörbarer Laut. Der erste Hörvergleich zeigt, was damit gemeint ist.
 - type: audio_contrast
   title: 'Hörvergleich: *flor*'
-  lead: Achte auf das *r* am Wortende. Wie klingt es in den beiden Aufnahmen?
+  lead: Wie klingt das *r* am Wortende in den beiden Aufnahmen?
   transcript: '*flor*'
   examples:
   - role: reference
@@ -40,7 +40,7 @@ blocks:
     Das Spanische verhält sich anders. Am Wortende bleibt das r gewöhnlich konsonantisch, meist als kurzer Zungenschlag [ɾ]: *flor* [ˈfloɾ]. Regional und je nach Kontext kann die Realisierung schwächer, länger oder anders ausfallen, bleibt aber in der Regel ein Konsonant. Wer die deutsche Gewohnheit überträgt, spricht *flor* eher wie [ˈfloɐ̯].
 - type: audio_contrast
   title: 'Hörvergleich: *lavar*'
-  lead: Achte auf das *r* am Wortende. Wie klingt es hier?
+  lead: Wie wird das auslautende *r* in den beiden Aufnahmen realisiert?
   transcript: '*lavar*'
   examples:
   - role: reference
@@ -55,7 +55,7 @@ blocks:
   body: Die deutsche R-Vokalisierung und ihre mögliche Übertragung betreffen nicht nur den absoluten Wortauslaut, sondern häufig auch ein r am Ende einer Silbe – selbst im Wortinneren. In *enfermo* steht das r vor dem *m*, im Spanischen meist als kurzer Zungenschlag [en.ˈfeɾ.mo]; vokalisiert klänge das Wort etwa wie [en.ˈfeɐ̯.mo]. Gemeinsam ist *flor* und *enfermo* die Silbenendposition des r.
 - type: audio_contrast
   title: 'Hörvergleich: *enfermo*'
-  lead: Achte auf das *r* vor dem *m* in *enfermo*. Wie klingt es in den beiden Aufnahmen?
+  lead: Wie klingt das *r* vor *m* in den beiden Aufnahmen?
   transcript: '*enfermo*'
   examples:
   - role: reference
@@ -73,7 +73,7 @@ blocks:
     Aus einem anderen Blickwinkel – dem Knacklaut zwischen den beiden Vokalen – kommt *reír* auch auf der Themenseite [Weiches Spanisch, hartes Deutsch](/de/teaching/spanish/soft-spanish-hard-german) vor. Hier geht es allein um das r.
 - type: audio_contrast
   title: 'Hörvergleich: *reír*'
-  lead: Achte auf das *r* am Anfang und am Ende. Wie unterscheiden sich die beiden Aufnahmen?
+  lead: Wie klingen das *r* am Wortanfang und das *r* am Wortende in den beiden Aufnahmen?
   transcript: '*reír*'
   examples:
   - role: reference

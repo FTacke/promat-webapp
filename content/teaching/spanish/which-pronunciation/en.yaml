@@ -28,11 +28,11 @@ blocks:
     title: Listening comparison
   - type: text
     body: |
-      How does the difference sound? The following recordings present the same word pair and word sequence once with *distinción* and once with *seseo*.
+      The following recordings present the same word pair and word sequence once with *distinción* and once with *seseo*.
       For teaching, the key point is to make both realizations, *distinción* and *seseo*, audible as equally legitimate variation.
   - type: audio_contrast
-    title: "With and without distinction: *casa* vs. *caza*"
-    lead: "This comparison shows that `z/c` and `s`, depending on where speakers come from, are pronounced either differently or the same."
+    title: "Listening comparison: *casa – caza*"
+    lead: "How are the two words pronounced in the recordings?"
     transcript: "casa – caza"
     examples:
       - label: "*Distinción*"
@@ -44,8 +44,8 @@ blocks:
         audio: variation/seseo-casa-caza-es-n-0004-2026-s01.mp3
         note: "*casa* and *caza* are pronounced the same way."
   - type: audio_contrast
-    title: "Different, but just as correct"
-    lead: "This word series makes the pronunciation with an interdental sound and as `s` especially easy to hear."
+    title: "Listening comparison: *gracias – ciudad – paz – ración*"
+    lead: "The word series shows the pronunciation with an interdental sound and as `s` in further words."
     transcript: "gracias – ciudad – paz – ración"
     examples:
       - label: "*Distinción*"
@@ -88,7 +88,7 @@ blocks:
       Short excerpts from radio broadcasts show that *seseo* is the normal pronunciation in many varieties.
   - type: audio_examples
     title: "*Seseo* in authentic audio excerpts"
-    lead: "These examples feature radio speakers from Spanish America. They show how normal it is to realize `z` and `c` before `e/i` as `s`."
+    lead: "The examples come from different Spanish American varieties."
     source:
       label: CO.RA.PAN
       url: https://corapan.hispanistica.com

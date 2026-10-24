@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r-am-silbenende
 title: The r at the End of a Word
-summary: Why word-final r sounds different in Spanish and German.
-description: Why word-final r sounds different in Spanish and German.
+summary: Why the German r often turns into a vowel while the Spanish r stays consonantal.
+description: Why the German r often turns into a vowel while the Spanish r stays consonantal.
 equivalents:
   de: r-am-silbenende
 metadata:
@@ -15,7 +15,7 @@ blocks:
   body: In German, the r at the end of a word often hardly sounds like a consonant any more – in Spanish it remains a distinct, audible sound. The first listening comparison shows what that means.
 - type: audio_contrast
   title: 'Listening comparison: *flor*'
-  lead: Listen for the *r* at the end of the word. How does it sound in the two recordings?
+  lead: How does the *r* at the end of the word sound in the two recordings?
   transcript: '*flor*'
   examples:
   - role: reference
@@ -40,7 +40,7 @@ blocks:
     Spanish behaves differently. At the end of a word, the r usually remains a consonant, mostly a brief tap [ɾ]: *flor* [ˈfloɾ]. Regionally and depending on context, the realisation can be weaker, longer or different, but as a rule it remains a consonant. Anyone who transfers the German habit will pronounce *flor* more like [ˈfloɐ̯].
 - type: audio_contrast
   title: 'Listening comparison: *lavar*'
-  lead: Listen for the *r* at the end of the word. How does it sound here?
+  lead: How is the word-final *r* realised in the two recordings?
   transcript: '*lavar*'
   examples:
   - role: reference
@@ -55,7 +55,7 @@ blocks:
   body: German r-vocalisation and its possible transfer concern not only the absolute end of a word but often also an r at the end of a syllable – even inside a word. In *enfermo*, the r stands before the *m*, in Spanish usually as a brief tap [en.ˈfeɾ.mo]; vocalised, the word would sound roughly like [en.ˈfeɐ̯.mo]. What *flor* and *enfermo* have in common is the syllable-final position of the r.
 - type: audio_contrast
   title: 'Listening comparison: *enfermo*'
-  lead: Listen for the *r* before the *m* in *enfermo*. How does it sound in the two recordings?
+  lead: How does the *r* before *m* sound in the two recordings?
   transcript: '*enfermo*'
   examples:
   - role: reference
@@ -73,7 +73,7 @@ blocks:
     *Reír* also appears on the topic page [Soft Spanish, hard German](/en/teaching/spanish/soft-spanish-hard-german), seen from another angle – the glottal stop between the two vowels. Here, only the r matters.
 - type: audio_contrast
   title: 'Listening comparison: *reír*'
-  lead: Listen for the *r* at the beginning and at the end. How do the two recordings differ?
+  lead: How do the *r* at the beginning and the *r* at the end of the word sound in the two recordings?
   transcript: '*reír*'
   examples:
   - role: reference
