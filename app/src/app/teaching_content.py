@@ -19,7 +19,7 @@ from markdown_it import MarkdownIt
 
 from . import publication
 from .content_navigation import build_content_header
-from .i18n import SUPPORTED_UI_LANGUAGES, translate
+from .i18n import SUPPORTED_UI_LANGUAGES, content_labels_complete, translate
 
 
 logger = logging.getLogger(__name__)
@@ -520,7 +520,6 @@ def _hub_topic_card(
         is_available = content_edition_topic_is_public(teaching_lang, ui_lang, topic_slug)
         if not is_available:
             return None
-        label_lang = edition["ui_lang"]
         href = content_edition_url(edition["ui_lang"], teaching_lang, ui_lang, topic_slug, origin=edition.get("origin"))
     else:
         is_available = topic_is_public(teaching_lang, ui_lang, topic_slug, raw_entry, raw_topic)
@@ -732,6 +731,8 @@ def _format_topic_date(ui_lang: str, value: Any) -> str:
         return ""
     if ui_lang == "de":
         return parsed.strftime("%d.%m.%Y")
+    if ui_lang == "es":
+        return parsed.strftime("%d/%m/%Y")
     return parsed.isoformat()
 
 
@@ -1012,12 +1013,14 @@ def _topic_blocks(
     topic_metadata: dict[str, Any],
     *,
     content_lang: str | None = None,
+    resource: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Blocks of one topic edition. Labels use ``ui_lang``; ``content_lang`` marks an additional content edition."""
+    """Blocks of one topic edition. ``ui_lang`` is the label language: the UI language of a German/English edition,
+    the content language of an additional content edition (its labels come from ``TEACHING_CONTENT_LABELS``)."""
     blocks: list[dict[str, Any]] = []
     top_level_citation = _citation_payload(
         ui_lang,
-        topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic, content_lang=content_lang),
+        resource if resource is not None else topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic, content_lang=content_lang),
         content_lang,
     )
     for index, raw_block in enumerate(raw_topic.get("blocks", [])):
@@ -1851,9 +1854,11 @@ def build_teaching_topic_page(
     page_intro = _topic_page_intro(raw_topic)
     hub_title = _as_text(index.get("title")) or teaching_lang.replace("-", " ").title()
     hub_title_plain = render_markdown_plain_text(hub_title) or hub_title
-    topic_metadata = _topic_metadata(ui_lang, raw_topic)
+    # Labels of the content area follow the content; navigation (header, back link, panel) stays in `ui_lang`.
+    label_lang = content_lang or ui_lang
+    topic_metadata = _topic_metadata(label_lang, raw_topic)
     resource = topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic, content_lang=content_lang)
-    blocks = _topic_blocks(teaching_lang, ui_lang, topic_slug, raw_topic, topic_metadata, content_lang=content_lang)
+    blocks = _topic_blocks(teaching_lang, label_lang, topic_slug, raw_topic, topic_metadata, content_lang=content_lang, resource=resource)
     topic_sections = _topic_sections(blocks)
     content_header = _decorate_content_header_markdown(
         build_content_header(
@@ -1974,6 +1979,8 @@ def content_edition_topic_is_public(teaching_lang: str, content_lang: str, topic
     """A topic exists in a content edition once its file is public and the topic itself is a published resource."""
     if content_lang not in content_edition_codes(teaching_lang) or not _TOPIC_SLUG_PATTERN.match(topic_slug or ""):
         return False
+    if not content_labels_complete(content_lang):
+        return False  # never show German or English labels inside a content edition
     if not topic_has_public_edition(teaching_lang, topic_slug):
         return False
     return topic_is_public(teaching_lang, content_lang, topic_slug)

@@ -1516,7 +1516,15 @@ def _render_teaching_content_edition(ui_lang: str, teaching_lang: str, content_l
     if page is None:
         abort(404)
     panel = _teaching_language_panel(teaching_lang, ui_lang)
-    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=ui_lang, indexable=True)
+    html = _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=ui_lang, indexable=True)
+    # Content links to other pages of the same edition are written canonically (`/de/teaching/spanish/es/...`); on
+    # the page they keep the reader's navigation language and the edition to return to.
+    resolved_origin = (page.get("ui_switch_params") or {}).get(CONTENT_EDITION_ORIGIN_PARAM, ui_lang)
+    edition_link = re.compile(rf'href="/(?:de|en)/teaching/{re.escape(teaching_lang)}/{re.escape(content_lang)}((?:/[a-z0-9-]+)?)"')
+    return edition_link.sub(
+        lambda match: f'href="/{ui_lang}/teaching/{teaching_lang}/{content_lang}{match.group(1)}?{CONTENT_EDITION_ORIGIN_PARAM}={resolved_origin}"',
+        html,
+    )
 
 
 @blueprint.get("/impressum", defaults={"ui_lang": None})

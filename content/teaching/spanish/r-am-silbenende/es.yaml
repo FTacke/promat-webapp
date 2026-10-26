@@ -1,0 +1,106 @@
+resource_id: promat-teaching-es-r-am-silbenende
+title: La r al final de palabra
+summary: Por qué la *r* alemana suele vocalizarse, mientras que la española mantiene su carácter consonántico.
+description: Por qué la *r* alemana suele vocalizarse, mientras que la española mantiene su carácter consonántico.
+equivalents:
+  de: r-am-silbenende
+  en: r-am-silbenende
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-26
+blocks:
+- type: topic_meta
+- type: text
+  body: En alemán, la *r* al final de palabra muchas veces apenas suena como una consonante. En español, en cambio, sigue siendo un sonido consonántico reconocible.
+- type: audio_contrast
+  title: 'Comparación auditiva: *flor*'
+  lead: ¿Cómo suena la *r* al final de palabra en las dos grabaciones?
+  transcript: '*flor*'
+  examples:
+  - role: reference
+    subtitle: España · W16
+    audio: corpus/p3-flor-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W16
+    audio: corpus/p3-flor-learner.mp3
+- type: solution
+  title: 'Solución: ¿qué se oye?'
+  body: 'En la grabación de referencia, *flor* termina con un contacto breve de la punta de la lengua contra los alvéolos: [ˈfloɾ]. En cambio, el aprendiente deja que la palabra termine con un sonido vocálico, sin un contacto lingual perceptible, aproximadamente [ˈfloɐ̯], como ocurre con frecuencia con la *r* final alemana.'
+- type: section_heading
+  title: Cuando la r alemana se convierte en vocal
+- type: text
+  body: 'En alemán estándar, la vocalización de /r/ forma parte de la pronunciación habitual, por ejemplo en *sehr*, *Vater* y *Lehrer*. Conviene distinguir dos casos. Después de la vocal larga de *sehr*, la *r* se percibe únicamente como un elemento vocálico final, aproximadamente [zeːɐ̯]. En las terminaciones átonas de *Vater* y *Lehrer*, en cambio, aparece la vocal [ɐ], conocida como *Vater-Schwa* o *Tiefschwa*: [ˈfaːtɐ], [ˈleːʁɐ]. Ambos fenómenos están relacionados, pero no son idénticos en todos sus aspectos.'
+- type: text
+  body: 'En español sucede algo distinto. La *r* final mantiene normalmente su carácter consonántico, por lo general como un contacto breve de la punta de la lengua [ɾ]: *flor* [ˈfloɾ]. Según la región y el contexto, su realización puede ser más débil, más prolongada o presentar otras características, pero por lo general sigue siendo una consonante. Cuando se transfiere el hábito alemán, *flor* puede pronunciarse más bien como [ˈfloɐ̯].'
+- type: audio_contrast
+  title: 'Comparación auditiva: *lavar*'
+  lead: ¿Cómo se realiza la *r* final en las dos grabaciones?
+  transcript: '*lavar*'
+  examples:
+  - role: reference
+    subtitle: España · W9
+    audio: corpus/p3-lavar-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W9
+    audio: corpus/p3-lavar-learner.mp3
+- type: section_heading
+  title: Cuando la r va seguida de una consonante
+- type: text
+  body: 'La vocalización de la *r* alemana y su posible transferencia no se limitan al final absoluto de palabra: también pueden afectar a una *r* situada al final de una sílaba, incluso dentro de la palabra. En *enfermo*, la *r* aparece delante de *m* y, en español, normalmente se realiza como un contacto breve de la lengua [en.ˈfeɾ.mo]; una realización vocalizada sonaría aproximadamente [en.ˈfeɐ̯.mo]. *Flor* y *enfermo* tienen en común que la *r* ocupa la posición final de sílaba.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *enfermo*'
+  lead: ¿Cómo suena la *r* delante de *m* en las dos grabaciones?
+  transcript: '*enfermo*'
+  examples:
+  - role: reference
+    subtitle: México · W50
+    audio: corpus/p3-enfermo-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W50
+    audio: corpus/p3-enfermo-learner.mp3
+- type: section_heading
+  title: 'Un caso especialmente difícil: r al principio y al final'
+- type: text
+  body: |-
+    *Reír* reúne las dos posiciones. En español, la palabra empieza con una vibrante múltiple y termina con un contacto breve de la punta de la lengua: [re.ˈiɾ]. Los aprendientes germanohablantes pueden transferir aquí dos hábitos a la vez: una [ʁ] posterior al inicio y la vocalización de la *r* final, por ejemplo [ʁe.ˈɪɐ].
+
+    La palabra *reír* aparece también en la página [Español fluido, alemán entrecortado](/de/teaching/spanish/es/soft-spanish-hard-german), donde se aborda desde otra perspectiva: la posible inserción de un golpe de glotis entre las dos vocales. En esta página se analiza exclusivamente la *r*.
+- type: audio_contrast
+  title: 'Comparación auditiva: *reír*'
+  lead: ¿Cómo suenan la *r* inicial y la *r* final en las dos grabaciones?
+  transcript: '*reír*'
+  examples:
+  - role: reference
+    subtitle: Chile · W76
+    audio: corpus/p3-reir-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W76
+    audio: corpus/p3-reir-learner.mp3
+- type: section_heading
+  title: Sugerencias para el aula
+- type: teaching_impulses
+  items:
+  - title: Descubrir la pronunciación del alemán
+    body: Pronunciar palabras alemanas conocidas, como *sehr*, *Vater* y *Lehrer*, y observar la vocalización habitual de /r/. ¿En qué casos se sigue oyendo una *r* consonántica al final y en cuáles no?
+  - title: Escuchar conscientemente los finales de palabra españoles
+    body: Usar *flor* y *lavar*, junto con otras palabras sencillas como *tirar*, para escuchar y practicar la *r* consonántica final, con un contacto breve de la punta de la lengua contra los alvéolos y sin añadir una vocal al final.
+  - title: Del final de palabra al final de sílaba
+    body: Pasar con *enfermo* a la posición final de sílaba. *Reír* permite mostrar, además, cómo pueden combinarse en una misma palabra distintos hábitos de pronunciación del alemán, al principio y al final.
+- type: further_reading
+  title: Para saber más
+  description: Otras páginas sobre la *r* en español y en alemán.
+  items:
+  - title: La pronunciación en el manual digital
+    text: Las erres del español y del alemán, la vocalización de la *r* alemana y el ejemplo *reír*.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
+  - title: Las dos erres del español
+    text: La vibrante simple y la múltiple, y la oposición entre *caro* y *carro*.
+    cta: Página temática relacionada
+    href: /de/teaching/spanish/es/r
+  - title: Español fluido, alemán entrecortado
+    text: Otra perspectiva sobre *reír* y sobre las diferencias de pronunciación entre el alemán y el español.
+    cta: Página temática relacionada
+    href: /de/teaching/spanish/es/soft-spanish-hard-german

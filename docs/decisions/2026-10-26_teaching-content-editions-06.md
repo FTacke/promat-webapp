@@ -22,7 +22,7 @@ Die Plattform ist global zweisprachig (`de`, `en`); die Teaching-Editionen häng
 - Keine sichtbare Änderung, solange keine Fassung veröffentlicht ist; DE/EN-Routen, Canonicals und der Schalter bleiben unverändert.
 - Derselbe Mechanismus trägt Französisch (`content_editions: [fr]`) ohne Sonderlogik.
 - Inhaltscodes sind reservierte Pfadsegmente: Kein Themen-Slug und kein Alias darf `es`/`fr` heißen (Validator).
-- Bis zur Aktivierung offen: Spanische Beschriftungen für Block-Labels (Sprecherrollen, Wortfolge-Chip, Auflösung) und spanische Zitationskonventionen; bis dahin erscheinen diese in der UI-Sprache bzw. in englischer Zitierform.
+- Beschriftungen im Inhaltsbereich (Sprecherrollen, Wortfolge-Chip, Auflösung, Metadaten, Zitationsbox) folgen der Inhaltssprache (`i18n.TEACHING_CONTENT_LABELS`); eine Fassung wird nur mit vollständigem Beschriftungssatz veröffentlicht. Spanische Zitierform: «…», `En:`, `ed.`. Aktiviert am 2026-10-26 für die sieben spanischen Themenseiten und ihre Übersicht.
 - Betroffen: `app/src/app/teaching_content.py`, `routes/public.py`, `publication.py`, `partials/_content_header.html`, `app-bar.js`, `scripts/validate_teaching_content.py`.
 
 ## Alternativen

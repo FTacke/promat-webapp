@@ -1,0 +1,134 @@
+resource_id: promat-teaching-es-r
+title: Las dos erres del español
+summary: Dos sonidos de *r* en español y por qué la *r* del alemán suele sonar diferente.
+description: Dos sonidos de *r* en español y por qué la *r* del alemán suele sonar diferente.
+equivalents:
+  de: r
+  en: r
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-26
+blocks:
+- type: topic_meta
+- type: text
+  body: En español, dos sonidos distintos de *r* pueden bastar para diferenciar dos palabras. Además, ambos contrastan claramente con una pronunciación de la *r* muy extendida en alemán. Las grabaciones auténticas del corpus permiten escuchar las dos diferencias.
+- type: audio_contrast
+  title: 'Comparación auditiva: *pero – perro*'
+  lead: ¿En qué se diferencian los dos sonidos de *r*?
+  transcript: '*pero – perro*'
+  examples:
+  - role: reference
+    subtitle: España · W90
+    audio: corpus/p2-pero-ref-a.mp3
+  - role: reference
+    subtitle: Chile · W90
+    audio: corpus/p2-pero-ref-b.mp3
+- type: solution
+  title: 'Solución: ¿qué se oye?'
+  body: En ambas grabaciones, la punta de la lengua realiza un solo contacto breve en *pero* [ˈpeɾo], mientras que en *perro* [ˈpero] vibra y golpea varias veces con rapidez. Esa diferencia basta para distinguir la conjunción *pero* del sustantivo *perro*.
+- type: section_heading
+  title: 'Dos sonidos de r: la escritura también da pistas'
+- type: text
+  body: Los dos sonidos de *r* del español se articulan en la parte anterior de la boca, con la punta de la lengua contra los alvéolos, justo detrás de los dientes superiores. En la **vibrante simple [ɾ]**, la punta de la lengua realiza un solo contacto breve. En la **vibrante múltiple [r]**, la punta se mantiene relajada junto a los alvéolos y la corriente de aire la hace vibrar, produciendo varios contactos rápidos. En alemán estándar, en cambio, la *r* suele articularse más atrás, a la altura de la úvula.
+- type: image
+  src: spanish-german-r-articulation.png
+  size: wide
+  alt: 'Cortes esquemáticos de la cavidad bucal de perfil: a la izquierda, articulación anterior con la punta de la lengua de las erres alveolares españolas [ɾ] y [r]; a la derecha, articulación uvular posterior de la [ʁ] alemana.'
+  caption: Las erres españolas [ɾ] y [r] se articulan con la punta de la lengua contra los alvéolos. En cambio, el sonido [ʁ], frecuente en alemán estándar, se articula más atrás, a la altura de la úvula. El esquema muestra la diferencia entre ambos puntos de articulación.
+  credit: 'Ilustración: Felix Tacke (concepto y elaboración de las instrucciones), generada con IA · Pronunciation Matters (2026)'
+- type: text
+  body: |-
+    Entre vocales, estos dos sonidos pueden distinguir palabras, y la escritura refleja la diferencia: la letra simple ⟨r⟩ representa [ɾ], mientras que ⟨rr⟩ representa [r], como en *pero* y *perro* o en *caro* y *carro*.
+
+    Al principio de palabra no existe este contraste. En esa posición se escribe una sola ⟨r⟩, que normalmente representa la vibrante múltiple, como en *reloj* [reˈlox].
+- type: section_heading
+  title: Vibrante simple y múltiple en otras palabras
+- type: audio_contrast
+  title: 'Comparación auditiva: *caro*'
+  lead: ¿Cómo suena la *r* simple en las dos grabaciones de referencia?
+  transcript: '*caro*'
+  examples:
+  - role: reference
+    subtitle: España · W85
+    audio: corpus/p2-caro-ref-a.mp3
+  - role: reference
+    subtitle: Chile · W85
+    audio: corpus/p2-caro-ref-b.mp3
+- type: audio_contrast
+  title: 'Comparación auditiva: *carro*'
+  lead: ¿Cómo suena la *rr* en las dos grabaciones de referencia?
+  transcript: '*carro*'
+  examples:
+  - role: reference
+    subtitle: España · W57
+    audio: corpus/p2-carro-ref-a.mp3
+  - role: reference
+    subtitle: Chile · W57
+    audio: corpus/p2-carro-ref-b.mp3
+- type: section_heading
+  title: Cuando la r alemana se traslada al español
+- type: text
+  body: En alemán estándar, la *r* suele articularse en la parte posterior de la boca, como fricativa uvular [ʁ], y no con la punta de la lengua. Sin embargo, algunas variedades regionales del alemán también presentan sonidos de *r* articulados más adelante. Cuando se transfiere el hábito de articularla atrás, una *r* inicial como la de *reloj* puede pronunciarse en esa zona posterior en lugar de realizarse como vibrante múltiple [r].
+- type: audio_contrast
+  title: 'Comparación auditiva: *reloj*'
+  lead: ¿En qué se diferencia la *r* inicial de las dos grabaciones?
+  transcript: '*reloj*'
+  examples:
+  - role: reference
+    subtitle: Chile · W2
+    audio: corpus/p2-reloj-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W2
+    audio: corpus/p2-reloj-learner.mp3
+- type: text
+  body: '*Reír* empieza y termina con una *r*. En esta palabra, los aprendientes germanohablantes pueden transferir dos hábitos diferentes: una *r* posterior al principio y una *r* vocalizada al final. Aquí el foco está en el inicio de palabra; la página [La r al final de palabra](/de/teaching/spanish/es/r-am-silbenende) trata con más detalle el sonido final.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *reír*'
+  lead: ¿Cómo suena la *r* inicial en las dos grabaciones?
+  transcript: '*reír*'
+  examples:
+  - role: reference
+    subtitle: Chile · W76
+    audio: corpus/p2-reir-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W76
+    audio: corpus/p2-reir-learner.mp3
+- type: section_heading
+  title: No todas las erres suenan igual
+- type: text
+  body: Las propias grabaciones de *caro* y *carro* muestran que dos hablantes no realizan un mismo sonido de *r* exactamente de la misma manera. En el mundo hispanohablante existen, además, otras realizaciones regionales que se presentan con ejemplos sonoros en el [manual digital](https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute). Por tanto, no toda diferencia respecto de un único modelo de referencia constituye un error de pronunciación.
+- type: info_box
+  title: Las lenguas de origen como recurso
+  body: No todos los aprendientes tienen que aprender desde cero la articulación de la *r* española. Quienes hablan, por ejemplo, turco, kurdo o italiano ya suelen conocer de sus propias lenguas la articulación con la punta de la lengua contra los alvéolos. Aun así, la vibración múltiple y, sobre todo, la distinción entre la vibrante simple y la múltiple pueden ser nuevas. Las lenguas de origen constituyen así un recurso importante para enseñar pronunciación.
+- type: section_heading
+  title: Sugerencias para el aula
+- type: teaching_impulses
+  items:
+  - title: Escuchar primero la diferencia
+    body: Utilizar los pares *pero* / *perro* y *caro* / *carro* para mostrar que la vibrante simple y la múltiple permiten distinguir significados. Escuchar y describir primero la diferencia; aclarar después el significado de las palabras.
+  - title: Tomar conciencia del punto de articulación
+    body: Contrastar brevemente la *r* anterior del español con la *r* posterior frecuente en alemán estándar, por ejemplo mediante las palabras *Rose* (alemán) y *rosa* (español). Para practicar *claro*, el manual digital propone imaginar primero una *d* en lugar de la *r* y acelerar progresivamente la articulación hasta que la punta de la lengua produzca el contacto característico.
+  - title: Aprovechar la escritura
+    body: Mostrar con los pares de palabras que ⟨r⟩ y ⟨rr⟩ entre vocales representan una verdadera diferencia de sonidos. También se pueden aprovechar las lenguas de origen presentes en el grupo.
+- type: further_reading
+  title: Para saber más
+  description: Capítulos del manual digital y otra página temática relacionada.
+  items:
+  - title: La pronunciación en el manual digital
+    text: Las erres del español y del alemán, las variantes regionales y el ejercicio con *claro*.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
+  - title: La ortografía en el manual digital
+    text: La relación entre letras y sonidos en español.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/orthographie/#se-escribe-casi-como-se-habla
+  - title: Las lenguas de origen en el manual digital
+    text: Por qué el turco, el kurdo o el italiano pueden facilitar la articulación de la *r* vibrante.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/herkunftssprachen/#gerolltes-r-normal-in-allen-herkunftssprachen
+  - title: La r al final de palabra
+    text: Por qué la *r* final suena diferente en español y en alemán y qué papel desempeña la vocalización de la *r* alemana.
+    cta: Página temática relacionada
+    href: /de/teaching/spanish/es/r-am-silbenende

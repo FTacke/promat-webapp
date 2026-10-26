@@ -45,9 +45,10 @@ _SCHEMA_TYPES: dict[str, Any] = {
     "research_design": "ScholarlyArticle",
     "teaching_topic": ["Article", "LearningResource"],
 }
-_EDITOR_LABELS = {"de": ("Hrsg.", "Hrsg."), "en": ("ed.", "eds.")}
-_QUOTES = {"de": ("„", "“"), "en": ("“", "”")}
-_DATA_AS_OF_LABELS = {"de": "Datenstand", "en": "data as of"}
+_EDITOR_LABELS = {"de": ("Hrsg.", "Hrsg."), "en": ("ed.", "eds."), "es": ("ed.", "eds.")}
+_QUOTES = {"de": ("„", "“"), "en": ("“", "”"), "es": ("«", "»")}
+_DATA_AS_OF_LABELS = {"de": "Datenstand", "en": "data as of", "es": "datos a fecha de"}
+_CONTAINER_LABELS = {"de": "In", "en": "In", "es": "En"}
 
 
 class PublicationRegistryError(RuntimeError):
@@ -397,8 +398,9 @@ def format_citation(resource: dict[str, Any], ui_lang: str) -> dict[str, str] | 
         editors = resource["editors"]
         singular, plural = _EDITOR_LABELS.get(ui_lang, _EDITOR_LABELS["en"])
         editor_text = f"{_join_names([editor['name'] for editor in editors])} ({plural if len(editors) > 1 else singular})"
-        container_text = f" In: {editor_text}, {platform['title']}."
-        container_html = f" In: {escape(editor_text)}, <em>{escape(str(platform['title']))}</em>."
+        container_label = _CONTAINER_LABELS.get(ui_lang, _CONTAINER_LABELS["en"])
+        container_text = f" {container_label}: {editor_text}, {platform['title']}."
+        container_html = f" {container_label}: {escape(editor_text)}, <em>{escape(str(platform['title']))}</em>."
 
     tail = f" {publisher}." if publisher else ""
     text = f"{head} {title_text}{container_text}{tail} {locator}"

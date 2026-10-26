@@ -630,6 +630,16 @@ def _topic_editions() -> list[tuple[str, str, str, dict]]:
     return editions
 
 
+def _edition_urls(teaching_lang: str, topic_slug: str, file_lang: str) -> tuple[str, str, str]:
+    """(topic URL, hub URL, link marker) of a topic file; additional content editions (e.g. `es.yaml`) live below
+    the content-language segment and are linked with the reader's origin (`?from=`)."""
+    if file_lang in ("de", "en"):
+        topic_href = f"/{file_lang}/teaching/{teaching_lang}/{topic_slug}"
+        return topic_href, f"/{file_lang}/teaching/{teaching_lang}", f'href="{topic_href}"'
+    topic_href = f"/de/teaching/{teaching_lang}/{file_lang}/{topic_slug}"
+    return topic_href, f"/de/teaching/{teaching_lang}/{file_lang}", f'href="{topic_href}?from='
+
+
 def _is_marked_unfinished(topic: dict) -> bool:
     hub = topic.get("hub") if isinstance(topic.get("hub"), dict) else {}
     metadata = topic.get("metadata") if isinstance(topic.get("metadata"), dict) else {}
@@ -650,24 +660,25 @@ def test_the_content_tree_contains_both_finished_and_unfinished_topics() -> None
 
 
 def test_unfinished_topics_are_neither_linked_nor_served_and_finished_ones_are(real_app_factory) -> None:
-    from app.teaching_content import topic_is_public
+    from app.teaching_content import content_edition_topic_is_public, topic_is_public
 
     client = real_app_factory().test_client()
-    hubs: dict[tuple[str, str], str] = {}
+    hubs: dict[str, str] = {}
     for teaching_lang, topic_slug, ui_lang, topic in _topic_editions():
-        hub_html = hubs.setdefault((teaching_lang, ui_lang), client.get(f"/{ui_lang}/teaching/{teaching_lang}").get_data(as_text=True))
-        topic_href = f"/{ui_lang}/teaching/{teaching_lang}/{topic_slug}"
+        topic_href, hub_href, link_marker = _edition_urls(teaching_lang, topic_slug, ui_lang)
+        hub_response = client.get(hub_href)
+        hub_html = hubs.setdefault(hub_href, hub_response.get_data(as_text=True) if hub_response.status_code == 200 else "")
         response = client.get(topic_href)
-        public = topic_is_public(teaching_lang, ui_lang, topic_slug)
+        public = (topic_is_public if ui_lang in ("de", "en") else content_edition_topic_is_public)(teaching_lang, ui_lang, topic_slug)
 
         if _is_marked_unfinished(topic):
             assert not public, topic_href
             assert response.status_code != 200, topic_href
-            assert f'href="{topic_href}"' not in hub_html, topic_href
+            assert link_marker not in hub_html, topic_href
         else:
             assert public, topic_href
             assert response.status_code == 200, topic_href
-            assert f'href="{topic_href}"' in hub_html, topic_href
+            assert link_marker in hub_html, topic_href
 
 
 def test_public_topics_carry_no_placeholder_author_status_or_scaffold_text(real_app_factory) -> None:
@@ -675,7 +686,9 @@ def test_public_topics_carry_no_placeholder_author_status_or_scaffold_text(real_
     for teaching_lang, topic_slug, ui_lang, topic in _topic_editions():
         if _is_marked_unfinished(topic):
             continue
-        body = client.get(f"/{ui_lang}/teaching/{teaching_lang}/{topic_slug}").get_data(as_text=True)
+        response = client.get(_edition_urls(teaching_lang, topic_slug, ui_lang)[0])
+        assert response.status_code == 200, (teaching_lang, topic_slug, ui_lang)
+        body = response.get_data(as_text=True)
         assert ">NN<" not in body and "NN</" not in body, (teaching_lang, topic_slug, ui_lang)
         for marker in PLACEHOLDER_MARKERS:
             assert marker not in body, (teaching_lang, topic_slug, ui_lang, marker)

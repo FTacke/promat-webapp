@@ -1,0 +1,108 @@
+resource_id: promat-teaching-es-soft-spanish-hard-german
+title: Español fluido, alemán entrecortado
+summary: Por qué el español suele sonar más fluido que el alemán y qué papel desempeña el golpe de glotis.
+description: Por qué el español suele sonar más fluido que el alemán y qué papel desempeña el golpe de glotis.
+equivalents:
+  de: soft-spanish-hard-german
+  en: soft-spanish-hard-german
+metadata:
+  creators:
+  - felix-tacke
+  - ana-goas-perez
+  created: 2026-10-10
+  updated: 2026-10-26
+blocks:
+- type: topic_meta
+- type: text
+  body: El acento alemán al hablar español no se manifiesta únicamente en los sonidos aislados. A veces son pequeñas diferencias, casi imperceptibles, las que cambian el ritmo y la sonoridad de un enunciado completo. Cuatro comparaciones auditivas permiten percibir esos matices y muestran cómo influyen en la fluidez del español.
+- type: audio_contrast
+  title: 'Comparación auditiva: *o hay*'
+  lead: ¿En qué se diferencian las dos pronunciaciones?
+  transcript: '*o hay*'
+  examples:
+  - role: reference
+    subtitle: MAR.ELE
+    audio: marele/o-hay-ref.mp3
+  - role: learner
+    subtitle: MAR.ELE
+    audio: marele/o-hay-learner.mp3
+- type: solution
+  title: 'Solución: ¿qué se oye?'
+  body: 'En la pronunciación del hablante de referencia, las vocales de *o hay* se enlazan de forma fluida: [o.ˈai]. En la grabación del aprendiente aparece, en cambio, un rasgo característico del alemán: el **golpe de glotis [ʔ]**, que en esa lengua se produce con frecuencia al comienzo de palabras y sílabas que empiezan por vocal. Los golpes de glotis adicionales [ʔo.ʔai] dan a la secuencia un sonido que puede percibirse como «duro» o «entrecortado».'
+- type: section_heading
+  title: ¿Cómo se produce el golpe de glotis?
+- type: text
+  body: El golpe de glotis [ʔ] se produce mediante un cierre breve de las cuerdas vocales en la laringe. En alemán aparece con frecuencia delante de palabras que comienzan por vocal, por ejemplo en *die Ente* [diː ˈʔɛntə].
+- type: image
+  src: glottal-stop-larynx-hand.png
+  alt: Ilustración de una mujer de medio perfil que se toca suavemente el cuello a la altura de la laringe con el pulgar y los dedos; la zona de la laringe está resaltada en violeta.
+  caption: La posición de la mano señala aproximadamente dónde se encuentra la laringe, lugar en el que se produce el golpe de glotis.
+  credit: 'Ilustración: Felix Tacke (concepto y elaboración de las instrucciones), generada con IA · Pronunciation Matters (2026)'
+- type: section_heading
+  title: ¿Dónde pueden aparecer golpes de glotis en la pronunciación de aprendientes?
+- type: text
+  body: En alemán, las sílabas que comienzan por vocal también suelen iniciarse con un golpe de glotis. Los aprendientes germanohablantes trasladan a veces este patrón al español, sobre todo cuando se encuentran dos vocales. Esto puede ocurrir tanto **entre palabras** (*o hay*, *tiene hambre*) como **dentro de una palabra**, por ejemplo en *reír*.
+- type: audio_contrast
+  title: 'Comparación auditiva: *tiene hambre*'
+  lead: ¿Cómo se enlazan las vocales en el límite entre las dos palabras?
+  transcript: '*tiene hambre*'
+  examples:
+  - role: reference
+    subtitle: Pronunciation Matters · D27
+    audio: corpus/p1-hambre-ref.mp3
+  - role: learner
+    subtitle: Pronunciation Matters · D27
+    audio: corpus/p1-hambre-learner.mp3
+- type: audio_contrast
+  title: 'Comparación auditiva: *reír*'
+  lead: ¿Cómo se realiza la transición entre las dos vocales?
+  transcript: '*reír*'
+  examples:
+  - role: reference
+    subtitle: Pronunciation Matters · W76
+    audio: corpus/p1-reir-ref.mp3
+  - role: learner
+    subtitle: Pronunciation Matters · W76
+    audio: corpus/p1-reir-learner.mp3
+- type: section_heading
+  title: Cuando se difuminan los límites entre palabras
+- type: text
+  body: |-
+    En español no solo se enlazan con fluidez las vocales que aparecen una junto a otra. Cuando una palabra termina en consonante y la siguiente empieza por vocal, normalmente esa consonante pasa a formar parte de la sílaba siguiente. Así, *sus amigos* se silabea en el habla como **su‑sa‑mi‑gos**, y *los otros* como **lo‑so‑tros**: la /s/ final forma una sílaba con la vocal que sigue. Este fenómeno recibe el nombre de **resilabificación**.
+
+    Los aprendientes germanohablantes, en cambio, a veces se guían más por los límites entre palabras y las pronuncian de manera más separada. Esto también puede producir una impresión de habla «entrecortada».
+- type: audio_contrast
+  title: 'Comparación auditiva: *los otros*'
+  lead: ¿Cómo se enlazan *los* y *otros*?
+  transcript: ¿Tampoco ***los otros*** quieren venir?
+  examples:
+  - role: reference
+    subtitle: Pronunciation Matters · QY5
+    audio: corpus/p1-losotros-ref.mp3
+  - role: learner
+    subtitle: Pronunciation Matters · QY5
+    audio: corpus/p1-losotros-learner.mp3
+- type: section_heading
+  title: Sugerencias para el aula
+- type: text
+  body: Estas comparaciones permiten dirigir la atención hacia diferencias entre lenguas que a menudo pasan inadvertidas y desarrollar la conciencia fonética.
+- type: teaching_impulses
+  items:
+  - title: Escuchar antes de explicar
+    body: Reproducir las grabaciones sin explicaciones previas. ¿Dónde se oyen interrupciones y dónde se enlazan los sonidos de forma continua? Recoger las observaciones y explicarlas después desde el punto de vista lingüístico.
+  - title: Experimentar conscientemente con la pronunciación
+    body: 'Articular de forma deliberada el golpe de glotis alemán, por ejemplo en *die Ente*, y contrastarlo con *o hay* o *tiene hambre*. Practicar después las secuencias españolas sin añadir golpes de glotis y experimentar con la resilabificación en *los otros* o *sus amigos*. También sirven enunciados sencillos que se amplían paso a paso: *el amigo* → *el amigo de Ana* → *el amigo de Ana es alto*.'
+  - title: Comparar lenguas
+    body: 'Extender la comparación al francés, el italiano o el inglés: ¿cómo se realizan los límites entre palabras? ¿Dónde aparecen inicios glotales y dónde se enlazan los sonidos? Estas comparaciones ayudan a reconocer distintos patrones de pronunciación y favorecen la reflexión entre lenguas.'
+- type: further_reading
+  title: Para saber más
+  description: Otras páginas sobre modelos de pronunciación y el golpe de glotis.
+  items:
+  - title: La pronunciación en el manual digital
+    text: El capítulo **Aussprache** («Pronunciación») del manual digital *Linguistik im Spanischunterricht* ofrece explicaciones adicionales y más ejemplos sonoros.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen
+  - title: ¿Qué pronunciación enseñar?
+    text: ¿Qué realización sirve como modelo y por qué la variación regional no establece una jerarquía de errores?
+    cta: Página temática relacionada
+    href: /de/teaching/spanish/es/which-pronunciation

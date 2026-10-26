@@ -1,0 +1,139 @@
+resource_id: promat-teaching-es-which-pronunciation
+title: ¿Qué pronunciación enseñar?
+summary: Por qué el *seseo* y la *distinción* son variantes igualmente válidas y qué implica esto para la enseñanza.
+description: ¿Existe una única pronunciación correcta del español? ¿Y qué implica esto para su enseñanza?
+equivalents:
+  de: which-pronunciation
+  en: which-pronunciation
+metadata:
+  creators:
+  - felix-tacke
+  peer_review:
+  - null
+  created: 2026-05-11
+  updated: 2026-10-26
+blocks:
+- type: topic_meta
+- type: text
+  body: |-
+    En todos los países hispanohablantes existe una pronunciación cuidada, aunque no suene exactamente igual en todas partes.
+    Muchos docentes y estudiantes dan por hecho, de manera implícita, que la pronunciación del centro y norte de España es el modelo al que se debería aspirar. Pero no es así.
+    Esta cuestión se aprecia con especial claridad en un rasgo: ¿se distinguen los sonidos correspondientes a las letras `s` y `z/c` (*distinción*) o se pronuncian igual (*seseo*)?
+- type: overview
+  title: De un vistazo
+  items:
+  - Más del 90 % de los hispanohablantes vive fuera de España.
+  - La mayoría pronuncia *caza* y *casa* de la misma manera (*seseo*).
+  - Esta página permite escuchar las diferencias entre ambos modelos de pronunciación y explica por qué el *seseo* y la *distinción* son igualmente correctos.
+- type: section_heading
+  title: Comparación auditiva
+- type: text
+  body: |-
+    Las siguientes grabaciones presentan el mismo par de palabras y la misma serie de palabras: una vez con *distinción* y otra con *seseo*.
+    En la enseñanza resulta fundamental mostrar mediante ejemplos sonoros que ambas realizaciones son variantes igualmente válidas.
+- type: audio_contrast
+  title: 'Comparación auditiva: *casa – caza*'
+  lead: ¿Cómo se pronuncian las dos palabras en cada grabación?
+  transcript: casa – caza
+  examples:
+  - label: '*Distinción*'
+    subtitle: centro y norte de España
+    audio: variation/distincion-casa-caza.mp3
+    note: '*casa* y *caza* se pronuncian de manera diferente.'
+  - label: '*Seseo*'
+    subtitle: Hispanoamérica / Canarias / zonas de Andalucía
+    audio: variation/seseo-casa-caza-es-n-0004-2026-s01.mp3
+    note: '*casa* y *caza* se pronuncian igual.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *gracias – ciudad – paz – ración*'
+  lead: Esta serie permite comparar la pronunciación con el sonido interdental y con `s` en otras palabras.
+  transcript: gracias – ciudad – paz – ración
+  examples:
+  - label: '*Distinción*'
+    subtitle: centro y norte de España
+    audio: variation/distincion-word-series.mp3
+    note: La diferencia se oye especialmente en la `c` de *gracias* y *ciudad* y en la `z` de *paz*.
+  - label: '*Seseo*'
+    subtitle: Hispanoamérica / Canarias / zonas de Andalucía
+    audio: variation/seseo-word-series-es-n-0004-2026-s01.mp3
+    note: Aquí la `c` ante `e/i` y la `z` se pronuncian como la `s`.
+- type: section_heading
+  title: '*Seseo* y *distinción*'
+- type: text
+  body: |-
+    Las grabaciones no muestran una particularidad de palabras aisladas, sino dos patrones de pronunciación extendidos en distintas regiones.
+    Los siguientes mapas muestran dónde predominan el *seseo* y la *distinción*.
+- type: embed
+  title: 'España: *distinción*, *seseo* y *ceceo*'
+  provider: datawrapper
+  src: https://datawrapper.dwcdn.net/poSnB/9/
+  height: 533
+- type: info_box
+  title: La mayoría de los hispanohablantes sesea
+  body: |-
+    Con *distinción*, la `s` se pronuncia de forma diferente de la `z` y de la `c` ante `e/i`: *casa* y *caza* contienen sonidos distintos.
+    Con *seseo*, estos sonidos coinciden: *casa* y *caza* se pronuncian igual.
+    La *distinción* es habitual sobre todo en el centro y norte de España.
+    El *seseo* es habitual en casi toda Hispanoamérica, en Canarias y en zonas de Andalucía, regiones donde vive más del 90 % de los hispanohablantes.
+
+    **Una idea clave:** Pronunciar `caza` igual que `casa` es hablar un español tan correcto como cualquier otro.
+- type: embed
+  title: El *seseo* en Hispanoamérica
+  provider: datawrapper
+  src: https://datawrapper.dwcdn.net/Uza2n/5/
+  height: 831
+- type: section_heading
+  title: 'El *seseo* en Hispanoamérica: ejemplos sonoros'
+- type: text
+  body: Breves fragmentos de programas de radio muestran que el *seseo* forma parte de la pronunciación habitual en numerosas variedades del español.
+- type: audio_examples
+  title: El *seseo* en grabaciones auténticas
+  lead: Los ejemplos proceden de distintas variedades hispanoamericanas.
+  source:
+    label: CO.RA.PAN
+    url: https://corapan.hispanistica.com
+  examples:
+  - label: México
+    transcript: … esta mujer que se *hizo* famosa en 2017 *gracias* a un video que se hizo viral.
+    note: En *gracias* y *hizo*, la `c` ante `e/i` y la `z` se pronuncian como `s`.
+    token_id: MEXb80def27c
+    audio: corapan/MEXb80def27c.mp3
+  - label: Chile
+    transcript: Se ve espectacular y está más *cerca*.
+    note: En *cerca*, la `c` se pronuncia como `s`.
+    token_id: CHL8b78ac16b
+    audio: corapan/CHL8b78ac16b.mp3
+  - label: Argentina
+    transcript: … *cerca* de Miami.
+    note: También aquí la `c` de *cerca* se pronuncia como `s`.
+    token_id: ARGCBAeca46a987
+    audio: corapan/ARGCBAeca46a987.mp3
+  - label: Costa Rica
+    transcript: Gana una *cena* para cuatro personas.
+    note: En *cena*, la `c` se pronuncia como `s`.
+    token_id: CRI61d9dc2dc
+    audio: corapan/CRI61d9dc2dc.mp3
+- type: section_heading
+  title: Sugerencias para el aula
+- type: text
+  body: 'Estas comparaciones permiten abordar varias decisiones concretas sobre la enseñanza de la pronunciación:'
+- type: teaching_impulses
+  items:
+  - title: Escuchar antes de explicar
+    body: Reproducir primero los ejemplos sin dar la explicación. ¿Percibe el alumnado alguna diferencia entre *casa* y *caza*?
+  - title: Hacer visible la variación
+    body: Utilizar los mapas para mostrar que la *distinción* tiene una distribución regional más limitada, mientras que el *seseo* es habitual en buena parte del mundo hispanohablante.
+  - title: Aclarar las normas
+    body: Subrayar que el *seseo* y la *distinción* no forman una jerarquía de pronunciaciones correctas e incorrectas, sino que son variantes igualmente legítimas.
+- type: further_reading
+  title: Para saber más
+  description: Los materiales complementarios presentan otros rasgos de pronunciación acompañados de ejemplos sonoros.
+  items:
+  - title: La pronunciación de ll e y
+    text: 'Hoy predomina el *yeísmo*: `ll` e `y` suelen pronunciarse igual. En Argentina y Uruguay, el sonido se parece a menudo al de «sh».'
+    cta: Más información
+    href: https://linguistik.hispanistica.com/variation/variation_aussprache/#yeismo
+  - title: Aspiración y pérdida de /s/
+    text: En muchas regiones, la /s/ en final de sílaba o de palabra se debilita o desaparece. En la enseñanza, este fenómeno es especialmente relevante para la comprensión auditiva.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/variation/variation_aussprache/#s-am-silbenende-abschwachung-und-schwund

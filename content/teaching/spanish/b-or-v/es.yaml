@@ -1,0 +1,99 @@
+resource_id: promat-teaching-es-b-or-v
+title: ¿B o V? Cuando la escritura se hace oír
+summary: Por qué dos letras del español representan un mismo fonema y, aun así, la escritura puede inducir pronunciaciones distintas.
+description: Por qué dos letras del español representan un mismo fonema y, aun así, la escritura puede inducir pronunciaciones distintas.
+equivalents:
+  de: b-or-v
+  en: b-or-v
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-26
+blocks:
+- type: topic_meta
+- type: text
+  body: En español, las letras ⟨b⟩ y ⟨v⟩ representan el mismo fonema /b/. En otras lenguas, como el alemán, estas letras tienen valores fonéticos diferentes. Los aprendientes germanohablantes trasladan con frecuencia, y de forma inconsciente, esa distinción al español, tal como muestran las comparaciones auditivas.
+- type: audio_contrast
+  title: 'Comparación auditiva: *bienes – vienes*'
+  lead: ¿Qué llama la atención en los sonidos iniciales de *bienes* y *vienes*?
+  transcript: '*bienes – vienes*'
+  examples:
+  - role: reference
+    subtitle: México · W92
+    audio: corpus/p4-bienes-ref-mx.mp3
+  - role: reference
+    subtitle: Chile · W92
+    audio: corpus/p4-bienes-ref-cl.mp3
+- type: solution
+  title: 'Solución: ¿qué se oye?'
+  body: 'En ambas grabaciones de referencia, *bienes* («posesiones») y *vienes* (forma del verbo *venir*) se pronuncian igual: [ˈbje.nes]. Son palabras homófonas: sin contexto no es posible saber cuál de ellas se ha pronunciado.'
+- type: section_heading
+  title: Dos letras, un solo sonido
+- type: text
+  body: 'Las grafías ⟨b⟩ y ⟨v⟩ se remontan a palabras latinas escritas con *b* y *v* (*beber* < lat. *bibere*, *vivir* < lat. *vivere*). En español, su pronunciación acabó coincidiendo: ambas letras representan el fonema /b/. Por eso no es posible deducir la grafía de una palabra solo por su pronunciación; hay que aprenderla palabra por palabra, también en pares como *barón* – *varón* o *botar* – *votar*.'
+- type: text
+  body: '**⟨b⟩ / ⟨v⟩ → /b/**'
+- type: info_box
+  title: 'Dos letras, un sonido: las dudas también existen entre hablantes nativos'
+  body: 'También entre hispanohablantes persiste en ocasiones la idea de que la letra ⟨v⟩ debería corresponder «en realidad» al sonido /v/. Esta creencia recibió históricamente el respaldo de planteamientos normativos: algunos tratados ortográficos de la Real Academia Española la sostuvieron todavía en el siglo XX, y de allí pasó a manuales escolares. Por eso, al prestar una atención especial a la escritura, algunas personas pueden llegar a pronunciar [v] creyendo que es una forma más correcta: un ejemplo ilustrativo de *spelling pronunciation*, es decir, una pronunciación influida por la grafía (véase Tacke 2020).'
+- type: section_heading
+  title: Cuando dos letras se convierten en dos sonidos
+- type: text
+  body: 'La expectativa de que letras diferentes deben corresponder a sonidos diferentes procede de otras lenguas y puede influir en la pronunciación. Un ejemplo:'
+- type: audio_contrast
+  title: 'Comparación auditiva: *barón – varón*'
+  lead: ¿Se pronuncia igual el sonido inicial de ambas palabras en las dos grabaciones?
+  transcript: '*barón – varón*'
+  examples:
+  - role: reference
+    subtitle: MAR.ELE
+    audio: marele/baron-varon-ref.mp3
+  - role: learner
+    subtitle: MAR.ELE
+    audio: marele/baron-varon-learner.mp3
+- type: text
+  body: 'El hablante de referencia pronuncia *barón* y *varón* del mismo modo: [baˈɾon]. En cambio, en la grabación del aprendiente, *varón* presenta un sonido inicial distinto: [vaˈʁon] en lugar de [baˈʁon]. La pronunciación sigue aquí la grafía: es un caso de *spelling pronunciation*.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *bienes – vienes*'
+  lead: ¿Cómo se pronuncia la *v* de *vienes*?
+  transcript: '*bienes – vienes*'
+  examples:
+  - role: reference
+    subtitle: México · W92
+    audio: corpus/p4-bienes-ref-mx.mp3
+  - role: learner
+    subtitle: L1 alemán · W92
+    audio: corpus/p4-bienes-learner.mp3
+- type: text
+  body: 'El sonido concreto que se oye no depende de la letra, sino del contexto fonético: el fonema /b/ se realiza normalmente como oclusiva [b] después de una pausa o de una consonante nasal y, en otros contextos, como aproximante [β]. Así, *vino* [ˈbi.no], pero *de vino* [de.ˈβi.no]. La página temática [b, d y g: ¿demasiado fuertes?](/de/teaching/spanish/es/soft-consonants-b-d-g) explica esta diferencia con más detalle.'
+- type: section_heading
+  title: Sugerencias para el aula
+- type: teaching_impulses
+  items:
+  - title: Escuchar antes de leer
+    body: Reproducir palabras como *bienes* y *vienes* sin mostrar su escritura. Después, revelar las grafías y comentar qué pronunciación cabría esperar a partir de las letras.
+  - title: Cuestionar conscientemente la escritura
+    body: Mostrar con *bienes – vienes* y *barón – varón* que distintas letras no tienen por qué representar distintos sonidos. Reflexionar sobre cómo surgen pronunciaciones condicionadas por la grafía (*spelling pronunciation*).
+  - title: La escritura también plantea dificultades
+    body: 'Explorar el fenómeno inverso: si dos letras suenan igual, es necesario aprender la grafía de cada palabra. Puede servir una comparación con el alemán, por ejemplo la grafía infantil hipotética *Fater* en lugar de *Vater* (un ejemplo ilustrativo, no un resultado empírico). En español puede utilizarse *tubo* / *tuvo*, siempre que el vocabulario se ajuste al nivel del grupo.'
+- type: further_reading
+  title: Para saber más
+  description: Capítulos complementarios del manual digital y referencias de carácter científico.
+  items:
+  - title: La ortografía en el manual digital
+    text: Por qué no puede deducirse de manera sistemática cuándo se escribe ⟨b⟩ o ⟨v⟩, con los ejemplos sonoros *barón* y *varón*.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/orthographie/#unsystematische-alternanzen-b-vs-v
+  - title: La lingüística de errores en el manual digital
+    text: Cómo la suposición de que las letras deben reflejar los sonidos ayuda a explicar errores de pronunciación por influencia de la escritura.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/fehlerlinguistik/#einfluss-des-schriftbilds
+  - title: La pronunciación en el manual digital
+    text: Cómo se realiza /b/ como [b] o [β] según el contexto.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/aussprache/#kontextabhangige-mal-so-mal-so-laute
+  - title: 'Tacke (2020): Spanish: Orthography and Orthoepy'
+    text: Estudio científico sobre ortografía, ortoepía y *spelling pronunciation* en español, publicado en *Manual of Standardization in the Romance Languages* (De Gruyter).
+    cta: Publicación
+    href: https://doi.org/10.1515/9783110458084-025

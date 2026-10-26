@@ -326,6 +326,8 @@ def register_context_processors(app: Flask) -> None:
                 for target in ("de", "en")
             },
             "t": lambda key, **kwargs: translate(current_ui_lang, key, **kwargs),
+            # Labels in a given language, e.g. the content language of a Teaching content edition.
+            "t_lang": lambda lang, key, **kwargs: translate(lang or current_ui_lang, key, **kwargs),
             **BRANDING,
         }
 

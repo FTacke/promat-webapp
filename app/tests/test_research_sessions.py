@@ -2265,7 +2265,8 @@ def test_every_teaching_topic_edition_uses_the_shared_vertical_layout(url_app: F
         teaching_language, topic_slug, ui_lang = locale_file.parts[-3], locale_file.parts[-2], locale_file.stem
         if topic_slug == "hubs" or "is_public: false" in locale_file.read_text(encoding="utf-8"):
             continue
-        routes.append(f"/{ui_lang}/teaching/{teaching_language}/{topic_slug}")
+        # additional content editions (e.g. es.yaml) are served below the content-language segment
+        routes.append(f"/{ui_lang}/teaching/{teaching_language}/{topic_slug}" if ui_lang in ("de", "en") else f"/de/teaching/{teaching_language}/{ui_lang}/{topic_slug}")
     assert {route.split("/")[3] for route in routes} >= {"spanish", "french"}
     for route in routes:
         response = client.get(route)

@@ -2127,7 +2127,107 @@ def resolve_request_ui_language(
     return infer_ui_language_from_accept_language(accept_language)
 
 
+#: Labels inside the content area of a Teaching page (block labels, speaker roles, topic metadata, citation box).
+#: A Teaching content edition in a language that is not a UI language (docs/spec/platform-data-files.md, "Teaching
+#: content editions") renders them in its content language; the edition is published only once all keys exist.
+TEACHING_CONTENT_LABEL_KEYS: tuple[str, ...] = (
+    "teaching.topic.meta",
+    "teaching.topic.pending",
+    "teaching.topic.authors",
+    "teaching.topic.status",
+    "teaching.topic.peer_review",
+    "teaching.topic.created",
+    "teaching.topic.updated",
+    "teaching.topic.byline",
+    "teaching.credits.heading",
+    "teaching.credits.coordinator",
+    "teaching.credits.authors",
+    "teaching.citation.copy",
+    "teaching.citation.copied",
+    "teaching.citation.copy_failed",
+    "teaching.citation.doi",
+    "teaching.citation.url",
+    "citation.heading.teaching_topic",
+    "teaching.audio.transcript",
+    "teaching.audio.segments",
+    "teaching.audio.note",
+    "teaching.audio.source",
+    "teaching.audio.speaker_id",
+    "teaching.audio.pending",
+    "teaching.audio.play",
+    "teaching.audio.pause",
+    "teaching.audio.progress",
+    "teaching.audio.source_prefix",
+    "teaching.audio.word_sequence",
+    "teaching.speaker.reference",
+    "teaching.speaker.learner",
+    "teaching.solution.show",
+    "teaching.solution.hide",
+    "teaching.download.label",
+    "teaching.download.pending",
+    "teaching.video.label",
+    "teaching.video.pending",
+    "teaching.overview.intro",
+    "teaching.hub.cards_aria",
+)
+
+TEACHING_CONTENT_LABELS: dict[str, dict[str, str]] = {
+    "es": {
+        "teaching.topic.meta": "Metadatos de la página",
+        "teaching.topic.pending": "En preparación",
+        "teaching.topic.authors": "Autoría",
+        "teaching.topic.status": "Estado",
+        "teaching.topic.peer_review": "Revisión por pares",
+        "teaching.topic.created": "Creado",
+        "teaching.topic.updated": "Actualizado",
+        "teaching.topic.byline": "Por {authors}",
+        "teaching.credits.heading": "Créditos",
+        "teaching.credits.coordinator": "Coordinación",
+        "teaching.credits.authors": "Autoría",
+        "teaching.citation.copy": "Copiar cita",
+        "teaching.citation.copied": "Cita copiada.",
+        "teaching.citation.copy_failed": "No se ha podido copiar.",
+        "teaching.citation.doi": "DOI",
+        "teaching.citation.url": "URL",
+        "citation.heading.teaching_topic": "Cómo citar esta página temática",
+        "teaching.audio.transcript": "Transcripción",
+        "teaching.audio.segments": "Segmentos",
+        "teaching.audio.note": "Observación",
+        "teaching.audio.source": "Fuente",
+        "teaching.audio.speaker_id": "ID de hablante",
+        "teaching.audio.pending": "Archivo de audio pendiente.",
+        "teaching.audio.play": "Reproducir audio",
+        "teaching.audio.pause": "Pausar audio",
+        "teaching.audio.progress": "Progreso del audio",
+        "teaching.audio.source_prefix": "Audios de",
+        "teaching.audio.word_sequence": "Secuencia",
+        "teaching.speaker.reference": "Hablante de referencia",
+        "teaching.speaker.learner": "Aprendiente",
+        "teaching.solution.show": "Mostrar solución",
+        "teaching.solution.hide": "Ocultar solución",
+        "teaching.download.label": "Descarga",
+        "teaching.download.pending": "Archivo de descarga pendiente.",
+        "teaching.video.label": "Vídeo",
+        "teaching.video.pending": "Archivo de vídeo pendiente.",
+        "teaching.overview.intro": "Páginas temáticas para la enseñanza de la pronunciación en las clases de lenguas extranjeras.",
+        "teaching.hub.cards_aria": "Páginas temáticas de esta lengua de enseñanza",
+    },
+}
+
+
+def content_labels_complete(content_lang: str | None) -> bool:
+    """True when a content language has every Teaching content label (UI languages always have them)."""
+    if content_lang in SUPPORTED_UI_LANGUAGES:
+        return True
+    labels = TEACHING_CONTENT_LABELS.get(str(content_lang or ""), {})
+    return all(labels.get(key) for key in TEACHING_CONTENT_LABEL_KEYS)
+
+
 def translate(ui_lang: str | None, key: str, **kwargs: object) -> str:
+    content_labels = TEACHING_CONTENT_LABELS.get(str(ui_lang or "").lower())
+    if content_labels is not None and key in content_labels:
+        value = content_labels[key]
+        return value.format(**kwargs) if kwargs else value
     language = resolve_ui_language(ui_lang)
     value = TRANSLATIONS.get(language, {}).get(key)
     if value is None:

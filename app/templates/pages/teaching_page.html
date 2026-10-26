@@ -6,32 +6,34 @@
 
 {% block content %}
 {% set teaching_view = promat_page.teaching_view | default('overview') %}
+{#- Labels of the content area follow the content language of a content edition; navigation stays in the UI language. -#}
+{% set label_lang = promat_page.content_lang or current_ui_lang %}
 {% set teaching_labels = {
-  'topic_meta': t('teaching.topic.meta'),
-  'topic_pending': t('teaching.topic.pending'),
-  'credits': t('teaching.credits.heading'),
-  'citation_copy': t('teaching.citation.copy'),
-  'citation_copy_copied': t('teaching.citation.copied'),
-  'citation_copy_failed': t('teaching.citation.copy_failed'),
-  'citation_doi': t('teaching.citation.doi'),
-  'citation_url': t('teaching.citation.url'),
-  'transcript': t('teaching.audio.transcript'),
-  'segments': t('teaching.audio.segments'),
-  'audio_note': t('teaching.audio.note'),
-  'audio_source': t('teaching.audio.source'),
-  'audio_speaker': t('teaching.audio.speaker_id'),
-  'audio_pending': t('teaching.audio.pending'),
-  'audio_play': t('teaching.audio.play'),
-  'audio_pause': t('teaching.audio.pause'),
-  'audio_progress': t('teaching.audio.progress'),
-  'audio_source_prefix': t('teaching.audio.source_prefix'),
-  'audio_word_sequence': t('teaching.audio.word_sequence'),
-  'solution_show': t('teaching.solution.show'),
-  'solution_hide': t('teaching.solution.hide'),
-  'download': t('teaching.download.label'),
-  'download_pending': t('teaching.download.pending'),
-  'video': t('teaching.video.label'),
-  'video_pending': t('teaching.video.pending'),
+  'topic_meta': t_lang(label_lang, 'teaching.topic.meta'),
+  'topic_pending': t_lang(label_lang, 'teaching.topic.pending'),
+  'credits': t_lang(label_lang, 'teaching.credits.heading'),
+  'citation_copy': t_lang(label_lang, 'teaching.citation.copy'),
+  'citation_copy_copied': t_lang(label_lang, 'teaching.citation.copied'),
+  'citation_copy_failed': t_lang(label_lang, 'teaching.citation.copy_failed'),
+  'citation_doi': t_lang(label_lang, 'teaching.citation.doi'),
+  'citation_url': t_lang(label_lang, 'teaching.citation.url'),
+  'transcript': t_lang(label_lang, 'teaching.audio.transcript'),
+  'segments': t_lang(label_lang, 'teaching.audio.segments'),
+  'audio_note': t_lang(label_lang, 'teaching.audio.note'),
+  'audio_source': t_lang(label_lang, 'teaching.audio.source'),
+  'audio_speaker': t_lang(label_lang, 'teaching.audio.speaker_id'),
+  'audio_pending': t_lang(label_lang, 'teaching.audio.pending'),
+  'audio_play': t_lang(label_lang, 'teaching.audio.play'),
+  'audio_pause': t_lang(label_lang, 'teaching.audio.pause'),
+  'audio_progress': t_lang(label_lang, 'teaching.audio.progress'),
+  'audio_source_prefix': t_lang(label_lang, 'teaching.audio.source_prefix'),
+  'audio_word_sequence': t_lang(label_lang, 'teaching.audio.word_sequence'),
+  'solution_show': t_lang(label_lang, 'teaching.solution.show'),
+  'solution_hide': t_lang(label_lang, 'teaching.solution.hide'),
+  'download': t_lang(label_lang, 'teaching.download.label'),
+  'download_pending': t_lang(label_lang, 'teaching.download.pending'),
+  'video': t_lang(label_lang, 'teaching.video.label'),
+  'video_pending': t_lang(label_lang, 'teaching.video.pending'),
 } %}
 <article class="pm-teaching-page pm-teaching-page--{{ teaching_view }} pm-content pm-content--material" aria-labelledby="promat-page-title"{% if promat_page.topic_slug %} data-topic-slug="{{ promat_page.topic_slug }}"{% endif %}{% if promat_page.content_lang %} lang="{{ promat_page.content_lang }}" data-content-lang="{{ promat_page.content_lang }}"{% endif %}>
   {% if teaching_view == 'topic' %}
@@ -40,7 +42,7 @@
     {% include 'partials/_content_header.html' %}
 
     {% if promat_page.topic_metadata.authors or promat_page.topic_metadata.details %}
-    <section class="pm-teaching-topic-metadata" aria-label="{{ t('teaching.topic.meta') }}">
+    <section class="pm-teaching-topic-metadata" aria-label="{{ t_lang(label_lang, 'teaching.topic.meta') }}">
       {{ render_topic_metadata_rows(promat_page.topic_metadata) }}
     </section>
     {% endif %}
@@ -51,7 +53,7 @@
   {% endif %}
 
   {% if promat_page.overview_intro %}
-  <section class="pm-reading pm-teaching-overview__intro" aria-label="{{ t('teaching.overview.intro') }}">
+  <section class="pm-reading pm-teaching-overview__intro" aria-label="{{ t_lang(label_lang, 'teaching.overview.intro') }}">
     <p class="pm-teaching-overview__intro-text">{{ promat_page.overview_intro_html | safe if promat_page.overview_intro_html else promat_page.overview_intro }}</p>
   </section>
   {% endif %}
@@ -75,7 +77,7 @@
   {% if promat_page.topic_groups %}
   <div class="pm-teaching-group-stack">
     {% for group in promat_page.topic_groups %}
-    <section class="pm-teaching-topic-group pm-teaching-content-wide" {% if group.title %}aria-labelledby="teaching-group-{{ loop.index }}"{% else %}aria-label="{{ t('teaching.hub.cards_aria') }}"{% endif %}>
+    <section class="pm-teaching-topic-group pm-teaching-content-wide" {% if group.title %}aria-labelledby="teaching-group-{{ loop.index }}"{% else %}aria-label="{{ t_lang(label_lang, 'teaching.hub.cards_aria') }}"{% endif %}>
       {% if group.title %}
       <div class="pm-teaching-topic-group__header">
         <h2 id="teaching-group-{{ loop.index }}" class="pm-teaching-topic-group__title">{{ group.title_html | safe if group.title_html else group.title }}</h2>

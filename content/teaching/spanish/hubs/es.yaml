@@ -1,0 +1,17 @@
+title: "Español: páginas temáticas"
+overview_intro: Las páginas temáticas ofrecen orientación lingüística, ejemplos sonoros e ideas para breves actividades de pronunciación en la clase de español. A menudo bastan diez minutos en algún momento de la clase, y muchos de estos fenómenos pueden abordarse ya desde el nivel A1 con ejemplos adecuados.
+card_columns: 2
+groups:
+  - title: Para empezar
+    description: Cuestiones fundamentales y una primera aproximación a fenómenos de pronunciación característicos.
+    topics:
+      - which-pronunciation
+      - soft-spanish-hard-german
+  - title: Descubrir fenómenos de pronunciación
+    description: Comprender patrones de pronunciación concretos y abordarlos en el aula.
+    topics:
+      - europe-sounds-different
+      - b-or-v
+      - soft-consonants-b-d-g
+      - r
+      - r-am-silbenende

@@ -42,6 +42,9 @@ PUBLIC_PAGES = [
     ("/en/teaching/french", "/en/teaching/french"),
     ("/de/teaching/spanish/which-pronunciation", "/de/teaching/spanish/which-pronunciation"),
     ("/en/teaching/spanish/which-pronunciation", "/en/teaching/spanish/which-pronunciation"),
+    # Spanish content edition: one canonical URL under the default UI prefix, whatever the navigation language
+    ("/de/teaching/spanish/es", "/de/teaching/spanish/es"),
+    ("/en/teaching/spanish/es/which-pronunciation", "/de/teaching/spanish/es/which-pronunciation"),
     ("/de/impressum", "/de/impressum"),
 ]
 
@@ -233,7 +236,11 @@ def test_parameter_variants_do_not_create_new_identities(client) -> None:
 def test_hreflang_is_reciprocal_and_only_for_real_equivalents(client) -> None:
     for path, canonical_path in PUBLIC_PAGES:
         alternates = dict(re.findall(r'<link rel="alternate" hreflang="([a-z]+)" href="([^"]*)">', _head(client, path)))
-        assert set(alternates) == {"de", "en"}, path
+        # Spanish teaching pages also have a published Spanish content edition (canonical under the default UI prefix)
+        spanish_edition = path.split("/")[2:4] == ["teaching", "spanish"] and path.rstrip("/").split("/")[-1] != "accent-changes-everything"
+        assert set(alternates) == ({"de", "en", "es"} if spanish_edition else {"de", "en"}), path
+        if spanish_edition:
+            assert alternates["es"].startswith(ORIGIN + "/de/teaching/spanish/es"), path
         assert ORIGIN + canonical_path in alternates.values(), path
         for lang, href in alternates.items():
             other = dict(re.findall(r'<link rel="alternate" hreflang="([a-z]+)" href="([^"]*)">', _head(client, href.removeprefix(ORIGIN))))

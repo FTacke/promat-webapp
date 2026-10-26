@@ -1,0 +1,116 @@
+resource_id: promat-teaching-es-europe-sounds-different
+title: Europa no suena igual en español
+summary: Cómo los hábitos de lectura y pronunciación del alemán pueden influir en las vocales y los diptongos del español.
+description: Cómo los hábitos de lectura y pronunciación del alemán pueden influir en las vocales y los diptongos del español.
+equivalents:
+  de: europe-sounds-different
+  en: europe-sounds-different
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-24
+  updated: 2026-10-26
+blocks:
+- type: topic_meta
+- type: text
+  body: A los aprendientes germanohablantes, las vocales españolas pueden parecerles familiares al principio. Sin embargo, las combinaciones vocálicas son precisamente uno de los contextos en los que se manifiestan los hábitos de lectura y pronunciación del alemán. Esto se observa incluso en una palabra que se escribe igual en ambas lenguas.
+- type: audio_contrast
+  title: 'Comparación auditiva: *Europa*'
+  lead: ¿Cómo suena la secuencia de letras *eu* en las dos grabaciones?
+  transcript: '*Europa*'
+  examples:
+  - role: reference
+    subtitle: España · W80
+    audio: corpus/p7-europa-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W80
+    audio: corpus/p7-europa-learner.mp3
+- type: solution
+  title: 'Solución: ¿qué se oye?'
+  body: En alemán, *Europa* se pronuncia normalmente con el diptongo [ɔɪ̯]. En español, en cambio, aparece [eu̯], aproximadamente [eu̯ˈɾopa]. Si se trasladan al español las correspondencias entre letras y sonidos propias del alemán, la pronunciación de esta palabra puede adquirir un marcado acento alemán.
+- type: audio_contrast
+  title: 'Comparación auditiva: *deuda*'
+  lead: ¿Cómo se pronuncia la secuencia vocálica *eu* en *deuda*?
+  transcript: '*deuda*'
+  examples:
+  - role: reference
+    subtitle: España · W22
+    audio: corpus/p7-deuda-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W22
+    audio: corpus/p7-deuda-learner.mp3
+- type: text
+  body: '*Deuda* también contiene la secuencia de letras ⟨eu⟩. En español corresponde al diptongo [eu̯], aproximadamente [ˈdeu̯ða]; como en *Europa*, aquí también puede aparecer por influencia del alemán una pronunciación con [ɔɪ̯].'
+- type: section_heading
+  title: Cinco vocales, pero no exactamente como en alemán
+- type: text
+  body: 'El español tiene cinco fonemas vocálicos: /a e i o u/. Dos palabras aisladas que aquí se reproducen una detrás de otra, *mismo* y *álbum*, permiten escuchar cómo suenan /i/ y /u/.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *mismo* – *álbum*'
+  lead: ¿En qué se diferencian las vocales *i* y *u* entre las dos grabaciones?
+  transcript: '*mismo* – *álbum*'
+  examples:
+  - role: reference
+    subtitle: MAR.ELE
+    note: Dos palabras aisladas montadas una detrás de otra
+    audio: marele/p7-mismo-album-ref.mp3
+  - role: learner
+    subtitle: MAR.ELE
+    note: Dos palabras aisladas montadas una detrás de otra
+    audio: marele/p7-mismo-album-learner.mp3
+- type: text
+  body: En alemán, las vocales tensas [iː] y [uː] contrastan con las laxas [ɪ] y [ʊ], como en *bieten* frente a *bitten* o en la palabra alemana *Album*, que contiene [ʊ]. El español no presenta ese contraste. Cuando se trasladan las vocales laxas del alemán a /i/ y /u/ del español, el resultado puede sonar claramente influido por el alemán.
+- type: section_heading
+  title: Cuando un diptongo se convierte en dos sílabas
+- type: text
+  body: 'En un diptongo, dos elementos vocálicos forman parte de *una misma* sílaba; en un hiato, pertenecen a sílabas distintas. En español, *fuego* se pronuncia normalmente con el diptongo [we] en la primera sílaba: *fue-go*. Bajo la influencia del alemán, pueden separarse las vocales y producirse *fu-e-go*. Algo parecido puede suceder con *sueño* [ˈsweɲo]: en lugar de la secuencia monosilábica *sue-*, puede aparecer *su-e-*.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *sueño*'
+  lead: ¿Cuántas sílabas se oyen en cada grabación?
+  transcript: '*sueño*'
+  examples:
+  - role: reference
+    subtitle: España · W40
+    audio: corpus/p7-sueno-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W40
+    audio: corpus/p7-sueno-learner.mp3
+- type: text
+  body: Con la secuencia vocálica ⟨iu⟩ se plantea la misma cuestión. *Viuda* [ˈbjuða] tiene dos sílabas, *viu-da*, no tres.
+- type: audio_contrast
+  title: 'Comparación auditiva: *viuda*'
+  lead: ¿Se mantiene la secuencia vocálica *iu* dentro de una misma sílaba?
+  transcript: '*viuda*'
+  examples:
+  - role: reference
+    subtitle: España · W3
+    audio: corpus/p7-viuda-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W3
+    audio: corpus/p7-viuda-learner.mp3
+- type: section_heading
+  title: Sugerencias para el aula
+- type: teaching_impulses
+  items:
+  - title: Comparar grafías familiares
+    body: 'Utilizar *Europa* y *deuda* para mostrar que una misma secuencia gráfica ⟨eu⟩ se pronuncia de manera diferente en las dos lenguas: [ɔɪ̯] en alemán y [eu̯] en español. Escuchar primero y observar la escritura después.'
+  - title: Tomar conciencia de la calidad vocálica
+    body: Comparar [i] y [u] del español en *mismo* y *álbum* con las vocales laxas alemanas [ɪ] y [ʊ], por ejemplo a partir de la pronunciación alemana de *Album*.
+  - title: Pronunciar los diptongos en una sola sílaba
+    body: Ilustrar la estructura silábica de los diptongos españoles con *sueño*, *viuda* y el ejemplo *fuego* del manual, por ejemplo marcando las sílabas con palmadas.
+- type: further_reading
+  title: Para saber más
+  description: Capítulos del manual digital y otra página temática relacionada.
+  items:
+  - title: La pronunciación en el manual digital
+    text: Calidad vocálica, diptongos e hiatos, así como errores típicos de transferencia.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen
+  - title: La ortografía en el manual digital
+    text: Cómo las grafías familiares pueden influir en la pronunciación, por ejemplo la secuencia ⟨eu⟩ en *Europa* y *deuda*.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/orthographie/#vokale
+  - title: Español fluido, alemán entrecortado
+    text: Cómo se enlazan con fluidez las vocales consecutivas en español y qué papel desempeña el golpe de glotis.
+    cta: Página temática relacionada
+    href: /de/teaching/spanish/es/soft-spanish-hard-german

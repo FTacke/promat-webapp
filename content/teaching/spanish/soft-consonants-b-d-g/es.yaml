@@ -1,0 +1,121 @@
+resource_id: promat-teaching-es-soft-consonants-b-d-g
+title: 'b, d y g: ¿demasiado fuertes?'
+summary: Por qué la *b*, la *d* y la *g* del español suelen sonar más suaves que en alemán y cuándo no ocurre así.
+description: Por qué la *b*, la *d* y la *g* del español suelen sonar más suaves que en alemán y cuándo no ocurre así.
+equivalents:
+  de: soft-consonants-b-d-g
+  en: soft-consonants-b-d-g
+metadata:
+  creators:
+  - felix-tacke
+  created: 2026-10-10
+  updated: 2026-10-26
+blocks:
+- type: topic_meta
+- type: text
+  body: 'Una consonante aparentemente familiar puede sonar muy diferente en español: la articulación de *b*, *d* y *g* suele implicar un cierre menos firme que la de los sonidos correspondientes en alemán. Una primera comparación auditiva permite percibir la diferencia.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *vida*'
+  lead: ¿En qué se diferencia la pronunciación de la *d*?
+  transcript: '*vida*'
+  examples:
+  - role: reference
+    subtitle: México · W45
+    audio: corpus/p5-vida-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W45
+    audio: corpus/p5-vida-learner.mp3
+- type: solution
+  title: 'Solución: ¿qué se oye?'
+  body: 'En la grabación de referencia, la *d* se pronuncia sin un cierre completo: [ˈbi.ða]. En cambio, el aprendiente la articula con un cierre perceptible, como en alemán: [ˈbi.da].'
+- type: section_heading
+  title: ¿Oclusión o aproximación?
+- type: text
+  body: 'Para producir la consonante oclusiva [d], la punta de la lengua entra en contacto con los dientes superiores e interrumpe brevemente por completo el paso del aire. En la aproximante [ð], en cambio, la lengua solo se acerca a ellos: queda un espacio por el que sigue pasando el aire, normalmente sin fricción audible. Esta articulación suele percibirse como más «suave».'
+- type: image
+  src: dental-stop-approximant.png
+  size: wide
+  alt: 'Dos cortes esquemáticos de la cavidad bucal vistos de perfil: a la izquierda, contacto completo de la lengua para [d]; a la derecha, la lengua se aproxima a los dientes y deja una abertura para el paso del aire en [ð].'
+  caption: 'Dos realizaciones de /d/ en español: en la oclusiva [d], un cierre completo interrumpe brevemente el paso del aire. En la aproximante [ð], la lengua se acerca a los dientes superiores sin llegar a cerrar el conducto, por lo que el aire puede seguir pasando.'
+  credit: 'Ilustración: Felix Tacke (concepto y elaboración de las instrucciones), generada con IA · Pronunciation Matters (2026)'
+- type: section_heading
+  title: La b y la g también pueden sonar más suaves
+- type: text
+  body: 'Lo mismo sucede con los fonemas españoles /b/ y /g/: según el contexto fonético, se realizan como oclusivas [b, g] o como aproximantes [β, ɣ]. La articulación más suave es especialmente habitual entre vocales, por ejemplo en *lavar* [la.ˈβaɾ]. En *agua*, la *g* se encuentra entre [a] y la semiconsonante [w]: [ˈa.ɣwa].'
+- type: audio_contrast
+  title: 'Comparación auditiva: *lavar*'
+  lead: ¿Cómo se pronuncia la consonante situada entre las dos *a*?
+  transcript: '*lavar*'
+  examples:
+  - role: reference
+    subtitle: España · W9
+    audio: corpus/p5-lavar-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · W9
+    audio: corpus/p5-lavar-learner.mp3
+- type: audio_contrast
+  title: 'Comparación auditiva: *con agua*'
+  lead: ¿Cómo se pronuncia la *g* en cada grabación?
+  transcript: '*con agua*'
+  examples:
+  - role: reference
+    subtitle: MAR.ELE
+    audio: marele/agua-ref.mp3
+  - role: learner
+    subtitle: MAR.ELE
+    audio: marele/agua-learner.mp3
+- type: section_heading
+  title: Varias aproximantes en una misma secuencia
+- type: text
+  body: En el habla continua pueden aparecer varias consonantes aproximantes seguidas, y no todas se encuentran entre vocales.
+- type: audio_contrast
+  title: 'Comparación auditiva: *el bebedor*'
+  lead: 'Esta secuencia muestra tres realizaciones aproximantes: [β] después de /l/ y entre vocales, y [ð] entre vocales.'
+  transcript: '*el bebedor*'
+  examples:
+  - role: reference
+    subtitle: MAR.ELE
+    audio: marele/bebedor-ref.mp3
+  - role: learner
+    subtitle: MAR.ELE
+    audio: marele/bebedor-learner.mp3
+- type: text
+  body: En la grabación de referencia, las tres consonantes presentan una articulación más suave, que puede representarse esquemáticamente como [el.βe.βe.ˈðoɾ]. El aprendiente, en cambio, las pronuncia con un cierre claramente perceptible.
+- type: info_box
+  title: ¿En qué otros contextos se suavizan b, d y g?
+  body: |-
+    La pronunciación más suave resulta especialmente fácil de observar entre vocales, pero también aparece en otros contextos. En *logro* y *regla*, la *g* suele pronunciarse como aproximante [ɣ] delante de otra consonante; también sucede en *algo*, después de *l*. Del mismo modo, la primera *b* de *el bebedor* suele realizarse como [β] tras la *l*.
+
+    La distribución no es idéntica para los tres fonemas: después de *l*, la *d* suele pronunciarse como oclusiva [d], por ejemplo en *caldo*. Y después de una consonante nasal, *b*, *d* y *g* se realizan como oclusivas; así ocurre con la *g* de *tengo* [ˈteŋ.go].
+
+    **Como primera orientación, puede retenerse esta regla: entre vocales, b, d y g suelen pronunciarse en español sin un cierre completo.**
+- type: section_heading
+  title: Sugerencias para el aula
+- type: teaching_impulses
+  items:
+  - title: Escuchar antes de explicar
+    body: Comparar primero las grabaciones de referencia y de aprendientes sin introducir términos técnicos. Observar en grupo qué consonantes suenan más fuertes y cuáles más suaves.
+  - title: Experimentar con el cierre y la aproximación
+    body: Utilizar el esquema articulatorio para mostrar la diferencia entre un cierre completo y el mero acercamiento de la lengua. Después, ensayar conscientemente ambos movimientos con palabras sencillas como *vida*.
+  - title: Extender el patrón a otros contextos
+    body: 'Pasar de los ejemplos simples a otros como *el bebedor*, donde aparecen diferentes posiciones dentro de una misma secuencia. No es necesario abordar toda la alofonía: tomar conciencia de la diferencia ya constituye un objetivo útil.'
+- type: further_reading
+  title: Para saber más
+  description: Capítulos del manual digital y páginas temáticas relacionadas.
+  items:
+  - title: La pronunciación en el manual digital
+    text: Las realizaciones de /b d g/ según el contexto, con ejemplos sonoros y orientaciones didácticas.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/aussprache/#kontextabhangige-mal-so-mal-so-laute
+  - title: La lingüística de errores en el manual digital
+    text: Fundamentos para explicar de manera sistemática los patrones de pronunciación en el aprendizaje, como la transferencia desde la primera lengua.
+    cta: Más información
+    href: https://linguistik.hispanistica.com/fehlerlinguistik/#transfer-aus-der-erstsprache
+  - title: Español fluido, alemán entrecortado
+    text: 'Otro mecanismo que puede producir una impresión de habla «entrecortada»: la inserción de golpes de glotis.'
+    cta: Página temática relacionada
+    href: /de/teaching/spanish/es/soft-spanish-hard-german
+  - title: ¿B o V? Cuando la escritura se hace oír
+    text: Por qué la aproximante española [β] no es [v] y qué papel desempeña la grafía.
+    cta: Página temática relacionada
+    href: /de/teaching/spanish/es/b-or-v

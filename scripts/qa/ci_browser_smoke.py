@@ -246,7 +246,10 @@ def check_publication_metadata(browser, base: str, report: Report, out: Path) ->
             )
             expected = CANONICAL_ORIGIN + path
             report.check(dom["canonical"] == [expected], f"[{lang}] {path} canonical in the final DOM ({dom['canonical']})")
-            report.check(sorted(code for code, _ in dom["alternates"]) == ["de", "en"] and [lang, expected] in dom["alternates"], f"[{lang}] {path} reciprocal hreflang de/en")
+            codes = sorted(code for code, _ in dom["alternates"])
+            # a published Teaching content edition (e.g. es) joins the de/en pair with its canonical edition URL
+            editions_ok = all(href.startswith(f"{CANONICAL_ORIGIN}/de/teaching/") for code, href in dom["alternates"] if code not in ("de", "en"))
+            report.check(codes[:2] == ["de", "en"] and editions_ok and [lang, expected] in dom["alternates"], f"[{lang}] {path} reciprocal hreflang de/en (+ content editions {codes[2:]})")
             report.check(bool(dom["description"].strip()) and not dom["robots"], f"[{lang}] {path} has a description and is indexable")
             report.check(dom["htmlLang"] == lang, f"[{lang}] {path} declares the UI language")
             try:

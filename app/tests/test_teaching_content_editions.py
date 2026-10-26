@@ -290,7 +290,8 @@ def test_edition_citation_and_json_ld_keep_the_publication_identity(published) -
     _status, html = _get(published, "/en/teaching/spanish/es/topic-one")
     assert '"identifier":"promat-teaching-test-topic-one"' in html and '"inLanguage":"es"' in html
     assert f'"url":"{BASE_URL}/de/teaching/spanish/es/topic-one"' in html
-    assert re.search(r"Tacke, Felix \(2026\)\. .Tema uno.\. In: Felix Tacke", html)
+    # Spanish citation conventions: «…», "En:", "ed."; the heading of the box is Spanish as well
+    assert "Tacke, Felix (2026). «Tema uno». En: Felix Tacke (ed.), " in html and "Cómo citar esta página temática" in html
     assert f"{BASE_URL}/de/teaching/spanish/es/topic-one</a>" in html
     _status, base = _get(published, "/de/teaching/spanish/topic-one")
     assert '"identifier":"promat-teaching-test-topic-one"' in base and '"inLanguage":"de"' in base
@@ -299,7 +300,9 @@ def test_edition_citation_and_json_ld_keep_the_publication_identity(published) -
 # --- the same mechanism for French ---------------------------------------------------------------------------------
 
 
-def test_french_teaching_resources_use_the_same_mechanism(make_client) -> None:
+def test_french_teaching_resources_use_the_same_mechanism(make_client, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app import i18n
+
     files = {
         "hubs/de.yaml": _hub("Französisch: Themenseiten", "liaison"),
         "hubs/en.yaml": _hub("French: Topic pages", "liaison"),
@@ -308,6 +311,10 @@ def test_french_teaching_resources_use_the_same_mechanism(make_client) -> None:
         "liaison/fr.yaml": _topic("La liaison").replace("promat-teaching-test-topic-one", "promat-teaching-fr-liaison"),
     }
     client = make_client({"french": (("fr",), files), "spanish": (("es",), _base_spanish())})
+    # without French content labels the edition stays unpublished: no German/English labels inside French content
+    assert client.get("/de/teaching/french/fr/liaison").status_code == 404
+    assert _edition_links(_get(client, "/en/teaching/french/liaison")[1]) == []
+    monkeypatch.setitem(i18n.TEACHING_CONTENT_LABELS, "fr", {key: f"[fr] {key}" for key in i18n.TEACHING_CONTENT_LABEL_KEYS})
     status, html = _get(client, "/en/teaching/french/liaison")
     assert status == 200 and _edition_links(html) == [("/en/teaching/french/fr/liaison?from=en", "fr", "En français")]
     status, html = _get(client, "/de/teaching/french/fr/liaison?from=en")
@@ -320,19 +327,43 @@ def test_french_teaching_resources_use_the_same_mechanism(make_client) -> None:
 # --- the real repository ----------------------------------------------------------------------------------------
 
 
-def test_repository_declares_spanish_edition_but_publishes_nothing_yet() -> None:
+SEVEN_SPANISH = ["which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende"]
+# Labels of the German/English content area that must never appear inside the Spanish content
+FOREIGN_CONTENT_LABELS = ("Referenzsprecher:in", "Lernende:r", "Reference speaker", ">Learner<", "Wortfolge", "Word sequence", "Autor:innen",
+                          "Authors:", "Erstellt", "Geändert", "Diese Themenseite zitieren", "Cite this topic page", "Auflösung", "Show solution")
+
+
+def test_repository_publishes_the_spanish_edition_of_the_seven_topic_pages() -> None:
     teaching_content.clear_teaching_content_caches()
     assert teaching_content.content_edition_codes("spanish") == ["es"]
     assert teaching_content.content_edition_codes("french") == []
-    assert not list((REPO_ROOT / "content" / "teaching").glob("*/*/es.yaml")) and not list((REPO_ROOT / "content" / "teaching").glob("*/*/fr.yaml"))
+    assert sorted(path.parent.name for path in (REPO_ROOT / "content" / "teaching" / "spanish").glob("*/es.yaml")) == sorted(SEVEN_SPANISH + ["hubs"])
+    assert not list((REPO_ROOT / "content" / "teaching").glob("*/*/fr.yaml"))
     client = _app().test_client()
     for ui_lang in ("de", "en"):
-        for path in ("", "/soft-spanish-hard-german", "/b-or-v"):
-            status, html = _get(client, f"/{ui_lang}/teaching/spanish{path}")
-            assert status == 200 and "pm-content-edition-links" not in html and "En español" not in html
-            assert [lang for lang, _href in _hreflang(html)] == ["de", "en"]
-        assert client.get(f"/{ui_lang}/teaching/spanish/es").status_code == 404
-        assert client.get(f"/{ui_lang}/teaching/spanish/es/soft-spanish-hard-german").status_code == 404
+        status, hub = _get(client, f"/{ui_lang}/teaching/spanish")
+        assert status == 200 and _edition_links(hub) == [(f"/{ui_lang}/teaching/spanish/es?from={ui_lang}", "es", "En español")]
+        status, es_hub = _get(client, f"/{ui_lang}/teaching/spanish/es?from={ui_lang}")
+        assert status == 200 and "Español: páginas temáticas" in es_hub and "Para empezar" in es_hub
+        assert re.findall(r'href="/[a-z]+/teaching/spanish/es/([a-z0-9-]+)\?from=', es_hub) == SEVEN_SPANISH
+        for slug in SEVEN_SPANISH:
+            status, base = _get(client, f"/{ui_lang}/teaching/spanish/{slug}")
+            assert status == 200 and _edition_links(base) == [(f"/{ui_lang}/teaching/spanish/es/{slug}?from={ui_lang}", "es", "En español")], slug
+            assert [lang for lang, _href in _hreflang(base)] == ["de", "en", "es"], slug
+            status, html = _get(client, f"/{ui_lang}/teaching/spanish/es/{slug}?from={ui_lang}")
+            assert status == 200 and re.search(r'<article [^>]*lang="es"', html), slug
+            assert _edition_links(html) == [(f"/{ui_lang}/teaching/spanish/{slug}", ui_lang, "Auf Deutsch" if ui_lang == "de" else "In English")], slug
+            # the content area: from the page title to the bottom navigation (header navigation and breadcrumb excluded)
+            content = html[html.index('<h1 id="promat-page-title"'):html.index("pm-teaching-topic-bottom-nav")]
+            assert "Cómo citar esta página temática" in content and (slug == "which-pronunciation" or "Hablante de referencia" in content), slug
+            for label in FOREIGN_CONTENT_LABELS:
+                assert label not in content, (slug, ui_lang, label)
+            # links between the Spanish pages stay in the Spanish edition, the navigation language and the origin
+            for target in re.findall(r'href="(/[a-z]+/teaching/spanish/[^"]*)"', content):
+                assert target.startswith(f"/{ui_lang}/teaching/spanish/es/") and target.endswith(f"?from={ui_lang}"), (slug, target)
+            assert _canonical(html) == f"{BASE_URL}/de/teaching/spanish/es/{slug}"
+    # the accent page is hidden and has no Spanish edition
+    assert client.get("/de/teaching/spanish/es/accent-changes-everything").status_code == 404
 
 
 # --- content validation ------------------------------------------------------------------------------------------
