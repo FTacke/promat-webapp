@@ -18,3 +18,7 @@
 ## Offen
 
 - Fachliche Durchsicht der spanischen Texte durch Ana Goás Pérez; Korrekturen direkt in den `es.yaml`.
+
+## Nachtrag: Stil des Sprachlinks
+
+- `En español` / `Auf Deutsch` / `In English` ohne Unterstreichung (auch nicht beim Hover): Akzentfarbe (`--pm-text-accent`), Globus-Icon, beim Hover leicht abgedunkelter bzw. aufgehellter Ton und eine zarte Akzent-Hinterlegung (9 %), Fokusring für Tastatur. Die Hinterlegung hat eine konstante Innenpolsterung, die ein negativer Rand ausgleicht (kein Verspringen); im Browser hell/dunkel, Desktop/Mobil geprüft, kein Overflow.

@@ -179,23 +179,32 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-left: auto;
 }
 
+/* Marked only by the accent colour and the globe icon; no underline. The hover tint has a constant padding that the
+   negative margin cancels, so the link does not move. */
 .pm-content-edition-links__link {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   min-height: 2.25rem;
+  margin-right: -0.55rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
   font-size: 0.875rem;
-  color: var(--pm-cta-link-primary, var(--book-fg));
-  text-decoration: underline;
-  text-decoration-color: transparent;
-  text-underline-offset: 0.16em;
-  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  color: var(--pm-text-accent);
+  text-decoration: none;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .pm-content-edition-links__link:hover,
 .pm-content-edition-links__link:focus-visible {
-  color: var(--pm-cta-link-hover, var(--pm-text-accent));
-  text-decoration-color: currentColor;
+  color: color-mix(in srgb, var(--pm-text-accent) 82%, var(--book-fg));
+  background-color: color-mix(in srgb, var(--pm-text-accent) 9%, transparent);
+  text-decoration: none;
+}
+
+.pm-content-edition-links__link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pm-text-accent) 55%, transparent);
+  outline-offset: 1px;
 }
 
 .pm-content-edition-links__icon {
