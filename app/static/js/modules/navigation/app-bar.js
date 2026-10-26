@@ -84,6 +84,21 @@ function rewriteLocalUiLangUrl(rawUrl, targetUiLang, baseOrigin = null) {
   return `${rewrittenPath}${query ? `?${query}` : ""}${parsed.hash || ""}`;
 }
 
+// Query values the server wants the UI-language switch to carry on the current page, e.g. the validated edition a
+// reader of a Teaching content edition returns to (`from`); see teaching_content.py, "additional content editions".
+function applyPageUiSwitchParams(searchParams) {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const meta = document.querySelector('meta[name="promat-ui-switch-params"]');
+  if (!meta) {
+    return;
+  }
+  new URLSearchParams(meta.getAttribute("content") || "").forEach((value, key) => {
+    searchParams.set(key, value);
+  });
+}
+
 export function buildUiLangSwitchUrl(targetUiLang, currentHref = null, baseOrigin = null) {
   const normalizedUiLang = resolveUiLang(targetUiLang);
   const origin = resolveBaseOrigin(baseOrigin);
@@ -96,6 +111,9 @@ export function buildUiLangSwitchUrl(targetUiLang, currentHref = null, baseOrigi
   if (searchParams.has("next")) {
     const nextValue = searchParams.get("next") || "";
     searchParams.set("next", rewriteLocalUiLangUrl(nextValue, normalizedUiLang, origin) || nextValue);
+  }
+  if (!currentHref) {
+    applyPageUiSwitchParams(searchParams);
   }
 
   const localizedPath = pathHasUiLangPrefix(currentUrl.pathname)

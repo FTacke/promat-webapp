@@ -2382,7 +2382,7 @@ def test_teaching_pilot_topic_renders_canonical_vertical_storytelling(url_app: F
     assert html.index('Hörvergleich: <em>casa – caza</em>') < html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3')
     assert html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-casa-caza.mp3') < html.index('Hörvergleich: <em>gracias – ciudad – paz – ración</em>')
     assert html.index('gracias – ciudad – paz – ración') < html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-word-series.mp3')
-    assert html.index('Der Unterschied, den die Aufnahmen zeigen, betrifft nicht einzelne Wörter') < html.index('src="https://datawrapper.dwcdn.net/poSnB/9/"')
+    assert html.index('Die Aufnahmen zeigen keine Besonderheit einzelner Wörter, sondern zwei regional verbreitete Aussprachemuster.') < html.index('src="https://datawrapper.dwcdn.net/poSnB/9/"')
     assert html.index('src="https://datawrapper.dwcdn.net/poSnB/9/"') < html.index('Merksatz: Wer ')
     assert html.index('Merksatz: Wer ') < html.index('src="https://datawrapper.dwcdn.net/Uza2n/5/"')
     assert html.index('/teaching-media/spanish/which-pronunciation/audio/variation/distincion-word-series.mp3') < html.index('Kurze Ausschnitte aus Radiosendungen zeigen, dass der ')

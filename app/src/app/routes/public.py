@@ -43,7 +43,14 @@ from ..research_views import (
     resolve_player_item_download,
 )
 from ..services.access_request_notifications import deliver_access_request_notification
-from ..teaching_content import resolve_public_teaching_topic_media_artifact, resolve_topic_route_target
+from ..teaching_content import (
+    CONTENT_EDITION_ORIGIN_PARAM,
+    build_teaching_hub_page,
+    build_teaching_topic_page,
+    content_edition_codes,
+    resolve_public_teaching_topic_media_artifact,
+    resolve_topic_route_target,
+)
 from ..extensions.sqlalchemy_ext import get_engine
 from .public_content import (
     PROJECT_PAGE_ORDER,
@@ -658,7 +665,7 @@ def _build_page_meta(page: dict[str, Any], ui_lang: str, *, indexable: bool, can
     if not indexable:
         return meta
 
-    path = canonical_path or request.path
+    path = page.get("meta_canonical_path") or canonical_path or request.path
     meta["canonical"] = publication.canonical_url(path)
     alternates = page.get("meta_alternates")
     if alternates is None:
@@ -668,9 +675,13 @@ def _build_page_meta(page: dict[str, Any], ui_lang: str, *, indexable: bool, can
             for target in SUPPORTED_UI_LANGUAGES
             if target in available and (swapped := _swap_ui_lang(path, ui_lang, target)) is not None
         }
-    # hreflang only for real equivalents, always reciprocal and including the page itself.
-    if len(alternates) > 1 and ui_lang in alternates:
-        meta["alternates"] = [(target, publication.canonical_url(alternates[target])) for target in SUPPORTED_UI_LANGUAGES if target in alternates]
+    # hreflang only for real equivalents, always reciprocal and including the page itself. The keys are content
+    # languages: the UI-language editions first, then published additional content editions (e.g. `es`).
+    self_lang = page.get("meta_hreflang_self") or ui_lang
+    if len(alternates) > 1 and self_lang in alternates:
+        order = [target for target in SUPPORTED_UI_LANGUAGES if target in alternates]
+        order += sorted(target for target in alternates if target not in SUPPORTED_UI_LANGUAGES)
+        meta["alternates"] = [(target, publication.canonical_url(alternates[target])) for target in order]
 
     resource = page.get("resource")
     if resource:
@@ -1455,6 +1466,9 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
     canonical_language_slug = get_canonical_language_slug(language_slug)
     if canonical_language_slug is None:
         abort(404)
+    if page_slug in content_edition_codes(canonical_language_slug):
+        # `/{ui_lang}/teaching/{language}/{content_lang}`: hub of an additional content edition.
+        return _render_teaching_content_edition(ui_lang, canonical_language_slug, page_slug)
 
     resolution = resolve_topic_route_target(canonical_language_slug, ui_lang, page_slug)
     if resolution["status"] == "missing-language":
@@ -1480,6 +1494,29 @@ def teaching_language_page(ui_lang: str, language_slug: str, page_slug: str):
 
     panel = _teaching_language_panel(canonical_language_slug, resolved_ui_lang)
     return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=resolved_ui_lang, indexable=True)
+
+
+@blueprint.get("/<ui_lang>/teaching/<language_slug>/<content_lang>/<page_slug>")
+def teaching_content_edition_page(ui_lang: str, language_slug: str, content_lang: str, page_slug: str):
+    """A topic in an additional content edition (docs/spec/platform-data-files.md, "Teaching content editions")."""
+    ui_lang = _require_ui_lang(ui_lang)
+    canonical_language_slug = get_canonical_language_slug(language_slug)
+    if canonical_language_slug is None or content_lang not in content_edition_codes(canonical_language_slug):
+        abort(404)
+    return _render_teaching_content_edition(ui_lang, canonical_language_slug, content_lang, page_slug)
+
+
+def _render_teaching_content_edition(ui_lang: str, teaching_lang: str, content_lang: str, topic_slug: str | None = None) -> str:
+    """Render a published content edition in the current UI language; unpublished editions do not exist (404)."""
+    origin = request.args.get(CONTENT_EDITION_ORIGIN_PARAM)
+    if topic_slug is None:
+        page = build_teaching_hub_page(ui_lang, teaching_lang, content_lang=content_lang, origin=origin)
+    else:
+        page = build_teaching_topic_page(ui_lang, teaching_lang, topic_slug, content_lang=content_lang, origin=origin)
+    if page is None:
+        abort(404)
+    panel = _teaching_language_panel(teaching_lang, ui_lang)
+    return _render_promat_page(page=page, panel=panel, page_name="teaching", ui_lang=ui_lang, indexable=True)
 
 
 @blueprint.get("/impressum", defaults={"ui_lang": None})

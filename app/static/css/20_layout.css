@@ -148,6 +148,61 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-top: var(--pm-content-header-back-title-gap);
 }
 
+/* Back link with a small content-edition link ("En español") opposite it; only rendered for published editions. */
+.pm-content-header__nav-row {
+  justify-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.pm-content-header__nav-row > .pm-content-header__back {
+  width: auto;
+}
+
+.pm-content-header__nav-row + .pm-breadcrumb {
+  margin-top: var(--pm-content-header-back-link-gap);
+}
+
+.pm-content-header__nav-row + .pm-content-header__title {
+  margin-top: var(--pm-content-header-back-title-gap);
+}
+
+.pm-content-edition-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+  margin-left: auto;
+}
+
+.pm-content-edition-links__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.25rem;
+  font-size: 0.875rem;
+  color: var(--pm-cta-link-primary, var(--book-fg));
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.16em;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.pm-content-edition-links__link:hover,
+.pm-content-edition-links__link:focus-visible {
+  color: var(--pm-cta-link-hover, var(--pm-text-accent));
+  text-decoration-color: currentColor;
+}
+
+.pm-content-edition-links__icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 .pm-content-header--has-back.pm-content-header--no-breadcrumbs .pm-content-header__title {
   margin-top: var(--pm-content-header-back-title-gap);
 }

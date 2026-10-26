@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-europe-sounds-different
 title: Europe sounds different in Spanish
-summary: How familiar spellings and sound patterns influence pronunciation in Spanish.
-description: How familiar spellings and sound patterns influence pronunciation in Spanish.
+summary: How reading and pronunciation habits from German can influence Spanish vowels and diphthongs.
+description: How reading and pronunciation habits from German can influence Spanish vowels and diphthongs.
 equivalents:
   de: europe-sounds-different
 metadata:
@@ -12,7 +12,7 @@ metadata:
 blocks:
 - type: topic_meta
 - type: text
-  body: Spanish vowels seem familiar to German-speaking learners at first. But especially with vowel sequences, German pronunciation can get in the way. That already shows in a word that is spelled almost the same in both languages.
+  body: Spanish vowels seem familiar to German-speaking learners at first. With vowel sequences in particular, however, reading and pronunciation habits from German can make themselves felt. This already shows in a word that is spelled the same in both languages.
 - type: audio_contrast
   title: 'Listening comparison: *Europa*'
   lead: How does the letter sequence *eu* sound in the two recordings?
@@ -111,6 +111,6 @@ blocks:
     cta: Learn more
     href: https://linguistik.hispanistica.com/orthographie/#vokale
   - title: Soft Spanish, hard German
-    text: Vowels in sequence – and why Spanish has no glottal stop before vowels.
+    text: How consecutive vowels are joined smoothly in Spanish and what role the glottal stop plays in this.
     cta: Go to topic page
     href: /en/teaching/spanish/soft-spanish-hard-german

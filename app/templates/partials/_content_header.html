@@ -7,7 +7,27 @@
   class="pm-content-header pm-reading{% if has_back_link %} pm-content-header--has-back{% endif %}{% if has_breadcrumbs %} pm-content-header--has-breadcrumbs{% else %} pm-content-header--no-breadcrumbs{% endif %}{% if breadcrumb_mode == 'mobile-only' %} pm-content-header--mobile-breadcrumb{% endif %}"
   aria-labelledby="{{ content_header.title_id | default('promat-page-title') }}"
 >
-  {% if content_header.back_link %}
+  {#- Content-edition links ("En español", back "Auf Deutsch"/"In English") sit opposite the back link. They are
+      only set for published editions (teaching_content.py, "additional content editions"); without them the markup
+      is the plain back link. -#}
+  {% set edition_links = content_header.get('edition_links') or [] %}
+  {% if edition_links %}
+  <div class="pm-content-header__nav-row"{% if promat_page is defined and promat_page.content_lang %} lang="{{ current_ui_lang }}"{% endif %}>
+    {% if content_header.back_link %}
+    <nav class="pm-back-link pm-content-header__back" aria-label="{{ content_header.back_link.label }}">
+      {{ render_navigation_pill({ 'label': content_header.back_link.label, 'href': content_header.back_link.href, 'size': 'medium', 'direction': 'back' }, 'pm-back-link__pill') }}
+    </nav>
+    {% endif %}
+    <nav class="pm-content-edition-links" aria-label="{{ t('teaching.content_edition.nav_label') }}">
+      {% for link in edition_links %}
+      <a class="pm-content-edition-links__link" href="{{ link.href }}" lang="{{ link.lang }}" hreflang="{{ link.lang }}">
+        <span class="material-symbols-rounded pm-content-edition-links__icon" aria-hidden="true">language</span>
+        <span class="pm-content-edition-links__label">{{ link.label }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+  </div>
+  {% elif content_header.back_link %}
   <nav class="pm-back-link pm-content-header__back" aria-label="{{ content_header.back_link.label }}">
     {{ render_navigation_pill({ 'label': content_header.back_link.label, 'href': content_header.back_link.href, 'size': 'medium', 'direction': 'back' }, 'pm-back-link__pill') }}
   </nav>

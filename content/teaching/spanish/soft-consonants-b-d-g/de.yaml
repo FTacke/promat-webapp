@@ -13,7 +13,7 @@ blocks:
 - type: topic_meta
 - type: text
   body: |-
-    Ein scheinbar vertrauter Konsonant kann im Spanischen ganz anders klingen: Bei b, d und g ist die Artikulation häufig weniger fest, als man es aus dem Deutschen kennt. Ein erster Hörvergleich macht den Unterschied hörbar.
+    Ein scheinbar vertrauter Konsonant kann im Spanischen ganz anders klingen: Bei b, d und g ist die Artikulation häufig weniger fest als bei entsprechenden deutschen Lauten. Ein erster Hörvergleich macht den Unterschied hörbar.
 - type: audio_contrast
   title: 'Hörvergleich: *vida*'
   lead: Was unterscheidet die Aussprache des *d*?
@@ -33,7 +33,7 @@ blocks:
   title: Verschluss oder Annäherung?
 - type: text
   body: |-
-    Beim Verschlusslaut [d] berührt die Zungenspitze die oberen Zähne so, dass der Luftstrom kurz vollständig unterbrochen wird. Beim Approximanten [ð] nähert sie sich ihnen nur an: Es bleibt ein Durchlass, die Luft strömt weiter, meist ohne hörbare Reibung. Diesen Unterschied nehmen wir als „weich“ wahr.
+    Beim Verschlusslaut [d] berührt die Zungenspitze die oberen Zähne so, dass der Luftstrom kurz vollständig unterbrochen wird. Beim Approximanten [ð] nähert sie sich ihnen nur an: Es bleibt ein Durchlass, die Luft strömt weiter, meist ohne hörbare Reibung. Diese Artikulation wird häufig als „weicher“ wahrgenommen.
 - type: image
   src: dental-stop-approximant.png
   size: wide
@@ -93,7 +93,7 @@ blocks:
 
     Die Verteilung ist nicht für alle drei Phoneme gleich: Das d wird nach l gewöhnlich als Verschlusslaut [d] gesprochen (*caldo*), und nach einem Nasal sind b, d und g Verschlusslaute, etwa das g in *tengo* [ˈteŋ.go].
 
-    **Für den Unterricht genügt zunächst die Faustregel: Zwischen Vokalen werden b, d und g im Spanischen meist ohne vollständigen Verschluss ausgesprochen.**
+    **Als erste Orientierung gilt: Zwischen Vokalen werden b, d und g im Spanischen gewöhnlich ohne vollständigen Verschluss ausgesprochen.**
 - type: section_heading
   title: Impulse für den Unterricht
 - type: teaching_impulses

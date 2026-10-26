@@ -60,7 +60,7 @@ blocks:
     title: "*Seseo* and *distinción*"
   - type: text
     body: |
-      The contrast heard in the recordings is not limited to individual words; it reflects regional pronunciation norms.
+      The recordings do not show a peculiarity of individual words but two regionally widespread pronunciation patterns.
       The maps below show where *seseo* and where *distinción* is the usual pronunciation.
   - type: embed
     title: "Spain: *distinción*, *seseo*, and *ceceo*"
@@ -72,7 +72,7 @@ blocks:
     body: |
       With *distinción*, `s` and `z/c` before `e/i` are pronounced differently: *casa* and *caza* have different sounds.
       With *seseo*, they merge: *casa* and *caza* are pronounced the same way.
-      *Distinción* is used only in central and northern Spain.
+      *Distinción*, i.e. the distinction, is common above all in central and northern Spain.
       *Seseo* is common in almost all of Spanish America, on the Canary Islands, and in parts of Andalusia, where more than 90% of all Spanish speakers live.
 
       Rule of thumb: if you pronounce `caza` like `casa`, your Spanish is still fully correct.

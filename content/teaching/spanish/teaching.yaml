@@ -3,3 +3,7 @@ default_ui_lang: de
 available_ui_langs:
   - de
   - en
+# Additional content editions of the Spanish topic pages (docs/spec/platform-data-files.md, "Teaching content
+# editions"). An edition is served and linked only once hubs/<code>.yaml and <topic>/<code>.yaml are published.
+content_editions:
+  - es

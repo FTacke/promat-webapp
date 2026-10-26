@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-b-or-v
 title: B or V? When spelling has a say
-summary: Why two Spanish letters sound the same – and why we sometimes still want to pronounce them differently.
-description: Why two Spanish letters sound the same – and why we sometimes still want to pronounce them differently.
+summary: Why two Spanish letters stand for the same sound – and why spelling can still prompt different pronunciations.
+description: Why two Spanish letters stand for the same sound – and why spelling can still prompt different pronunciations.
 equivalents:
   de: b-or-v
 metadata:
@@ -12,7 +12,7 @@ metadata:
 blocks:
 - type: topic_meta
 - type: text
-  body: Spanish writes ⟨b⟩ and ⟨v⟩, yet both letters stand for the same sound. That is unfamiliar to learners – and it tempts them to follow the spelling. The listening comparisons show what this sounds like.
+  body: In Spanish, ⟨b⟩ and ⟨v⟩ stand for the same phoneme /b/. In other languages, such as German, the two letters have different sound values. German-speaking learners often transfer this familiar distinction to Spanish without noticing, as the listening comparisons show.
 - type: audio_contrast
   title: 'Listening comparison: *bienes – vienes*'
   lead: What stands out about the initial sounds of *bienes* and *vienes*?

@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-europe-sounds-different
 title: Europa klingt auf Spanisch anders
-summary: Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen.
-description: Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen.
+summary: Wie Lese- und Aussprachegewohnheiten aus dem Deutschen spanische Vokale und Diphthonge beeinflussen können.
+description: Wie Lese- und Aussprachegewohnheiten aus dem Deutschen spanische Vokale und Diphthonge beeinflussen können.
 equivalents:
   en: europe-sounds-different
 metadata:
@@ -12,7 +12,7 @@ metadata:
 blocks:
 - type: topic_meta
 - type: text
-  body: Die spanischen Vokale erscheinen deutschsprachigen Lernenden zunächst vertraut. Doch gerade bei Vokalverbindungen kann die deutsche Aussprache in die Quere kommen. Das zeigt sich schon an einem Wort, das in beiden Sprachen fast gleich geschrieben wird.
+  body: Die spanischen Vokale erscheinen deutschsprachigen Lernenden zunächst vertraut. Gerade bei Vokalverbindungen können sich jedoch deutsche Lese- und Aussprachegewohnheiten bemerkbar machen. Das zeigt sich schon an einem Wort, das in beiden Sprachen gleich geschrieben wird.
 - type: audio_contrast
   title: 'Hörvergleich: *Europa*'
   lead: Wie klingt die Buchstabenfolge *eu* in den beiden Aufnahmen?
@@ -113,6 +113,6 @@ blocks:
     cta: Mehr erfahren
     href: https://linguistik.hispanistica.com/orthographie/#vokale
   - title: Weiches Spanisch, hartes Deutsch
-    text: Aufeinanderfolgende Vokale – und warum das Spanische keinen Knacklaut vor Vokalen kennt.
+    text: Wie aufeinanderfolgende Vokale im Spanischen fließend verbunden werden und welche Rolle der Knacklaut dabei spielt.
     cta: Zur Themenseite
     href: /de/teaching/spanish/soft-spanish-hard-german

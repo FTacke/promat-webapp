@@ -813,8 +813,9 @@ def test_b_d_g_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     for word in ("logro", "regla", "algo", "caldo", "tengo", "bebedor"):
         assert word in box_text, word
     assert "signo" not in html  # signo has g BEFORE the nasal, so it is no postnasal example (tengo is)
-    assert ("Zwischen Vokalen werden b, d und g im Spanischen meist ohne vollständigen Verschluss ausgesprochen" if de
-            else "between vowels, b, d and g in Spanish are mostly pronounced without a complete closure") in box_text
+    assert ("Als erste Orientierung gilt: Zwischen Vokalen werden b, d und g im Spanischen gewöhnlich ohne vollständigen Verschluss ausgesprochen." if de
+            else "As a first orientation: between vowels, b, d and g in Spanish are usually pronounced without a complete closure.") in box_text
+    assert "Faustregel" not in html and "rule of thumb" not in html
     prompts = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
     assert prompts == (["Erst hören, dann erklären", "Verschluss und Annäherung erproben", "Das Muster übertragen"] if de
                        else ["Listen first, explain later", "Try out closure and approximation", "Transfer the pattern"])
@@ -967,8 +968,8 @@ def test_europe_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
 def test_europe_page_title_teaser_citation_and_authorship(client, lang: str) -> None:
     html = _html(client, lang, EUROPE)
     title = "Europa klingt auf Spanisch anders" if lang == "de" else "Europe sounds different in Spanish"
-    teaser = ("Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen." if lang == "de"
-              else "How familiar spellings and sound patterns influence pronunciation in Spanish.")
+    teaser = ("Wie Lese- und Aussprachegewohnheiten aus dem Deutschen spanische Vokale und Diphthonge beeinflussen können." if lang == "de"
+              else "How reading and pronunciation habits from German can influence Spanish vowels and diphthongs.")
     assert teaser in html and html.count("<h1") == 1 and title in html_module.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1))
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
     assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
@@ -1153,7 +1154,8 @@ def test_spanish_topic_teasers_are_single_sentences_that_do_not_repeat_the_title
             assert len(re_module.findall(r"[.!?](?:\s|$)", summary)) <= 1, (slug, lang, summary)
             assert summary.rstrip(".?!").lower() != str(meta["title"]).rstrip(".?!").lower(), (slug, lang)
     expected = {
-        ("europe-sounds-different", "de"): "Wie vertraute Schreibungen und Lautmuster die spanische Aussprache beeinflussen.",
+        ("europe-sounds-different", "de"): "Wie Lese- und Aussprachegewohnheiten aus dem Deutschen spanische Vokale und Diphthonge beeinflussen können.",
+        ("b-or-v", "de"): "Warum zwei spanische Buchstaben denselben Laut bezeichnen – und die Schrift dennoch zu unterschiedlichen Aussprachen verleiten kann.",
         ("r", "de"): "Zwei spanische r-Laute – und warum das deutsche r anders klingt.",
         ("r-am-silbenende", "de"): "Warum das deutsche r häufig zum Vokal wird, das spanische aber konsonantisch bleibt.",
     }
@@ -1173,3 +1175,68 @@ def test_unreleased_accent_topic_is_hidden_from_hub_and_not_served(client) -> No
         assert client.get(f"/{lang}/teaching/spanish/{UNRELEASED}").status_code == 404
     media = next((TOPIC_DIR / UNRELEASED / "media" / "audio").rglob("*.mp3"))
     assert client.get(f"/teaching-media/spanish/{UNRELEASED}/audio/{media.relative_to(TOPIC_DIR / UNRELEASED / 'media' / 'audio').as_posix()}").status_code == 404
+
+
+MASTER_REVISION_2026_10_26 = {
+    "which-pronunciation": (
+        {"de": ["Die Aufnahmen zeigen keine Besonderheit einzelner Wörter, sondern zwei regional verbreitete Aussprachemuster.",
+                "Die *distinción*, also die Unterscheidung, ist vor allem in Zentral- und Nordspanien üblich."],
+         "en": ["The recordings do not show a peculiarity of individual words but two regionally widespread pronunciation patterns.",
+                "*Distinción*, i.e. the distinction, is common above all in central and northern Spain."]},
+        {"de": ["betrifft nicht einzelne Wörter, sondern ganze Regionen", "wird nur in Zentral- und Nordspanien gemacht"],
+         "en": ["reflects regional pronunciation norms", "is used only in central and northern Spain"]},
+    ),
+    "soft-spanish-hard-german": (
+        {"de": ["Vier Hörvergleiche machen diese Feinheiten hörbar und zeigen, wie sie den spanischen Redefluss beeinflussen."],
+         "en": ["Four listening comparisons make these subtleties audible and show how they affect the flow of Spanish speech."]},
+        {"de": ["wie man sie im Unterricht aufgreifen kann"], "en": ["how they can be taken up in the classroom"]},
+    ),
+    "europe-sounds-different": (
+        {"de": ["summary: Wie Lese- und Aussprachegewohnheiten aus dem Deutschen spanische Vokale und Diphthonge beeinflussen können.",
+                "Die spanischen Vokale erscheinen deutschsprachigen Lernenden zunächst vertraut. Gerade bei Vokalverbindungen können sich jedoch deutsche Lese- und Aussprachegewohnheiten bemerkbar machen. Das zeigt sich schon an einem Wort, das in beiden Sprachen gleich geschrieben wird.",
+                "text: Wie aufeinanderfolgende Vokale im Spanischen fließend verbunden werden und welche Rolle der Knacklaut dabei spielt."],
+         "en": ["summary: How reading and pronunciation habits from German can influence Spanish vowels and diphthongs.",
+                "text: How consecutive vowels are joined smoothly in Spanish and what role the glottal stop plays in this."]},
+        {"de": ["in die Quere kommen", "fast gleich geschrieben", "keinen Knacklaut vor Vokalen kennt"], "en": ["get in the way", "no glottal stop before vowels"]},
+    ),
+    "b-or-v": (
+        {"de": ["summary: Warum zwei spanische Buchstaben denselben Laut bezeichnen – und die Schrift dennoch zu unterschiedlichen Aussprachen verleiten kann.",
+                "Im Spanischen stehen ⟨b⟩ und ⟨v⟩ für dasselbe Phonem /b/. In anderen Sprachen, etwa im Deutschen, haben die Buchstaben unterschiedliche Lautwerte. Diese aus dem Deutschen vertraute Unterscheidung wird von deutschsprachigen Lernenden häufig unbewusst auf das Spanische übertragen, wie die Hörvergleiche zeigen."],
+         "en": ["summary: Why two Spanish letters stand for the same sound – and why spelling can still prompt different pronunciations."]},
+        {"de": ["unterschiedlich aussprechen wollen", "Die Hörvergleiche zeigen, wie das klingt."], "en": ["still want to pronounce them differently"]},
+    ),
+    "soft-consonants-b-d-g": (
+        {"de": ["Bei b, d und g ist die Artikulation häufig weniger fest als bei entsprechenden deutschen Lauten. Ein erster Hörvergleich macht den Unterschied hörbar.",
+                "Diese Artikulation wird häufig als „weicher“ wahrgenommen.",
+                "**Als erste Orientierung gilt: Zwischen Vokalen werden b, d und g im Spanischen gewöhnlich ohne vollständigen Verschluss ausgesprochen.**"],
+         "en": ["This articulation is often perceived as “softer”.",
+                "**As a first orientation: between vowels, b, d and g in Spanish are usually pronounced without a complete closure.**"]},
+        {"de": ["als man es aus dem Deutschen kennt", "Diesen Unterschied nehmen wir", "Faustregel"], "en": ["one knows it from German", "we perceive as", "rule of thumb"]},
+    ),
+    "r": (
+        {"de": ["Nicht jede Abweichung von einem einzelnen Referenzmodell ist deshalb ein Aussprachefehler.\n"], "en": ["Not every deviation from a single reference model is therefore a pronunciation error.\n"]},
+        {"de": ["Für den Unterricht ist zunächst entscheidend, dass einfacher und mehrfacher Vibrant"], "en": ["For teaching, what matters first"]},
+    ),
+    "r-am-silbenende": (
+        {"de": ["Im Standarddeutschen gehört die Vokalisierung von /r/ zur regulären Aussprache, etwa in *sehr*, *Vater* oder *Lehrer*.",
+                "das sogenannte Vater-Schwa (auch Tiefschwa): [ˈfaːtɐ], [ˈleːʁɐ]. Beide Erscheinungen sind verwandt, aber nicht in jeder Hinsicht identisch."],
+         "en": ["In Standard German, the vocalisation of /r/ is part of regular pronunciation,", "The two phenomena are related, but not identical in every respect."]},
+        {"de": ["Der erste Hörvergleich zeigt, was damit gemeint ist.", "führt die R-Vokalisierung also selbst vor", "ist das kein Fehler, sondern der Normalfall"],
+         "en": ["The first listening comparison shows what that means.", "demonstrates r-vocalisation itself", "this is not a mistake but the normal case"]},
+    ),
+}
+
+
+@pytest.mark.parametrize("slug", sorted(MASTER_REVISION_2026_10_26))
+def test_master_revision_wording_is_in_place_in_german_and_english(slug: str) -> None:
+    present, absent = MASTER_REVISION_2026_10_26[slug]
+    for lang in ("de", "en"):
+        source = (TOPIC_DIR / slug / f"{lang}.yaml").read_text(encoding="utf-8")
+        for fragment in present.get(lang, []):
+            assert fragment in source, (slug, lang, fragment)
+        for fragment in absent.get(lang, []):
+            assert fragment not in source, (slug, lang, fragment)
+    # the r vocalisation sentence of r-am-silbenende names sehr/Vater/Lehrer once, then explains the two cases
+    if slug == "r-am-silbenende":
+        de = (TOPIC_DIR / slug / "de.yaml").read_text(encoding="utf-8")
+        assert de.count("*Vater* oder *Lehrer*") == 1 and "Dabei sind zwei Fälle zu unterscheiden" in de

@@ -22,7 +22,7 @@ from .extensions import register_extensions
 from .page_languages import page_ui_languages
 from .routes import register_blueprints
 from .runtime_paths import get_logs_dir
-from .teaching_content import resolve_teaching_switch_path
+from .teaching_content import resolve_teaching_switch_path, teaching_switch_query
 from .config import load_config
 
 
@@ -109,6 +109,10 @@ def _build_ui_lang_switch_url(target_ui_lang: str) -> str:
 
     teaching_override = resolve_teaching_switch_path(path, target_ui_lang)
     localized_path = teaching_override or (_swap_ui_lang_prefix(path, target_ui_lang) if _path_has_ui_lang_prefix(path) else path)
+    # A Teaching content edition keeps its content and the validated edition to return to (`from`).
+    switch_query = teaching_switch_query(path, request.args.get("from"))
+    if switch_query:
+        rewritten_items = [(key, value) for key, value in rewritten_items if key not in switch_query] + list(switch_query.items())
     rewritten_items.append(("lang", target_ui_lang))
 
     query = urlencode(rewritten_items, doseq=True)

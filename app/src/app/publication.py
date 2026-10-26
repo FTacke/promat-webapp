@@ -261,7 +261,15 @@ def corpus_resource(language_slug: str, ui_lang: str) -> dict[str, Any] | None:
     )
 
 
-def teaching_area_resource(language_slug: str, ui_lang: str, *, has_public_topics: bool = True) -> dict[str, Any] | None:
+def teaching_area_resource(
+    language_slug: str,
+    ui_lang: str,
+    *,
+    has_public_topics: bool = True,
+    path: str | None = None,
+    content_lang: str | None = None,
+) -> dict[str, Any] | None:
+    """The Teaching area of one taught language; ``path``/``content_lang`` describe an additional content edition."""
     entry = language_entry("teaching_resource", language_slug)
     if entry is None:
         return None
@@ -270,9 +278,9 @@ def teaching_area_resource(language_slug: str, ui_lang: str, *, has_public_topic
         resource_id=str(entry["resource_id"]),
         title=str(entry["title"]),
         ui_lang=ui_lang,
-        path=f"/{ui_lang}/teaching/{language_slug}",
+        path=path or f"/{ui_lang}/teaching/{language_slug}",
         entry=entry,
-        language=ui_lang,
+        language=content_lang or ui_lang,
         subject_language=CONTENT_LANGUAGE_CODES.get(language_slug),
         is_part_of=platform_resource(ui_lang),
     )
@@ -312,15 +320,19 @@ def topic_resource(
     doi: str | None = None,
     license_value: str | None = None,
     published: bool = True,
+    path: str | None = None,
+    content_lang: str | None = None,
 ) -> dict[str, Any]:
+    """One language edition of a topic. All editions share ``resource_id`` and creators; an additional content
+    edition (``content_lang``, e.g. ``es``) gets its own canonical ``path`` and ``inLanguage``."""
     return _resource(
         "teaching_topic",
         resource_id=resource_id,
         title=title,
         ui_lang=ui_lang,
-        path=f"/{ui_lang}/teaching/{language_slug}/{topic_slug}",
+        path=path or f"/{ui_lang}/teaching/{language_slug}/{topic_slug}",
         entry={"doi": doi, "license": license_value},
-        language=ui_lang,
+        language=content_lang or ui_lang,
         is_part_of=teaching_area_resource(language_slug, ui_lang),
         creators=people(creator_ids),
         date_published=date_published,

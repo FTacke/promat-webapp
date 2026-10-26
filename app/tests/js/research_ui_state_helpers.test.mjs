@@ -179,3 +179,25 @@ test('language-switch handoff never crosses corpora, never outlives its window a
   assert.equal(storage.size(), 0);
   assert.equal(saveComparisonLangHandoff(null, { corpus: 'spanish', sessionIds: ['x'] }), false);
 });
+
+test('buildUiLangSwitchUrl keeps a Teaching content edition and its origin', () => {
+  assert.equal(
+    buildUiLangSwitchUrl('en', 'http://promat.test/de/teaching/spanish/es/topic-one?from=de&lang=de', 'http://promat.test'),
+    '/en/teaching/spanish/es/topic-one?from=de&lang=en',
+  );
+});
+
+test('buildUiLangSwitchUrl adds the page switch params of the current page (direct visit of a content edition)', () => {
+  const previousWindow = globalThis.window;
+  const previousDocument = globalThis.document;
+  globalThis.window = { location: { href: 'http://promat.test/de/teaching/spanish/es/topic-one' } };
+  globalThis.document = {
+    querySelector: (selector) => (selector === 'meta[name="promat-ui-switch-params"]' ? { getAttribute: () => 'from=de' } : null),
+  };
+  try {
+    assert.equal(buildUiLangSwitchUrl('en', null, 'http://promat.test'), '/en/teaching/spanish/es/topic-one?from=de&lang=en');
+  } finally {
+    globalThis.window = previousWindow;
+    globalThis.document = previousDocument;
+  }
+});

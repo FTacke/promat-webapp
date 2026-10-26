@@ -13,7 +13,7 @@ metadata:
 blocks:
 - type: topic_meta
 - type: text
-  body: Ein deutscher Akzent im Spanischen zeigt sich nicht nur an einzelnen Lauten. Manchmal sind es kleine, kaum bemerkte Unterschiede, die den Klang einer ganzen Äußerung verändern. Vier Hörvergleiche machen solche Feinheiten hörbar – und zeigen, wie man sie im Unterricht aufgreifen kann.
+  body: Ein deutscher Akzent im Spanischen zeigt sich nicht nur an einzelnen Lauten. Manchmal sind es kleine, kaum bemerkte Unterschiede, die den Klang einer ganzen Äußerung verändern. Vier Hörvergleiche machen diese Feinheiten hörbar und zeigen, wie sie den spanischen Redefluss beeinflussen.
 - type: audio_contrast
   title: 'Hörvergleich: *o hay*'
   lead: Was unterscheidet die beiden Aussprachen?

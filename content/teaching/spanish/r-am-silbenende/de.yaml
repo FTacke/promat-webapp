@@ -12,7 +12,7 @@ metadata:
 blocks:
 - type: topic_meta
 - type: text
-  body: Im Deutschen klingt das r am Wortende oft kaum noch wie ein Konsonant – im Spanischen bleibt es ein eigener, hörbarer Laut. Der erste Hörvergleich zeigt, was damit gemeint ist.
+  body: Im Deutschen klingt das r am Wortende oft kaum noch wie ein Konsonant – im Spanischen bleibt es ein eigener, hörbarer Laut.
 - type: audio_contrast
   title: 'Hörvergleich: *flor*'
   lead: Wie klingt das *r* am Wortende in den beiden Aufnahmen?
@@ -32,9 +32,7 @@ blocks:
   title: Wenn das deutsche r zum Vokal wird
 - type: text
   body: |-
-    Im Standarddeutschen ist das kein Fehler, sondern der Normalfall: Nach Vokalen wird /r/ häufig vokalisiert. In *sehr* klingt das r nach dem langen Vokal nur noch als Ausklang mit, etwa [zeːɐ̯]. In unbetonten Endungen wie in *Vater* und *Lehrer* steht an seiner Stelle der Vokal [ɐ], das sogenannte Vater-Schwa (auch Tiefschwa): [ˈfaːtɐ], [ˈleːʁɐ]. Beide Erscheinungen sind verwandt, aber nicht in jeder Hinsicht identisch.
-
-    Das deutsche Wort *sehr* führt die R-Vokalisierung also selbst vor: Ein konsonantisches r ist darin kaum noch zu hören.
+    Im Standarddeutschen gehört die Vokalisierung von /r/ zur regulären Aussprache, etwa in *sehr*, *Vater* oder *Lehrer*. Dabei sind zwei Fälle zu unterscheiden: Nach dem langen Vokal in *sehr* klingt das r nur noch als Ausklang mit, etwa [zeːɐ̯]. In den unbetonten Endungen von *Vater* und *Lehrer* steht an seiner Stelle der Vokal [ɐ], das sogenannte Vater-Schwa (auch Tiefschwa): [ˈfaːtɐ], [ˈleːʁɐ]. Beide Erscheinungen sind verwandt, aber nicht in jeder Hinsicht identisch.
 - type: text
   body: |-
     Das Spanische verhält sich anders. Am Wortende bleibt das r gewöhnlich konsonantisch, meist als kurzer Zungenschlag [ɾ]: *flor* [ˈfloɾ]. Regional und je nach Kontext kann die Realisierung schwächer, länger oder anders ausfallen, bleibt aber in der Regel ein Konsonant. Wer die deutsche Gewohnheit überträgt, spricht *flor* eher wie [ˈfloɐ̯].

@@ -13,7 +13,7 @@ blocks:
 - type: topic_meta
 - type: text
   body: |-
-    A seemingly familiar consonant can sound quite different in Spanish: with b, d and g, the articulation is often less firm than one knows it from German. A first listening comparison makes the difference audible.
+    A seemingly familiar consonant can sound quite different in Spanish: with b, d and g, the articulation is often less firm than with the corresponding German sounds. A first listening comparison makes the difference audible.
 - type: audio_contrast
   title: 'Listening comparison: *vida*'
   lead: What distinguishes the pronunciation of the *d*?
@@ -33,7 +33,7 @@ blocks:
   title: Closure or approximation?
 - type: text
   body: |-
-    With the stop [d], the tip of the tongue touches the upper teeth so that the airflow is briefly interrupted completely. With the approximant [ð], it merely approaches them: a passage remains, the air keeps flowing, usually without audible friction. This is the difference we perceive as “soft”.
+    With the stop [d], the tip of the tongue touches the upper teeth so that the airflow is briefly interrupted completely. With the approximant [ð], it merely approaches them: a passage remains, the air keeps flowing, usually without audible friction. This articulation is often perceived as “softer”.
 - type: image
   src: dental-stop-approximant.png
   size: wide
@@ -93,7 +93,7 @@ blocks:
 
     The distribution is not the same for all three phonemes: d is usually pronounced as the stop [d] after l (*caldo*), and after a nasal, b, d and g are stops, for instance the g in *tengo* [ˈteŋ.go].
 
-    **For the classroom, a rule of thumb is enough at first: between vowels, b, d and g in Spanish are mostly pronounced without a complete closure.**
+    **As a first orientation: between vowels, b, d and g in Spanish are usually pronounced without a complete closure.**
 - type: section_heading
   title: Classroom prompts
 - type: teaching_impulses

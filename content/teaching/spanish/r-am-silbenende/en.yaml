@@ -12,7 +12,7 @@ metadata:
 blocks:
 - type: topic_meta
 - type: text
-  body: In German, the r at the end of a word often hardly sounds like a consonant any more – in Spanish it remains a distinct, audible sound. The first listening comparison shows what that means.
+  body: In German, the r at the end of a word often hardly sounds like a consonant any more – in Spanish it remains a distinct, audible sound.
 - type: audio_contrast
   title: 'Listening comparison: *flor*'
   lead: How does the *r* at the end of the word sound in the two recordings?
@@ -32,9 +32,7 @@ blocks:
   title: When the German r becomes a vowel
 - type: text
   body: |-
-    In Standard German, this is not a mistake but the normal case: after vowels, /r/ is frequently vocalised. In *sehr* (“very”), the r after the long vowel is heard only as an off-glide, roughly [zeːɐ̯]. In unstressed endings such as in *Vater* and *Lehrer*, the vowel [ɐ] takes its place, the so-called “Vater schwa” (also low schwa): [ˈfaːtɐ], [ˈleːʁɐ]. The two phenomena are related, but not identical in every respect.
-
-    The German word *sehr* thus demonstrates r-vocalisation itself: there is hardly a consonantal r left in it.
+    In Standard German, the vocalisation of /r/ is part of regular pronunciation, for instance in *sehr* (“very”), *Vater* (“father”) or *Lehrer* (“teacher”). Two cases need to be distinguished: after the long vowel in *sehr*, the r is heard only as an off-glide, roughly [zeːɐ̯]. In the unstressed endings of *Vater* and *Lehrer*, the vowel [ɐ] takes its place, the so-called “Vater schwa” (also low schwa): [ˈfaːtɐ], [ˈleːʁɐ]. The two phenomena are related, but not identical in every respect.
 - type: text
   body: |-
     Spanish behaves differently. At the end of a word, the r usually remains a consonant, mostly a brief tap [ɾ]: *flor* [ˈfloɾ]. Regionally and depending on context, the realisation can be weaker, longer or different, but as a rule it remains a consonant. Anyone who transfers the German habit will pronounce *flor* more like [ˈfloɐ̯].

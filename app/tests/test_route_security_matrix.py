@@ -24,6 +24,7 @@ PUBLIC_ENDPOINTS = {
     "public.teaching_home",
     "public.teaching_language_root",
     "public.teaching_language_page",
+    "public.teaching_content_edition_page",
     "public.teaching_topic_media",
     "public.login",
     "public.health_check",

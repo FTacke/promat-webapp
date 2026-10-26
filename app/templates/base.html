@@ -6,6 +6,9 @@
     <title>{% block page_title %}{{ page_meta.title if page_meta else app_display_name }}{% endblock %}</title>
     <meta name="application-name" content="{{ app_display_name }}">
 {% include 'partials/_page_meta.html' %}
+    {% if promat_page is defined and promat_page.ui_switch_params %}
+    <meta name="promat-ui-switch-params" content="{{ promat_page.ui_switch_params | urlencode }}">
+    {% endif %}
     <!-- Theme color is synchronized from canonical CSS tokens by theme.js -->
     <meta name="theme-color" content="" data-theme-color>
     <!-- no-js removal moved to static/js/theme.js (externalized for CSP) -->

@@ -504,7 +504,10 @@ def _hub_topic_card(
     raw_entry: dict[str, Any] | None,
     *,
     include_unavailable: bool = False,
+    edition: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
+    """Hub card of one topic. With ``edition`` (``{"ui_lang", "origin"}``), ``ui_lang`` is the content language of
+    an additional content edition: only its published topics are shown, never untranslated placeholders."""
     if not topic_slug:
         return None
 
@@ -512,22 +515,31 @@ def _hub_topic_card(
     if raw_topic is None:
         return None
 
-    is_available = topic_is_public(teaching_lang, ui_lang, topic_slug, raw_entry, raw_topic)
-    if not is_available and not include_unavailable:
-        return None
+    label_lang = ui_lang
+    if edition is not None:
+        is_available = content_edition_topic_is_public(teaching_lang, ui_lang, topic_slug)
+        if not is_available:
+            return None
+        label_lang = edition["ui_lang"]
+        href = content_edition_url(edition["ui_lang"], teaching_lang, ui_lang, topic_slug, origin=edition.get("origin"))
+    else:
+        is_available = topic_is_public(teaching_lang, ui_lang, topic_slug, raw_entry, raw_topic)
+        if not is_available and not include_unavailable:
+            return None
+        href = url_for(
+            "public.teaching_language_page",
+            ui_lang=ui_lang,
+            language_slug=teaching_lang,
+            page_slug=topic_slug,
+        ) if is_available else ""
 
     return _set_inline_markdown_fields({
         "slug": topic_slug,
         "title": _as_text(raw_topic.get("title")) or topic_slug,
         "summary": _as_text(raw_topic.get("summary") or raw_topic.get("description")),
-        "byline": _topic_card_byline(ui_lang, raw_topic),
+        "byline": _topic_card_byline(label_lang, raw_topic),
         "metadata": _topic_card_metadata(raw_topic),
-        "href": url_for(
-            "public.teaching_language_page",
-            ui_lang=ui_lang,
-            language_slug=teaching_lang,
-            page_slug=topic_slug,
-        ) if is_available else "",
+        "href": href,
         "is_available": is_available,
     }, "title", "summary", "byline")
 
@@ -850,11 +862,23 @@ def _further_reading_item_entries(values: Any) -> list[dict[str, str]]:
     return entries
 
 
-def topic_resource(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic: dict[str, Any]) -> dict[str, Any] | None:
-    """Publication resource of a topic edition, or ``None`` while the topic has no ``resource_id``."""
+def topic_resource(
+    teaching_lang: str,
+    ui_lang: str,
+    topic_slug: str,
+    raw_topic: dict[str, Any],
+    *,
+    content_lang: str | None = None,
+) -> dict[str, Any] | None:
+    """Publication resource of a topic edition, or ``None`` while the topic has no ``resource_id``.
+
+    ``content_lang`` names an additional content edition (e.g. ``es``): same resource id and creators, but its own
+    canonical path and ``inLanguage``.
+    """
     resource_id = _as_text(raw_topic.get("resource_id"))
     if not resource_id:
         return None
+    source_lang = content_lang or ui_lang
     metadata_source = _topic_metadata_source(raw_topic)
     title = _as_text(raw_topic.get("title"))
     return publication.topic_resource(
@@ -869,13 +893,20 @@ def topic_resource(teaching_lang: str, ui_lang: str, topic_slug: str, raw_topic:
         description=render_markdown_plain_text(raw_topic.get("summary") or raw_topic.get("description")) or None,
         doi=_as_text(raw_topic.get("doi")) or None,
         license_value=_as_text(raw_topic.get("license")) or None,
-        published=topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic=raw_topic),
+        published=topic_is_public(teaching_lang, source_lang, topic_slug, raw_topic=raw_topic)
+        and (content_lang is None or content_edition_topic_is_public(teaching_lang, content_lang, topic_slug)),
+        path=content_edition_canonical_path(teaching_lang, content_lang, topic_slug) if content_lang else None,
+        content_lang=content_lang,
     )
 
 
-def _citation_payload(ui_lang: str, resource: dict[str, Any] | None) -> dict[str, Any] | None:
-    """Citation block generated from the structured resource; topics never carry a typed citation string."""
-    citation = publication.format_citation(resource, ui_lang) if resource else None
+def _citation_payload(ui_lang: str, resource: dict[str, Any] | None, citation_lang: str | None = None) -> dict[str, Any] | None:
+    """Citation block generated from the structured resource; topics never carry a typed citation string.
+
+    The heading belongs to the UI (``ui_lang``); the citation itself follows the language of the content
+    (``citation_lang``, default: the UI language).
+    """
+    citation = publication.format_citation(resource, citation_lang or ui_lang) if resource else None
     if citation is None:
         return None
     return _set_inline_markdown_fields(
@@ -979,9 +1010,16 @@ def _topic_blocks(
     topic_slug: str,
     raw_topic: dict[str, Any],
     topic_metadata: dict[str, Any],
+    *,
+    content_lang: str | None = None,
 ) -> list[dict[str, Any]]:
+    """Blocks of one topic edition. Labels use ``ui_lang``; ``content_lang`` marks an additional content edition."""
     blocks: list[dict[str, Any]] = []
-    top_level_citation = _citation_payload(ui_lang, topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic))
+    top_level_citation = _citation_payload(
+        ui_lang,
+        topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic, content_lang=content_lang),
+        content_lang,
+    )
     for index, raw_block in enumerate(raw_topic.get("blocks", [])):
         if not isinstance(raw_block, dict):
             continue
@@ -1437,7 +1475,13 @@ def _topic_sections(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sections
 
 
-def _hub_topic_cards(teaching_lang: str, ui_lang: str, *, include_unavailable: bool = False) -> list[dict[str, Any]]:
+def _hub_topic_cards(
+    teaching_lang: str,
+    ui_lang: str,
+    *,
+    include_unavailable: bool = False,
+    edition: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     index = load_teaching_index(teaching_lang, ui_lang) or {}
     cards: list[dict[str, Any]] = []
     for entry in _hub_topic_entries(index):
@@ -1448,13 +1492,14 @@ def _hub_topic_cards(teaching_lang: str, ui_lang: str, *, include_unavailable: b
             topic_slug,
             entry,
             include_unavailable=include_unavailable,
+            edition=edition,
         )
         if card is not None:
             cards.append(card)
     return cards
 
 
-def _hub_topic_groups(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
+def _hub_topic_groups(teaching_lang: str, ui_lang: str, *, edition: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     index = load_teaching_index(teaching_lang, ui_lang) or {}
     groups: list[dict[str, Any]] = []
 
@@ -1468,6 +1513,7 @@ def _hub_topic_groups(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
                 topic_slug,
                 raw_topic,
                 include_unavailable=True,
+                edition=edition,
             )
             if card is not None:
                 cards.append(card)
@@ -1483,7 +1529,7 @@ def _hub_topic_groups(teaching_lang: str, ui_lang: str) -> list[dict[str, Any]]:
     if groups:
         return groups
 
-    flat_cards = _hub_topic_cards(teaching_lang, ui_lang, include_unavailable=True)
+    flat_cards = _hub_topic_cards(teaching_lang, ui_lang, include_unavailable=True, edition=edition)
     if not flat_cards:
         return []
     return [_set_inline_markdown_fields({"title": "", "description": "", "cards": flat_cards}, "title", "description")]
@@ -1501,6 +1547,7 @@ def load_teaching_manifest(teaching_lang: str) -> dict[str, Any] | None:
         "teaching_lang": _as_text(data.get("teaching_lang")) or teaching_lang,
         "default_ui_lang": default_ui_lang,
         "available_ui_langs": available_ui_langs,
+        "content_editions": _normalize_content_edition_codes(data.get("content_editions")),
     }
 
 
@@ -1595,12 +1642,28 @@ def resolve_topic_slug_for_ui_lang(teaching_lang: str, current_ui_lang: str, top
     return None
 
 
-def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] | None:
-    effective_ui_lang = resolve_teaching_edition_ui_lang(teaching_lang, ui_lang)
-    if effective_ui_lang is None:
-        return None
+def build_teaching_hub_page(
+    ui_lang: str,
+    teaching_lang: str,
+    *,
+    content_lang: str | None = None,
+    origin: str | None = None,
+) -> dict[str, Any] | None:
+    """Hub of one teaching language. With ``content_lang`` the hub of an additional content edition (only once it
+    is published); the platform navigation stays in ``ui_lang``, ``origin`` is the edition to return to."""
+    if content_lang is not None:
+        if ui_lang not in SUPPORTED_UI_LANGUAGES or not content_edition_hub_is_public(teaching_lang, content_lang):
+            return None
+        effective_ui_lang = ui_lang
+        source_lang = content_lang
+        origin = resolve_content_edition_origin(teaching_lang, origin, ui_lang)
+    else:
+        effective_ui_lang = resolve_teaching_edition_ui_lang(teaching_lang, ui_lang)
+        if effective_ui_lang is None:
+            return None
+        source_lang = effective_ui_lang
 
-    index = load_teaching_index(teaching_lang, effective_ui_lang)
+    index = load_teaching_index(teaching_lang, source_lang)
     if index is None:
         return None
 
@@ -1608,9 +1671,16 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
     page_title = render_markdown_plain_text(title) or title
     lead = _as_text(index.get("lead"))
     overview_intro = _hub_overview_intro(index)
-    topic_groups = _hub_topic_groups(teaching_lang, effective_ui_lang)
+    edition = {"ui_lang": effective_ui_lang, "origin": origin} if content_lang else None
+    topic_groups = _hub_topic_groups(teaching_lang, source_lang, edition=edition)
     topic_count = sum(len(group["cards"]) for group in topic_groups)
-    area_resource = publication.teaching_area_resource(teaching_lang, effective_ui_lang, has_public_topics=topic_count > 0)
+    area_resource = publication.teaching_area_resource(
+        teaching_lang,
+        effective_ui_lang,
+        has_public_topics=topic_count > 0,
+        path=content_edition_canonical_path(teaching_lang, content_lang) if content_lang else None,
+        content_lang=content_lang,
+    )
     if area_resource is not None:
         area_resource["description"] = render_markdown_plain_text(overview_intro or lead) or None
     content_header = _decorate_content_header_markdown(
@@ -1632,11 +1702,17 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         title=title,
         intro=lead,
     )
+    content_header["edition_links"] = (
+        _content_edition_return_links(effective_ui_lang, teaching_lang, content_lang, origin)
+        if content_lang
+        else _content_edition_links(effective_ui_lang, teaching_lang)
+    )
     return {
         "title": title,
         "page_title": page_title,
         "intro": lead,
         "overview_intro": overview_intro,
+        "content_lang": content_lang,
         "page_kind": "material",
         "layout": "teaching",
         "template": "pages/teaching_page.html",
@@ -1663,9 +1739,15 @@ def build_teaching_hub_page(ui_lang: str, teaching_lang: str) -> dict[str, Any] 
         "citation": None,
         "meta_description": render_markdown_plain_text(overview_intro or lead) or None,
         "meta_alternates": {
-            edition: url_for("public.teaching_language_root", ui_lang=edition, language_slug=teaching_lang)
-            for edition in list_existing_ui_editions(teaching_lang)
+            **{
+                edition: url_for("public.teaching_language_root", ui_lang=edition, language_slug=teaching_lang)
+                for edition in list_existing_ui_editions(teaching_lang)
+            },
+            **content_edition_alternates(teaching_lang),
         },
+        "meta_hreflang_self": content_lang or effective_ui_lang,
+        "meta_canonical_path": content_edition_canonical_path(teaching_lang, content_lang) if content_lang else None,
+        "ui_switch_params": {CONTENT_EDITION_ORIGIN_PARAM: origin} if content_lang else None,
     }
 
 
@@ -1729,14 +1811,40 @@ def topic_public_alternates(teaching_lang: str, ui_lang: str, topic_slug: str) -
                 language_slug=teaching_lang,
                 page_slug=target_slug,
             )
+    alternates.update(content_edition_alternates(teaching_lang, topic_slug))
     return alternates
 
 
-def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str) -> dict[str, Any] | None:
-    raw_topic = load_teaching_topic(teaching_lang, ui_lang, topic_slug)
-    index = load_teaching_index(teaching_lang, ui_lang)
-    if raw_topic is None or index is None or not topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic=raw_topic):
-        return None
+def build_teaching_topic_page(
+    ui_lang: str,
+    teaching_lang: str,
+    topic_slug: str,
+    *,
+    content_lang: str | None = None,
+    origin: str | None = None,
+) -> dict[str, Any] | None:
+    """One topic page. With ``content_lang`` the same topic in an additional content edition (only once it is
+    published); navigation and labels stay in ``ui_lang``, ``origin`` is the edition the reader returns to."""
+    if content_lang is not None:
+        if ui_lang not in SUPPORTED_UI_LANGUAGES or not content_edition_topic_is_public(teaching_lang, content_lang, topic_slug):
+            return None
+        origin = resolve_content_edition_origin(teaching_lang, origin, ui_lang)
+        raw_topic = load_teaching_topic(teaching_lang, content_lang, topic_slug)
+        hub_is_edition = content_edition_hub_is_public(teaching_lang, content_lang)
+        index = load_teaching_index(teaching_lang, content_lang if hub_is_edition else (resolve_teaching_edition_ui_lang(teaching_lang, ui_lang) or ui_lang))
+        if raw_topic is None or index is None:
+            return None
+        hub_href = (
+            content_edition_url(ui_lang, teaching_lang, content_lang, origin=origin)
+            if hub_is_edition
+            else url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang)
+        )
+    else:
+        raw_topic = load_teaching_topic(teaching_lang, ui_lang, topic_slug)
+        index = load_teaching_index(teaching_lang, ui_lang)
+        if raw_topic is None or index is None or not topic_is_public(teaching_lang, ui_lang, topic_slug, raw_topic=raw_topic):
+            return None
+        hub_href = url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang)
 
     title = _as_text(raw_topic.get("title")) or topic_slug.replace("-", " ").title()
     page_title = render_markdown_plain_text(title) or title
@@ -1744,8 +1852,8 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
     hub_title = _as_text(index.get("title")) or teaching_lang.replace("-", " ").title()
     hub_title_plain = render_markdown_plain_text(hub_title) or hub_title
     topic_metadata = _topic_metadata(ui_lang, raw_topic)
-    resource = topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic)
-    blocks = _topic_blocks(teaching_lang, ui_lang, topic_slug, raw_topic, topic_metadata)
+    resource = topic_resource(teaching_lang, ui_lang, topic_slug, raw_topic, content_lang=content_lang)
+    blocks = _topic_blocks(teaching_lang, ui_lang, topic_slug, raw_topic, topic_metadata, content_lang=content_lang)
     topic_sections = _topic_sections(blocks)
     content_header = _decorate_content_header_markdown(
         build_content_header(
@@ -1760,12 +1868,18 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
             current_label=page_title,
             back_link={
                 "label": translate(ui_lang, "teaching.action.back_to_language_hub", hub_title=hub_title_plain),
-                "href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
+                "href": hub_href,
             },
         ),
         title=title,
         intro=page_intro,
     )
+    content_header["edition_links"] = (
+        _content_edition_return_links(ui_lang, teaching_lang, content_lang, origin, topic_slug)
+        if content_lang
+        else _content_edition_links(ui_lang, teaching_lang, topic_slug)
+    )
+    alternates_base_lang = resolve_teaching_edition_ui_lang(teaching_lang, ui_lang) or ui_lang
     return {
         "title": title,
         "page_title": page_title,
@@ -1777,20 +1891,24 @@ def build_teaching_topic_page(ui_lang: str, teaching_lang: str, topic_slug: str)
         "resolved_ui_lang": ui_lang,
         "teaching_lang": teaching_lang,
         "topic_slug": topic_slug,
+        "content_lang": content_lang,
         "hub_title": hub_title_plain,
-        "hub_href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
+        "hub_href": hub_href,
         "back_link": {
             "label": translate(ui_lang, "teaching.action.back_to_language_hub", hub_title=hub_title_plain),
-            "href": url_for("public.teaching_language_root", ui_lang=ui_lang, language_slug=teaching_lang),
+            "href": hub_href,
         },
         "topic_metadata": topic_metadata,
-        "teaching_switch_items": _teaching_switch_items(ui_lang, teaching_lang, topic_slug=topic_slug),
+        "teaching_switch_items": [] if content_lang else _teaching_switch_items(ui_lang, teaching_lang, topic_slug=topic_slug),
         "blocks": blocks,
         "topic_sections": topic_sections,
         "content_header": content_header,
         "resource": resource if resource and resource["citable"] else None,
         "meta_description": (resource or {}).get("description") or render_markdown_plain_text(page_intro) or None,
-        "meta_alternates": topic_public_alternates(teaching_lang, ui_lang, topic_slug),
+        "meta_alternates": topic_public_alternates(teaching_lang, alternates_base_lang if content_lang else ui_lang, topic_slug),
+        "meta_hreflang_self": content_lang or ui_lang,
+        "meta_canonical_path": content_edition_canonical_path(teaching_lang, content_lang, topic_slug) if content_lang else None,
+        "ui_switch_params": {CONTENT_EDITION_ORIGIN_PARAM: origin} if content_lang else None,
     }
 
 
@@ -1803,6 +1921,9 @@ def resolve_teaching_switch_path(current_path: str, target_ui_lang: str) -> str 
         return f"/{target_ui_lang}/teaching"
 
     teaching_lang = parts[2]
+    if len(parts) >= 4 and parts[3] in content_edition_codes(teaching_lang):
+        # Additional content edition: only the platform navigation changes, the content stays.
+        return "/" + "/".join([target_ui_lang, *parts[1:5]])
     if not edition_exists(teaching_lang, target_ui_lang):
         return None
 
@@ -1814,3 +1935,167 @@ def resolve_teaching_switch_path(current_path: str, target_ui_lang: str) -> str 
     if target_topic_slug:
         return f"/{target_ui_lang}/teaching/{teaching_lang}/{target_topic_slug}"
     return f"/{target_ui_lang}/teaching/{teaching_lang}"
+
+
+# --- additional content editions ------------------------------------------------------------------------------
+#
+# The UI language (``/{ui_lang}/...``, ``?lang=``) and the language of a Teaching text are two independent
+# dimensions. The German and English editions are tied to the UI language (``de.yaml``/``en.yaml``). A teaching
+# language may declare further *content editions* in ``teaching.yaml`` (``content_editions: [es]``); their files sit
+# next to the others (``hubs/es.yaml``, ``<topic>/es.yaml``) and are served under a stable resource path:
+#
+#     /{ui_lang}/teaching/{teaching_lang}/{content_lang}             hub of the content edition
+#     /{ui_lang}/teaching/{teaching_lang}/{content_lang}/{topic}     topic in the content edition
+#
+# The platform navigation stays in ``ui_lang``; the DE/EN switch only swaps that prefix, so the content stays. The
+# edition a reader came from travels as ``?from=de|en``; it is only ever compared against the existing UI editions,
+# never used as a URL. Nothing of an edition is linked, listed or served before it is published.
+
+CONTENT_EDITION_ORIGIN_PARAM = "from"
+_CONTENT_EDITION_CODE_PATTERN = re.compile(r"^[a-z]{2}$")
+
+
+def _normalize_content_edition_codes(values: Any) -> list[str]:
+    codes: list[str] = []
+    for value in values if isinstance(values, list) else []:
+        code = _as_text(value).lower()
+        if _CONTENT_EDITION_CODE_PATTERN.match(code) and code not in SUPPORTED_UI_LANGUAGES and code not in codes:
+            codes.append(code)
+    return codes
+
+
+def content_edition_codes(teaching_lang: str) -> list[str]:
+    """Additional content languages a teaching language declares (``teaching.yaml`` ``content_editions``)."""
+    manifest = load_teaching_manifest(teaching_lang) if _TEACHING_LANG_PATTERN.match(teaching_lang or "") else None
+    return list(manifest["content_editions"]) if manifest else []
+
+
+def content_edition_topic_is_public(teaching_lang: str, content_lang: str, topic_slug: str) -> bool:
+    """A topic exists in a content edition once its file is public and the topic itself is a published resource."""
+    if content_lang not in content_edition_codes(teaching_lang) or not _TOPIC_SLUG_PATTERN.match(topic_slug or ""):
+        return False
+    if not topic_has_public_edition(teaching_lang, topic_slug):
+        return False
+    return topic_is_public(teaching_lang, content_lang, topic_slug)
+
+
+def content_edition_hub_is_public(teaching_lang: str, content_lang: str) -> bool:
+    """The hub of a content edition is public once its file is public and it lists at least one published topic."""
+    if content_lang not in content_edition_codes(teaching_lang):
+        return False
+    index = load_teaching_index(teaching_lang, content_lang)
+    if index is None or _explicit_public_availability(index) is False:
+        return False
+    status = index.get("status")
+    if isinstance(status, str) and status.strip().lower() in _UNFINISHED_STATUS_VALUES:
+        return False
+    return any(
+        content_edition_topic_is_public(teaching_lang, content_lang, _as_text(entry.get("slug")))
+        for entry in _hub_topic_entries(index)
+    )
+
+
+def resolve_content_edition_origin(teaching_lang: str, requested: Any, ui_lang: str) -> str:
+    """The edition to return to: a validated ``from`` value, otherwise the current UI language (direct visits)."""
+    editions = list_existing_ui_editions(teaching_lang)
+    candidate = _as_text(requested).lower()
+    if candidate in editions:
+        return candidate
+    if ui_lang in editions:
+        return ui_lang
+    return resolve_teaching_edition_ui_lang(teaching_lang, ui_lang) or ui_lang
+
+
+def content_edition_url(
+    ui_lang: str,
+    teaching_lang: str,
+    content_lang: str,
+    topic_slug: str | None = None,
+    *,
+    origin: str | None = None,
+) -> str:
+    params = {CONTENT_EDITION_ORIGIN_PARAM: origin} if origin else {}
+    if topic_slug:
+        return url_for(
+            "public.teaching_content_edition_page",
+            ui_lang=ui_lang,
+            language_slug=teaching_lang,
+            content_lang=content_lang,
+            page_slug=topic_slug,
+            **params,
+        )
+    return url_for("public.teaching_language_page", ui_lang=ui_lang, language_slug=teaching_lang, page_slug=content_lang, **params)
+
+
+def content_edition_canonical_path(teaching_lang: str, content_lang: str, topic_slug: str | None = None) -> str:
+    """One canonical URL per content edition, independent of the UI language it is viewed in: the teaching
+    language's default UI edition carries it."""
+    manifest = load_teaching_manifest(teaching_lang) or {}
+    canonical_ui_lang = resolve_teaching_edition_ui_lang(teaching_lang, _as_text(manifest.get("default_ui_lang"))) or "de"
+    return content_edition_url(canonical_ui_lang, teaching_lang, content_lang, topic_slug)
+
+
+def content_edition_alternates(teaching_lang: str, topic_slug: str | None = None) -> dict[str, str]:
+    """Published content editions of a hub or topic as ``{content_lang: canonical path}`` (hreflang)."""
+    alternates: dict[str, str] = {}
+    for code in content_edition_codes(teaching_lang):
+        published = (
+            content_edition_topic_is_public(teaching_lang, code, topic_slug)
+            if topic_slug
+            else content_edition_hub_is_public(teaching_lang, code)
+        )
+        if published:
+            alternates[code] = content_edition_canonical_path(teaching_lang, code, topic_slug)
+    return alternates
+
+
+def _edition_link_label(ui_lang: str, key: str) -> str | None:
+    label = translate(ui_lang, key)
+    return None if label == key else label
+
+
+def _content_edition_links(ui_lang: str, teaching_lang: str, topic_slug: str | None = None) -> list[dict[str, str]]:
+    """``En español``-style links of a German/English page: only to content editions that are published."""
+    links: list[dict[str, str]] = []
+    for code in content_edition_alternates(teaching_lang, topic_slug):
+        label = _edition_link_label(ui_lang, f"teaching.content_edition.open.{code}")
+        if label:
+            links.append({"label": label, "lang": code, "href": content_edition_url(ui_lang, teaching_lang, code, topic_slug, origin=ui_lang)})
+    return links
+
+
+def _content_edition_return_links(
+    ui_lang: str,
+    teaching_lang: str,
+    content_lang: str,
+    origin: str,
+    topic_slug: str | None = None,
+) -> list[dict[str, str]]:
+    """``Auf Deutsch``/``In English`` link of a content edition page, back to the edition the reader came from."""
+    label = _edition_link_label(ui_lang, f"teaching.content_edition.return.{origin}")
+    if not label:
+        return []
+    target_slug = None
+    if topic_slug:
+        if topic_is_public(teaching_lang, origin, topic_slug):
+            target_slug = topic_slug
+        else:
+            edition_topic = load_teaching_topic(teaching_lang, content_lang, topic_slug) or {}
+            equivalents = edition_topic.get("equivalents") if isinstance(edition_topic.get("equivalents"), dict) else {}
+            equivalent = _as_text(equivalents.get(origin))
+            if equivalent and topic_is_public(teaching_lang, origin, equivalent):
+                target_slug = equivalent
+    href = (
+        url_for("public.teaching_language_page", ui_lang=origin, language_slug=teaching_lang, page_slug=target_slug)
+        if target_slug
+        else url_for("public.teaching_language_root", ui_lang=origin, language_slug=teaching_lang)
+    )
+    return [{"label": label, "lang": origin, "href": href}]
+
+
+def teaching_switch_query(current_path: str, requested_origin: Any) -> dict[str, str]:
+    """Query values the UI-language switch must carry on a content edition page (the validated origin)."""
+    parts = [segment for segment in (current_path or "").strip("/").split("/") if segment]
+    if len(parts) >= 4 and parts[1] == "teaching" and parts[3] in content_edition_codes(parts[2]):
+        return {CONTENT_EDITION_ORIGIN_PARAM: resolve_content_edition_origin(parts[2], requested_origin, parts[0])}
+    return {}

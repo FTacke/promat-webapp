@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-b-or-v
 title: B oder V? Wenn die Schrift mitredet
-summary: Warum zwei spanische Buchstaben gleich klingen – und wir sie trotzdem manchmal unterschiedlich aussprechen wollen.
-description: Warum zwei spanische Buchstaben gleich klingen – und wir sie trotzdem manchmal unterschiedlich aussprechen wollen.
+summary: Warum zwei spanische Buchstaben denselben Laut bezeichnen – und die Schrift dennoch zu unterschiedlichen Aussprachen verleiten kann.
+description: Warum zwei spanische Buchstaben denselben Laut bezeichnen – und die Schrift dennoch zu unterschiedlichen Aussprachen verleiten kann.
 equivalents:
   en: b-or-v
 metadata:
@@ -12,7 +12,7 @@ metadata:
 blocks:
 - type: topic_meta
 - type: text
-  body: Das Spanische schreibt ⟨b⟩ und ⟨v⟩, doch beide Buchstaben stehen für denselben Laut. Für Lernende ist das ungewohnt – und es verleitet dazu, der Schrift zu folgen. Die Hörvergleiche zeigen, wie das klingt.
+  body: Im Spanischen stehen ⟨b⟩ und ⟨v⟩ für dasselbe Phonem /b/. In anderen Sprachen, etwa im Deutschen, haben die Buchstaben unterschiedliche Lautwerte. Diese aus dem Deutschen vertraute Unterscheidung wird von deutschsprachigen Lernenden häufig unbewusst auf das Spanische übertragen, wie die Hörvergleiche zeigen.
 - type: audio_contrast
   title: 'Hörvergleich: *bienes – vienes*'
   lead: Was fällt bei den Anlauten von *bienes* und *vienes* auf?

@@ -30,6 +30,8 @@ UNFINISHED_STATUS_VALUES = {"draft", "private", "pending", "planned", "scaffold"
 PLACEHOLDER_AUTHORS = {"nn", "n.n.", "n. n."}
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DOI_PATTERN = re.compile(r"^10[.][0-9]{4,9}/[^ ]+$")
+CONTENT_EDITION_PATTERN = re.compile(r"^[a-z]{2}$")
+UI_LANGUAGES = ("de", "en")
 MEDIA_EXCEPTIONS_FILE = CONTENT_ROOT / "media-exceptions.yaml"
 MEDIA_EXCEPTION_STATUSES = {"content_decision_required", "retained"}
 
@@ -275,6 +277,97 @@ def validate_publication_front_matter(
                     errors.append(f"{where}: equivalent {other_ui_lang}/{other_slug} does not point back to {topic_slug}")
 
 
+def validate_content_editions(
+    errors: list[str],
+    teaching_lang: str,
+    manifest: dict[str, Any],
+    available_ui_langs: list[str],
+) -> None:
+    """Additional content editions (``content_editions`` in ``teaching.yaml``, e.g. ``es``).
+
+    An edition is a translation of published topics: same slug, same ``resource_id`` and creators as the German and
+    English editions. Its code must not collide with a topic slug or alias (it is a path segment), and no language
+    file may exist for an undeclared code (no shadow editions).
+    """
+    raw_codes = manifest.get("content_editions") or []
+    if not isinstance(raw_codes, list):
+        errors.append(f"{teaching_lang}: content_editions must be a list of two-letter language codes")
+        return
+    codes: list[str] = []
+    for value in raw_codes:
+        code = _as_text(value)
+        if not CONTENT_EDITION_PATTERN.match(code):
+            errors.append(f"{teaching_lang}: content edition {code!r} must be a two-letter lower-case language code")
+        elif code in UI_LANGUAGES or code in available_ui_langs:
+            errors.append(f"{teaching_lang}: content edition {code!r} is a UI language; UI editions are listed in available_ui_langs")
+        elif code in codes:
+            errors.append(f"{teaching_lang}: content edition {code!r} is listed twice")
+        else:
+            codes.append(code)
+
+    language_dir = CONTENT_ROOT / teaching_lang
+    topic_dirs = sorted(path for path in language_dir.iterdir() if path.is_dir() and path.name != "hubs")
+    known_langs = set(available_ui_langs) | set(codes)
+    for topic_dir in [*topic_dirs, language_dir / "hubs"]:
+        for language_file in sorted(topic_dir.glob("*.yaml")):
+            if CONTENT_EDITION_PATTERN.match(language_file.stem) and language_file.stem not in known_langs:
+                errors.append(f"{language_file.relative_to(REPO_ROOT).as_posix()}: language file of an undeclared content edition")
+    for code in codes:
+        for topic_dir in topic_dirs:
+            if topic_dir.name == code:
+                errors.append(f"{teaching_lang}/{code}: a topic slug must not equal the content edition code {code!r}")
+            for ui_lang in available_ui_langs:
+                base = _load_yaml_map(_topic_file(teaching_lang, topic_dir.name, ui_lang)) or {}
+                if code in _string_list(base.get("aliases")):
+                    errors.append(f"{teaching_lang}/{topic_dir.name}/{ui_lang}: alias {code!r} collides with the content edition code")
+
+        hub_path = language_dir / "hubs" / f"{code}.yaml"
+        if hub_path.exists():
+            hub = _load_yaml_map(hub_path)
+            if hub is None:
+                errors.append(f"Invalid hub file: {hub_path.relative_to(REPO_ROOT)}")
+            else:
+                for topic_slug in _iter_hub_topic_slugs(hub):
+                    if not _topic_file(teaching_lang, topic_slug, code).exists():
+                        errors.append(f"{hub_path.relative_to(REPO_ROOT).as_posix()}: lists {topic_slug!r}, which has no {code}.yaml")
+
+        for topic_dir in topic_dirs:
+            edition_path = _topic_file(teaching_lang, topic_dir.name, code)
+            if not edition_path.exists():
+                continue
+            where = f"{teaching_lang}/{topic_dir.name}/{code}"
+            edition = _load_yaml_map(edition_path)
+            if edition is None:
+                errors.append(f"{where}: invalid YAML map")
+                continue
+            _validate_topic_media(errors, teaching_lang, topic_dir.name, edition)
+            _validate_topic_layout(errors, teaching_lang, topic_dir.name, edition)
+            if not topic_is_public(edition):
+                continue
+            bases = [
+                topic
+                for ui_lang in available_ui_langs
+                if (topic := _load_yaml_map(_topic_file(teaching_lang, topic_dir.name, ui_lang))) is not None and topic_is_public(topic)
+            ]
+            if not bases:
+                errors.append(f"{where}: a content edition translates a published topic; no public {'/'.join(available_ui_langs)} edition exists")
+                continue
+            base = bases[0]
+            if _as_text(edition.get("resource_id")) != _as_text(base.get("resource_id")):
+                errors.append(f"{where}: resource_id must be the one of the topic ({_as_text(base.get('resource_id'))!r})")
+            if _string_list(_metadata(edition).get("creators")) != _string_list(_metadata(base).get("creators")):
+                errors.append(f"{where}: metadata.creators must be the same people as in the other editions")
+            if not _as_text(edition.get("title")):
+                errors.append(f"{where}: title is required")
+            if not _as_text(edition.get("summary")) and not _as_text(edition.get("description")):
+                errors.append(f"{where}: summary or description is required (used as the page description)")
+            if _string_list(_metadata(edition).get("authors")) or isinstance(edition.get("credits"), dict):
+                errors.append(f"{where}: a public topic names its authors only through metadata.creators (remove authors/credits)")
+            citation = edition.get("citation")
+            if isinstance(citation, dict) and any(key in citation for key in ("text", "copy_text", "url")):
+                errors.append(f"{where}: remove the typed citation; it is generated from the publication metadata")
+
+
 def _string_leaves(value: Any) -> Iterable[str]:
     if isinstance(value, str):
         yield value.replace("\\", "/")
@@ -393,6 +486,7 @@ def main() -> int:
                 _validate_topic_equivalents(errors, teaching_lang, ui_lang, topic_slug, topic, available_ui_langs)
 
         validate_publication_front_matter(errors, publication, teaching_lang, available_ui_langs, seen_resource_ids)
+        validate_content_editions(errors, teaching_lang, manifest, available_ui_langs)
 
     validate_unreferenced_media(errors, warnings, teaching_languages)
 

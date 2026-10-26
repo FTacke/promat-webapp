@@ -33,7 +33,7 @@
   'video': t('teaching.video.label'),
   'video_pending': t('teaching.video.pending'),
 } %}
-<article class="pm-teaching-page pm-teaching-page--{{ teaching_view }} pm-content pm-content--material" aria-labelledby="promat-page-title"{% if promat_page.topic_slug %} data-topic-slug="{{ promat_page.topic_slug }}"{% endif %}>
+<article class="pm-teaching-page pm-teaching-page--{{ teaching_view }} pm-content pm-content--material" aria-labelledby="promat-page-title"{% if promat_page.topic_slug %} data-topic-slug="{{ promat_page.topic_slug }}"{% endif %}{% if promat_page.content_lang %} lang="{{ promat_page.content_lang }}" data-content-lang="{{ promat_page.content_lang }}"{% endif %}>
   {% if teaching_view == 'topic' %}
   <div class="pm-teaching-topic-header">
     {% set content_header = promat_page.content_header %}
