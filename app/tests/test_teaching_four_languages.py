@@ -33,23 +33,23 @@ SPANISH = ["which-pronunciation", "soft-spanish-hard-german", "europe-sounds-dif
 NEW_TOPICS = {
     "english": {
         "which-english-pronunciation": ("Welches Englisch unterrichten?", "Which English to teach?"),
-        "ship-or-sheep": ("Ship oder sheep? Wenn Vokale Wörter verändern", "Ship or sheep? When vowels change words"),
-        "english-th": ("Das englische th: zwei Laute, viele Varianten", "The English th: two sounds, many variants"),
+        "ship-or-sheep": ("*Ship* oder *sheep*? Wenn Vokale Wörter verändern", "*Ship* or *sheep*? When vowels change words"),
+        "english-th": ("Das englische *th*: zwei Laute, viele Varianten", "The English *th*: two sounds, many variants"),
         "weak-forms-and-schwa": ("Warum kleine Wörter plötzlich anders klingen", "Why small words suddenly sound different"),
         "english-stress": ("Englisch betont anders", "Stress works differently in English"),
     },
     "french": {
         "nasal-vowels": ("Was die Nase mit französischen Vokalen zu tun hat", "What the nose has to do with French vowels"),
-        "u-or-ou": ("u oder ou? Zwei Schreibungen, zwei Vokale", "u or ou? Two spellings, two vowels"),
+        "u-or-ou": ("*u* oder *ou*? Zwei Schreibungen, zwei Vokale", "*u* or *ou*? Two spellings, two vowels"),
         "liaison": ("Liaison: Wenn stumme Konsonanten hörbar werden", "Liaison: when silent consonants become audible"),
-        "schwa": ("Das flüchtige e: Wo bleibt das Schwa?", "The fleeting e: where does the schwa go?"),
+        "schwa": ("Das flüchtige *e*: Wo bleibt das Schwa?", "The fleeting *e*: where does the schwa go?"),
         "spelling-and-pronunciation": ("Französisch klingt anders, als es geschrieben wird", "French sounds different from how it is spelled"),
         "french-stress": ("Wo liegt die Betonung im Französischen?", "Where does the stress fall in French?"),
     },
     "german": {
-        "miete-or-mitte": ("Miete oder Mitte? Wenn Vokale Wörter unterscheiden", "Miete or Mitte? When vowels tell words apart"),
-        "ich-or-ach": ("Ich oder ach? Zwei Laute für ch", "Ich or ach? Two sounds for ch"),
-        "final-devoicing": ("Rad oder Rat? Am Wortende wird es stimmlos", "Rad or Rat? Voiceless at the end of the word"),
+        "miete-or-mitte": ("*Miete* oder *Mitte*? Wenn Vokale Wörter unterscheiden", "*Miete* or *Mitte*? When vowels tell words apart"),
+        "ich-or-ach": ("*Ich* oder *ach*? Zwei Laute für *ch*", "*Ich* or *ach*? Two sounds for *ch*"),
+        "final-devoicing": ("*Rad* oder *Rat*? Am Wortende wird es stimmlos", "*Rad* or *Rat*? Voiceless at the end of the word"),
         "german-stress": ("Was die Betonung im Deutschen verändert", "What stress changes in German"),
     },
 }
@@ -103,11 +103,13 @@ def test_hub_titles_and_structure(client, teaching_lang: str, ui_lang: str) -> N
         assert cards == list(NEW_TOPICS[teaching_lang]) and cards[0] == START[teaching_lang]
         first_group = html.split('id="teaching-group-2"')[0]
         assert re.findall(rf'href="/{ui_lang}/teaching/{teaching_lang}/([a-z0-9-]+)"', first_group) == [START[teaching_lang]]
-        intro = _text(re.search(r'pm-teaching-overview__intro-text">(.*?)</p>', html, re.S).group(1))
-        # the introductions describe the series; they do not promise listening examples that do not exist yet
-        assert "entstehen derzeit" in intro or "currently being developed" in intro
-        for promise in ("Hörbeispiele", "listening examples", "audio examples"):
-            assert promise not in intro
+    # every hub has the same introduction, naming its own subject
+    intro = _text(re.search(r'pm-teaching-overview__intro-text">(.*?)</p>', html, re.S).group(1)).strip()
+    subject = {"de": {"spanish": "Spanischunterricht", "english": "Englischunterricht", "french": "Französischunterricht", "german": "Deutschunterricht"},
+               "en": {"spanish": "Spanish lessons", "english": "English lessons", "french": "French lessons", "german": "German lessons"}}[ui_lang][teaching_lang]
+    assert intro == (f"Die Themenseiten bieten fachliche Orientierung, Hörbeispiele und Anregungen für kurze Ausspracheimpulse im {subject}. Oft genügen dafür zehn Minuten zwischendurch – und viele Phänomene lassen sich mit passenden Beispielen schon ab A1 aufgreifen." if ui_lang == "de"
+                     else f"The topic pages offer linguistic guidance, listening examples, and ideas for short pronunciation activities in {subject}. Often, just ten minutes here and there are enough – and many of these features can be introduced as early as A1 with suitable examples.")
+    assert "entstehen derzeit" not in html and "currently being developed" not in html
 
 
 def test_spanish_content_edition_hub_title() -> None:
@@ -122,7 +124,10 @@ def test_placeholder_pages_show_title_teaser_and_tba_only(client, teaching_lang:
     source = yaml.safe_load((TEACHING / teaching_lang / slug / f"{ui_lang}.yaml").read_text(encoding="utf-8"))
     assert source["title"] == NEW_TOPICS[teaching_lang][slug][ui_lang == "en"] and source["status"] == "placeholder"
     assert source["summary"] and source["blocks"] == [{"type": "topic_meta"}] and "metadata" not in source
-    assert re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1).strip() == html_module.escape(source["title"], quote=False)
+    # metalinguistic mentions are italic in the visible title, plain in <title>
+    expected_h1 = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", html_module.escape(source["title"], quote=False))
+    assert re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1).strip() == expected_h1
+    assert f"<title>{html_module.escape(source['title'].replace('*', ''), quote=False)} · " in html
     meta = re.findall(r'pm-teaching-topic-meta__(?:label|value)">([^<]*)<', html)
     assert meta == (["Autor:innen:", "tba"] if ui_lang == "de" else ["Authors:", "tba"])  # no dates
     # nothing after the header: no sections, no empty containers, no bottom navigation, no citation

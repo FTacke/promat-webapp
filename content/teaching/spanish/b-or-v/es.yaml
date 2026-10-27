@@ -1,5 +1,5 @@
 resource_id: promat-teaching-es-b-or-v
-title: ¿B o V? Cuando la escritura se hace oír
+title: '¿*B* o *V*? Cuando la escritura se hace oír'
 summary: Por qué dos letras del español representan un mismo fonema y, aun así, la escritura puede inducir pronunciaciones distintas.
 description: Por qué dos letras del español representan un mismo fonema y, aun así, la escritura puede inducir pronunciaciones distintas.
 equivalents:
@@ -66,7 +66,7 @@ blocks:
     subtitle: L1 alemán · W92
     audio: corpus/p4-bienes-learner.mp3
 - type: text
-  body: 'El sonido concreto que se oye no depende de la letra, sino del contexto fonético: el fonema /b/ se realiza normalmente como oclusiva [b] después de una pausa o de una consonante nasal y, en otros contextos, como aproximante [β]. Así, *vino* [ˈbi.no], pero *de vino* [de.ˈβi.no]. La página temática [b, d y g: ¿demasiado fuertes?](/de/teaching/spanish/es/soft-consonants-b-d-g) explica esta diferencia con más detalle.'
+  body: 'El sonido concreto que se oye no depende de la letra, sino del contexto fonético: el fonema /b/ se realiza normalmente como oclusiva [b] después de una pausa o de una consonante nasal y, en otros contextos, como aproximante [β]. Así, *vino* [ˈbi.no], pero *de vino* [de.ˈβi.no]. La página temática [*b*, *d* y *g*: ¿demasiado fuertes?](/de/teaching/spanish/es/soft-consonants-b-d-g) explica esta diferencia con más detalle.'
 - type: section_heading
   title: Sugerencias para el aula
 - type: teaching_impulses

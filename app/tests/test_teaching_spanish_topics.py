@@ -520,9 +520,9 @@ def test_r_at_word_end_page_follows_the_agreed_dramaturgy(client, lang: str) -> 
     assert prompts == (["Das eigene Deutsch entdecken", "Spanische Wortenden bewusst hören", "Vom Wortende zur Silbe"] if de
                        else ["Discover your own German", "Listen to Spanish word endings consciously", "From word ending to syllable"])
     # the Vertiefung box lists exactly three resources with a short note each
-    items = re.findall(r'pm-teaching-further-reading__item-title">([^<]+)<', html)
-    assert items == (["Aussprache im digitalen Lehrbuch", "Das spanische r", "Weiches Spanisch, hartes Deutsch"] if de
-                     else ["Pronunciation in the digital textbook", "The Spanish r", "Soft Spanish, hard German"])
+    items = re.findall(r'pm-teaching-further-reading__item-title">((?:[^<]|</?em>)+)<', html)
+    assert items == (["Aussprache im digitalen Lehrbuch", "Das spanische <em>r</em>", "Weiches Spanisch, hartes Deutsch"] if de
+                     else ["Pronunciation in the digital textbook", "The Spanish <em>r</em>", "Soft Spanish, hard German"])
     assert client.get(f"/{lang}/teaching/spanish/r").status_code == 200
 
 
@@ -580,9 +580,9 @@ def test_spanish_r_page_follows_the_agreed_dramaturgy(client, lang: str) -> None
     prompts = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
     assert prompts == (["Erst den Unterschied hören", "Die Artikulationsstelle bewusst machen", "Die Schreibung als Hilfe nutzen"] if de
                        else ["Hear the difference first", "Make the place of articulation conscious", "Use the spelling as a help"])
-    items = re.findall(r'pm-teaching-further-reading__item-title">([^<]+)<', html)
-    assert items == (["Aussprache im digitalen Lehrbuch", "Orthographie im digitalen Lehrbuch", "Herkunftssprachen im digitalen Lehrbuch", "Das r am Wortende"] if de
-                     else ["Pronunciation in the digital textbook", "Orthography in the digital textbook", "Heritage languages in the digital textbook", "The r at the End of a Word"])
+    items = re.findall(r'pm-teaching-further-reading__item-title">((?:[^<]|</?em>)+)<', html)
+    assert items == (["Aussprache im digitalen Lehrbuch", "Orthographie im digitalen Lehrbuch", "Herkunftssprachen im digitalen Lehrbuch", "Das <em>r</em> am Wortende"] if de
+                     else ["Pronunciation in the digital textbook", "Orthography in the digital textbook", "Heritage languages in the digital textbook", "The <em>r</em> at the End of a Word"])
     for href in ("https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute", "https://linguistik.hispanistica.com/orthographie/#se-escribe-casi-como-se-habla",
                  "https://linguistik.hispanistica.com/herkunftssprachen/#gerolltes-r-normal-in-allen-herkunftssprachen"):
         assert href in html, href
@@ -955,7 +955,7 @@ def test_europe_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     prompts = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
     assert prompts == (["Vertraute Schreibungen vergleichen", "Vokalqualität bewusst machen", "Diphthonge als eine Silbe sprechen"] if de
                        else ["Compare familiar spellings", "Make vowel quality conscious", "Say diphthongs as one syllable"])
-    items = re.findall(r'pm-teaching-further-reading__item-title">([^<]+)<', html)
+    items = re.findall(r'pm-teaching-further-reading__item-title">((?:[^<]|</?em>)+)<', html)
     assert items == (["Aussprache im digitalen Lehrbuch", "Orthographie im digitalen Lehrbuch", "Weiches Spanisch, hartes Deutsch"] if de
                      else ["Pronunciation in the digital textbook", "Orthography in the digital textbook", "Soft Spanish, hard German"])
     for href in ("https://linguistik.hispanistica.com/aussprache/#laute-des-spanischen-herausforderungen", "https://linguistik.hispanistica.com/orthographie/#vokale",
@@ -970,7 +970,10 @@ def test_europe_page_title_teaser_citation_and_authorship(client, lang: str) -> 
     title = "Europa klingt auf Spanisch anders" if lang == "de" else "Europe sounds different in Spanish"
     teaser = ("Wie Lese- und Aussprachegewohnheiten aus dem Deutschen spanische Vokale und Diphthonge beeinflussen können." if lang == "de"
               else "How reading and pronunciation habits from German can influence Spanish vowels and diphthongs.")
-    assert teaser in html and html.count("<h1") == 1 and title in html_module.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1))
+    # metalinguistic italics in the visible title (*Europa*); plain text in <title> and in the citation
+    h1 = html_module.unescape(re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1))
+    assert teaser in html and html.count("<h1") == 1 and h1.strip() == ("<em>Europa</em> klingt auf Spanisch anders" if lang == "de" else "<em>Europe</em> sounds different in Spanish")
+    assert f"<title>{title} · " in html
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
     assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
     assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/{EUROPE}" in html
@@ -1156,8 +1159,8 @@ def test_spanish_topic_teasers_are_single_sentences_that_do_not_repeat_the_title
     expected = {
         ("europe-sounds-different", "de"): "Wie Lese- und Aussprachegewohnheiten aus dem Deutschen spanische Vokale und Diphthonge beeinflussen können.",
         ("b-or-v", "de"): "Warum zwei spanische Buchstaben denselben Laut bezeichnen – und die Schrift dennoch zu unterschiedlichen Aussprachen verleiten kann.",
-        ("r", "de"): "Zwei spanische r-Laute – und warum das deutsche r anders klingt.",
-        ("r-am-silbenende", "de"): "Warum das deutsche r häufig zum Vokal wird, das spanische aber konsonantisch bleibt.",
+        ("r", "de"): "Zwei spanische *r*-Laute – und warum das deutsche *r* anders klingt.",
+        ("r-am-silbenende", "de"): "Warum das deutsche *r* häufig zum Vokal wird, das spanische aber konsonantisch bleibt.",
     }
     for (slug, lang), teaser in expected.items():
         meta = yaml.safe_load((TOPIC_DIR / slug / f"{lang}.yaml").read_text(encoding="utf-8"))

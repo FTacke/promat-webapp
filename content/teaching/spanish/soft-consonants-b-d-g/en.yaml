@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-soft-consonants-b-d-g
-title: 'b, d and g: Pronounced too hard?'
-summary: Why Spanish b, d and g often sound softer than in German – and when they do not.
-description: Why Spanish b, d and g often sound softer than in German – and when they do not.
+title: '*b*, *d* and *g*: Pronounced too hard?'
+summary: 'Why Spanish *b*, *d* and *g* often sound softer than in German – and when they do not.'
+description: 'Why Spanish *b*, *d* and *g* often sound softer than in German – and when they do not.'
 equivalents:
   de: soft-consonants-b-d-g
 metadata:
@@ -120,7 +120,7 @@ blocks:
     text: The other mechanism behind the “clipped” impression – additional glottal stops.
     cta: Go to topic page
     href: /en/teaching/spanish/soft-spanish-hard-german
-  - title: B or V? When spelling has a say
+  - title: '*B* or *V*? When spelling has a say'
     text: Why the Spanish [β] is not a [v] and what spelling has to do with it.
     cta: Go to topic page
     href: /en/teaching/spanish/b-or-v

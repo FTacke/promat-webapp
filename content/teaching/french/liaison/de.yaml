@@ -1,8 +1,8 @@
 resource_id: promat-teaching-fr-liaison
 status: placeholder
 title: 'Liaison: Wenn stumme Konsonanten hörbar werden'
-summary: Warum in *les amis* ein z-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.
-description: Warum in *les amis* ein z-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.
+summary: 'Warum in *les amis* ein *z*-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.'
+description: 'Warum in *les amis* ein *z*-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.'
 equivalents:
   en: liaison
 blocks:

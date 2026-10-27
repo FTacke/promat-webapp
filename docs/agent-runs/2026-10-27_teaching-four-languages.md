@@ -52,3 +52,9 @@ Die sieben spanischen Themenseiten (`de.yaml`, `en.yaml`, `es.yaml`), Audio-Slot
 ## Offen
 
 - Der allgemeine Einleitungssatz der Sprachauswahl („Themenseiten mit fachlicher Orientierung, Hörbeispielen und Unterrichtsimpulsen“) gilt bisher nur für Spanisch vollständig; nicht geändert, da die Sprachauswahl nicht umgestaltet werden sollte.
+
+## Nachtrag: Einheitliche Einleitung, kursive Erwähnungen
+
+- Alle Übersichten tragen die Einleitung der Spanisch-Übersicht, mit dem jeweiligen Fach (Spanisch-, Englisch-, Französisch-, Deutschunterricht / Spanish, English, French, German lessons); die „entstehen derzeit“-Texte sind entfernt.
+- Metasprachliche Erwähnungen in Titeln und Teasern kursiv, in DE, EN und der spanischen Inhaltsedition: *Europa*/*Europe*, *B*/*V*, *b*, *d*, *g*, *r* (auch *r*-Laute), *th*, *Ship*/*sheep*, *u*/*ou*, *e*, *Miete*/*Mitte*, *Ich*/*ach*, *ch*, *Rad*/*Rat*, *n*, *z*-Laut; ebenso dort, wo Seitentitel zitiert werden (Vertiefungstitel, Linktexte). Fachtermini (Schwa, Liaison, erres) bleiben aufrecht. `<title>`, Meta-Beschreibung, JSON-LD und Zitation zeigen Klartext.
+- Der Post-Deploy-Smoke vergleicht den `<title>` jetzt mit dem Klartext des Seitentitels (vorher wäre er an den Sternchen gescheitert).

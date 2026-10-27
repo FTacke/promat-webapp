@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r
-title: The Spanish r
-summary: Two Spanish r sounds – and why the German r sounds different.
-description: Two Spanish r sounds – and why the German r sounds different.
+title: 'The Spanish *r*'
+summary: 'Two Spanish *r* sounds – and why the German *r* sounds different.'
+description: 'Two Spanish *r* sounds – and why the German *r* sounds different.'
 equivalents:
   de: r
 metadata:
@@ -86,7 +86,7 @@ blocks:
     audio: corpus/p2-reloj-learner.mp3
 - type: text
   body: |-
-    *Reír* begins and ends with an r. German-speaking learners may sometimes carry over two habits here: a back r at the beginning of the word and a vocalised one at the end. Here, the focus is on the beginning of the word; the end of the word is treated in more detail on the topic page [The r at the End of a Word](/en/teaching/spanish/r-am-silbenende).
+    *Reír* begins and ends with an r. German-speaking learners may sometimes carry over two habits here: a back r at the beginning of the word and a vocalised one at the end. Here, the focus is on the beginning of the word; the end of the word is treated in more detail on the topic page [The *r* at the End of a Word](/en/teaching/spanish/r-am-silbenende).
 - type: audio_contrast
   title: 'Listening comparison: *reír*'
   lead: How does the *r* at the beginning of the word sound in the two recordings?
@@ -132,7 +132,7 @@ blocks:
     text: Why Turkish, Kurdish or Italian can be an advantage for the trilled r (in German).
     cta: Learn more
     href: https://linguistik.hispanistica.com/herkunftssprachen/#gerolltes-r-normal-in-allen-herkunftssprachen
-  - title: The r at the End of a Word
+  - title: 'The *r* at the End of a Word'
     text: Why the r at the end of a word sounds different in Spanish than in German – and what German r-vocalisation has to do with it.
     cta: Go to topic page
     href: /en/teaching/spanish/r-am-silbenende

@@ -1,5 +1,5 @@
 resource_id: promat-teaching-es-soft-consonants-b-d-g
-title: 'b, d y g: ¿demasiado fuertes?'
+title: '*b*, *d* y *g*: ¿demasiado fuertes?'
 summary: Por qué la *b*, la *d* y la *g* del español suelen sonar más suaves que en alemán y cuándo no ocurre así.
 description: Por qué la *b*, la *d* y la *g* del español suelen sonar más suaves que en alemán y cuándo no ocurre así.
 equivalents:
@@ -115,7 +115,7 @@ blocks:
     text: 'Otro mecanismo que puede producir una impresión de habla «entrecortada»: la inserción de golpes de glotis.'
     cta: Página temática relacionada
     href: /de/teaching/spanish/es/soft-spanish-hard-german
-  - title: ¿B o V? Cuando la escritura se hace oír
+  - title: '¿*B* o *V*? Cuando la escritura se hace oír'
     text: Por qué la aproximante española [β] no es [v] y qué papel desempeña la grafía.
     cta: Página temática relacionada
     href: /de/teaching/spanish/es/b-or-v

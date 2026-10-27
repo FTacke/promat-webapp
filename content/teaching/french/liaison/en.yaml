@@ -1,8 +1,8 @@
 resource_id: promat-teaching-fr-liaison
 status: placeholder
 title: 'Liaison: when silent consonants become audible'
-summary: Why a z sound can be heard in *les amis* – and when French links words in this way.
-description: Why a z sound can be heard in *les amis* – and when French links words in this way.
+summary: 'Why a *z* sound can be heard in *les amis* – and when French links words in this way.'
+description: 'Why a *z* sound can be heard in *les amis* – and when French links words in this way.'
 equivalents:
   de: liaison
 blocks:

@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r-am-silbenende
-title: The r at the End of a Word
-summary: Why the German r often turns into a vowel while the Spanish r stays consonantal.
-description: Why the German r often turns into a vowel while the Spanish r stays consonantal.
+title: 'The *r* at the End of a Word'
+summary: 'Why the German *r* often turns into a vowel while the Spanish *r* stays consonantal.'
+description: 'Why the German *r* often turns into a vowel while the Spanish *r* stays consonantal.'
 equivalents:
   de: r-am-silbenende
 metadata:
@@ -98,7 +98,7 @@ blocks:
     text: The r sounds of Spanish and German, German r-vocalisation and the example *reír* (in German).
     cta: Learn more
     href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
-  - title: The Spanish r
+  - title: 'The Spanish *r*'
     text: The single and the multiple tap r – and the contrast *caro* – *carro*.
     cta: Go to topic page
     href: /en/teaching/spanish/r

@@ -105,8 +105,16 @@ def draft_topic_paths() -> list[str]:
 
 
 def _topic_title(path: Path) -> str:
+    """Plain page title as the server renders it in <title>: YAML quoting and Markdown emphasis (*Europa*) removed."""
     match = re.search(r"^title:\s*(.+?)\s*$", path.read_text(encoding="utf-8"), flags=re.M)
-    return match.group(1).strip("\"'") if match else ""
+    if not match:
+        return ""
+    value = match.group(1)
+    if len(value) > 1 and value[0] == value[-1] == "'":
+        value = value[1:-1].replace("''", "'")
+    else:
+        value = value.strip("\"'")
+    return re.sub(r"\*+([^*]+?)\*+", r"\1", value)
 
 
 def _title(body: str) -> str:

@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r-am-silbenende
-title: Das r am Wortende
-summary: Warum das deutsche r häufig zum Vokal wird, das spanische aber konsonantisch bleibt.
-description: Warum das deutsche r häufig zum Vokal wird, das spanische aber konsonantisch bleibt.
+title: 'Das *r* am Wortende'
+summary: 'Warum das deutsche *r* häufig zum Vokal wird, das spanische aber konsonantisch bleibt.'
+description: 'Warum das deutsche *r* häufig zum Vokal wird, das spanische aber konsonantisch bleibt.'
 equivalents:
   en: r-am-silbenende
 metadata:
@@ -98,7 +98,7 @@ blocks:
     text: Die R-Laute des Spanischen und des Deutschen, die deutsche R-Vokalisierung und das Beispiel *reír*.
     cta: Mehr erfahren
     href: https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute
-  - title: Das spanische r
+  - title: 'Das spanische *r*'
     text: Das einfache und das mehrfach geschlagene r – und der Gegensatz *caro* – *carro*.
     cta: Zur Themenseite
     href: /de/teaching/spanish/r

@@ -83,7 +83,7 @@ blocks:
     subtitle: L1 alemán · W2
     audio: corpus/p2-reloj-learner.mp3
 - type: text
-  body: '*Reír* empieza y termina con una *r*. En esta palabra, los aprendientes germanohablantes pueden transferir dos hábitos diferentes: una *r* posterior al principio y una *r* vocalizada al final. Aquí el foco está en el inicio de palabra; la página [La r al final de palabra](/de/teaching/spanish/es/r-am-silbenende) trata con más detalle el sonido final.'
+  body: '*Reír* empieza y termina con una *r*. En esta palabra, los aprendientes germanohablantes pueden transferir dos hábitos diferentes: una *r* posterior al principio y una *r* vocalizada al final. Aquí el foco está en el inicio de palabra; la página [La *r* al final de palabra](/de/teaching/spanish/es/r-am-silbenende) trata con más detalle el sonido final.'
 - type: audio_contrast
   title: 'Comparación auditiva: *reír*'
   lead: ¿Cómo suena la *r* inicial en las dos grabaciones?
@@ -128,7 +128,7 @@ blocks:
     text: Por qué el turco, el kurdo o el italiano pueden facilitar la articulación de la *r* vibrante.
     cta: Más información
     href: https://linguistik.hispanistica.com/herkunftssprachen/#gerolltes-r-normal-in-allen-herkunftssprachen
-  - title: La r al final de palabra
+  - title: 'La *r* al final de palabra'
     text: Por qué la *r* final suena diferente en español y en alemán y qué papel desempeña la vocalización de la *r* alemana.
     cta: Página temática relacionada
     href: /de/teaching/spanish/es/r-am-silbenende

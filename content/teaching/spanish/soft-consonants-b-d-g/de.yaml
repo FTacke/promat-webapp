@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-soft-consonants-b-d-g
-title: 'b, d und g: Zu hart ausgesprochen?'
-summary: Warum spanische b, d und g oft weicher klingen als im Deutschen – und wann sie es nicht tun.
-description: Warum spanische b, d und g oft weicher klingen als im Deutschen – und wann sie es nicht tun.
+title: '*b*, *d* und *g*: Zu hart ausgesprochen?'
+summary: 'Warum spanische *b*, *d* und *g* oft weicher klingen als im Deutschen – und wann sie es nicht tun.'
+description: 'Warum spanische *b*, *d* und *g* oft weicher klingen als im Deutschen – und wann sie es nicht tun.'
 equivalents:
   en: soft-consonants-b-d-g
 metadata:
@@ -120,7 +120,7 @@ blocks:
     text: Der andere Mechanismus hinter dem „abgehackten“ Höreindruck – zusätzliche Knacklaute.
     cta: Zur Themenseite
     href: /de/teaching/spanish/soft-spanish-hard-german
-  - title: B oder V? Wenn die Schrift mitredet
+  - title: '*B* oder *V*? Wenn die Schrift mitredet'
     text: Warum das spanische [β] kein [v] ist und welche Rolle die Schreibung dabei spielt.
     cta: Zur Themenseite
     href: /de/teaching/spanish/b-or-v

@@ -1942,7 +1942,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Warum <em>seseo</em> und <em>distinción</em> gleichwertige Aussprachen sind – und was das für den Unterricht bedeutet.' in html
     assert 'Von Felix Tacke' not in html
     assert 'pm-teaching-topic-card__byline' not in html
-    assert 'Das r am Wortende' in html
+    assert 'Das <em>r</em> am Wortende' in html
     assert html.count('pm-teaching-topic-card--available') == 7
     assert html.count('pm-teaching-topic-card--pending') == 0
     assert html.count('pm-teaching-topic-card--compact') == 7
@@ -1962,7 +1962,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Das spanische r' not in first_group_html
     assert first_group_html.index('Welche Aussprache unterrichten?') < first_group_html.index('Weiches Spanisch, hartes Deutsch')
     second_group_html = _extract_section_by_labelledby(html, 'teaching-group-2')
-    order = ['B oder V? Wenn die Schrift mitredet', 'b, d und g: Zu hart ausgesprochen?', 'Das spanische r', 'Das r am Wortende']
+    order = ['<em>B</em> oder <em>V</em>? Wenn die Schrift mitredet', '<em>b</em>, <em>d</em> und <em>g</em>: Zu hart ausgesprochen?', 'Das spanische <em>r</em>', 'Das <em>r</em> am Wortende']
     assert 'Ein Akzent verändert alles' not in html  # draft page: not listed
     positions = [second_group_html.index(title) for title in order]
     assert positions == sorted(positions)
@@ -2021,11 +2021,11 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'By Felix Tacke' not in html
     assert 'pm-teaching-topic-card__byline' not in html
     assert 'Soft Spanish, hard German' in html
-    assert 'Spanish r' in html
+    assert 'Spanish <em>r</em>' in html
     assert 'Getting started' in html and 'Fundamental questions and a first look at typical pronunciation features.' in html
     assert 'Exploring pronunciation features' in html and 'Explore pronunciation patterns and discover ways to address them in the classroom.' in html
     assert 'Basics' not in html and 'Sounds and articulation' not in html
-    assert 'The r at the End of a Word' in html
+    assert 'The <em>r</em> at the End of a Word' in html
     assert html.count('pm-teaching-topic-card--available') == 7
     assert html.count('pm-teaching-topic-card--pending') == 0
     for slug in ('which-pronunciation', 'soft-spanish-hard-german', 'europe-sounds-different', 'r', 'r-am-silbenende', 'b-or-v', 'soft-consonants-b-d-g'):

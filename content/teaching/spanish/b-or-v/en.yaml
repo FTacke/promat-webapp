@@ -1,5 +1,5 @@
 resource_id: promat-teaching-es-b-or-v
-title: B or V? When spelling has a say
+title: '*B* or *V*? When spelling has a say'
 summary: Why two Spanish letters stand for the same sound – and why spelling can still prompt different pronunciations.
 description: Why two Spanish letters stand for the same sound – and why spelling can still prompt different pronunciations.
 equivalents:
@@ -68,7 +68,7 @@ blocks:
     subtitle: L1 German · W92
     audio: corpus/p4-bienes-learner.mp3
 - type: text
-  body: 'Which sound is actually heard does not depend on the letter, by the way, but on the context: after a pause or a nasal, the phoneme /b/ is usually realised as the stop [b], elsewhere as the approximant [β] – *vino* [ˈbi.no], but *de vino* [de.ˈβi.no]. More on this on the topic page [b, d and g: Pronounced too hard?](/en/teaching/spanish/soft-consonants-b-d-g).'
+  body: 'Which sound is actually heard does not depend on the letter, by the way, but on the context: after a pause or a nasal, the phoneme /b/ is usually realised as the stop [b], elsewhere as the approximant [β] – *vino* [ˈbi.no], but *de vino* [de.ˈβi.no]. More on this on the topic page [*b*, *d* and *g*: Pronounced too hard?](/en/teaching/spanish/soft-consonants-b-d-g).'
 - type: section_heading
   title: Classroom prompts
 - type: teaching_impulses

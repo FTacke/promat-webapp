@@ -1,7 +1,7 @@
 resource_id: promat-teaching-es-r
-title: Das spanische r
-summary: Zwei spanische r-Laute – und warum das deutsche r anders klingt.
-description: Zwei spanische r-Laute – und warum das deutsche r anders klingt.
+title: 'Das spanische *r*'
+summary: 'Zwei spanische *r*-Laute – und warum das deutsche *r* anders klingt.'
+description: 'Zwei spanische *r*-Laute – und warum das deutsche *r* anders klingt.'
 equivalents:
   en: r
 metadata:
@@ -86,7 +86,7 @@ blocks:
     audio: corpus/p2-reloj-learner.mp3
 - type: text
   body: |-
-    *Reír* beginnt und endet mit einem r. Deutschsprachige Lernende können hier mitunter zwei Gewohnheiten übertragen: ein hinteres r am Wortanfang und ein vokalisiertes am Wortende. Hier geht es um den Wortanfang; das Wortende behandelt die Themenseite [Das r am Wortende](/de/teaching/spanish/r-am-silbenende) ausführlicher.
+    *Reír* beginnt und endet mit einem r. Deutschsprachige Lernende können hier mitunter zwei Gewohnheiten übertragen: ein hinteres r am Wortanfang und ein vokalisiertes am Wortende. Hier geht es um den Wortanfang; das Wortende behandelt die Themenseite [Das *r* am Wortende](/de/teaching/spanish/r-am-silbenende) ausführlicher.
 - type: audio_contrast
   title: 'Hörvergleich: *reír*'
   lead: Wie klingt das *r* am Wortanfang in den beiden Aufnahmen?
@@ -132,7 +132,7 @@ blocks:
     text: Warum Türkisch, Kurdisch oder Italienisch beim gerollten r ein Vorteil sein können.
     cta: Mehr erfahren
     href: https://linguistik.hispanistica.com/herkunftssprachen/#gerolltes-r-normal-in-allen-herkunftssprachen
-  - title: Das r am Wortende
+  - title: 'Das *r* am Wortende'
     text: Warum das r am Wortende im Spanischen anders klingt als im Deutschen – und was die deutsche R-Vokalisierung damit zu tun hat.
     cta: Zur Themenseite
     href: /de/teaching/spanish/r-am-silbenende

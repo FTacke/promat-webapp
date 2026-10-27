@@ -1,8 +1,8 @@
 resource_id: promat-teaching-en-english-th
 status: placeholder
-title: 'The English th: two sounds, many variants'
-summary: How the two th sounds are produced, why learners often replace them and what role regional variation plays.
-description: How the two th sounds are produced, why learners often replace them and what role regional variation plays.
+title: 'The English *th*: two sounds, many variants'
+summary: 'How the two *th* sounds are produced, why learners often replace them and what role regional variation plays.'
+description: 'How the two *th* sounds are produced, why learners often replace them and what role regional variation plays.'
 equivalents:
   de: english-th
 blocks:

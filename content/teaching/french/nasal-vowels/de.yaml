@@ -1,8 +1,8 @@
 resource_id: promat-teaching-fr-nasal-vowels
 status: placeholder
 title: Was die Nase mit französischen Vokalen zu tun hat
-summary: Wie die Nasalvokale in *bon*, *banc* und *bain* entstehen – und weshalb ein geschriebenes n nicht immer als Konsonant erklingt.
-description: Wie die Nasalvokale in *bon*, *banc* und *bain* entstehen – und weshalb ein geschriebenes n nicht immer als Konsonant erklingt.
+summary: 'Wie die Nasalvokale in *bon*, *banc* und *bain* entstehen – und weshalb ein geschriebenes *n* nicht immer als Konsonant erklingt.'
+description: 'Wie die Nasalvokale in *bon*, *banc* und *bain* entstehen – und weshalb ein geschriebenes *n* nicht immer als Konsonant erklingt.'
 equivalents:
   en: nasal-vowels
 blocks:
