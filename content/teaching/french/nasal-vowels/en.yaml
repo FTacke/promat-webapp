@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-nasal-vowels
+status: placeholder
+title: What the nose has to do with French vowels
+summary: How the nasal vowels in *bon*, *banc* and *bain* are produced – and why a written n does not always sound like a consonant.
+description: How the nasal vowels in *bon*, *banc* and *bain* are produced – and why a written n does not always sound like a consonant.
+equivalents:
+  de: nasal-vowels
+blocks:
+- type: topic_meta

@@ -1,0 +1,9 @@
+resource_id: promat-teaching-de-german-stress
+status: placeholder
+title: Was die Betonung im Deutschen verändert
+summary: Wie Wortakzent und Satzakzent Bedeutungen hervorheben und den Rhythmus einer Äußerung prägen.
+description: Wie Wortakzent und Satzakzent Bedeutungen hervorheben und den Rhythmus einer Äußerung prägen.
+equivalents:
+  en: german-stress
+blocks:
+- type: topic_meta

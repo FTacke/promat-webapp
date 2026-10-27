@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-spelling-and-pronunciation
+status: placeholder
+title: Französisch klingt anders, als es geschrieben wird
+summary: Wie stumme Endkonsonanten und vertraute Schriftbilder die Aussprache französischer Wörter beeinflussen.
+description: Wie stumme Endkonsonanten und vertraute Schriftbilder die Aussprache französischer Wörter beeinflussen.
+equivalents:
+  en: spelling-and-pronunciation
+blocks:
+- type: topic_meta

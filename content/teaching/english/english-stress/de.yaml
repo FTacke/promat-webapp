@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-english-stress
+status: placeholder
+title: Englisch betont anders
+summary: Wie Wortakzent und Satzbetonung den Rhythmus, die Verständlichkeit und die Bedeutung einer Äußerung beeinflussen.
+description: Wie Wortakzent und Satzbetonung den Rhythmus, die Verständlichkeit und die Bedeutung einer Äußerung beeinflussen.
+equivalents:
+  en: english-stress
+blocks:
+- type: topic_meta

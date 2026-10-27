@@ -1,21 +1,21 @@
 teaching_lang: french
-topic_slug: nasalvokale
+topic_slug: liaison
 ui_lang: en
 status: draft
 
-title: Nasal vowels
-summary: "Pronunciation and listening comprehension around French nasal vowels."
-description: This topic page has been created and is still being developed. It is planned as a compact teaching page on French nasal vowels.
+title: Liaison
+summary: "Pronunciation and listening comprehension around liaison in French."
+description: This topic page has been created and is still being developed. It is planned as a compact teaching page on liaison in French.
 
 equivalents:
-  de: nasalvokale
+  de: liaison
 
 card:
-  title: Nasal vowels
-  description: "Pronunciation and listening comprehension around French nasal vowels."
+  title: Liaison
+  description: "Pronunciation and listening comprehension around liaison in French."
 
 hub:
-  group: Sounds and articulation
+  group: Word linking and connected speech
   status: draft
 
 metadata:
@@ -31,7 +31,7 @@ blocks:
 
   - type: text
     body: |
-      A short explanatory introduction can be added here later: what is relevant for teaching about French nasal vowels? Which listening goals are central?
+      A short explanatory introduction can be added here later: what is relevant for teaching about liaison in French? Which listening goals are central?
 
   - type: overview
     title: At a glance
@@ -50,7 +50,7 @@ blocks:
   - type: audio_examples
     title: Listening comparison
     lead: |
-      This can later make audible how French nasal vowels are realized in short contexts.
+      This can later make audible how liaison in French is realized in short contexts.
     empty_state: Audio examples have not yet been added.
 
   - type: section_heading

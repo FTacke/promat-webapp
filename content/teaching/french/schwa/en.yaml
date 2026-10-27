@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-schwa
+status: placeholder
+title: 'The fleeting e: where does the schwa go?'
+summary: Why an unstressed e in French is sometimes pronounced and sometimes disappears.
+description: Why an unstressed e in French is sometimes pronounced and sometimes disappears.
+equivalents:
+  de: schwa
+blocks:
+- type: topic_meta

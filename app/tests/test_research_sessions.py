@@ -1861,25 +1861,22 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask, releas
     assert 'pm-teaching-overview__prompt' not in html
     assert 'Welche Sprache unterrichten Sie?' in html
     assert 'pm-teaching-language-list' in html
-    assert html.count('pm-teaching-language-row--available') == 2
-    assert html.count('pm-teaching-language-row--pending') == 2
+    assert html.count('pm-teaching-language-row--available') == 4
+    assert html.count('pm-teaching-language-row--pending') == 0
     assert html.count('pm-teaching-language-row__copy') == 4
     assert html.count('pm-teaching-language-row__status') == 4
-    assert html.count('pm-nav-surface__arrow') == 2
+    assert html.count('pm-nav-surface__arrow') == 4
     # Compact, typographic panels: no separate "Öffnen" link and no status badges.
     assert 'pm-teaching-language-row__action' not in html
     assert 'pm-teaching-language-row__badge' not in html
     assert '>Öffnen<' not in html
     assert html.index('>Spanisch<') < html.index('7 Themenseiten') < html.index('pm-nav-surface__arrow')
-    assert html.index('>Englisch<') < html.index('In Vorbereitung')
-    assert 'href="/de/teaching/spanish"' in html
-    assert 'href="/de/teaching/english"' not in html
-    assert 'href="/de/teaching/french"' in html
-    assert 'href="/de/teaching/german"' not in html
+    for slug in ("spanish", "english", "french", "german"):
+        assert f'href="/de/teaching/{slug}"' in html
     assert 'aria-disabled' not in html
-    assert '7 Themenseiten' in html
-    assert '3 Themenseiten' in html
-    assert html.count('In Vorbereitung') == 2
+    # counts of the announced topic pages, from the content index: 7 / 5 / 6 / 4
+    assert html.index('>Spanisch<') < html.index('7 Themenseiten') < html.index('>Englisch<') < html.index('5 Themenseiten') < html.index('>Französisch<') < html.index('6 Themenseiten') < html.index('>Deutsch<') < html.index('4 Themenseiten')
+    assert 'In Vorbereitung' not in html
     assert html.index('>Spanisch<') < html.index('>Englisch<') < html.index('>Französisch<') < html.index('>Deutsch<')
     assert 'Korpus wählen' not in html
     assert 'Aussprachebewusstsein für plurizentrisches Spanisch im Unterricht.' not in html
@@ -1926,7 +1923,7 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
     assert 'Welche Aussprache unterrichten?' not in drawer_html
     assert 'Das r am Wortende' not in drawer_html
     assert 'pm-teaching-page--hub' in html
-    assert 'Spanisch: Themenseiten' in html
+    assert 'Spanische Aussprache verstehen' in html and 'Spanisch: Themenseiten' not in html
     assert 'Spanisch: Aussprache unterrichten' not in html
     assert 'Themenseiten zur spanischen Aussprache im Fremdsprachenunterricht.' not in html
     assert 'fachliche Orientierung' in html
@@ -1979,12 +1976,12 @@ def test_teaching_language_root_uses_shared_topbar_and_mobile_drawer(url_app: Fl
 def test_pending_topic_cards_do_not_repeat_the_status_in_their_description(url_app: Flask) -> None:
     client = url_app.test_client()
 
+    # announced pages are public placeholders: available cards, never a pending status in the description
     for ui_lang, status in (("de", "In Vorbereitung"), ("en", "In preparation")):
         html = client.get(f"/{ui_lang}/teaching/french").get_data(as_text=True)
-        pending = html.count('<article class="pm-teaching-topic-card pm-teaching-topic-card--pending')
-        assert pending >= 3
-        assert html.count(f'class="pm-teaching-topic-card__status">{status}</p>') == pending
-        assert f"{status}: " not in html
+        assert html.count('<article class="pm-teaching-topic-card pm-teaching-topic-card--pending') == 0
+        assert html.count("pm-teaching-topic-card--available") == 6
+        assert f'class="pm-teaching-topic-card__status">{status}</p>' not in html and f"{status}: " not in html
 
 
 def test_teaching_french_hub_uses_current_language_drawer_context(url_app: Flask) -> None:
@@ -2015,7 +2012,7 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'Spanish: Topic pages' in html
+    assert 'Understanding Spanish Pronunciation' in html and 'Spanish: Topic pages' not in html
     assert 'Teaching Spanish pronunciation' not in html
     assert 'Topic pages for Spanish pronunciation in foreign language teaching.' not in html
     assert 'pm-nav-pill__label">Language selection</span>' in html
@@ -2048,17 +2045,18 @@ def test_teaching_english_hub_stays_within_english_edition_topics(url_app: Flask
     assert 'German' not in drawer_html
 
 
-@pytest.mark.parametrize("language_slug", ["english", "german"])
-def test_teaching_empty_hubs_render_public_empty_state(url_app: Flask, language_slug: str) -> None:
+@pytest.mark.parametrize(("language_slug", "title", "count"), [("english", "Englische Aussprache verstehen", 5), ("german", "Deutsche Aussprache verstehen", 4)])
+def test_teaching_english_and_german_hubs_list_their_announced_topics(url_app: Flask, language_slug: str, title: str, count: int) -> None:
     client = url_app.test_client()
 
     response = client.get(f"/de/teaching/{language_slug}")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert ': Aussprache unterrichten' in html
-    assert 'Themenseiten im Aufbau' in html
-    assert 'Für diese Sprache sind noch keine öffentlichen Themenseiten hinterlegt.' in html
+    assert title in html and ': Aussprache unterrichten' not in html
+    assert 'Themenseiten im Aufbau' not in html
+    assert 'Für diese Sprache sind noch keine öffentlichen Themenseiten hinterlegt.' not in html
+    assert html.count("pm-teaching-topic-card--available") == count
     assert 'Editionen' not in html
 
 
@@ -2089,12 +2087,22 @@ def test_teaching_topic_media_route_blocks_parent_traversal(url_app: Flask) -> N
 def test_teaching_unpublished_topic_is_not_found(url_app: Flask) -> None:
     client = url_app.test_client()
 
-    response = client.get("/en/teaching/french/liaison")
+    response = client.get("/en/teaching/spanish/accent-changes-everything")
 
     assert response.status_code == 404
 
 
 def test_teaching_topic_renders_public_content_blocks(url_app: Flask, released_teaching_content: Path) -> None:
+    # Every block type of the former French scaffold (now a test fixture, no longer content) rendered as a released page.
+    fixtures = Path(__file__).resolve().parent / "fixtures" / "teaching_scaffold"
+    for lang in ("de", "en"):
+        text = (fixtures / f"{lang}.yaml").read_text(encoding="utf-8")
+        text = re.sub(r"^status: draft\n", "", text, flags=re.M)
+        text = re.sub(r"^  status: draft\n", "", text, flags=re.M).replace("    - NN\n", "    - Test Autor\n")
+        (released_teaching_content / "french" / "liaison" / f"{lang}.yaml").write_text(text, encoding="utf-8")
+    import app.teaching_content as teaching_content
+
+    teaching_content.clear_teaching_content_caches()
     client = url_app.test_client()
 
     response = client.get("/de/teaching/french/liaison")
@@ -2261,17 +2269,24 @@ def test_every_teaching_topic_edition_uses_the_shared_vertical_layout(url_app: F
     """The layout is a property of the shared topic template, not of one page: all languages and UI languages get it."""
     client = url_app.test_client()
     routes: list[str] = []
+    placeholders: set[str] = set()
     for locale_file in sorted(released_teaching_content.glob("*/*/??.yaml")):
         teaching_language, topic_slug, ui_lang = locale_file.parts[-3], locale_file.parts[-2], locale_file.stem
         if topic_slug == "hubs" or "is_public: false" in locale_file.read_text(encoding="utf-8"):
             continue
         # additional content editions (e.g. es.yaml) are served below the content-language segment
         routes.append(f"/{ui_lang}/teaching/{teaching_language}/{topic_slug}" if ui_lang in ("de", "en") else f"/de/teaching/{teaching_language}/{ui_lang}/{topic_slug}")
+        if "status: placeholder" in locale_file.read_text(encoding="utf-8"):
+            placeholders.add(routes[-1])
     assert {route.split("/")[3] for route in routes} >= {"spanish", "french"}
     for route in routes:
         response = client.get(route)
         assert response.status_code == 200, route
         html = response.get_data(as_text=True)
+        if route in placeholders:
+            # an announced page shows header and authorship only: no sections, no empty containers
+            assert 'class="pm-teaching-topic-sections"' not in html and "pm-teaching-block-stack" not in html, route
+            continue
         assert 'class="pm-teaching-topic-sections"' in html, route
         assert 'pm-teaching-topic-section__stack pm-teaching-block-stack' in html, route
         assert 'pm-teaching-block-grid' not in html, route
@@ -2478,7 +2493,7 @@ def test_teaching_pilot_topic_renders_canonical_vertical_storytelling(url_app: F
     assert '<em>cena</em>' in html
     assert 'text-transform: uppercase' not in html
     assert 'Diese Themenseite zitieren' in html
-    assert html.index('Impulse für den Unterricht') < html.index('Vertiefung') < html.index('Diese Themenseite zitieren') < html.rindex('pm-nav-pill__label">Spanisch: Themenseiten</span>')
+    assert html.index('Impulse für den Unterricht') < html.index('Vertiefung') < html.index('Diese Themenseite zitieren') < html.rindex('pm-nav-pill__label">Alle Themen</span>')
     assert '*Pronunciation Matters*' not in html
     assert '[pronunciation-matters.de]' not in html
     assert 'Noch ein Aussprachemerkmal: `ll` und `y`' not in html
@@ -2499,7 +2514,7 @@ def test_teaching_english_topic_uses_natural_hub_backlink(url_app: Flask, releas
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'pm-nav-pill__label">Spanish: Topic pages</span>' in html
+    assert 'pm-nav-pill__label">All topics</span>' in html
     assert 'Editionen' not in html
 
 

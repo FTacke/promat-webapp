@@ -1,3 +1,15 @@
-title: Teaching English pronunciation
-lead: Topic pages for English pronunciation in foreign language teaching.
-groups: []
+title: Understanding English Pronunciation
+overview_intro: The topic pages on English pronunciation are currently being developed. They are intended to provide linguistic guidance on central pronunciation features – from the choice of a pronunciation model to vowels, the th sounds, weak forms and stress – and to suggest short pronunciation activities for English lessons.
+card_columns: 2
+groups:
+- title: Getting started
+  description: Fundamental questions about the pronunciation model in English lessons.
+  topics:
+  - which-english-pronunciation
+- title: Exploring pronunciation features
+  description: Explore pronunciation patterns and discover ways to address them in the classroom.
+  topics:
+  - ship-or-sheep
+  - english-th
+  - weak-forms-and-schwa
+  - english-stress

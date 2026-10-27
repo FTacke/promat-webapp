@@ -1,3 +1,14 @@
-title: Teaching German pronunciation
-lead: Topic pages for German pronunciation in foreign language teaching.
-groups: []
+title: Understanding German Pronunciation
+overview_intro: The topic pages on German pronunciation are currently being developed. They address the teaching of German as a foreign and second language and are intended to provide linguistic guidance on central pronunciation features – from vowel length and vowel quality to the two ch sounds, final devoicing and stress.
+card_columns: 2
+groups:
+- title: Getting started
+  description: A first look at a central pronunciation feature of German.
+  topics:
+  - miete-or-mitte
+- title: Exploring pronunciation features
+  description: Explore pronunciation patterns and discover ways to address them in the classroom.
+  topics:
+  - ich-or-ach
+  - final-devoicing
+  - german-stress

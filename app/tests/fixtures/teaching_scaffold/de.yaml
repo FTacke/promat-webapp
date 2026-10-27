@@ -1,21 +1,21 @@
 teaching_lang: french
-topic_slug: nasalvokale
+topic_slug: liaison
 ui_lang: de
 status: draft
 
-title: Nasalvokale
-summary: "Aussprache und Hörverstehen rund um französische Nasalvokale."
-description: Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zu französischen Nasalvokalen.
+title: Die Liaison
+summary: "Aussprache und Hörverstehen rund um die Liaison im Französischen."
+description: Diese Themenseite ist angelegt und wird noch ausgearbeitet. Geplant ist eine kompakte Unterrichtsseite zur Liaison im Französischen.
 
 equivalents:
-  en: nasalvokale
+  en: liaison
 
 card:
-  title: Nasalvokale
-  description: "Aussprache und Hörverstehen rund um französische Nasalvokale."
+  title: Die Liaison
+  description: "Aussprache und Hörverstehen rund um die Liaison im Französischen."
 
 hub:
-  group: Laute und Artikulation
+  group: Wortverbindung und Redefluss
   status: draft
 
 metadata:
@@ -31,7 +31,7 @@ blocks:
 
   - type: text
     body: |
-      Hier kann später ein kurzer erklärender Einstieg stehen: Was ist an französischen Nasalvokalen für den Unterricht relevant? Welche Hörziele stehen im Mittelpunkt?
+      Hier kann später ein kurzer erklärender Einstieg stehen: Was ist an der Liaison im Französischen für den Unterricht relevant? Welche Hörziele stehen im Mittelpunkt?
 
   - type: overview
     title: Auf einen Blick
@@ -50,7 +50,7 @@ blocks:
   - type: audio_examples
     title: Hörvergleich
     lead: |
-      Hier kann später hörbar gemacht werden, wie französische Nasalvokale in kurzen Kontexten realisiert werden.
+      Hier kann später hörbar gemacht werden, wie die Liaison im Französischen in kurzen Kontexten realisiert wird.
     empty_state: Audio-Beispiele noch nicht hinterlegt
 
   - type: section_heading

@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-french-stress
+status: placeholder
+title: Wo liegt die Betonung im Französischen?
+summary: Warum die rhythmische Gruppe für die französische Betonung so wichtig ist – und was das für den Redefluss bedeutet.
+description: Warum die rhythmische Gruppe für die französische Betonung so wichtig ist – und was das für den Redefluss bedeutet.
+equivalents:
+  en: french-stress
+blocks:
+- type: topic_meta

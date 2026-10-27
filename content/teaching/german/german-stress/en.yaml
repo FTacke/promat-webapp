@@ -1,0 +1,9 @@
+resource_id: promat-teaching-de-german-stress
+status: placeholder
+title: What stress changes in German
+summary: How word stress and sentence stress highlight meanings and shape the rhythm of an utterance.
+description: How word stress and sentence stress highlight meanings and shape the rhythm of an utterance.
+equivalents:
+  de: german-stress
+blocks:
+- type: topic_meta

@@ -29,6 +29,10 @@ _TOPIC_MEDIA_TYPES = frozenset({"audio", "downloads", "images", "video"})
 # placeholder "NN". This is part of the single availability rule in `topic_is_public`.
 _UNFINISHED_STATUS_VALUES = frozenset({"draft", "private", "pending", "planned", "scaffold"})
 _PLACEHOLDER_AUTHOR_NAMES = frozenset({"nn", "n.n.", "n. n."})
+# `status: placeholder` is a public topic that is announced but not yet written: listed, counted and reachable, with
+# title, teaser and the authorship "tba" only; no blocks, no dates, not citable, not indexed.
+PLACEHOLDER_STATUS = "placeholder"
+PLACEHOLDER_AUTHORSHIP = "tba"
 _TEACHING_LANG_PATTERN = re.compile(r"^[a-z]+$")
 _TOPIC_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _DATAWRAPPER_EMBED_HOST = "datawrapper.dwcdn.net"
@@ -371,6 +375,12 @@ def _topic_card_byline(ui_lang: str, raw_topic: dict[str, Any]) -> str:
     return translate(ui_lang, "teaching.topic.byline", authors=", ".join(authors))
 
 
+def topic_is_placeholder(raw_topic: dict[str, Any] | None) -> bool:
+    """A public topic announced with title and teaser only (``status: placeholder``)."""
+    status = (raw_topic or {}).get("status")
+    return isinstance(status, str) and status.strip().lower() == PLACEHOLDER_STATUS
+
+
 def _topic_is_unfinished(raw_topic: dict[str, Any]) -> bool:
     hub = raw_topic.get("hub") if isinstance(raw_topic.get("hub"), dict) else {}
     for value in (raw_topic.get("status"), hub.get("status")):
@@ -540,6 +550,7 @@ def _hub_topic_card(
         "metadata": _topic_card_metadata(raw_topic),
         "href": href,
         "is_available": is_available,
+        "is_placeholder": topic_is_placeholder(raw_topic),
     }, "title", "summary", "byline")
 
 
@@ -747,6 +758,8 @@ def _topic_metadata(ui_lang: str, raw_topic: dict[str, Any]) -> dict[str, Any]:
     metadata: dict[str, Any] = {"authors": None, "details": []}
     metadata_source = _topic_metadata_source(raw_topic)
     authors = _topic_author_names(raw_topic)
+    if not authors and topic_is_placeholder(raw_topic):
+        authors = [PLACEHOLDER_AUTHORSHIP]
     if authors:
         metadata["authors"] = {
             "key": "authors",
@@ -895,6 +908,7 @@ def topic_resource(
         doi=_as_text(raw_topic.get("doi")) or None,
         license_value=_as_text(raw_topic.get("license")) or None,
         published=topic_is_public(teaching_lang, source_lang, topic_slug, raw_topic=raw_topic)
+        and not topic_is_placeholder(raw_topic)
         and (content_lang is None or content_edition_topic_is_public(teaching_lang, content_lang, topic_slug)),
         path=content_edition_canonical_path(teaching_lang, content_lang, topic_slug) if content_lang else None,
         content_lang=content_lang,
@@ -1677,10 +1691,11 @@ def build_teaching_hub_page(
     edition = {"ui_lang": effective_ui_lang, "origin": origin} if content_lang else None
     topic_groups = _hub_topic_groups(teaching_lang, source_lang, edition=edition)
     topic_count = sum(len(group["cards"]) for group in topic_groups)
+    written_topic_count = sum(1 for group in topic_groups for card in group["cards"] if card["is_available"] and not card.get("is_placeholder"))
     area_resource = publication.teaching_area_resource(
         teaching_lang,
         effective_ui_lang,
-        has_public_topics=topic_count > 0,
+        has_public_topics=written_topic_count > 0,
         path=content_edition_canonical_path(teaching_lang, content_lang) if content_lang else None,
         content_lang=content_lang,
     )
@@ -1909,6 +1924,9 @@ def build_teaching_topic_page(
         "topic_sections": topic_sections,
         "content_header": content_header,
         "resource": resource if resource and resource["citable"] else None,
+        "is_placeholder": topic_is_placeholder(raw_topic),
+        # an announced, not yet written page is public but not offered to search engines
+        "meta_indexable": not topic_is_placeholder(raw_topic),
         "meta_description": (resource or {}).get("description") or render_markdown_plain_text(page_intro) or None,
         "meta_alternates": topic_public_alternates(teaching_lang, alternates_base_lang if content_lang else ui_lang, topic_slug),
         "meta_hreflang_self": content_lang or ui_lang,

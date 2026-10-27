@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-english-th
+status: placeholder
+title: 'Das englische th: zwei Laute, viele Varianten'
+summary: Wie die beiden th-Laute gebildet werden, warum Lernende sie häufig ersetzen und welche Rolle regionale Variation spielt.
+description: Wie die beiden th-Laute gebildet werden, warum Lernende sie häufig ersetzen und welche Rolle regionale Variation spielt.
+equivalents:
+  en: english-th
+blocks:
+- type: topic_meta

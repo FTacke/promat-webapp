@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-spelling-and-pronunciation
+status: placeholder
+title: French sounds different from how it is spelled
+summary: How silent final consonants and familiar spellings influence the pronunciation of French words.
+description: How silent final consonants and familiar spellings influence the pronunciation of French words.
+equivalents:
+  de: spelling-and-pronunciation
+blocks:
+- type: topic_meta

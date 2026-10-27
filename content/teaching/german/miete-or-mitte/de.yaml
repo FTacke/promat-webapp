@@ -1,0 +1,9 @@
+resource_id: promat-teaching-de-miete-or-mitte
+status: placeholder
+title: Miete oder Mitte? Wenn Vokale Wörter unterscheiden
+summary: Wie Vokaldauer und Vokalqualität im Deutschen zusammenwirken – und warum beide für das Verstehen wichtig sind.
+description: Wie Vokaldauer und Vokalqualität im Deutschen zusammenwirken – und warum beide für das Verstehen wichtig sind.
+equivalents:
+  en: miete-or-mitte
+blocks:
+- type: topic_meta

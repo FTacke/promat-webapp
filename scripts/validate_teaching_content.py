@@ -237,7 +237,16 @@ def validate_publication_front_matter(
                 errors.append(f"{where}: summary or description is required (used as the page description)")
             metadata = _metadata(topic)
             creators = _string_list(metadata.get("creators"))
-            if not creators:
+            if _as_text(topic.get("status")).lower() == "placeholder":
+                # An announced page: title, teaser and the rendered authorship "tba" only.
+                if creators or _string_list(metadata.get("authors")) or isinstance(topic.get("credits"), dict):
+                    errors.append(f"{where}: a placeholder names no authors (its authorship is shown as 'tba')")
+                if metadata.get("created") is not None or metadata.get("updated") is not None:
+                    errors.append(f"{where}: a placeholder carries no publication dates (metadata.created/updated)")
+                blocks = [block for block in topic.get("blocks") or [] if isinstance(block, dict) and block.get("type") != "topic_meta"]
+                if blocks:
+                    errors.append(f"{where}: a placeholder has no content blocks yet (found {', '.join(str(block.get('type')) for block in blocks)})")
+            elif not creators:
                 errors.append(f"{where}: metadata.creators must list at least one person id of content/publication/resources.yaml")
             for person_id in creators:
                 if person_id not in known_people:
@@ -245,7 +254,7 @@ def validate_publication_front_matter(
             if _string_list(metadata.get("authors")) or isinstance(topic.get("credits"), dict):
                 errors.append(f"{where}: a public topic names its authors only through metadata.creators (remove authors/credits)")
             created, updated = _as_date(metadata.get("created")), _as_date(metadata.get("updated"))
-            if created is None:
+            if created is None and _as_text(topic.get("status")).lower() != "placeholder":
                 errors.append(f"{where}: metadata.created must be an ISO date (publication date)")
             if metadata.get("updated") is not None and updated is None:
                 errors.append(f"{where}: metadata.updated must be an ISO date")

@@ -742,10 +742,10 @@ def test_spanish_overview_has_two_sections_in_two_column_grids(client, lang: str
     assert "pm-teaching-topic-card--pending" not in hub  # no placeholder cards for planned pages
     for slug in cards:
         assert client.get(f"/{lang}/teaching/spanish/{slug}").status_code == 200
-    # the two-column layout is a property of this hub only: other teaching hubs keep their grids
+    # the other teaching hubs follow the same two-column layout
     for other in ("french", "german", "english"):
         source = REPO_ROOT / "content" / "teaching" / other / "hubs" / f"{lang}.yaml"
-        assert not source.exists() or "card_columns" not in source.read_text(encoding="utf-8")
+        assert "card_columns: 2" in source.read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("lang", ["de", "en"])

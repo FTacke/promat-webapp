@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-u-or-ou
+status: placeholder
+title: u oder ou? Zwei Schreibungen, zwei Vokale
+summary: Warum *tu* und *tout* unterschiedlich klingen – und wie die beiden gerundeten Vokale gebildet werden.
+description: Warum *tu* und *tout* unterschiedlich klingen – und wie die beiden gerundeten Vokale gebildet werden.
+equivalents:
+  en: u-or-ou
+blocks:
+- type: topic_meta

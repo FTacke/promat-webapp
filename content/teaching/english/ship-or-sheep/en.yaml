@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-ship-or-sheep
+status: placeholder
+title: Ship or sheep? When vowels change words
+summary: Why English vowels differ in more than just length – and how small differences can change meaning.
+description: Why English vowels differ in more than just length – and how small differences can change meaning.
+equivalents:
+  de: ship-or-sheep
+blocks:
+- type: topic_meta

@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-weak-forms-and-schwa
+status: placeholder
+title: Warum kleine Wörter plötzlich anders klingen
+summary: Wie Schwa und schwache Formen den Klang zusammenhängender englischer Rede prägen.
+description: Wie Schwa und schwache Formen den Klang zusammenhängender englischer Rede prägen.
+equivalents:
+  en: weak-forms-and-schwa
+blocks:
+- type: topic_meta

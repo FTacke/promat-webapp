@@ -1,12 +1,16 @@
-title: "French: Topic pages"
-overview_intro: The topic pages combine subject-specific guidance, audio examples, and teaching prompts on individual pronunciation phenomena in French teaching.
+title: Understanding French Pronunciation
+overview_intro: The topic pages on French pronunciation are currently being developed. They are intended to provide linguistic guidance on central pronunciation features – from nasal and rounded vowels to liaison and the fleeting e, spelling and stress – and to suggest short pronunciation activities for French lessons.
+card_columns: 2
 groups:
-  - title: Sounds and articulation
-    description: Core sound phenomena of French with examples and teaching prompts.
-    topics:
-      - nasalvokale
-      - gleitlaute
-  - title: Word linking and connected speech
-    description: Pronunciation phenomena at word boundaries and in connected speech.
-    topics:
-      - liaison
+- title: Getting started
+  description: A first look at a characteristic pronunciation feature of French.
+  topics:
+  - nasal-vowels
+- title: Exploring pronunciation features
+  description: Explore pronunciation patterns and discover ways to address them in the classroom.
+  topics:
+  - u-or-ou
+  - liaison
+  - schwa
+  - spelling-and-pronunciation
+  - french-stress

@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-english-stress
+status: placeholder
+title: Stress works differently in English
+summary: How word stress and sentence stress affect the rhythm, intelligibility and meaning of an utterance.
+description: How word stress and sentence stress affect the rhythm, intelligibility and meaning of an utterance.
+equivalents:
+  de: english-stress
+blocks:
+- type: topic_meta

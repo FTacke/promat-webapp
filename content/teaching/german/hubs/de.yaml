@@ -1,3 +1,14 @@
-title: "Deutsch: Aussprache unterrichten"
-lead: Themenseiten zur deutschen Aussprache im Fremdsprachenunterricht.
-groups: []
+title: Deutsche Aussprache verstehen
+overview_intro: Die Themenseiten zur deutschen Aussprache entstehen derzeit. Sie richten sich an den Unterricht in Deutsch als Fremd- und Zweitsprache und sollen fachliche Orientierung zu zentralen Aussprachephänomenen geben – von Vokaldauer und Vokalqualität über die beiden ch-Laute und die Auslautverhärtung bis zur Betonung.
+card_columns: 2
+groups:
+- title: Zum Einstieg
+  description: Ein erster Einblick in ein zentrales Aussprachephänomen des Deutschen.
+  topics:
+  - miete-or-mitte
+- title: Aussprachephänomene entdecken
+  description: Konkrete Aussprachemuster verstehen und im Unterricht aufgreifen.
+  topics:
+  - ich-or-ach
+  - final-devoicing
+  - german-stress

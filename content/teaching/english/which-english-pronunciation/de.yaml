@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-which-english-pronunciation
+status: placeholder
+title: Welches Englisch unterrichten?
+summary: Warum britische, amerikanische und andere Aussprachen gleichberechtigt nebeneinanderstehen – und welche Rolle Verständlichkeit spielt.
+description: Warum britische, amerikanische und andere Aussprachen gleichberechtigt nebeneinanderstehen – und welche Rolle Verständlichkeit spielt.
+equivalents:
+  en: which-english-pronunciation
+blocks:
+- type: topic_meta

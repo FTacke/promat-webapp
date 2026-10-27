@@ -1,12 +1,16 @@
-title: "Französisch: Themenseiten"
-overview_intro: Die Themenseiten bündeln fachliche Orientierung, Hörbeispiele und Unterrichtsimpulse zu einzelnen Aussprachephänomenen im Französischunterricht.
+title: Französische Aussprache verstehen
+overview_intro: Die Themenseiten zur französischen Aussprache entstehen derzeit. Sie sollen fachliche Orientierung zu zentralen Aussprachephänomenen geben – von Nasalvokalen und gerundeten Vokalen über die Liaison und das flüchtige e bis zu Schreibung und Betonung – und Anregungen für kurze Ausspracheimpulse im Französischunterricht bieten.
+card_columns: 2
 groups:
-  - title: Laute und Artikulation
-    description: Zentrale Lautphänomene des Französischen mit Beispielen und Unterrichtsimpulsen.
-    topics:
-      - nasalvokale
-      - gleitlaute
-  - title: Wortverbindung und Redefluss
-    description: Aussprachephänomene an Wortgrenzen und im gesprochenen Zusammenhang.
-    topics:
-      - liaison
+- title: Zum Einstieg
+  description: Ein erster Einblick in ein charakteristisches Aussprachephänomen des Französischen.
+  topics:
+  - nasal-vowels
+- title: Aussprachephänomene entdecken
+  description: Konkrete Aussprachemuster verstehen und im Unterricht aufgreifen.
+  topics:
+  - u-or-ou
+  - liaison
+  - schwa
+  - spelling-and-pronunciation
+  - french-stress

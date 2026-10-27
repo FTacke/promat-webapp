@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-schwa
+status: placeholder
+title: 'Das flüchtige e: Wo bleibt das Schwa?'
+summary: Warum ein unbetontes e im Französischen manchmal ausgesprochen wird und manchmal verschwindet.
+description: Warum ein unbetontes e im Französischen manchmal ausgesprochen wird und manchmal verschwindet.
+equivalents:
+  en: schwa
+blocks:
+- type: topic_meta

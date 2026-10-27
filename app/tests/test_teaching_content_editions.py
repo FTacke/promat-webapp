@@ -344,7 +344,7 @@ def test_repository_publishes_the_spanish_edition_of_the_seven_topic_pages() -> 
         status, hub = _get(client, f"/{ui_lang}/teaching/spanish")
         assert status == 200 and _edition_links(hub) == [(f"/{ui_lang}/teaching/spanish/es?from={ui_lang}", "es", "En español")]
         status, es_hub = _get(client, f"/{ui_lang}/teaching/spanish/es?from={ui_lang}")
-        assert status == 200 and "Español: páginas temáticas" in es_hub and "Para empezar" in es_hub
+        assert status == 200 and "Comprender la pronunciación del español" in es_hub and "Para empezar" in es_hub
         assert re.findall(r'href="/[a-z]+/teaching/spanish/es/([a-z0-9-]+)\?from=', es_hub) == SEVEN_SPANISH
         for slug in SEVEN_SPANISH:
             status, base = _get(client, f"/{ui_lang}/teaching/spanish/{slug}")

@@ -1,0 +1,9 @@
+resource_id: promat-teaching-de-ich-or-ach
+status: placeholder
+title: Ich or ach? Two sounds for ch
+summary: Why the same letter combination is pronounced differently depending on the surrounding sounds – and how the two sounds are produced.
+description: Why the same letter combination is pronounced differently depending on the surrounding sounds – and how the two sounds are produced.
+equivalents:
+  de: ich-or-ach
+blocks:
+- type: topic_meta

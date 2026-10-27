@@ -780,6 +780,10 @@ def test_topics_carry_no_typed_citation_and_public_ones_cite_their_own_canonical
             continue
         body = response.get_data(as_text=True)
         copy_texts = [html_module.unescape(text) for text in re.findall(r'data-copy-text="([^"]*)"', body)]
+        if topic.get("status") == "placeholder":
+            # an announced page is not a published contribution: no citation, no canonical, not indexed
+            assert copy_texts == [] and 'rel="canonical"' not in body and '<meta name="robots" content="noindex">' in body, page_path
+            continue
         assert len(copy_texts) == 1, page_path
         urls = [url.rstrip(".,;") for url in re.findall(r"https?://[^\s)\]]+", copy_texts[0])]
         assert urls == [CANONICAL_ORIGIN + page_path], (page_path, urls)

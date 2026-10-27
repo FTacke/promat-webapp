@@ -147,7 +147,7 @@ def test_registry_validation_rejects_broken_bibliographic_data(tmp_path, monkeyp
 def test_unknown_and_unpublished_topics_are_not_found(client) -> None:
     assert client.get("/de/teaching/spanish/does-not-exist").status_code == 404
     assert client.get("/de/teaching/spanish/Which-Pronunciation").status_code == 404
-    for draft in ("/de/teaching/french/liaison", "/en/teaching/french/liaison", "/de/teaching/french/gleitlaute"):
+    for draft in ("/de/teaching/spanish/accent-changes-everything", "/en/teaching/spanish/accent-changes-everything", "/de/teaching/french/gleitlaute"):
         assert client.get(draft).status_code == 404, draft
     assert client.get("/de/teaching/klingon/anything").status_code == 404
 

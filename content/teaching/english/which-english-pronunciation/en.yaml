@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-which-english-pronunciation
+status: placeholder
+title: Which English to teach?
+summary: Why British, American and other pronunciations stand side by side as equals – and what role intelligibility plays.
+description: Why British, American and other pronunciations stand side by side as equals – and what role intelligibility plays.
+equivalents:
+  de: which-english-pronunciation
+blocks:
+- type: topic_meta

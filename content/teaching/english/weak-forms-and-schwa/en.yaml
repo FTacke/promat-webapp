@@ -1,0 +1,9 @@
+resource_id: promat-teaching-en-weak-forms-and-schwa
+status: placeholder
+title: Why small words suddenly sound different
+summary: How schwa and weak forms shape the sound of connected English speech.
+description: How schwa and weak forms shape the sound of connected English speech.
+equivalents:
+  de: weak-forms-and-schwa
+blocks:
+- type: topic_meta

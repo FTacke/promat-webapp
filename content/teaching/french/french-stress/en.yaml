@@ -1,0 +1,9 @@
+resource_id: promat-teaching-fr-french-stress
+status: placeholder
+title: Where does the stress fall in French?
+summary: Why the rhythmic group matters so much for stress in French – and what that means for the flow of speech.
+description: Why the rhythmic group matters so much for stress in French – and what that means for the flow of speech.
+equivalents:
+  de: french-stress
+blocks:
+- type: topic_meta
