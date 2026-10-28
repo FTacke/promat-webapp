@@ -8,7 +8,7 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-24
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -112,8 +112,8 @@ blocks:
   items:
   - title: Hear the difference first
     body: Use the word pairs *pero* / *perro* and *caro* / *carro* to draw attention to the meaning-distinguishing function of the tap and the trill – first listen and let learners describe what differs, then clarify the meanings.
-  - title: Make the place of articulation conscious
-    body: Briefly contrast the front Spanish r with the back r common in Standard German, for example with *Rose* and *rosa*. For *claro*, the digital textbook suggests first imagining a d instead of the r and saying it faster and faster until the tip of the tongue taps by itself.
+  - title: Recognise where the r is produced
+    body: 'Briefly contrast the front Spanish r with the back r common in Standard German, for example with *Rose* (German) and *rosa* (Spanish). For *claro*, the digital textbook suggests first imagining a *d* instead of the *r* and saying the word faster and faster until the tip of the tongue produces the typical brief contact with the alveolar ridge.'
   - title: Use the spelling as a help
     body: Use the word pairs to show that ⟨r⟩ and ⟨rr⟩ between vowels mark a real difference in sound. Learners’ existing heritage languages can be brought in here.
 - type: further_reading

@@ -7,8 +7,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-24
-  updated: 2026-10-24
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -44,22 +45,20 @@ blocks:
 - type: section_heading
   title: Five vowels – not quite as in German
 - type: text
-  body: 'Spanish gets by with five vowel phonemes: /a e i o u/. How /i/ and /u/ sound is shown by two single words played one after the other: *mismo* and *álbum*.'
+  body: 'Spanish gets by with five vowel phonemes: /a e i o u/. Even /i/ and /u/ do not sound quite as in German: Spanish /u/ is pronounced [u], but German-speaking learners easily carry over the familiar lax [ʊ]. This can be heard clearly in *álbum*.'
 - type: audio_contrast
-  title: 'Listening comparison: *mismo* – *álbum*'
-  lead: How do the vowels *i* and *u* differ in the two recordings?
-  transcript: '*mismo* – *álbum*'
+  title: 'Listening comparison: *álbum*'
+  lead: 'How does the pronunciation of the *u* in *álbum* differ between the two recordings?'
+  transcript: '*álbum*'
   examples:
   - role: reference
     subtitle: MAR.ELE
-    note: Two single words, spliced one after the other
-    audio: marele/p7-mismo-album-ref.mp3
+    audio: marele/p7-album-ref.mp3
   - role: learner
-    subtitle: MAR.ELE
-    note: Two single words, spliced one after the other
-    audio: marele/p7-mismo-album-learner.mp3
+    subtitle: L1 German · W44
+    audio: corpus/p7-album-learner.mp3
 - type: text
-  body: German distinguishes the tense vowels [iː] and [uː] from the lax [ɪ] and [ʊ], for example in *bieten* and *bitten*, or in the familiar *Album*, which is pronounced with [ʊ]. Spanish has no such contrast. If the lax German vowels are carried over to Spanish /i/ and /u/, the result can sound distinctly German-influenced.
+  body: 'German distinguishes the tense vowels [iː] and [uː] from the lax [ɪ] and [ʊ], for example in the familiar *Album*, which is pronounced with [ʊ]. The same applies to /i/: Spanish *vino* has an [i], whereas German *bitten* has a lax [ɪ] and *bieten* a long [iː]. Spanish has no such contrast. If the lax German vowels are carried over to Spanish /i/ and /u/, the result can sound distinctly German-influenced.'
 - type: section_heading
   title: When a diphthong turns into two syllables
 - type: text
@@ -95,7 +94,7 @@ blocks:
   - title: Compare familiar spellings
     body: Use *Europa* and *deuda* to show that the same letter sequence ⟨eu⟩ is pronounced differently in two languages – [ɔɪ̯] in German, [eu̯] in Spanish. Listen first, then look at the spelling.
   - title: Make vowel quality conscious
-    body: Use *mismo* and *álbum* to set the Spanish vowels [i] and [u] apart from the lax German variants [ɪ] and [ʊ], for example in comparison with the German *Album*.
+    body: 'Use *álbum* to make audible that Spanish /u/ is pronounced [u] and not as the lax [ʊ] of German *Album*; show the same principle for /i/ with *vino* compared with German *bitten* and *bieten*.'
   - title: Say diphthongs as one syllable
     body: Use *sueño*, *viuda* and the textbook example *fuego* to illustrate the syllable structure of Spanish diphthongs, for example by clapping the syllables.
 - type: further_reading

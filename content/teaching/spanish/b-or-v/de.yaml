@@ -8,7 +8,7 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-19
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -38,7 +38,7 @@ blocks:
 - type: info_box
   title: Zwei Buchstaben, ein Laut – auch Erstsprachler:innen sind manchmal unsicher
   body: |-
-    Auch in der spanischen Sprachgemeinschaft hält sich mitunter die Vorstellung, ⟨v⟩ stehe „eigentlich“ für ein /v/. Gestützt wurde sie historisch durch normative Darstellungen: Orthographische Abhandlungen der Real Academia Española vertraten sie noch bis ins 20. Jahrhundert, von dort gelangte sie in Schulbücher. Wer sich beim Sprechen bewusst an der Schrift orientiert, kann deshalb ein vermeintlich korrekteres [v] sprechen – ein anschauliches Beispiel für *spelling pronunciation* (vgl. Tacke 2020).
+    Auch in der spanischen Sprachgemeinschaft hält sich mitunter die Vorstellung, ⟨v⟩ stehe „eigentlich“ für ein /v/. Gestützt wurde sie historisch durch normative Darstellungen: Orthographische Abhandlungen der Real Academia Española vertraten sie noch bis ins 20. Jahrhundert, von dort gelangte sie in Schulbücher. Wer sich beim Sprechen bewusst an der Schrift orientiert, kann deshalb ein vermeintlich korrekteres [v] sprechen; dies ist ein Beispiel für *spelling pronunciation*, also eine von der Schrift beeinflusste Aussprache.
 - type: section_heading
   title: Wenn zwei Buchstaben zu zwei Lauten werden
 - type: text

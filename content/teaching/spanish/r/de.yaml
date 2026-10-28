@@ -8,7 +8,7 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-24
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -112,8 +112,8 @@ blocks:
   items:
   - title: Erst den Unterschied hören
     body: Mit den Wortpaaren *pero* / *perro* und *caro* / *carro* auf die bedeutungsunterscheidende Funktion des einfachen und mehrfachen Vibranten aufmerksam machen – zuerst hören und beschreiben lassen, was sich unterscheidet, danach die Bedeutungen klären.
-  - title: Die Artikulationsstelle bewusst machen
-    body: Das vordere spanische und das im Standarddeutschen verbreitete hintere r kurz gegenüberstellen, etwa mit *Rose* und *rosa*. Das digitale Lehrbuch schlägt für *claro* vor, sich zunächst ein d statt des r vorzustellen und es zunehmend schneller zu sprechen, bis die Zungenspitze von selbst schlägt.
+  - title: Erkennen, wo das r gebildet wird
+    body: 'Das vordere spanische r kurz dem im Standarddeutschen verbreiteten hinteren r gegenüberstellen, etwa mit *Rose* (deutsch) und *rosa* (spanisch). Für *claro* schlägt das digitale Lehrbuch vor, sich zunächst ein *d* statt des *r* vorzustellen und das Wort immer schneller zu sprechen, bis die Zungenspitze den typischen kurzen Kontakt am Zahndamm erzeugt.'
   - title: Die Schreibung als Hilfe nutzen
     body: Anhand der Wortpaare zeigen, dass ⟨r⟩ und ⟨rr⟩ zwischen Vokalen einen echten Lautunterschied kennzeichnen. Dabei lassen sich vorhandene Herkunftssprachen der Lernenden einbeziehen.
 - type: further_reading

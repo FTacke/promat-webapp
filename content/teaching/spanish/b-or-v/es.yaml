@@ -9,7 +9,7 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-26
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -36,7 +36,7 @@ blocks:
   body: '**⟨b⟩ / ⟨v⟩ → /b/**'
 - type: info_box
   title: 'Dos letras, un sonido: las dudas también existen entre hablantes nativos'
-  body: 'También entre hispanohablantes persiste en ocasiones la idea de que la letra ⟨v⟩ debería corresponder «en realidad» al sonido /v/. Esta creencia recibió históricamente el respaldo de planteamientos normativos: algunos tratados ortográficos de la Real Academia Española la sostuvieron todavía en el siglo XX, y de allí pasó a manuales escolares. Por eso, al prestar una atención especial a la escritura, algunas personas pueden llegar a pronunciar [v] creyendo que es una forma más correcta: un ejemplo ilustrativo de *spelling pronunciation*, es decir, una pronunciación influida por la grafía (véase Tacke 2020).'
+  body: 'También entre hispanohablantes persiste en ocasiones la idea de que la letra ⟨v⟩ debería corresponder «en realidad» al sonido /v/. Esta creencia recibió históricamente el respaldo de planteamientos normativos: algunos tratados ortográficos de la Real Academia Española la sostuvieron todavía en el siglo XX, y de allí pasó a manuales escolares. Por eso, al prestar una atención especial a la escritura, algunas personas pueden llegar a pronunciar [v] creyendo que es una forma más correcta; este es un ejemplo de *spelling pronunciation*, es decir, una pronunciación influida por la grafía.'
 - type: section_heading
   title: Cuando dos letras se convierten en dos sonidos
 - type: text

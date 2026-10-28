@@ -8,8 +8,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-24
-  updated: 2026-10-26
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -44,22 +45,20 @@ blocks:
 - type: section_heading
   title: Cinco vocales, pero no exactamente como en alemán
 - type: text
-  body: 'El español tiene cinco fonemas vocálicos: /a e i o u/. Dos palabras aisladas que aquí se reproducen una detrás de otra, *mismo* y *álbum*, permiten escuchar cómo suenan /i/ y /u/.'
+  body: 'El español tiene cinco fonemas vocálicos: /a e i o u/. Tampoco /i/ y /u/ suenan exactamente como en alemán: la /u/ española se pronuncia [u], pero los aprendientes germanohablantes tienden a trasladar la [ʊ] laxa que conocen del alemán. Se aprecia claramente en *álbum*.'
 - type: audio_contrast
-  title: 'Comparación auditiva: *mismo* – *álbum*'
-  lead: ¿En qué se diferencian las vocales *i* y *u* entre las dos grabaciones?
-  transcript: '*mismo* – *álbum*'
+  title: 'Comparación auditiva: *álbum*'
+  lead: '¿En qué se diferencia la pronunciación de la *u* de *álbum* entre las dos grabaciones?'
+  transcript: '*álbum*'
   examples:
   - role: reference
     subtitle: MAR.ELE
-    note: Dos palabras aisladas montadas una detrás de otra
-    audio: marele/p7-mismo-album-ref.mp3
+    audio: marele/p7-album-ref.mp3
   - role: learner
-    subtitle: MAR.ELE
-    note: Dos palabras aisladas montadas una detrás de otra
-    audio: marele/p7-mismo-album-learner.mp3
+    subtitle: L1 alemán · W44
+    audio: corpus/p7-album-learner.mp3
 - type: text
-  body: En alemán, las vocales tensas [iː] y [uː] contrastan con las laxas [ɪ] y [ʊ], como en *bieten* frente a *bitten* o en la palabra alemana *Album*, que contiene [ʊ]. El español no presenta ese contraste. Cuando se trasladan las vocales laxas del alemán a /i/ y /u/ del español, el resultado puede sonar claramente influido por el alemán.
+  body: 'En alemán, las vocales tensas [iː] y [uː] contrastan con las laxas [ɪ] y [ʊ], como en la palabra alemana *Album*, que contiene [ʊ]. Lo mismo ocurre con /i/: el español *vino* tiene una [i], mientras que el alemán *bitten* presenta una [ɪ] laxa y *bieten*, una [iː] larga. El español no presenta ese contraste. Cuando se trasladan las vocales laxas del alemán a /i/ y /u/ del español, el resultado puede sonar claramente influido por el alemán.'
 - type: section_heading
   title: Cuando un diptongo se convierte en dos sílabas
 - type: text
@@ -95,7 +94,7 @@ blocks:
   - title: Comparar grafías familiares
     body: 'Utilizar *Europa* y *deuda* para mostrar que una misma secuencia gráfica ⟨eu⟩ se pronuncia de manera diferente en las dos lenguas: [ɔɪ̯] en alemán y [eu̯] en español. Escuchar primero y observar la escritura después.'
   - title: Tomar conciencia de la calidad vocálica
-    body: Comparar [i] y [u] del español en *mismo* y *álbum* con las vocales laxas alemanas [ɪ] y [ʊ], por ejemplo a partir de la pronunciación alemana de *Album*.
+    body: 'Hacer audible con *álbum* que la /u/ española se pronuncia [u] y no como la [ʊ] laxa del alemán *Album*; mostrar el mismo principio para /i/ con *vino* frente al alemán *bitten* y *bieten*.'
   - title: Pronunciar los diptongos en una sola sílaba
     body: Ilustrar la estructura silábica de los diptongos españoles con *sueño*, *viuda* y el ejemplo *fuego* del manual, por ejemplo marcando las sílabas con palmadas.
 - type: further_reading

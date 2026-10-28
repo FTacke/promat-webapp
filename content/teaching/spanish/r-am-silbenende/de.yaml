@@ -7,8 +7,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-19
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -27,12 +28,12 @@ blocks:
 - type: solution
   title: 'Auflösung: Was ist zu hören?'
   body: |-
-    In der Aufnahme der Referenzsprecher:in endet *flor* mit einem kurzen Zungenschlag am Zahndamm: [ˈfloɾ]. Die lernende Person lässt das Wort dagegen ohne erkennbaren Zungenkontakt vokalisch ausklingen, etwa [ˈfloɐ̯] – so, wie man es vom deutschen r am Wortende kennt.
+    In der Referenzaufnahme endet *flor* mit einem kurzen Kontakt der Zungenspitze am Zahndamm: [ˈfloɾ]. Die lernende Person beendet das Wort dagegen mit einem vokalischen Laut, ohne dass die Zungenspitze den Zahndamm berührt; die Aussprache nähert sich so [ˈfloɐ̯] an, wie es beim deutschen r am Wortende häufig vorkommt.
 - type: section_heading
   title: Wenn das deutsche r zum Vokal wird
 - type: text
   body: |-
-    Im Standarddeutschen gehört die Vokalisierung von /r/ zur regulären Aussprache, etwa in *sehr*, *Vater* oder *Lehrer*. Dabei sind zwei Fälle zu unterscheiden: Nach dem langen Vokal in *sehr* klingt das r nur noch als Ausklang mit, etwa [zeːɐ̯]. In den unbetonten Endungen von *Vater* und *Lehrer* steht an seiner Stelle der Vokal [ɐ], das sogenannte Vater-Schwa (auch Tiefschwa): [ˈfaːtɐ], [ˈleːʁɐ]. Beide Erscheinungen sind verwandt, aber nicht in jeder Hinsicht identisch.
+    Im Standarddeutschen wird das *r* am Silbenende häufig vokalisiert. So ist in Wörtern wie *sehr* und in der Endung *-er* von *Vater* oder *Lehrer* anstelle eines Konsonanten ein vokalischer Laut zu hören. Deutschsprachige Lernende können dieses Aussprachemuster auf das Spanische übertragen.
 - type: text
   body: |-
     Das Spanische verhält sich anders. Am Wortende bleibt das r gewöhnlich konsonantisch, meist als kurzer Zungenschlag [ɾ]: *flor* [ˈfloɾ]. Regional und je nach Kontext kann die Realisierung schwächer, länger oder anders ausfallen, bleibt aber in der Regel ein Konsonant. Wer die deutsche Gewohnheit überträgt, spricht *flor* eher wie [ˈfloɐ̯].

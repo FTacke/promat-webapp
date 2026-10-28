@@ -216,12 +216,12 @@ comparisons:
     sha256: 2c2a2cc5dbbb4212976615f65968f1434a0af93e0492a45a62e12185f80eea1f
   - slot: learner
     category: learner
-    session_id: ES-L-0011-2026-S01
+    session_id: ES-L-0019-2026-S01
     item:
       task: wordlist
       id: wl_002
     file: corpus/p2-reloj-learner.mp3
-    sha256: 2587ba3539ebb435a91d279298f6585b9f0ada944c10dcee8d192df3b421af94
+    sha256: e94e282985255e2c4b8ebb0b7e12407bd61445f4ab49b461fa96908a74eb2004
 - id: p2-reir
   topic: r
   phenomenon: Anlautendes r in reír (dieselbe Lernendenaufnahme wie auf der Seite zum r am Wortende)
@@ -361,12 +361,12 @@ comparisons:
     sha256: 044ca4220cea2690b8e71b67040042c7cf9b0dde8cf1bb9e3c2fcca364fbf537
   - slot: learner
     category: learner
-    session_id: ES-L-0019-2026-S01
+    session_id: ES-L-0017-2026-S01
     item:
       task: wordlist
       id: wl_092
     file: corpus/p4-bienes-learner.mp3
-    sha256: c7f0efe42335282d8c72ab49ed1ed53555185bb0e77cec32016540bcc7ec1c2e
+    sha256: 73492f5d31afa9bc2537aaf04f7d273e02cc10100e33774fcc6975496bac9b45
 - id: p4-baron-varon
   topic: b-or-v
   phenomenon: Orthographisch beeinflusste Aussprache von <v> (spelling pronunciation)
@@ -555,6 +555,50 @@ comparisons:
       transcription: '[kon.ˈa.gwa]'
     file: marele/agua-learner.mp3
     sha256: 1a4b71e4a464fc5dbffaac3aa182134e4f2b2cb5cbe79513e2331a3a20e4deaa
+- id: p5-baile
+  topic: soft-consonants-b-d-g
+  phenomenon: 'Intervokalisches /g/ in *elegante*: Approximant [ɣ] vs. Verschlusslaut [g]'
+  target: el baile elegante del evento
+  target_tokens:
+  - el
+  - baile
+  - elegante
+  - del
+  - evento
+  question: Wie unterscheidet sich die Aussprache des *g* in *elegante* zwischen den beiden Aufnahmen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: d_08
+    file: corpus/p5-baile-ref.mp3
+    crop:
+      start_ms: 1500
+      end_ms: 3210
+      lead_silence_ms: 0
+      fade_in_ms: 35
+      fade_out_ms: 30
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: 61a3d04f53d827703825a3e575d8735884548072c8610c1257b8b81b95fd5725
+    source_sha256: ddfce184b48b4da4a46f3000e20d14ce8fbf707246de5686e443a1940ee9346f
+  - slot: learner
+    category: learner
+    session_id: ES-L-0020-2026-S01
+    item:
+      task: text
+      id: d_08
+    file: corpus/p5-baile-learner.mp3
+    crop:
+      start_ms: 2900
+      end_ms: 6100
+      lead_silence_ms: 0
+      fade_in_ms: 15
+      fade_out_ms: 30
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: 45cb04025e5697bf60edb0c01ca77aec0f2f9b937104c09d5a4d22415b894701
+    source_sha256: ea9e8cb9eb62b1a4e8377d65a985e522cc0f53aa89dbf3e8cf8001c4569da07d
 - id: p5-bebedor
   topic: soft-consonants-b-d-g
   phenomenon: '/b/ nach /l/, /b/ und /d/ zwischen Vokalen: Approximanten [β β ð] vs. Verschlusslaute'
@@ -576,6 +620,46 @@ comparisons:
       transcription: '[el.be.be.ˈdoɐ]'
     file: marele/bebedor-learner.mp3
     sha256: 848aecefa5f06888b6e335f87f2520d2a935ef8834f4a2c3f66f1eeffb99b79b
+- id: p5-cuidado
+  topic: soft-consonants-b-d-g
+  phenomenon: 'Zwei intervokalische /d/ in *cuidado*: Approximanten [ð] vs. Verschlusslaute'
+  target: cuidado
+  target_tokens:
+  - cuidado
+  question: Wie werden die beiden *d* in *cuidado* in den Aufnahmen ausgesprochen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: ES-N-0004-2026-S01
+    item:
+      task: text
+      id: d_21
+    file: corpus/p5-cuidado-ref.mp3
+    crop:
+      start_ms: 745
+      end_ms: 1135
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 25
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: 88bcad45979fda134398e21e01b03f8244ad7f4549c17b2812cf43e43e7244fe
+    source_sha256: 7457ac9b8ed2dcb2f4d40277f4247697af7a7b1db24e076f1cd5060b1d990df5
+  - slot: learner
+    category: learner
+    session_id: ES-L-0020-2026-S01
+    item:
+      task: text
+      id: d_21
+    file: corpus/p5-cuidado-learner.mp3
+    crop:
+      start_ms: 960
+      end_ms: 1785
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 25
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    sha256: ff8e00552d9759ae000753089b75e8795efe803a442824458203c0f7b437e469
+    source_sha256: b94c1568f3a3cd4875f0e3886dae6a95b6250de33248ded0b503bc160de6d36c
 - id: p7-europa
   topic: europe-sounds-different
   phenomenon: '⟨eu⟩ in Europa: spanischer Diphthong [eu̯] gegenüber deutscher Lesung [ɔɪ̯]'
@@ -624,69 +708,40 @@ comparisons:
       id: wl_022
     file: corpus/p7-deuda-learner.mp3
     sha256: 164aa291910e29d9c2101537498c144414ccc796b614e0bc307aa3f943353134
-- id: p7-mismo-album
+- id: p7-album
   topic: europe-sounds-different
-  phenomenon: 'Vokalqualität: spanisches /i/ und /u/ gegenüber deutschen ungespannten Vokalen (MAR.ELE-Aufnahmen, zwei hintereinander
-    montierte Einzelwörter)'
-  target: mismo – álbum
-  question: Wie unterscheiden sich die Vokale *i* und *u* in den beiden Aufnahmen?
+  phenomenon: 'Vokalqualität: spanisches /u/ [u] gegenüber deutschem ungespanntem [ʊ] (in *álbum*)'
+  target: álbum
+  target_tokens:
+  - álbum
+  question: Wie unterscheidet sich die Aussprache des *u* in *álbum* zwischen den beiden Aufnahmen?
   recordings:
   - slot: ref
     category: reference
     origin:
       corpus: MAR.ELE
-    file: marele/p7-mismo-album-ref.mp3
-    join:
-      pause_ms: 300
-      tool: ffmpeg 8.1-full_build-www.gyan.dev
-    parts:
-    - source_file: items/inf-L1-ES_es_040_mismo.mp3
-      target_tokens:
-      - mismo
-      crop:
-        start_ms: 550
-        end_ms: 1240
-        fade_in_ms: 15
-        fade_out_ms: 25
-      source_sha256: 1b2239edc4f2de8f8c4a844de965fff34eaa5117f431c396edcb38a3860c3323
-    - source_file: items/inf-L1-ES_es_049_álbum.mp3
-      target_tokens:
-      - álbum
-      crop:
+      source_file: items/inf-L1-ES_es_049_álbum.mp3
+      source_sha256: ebccfbb63afd65fd506e11d9c9add4f7ab3c79c6b327364efb4b5f41e6de27c8
+      source_crop:
         start_ms: 480
         end_ms: 1135
         fade_in_ms: 15
         fade_out_ms: 25
-      source_sha256: ebccfbb63afd65fd506e11d9c9add4f7ab3c79c6b327364efb4b5f41e6de27c8
-    sha256: 585a92f36940296c141a779f5c91afd21e5b6613e1f6ca71002abb424066001f
+      extracted_from:
+        file: marele/p7-mismo-album-ref.mp3
+        sha256: 585a92f36940296c141a779f5c91afd21e5b6613e1f6ca71002abb424066001f
+        method: MP3 frame copy without re-encoding from 0.85 s (inside the 300 ms pause before álbum) to the end
+        tool: ffmpeg 8.1-full_build-www.gyan.dev
+    file: marele/p7-album-ref.mp3
+    sha256: db4977e984cc0980b9f931d3bb79df1dc9fa1451388233a4c64ee43ef8ccfbaf
   - slot: learner
     category: learner
-    origin:
-      corpus: MAR.ELE
-    file: marele/p7-mismo-album-learner.mp3
-    join:
-      pause_ms: 300
-      tool: ffmpeg 8.1-full_build-www.gyan.dev
-    parts:
-    - source_file: items/inf-019_040_mismo.mp3
-      target_tokens:
-      - mismo
-      crop:
-        start_ms: 470
-        end_ms: 1230
-        fade_in_ms: 15
-        fade_out_ms: 25
-      source_sha256: 385d560cbef16a25d158195829db1879d6ec6ff6f151ca992bec1c0527deb492
-    - source_file: items/inf-019_049_álbum.mp3
-      target_tokens:
-      - álbum
-      crop:
-        start_ms: 465
-        end_ms: 1175
-        fade_in_ms: 15
-        fade_out_ms: 25
-      source_sha256: b6fbba756569416517ddffa5e8a60cac0c105d678830addc71a6de8d0b438d00
-    sha256: d583c950563862765b8d3c81a6ce852b0079feea60d5a89943409a1fecab8d9e
+    session_id: ES-L-0015-2026-S01
+    item:
+      task: wordlist
+      id: wl_044
+    file: corpus/p7-album-learner.mp3
+    sha256: 5791b6ecbb66fdefb98f9e5c46af3314bc7e5a2ab521512393159e0c8e7137c9
 - id: p7-sueno
   topic: europe-sounds-different
   phenomenon: Diphthong ⟨ue⟩ in einer Silbe gegenüber getrennten Vokalen
@@ -705,12 +760,12 @@ comparisons:
     sha256: f6ef0dfbf2873a6087c29a2e774972d439db0d7f169d390202a725937eb6720f
   - slot: learner
     category: learner
-    session_id: ES-L-0010-2026-S01
+    session_id: ES-L-0015-2026-S01
     item:
       task: wordlist
       id: wl_040
     file: corpus/p7-sueno-learner.mp3
-    sha256: 7968e726dbb10fb17a0569feeccd75486a25b03b7f5c07a7ba9fec1beb4ea621
+    sha256: 63c4e790d5b1a93b99d7bf3b30cc9050db0663f81742987598e00fae33440877
 - id: p7-viuda
   topic: europe-sounds-different
   phenomenon: Diphthong ⟨iu⟩ in einer Silbe gegenüber getrennten Vokalen
@@ -874,17 +929,6 @@ reserves:
   reference: ES-N-0001-2026-S01
   learner: ES-L-0005-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
-- id: p2-reloj-reserve-0019
-  topic: r
-  target: reloj
-  target_tokens:
-  - reloj
-  item:
-    task: wordlist
-    id: wl_002
-  reference: ES-N-0005-2026-S01
-  learner: ES-L-0019-2026-S01
-  status: curatorial reserve for the learner slot of p2-reloj, not integrated; check with --release-report before use
 - id: p2-reloj-reserve-0021
   topic: r
   target: reloj
@@ -929,17 +973,6 @@ reserves:
   reference: ES-N-0002-2026-S01
   learner: ES-L-0008-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
-- id: p7-mismo-reserve-0004
-  topic: europe-sounds-different
-  target: mismo
-  target_tokens:
-  - mismo
-  item:
-    task: wordlist
-    id: wl_037
-  reference: ES-N-0005-2026-S01
-  learner: ES-L-0004-2026-S01
-  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
 - id: p7-album-reserve-0004
   topic: europe-sounds-different
   target: álbum
@@ -951,17 +984,6 @@ reserves:
   reference: ES-N-0005-2026-S01
   learner: ES-L-0004-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
-- id: p7-mismo-reserve-0019
-  topic: europe-sounds-different
-  target: mismo
-  target_tokens:
-  - mismo
-  item:
-    task: wordlist
-    id: wl_037
-  reference: ES-N-0005-2026-S01
-  learner: ES-L-0019-2026-S01
-  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
 - id: p7-album-reserve-0019
   topic: europe-sounds-different
   target: álbum
@@ -972,17 +994,6 @@ reserves:
     id: wl_044
   reference: ES-N-0005-2026-S01
   learner: ES-L-0019-2026-S01
-  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
-- id: p7-sueno-reserve-0015
-  topic: europe-sounds-different
-  target: sueño
-  target_tokens:
-  - sueño
-  item:
-    task: wordlist
-    id: wl_040
-  reference: ES-N-0001-2026-S01
-  learner: ES-L-0015-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
 - id: p7-viuda-reserve-0017
   topic: europe-sounds-different

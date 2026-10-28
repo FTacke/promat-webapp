@@ -7,8 +7,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-24
-  updated: 2026-10-24
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -44,23 +45,20 @@ blocks:
 - type: section_heading
   title: Fünf Vokale – nicht ganz wie im Deutschen
 - type: text
-  body: |-
-    Das Spanische kommt mit fünf Vokalphonemen aus: /a e i o u/. Wie /i/ und /u/ klingen, zeigen zwei Einzelwörter, die hier hintereinander abgespielt werden: *mismo* und *álbum*.
+  body: 'Das Spanische kommt mit fünf Vokalphonemen aus: /a e i o u/. Auch /i/ und /u/ klingen dabei nicht ganz wie im Deutschen: Das spanische /u/ wird als [u] gesprochen, deutschsprachige Lernende übertragen jedoch leicht das vertraute ungespannte [ʊ]. Gut hörbar ist das in *álbum*.'
 - type: audio_contrast
-  title: 'Hörvergleich: *mismo* – *álbum*'
-  lead: Wie unterscheiden sich die Vokale *i* und *u* in den beiden Aufnahmen?
-  transcript: '*mismo* – *álbum*'
+  title: 'Hörvergleich: *álbum*'
+  lead: 'Wie unterscheidet sich die Aussprache des *u* in *álbum* zwischen den beiden Aufnahmen?'
+  transcript: '*álbum*'
   examples:
   - role: reference
     subtitle: MAR.ELE
-    note: Zwei Einzelwörter, hintereinander montiert
-    audio: marele/p7-mismo-album-ref.mp3
+    audio: marele/p7-album-ref.mp3
   - role: learner
-    subtitle: MAR.ELE
-    note: Zwei Einzelwörter, hintereinander montiert
-    audio: marele/p7-mismo-album-learner.mp3
+    subtitle: L1 Deutsch · W44
+    audio: corpus/p7-album-learner.mp3
 - type: text
-  body: Im Deutschen stehen den gespannten Vokalen [iː] und [uː] die ungespannten [ɪ] und [ʊ] gegenüber, etwa in *bieten* und *bitten* oder im vertrauten *Album*, das mit [ʊ] gesprochen wird. Das Spanische kennt diesen Gegensatz nicht. Werden die ungespannten deutschen Vokale auf spanisches /i/ und /u/ übertragen, kann ein deutlich deutsch beeinflusster Höreindruck entstehen.
+  body: 'Im Deutschen stehen den gespannten Vokalen [iː] und [uː] die ungespannten [ɪ] und [ʊ] gegenüber, etwa im vertrauten *Album*, das mit [ʊ] gesprochen wird. Ebenso verhält es sich bei /i/: Das spanische *vino* hat ein [i], das deutsche *bitten* dagegen ein ungespanntes [ɪ] und *bieten* ein langes [iː]. Das Spanische kennt diesen Gegensatz nicht. Werden die ungespannten deutschen Vokale auf spanisches /i/ und /u/ übertragen, kann ein deutlich deutsch beeinflusster Höreindruck entstehen.'
 - type: section_heading
   title: Wenn aus einem Diphthong zwei Silben werden
 - type: text
@@ -97,7 +95,7 @@ blocks:
   - title: Vertraute Schreibungen vergleichen
     body: An *Europa* und *deuda* zeigen, dass dieselbe Buchstabenfolge ⟨eu⟩ in zwei Sprachen unterschiedlich ausgesprochen wird – im Deutschen [ɔɪ̯], im Spanischen [eu̯]. Zuerst hören, dann die Schreibung betrachten.
   - title: Vokalqualität bewusst machen
-    body: Mit *mismo* und *álbum* die spanischen Vokale [i] und [u] von den deutschen ungespannten Varianten [ɪ] und [ʊ] abgrenzen, etwa im Vergleich mit dem deutschen *Album*.
+    body: 'Mit *álbum* hörbar machen, dass das spanische /u/ als [u] gesprochen wird und nicht als ungespanntes [ʊ] wie im deutschen *Album*; für /i/ dasselbe Prinzip an *vino* im Vergleich mit deutschem *bitten* und *bieten* zeigen.'
   - title: Diphthonge als eine Silbe sprechen
     body: Mit *sueño*, *viuda* und dem Lehrbuchbeispiel *fuego* die Silbenstruktur spanischer Diphthonge veranschaulichen, etwa durch Silbenklatschen.
 - type: further_reading

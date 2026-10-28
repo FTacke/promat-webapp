@@ -9,7 +9,7 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-26
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -100,18 +100,18 @@ blocks:
 - type: text
   body: Las propias grabaciones de *caro* y *carro* muestran que dos hablantes no realizan un mismo sonido de *r* exactamente de la misma manera. En el mundo hispanohablante existen, además, otras realizaciones regionales que se presentan con ejemplos sonoros en el [manual digital](https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute). Por tanto, no toda diferencia respecto de un único modelo de referencia constituye un error de pronunciación.
 - type: info_box
-  title: Las lenguas de origen como recurso
-  body: No todos los aprendientes tienen que aprender desde cero la articulación de la *r* española. Quienes hablan, por ejemplo, turco, kurdo o italiano ya suelen conocer de sus propias lenguas la articulación con la punta de la lengua contra los alvéolos. Aun así, la vibración múltiple y, sobre todo, la distinción entre la vibrante simple y la múltiple pueden ser nuevas. Las lenguas de origen constituyen así un recurso importante para enseñar pronunciación.
+  title: Las lenguas de herencia como recurso
+  body: No todos los aprendientes tienen que aprender desde cero la articulación de la *r* española. Quienes hablan, por ejemplo, turco, kurdo o italiano ya suelen conocer de sus propias lenguas la articulación con la punta de la lengua contra los alvéolos. Aun así, la vibración múltiple y, sobre todo, la distinción entre la vibrante simple y la múltiple pueden ser nuevas. Las lenguas de herencia constituyen así un recurso importante para enseñar pronunciación.
 - type: section_heading
   title: Sugerencias para el aula
 - type: teaching_impulses
   items:
   - title: Escuchar primero la diferencia
     body: Utilizar los pares *pero* / *perro* y *caro* / *carro* para mostrar que la vibrante simple y la múltiple permiten distinguir significados. Escuchar y describir primero la diferencia; aclarar después el significado de las palabras.
-  - title: Tomar conciencia del punto de articulación
+  - title: Reconocer dónde se articula la r
     body: Contrastar brevemente la *r* anterior del español con la *r* posterior frecuente en alemán estándar, por ejemplo mediante las palabras *Rose* (alemán) y *rosa* (español). Para practicar *claro*, el manual digital propone imaginar primero una *d* en lugar de la *r* y acelerar progresivamente la articulación hasta que la punta de la lengua produzca el contacto característico.
   - title: Aprovechar la escritura
-    body: Mostrar con los pares de palabras que ⟨r⟩ y ⟨rr⟩ entre vocales representan una verdadera diferencia de sonidos. También se pueden aprovechar las lenguas de origen presentes en el grupo.
+    body: Mostrar con los pares de palabras que ⟨r⟩ y ⟨rr⟩ entre vocales representan una verdadera diferencia de sonidos. También se pueden aprovechar las lenguas de herencia presentes en el grupo.
 - type: further_reading
   title: Para saber más
   description: Capítulos del manual digital y otra página temática relacionada.
@@ -124,7 +124,7 @@ blocks:
     text: La relación entre letras y sonidos en español.
     cta: Más información
     href: https://linguistik.hispanistica.com/orthographie/#se-escribe-casi-como-se-habla
-  - title: Las lenguas de origen en el manual digital
+  - title: Las lenguas de herencia en el manual digital
     text: Por qué el turco, el kurdo o el italiano pueden facilitar la articulación de la *r* vibrante.
     cta: Más información
     href: https://linguistik.hispanistica.com/herkunftssprachen/#gerolltes-r-normal-in-allen-herkunftssprachen

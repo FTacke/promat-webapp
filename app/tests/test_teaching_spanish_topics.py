@@ -302,8 +302,9 @@ def test_speaker_terms_are_central_and_non_normative(client, slug: str, lang: st
 def test_cropped_recordings_are_declared_with_cut_points_and_source_hashes() -> None:
     data = slots.load_slots()
     cropped = {(c["id"], r["slot"]): r for c, r in slots.iter_recordings(data) if r.get("crop")}
-    # tiene hambre (D27) is a cut-out of the item MP3; reír (word list) is already isolated and los otros (QY5) plays the full sentence
-    assert set(cropped) == {("p1-hambre", "ref"), ("p1-hambre", "learner")}
+    # tiene hambre (D27), el baile elegante del evento (D08) and cuidado (D21) are cut-outs of item MP3s; reír (word list) is already
+    # isolated and los otros (QY5) plays the full sentence
+    assert set(cropped) == {(cid, slot) for cid in ("p1-hambre", "p5-baile", "p5-cuidado") for slot in ("ref", "learner")}
     for comparison in data["comparisons"]:
         if comparison["id"] == "p1-losotros":
             assert all("crop" not in r and "source_sha256" not in r for r in comparison["recordings"])
@@ -426,7 +427,10 @@ def test_b_or_v_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     box = re.search(r'pm-admonition--context.*?</section>', html, re.S).group(0)
     box_text = html_module.unescape(re.sub(r"<[^>]+>", " ", box))
     assert ("auch Erstsprachler:innen sind manchmal unsicher" if de else "even native speakers are sometimes unsure") in box_text
-    assert len(re.findall(r"[.!?](?:\s|$)", box_text)) <= 5 and "Tacke 2020" in box_text
+    assert len(re.findall(r"[.!?](?:\s|$)", box_text)) <= 5 and "Tacke 2020" not in box_text
+    assert ("dies ist ein Beispiel für spelling pronunciation , also eine von der Schrift beeinflusste Aussprache" if de
+            else "this is an example of spelling pronunciation , that is, a pronunciation influenced by spelling") in re.sub(r"\s+", " ", box_text)
+    assert "Tacke 2020" not in html.split('<ul class="pm-teaching-further-reading__list">')[0] and "Tacke (2020)" in html
     for forbidden in ("die meisten", "most native", "Katalan", "Catalan", "Prozent", "per cent"):
         assert forbidden not in html
     assert "⟨b⟩ / ⟨v⟩ → /b/" in html  # the quiet typographic summary
@@ -461,7 +465,7 @@ def test_b_or_v_recordings_are_released_provenance_documented_and_replaceable() 
     assert list(comparisons) == ["p4-bienes-vienes", "p4-baron-varon"]
     bienes = {r["slot"]: (r["session_id"], r["item"]["id"]) for r in comparisons["p4-bienes-vienes"]["recordings"]}
     # two reference voices that are not the MAR.ELE reference speakers, and a provisional learner candidate (to be audited)
-    assert bienes == {"ref-mx": ("ES-N-0004-2026-S01", "wl_092"), "ref-cl": ("ES-N-0005-2026-S01", "wl_092"), "learner": ("ES-L-0019-2026-S01", "wl_092")}
+    assert bienes == {"ref-mx": ("ES-N-0004-2026-S01", "wl_092"), "ref-cl": ("ES-N-0005-2026-S01", "wl_092"), "learner": ("ES-L-0017-2026-S01", "wl_092")}
     used = {session for session, _item in bienes.values()}
     assert not used & {"ES-N-0001-2026-S01", "ES-N-0002-2026-S01", "ES-N-0003-2026-S01"} and "ES-N-0003-2026-S01" in slots.EXCLUDED_SESSIONS  # no Ecuador
     baron = {r["slot"]: r for r in comparisons["p4-baron-varon"]["recordings"]}
@@ -509,10 +513,13 @@ def test_r_at_word_end_page_follows_the_agreed_dramaturgy(client, lang: str) -> 
     # old building blocks are gone: overview box, generic rubric, variation box, cuidar/lavar cards
     for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "cuidar", "lavar la ropa", "p3-cuidar", "Lernendenmuster", "Learner pattern", "pm-admonition--context"):
         assert gone not in html, gone
-    # German phonetics: sehr / Vater / Lehrer with IPA, the Vater schwa named, and the Spanish contrast in IPA
-    for fragment in ("[zeːɐ̯]", "[ˈfaːtɐ]", "[ˈleːʁɐ]", "[ˈfloɾ]", "[en.ˈfeɾ.mo]", "[re.ˈiɾ]", "[ʁe.ˈɪɐ]"):
+    # German r-vocalisation in one simple statement (sehr, the ending -er of Vater/Lehrer), without [ɐ̯]/[ɐ] or the Vater schwa; Spanish transcriptions stay
+    for fragment in ("[ˈfloɾ]", "[ˈfloɐ̯]", "[en.ˈfeɾ.mo]", "[re.ˈiɾ]", "[ʁe.ˈɪɐ]", "<em>sehr</em>", "<em>-er</em>", "<em>Vater</em>", "<em>Lehrer</em>"):
         assert fragment in html, fragment
-    assert ("Vater-Schwa" if de else "Vater schwa") in html
+    for gone in ("[zeːɐ̯]", "[ˈfaːtɐ]", "[ˈleːʁɐ]", "Vater-Schwa", "Vater schwa", "Tiefschwa", "low schwa"):
+        assert gone not in html, gone
+    assert ("Im Standarddeutschen wird das <em>r</em> am Silbenende häufig vokalisiert." if de else "In Standard German, the <em>r</em> at the end of a syllable is often vocalised.") in html
+    assert ("ohne dass die Zungenspitze den Zahndamm berührt" if de else "without the tongue tip making contact") in html
     # cross links: the other topic pages
     assert f'href="/{lang}/teaching/spanish/soft-spanish-hard-german"' in html and f'href="/{lang}/teaching/spanish/r"' in html
     assert "https://linguistik.hispanistica.com/aussprache/#anders-artikulierte-laute-die-r-laute" in html
@@ -578,8 +585,8 @@ def test_spanish_r_page_follows_the_agreed_dramaturgy(client, lang: str) -> None
         assert language in html
     # classroom prompts and further reading
     prompts = re.findall(r'class="pm-teaching-impulses__item-title">([^<]+)<', html)
-    assert prompts == (["Erst den Unterschied hören", "Die Artikulationsstelle bewusst machen", "Die Schreibung als Hilfe nutzen"] if de
-                       else ["Hear the difference first", "Make the place of articulation conscious", "Use the spelling as a help"])
+    assert prompts == (["Erst den Unterschied hören", "Erkennen, wo das r gebildet wird", "Die Schreibung als Hilfe nutzen"] if de
+                       else ["Hear the difference first", "Recognise where the r is produced", "Use the spelling as a help"])
     items = re.findall(r'pm-teaching-further-reading__item-title">((?:[^<]|</?em>)+)<', html)
     assert items == (["Aussprache im digitalen Lehrbuch", "Orthographie im digitalen Lehrbuch", "Herkunftssprachen im digitalen Lehrbuch", "Das <em>r</em> am Wortende"] if de
                      else ["Pronunciation in the digital textbook", "Orthography in the digital textbook", "Heritage languages in the digital textbook", "The <em>r</em> at the End of a Word"])
@@ -649,6 +656,10 @@ def test_spanish_r_page_citation_authorship_and_teaser(client, lang: str) -> Non
     title = "Das spanische r" if lang == "de" else "The Spanish r"
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
     assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html  # authorship unchanged: Felix Tacke only
+    # heritage languages: the Spanish edition uses "lenguas de herencia" throughout
+    es = (TOPIC_DIR / "r" / "es.yaml").read_text(encoding="utf-8")
+    assert "lenguas de origen" not in es and es.count("lenguas de herencia") == 4 and "Las lenguas de herencia como recurso" in es
+    assert "Reconocer dónde se articula la r" in es and "turco, kurdo o italiano" in es
     assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/r" in html
     teaser = ("Zwei spanische r-Laute – und warum das deutsche r anders klingt." if lang == "de"
               else "Two Spanish r sounds – and why the German r sounds different.")
@@ -665,7 +676,7 @@ def test_spanish_r_curation_is_released_traceable_and_reuses_the_reir_recording(
         "p2-pero": [("ref_a", "reference", spain, "wl_090"), ("ref_b", "reference", chile, "wl_090")],
         "p2-caro": [("ref_a", "reference", spain, "wl_085"), ("ref_b", "reference", chile, "wl_085")],
         "p2-carro": [("ref_a", "reference", spain, "wl_057"), ("ref_b", "reference", chile, "wl_057")],
-        "p2-reloj": [("ref", "reference", chile, "wl_002"), ("learner", "learner", "ES-L-0011-2026-S01", "wl_002")],
+        "p2-reloj": [("ref", "reference", chile, "wl_002"), ("learner", "learner", "ES-L-0019-2026-S01", "wl_002")],
         "p2-reir": [("ref", "reference", chile, "wl_076"), ("learner", "learner", "ES-L-0019-2026-S01", "wl_076")],
     }
     assert not {rec[2] for recs in picked.values() for rec in recs} & set(slots.EXCLUDED_SESSIONS)
@@ -683,7 +694,7 @@ def test_spanish_r_curation_is_released_traceable_and_reuses_the_reir_recording(
     assert len(list(corpus.glob("*.mp3"))) == 10
     # reloj learner: documented reserves (not integrated), all inside the release gate
     reserves = [r for r in data["reserves"] if r["topic"] == "r"]
-    assert {r["learner"] for r in reserves} == {"ES-L-0019-2026-S01", "ES-L-0021-2026-S01", "ES-L-0005-2026-S01"}
+    assert {r["learner"] for r in reserves} == {"ES-L-0021-2026-S01", "ES-L-0005-2026-S01"}
     assert not {r["learner"] for r in reserves} & set(slots.EXCLUDED_SESSIONS)
 
 
@@ -692,7 +703,7 @@ def test_r_at_word_end_citation_and_slug_are_stable(client, lang: str) -> None:
     html = _html(client, lang, "r-am-silbenende")
     title = "Das r am Wortende" if lang == "de" else "The r at the End of a Word"
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
-    assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
+    assert f"Tacke, Felix & Goás Pérez, Ana (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html_module.unescape(html)
     assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/r-am-silbenende" in html  # canonical URL keeps the old slug
 
 
@@ -755,6 +766,12 @@ def test_b_d_g_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     headings = re.findall(r'<h2 [^>]*class="pm-teaching-section-heading__title">([^<]*)</h2>', html)
     assert headings == (["Verschluss oder Annäherung?", "Auch b und g werden weich", "Mehrere Approximanten in einer Wortfolge", "Impulse für den Unterricht"] if de
                         else ["Closure or approximation?", "b and g become soft, too", "Several approximants in one word sequence", "Classroom prompts"])
+    prefix = "Hörvergleich" if de else "Listening comparison"
+    # el baile elegante del evento directly after con agua (before the next heading), cuidado after el bebedor (before the info box)
+    pos = {name: html.index(f"{prefix}: <em>{name}</em>") for name in ("vida", "lavar", "con agua", "el baile elegante del evento", "el bebedor", "cuidado")}
+    assert pos["vida"] < pos["lavar"] < pos["con agua"] < pos["el baile elegante del evento"] < html.index(headings[2]) < pos["el bebedor"] < pos["cuidado"] < html.index("pm-admonition--context")
+    assert ("etwa in <em>elegante</em>" if de else "for instance in <em>elegante</em>") in html[pos["con agua"]:pos["el baile elegante del evento"]]
+    assert ("In <em>cuidado</em> stehen zwei /d/ zwischen Vokalen" if de else "<em>cuidado</em> has two /d/ between vowels") in html[pos["el bebedor"]:pos["cuidado"]]
     # the heading sits directly before the el bebedor card, followed by its short introduction; the card keeps the explanation of the three positions
     assert html.index(headings[2]) < html.index(f'{"Hörvergleich" if de else "Listening comparison"}: <em>el bebedor</em>') and html.index('<em>con agua</em>') < html.index(headings[2])
     assert ("nicht auf die Stellung zwischen Vokalen beschränkt" if de else "not limited to the position between vowels") in html
@@ -763,24 +780,32 @@ def test_b_d_g_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     leads = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
     assert leads == ([
         "Was unterscheidet die Aussprache des d?", "Wie wird der Konsonant zwischen den beiden a ausgesprochen?", "Wie wird das g in den beiden Aufnahmen ausgesprochen?",
-        "Die Wortfolge zeigt drei approximantische Realisierungen: [β] nach /l/ und zwischen Vokalen sowie [ð] zwischen Vokalen."] if de else [
+        "Wie unterscheidet sich die Aussprache des g in elegante zwischen den beiden Aufnahmen?",
+        "Die Wortfolge zeigt drei approximantische Realisierungen: [β] nach /l/ und zwischen Vokalen sowie [ð] zwischen Vokalen.",
+        "Wie werden die beiden d in cuidado in den Aufnahmen ausgesprochen?"] if de else [
         "What distinguishes the pronunciation of the d?", "How is the consonant between the two a pronounced?", "How is the g pronounced in the two recordings?",
-        "The word sequence shows three approximant realisations: [β] after /l/ and between vowels, and [ð] between vowels."])
+        "How does the pronunciation of the g in elegante differ between the two recordings?",
+        "The word sequence shows three approximant realisations: [β] after /l/ and between vowels, and [ð] between vowels.",
+        "How are the two d in cuidado pronounced in the recordings?"])
     assert ("das erste b nach l" if de else "the first b after l") not in html
-    # four listening stations: d (vida, the only collapsible solution), b (lavar), g (con agua, MAR.ELE), several positions (el bebedor, MAR.ELE)
-    prefix = "Hörvergleich" if de else "Listening comparison"
+    # six listening stations: d (vida, the only collapsible solution), b (lavar), g (con agua, MAR.ELE), g in a sentence (D08), several positions
+    # (el bebedor, MAR.ELE), two d in one word (cuidado, D21)
+    names = ["vida", "lavar", "con agua", "el baile elegante del evento", "el bebedor", "cuidado"]
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
-    assert titles[:4] == [f"{prefix}: <em>vida</em>", f"{prefix}: <em>lavar</em>", f"{prefix}: <em>con agua</em>", f"{prefix}: <em>el bebedor</em>"]
-    assert html.count("pm-teaching-block--audio-contrast") == 4
+    assert titles[:6] == [f"{prefix}: <em>{name}</em>" for name in names]
+    assert html.count("pm-teaching-block--audio-contrast") == 6
     assert html.count('<details class="pm-teaching-solution">') == 1 and html.index('<details class="pm-teaching-solution">') < html.index(headings[0])
-    assert re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html) == ["<em>vida</em>", "<em>lavar</em>", "<em>con agua</em>", "<em>el bebedor</em>"]
+    assert re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html) == [f"<em>{name}</em>" for name in names]
     ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
-    assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 4
+    assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 6
     subtitles = re.findall(r'pm-teaching-audio-contrast__example-subtitle">([^<]+)<', html)
-    assert subtitles[0::2] == (["Mexiko · W45", "Spanien · W9", "MAR.ELE", "MAR.ELE"] if de else ["Mexico · W45", "Spain · W9", "MAR.ELE", "MAR.ELE"])
+    assert subtitles[0::2] == (["Mexiko · W45", "Spanien · W9", "MAR.ELE", "Mexiko · D8", "MAR.ELE", "Mexiko · D21"] if de
+                               else ["Mexico · W45", "Spain · W9", "MAR.ELE", "Mexico · D8", "MAR.ELE", "Mexico · D21"])
+    assert subtitles[1::2] == (["L1 Deutsch · W45", "L1 Deutsch · W9", "MAR.ELE", "L1 Deutsch · D8", "MAR.ELE", "L1 Deutsch · D21"] if de
+                               else ["L1 German · W45", "L1 German · W9", "MAR.ELE", "L1 German · D8", "MAR.ELE", "L1 German · D21"])
     assert "Chile" not in html and "hispanistica.com/projects/marele" not in html  # no Chilean reference for lavar; MAR.ELE named as plain text
     # removed building blocks: overview box, generic rubric, logro card, the separate [β] is not [v] note, the old context section
-    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "cuidado", "labio", "p5-logro", "p5-algo", "p5-vino", "Nicht immer weich", "Not always soft",
+    for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "labio", "p5-logro", "p5-algo", "p5-vino", "Nicht immer weich", "Not always soft",
                  "kein deutsches [v]", "not a German [v]", "<em>logro</em>]"):
         assert gone not in html, gone
     # articulation diagram directly after the closure/approximation explanation: wide figure, WebP + master fallback, exact caption, credit and alt text
@@ -820,6 +845,8 @@ def test_b_d_g_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     assert prompts == (["Erst hören, dann erklären", "Verschluss und Annäherung erproben", "Das Muster übertragen"] if de
                        else ["Listen first, explain later", "Try out closure and approximation", "Transfer the pattern"])
     assert "<em>el bebedor</em>" in html.split("pm-teaching-impulses__item-title")[-1]
+    assert ("Nicht alle Regeln für die unterschiedlichen Realisierungen müssen behandelt werden" if de else "Not every rule for the different realisations needs to be covered") in html
+    assert "Allophonie" not in html and "Allophony" not in html
     # the two sibling pages are linked in the Vertiefung box only, not in the running text
     rest = html.split('<ul class="pm-teaching-further-reading__list">')
     assert f'href="/{lang}/teaching/spanish/b-or-v"' in rest[1] and f'href="/{lang}/teaching/spanish/soft-spanish-hard-german"' in rest[1]
@@ -833,7 +860,7 @@ def test_b_d_g_authorship_citation_and_slug(client, lang: str) -> None:
     html = _html(client, lang, "soft-consonants-b-d-g")
     title = "b, d und g: Zu hart ausgesprochen?" if lang == "de" else "b, d and g: Pronounced too hard?"
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
-    assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
+    assert f"Tacke, Felix & Goás Pérez, Ana (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html_module.unescape(html)
     assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/soft-consonants-b-d-g" in html
 
 
@@ -842,13 +869,20 @@ def test_b_d_g_curation_is_released_traceable_and_the_diagram_master_is_kept() -
 
     data = slots.load_slots()
     comparisons = {c["id"]: c for c in data["comparisons"] if c["topic"] == "soft-consonants-b-d-g"}
-    assert list(comparisons) == ["p5-vida", "p5-lavar", "p5-agua", "p5-bebedor"]
-    picked = {cid: {r["slot"]: (r["session_id"], r["item"]["id"]) for r in c["recordings"]} for cid, c in comparisons.items() if cid in ("p5-vida", "p5-lavar")}
-    # lavar: a Spanish (not Chilean) reference; the learner recording of the earlier version is kept
+    assert list(comparisons) == ["p5-vida", "p5-lavar", "p5-agua", "p5-baile", "p5-bebedor", "p5-cuidado"]
+    picked = {cid: {r["slot"]: (r["session_id"], r["item"]["id"]) for r in c["recordings"]} for cid, c in comparisons.items() if cid in ("p5-vida", "p5-lavar", "p5-baile", "p5-cuidado")}
+    # lavar: a Spanish (not Chilean) reference; D08 and D21: ES-N-0004 and ES-L-0020 as decided after the review
     assert picked == {
         "p5-vida": {"ref": ("ES-N-0004-2026-S01", "wl_045"), "learner": ("ES-L-0007-2026-S01", "wl_045")},
         "p5-lavar": {"ref": ("ES-N-0001-2026-S01", "wl_009"), "learner": ("ES-L-0006-2026-S01", "wl_009")},
+        "p5-baile": {"ref": ("ES-N-0004-2026-S01", "d_08"), "learner": ("ES-L-0020-2026-S01", "d_08")},
+        "p5-cuidado": {"ref": ("ES-N-0004-2026-S01", "d_21"), "learner": ("ES-L-0020-2026-S01", "d_21")},
     }
+    # the two sentence cut-outs: only the agreed passage, cut points and source hashes declared
+    assert comparisons["p5-baile"]["target_tokens"] == ["el", "baile", "elegante", "del", "evento"] and comparisons["p5-cuidado"]["target_tokens"] == ["cuidado"]
+    for cid in ("p5-baile", "p5-cuidado"):
+        for recording in comparisons[cid]["recordings"]:
+            assert recording["crop"]["end_ms"] > recording["crop"]["start_ms"] > 0 and len(recording["source_sha256"]) == 64
     assert not {s for c in picked.values() for s, _i in c.values()} & set(slots.EXCLUDED_SESSIONS) and "ES-N-0005-2026-S01" not in {s for c in picked.values() for s, _i in c.values()}
     # con agua and el bebedor are the MAR.ELE pairs: copied byte for byte, provenance and the textbook transcriptions documented
     expected = {"p5-agua": ("agua_l1.mp3", "agua_ele.mp3", "[ko.ˈna.ɣwa]", "[kon.ˈa.gwa]"), "p5-bebedor": ("bebedor_l1.mp3", "bebedor_ele.mp3", "[el.βe.βe.ˈðoɾ]", "[el.be.be.ˈdoɐ]")}
@@ -863,7 +897,8 @@ def test_b_d_g_curation_is_released_traceable_and_the_diagram_master_is_kept() -
     assert {r["learner"] for r in reserves} == {"ES-L-0020-2026-S01", "ES-L-0018-2026-S01", "ES-L-0010-2026-S01", "ES-L-0017-2026-S01"}
     assert not any(r["id"].startswith("p5-logro") for r in reserves) and all(r["reference"] != "ES-N-0005-2026-S01" for r in reserves if r["id"].startswith("p5-lavar"))
     media = TOPIC_DIR / "soft-consonants-b-d-g" / "media"
-    assert sorted(path.name for path in (media / "audio" / "corpus").glob("*.mp3")) == ["p5-lavar-learner.mp3", "p5-lavar-ref.mp3", "p5-vida-learner.mp3", "p5-vida-ref.mp3"]
+    assert sorted(path.name for path in (media / "audio" / "corpus").glob("*.mp3")) == sorted(
+        f"p5-{name}-{slot}.mp3" for name in ("lavar", "vida", "baile", "cuidado") for slot in ("learner", "ref"))
     assert sorted(path.name for path in (media / "audio" / "marele").glob("*.mp3")) == ["agua-learner.mp3", "agua-ref.mp3", "bebedor-learner.mp3", "bebedor-ref.mp3"]
     # the diagram master is kept untouched next to its WebP derivative (declared with hashes); no working copy is left in the repository root
     master = media / "images" / "dental-stop-approximant.png"
@@ -886,7 +921,7 @@ def test_slot_registry_is_consistent_with_media_and_pages() -> None:
     assert slots.check(data) == []
     declared = {(c["topic"], r["file"]) for c, r in slots.iter_recordings(data)}
     on_disk = {(path.parents[3].name, f"{path.parent.name}/{path.name}") for kind in ("corpus", "marele") for path in TOPIC_DIR.glob(f"*/media/audio/{kind}/*.mp3")}
-    assert declared == on_disk and len(declared) == 57
+    assert declared == on_disk and len(declared) == 61
     for comparison, recording in slots.iter_recordings(data):
         assert recording["category"] in ("reference", "learner")
         if not slots.is_external(recording):
@@ -915,37 +950,40 @@ def test_europe_page_follows_the_agreed_dramaturgy(client, lang: str) -> None:
     # five listening cards in the agreed order; the first follows the short introduction directly and is the only one with a solution
     prefix = "Hörvergleich" if de else "Listening comparison"
     titles = re.findall(r'<h3 class="promat-content-block__title pm-panel__title">(.*?)</h3>', html)
-    assert titles[:5] == [f"{prefix}: <em>{w}</em>" for w in ("Europa", "deuda")] + [f"{prefix}: <em>mismo</em> – <em>álbum</em>"] + [f"{prefix}: <em>{w}</em>" for w in ("sueño", "viuda")]
+    assert titles[:5] == [f"{prefix}: <em>{w}</em>" for w in ("Europa", "deuda", "álbum", "sueño", "viuda")]
     assert html.count("pm-teaching-block--audio-contrast") == 5 and html.count('<details class="pm-teaching-solution">') == 1
-    pos = {w: html.index(f"{prefix}: <em>{w}</em>") for w in ("Europa", "deuda", "sueño", "viuda")}
-    pos["mismo"] = html.index(f"{prefix}: <em>mismo</em> – <em>álbum</em>")
+    pos = {w: html.index(f"{prefix}: <em>{w}</em>") for w in ("Europa", "deuda", "álbum", "sueño", "viuda")}
+    pos["mismo"] = pos["álbum"]
     assert html.index("pm-teaching-block--audio-contrast") < html.index('<details class="pm-teaching-solution">') < pos["deuda"]
     assert pos["Europa"] < pos["deuda"] < html.index(headings[0]) < pos["mismo"] < html.index(headings[1]) < pos["sueño"] < pos["viuda"] < html.index(headings[2])
     chips = re.findall(r'pm-teaching-audio-contrast__transcript-text">(.*?)</span>', html)
-    assert chips == ["<em>Europa</em>", "<em>deuda</em>", "<em>mismo</em> – <em>álbum</em>", "<em>sueño</em>", "<em>viuda</em>"]
+    assert chips == ["<em>Europa</em>", "<em>deuda</em>", "<em>álbum</em>", "<em>sueño</em>", "<em>viuda</em>"]
     questions = [html_module.unescape(re.sub(r"<[^>]+>", "", q)).strip() for q in re.findall(r'class="audio-section-description">(.*?)</p>', html, re.S)]
     assert questions == ([
         "Wie klingt die Buchstabenfolge eu in den beiden Aufnahmen?", "Wie wird die Vokalverbindung eu in deuda ausgesprochen?",
-        "Wie unterscheiden sich die Vokale i und u in den beiden Aufnahmen?", "Wie viele Silben sind in den beiden Aufnahmen zu hören?",
+        "Wie unterscheidet sich die Aussprache des u in álbum zwischen den beiden Aufnahmen?", "Wie viele Silben sind in den beiden Aufnahmen zu hören?",
         "Bleibt die Vokalfolge iu innerhalb einer Silbe?"] if de else [
         "How does the letter sequence eu sound in the two recordings?", "How is the vowel sequence eu pronounced in deuda?",
-        "How do the vowels i and u differ in the two recordings?", "How many syllables can be heard in the two recordings?",
+        "How does the pronunciation of the u in álbum differ between the two recordings?", "How many syllables can be heard in the two recordings?",
         "Does the vowel sequence iu stay within one syllable?"])
     ref, learner = ("Referenzsprecher:in", "Lernende:r") if de else ("Reference speaker", "Learner")
     assert re.findall(r'pm-teaching-audio-contrast__example-title">([^<]+)<', html) == [ref, learner] * 5
     country = ("Spanien", "Chile", "Deutsch") if de else ("Spain", "Chile", "German")
     assert re.findall(r'pm-teaching-audio-contrast__example-subtitle">([^<]+)<', html) == [
-        f"{country[0]} · W80", f"L1 {country[2]} · W80", f"{country[0]} · W22", f"L1 {country[2]} · W22", "MAR.ELE", "MAR.ELE",
+        f"{country[0]} · W80", f"L1 {country[2]} · W80", f"{country[0]} · W22", f"L1 {country[2]} · W22", "MAR.ELE", f"L1 {country[2]} · W44",
         f"{country[0]} · W40", f"L1 {country[2]} · W40", f"{country[0]} · W3", f"L1 {country[2]} · W3"]
-    # the combined card: exactly two players, both marked as two single words spliced one after the other (never one connected utterance)
-    card = html[pos["mismo"]:pos["sueño"]]  # from the card title to the next card (the explanation text sits inside this stretch)
-    assert sorted(set(re.findall(r'<source src="([^"]+)"', card))) == [f"/teaching-media/spanish/{EUROPE}/audio/marele/p7-mismo-album-{who}.mp3" for who in ("learner", "ref")]
-    note = "Zwei Einzelwörter, hintereinander montiert" if de else "Two single words, spliced one after the other"
-    assert card.count(note) == 2
+    # the álbum card: exactly two players (MAR.ELE reference, ProMat learner), no montage, no mismo; /i/ is still explained in the text (vino, bitten, bieten)
+    card = html[pos["álbum"]:pos["sueño"]]  # from the card title to the next card (the explanation text sits inside this stretch)
+    assert sorted(set(re.findall(r'<source src="([^"]+)"', card))) == [f"/teaching-media/spanish/{EUROPE}/audio/corpus/p7-album-learner.mp3",
+                                                                      f"/teaching-media/spanish/{EUROPE}/audio/marele/p7-album-ref.mp3"]
+    assert "mismo" not in html and "montiert" not in html and "spliced" not in html
+    for word in ("<em>vino</em>", "<em>bitten</em>", "<em>bieten</em>", "<em>Album</em>"):
+        assert word in card, word
     # phonetic statements of the explanation text
     for fragment in ("[ɔɪ̯]", "[eu̯ˈɾopa]", "[ˈdeu̯ða]", "⟨eu⟩", "[iː]", "[ɪ]", "[ʊ]", "[uː]", "[ˈsweɲo]", "[ˈbjuða]", "fuego", "fu-e-go", "fue-go", "viu-da"):
         assert fragment in html, fragment
     assert ("bieten" in html and "Album" in html) and ("das mit [ʊ] gesprochen wird" in html if de else "which is pronounced with [ʊ]" in html)
+    assert "<em>álbum</em>" in html.split("pm-teaching-impulses__item-title")[2] and "<em>vino</em>" in html.split("pm-teaching-impulses__item-title")[2]
     # nothing general, nothing excluded: no overview box, no generic rubric, no graphic, no discarded candidate words
     for gone in ("Auf einen Blick", "At a glance", "Hören und entdecken", "Listen and discover", "pm-teaching-figure", "pm-admonition--tip", "ciudad", "cuidado", "tierra", "buscó", "centro", "pastel", "Vokaltrapez", "vowel chart"):
         assert gone not in html, gone
@@ -975,70 +1013,67 @@ def test_europe_page_title_teaser_citation_and_authorship(client, lang: str) -> 
     assert teaser in html and html.count("<h1") == 1 and h1.strip() == ("<em>Europa</em> klingt auf Spanisch anders" if lang == "de" else "<em>Europe</em> sounds different in Spanish")
     assert f"<title>{title} · " in html
     quote_open, quote_close = ("„", "“") if lang == "de" else ("“", "”")
-    assert f"Tacke, Felix (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html and "Goás Pérez" not in html
+    assert f"Tacke, Felix & Goás Pérez, Ana (2026). {quote_open}{title}{quote_close}. In: Felix Tacke" in html_module.unescape(html)
     assert f"https://pronunciation-matters.de/{lang}/teaching/spanish/{EUROPE}" in html
     assert ("Europa" if lang == "de" else "Europe") in title  # the title uses the word Europe as the vivid entry in both languages
 
 
-def test_europe_curation_is_released_traceable_and_the_montage_is_declared() -> None:
-    import re as re_module
-
+def test_europe_curation_is_released_traceable_and_album_replaces_the_montage() -> None:
     data = slots.load_slots()
     comparisons = {c["id"]: c for c in data["comparisons"] if c["topic"] == EUROPE}
-    assert list(comparisons) == ["p7-europa", "p7-deuda", "p7-mismo-album", "p7-sueno", "p7-viuda"]
+    assert list(comparisons) == ["p7-europa", "p7-deuda", "p7-album", "p7-sueno", "p7-viuda"]
     n1, n2 = "ES-N-0001-2026-S01", "ES-N-0002-2026-S01"
-    l10, l21 = "ES-L-0010-2026-S01", "ES-L-0021-2026-S01"
+    l10, l15, l21 = "ES-L-0010-2026-S01", "ES-L-0015-2026-S01", "ES-L-0021-2026-S01"
     picked = {cid: [(r["slot"], r["category"], r.get("session_id")) for r in c["recordings"]] for cid, c in comparisons.items()}
     assert picked == {
         "p7-europa": [("ref", "reference", n2), ("learner", "learner", l21)],
         "p7-deuda": [("ref", "reference", n2), ("learner", "learner", l21)],  # same pair as Europa: the second case of the same phenomenon
-        "p7-mismo-album": [("ref", "reference", None), ("learner", "learner", None)],  # MAR.ELE single-word items, no ProMat session
-        "p7-sueno": [("ref", "reference", n1), ("learner", "learner", l10)],
+        "p7-album": [("ref", "reference", None), ("learner", "learner", l15)],  # MAR.ELE reference, ProMat learner ES-L-0015
+        "p7-sueno": [("ref", "reference", n1), ("learner", "learner", l15)],  # learner ES-L-0015 after the review
         "p7-viuda": [("ref", "reference", n1), ("learner", "learner", l10)],
     }
     assert not {s for recs in picked.values() for _slot, _cat, s in recs} & set(slots.EXCLUDED_SESSIONS)
-    items = {cid: [r["item"]["id"] for r in c["recordings"]] for cid, c in comparisons.items() if cid != "p7-mismo-album"}
-    assert items == {"p7-europa": ["wl_080"] * 2, "p7-deuda": ["wl_022"] * 2, "p7-sueno": ["wl_040"] * 2, "p7-viuda": ["wl_003"] * 2}
-    # discarded candidate words are not part of the page's recordings
-    assert not {c["target"] for c in comparisons.values()} & {"ciudad", "cuidado", "tierra", "buscó", "centro", "pastel"}
-    # the montage: two single-word MAR.ELE items per speaker, in the order mismo, álbum, with a short declared pause; originals untouched (hashes), tool recorded
-    sources = {"ref": ["items/inf-L1-ES_es_040_mismo.mp3", "items/inf-L1-ES_es_049_álbum.mp3"], "learner": ["items/inf-019_040_mismo.mp3", "items/inf-019_049_álbum.mp3"]}
-    for recording in comparisons["p7-mismo-album"]["recordings"]:
-        assert recording["origin"] == {"corpus": "MAR.ELE"} and "item" not in recording and "crop" not in recording
-        assert [p["source_file"] for p in recording["parts"]] == sources[recording["slot"]]
-        assert [p["target_tokens"] for p in recording["parts"]] == [["mismo"], ["álbum"]]
-        assert recording["join"]["pause_ms"] == 300 and recording["join"]["tool"].startswith("ffmpeg")
-        for part in recording["parts"]:
-            crop = part["crop"]
-            assert 0 < crop["start_ms"] < crop["end_ms"] and crop["fade_in_ms"] >= 10 and crop["fade_out_ms"] >= 15
-            assert re_module.fullmatch(r"[0-9a-f]{64}", part["source_sha256"]) and part["source_sha256"] != recording["sha256"]
-    # the page does not present it as one utterance; the clips are short two-word montages, not full sentences
+    items = {cid: [r["item"]["id"] for r in c["recordings"] if "item" in r] for cid, c in comparisons.items()}
+    assert items == {"p7-europa": ["wl_080"] * 2, "p7-deuda": ["wl_022"] * 2, "p7-album": ["wl_044"], "p7-sueno": ["wl_040"] * 2, "p7-viuda": ["wl_003"] * 2}
+    # álbum only: the reference is the MAR.ELE álbum clip used so far (second part of the former montage, taken out by MP3 frame copy)
+    album = {r["slot"]: r for r in comparisons["p7-album"]["recordings"]}
+    assert comparisons["p7-album"]["target_tokens"] == ["álbum"] and "parts" not in album["ref"] and "crop" not in album["ref"]
+    origin = album["ref"]["origin"]
+    assert origin["corpus"] == "MAR.ELE" and origin["source_file"] == "items/inf-L1-ES_es_049_álbum.mp3" and len(origin["source_sha256"]) == 64
+    assert origin["extracted_from"]["file"] == "marele/p7-mismo-album-ref.mp3" and "frame copy" in origin["extracted_from"]["method"]
+    assert not [r for _c, r in slots.iter_recordings(data) if r.get("parts")]  # no montage is used any more
     media = TOPIC_DIR / EUROPE / "media" / "audio"
-    for name, low, high in (("p7-mismo-album-ref", 1400, 1900), ("p7-mismo-album-learner", 1500, 2000)):
-        size = (media / "marele" / f"{name}.mp3").stat().st_size
-        assert low * 20 < size < high * 20  # 160 kbit/s = 20 bytes per ms
+    size = (media / "marele" / "p7-album-ref.mp3").stat().st_size
+    assert 600 * 20 < size < 900 * 20  # one word at 160 kbit/s (20 bytes per ms), not two
     declared = sorted(r["file"].split("/")[1] for c in comparisons.values() for r in c["recordings"] if r["file"].startswith("corpus/"))
-    assert sorted(path.name for path in (media / "corpus").glob("*.mp3")) == declared and len(declared) == 8
-    assert sorted(path.name for path in (media / "marele").glob("*.mp3")) == ["p7-mismo-album-learner.mp3", "p7-mismo-album-ref.mp3"]
+    assert sorted(path.name for path in (media / "corpus").glob("*.mp3")) == declared and len(declared) == 9
+    assert sorted(path.name for path in (media / "marele").glob("*.mp3")) == ["p7-album-ref.mp3"]
     reserves = {r["id"]: r for r in data["reserves"] if r["topic"] == EUROPE}
-    assert sorted(reserves) == sorted(["p7-europa-reserve-0008", "p7-deuda-reserve-0008", "p7-mismo-reserve-0004", "p7-album-reserve-0004", "p7-mismo-reserve-0019",
-                                       "p7-album-reserve-0019", "p7-sueno-reserve-0015", "p7-viuda-reserve-0017"])
+    assert sorted(reserves) == sorted(["p7-europa-reserve-0008", "p7-deuda-reserve-0008", "p7-album-reserve-0004", "p7-album-reserve-0019", "p7-viuda-reserve-0017"])
     assert not {r["learner"] for r in reserves.values()} & set(slots.EXCLUDED_SESSIONS)
 
-
 def test_montage_declaration_rules_are_enforced() -> None:
+    """No page uses a montage at present; the declaration rules stay enforced for a future one (built here from the álbum reference)."""
     import copy
 
     data = slots.load_slots()
     assert slots.check(data) == []
 
+    def external_montage(candidate) -> dict:
+        recording = next(r for c in candidate["comparisons"] if c["id"] == "p7-album" for r in c["recordings"] if r["slot"] == "ref")
+        part = {"source_file": recording["origin"]["source_file"], "target_tokens": ["álbum"], "crop": {"start_ms": 480, "end_ms": 1135, "fade_in_ms": 15, "fade_out_ms": 25},
+                "source_sha256": recording["origin"]["source_sha256"]}
+        recording["origin"] = {"corpus": "MAR.ELE"}
+        recording["parts"] = [dict(part), dict(part, crop=dict(part["crop"]))]
+        recording["join"] = {"pause_ms": 300, "tool": "ffmpeg"}
+        return recording
+
     def broken(mutate) -> list[str]:
         candidate = copy.deepcopy(data)
-        recording = next(r for _c, r in slots.iter_recordings(candidate) if r.get("parts"))
-        mutate(recording)
+        mutate(external_montage(candidate))
         return slots.check(candidate)
 
-    # external montage (MAR.ELE)
+    assert not any("montage needs" in p for p in broken(lambda r: None))
     assert any("montage needs" in p for p in broken(lambda r: r["join"].pop("pause_ms")))
     assert any("montage needs" in p for p in broken(lambda r: r.update(parts=r["parts"][:1])))
     assert any("every part of a montage needs a crop" in p for p in broken(lambda r: r["parts"][1].pop("crop")))
@@ -1066,30 +1101,19 @@ def test_montage_declaration_rules_are_enforced() -> None:
     as_session_montage(candidate)["parts"][0]["item"] = {"task": "wordlist", "id": "x"}
     assert any("invalid corpus item" in p for p in slots.check(candidate))
 
-
-def test_montage_is_reproducible_from_the_declared_cut_points_and_pause(tmp_path) -> None:
-    import os
+def test_album_reference_is_the_former_montage_part_without_re_encoding() -> None:
+    """The MAR.ELE álbum reference is taken out of the former montage by MP3 frame copy: same codec settings, one word only."""
     import shutil as shutil_module
     import subprocess
 
-    marele_root = Path(os.environ.get("PROMAT_MARELE_ROOT") or r"C:\dev_backup\marele-webapp")
-    if shutil_module.which("ffmpeg") is None or not (marele_root / "items").is_dir():
-        pytest.skip("ffmpeg or the MAR.ELE backup is not present")
-    data = slots.load_slots()
-    montages = [(c, r) for c, r in slots.iter_recordings(data) if r.get("parts")]
-    assert len(montages) == 2
-    for _comparison, recording in montages:
-        origins = [marele_root / part["source_file"] for part in recording["parts"]]
-        assert [slots.sha256_of(o) for o in origins] == [p["source_sha256"] for p in recording["parts"]]  # the MAR.ELE items are untouched
-        target = tmp_path / Path(recording["file"]).name
-        slots.derive_montage(origins, target, recording["parts"], recording["join"])
-        if recording["join"]["tool"] == f"ffmpeg {slots.ffmpeg_version()}":
-            assert slots.sha256_of(target) == recording["sha256"], recording["file"]  # bit-identical with the same tool version
-        if shutil_module.which("ffprobe"):
-            seconds = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(target)], capture_output=True, text=True, check=True).stdout)
-            expected = (sum(p["crop"]["end_ms"] - p["crop"]["start_ms"] for p in recording["parts"]) + recording["join"]["pause_ms"]) / 1000
-            assert abs(seconds - expected) < 0.06  # words, then exactly the declared pause, nothing else
-
+    if shutil_module.which("ffprobe") is None:
+        pytest.skip("ffprobe is not present")
+    clip = TOPIC_DIR / EUROPE / "media" / "audio" / "marele" / "p7-album-ref.mp3"
+    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_name,sample_rate,bit_rate:format=duration", "-of", "default=nw=1", str(clip)],
+                         capture_output=True, text=True, check=True).stdout
+    assert "codec_name=mp3" in out and "sample_rate=48000" in out and "bit_rate=160000" in out
+    seconds = float(next(line for line in out.splitlines() if line.startswith("duration=")).split("=")[1])
+    assert 0.6 < seconds < 0.8  # álbum only (the former montage with mismo, pause and álbum was about 1.65 s)
 
 def test_session_montage_parts_are_checked_item_by_item_in_the_release_report() -> None:
     import copy
@@ -1104,8 +1128,9 @@ def test_session_montage_parts_are_checked_item_by_item_in_the_release_report() 
     rows = [r for r in slots.release_rows(data, sessions_root) if r["use"] == "p7-europa · integrated" and r["role"] == "learner"]
     assert sorted((r["session"], r["item"]) for r in rows) == [("ES-L-0021-2026-S01", "wl_022"), ("ES-L-0021-2026-S01", "wl_080")]
     assert all(r["result"] == "OK" and r["consent"] == "yes" and r["review"] == "False" for r in rows)
-    # the MAR.ELE montage has no ProMat session and therefore no ProMat release row
-    assert not [r for r in slots.release_rows(slots.load_slots(), sessions_root) if r["use"].startswith("p7-mismo-album")]
+    # the MAR.ELE álbum reference has no ProMat session and therefore no release row; the ES-L-0015 learner has one
+    album_rows = [r for r in slots.release_rows(slots.load_slots(), sessions_root) if r["use"] == "p7-album · integrated"]
+    assert [(r["session"], r["item"], r["role"], r["result"]) for r in album_rows] == [("ES-L-0015-2026-S01", "wl_044", "learner", "OK")]
 
 
 SEVEN_SPANISH_PAGES = ("which-pronunciation", "soft-spanish-hard-german", "europe-sounds-different", "b-or-v", "soft-consonants-b-d-g", "r", "r-am-silbenende")
@@ -1220,10 +1245,9 @@ MASTER_REVISION_2026_10_26 = {
         {"de": ["Nicht jede Abweichung von einem einzelnen Referenzmodell ist deshalb ein Aussprachefehler.\n"], "en": ["Not every deviation from a single reference model is therefore a pronunciation error.\n"]},
         {"de": ["Für den Unterricht ist zunächst entscheidend, dass einfacher und mehrfacher Vibrant"], "en": ["For teaching, what matters first"]},
     ),
-    "r-am-silbenende": (
-        {"de": ["Im Standarddeutschen gehört die Vokalisierung von /r/ zur regulären Aussprache, etwa in *sehr*, *Vater* oder *Lehrer*.",
-                "das sogenannte Vater-Schwa (auch Tiefschwa): [ˈfaːtɐ], [ˈleːʁɐ]. Beide Erscheinungen sind verwandt, aber nicht in jeder Hinsicht identisch."],
-         "en": ["In Standard German, the vocalisation of /r/ is part of regular pronunciation,", "The two phenomena are related, but not identical in every respect."]},
+    "r-am-silbenende": (  # since the review of 2026-10-28 the German r-vocalisation is one simple statement (see test_r_at_word_end_page)
+        {"de": ["Im Standarddeutschen wird das *r* am Silbenende häufig vokalisiert."],
+         "en": ["In Standard German, the *r* at the end of a syllable is often vocalised."]},
         {"de": ["Der erste Hörvergleich zeigt, was damit gemeint ist.", "führt die R-Vokalisierung also selbst vor", "ist das kein Fehler, sondern der Normalfall"],
          "en": ["The first listening comparison shows what that means.", "demonstrates r-vocalisation itself", "this is not a mistake but the normal case"]},
     ),
@@ -1242,4 +1266,4 @@ def test_master_revision_wording_is_in_place_in_german_and_english(slug: str) ->
     # the r vocalisation sentence of r-am-silbenende names sehr/Vater/Lehrer once, then explains the two cases
     if slug == "r-am-silbenende":
         de = (TOPIC_DIR / slug / "de.yaml").read_text(encoding="utf-8")
-        assert de.count("*Vater* oder *Lehrer*") == 1 and "Dabei sind zwei Fälle zu unterscheiden" in de
+        assert de.count("*Vater* oder *Lehrer*") == 1 and "Vater-Schwa" not in de

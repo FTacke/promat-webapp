@@ -8,8 +8,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-26
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -27,11 +28,11 @@ blocks:
     audio: corpus/p3-flor-learner.mp3
 - type: solution
   title: 'Solución: ¿qué se oye?'
-  body: 'En la grabación de referencia, *flor* termina con un contacto breve de la punta de la lengua contra los alvéolos: [ˈfloɾ]. En cambio, el aprendiente deja que la palabra termine con un sonido vocálico, sin un contacto lingual perceptible, aproximadamente [ˈfloɐ̯], como ocurre con frecuencia con la *r* final alemana.'
+  body: 'En la grabación de referencia, *flor* termina con un contacto breve de la punta de la lengua contra los alvéolos: [ˈfloɾ]. En cambio, el aprendiente termina la palabra con un sonido vocálico, sin que la punta de la lengua llegue a hacer contacto, de modo que la pronunciación se acerca a [ˈfloɐ̯], como ocurre con frecuencia con la *r* final en alemán.'
 - type: section_heading
   title: Cuando la r alemana se convierte en vocal
 - type: text
-  body: 'En alemán estándar, la vocalización de /r/ forma parte de la pronunciación habitual, por ejemplo en *sehr*, *Vater* y *Lehrer*. Conviene distinguir dos casos. Después de la vocal larga de *sehr*, la *r* se percibe únicamente como un elemento vocálico final, aproximadamente [zeːɐ̯]. En las terminaciones átonas de *Vater* y *Lehrer*, en cambio, aparece la vocal [ɐ], conocida como *Vater-Schwa* o *Tiefschwa*: [ˈfaːtɐ], [ˈleːʁɐ]. Ambos fenómenos están relacionados, pero no son idénticos en todos sus aspectos.'
+  body: 'En alemán estándar, la *r* al final de una sílaba se vocaliza con frecuencia. Así, en palabras como *sehr* y en la terminación *-er* de *Vater* o *Lehrer*, en lugar de una consonante se oye un sonido vocálico. Esta costumbre puede transferirse al español en la pronunciación de aprendientes germanohablantes.'
 - type: text
   body: 'En español sucede algo distinto. La *r* final mantiene normalmente su carácter consonántico, por lo general como un contacto breve de la punta de la lengua [ɾ]: *flor* [ˈfloɾ]. Según la región y el contexto, su realización puede ser más débil, más prolongada o presentar otras características, pero por lo general sigue siendo una consonante. Cuando se transfiere el hábito alemán, *flor* puede pronunciarse más bien como [ˈfloɐ̯].'
 - type: audio_contrast

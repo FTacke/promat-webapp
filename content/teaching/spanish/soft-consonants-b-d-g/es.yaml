@@ -8,8 +8,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-26
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -64,6 +65,19 @@ blocks:
   - role: learner
     subtitle: MAR.ELE
     audio: marele/agua-learner.mp3
+- type: text
+  body: 'También dentro de una oración puede observarse la /g/ entre vocales, por ejemplo en *elegante*.'
+- type: audio_contrast
+  title: 'Comparación auditiva: *el baile elegante del evento*'
+  lead: '¿En qué se diferencia la pronunciación de la *g* de *elegante* entre las dos grabaciones?'
+  transcript: '*el baile elegante del evento*'
+  examples:
+  - role: reference
+    subtitle: México · D8
+    audio: corpus/p5-baile-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · D8
+    audio: corpus/p5-baile-learner.mp3
 - type: section_heading
   title: Varias aproximantes en una misma secuencia
 - type: text
@@ -81,6 +95,19 @@ blocks:
     audio: marele/bebedor-learner.mp3
 - type: text
   body: En la grabación de referencia, las tres consonantes presentan una articulación más suave, que puede representarse esquemáticamente como [el.βe.βe.ˈðoɾ]. El aprendiente, en cambio, las pronuncia con un cierre claramente perceptible.
+- type: text
+  body: 'El mismo mecanismo puede repetirse dentro de una sola palabra: en *cuidado* hay dos /d/ entre vocales, que en el modelo de referencia del español se pronuncian ambas como aproximante [ð].'
+- type: audio_contrast
+  title: 'Comparación auditiva: *cuidado*'
+  lead: '¿Cómo se pronuncian las dos *d* de *cuidado* en las grabaciones?'
+  transcript: '*cuidado*'
+  examples:
+  - role: reference
+    subtitle: México · D21
+    audio: corpus/p5-cuidado-ref.mp3
+  - role: learner
+    subtitle: L1 alemán · D21
+    audio: corpus/p5-cuidado-learner.mp3
 - type: info_box
   title: ¿En qué otros contextos se suavizan b, d y g?
   body: |-
@@ -98,7 +125,7 @@ blocks:
   - title: Experimentar con el cierre y la aproximación
     body: Utilizar el esquema articulatorio para mostrar la diferencia entre un cierre completo y el mero acercamiento de la lengua. Después, ensayar conscientemente ambos movimientos con palabras sencillas como *vida*.
   - title: Extender el patrón a otros contextos
-    body: 'Pasar de los ejemplos simples a otros como *el bebedor*, donde aparecen diferentes posiciones dentro de una misma secuencia. No es necesario abordar toda la alofonía: tomar conciencia de la diferencia ya constituye un objetivo útil.'
+    body: 'Pasar de los ejemplos simples a otros como *el bebedor*, donde aparecen diferentes posiciones dentro de una misma secuencia. No es necesario explicar todas las reglas que determinan cuándo estas consonantes se pronuncian con o sin cierre completo: basta con reconocer y experimentar la diferencia.'
 - type: further_reading
   title: Para saber más
   description: Capítulos del manual digital y páginas temáticas relacionadas.

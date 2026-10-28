@@ -7,8 +7,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-19
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -27,12 +28,12 @@ blocks:
 - type: solution
   title: 'Solution: What can be heard?'
   body: |-
-    In the reference speaker’s recording, *flor* ends with a brief tap of the tongue against the alveolar ridge: [ˈfloɾ]. The learner, by contrast, lets the word fade out as a vowel without any audible tongue contact, roughly [ˈfloɐ̯] – just as one knows it from the German r at the end of a word.
+    In the reference recording, *flor* ends with a brief contact of the tongue tip against the alveolar ridge: [ˈfloɾ]. The learner, by contrast, ends the word with a vowel-like sound, without the tongue tip making contact, so that the pronunciation comes close to [ˈfloɐ̯], as often happens with a final r in German.
 - type: section_heading
   title: When the German r becomes a vowel
 - type: text
   body: |-
-    In Standard German, the vocalisation of /r/ is part of regular pronunciation, for instance in *sehr* (“very”), *Vater* (“father”) or *Lehrer* (“teacher”). Two cases need to be distinguished: after the long vowel in *sehr*, the r is heard only as an off-glide, roughly [zeːɐ̯]. In the unstressed endings of *Vater* and *Lehrer*, the vowel [ɐ] takes its place, the so-called “Vater schwa” (also low schwa): [ˈfaːtɐ], [ˈleːʁɐ]. The two phenomena are related, but not identical in every respect.
+    In Standard German, the *r* at the end of a syllable is often vocalised. In words such as *sehr* (“very”) and in the ending *-er* of *Vater* (“father”) or *Lehrer* (“teacher”), a vowel-like sound is heard instead of a consonant. German-speaking learners may carry this pronunciation pattern over to Spanish.
 - type: text
   body: |-
     Spanish behaves differently. At the end of a word, the r usually remains a consonant, mostly a brief tap [ɾ]: *flor* [ˈfloɾ]. Regionally and depending on context, the realisation can be weaker, longer or different, but as a rule it remains a consonant. Anyone who transfers the German habit will pronounce *flor* more like [ˈfloɐ̯].

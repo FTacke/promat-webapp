@@ -8,7 +8,7 @@ metadata:
   creators:
   - felix-tacke
   created: 2026-10-10
-  updated: 2026-10-19
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -38,7 +38,7 @@ blocks:
 - type: info_box
   title: Two letters, one sound – even native speakers are sometimes unsure
   body: |-
-    Within the Spanish-speaking community, too, the idea persists that ⟨v⟩ “actually” stands for a /v/. It was historically supported by normative accounts: orthographic treatises of the Real Academia Española maintained it well into the 20th century, and from there it found its way into school textbooks. Anyone who consciously follows the spelling when speaking may therefore produce a supposedly more correct [v] – a vivid example of *spelling pronunciation* (cf. Tacke 2020).
+    Within the Spanish-speaking community, too, the idea persists that ⟨v⟩ “actually” stands for a /v/. It was historically supported by normative accounts: orthographic treatises of the Real Academia Española maintained it well into the 20th century, and from there it found its way into school textbooks. Anyone who consciously follows the spelling when speaking may therefore produce a supposedly more correct [v]; this is an example of *spelling pronunciation*, that is, a pronunciation influenced by spelling.
 - type: section_heading
   title: When two letters become two sounds
 - type: text

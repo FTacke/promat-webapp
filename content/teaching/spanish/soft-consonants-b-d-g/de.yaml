@@ -7,8 +7,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-19
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -67,6 +68,19 @@ blocks:
   - role: learner
     subtitle: MAR.ELE
     audio: marele/agua-learner.mp3
+- type: text
+  body: 'Auch im zusammenhängenden Satz lässt sich das /g/ zwischen Vokalen beobachten, etwa in *elegante*.'
+- type: audio_contrast
+  title: 'Hörvergleich: *el baile elegante del evento*'
+  lead: 'Wie unterscheidet sich die Aussprache des *g* in *elegante* zwischen den beiden Aufnahmen?'
+  transcript: '*el baile elegante del evento*'
+  examples:
+  - role: reference
+    subtitle: Mexiko · D8
+    audio: corpus/p5-baile-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · D8
+    audio: corpus/p5-baile-learner.mp3
 - type: section_heading
   title: Mehrere Approximanten in einer Wortfolge
 - type: text
@@ -86,6 +100,19 @@ blocks:
 - type: text
   body: |-
     In der Referenzaufnahme klingen alle drei weicher, schematisch [el.βe.βe.ˈðoɾ]; die lernende Person spricht sie dagegen mit deutlichem Verschluss.
+- type: text
+  body: 'Derselbe Mechanismus kann sich auch innerhalb eines Wortes wiederholen: In *cuidado* stehen zwei /d/ zwischen Vokalen, die im spanischen Referenzmodell beide als Approximant [ð] gesprochen werden.'
+- type: audio_contrast
+  title: 'Hörvergleich: *cuidado*'
+  lead: 'Wie werden die beiden *d* in *cuidado* in den Aufnahmen ausgesprochen?'
+  transcript: '*cuidado*'
+  examples:
+  - role: reference
+    subtitle: Mexiko · D21
+    audio: corpus/p5-cuidado-ref.mp3
+  - role: learner
+    subtitle: L1 Deutsch · D21
+    audio: corpus/p5-cuidado-learner.mp3
 - type: info_box
   title: Wann klingen b, d und g sonst noch weich?
   body: |-
@@ -103,7 +130,7 @@ blocks:
   - title: Verschluss und Annäherung erproben
     body: Mit der Artikulationsgrafik den Unterschied zwischen vollständigem Verschluss und bloßer Annäherung zeigen und bei einfachen Wörtern wie *vida* die unterschiedliche Zungenbewegung bewusst ausprobieren.
   - title: Das Muster übertragen
-    body: Von den einfachen Beispielen zu weiteren Kontexten gehen, etwa mit *el bebedor*, wo mehrere Positionen in einer Wortfolge zusammenkommen. Die Allophonie muss nicht vollständig behandelt werden – schon die Sensibilisierung für den Unterschied ist ein sinnvolles Ziel.
+    body: 'Von den einfachen Beispielen zu weiteren Kontexten gehen, etwa mit *el bebedor*, wo mehrere Positionen in einer Wortfolge zusammenkommen. Nicht alle Regeln für die unterschiedlichen Realisierungen müssen behandelt werden – schon das bewusste Wahrnehmen und Erproben des Unterschieds ist ein sinnvolles Ziel.'
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Kapitel des digitalen Lehrbuchs und verwandte Themenseiten.

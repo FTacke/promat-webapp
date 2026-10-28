@@ -7,8 +7,9 @@ equivalents:
 metadata:
   creators:
   - felix-tacke
+  - ana-goas-perez
   created: 2026-10-10
-  updated: 2026-10-19
+  updated: 2026-10-28
 blocks:
 - type: topic_meta
 - type: text
@@ -67,6 +68,19 @@ blocks:
   - role: learner
     subtitle: MAR.ELE
     audio: marele/agua-learner.mp3
+- type: text
+  body: 'The /g/ between vowels can also be observed within a sentence, for instance in *elegante*.'
+- type: audio_contrast
+  title: 'Listening comparison: *el baile elegante del evento*'
+  lead: 'How does the pronunciation of the *g* in *elegante* differ between the two recordings?'
+  transcript: '*el baile elegante del evento*'
+  examples:
+  - role: reference
+    subtitle: Mexico · D8
+    audio: corpus/p5-baile-ref.mp3
+  - role: learner
+    subtitle: L1 German · D8
+    audio: corpus/p5-baile-learner.mp3
 - type: section_heading
   title: Several approximants in one word sequence
 - type: text
@@ -86,6 +100,19 @@ blocks:
 - type: text
   body: |-
     In the reference recording, all three sound softer, schematically [el.βe.βe.ˈðoɾ]; the learner, by contrast, pronounces them with a distinct closure.
+- type: text
+  body: 'The same mechanism can also recur within a single word: *cuidado* has two /d/ between vowels, both of which are pronounced as the approximant [ð] in the Spanish reference model.'
+- type: audio_contrast
+  title: 'Listening comparison: *cuidado*'
+  lead: 'How are the two *d* in *cuidado* pronounced in the recordings?'
+  transcript: '*cuidado*'
+  examples:
+  - role: reference
+    subtitle: Mexico · D21
+    audio: corpus/p5-cuidado-ref.mp3
+  - role: learner
+    subtitle: L1 German · D21
+    audio: corpus/p5-cuidado-learner.mp3
 - type: info_box
   title: When else do b, d and g sound soft?
   body: |-
@@ -103,7 +130,7 @@ blocks:
   - title: Try out closure and approximation
     body: Use the articulation diagram to show the difference between a complete closure and mere approximation, and consciously try out the different tongue movement with simple words such as *vida*.
   - title: Transfer the pattern
-    body: Move from the simple examples to further contexts, for instance with *el bebedor*, where several positions come together in one word sequence. Allophony does not have to be covered completely – raising awareness of the difference is already a worthwhile goal.
+    body: 'Move from the simple examples to further contexts, for instance with *el bebedor*, where several positions come together in one word sequence. Not every rule for the different realisations needs to be covered – consciously noticing and trying out the difference is already a worthwhile goal.'
 - type: further_reading
   title: Further exploration
   description: Further chapters of the digital textbook and related topic pages.
