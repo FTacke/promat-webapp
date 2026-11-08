@@ -32,6 +32,14 @@ Wird CI rot, passiert nichts auf dem Server; der nächste grüne Commit deployt.
 3. Es gibt keine automatische Rücknahme. Ein Rollback ist ein erneutes Deployment des früheren Commits; Datenbank-Migrationen werden dabei nicht zurückgedreht (sie sind additiv). Ist die Datenbank durch eine Migration unbrauchbar, den DB-Restore aus `backup-and-restore.md` verwenden.
 4. Danach `curl -fsS http://127.0.0.1:8000/health` und `/ready` auf dem Server sowie die Seiten aus der Prüfliste unten.
 
+## Release einer neuen Plattformversion
+
+1. Eintrag in `CHANGELOG.md` (nur produktiv funktionierende Funktionen) und Run-Bericht; Version in `app/pyproject.toml` angleichen. Commit, Push auf `main`, CI und Deployment abwarten.
+2. Produktion prüfen: `python scripts/post_deploy_smoke.py --base-url https://pronunciation-matters.de` sowie die Seiten aus der Prüfliste unten.
+3. Annotierten Tag auf genau diesen Commit setzen und pushen: `git tag -a vX.Y.Z -m "PROMAT vX.Y.Z" <commit>`, `git push origin vX.Y.Z`.
+4. In GitHub: Releases → „Draft a new release“ → Tag `vX.Y.Z`, Titel `Pronunciation Matters X.Y.Z – …`, englische Release Notes, „Set as the latest release“.
+5. Der Footer übernimmt den Tag beim nächsten Deployment (jeder Push auf `main` oder Actions → „Deploy production“ → „Run workflow“ auf `main`); der Link führt immer auf `releases/latest`. Danach im Footer prüfen: `curl -s https://pronunciation-matters.de/de | grep -A3 promat-footer__version`.
+
 ## Fehlerbilder
 
 - „Production configuration is invalid“ im Deploy-Log: `/srv/webapps/promat/config/passwords.env` korrigieren (`JWT_SECRET_KEY` und `FLASK_SECRET_KEY` **verschiedene** echte Zufallswerte von mindestens 32 Zeichen, `PROMAT_PUBLIC_BASE_URL=https://<öffentliche Domain>`, `AUTH_ACCESS_REQUEST_EMAIL` / `AUTH_ACCESS_REQUEST_FROM_EMAIL` echte Adressen, bei `smtp` ein echter `AUTH_ACCESS_REQUEST_SMTP_HOST`), Workflow erneut starten. Der laufende Container wurde nicht angetastet. Die Meldung nennt den Namen der Variable, nie ihren Wert.

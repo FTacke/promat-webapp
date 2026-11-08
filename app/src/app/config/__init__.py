@@ -213,10 +213,9 @@ class BaseConfig:
     APP_REPOSITORY_URL = _normalize_value(os.getenv("APP_REPOSITORY_URL") or "https://github.com/FTacke/promat-webapp")
     APP_VERSION = _normalize_value(os.getenv("VITE_APP_VERSION") or os.getenv("APP_VERSION") or "dev")
     APP_RELEASE_TAG = _normalize_value(os.getenv("APP_RELEASE_TAG") or APP_VERSION or "dev")
-    APP_RELEASE_URL = _normalize_value(
-        os.getenv("APP_RELEASE_URL")
-        or (f"{APP_REPOSITORY_URL}/releases/tag/{APP_RELEASE_TAG}" if APP_RELEASE_TAG != "dev" else f"{APP_REPOSITORY_URL}/releases/latest")
-    )
+    # The footer label is the release tag read at deploy time; its link always opens the newest GitHub Release, so a
+    # release published after the last deploy is reachable before the next deploy updates the label.
+    APP_RELEASE_URL = _normalize_value(os.getenv("APP_RELEASE_URL") or f"{APP_REPOSITORY_URL}/releases/latest")
     VITE_GOATCOUNTER_URL = _normalize_value(os.getenv("VITE_GOATCOUNTER_URL") or "")
     GOATCOUNTER_URL = VITE_GOATCOUNTER_URL if _is_production_env(APP_ENV) and VITE_GOATCOUNTER_URL == GOATCOUNTER_ENDPOINT else ""
 

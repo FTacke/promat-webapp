@@ -619,14 +619,14 @@ def test_shared_footer_localizes_legal_links(
 
 def test_shared_footer_uses_configured_release_tag(auth_app: Flask) -> None:
     auth_app.config["APP_RELEASE_TAG"] = "v0.7"
-    auth_app.config["APP_RELEASE_URL"] = "https://github.com/FTacke/promat-webapp/releases/tag/v0.7"
+    auth_app.config["APP_RELEASE_URL"] = "https://github.com/FTacke/promat-webapp/releases/latest"
     client = auth_app.test_client()
 
     response = client.get("/login?ui_lang=en")
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'href="https://github.com/FTacke/promat-webapp/releases/tag/v0.7"' in html
+    assert 'href="https://github.com/FTacke/promat-webapp/releases/latest"' in html
     assert ">v0.7</a>" in html
     assert ">v0.0</a>" not in html
 

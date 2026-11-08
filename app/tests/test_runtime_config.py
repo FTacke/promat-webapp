@@ -163,7 +163,7 @@ def test_release_tag_uses_public_deploy_version_env(tmp_path: Path, monkeypatch:
 
     assert app.config["APP_VERSION"] == "v0.7"
     assert app.config["APP_RELEASE_TAG"] == "v0.7"
-    assert app.config["APP_RELEASE_URL"].endswith("/releases/tag/v0.7")
+    assert app.config["APP_RELEASE_URL"] == "https://github.com/FTacke/promat-webapp/releases/latest"
 
 
 def test_goatcounter_url_is_production_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

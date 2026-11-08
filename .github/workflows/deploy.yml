@@ -126,10 +126,10 @@ jobs:
               "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/latest" || true
           )"
           release_tag="$(printf '%s' "${release_json}" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
-          release_url="$(printf '%s' "${release_json}" | sed -n 's/.*"html_url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+          # Read once per deploy: the footer label is this tag; its link always opens the newest release.
+          release_url="https://github.com/${GITHUB_REPOSITORY}/releases/latest"
           if [[ -z "${release_tag}" ]]; then
             release_tag="dev"
-            release_url="https://github.com/${GITHUB_REPOSITORY}/releases/latest"
           fi
           {
             echo "VITE_APP_VERSION=${release_tag}"
