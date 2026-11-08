@@ -503,12 +503,12 @@ comparisons:
     sha256: de25bd78444cbb8a48aed11f1952a135253958f4f0b0a216c8184399bc06fe19
   - slot: learner
     category: learner
-    session_id: ES-L-0007-2026-S01
+    session_id: ES-L-0020-2026-S01
     item:
       task: wordlist
       id: wl_045
     file: corpus/p5-vida-learner.mp3
-    sha256: aa6cd9568798fd29e34f1d4f085baee2a2f2c5f35aacb746f6a219f06dbe19be
+    sha256: d85350771d13803f5b38a8813615597ce0d83aecc0507288479613e1aaff9914
 - id: p5-lavar
   topic: soft-consonants-b-d-g
   phenomenon: 'Intervokalisches /b/: [b] vs. [β]'
@@ -873,17 +873,6 @@ reserves:
     id: wl_050
   reference: ES-N-0004-2026-S01
   learner: ES-L-0004-2026-S01
-  status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
-- id: p5-vida-reserve-0020
-  topic: soft-consonants-b-d-g
-  target: vida
-  target_tokens:
-  - vida
-  item:
-    task: wordlist
-    id: wl_045
-  reference: ES-N-0004-2026-S01
-  learner: ES-L-0020-2026-S01
   status: curatorial reserve for the learner slot, not integrated; check with --release-report before use
 - id: p5-vida-reserve-0018
   topic: soft-consonants-b-d-g

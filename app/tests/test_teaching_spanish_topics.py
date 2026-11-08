@@ -873,7 +873,7 @@ def test_b_d_g_curation_is_released_traceable_and_the_diagram_master_is_kept() -
     picked = {cid: {r["slot"]: (r["session_id"], r["item"]["id"]) for r in c["recordings"]} for cid, c in comparisons.items() if cid in ("p5-vida", "p5-lavar", "p5-baile", "p5-cuidado")}
     # lavar: a Spanish (not Chilean) reference; D08 and D21: ES-N-0004 and ES-L-0020 as decided after the review
     assert picked == {
-        "p5-vida": {"ref": ("ES-N-0004-2026-S01", "wl_045"), "learner": ("ES-L-0007-2026-S01", "wl_045")},
+        "p5-vida": {"ref": ("ES-N-0004-2026-S01", "wl_045"), "learner": ("ES-L-0020-2026-S01", "wl_045")},
         "p5-lavar": {"ref": ("ES-N-0001-2026-S01", "wl_009"), "learner": ("ES-L-0006-2026-S01", "wl_009")},
         "p5-baile": {"ref": ("ES-N-0004-2026-S01", "d_08"), "learner": ("ES-L-0020-2026-S01", "d_08")},
         "p5-cuidado": {"ref": ("ES-N-0004-2026-S01", "d_21"), "learner": ("ES-L-0020-2026-S01", "d_21")},
@@ -894,7 +894,7 @@ def test_b_d_g_curation_is_released_traceable_and_the_diagram_master_is_kept() -
             assert recording["origin"]["corpus"] == "MAR.ELE" and "session_id" not in recording
             assert recording["sha256"] == slots.sha256_of(slots.media_path("soft-consonants-b-d-g", recording["file"]))
     reserves = [r for r in data["reserves"] if r["topic"] == "soft-consonants-b-d-g"]
-    assert {r["learner"] for r in reserves} == {"ES-L-0020-2026-S01", "ES-L-0018-2026-S01", "ES-L-0010-2026-S01", "ES-L-0017-2026-S01"}
+    assert {r["learner"] for r in reserves} == {"ES-L-0018-2026-S01", "ES-L-0010-2026-S01", "ES-L-0017-2026-S01"}
     assert not any(r["id"].startswith("p5-logro") for r in reserves) and all(r["reference"] != "ES-N-0005-2026-S01" for r in reserves if r["id"].startswith("p5-lavar"))
     media = TOPIC_DIR / "soft-consonants-b-d-g" / "media"
     assert sorted(path.name for path in (media / "audio" / "corpus").glob("*.mp3")) == sorted(
