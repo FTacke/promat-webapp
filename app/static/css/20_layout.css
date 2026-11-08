@@ -277,6 +277,12 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin: 0;
 }
 
+/* Line-broken blocks of rendered Markdown (addresses, contact data on the legal pages) keep the compact rhythm of the
+   literature lists instead of the airy paragraph line height. */
+.promat-content-block__body p:has(> br) {
+  line-height: var(--pm-literature-line-height);
+}
+
 .promat-content-block__list {
   padding-left: 1.15rem;
 }
@@ -332,7 +338,7 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-top: var(--pm-reading-heading-gap-before-h2);
 }
 
-.pm-reading :where(h2, .promat-content-block__title) + :where(p, ul, ol) {
+.pm-reading :where(h2, .promat-content-block__title) + :where(p, ul, ol, h3) {
   margin-top: var(--pm-reading-heading-gap-after-h2);
 }
 
@@ -814,6 +820,11 @@ body.app-shell.page-landing .md3-content-wrapper {
   max-width: min(100%, 46rem);
 }
 
+.pm-section-overview .pm-feature-band .pm-card-grid {
+  width: 100%;
+  max-width: min(100%, var(--pm-layout-component-width));
+}
+
 @media (max-width: 767px) {
   body.app-shell.page-landing {
     grid-template-rows: auto auto;
@@ -962,7 +973,8 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-teaching-overview__intro,
-.pm-teaching-overview__prompt {
+.pm-teaching-overview__prompt,
+.pm-section-overview__intro {
   display: grid;
   gap: var(--pm-space-xs);
 }
@@ -1005,7 +1017,8 @@ body.app-shell.page-landing .md3-content-wrapper {
   margin-inline: auto;
 }
 
-.pm-teaching-page--overview .pm-content-header {
+.pm-teaching-page--overview .pm-content-header,
+.pm-section-overview .pm-content-header {
   width: min(100%, 58rem);
   max-width: 58rem;
   justify-items: center;
@@ -1019,14 +1032,16 @@ body.app-shell.page-landing .md3-content-wrapper {
 }
 
 .pm-teaching-overview__intro,
-.pm-teaching-overview__prompt {
+.pm-teaching-overview__prompt,
+.pm-section-overview__intro {
   width: min(100%, 58rem);
   margin-inline: auto;
   justify-items: center;
   text-align: center;
 }
 
-.pm-teaching-page--overview .pm-teaching-overview__intro {
+.pm-teaching-page--overview .pm-teaching-overview__intro,
+.pm-section-overview__intro {
   margin-top: clamp(0.16rem, 0.55vw, 0.42rem);
 }
 

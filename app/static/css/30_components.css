@@ -1681,7 +1681,8 @@ a.promat-card:active .pm-cta-link {
   margin-right: var(--pm-nav-pill-arrow-gap);
 }
 
-.pm-teaching-page {
+.pm-teaching-page,
+.promat-page.pm-section-overview {
   display: grid;
   gap: var(--pm-space-grid);
 }
@@ -1857,7 +1858,8 @@ a.promat-card:active .pm-cta-link {
 }
 
 .pm-teaching-page--overview .pm-content-header,
-.pm-teaching-page--hub .pm-content-header {
+.pm-teaching-page--hub .pm-content-header,
+.pm-section-overview .pm-content-header {
   justify-items: center;
   text-align: center;
 }
@@ -1869,7 +1871,8 @@ a.promat-card:active .pm-cta-link {
   margin-inline: auto;
 }
 
-.pm-teaching-overview__intro-text {
+.pm-teaching-overview__intro-text,
+.pm-section-overview__intro-text {
   margin: 0;
   max-width: min(100%, 60ch);
   text-wrap: balance;
@@ -3281,7 +3284,8 @@ a.promat-card:active .pm-cta-link {
 
   .pm-teaching-page--hub .pm-content-header__intro,
   .pm-teaching-page--topic .pm-content-header__intro,
-  .pm-teaching-overview__intro-text {
+  .pm-teaching-overview__intro-text,
+  .pm-section-overview__intro-text {
     max-width: 100%;
     overflow-wrap: anywhere;
     font-size: 1.04rem;

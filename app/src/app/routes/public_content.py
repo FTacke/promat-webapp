@@ -497,9 +497,13 @@ def build_corpus_cards_teaching(ui_lang: str) -> list[dict[str, str]]:
 
 def build_research_select_page(ui_lang: str) -> dict[str, Any]:
     return {
-        "title": get_section_label("research", ui_lang),
+        "title": get_text(ui_lang, "research.overview.title"),
         "eyebrow": get_section_label("research", ui_lang),
+        "overview_intro": get_text(ui_lang, "research.overview.intro"),
         "page_kind": "workbench",
+        # Centered section overview like the teaching overview: no desktop sidebar, centered header, two-column cards.
+        "layout": "section-overview",
+        "corpus_cards_aria": get_text(ui_lang, "research.overview.cards_aria"),
         "corpus_cards": build_corpus_cards_research(ui_lang),
         "sections": [],
         "is_section_root": True,

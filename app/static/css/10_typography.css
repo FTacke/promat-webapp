@@ -39,13 +39,17 @@ textarea {
 
 .promat-content-block__title,
 .pm-panel__title,
-.pm-card__title {
+.pm-card__title,
+.promat-content-block__body :where(h2) {
   font-family: var(--pm-type-reading-family);
   text-wrap: balance;
 }
 
+/* `.promat-content-block__body` holds rendered Markdown (legal pages): its paragraphs and lists take the reading type
+   of the article pages, like `.promat-content-block__text`. */
 .promat-content-block__text,
 .promat-content-block__list,
+.promat-content-block__body :where(p, ul, ol),
 .pm-card__text,
 .pm-research-language-root__paragraph,
 .md3-hero__intro,

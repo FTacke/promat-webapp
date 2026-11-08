@@ -61,7 +61,7 @@
 
 
 {% block content %}
-<article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }}" aria-labelledby="promat-page-title">
+<article class="promat-page promat-page--{{ promat_page.page_kind | default('reading') }} pm-content pm-content--{{ promat_page.page_kind | default('reading') }}{{ ' pm-section-overview' if promat_page.layout == 'section-overview' else '' }}" aria-labelledby="promat-page-title">
   {% set content_header = promat_page.content_header %}
   {% if promat_page.article_header %}
   <div class="pm-article-masthead">
@@ -73,6 +73,12 @@
   {% include 'partials/_content_header.html' %}
   {% endif %}
 
+  {% if promat_page.overview_intro %}
+  <section class="pm-reading pm-section-overview__intro">
+    <p class="pm-section-overview__intro-text">{{ promat_page.overview_intro }}</p>
+  </section>
+  {% endif %}
+
   {% if promat_page.hero_links %}
   <nav class="promat-page__actions pm-reading pm-stack--inline" aria-label="Schnellzugriffe">
     {% for link in promat_page.hero_links %}
@@ -82,7 +88,7 @@
   {% endif %}
 
   {% if promat_page.corpus_cards %}
-  <section class="pm-feature-band" aria-label="Sprachbereiche">
+  <section class="pm-feature-band" aria-label="{{ promat_page.corpus_cards_aria }}">
     <div class="pm-card-grid">
       {% for card in promat_page.corpus_cards %}
       {{ render_corpus_card(card, 'h2') }}

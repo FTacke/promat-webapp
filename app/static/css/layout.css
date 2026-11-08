@@ -156,12 +156,15 @@ h6:focus[tabindex="-1"] {
     justify-content: center;
   }
 
-  body.app-shell.page-teaching #navigation-drawer {
+  body.app-shell.page-teaching #navigation-drawer,
+  body.app-shell.page-section-overview #navigation-drawer {
     display: none;
   }
 
   body.app-shell.page-teaching .pm-content-wrapper,
-  body.app-shell.page-teaching .md3-content-wrapper {
+  body.app-shell.page-teaching .md3-content-wrapper,
+  body.app-shell.page-section-overview .pm-content-wrapper,
+  body.app-shell.page-section-overview .md3-content-wrapper {
     grid-template-columns: minmax(0, var(--pm-layout-content-width-current));
     justify-content: center;
   }

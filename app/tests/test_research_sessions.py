@@ -1277,7 +1277,9 @@ def test_research_overview_renders_shared_sidebar_header_and_single_header_nav(u
     html = response.get_data(as_text=True)
     assert html.count('class="promat-topbar__nav"') == 1
     assert 'promat-topbar__row--secondary' not in html
-    assert 'class="app-shell app-shell--inner"' in html
+    # Centered section overview: the desktop sidebar is hidden by the body class (like the teaching overview); the
+    # panel markup stays for the mobile modal drawer.
+    assert 'class="app-shell app-shell--inner page-section-overview"' in html
     assert 'data-page="research"' in html
     assert 'data-context-mode="none"' in html
     assert 'promat-panel__context' in html
@@ -1286,6 +1288,42 @@ def test_research_overview_renders_shared_sidebar_header_and_single_header_nav(u
     assert '>Forschung<' in html
     assert 'Korpus wählen' in html
     assert 'class="pm-breadcrumb' not in html
+
+
+@pytest.mark.parametrize(
+    ("path", "title", "intro", "cards_aria"),
+    [
+        (
+            "/de/research",
+            "Lernendenaussprache erforschen",
+            "Die Sprachkorpora bieten authentische Aufnahmen von Lernenden und Referenzsprecher:innen für die Untersuchung fremdsprachlicher Aussprache.",
+            "Korpusauswahl für die Forschung",
+        ),
+        (
+            "/en/research",
+            "Researching Learner Pronunciation",
+            "The language corpora provide authentic recordings of learners and reference speakers for the study of foreign-language pronunciation.",
+            "Corpus selection for research",
+        ),
+    ],
+)
+def test_research_overview_centered_title_intro_and_corpus_cards_in_order(
+    url_app: Flask, path: str, title: str, intro: str, cards_aria: str
+) -> None:
+    html = url_app.test_client().get(path).get_data(as_text=True)
+    article = re.search(r'<article class="([^"]*)"', html).group(1)
+    assert "pm-section-overview" in article.split()
+
+    title_match = re.search(r'<h1 id="promat-page-title"[^>]*>([^<]*)</h1>', html)
+    assert title_match.group(1) == title
+    intro_match = re.search(r'<section class="pm-reading pm-section-overview__intro">\s*<p class="pm-section-overview__intro-text">([^<]*)</p>', html)
+    assert intro_match.group(1) == intro
+    # Exactly one intro, no header intro, no extra section headings between intro and cards.
+    assert "pm-content-header__intro" not in html
+    cards = html.index(f'<section class="pm-feature-band" aria-label="{cards_aria}">')
+    assert title_match.start() < intro_match.start() < cards
+    assert "<h2" not in html[intro_match.end():cards]
+    assert len(re.findall(r'href="/(?:de|en)/research/(?:spanish|french|german|english)"', html[cards:])) == 4
 
 
 def test_research_overview_topbar_exposes_route_preserving_language_switch(url_app: Flask) -> None:

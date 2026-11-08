@@ -729,6 +729,10 @@ def _render_promat_page(
     elif layout == "teaching":
         shell_class = "app-shell--inner"
         body_class = "page-teaching"
+    elif layout == "section-overview":
+        # Section overview (research root): the desktop sidebar is hidden like on the teaching pages; the modal
+        # drawer stays the mobile navigation.
+        body_class = "page-section-overview"
 
     return render_template(
         template_name,
