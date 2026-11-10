@@ -68,3 +68,7 @@ Dummy-Seiten `nasal-vowels`, `u-or-ou`, `schwa`, `spelling-and-pronunciation`, `
 
 - Hörabnahme durch Janina Reinhardt, insbesondere der provisorisch gewählten Aufnahmen und der Ausschnittgrenzen.
 - Export der deutschen Fassung mit Audiozuordnung: `liaison_themenseite_de_master_review.md` (Downloads).
+
+## Nachtrag: CI
+
+Der Commit `0fc8f5a` und ein leerer Neustart (`bf48164`) scheiterten im Job „Browser smoke“ an „Install dependencies“, der Deploy wurde vom Release-Gate übersprungen. Ursache (Annotation des Runners): `ubuntu-latest` ist seit Oktober 2026 Ubuntu 26, für das `playwright install --with-deps` (Playwright 1.59) keine Systempakete kennt; alle übrigen Jobs waren grün, die Abhängigkeiten unverändert. Der Browser-Smoke-Job läuft jetzt auf `ubuntu-24.04` (Kommentar in `.github/workflows/ci.yml`); beim nächsten Playwright-Update wieder lösen.

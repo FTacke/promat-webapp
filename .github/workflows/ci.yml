@@ -166,7 +166,9 @@ jobs:
 
   browser-smoke:
     name: Browser smoke (Chromium, fixture runtime)
-    runs-on: ubuntu-latest
+    # Pinned: `playwright install --with-deps` (Playwright 1.59) installs system packages for known Ubuntu releases only;
+    # ubuntu-latest moved to Ubuntu 26 in October 2026 and the step failed there. Unpin after upgrading Playwright.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
