@@ -99,4 +99,14 @@ Die Prüfpunkte liegen separat und lokal vor: `tmp/author-review/2026-11-10_germ
 
 ## 10. Veröffentlichung
 
-Siehe Nachtrag.
+- Commit `b7f449a`: CI und Deploy production erfolgreich.
+- Live geprüft:
+  - https://pronunciation-matters.de/de/research/german/design
+  - https://pronunciation-matters.de/en/research/german/design
+- Ergebnisse:
+  - beide Seiten 200, Canonical je Fassung, `hreflang` de/en, kein `noindex`;
+  - Zitation „Fischer, Theresa & Siebold, Kathrin (2026) … In: Felix Tacke (Hrsg./ed.) …“;
+  - die Sprachumschaltung wechselt direkt zur anderen Fassung;
+  - in beiden Fassungen öffnen sich Tab. 1–3 (19/22/2 Zeilen) sowie Wortliste (96) und Satzliste (51) vollständig;
+  - Desktop/Mobil, Hell/Dunkel: kein Overflow, keine Konsolenfehler;
+  - spanische und englische Design-Seiten unverändert.
