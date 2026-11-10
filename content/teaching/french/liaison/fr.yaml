@@ -44,27 +44,30 @@ blocks:
 
     Le fait qu’un *s* écrit apparaisse comme [z] sonore dans la liaison s’explique lui aussi par l’histoire : entre deux voyelles, les fricatives comme /s/ et /f/ se sont sonorisées. À l’inverse, l’ancien assourdissement des consonnes finales explique qu’un *d* écrit apparaisse comme [t] dans la liaison, par exemple dans *grand‿ami* [ɡʁɑ̃.ta.mi].
 - type: section_heading
-  title: 'Trois consonnes : [z], [t] et [n]'
+  title: 'Les trois consonnes de liaison'
 - type: text
-  body: 'Trois consonnes comptent surtout pour la liaison en français contemporain : [z], [t] et [n]. Ensemble, elles représentent presque tous les cas de liaison ; environ la moitié concerne [z].'
+  body: 'Dans la liaison, différentes consonnes peuvent se faire entendre. Lesquelles entend-on dans l’extrait suivant ?'
 - type: audio_examples
-  title: 'Exemples sonores : [z], [t] et [n]'
-  lead: Trois extraits de phrases lues ; la liaison se trouve dans la partie en italique.
+  title: 'Exemple sonore : la liaison en contexte'
+  lead: 'Quelles consonnes se font entendre aux frontières de mots signalées ?'
   examples:
-  - label: '[z]'
-    transcript: '*des heures*'
-    note: '*des‿heures* [de.zœʁ] · France · T50'
-    audio: corpus/fr1-z-des-heures.mp3
-  - label: '[t]'
-    transcript: elle *est allée* à la bibliothèque
-    note: '*est‿allée* [ɛ.ta.le] · France · T4'
-    audio: corpus/fr1-t-est-allee.mp3
-  - label: '[n]'
-    transcript: Avait-elle vraiment *un aspect*
-    note: '*un‿aspect* · France · T33'
-    audio: corpus/fr1-n-un-aspect.mp3
-- type: text
-  body: Les autres consonnes de liaison ne jouent presque plus de rôle en français contemporain. Les liaisons en [ʁ] ou en [p] ne sont en général pas nécessaires et peuvent même paraître étranges dans de nombreux cas.
+  - transcript: 'C’étai**t** un chat, vou**s** e**n** ave**z** entendu parler ?'
+    note: 'France · T63'
+    audio: corpus/fr1-c-etait-un-chat.mp3
+- type: solution
+  title: 'Solution : qu’entend-on ?'
+  body: |-
+    Dans l’enregistrement, la liaison est réalisée à trois des quatre frontières signalées :
+
+    - *c’était‿un* : le *t* de *était* se prononce [t].
+    - *vous‿en* : le *s* de *vous* se prononce [z].
+    - *en‿avez* : le *n* de *en* se prononce [n].
+
+    En revanche, il n’y a pas de liaison dans *avez entendu* : le *z* de *avez* reste muet. La liaison serait possible ici, mais elle n’est pas obligatoire. Dans les trois cas de liaison, la consonne ouvre en même temps la première syllabe du mot suivant ; cette phrase ne contient pas de simple *enchaînement* sans liaison.
+
+    En français contemporain, trois consonnes de liaison sont surtout répandues : **[z], [t] et [n]**. Ensemble, elles représentent de loin la plus grande partie des liaisons effectivement réalisées. Dans les études sur le français parlé, [z] est particulièrement fréquent.
+
+    Les autres consonnes de liaison, comme [ʁ] et [p], sont beaucoup plus rares et n’apparaissent que dans certains contextes et styles de parole.
 - type: section_heading
   title: Pourquoi la liaison compte dès le début
 - type: text
@@ -142,7 +145,7 @@ blocks:
   - title: '*ils ont* ou *ils sont* ?'
     body: Faire écouter les deux enregistrements dans un ordre variable et les faire attribuer. Attirer l’attention sur la différence entre le [z] sonore et le [s] sourd, par exemple en faisant sentir la vibration des cordes vocales, la main posée sur le larynx.
   - title: Repérer les liaisons dans la phrase
-    body: Dans les extraits de phrases (*des heures*, *elle est allée à la bibliothèque*, *Avait-elle vraiment un aspect*), repérer les consonnes de liaison et les classer en [z], [t] ou [n].
+    body: Dans l’exemple sonore en contexte (*C’était un chat, vous en avez entendu parler ?*), repérer les consonnes de liaison et les classer en [z], [t] ou [n].
 - type: further_reading
   title: Pour aller plus loin
   description: Lecture complémentaire sur la liaison.

@@ -20,7 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 TOPIC = REPO_ROOT / "content" / "teaching" / "french" / "liaison"
 EDITIONS = {"de": "/de/teaching/french/liaison", "en": "/en/teaching/french/liaison", "fr": "/de/teaching/french/fr/liaison?from=de"}
 CARDS = ["*des pâtes – des heures*", "*ils ont – ils sont*", "*Blanche-Neige et les onze poissons bleus*", "*Il était huit heures*", "*huit*", "*vers neuf heures*"]
-AUDIO = ["corpus/fr1-des-pates.mp3", "corpus/fr1-des-heures.mp3", "corpus/fr1-z-des-heures.mp3", "corpus/fr1-t-est-allee.mp3", "corpus/fr1-n-un-aspect.mp3",
+AUDIO = ["corpus/fr1-des-pates.mp3", "corpus/fr1-des-heures.mp3", "corpus/fr1-c-etait-un-chat.mp3",
          "corpus/fr1-ils-ont.mp3", "corpus/fr1-ils-sont.mp3", "corpus/fr1-les-onze.mp3", "corpus/fr1-huit-heures.mp3", "corpus/fr1-huit.mp3", "corpus/fr1-neuf-heures.mp3"]
 
 
@@ -83,9 +83,7 @@ def test_audio_registry_releases_and_provenance() -> None:
         assert recordings == {
             "corpus/fr1-des-pates.mp3": ("FR-N-0001-2026-S01", "wl_055", "reference"),
             "corpus/fr1-des-heures.mp3": ("FR-N-0001-2026-S01", "t_54", "reference"),
-            "corpus/fr1-z-des-heures.mp3": ("FR-N-0001-2026-S01", "t_50", "reference"),
-            "corpus/fr1-t-est-allee.mp3": ("FR-N-0001-2026-S01", "t_04", "reference"),
-            "corpus/fr1-n-un-aspect.mp3": ("FR-N-0001-2026-S01", "t_33", "reference"),
+            "corpus/fr1-c-etait-un-chat.mp3": ("FR-N-0001-2026-S01", "t_63", "reference"),  # connected excerpt, uncut item
             "corpus/fr1-ils-ont.mp3": ("FR-N-0001-2026-S01", "wl_045", "reference"),
             "corpus/fr1-ils-sont.mp3": ("FR-N-0001-2026-S01", "wl_009", "reference"),
             "corpus/fr1-les-onze.mp3": ("FR-N-0001-2026-S01", "t_05", "reference"),
@@ -143,3 +141,51 @@ def test_french_edition_links_return_navigation_and_metadata(client) -> None:
     fr_hub = client.get("/de/teaching/french/fr?from=de").get_data(as_text=True)
     assert "Comprendre la prononciation du français" in fr_hub and "La liaison" in fr_hub
     assert re.findall(r'href="/de/teaching/french/fr/([a-z0-9-]+)\?from=de"', fr_hub) == ["liaison"]
+
+
+TRANSCRIPT = "C’étai**t** un chat, vou**s** e**n** ave**z** entendu parler ?"
+SECTION = {  # heading, listening question, solution title of the discovery section per edition
+    "de": ("Die drei Liaison-Konsonanten", "Hörbeispiel: Liaison im Zusammenhang", "Welche Konsonanten werden an den markierten Wortübergängen hörbar?"),
+    "en": ("The three liaison consonants", "Listening example: liaison in context", "Which consonants become audible at the marked word boundaries?"),
+    "fr": ("Les trois consonnes de liaison", "Exemple sonore : la liaison en contexte", "Quelles consonnes se font entendre aux frontières de mots signalées ?"),
+}
+
+
+def _section(lang: str) -> list[dict]:
+    blocks = _load(lang)["blocks"]
+    start = next(i for i, b in enumerate(blocks) if b["type"] == "section_heading" and b["title"] == SECTION[lang][0])
+    end = next(i for i, b in enumerate(blocks) if i > start and b["type"] == "section_heading")
+    return blocks[start:end]
+
+
+@pytest.mark.parametrize("lang", ["de", "en", "fr"])
+def test_discovery_section_hides_the_answer_until_the_solution(lang: str) -> None:
+    section = _section(lang)
+    assert [b["type"] for b in section] == ["section_heading", "text", "audio_examples", "solution"]
+    heading, title, lead = SECTION[lang]
+    examples = section[2]["examples"]
+    assert (section[2]["title"], section[2]["lead"]) == (title, lead)
+    assert [(e["transcript"], e["audio"]) for e in examples] == [(TRANSCRIPT, "corpus/fr1-c-etait-un-chat.mp3")]
+    # the same four candidate positions are marked, all alike: the written final consonant before a vowel-initial word
+    words = TRANSCRIPT.replace(",", "").split()
+    marked = [(w.replace("**", ""), words[i + 1].replace("**", "")) for i, w in enumerate(words) if w.endswith("**")]
+    assert marked == [("C’était", "un"), ("vous", "en"), ("en", "avez"), ("avez", "entendu")]
+    assert re.findall(r"\*\*(\w)\*\*", TRANSCRIPT) == ["t", "s", "n", "z"]
+    before = " ".join([section[1]["body"], section[2]["lead"], examples[0]["note"]])
+    for answer in ("[z]", "[t]", "[n]", "‿"):
+        assert answer not in before, answer  # nothing about the consonants before the solution
+    solution = section[3]["body"]
+    for realised, consonant in (("c’était‿un", "[t]"), ("vous‿en", "[z]"), ("en‿avez", "[n]")):
+        assert f"*{realised}*" in solution and consonant in solution
+    assert "*avez entendu*" in solution and "avez‿entendu" not in solution
+    assert "**[z], [t]" in solution and "[ʁ] " in solution and "%" not in solution and "/k/" not in solution
+    impulse = next(b for b in _load(lang)["blocks"] if b["type"] == "teaching_impulses")["items"][2]["body"]
+    assert "C’était un chat, vous en avez entendu parler" in impulse and "est allée" not in impulse
+
+
+def test_discovery_section_renders_marks_and_closed_solution(client) -> None:
+    html = client.get("/de/teaching/french/liaison").get_data(as_text=True)
+    assert "C’étai<strong>t</strong> un chat, vou<strong>s</strong> e<strong>n</strong> ave<strong>z</strong> entendu parler ?" in html
+    lead = html.index("Welche Konsonanten werden an den markierten Wortübergängen hörbar?")
+    solution = html.index("<details", lead)
+    assert "<details class=\"pm-teaching-solution" in html[solution:solution + 60] and " open" not in html[solution:html.index(">", solution)]

@@ -2651,6 +2651,18 @@ a.promat-card:active .pm-cta-link {
   color: var(--book-fg);
 }
 
+/* Marked positions in a transcript (`**…**`, e.g. candidate word boundaries of a listening task): a neutral tinted mark,
+   identical for every marked position, so it neither reads as a link nor anticipates a solution. */
+.pm-teaching-audio-example__text strong {
+  padding: 0.04em 0.02em;
+  border-radius: 0.18em;
+  background: color-mix(in srgb, var(--pm-text-accent) 18%, transparent);
+  color: inherit;
+  font-weight: 700;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 .pm-teaching-audio-example__token {
   justify-self: auto;
 }

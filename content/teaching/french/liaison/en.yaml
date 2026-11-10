@@ -43,27 +43,30 @@ blocks:
 
     The fact that a written *s* appears as a voiced [z] in liaison also has historical reasons: between vowels, fricatives such as /s/ and /f/ became voiced. Conversely, earlier final devoicing is why a written *d* appears as [t] in liaison, as in *grand‿ami* [ɡʁɑ̃.ta.mi].
 - type: section_heading
-  title: 'Three consonants: [z], [t] and [n]'
+  title: 'The three liaison consonants'
 - type: text
-  body: 'Three consonants matter most for liaison in present-day French: [z], [t] and [n]. Together they account for nearly all cases of liaison; about half of them involve [z].'
+  body: 'Different consonants can become audible in liaison. Which ones can be heard in the following excerpt?'
 - type: audio_examples
-  title: 'Listening examples: [z], [t] and [n]'
-  lead: Three excerpts from read sentences; the liaison occurs in the part set in italics.
+  title: 'Listening example: liaison in context'
+  lead: 'Which consonants become audible at the marked word boundaries?'
   examples:
-  - label: '[z]'
-    transcript: '*des heures*'
-    note: '*des‿heures* [de.zœʁ] · France · T50'
-    audio: corpus/fr1-z-des-heures.mp3
-  - label: '[t]'
-    transcript: elle *est allée* à la bibliothèque
-    note: '*est‿allée* [ɛ.ta.le] · France · T4'
-    audio: corpus/fr1-t-est-allee.mp3
-  - label: '[n]'
-    transcript: Avait-elle vraiment *un aspect*
-    note: '*un‿aspect* · France · T33'
-    audio: corpus/fr1-n-un-aspect.mp3
-- type: text
-  body: Other liaison consonants hardly play a role in present-day French. Liaisons with [ʁ] or [p] are generally not required and can even sound odd in many cases.
+  - transcript: 'C’étai**t** un chat, vou**s** e**n** ave**z** entendu parler ?'
+    note: 'France · T63'
+    audio: corpus/fr1-c-etait-un-chat.mp3
+- type: solution
+  title: 'Solution: What can be heard?'
+  body: |-
+    In the recording, three of the four marked boundaries are linked:
+
+    - *c’était‿un*: the *t* of *était* is pronounced as [t].
+    - *vous‿en*: the *s* of *vous* is pronounced as [z].
+    - *en‿avez*: the *n* of *en* is pronounced as [n].
+
+    In *avez entendu*, by contrast, there is no liaison: the *z* of *avez* remains silent. Liaison would be possible here but is not required. In the three linked cases, the consonant also begins the first syllable of the following word; this sentence contains no mere *enchaînement* without liaison.
+
+    Three liaison consonants are especially common in present-day French: **[z], [t] and [n]**. Together they account for by far the largest share of the liaisons actually produced. In studies of spoken French, [z] is particularly frequent.
+
+    Other liaison consonants such as [ʁ] and [p] are much rarer and occur only in certain contexts and speaking styles.
 - type: section_heading
   title: Why liaison matters from the start
 - type: text
@@ -141,7 +144,7 @@ blocks:
   - title: '*ils ont* or *ils sont*?'
     body: Play the two recordings in varying order and let learners match them. Draw attention to the difference between voiced [z] and voiceless [s], for example by having learners feel the vibration of the vocal folds with a hand on the larynx.
   - title: Discover liaisons in sentences
-    body: In the sentence excerpts (*des heures*, *elle est allée à la bibliothèque*, *Avait-elle vraiment un aspect*), pick out the linked consonants and assign them to [z], [t] or [n].
+    body: In the connected listening example (*C’était un chat, vous en avez entendu parler ?*), pick out the linked consonants and assign them to [z], [t] or [n].
 - type: further_reading
   title: Further exploration
   description: Further reading on liaison.

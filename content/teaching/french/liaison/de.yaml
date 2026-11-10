@@ -43,27 +43,30 @@ blocks:
 
     Auch dass ein geschriebenes *s* in der Liaison als stimmhaftes [z] erscheint, ist historisch zu erklären: Zwischen Vokalen wurden Reibelaute wie /s/ und /f/ stimmhaft. Umgekehrt führte die frühere Auslautverhärtung dazu, dass ein geschriebenes *d* in der Liaison als [t] erscheint, etwa in *grand‿ami* [ɡʁɑ̃.ta.mi].
 - type: section_heading
-  title: 'Drei Konsonanten: [z], [t] und [n]'
+  title: 'Die drei Liaison-Konsonanten'
 - type: text
-  body: 'Für die Liaison im heutigen Französisch sind vor allem drei Konsonanten wichtig: [z], [t] und [n]. Sie machen zusammen nahezu alle Liaisonfälle aus; etwa die Hälfte entfällt auf [z].'
+  body: 'Bei der Liaison können verschiedene Konsonanten hörbar werden. Welche sind es im folgenden Textausschnitt?'
 - type: audio_examples
-  title: 'Hörbeispiele: [z], [t] und [n]'
-  lead: Drei Ausschnitte aus vorgelesenen Sätzen; die Liaison steht jeweils im kursiv gesetzten Teil.
+  title: 'Hörbeispiel: Liaison im Zusammenhang'
+  lead: 'Welche Konsonanten werden an den markierten Wortübergängen hörbar?'
   examples:
-  - label: '[z]'
-    transcript: '*des heures*'
-    note: '*des‿heures* [de.zœʁ] · Frankreich · T50'
-    audio: corpus/fr1-z-des-heures.mp3
-  - label: '[t]'
-    transcript: elle *est allée* à la bibliothèque
-    note: '*est‿allée* [ɛ.ta.le] · Frankreich · T4'
-    audio: corpus/fr1-t-est-allee.mp3
-  - label: '[n]'
-    transcript: Avait-elle vraiment *un aspect*
-    note: '*un‿aspect* · Frankreich · T33'
-    audio: corpus/fr1-n-un-aspect.mp3
-- type: text
-  body: Andere Liaisonkonsonanten spielen im heutigen Französisch kaum noch eine Rolle. Liaisons mit [ʁ] oder [p] sind in der Regel nicht erforderlich und können in vielen Fällen sogar eigenartig wirken.
+  - transcript: 'C’étai**t** un chat, vou**s** e**n** ave**z** entendu parler ?'
+    note: 'Frankreich · T63'
+    audio: corpus/fr1-c-etait-un-chat.mp3
+- type: solution
+  title: 'Auflösung: Was ist zu hören?'
+  body: |-
+    An drei der vier markierten Übergänge wird in der Aufnahme gebunden:
+
+    - *c’était‿un*: Das *t* von *était* wird als [t] hörbar.
+    - *vous‿en*: Das *s* von *vous* wird als [z] hörbar.
+    - *en‿avez*: Das *n* von *en* wird als [n] hörbar.
+
+    Bei *avez entendu* wird dagegen nicht gebunden: Das *z* von *avez* bleibt stumm. Eine Liaison wäre hier möglich, ist aber nicht notwendig. In den drei gebundenen Fällen eröffnet der Konsonant zugleich die erste Silbe des folgenden Worts; ein bloßes *enchaînement* ohne Liaison kommt in diesem Satz nicht vor.
+
+    Im heutigen Französisch sind vor allem drei Liaisonkonsonanten verbreitet: **[z], [t] und [n]**. Zusammen machen sie den weitaus größten Teil der tatsächlich realisierten Liaisons aus. In Untersuchungen des gesprochenen Französisch ist [z] besonders häufig.
+
+    Weitere Liaisonkonsonanten wie [ʁ] und [p] sind deutlich seltener und treten nur in bestimmten Kontexten und Sprechstilen auf.
 - type: section_heading
   title: Warum die Liaison schon am Anfang wichtig ist
 - type: text
@@ -141,7 +144,7 @@ blocks:
   - title: '*ils ont* oder *ils sont*?'
     body: Die beiden Aufnahmen in wechselnder Reihenfolge vorspielen und zuordnen lassen. Dabei auf den Unterschied zwischen stimmhaftem [z] und stimmlosem [s] achten, etwa indem die Lernenden die Stimmlippenschwingung mit der Hand am Kehlkopf erspüren.
   - title: Liaisons im Satz entdecken
-    body: In den Satzausschnitten (*des heures*, *elle est allée à la bibliothèque*, *Avait-elle vraiment un aspect*) die gebundenen Konsonanten heraushören und [z], [t] oder [n] zuordnen.
+    body: Im zusammenhängenden Hörbeispiel (*C’était un chat, vous en avez entendu parler ?*) die gebundenen Konsonanten heraushören und [z], [t] oder [n] zuordnen.
 - type: further_reading
   title: Vertiefung
   description: Weiterführende Literatur zur Liaison.

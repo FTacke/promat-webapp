@@ -39,85 +39,29 @@ comparisons:
       tool: ffmpeg 8.1-full_build-www.gyan.dev
     source_sha256: 1ec305c0220b236ef701ccb7ed2ddcadd5d16cf9ad3fd0bde64c0e4dd88d98f4
     sha256: d9c621d0c795714decbfd9bda56ad6aa9827c894fa959d912f83ef6d786a3b8c
-- id: fr1-z
+- id: fr1-hoertext
   topic: liaison
-  phenomenon: Liaisonkonsonant [z]
-  target: des heures
+  phenomenon: 'Liaisonkonsonanten im Zusammenhang: *c’était‿un* [t], *vous‿en* [z], *en‿avez* [n]; *avez entendu* ohne Liaison'
+  target: C’était un chat, vous en avez entendu parler ?
   target_tokens:
-  - des
-  - heures
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: FR-N-0001-2026-S01
-    item:
-      task: text
-      id: t_50
-    file: corpus/fr1-z-des-heures.mp3
-    crop:
-      start_ms: 1300
-      end_ms: 1790
-      lead_silence_ms: 0
-      fade_in_ms: 10
-      fade_out_ms: 20
-      tool: ffmpeg 8.1-full_build-www.gyan.dev
-    source_sha256: 231e564db6fb7999d94db87fcd0754e2f887abe0041011dc3d4bbe8ccd5f878c
-    sha256: 9b648b06b934f326dd408d10c534748dc31fb12125de05a4d4111161d20d76ba
-- id: fr1-t
-  topic: liaison
-  phenomenon: Liaisonkonsonant [t]
-  target: elle est allée à la bibliothèque
-  target_tokens:
-  - elle
-  - est
-  - allée
-  - à
-  - la
-  - bibliothèque
-  recordings:
-  - slot: ref
-    category: reference
-    session_id: FR-N-0001-2026-S01
-    item:
-      task: text
-      id: t_04
-    file: corpus/fr1-t-est-allee.mp3
-    crop:
-      start_ms: 1140
-      end_ms: 2590
-      lead_silence_ms: 0
-      fade_in_ms: 10
-      fade_out_ms: 25
-      tool: ffmpeg 8.1-full_build-www.gyan.dev
-    source_sha256: 6249b481ddee20561c1ad032c2c2cb194f2fcf6e9014bdf1b39601d824872c60
-    sha256: 0a21b5ab334d452b4f6599bf2c78da7e18622c3312633d51390e0309551c4a7d
-- id: fr1-n
-  topic: liaison
-  phenomenon: Liaisonkonsonant [n]
-  target: Avait-elle vraiment un aspect
-  target_tokens:
-  - avait
-  - elle
-  - vraiment
+  - c'était
   - un
-  - aspect
+  - chat
+  - vous
+  - en
+  - avez
+  - entendu
+  - parler
+  question: Welche Konsonanten werden an den markierten Wortübergängen hörbar?
   recordings:
   - slot: ref
     category: reference
     session_id: FR-N-0001-2026-S01
     item:
       task: text
-      id: t_33
-    file: corpus/fr1-n-un-aspect.mp3
-    crop:
-      start_ms: 300
-      end_ms: 1700
-      lead_silence_ms: 0
-      fade_in_ms: 10
-      fade_out_ms: 25
-      tool: ffmpeg 8.1-full_build-www.gyan.dev
-    source_sha256: bc712d14dd29c99f88c31407cbbe350d11ac99663898dc811aef5ce1b04985a0
-    sha256: 27fcd7bb555f0f3f61d2ed48738872f5c4d7c8fb1ee0c3e6132e8894de1c0c6c
+      id: t_63
+    file: corpus/fr1-c-etait-un-chat.mp3
+    sha256: be4bd4ba8f79b43f5144c91d210ffeafe617dc0b0a49f3a46d72a43bf2154999
 - id: fr1-ils
   topic: liaison
   phenomenon: 'Bedeutungsunterscheidung durch die Liaison: *ils ont* [il.zɔ̃] – *ils sont* [il.sɔ̃]'
