@@ -90,3 +90,13 @@ Hinweis: Der Infokasten „Woher kommt die Liaison?“ vor dem Abschnitt nennt b
 ## 8. Offen
 
 Hörabnahme durch Janina Reinhardt: Auswahl der Aufnahme, Markierung der Endkonsonanten statt Wortpaare, Formulierungen der Auflösung.
+
+## 9. Veröffentlichung
+
+- Commit `2580fef`: CI und Deploy production erfolgreich.
+- Live geprüft auf `/de|en/teaching/french/liaison` und `/de|en/teaching/french/fr/liaison`:
+  - neuer Abschnitt mit Markierungen;
+  - Audio-Hash live gleich Repository;
+  - alte Einzelbeispiele 404;
+  - Player spielt, Auflösung anfangs geschlossen;
+  - kein Overflow, keine Konsolenfehler (Desktop/Mobil, Hell/Dunkel).
