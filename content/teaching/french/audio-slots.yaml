@@ -1,0 +1,243 @@
+# Curated corpus recordings of the French Teaching topic pages (declaration; see scripts/teaching_audio_slots.py).
+#
+# Edit a recording (session / item) here, then run `python scripts/teaching_audio_slots.py --language french --export` and commit
+# the changed media file and its `sha256`. The topic pages name only the media file, never a session. All recordings come from
+# sessions with `teaching_consent_signed: yes` and `needs_review: false` (checked by `--release-report`). The `liaison` page was
+# curated by acoustic screening (spectrogram, energy) and is provisional until listened to by its author (Janina Reinhardt).
+# A `crop` entry renders the target word sequence out of the item MP3 (cut points fixed here, see the script docstring).
+
+comparisons:
+- id: fr1-des
+  topic: liaison
+  phenomenon: 'Liaison auf [z]: *des pâtes* (keine Liaison vor Konsonant) – *des heures* (Liaison vor Vokal)'
+  target: des pâtes – des heures
+  target_tokens:
+  - des
+  question: Wie wird *des* in den beiden Aufnahmen ausgesprochen?
+  recordings:
+  - slot: pates
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_055
+    file: corpus/fr1-des-pates.mp3
+    sha256: 7417a492c1c64239ad34f747b59c569b3e70fc4ea514e0df5fb2c1c8ca526a4d
+  - slot: heures
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: text
+      id: t_54
+    file: corpus/fr1-des-heures.mp3
+    crop:
+      start_ms: 830
+      end_ms: 1215
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 20
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    source_sha256: 1ec305c0220b236ef701ccb7ed2ddcadd5d16cf9ad3fd0bde64c0e4dd88d98f4
+    sha256: d9c621d0c795714decbfd9bda56ad6aa9827c894fa959d912f83ef6d786a3b8c
+- id: fr1-z
+  topic: liaison
+  phenomenon: Liaisonkonsonant [z]
+  target: des heures
+  target_tokens:
+  - des
+  - heures
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: text
+      id: t_50
+    file: corpus/fr1-z-des-heures.mp3
+    crop:
+      start_ms: 1300
+      end_ms: 1790
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 20
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    source_sha256: 231e564db6fb7999d94db87fcd0754e2f887abe0041011dc3d4bbe8ccd5f878c
+    sha256: 9b648b06b934f326dd408d10c534748dc31fb12125de05a4d4111161d20d76ba
+- id: fr1-t
+  topic: liaison
+  phenomenon: Liaisonkonsonant [t]
+  target: elle est allée à la bibliothèque
+  target_tokens:
+  - elle
+  - est
+  - allée
+  - à
+  - la
+  - bibliothèque
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: text
+      id: t_04
+    file: corpus/fr1-t-est-allee.mp3
+    crop:
+      start_ms: 1140
+      end_ms: 2590
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 25
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    source_sha256: 6249b481ddee20561c1ad032c2c2cb194f2fcf6e9014bdf1b39601d824872c60
+    sha256: 0a21b5ab334d452b4f6599bf2c78da7e18622c3312633d51390e0309551c4a7d
+- id: fr1-n
+  topic: liaison
+  phenomenon: Liaisonkonsonant [n]
+  target: Avait-elle vraiment un aspect
+  target_tokens:
+  - avait
+  - elle
+  - vraiment
+  - un
+  - aspect
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: text
+      id: t_33
+    file: corpus/fr1-n-un-aspect.mp3
+    crop:
+      start_ms: 300
+      end_ms: 1700
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 25
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    source_sha256: bc712d14dd29c99f88c31407cbbe350d11ac99663898dc811aef5ce1b04985a0
+    sha256: 27fcd7bb555f0f3f61d2ed48738872f5c4d7c8fb1ee0c3e6132e8894de1c0c6c
+- id: fr1-ils
+  topic: liaison
+  phenomenon: 'Bedeutungsunterscheidung durch die Liaison: *ils ont* [il.zɔ̃] – *ils sont* [il.sɔ̃]'
+  target: ils ont – ils sont
+  target_tokens:
+  - ils
+  question: Woran lassen sich *ils ont* und *ils sont* beim Hören unterscheiden?
+  recordings:
+  - slot: ont
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_045
+    file: corpus/fr1-ils-ont.mp3
+    sha256: 64687d1e7bed4f51b90febd4a04034313297029233e069236fe4af53aa24687d
+  - slot: sont
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_009
+    file: corpus/fr1-ils-sont.mp3
+    sha256: 1a92c0a49b00e430e642ab09800ae6747aaf08a07aff0293bac5873e880a68dc
+- id: fr1-onze
+  topic: liaison
+  phenomenon: Keine Liaison vor dem Zahlwort *onze*
+  target: Blanche-Neige et les onze poissons bleus
+  target_tokens:
+  - blanche
+  - neige
+  - et
+  - les
+  - onze
+  - poissons
+  - bleus
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: text
+      id: t_05
+    file: corpus/fr1-les-onze.mp3
+    crop:
+      start_ms: 1660
+      end_ms: 4300
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 30
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    source_sha256: 9c6dc0da843f4ce222f3f491afbb96711dabfacc7a0b8e365bd641e65fbad2f4
+    sha256: 0c7c115be73d6fd0c59e27e96311ce8f7b8bcadc1bef40eaacaf888d6573245c
+- id: fr1-huit-heures
+  topic: liaison
+  phenomenon: Keine Liaison vor *huit*, [t] von *huit* vor *heures*
+  target: Il était huit heures
+  target_tokens:
+  - il
+  - était
+  - huit
+  - heures
+  question: Wo werden in dieser Aufnahme Wörter miteinander verbunden?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: FR-N-0002-2026-S01
+    item:
+      task: text
+      id: t_22
+    file: corpus/fr1-huit-heures.mp3
+    crop:
+      start_ms: 280
+      end_ms: 1010
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 20
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    source_sha256: b1be1c284ec5de4f185c86882d0580e3d2ae84e105051565b05b0b1aca600464
+    sha256: ceb5768560d5e17a3162e9d057164ef131123ed1a55bccabcb4b4268b10f01e1
+- id: fr1-huit
+  topic: liaison
+  phenomenon: '*huit* isoliert: [ɥit]'
+  target: huit
+  target_tokens:
+  - huit
+  question: Ist das *t* von *huit* auch ohne folgendes Wort zu hören?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: wordlist
+      id: wl_058
+    file: corpus/fr1-huit.mp3
+    sha256: 5b379a9d367a71c0c70305b560339bb3657f6344df5523be0b1852753f53dffd
+- id: fr1-neuf
+  topic: liaison
+  phenomenon: '*neuf heures*: [f] wird zu [v]'
+  target: vers neuf heures
+  target_tokens:
+  - vers
+  - neuf
+  - heures
+  question: Wie wird das *f* von *neuf* vor *heures* ausgesprochen?
+  recordings:
+  - slot: ref
+    category: reference
+    session_id: FR-N-0001-2026-S01
+    item:
+      task: text
+      id: t_43
+    file: corpus/fr1-neuf-heures.mp3
+    crop:
+      start_ms: 1340
+      end_ms: 2200
+      lead_silence_ms: 0
+      fade_in_ms: 10
+      fade_out_ms: 25
+      tool: ffmpeg 8.1-full_build-www.gyan.dev
+    source_sha256: f28f6ebf04f35d9e5aed3f91cf6a44ac385b0c9643e925e1fc0b58457006564e
+    sha256: f7fb6d2319122daa4e77973c5d711a9f3bef7d566ae061139706d57b7e307093
+reserves: []

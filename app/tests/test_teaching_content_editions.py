@@ -312,9 +312,11 @@ def test_french_teaching_resources_use_the_same_mechanism(make_client, monkeypat
     }
     client = make_client({"french": (("fr",), files), "spanish": (("es",), _base_spanish())})
     # without French content labels the edition stays unpublished: no German/English labels inside French content
+    french_labels = i18n.TEACHING_CONTENT_LABELS["fr"]
+    monkeypatch.delitem(i18n.TEACHING_CONTENT_LABELS, "fr")
     assert client.get("/de/teaching/french/fr/liaison").status_code == 404
     assert _edition_links(_get(client, "/en/teaching/french/liaison")[1]) == []
-    monkeypatch.setitem(i18n.TEACHING_CONTENT_LABELS, "fr", {key: f"[fr] {key}" for key in i18n.TEACHING_CONTENT_LABEL_KEYS})
+    monkeypatch.setitem(i18n.TEACHING_CONTENT_LABELS, "fr", french_labels)
     status, html = _get(client, "/en/teaching/french/liaison")
     assert status == 200 and _edition_links(html) == [("/en/teaching/french/fr/liaison?from=en", "fr", "En français")]
     status, html = _get(client, "/de/teaching/french/fr/liaison?from=en")
@@ -336,9 +338,10 @@ FOREIGN_CONTENT_LABELS = ("Referenzsprecher:in", "Lernende:r", "Reference speake
 def test_repository_publishes_the_spanish_edition_of_the_seven_topic_pages() -> None:
     teaching_content.clear_teaching_content_caches()
     assert teaching_content.content_edition_codes("spanish") == ["es"]
-    assert teaching_content.content_edition_codes("french") == []
+    assert teaching_content.content_edition_codes("french") == ["fr"]  # French: the liaison page and its hub (test_teaching_liaison.py)
     assert sorted(path.parent.name for path in (REPO_ROOT / "content" / "teaching" / "spanish").glob("*/es.yaml")) == sorted(SEVEN_SPANISH + ["hubs"])
-    assert not list((REPO_ROOT / "content" / "teaching").glob("*/*/fr.yaml"))
+    assert sorted(str(path.relative_to(REPO_ROOT / "content" / "teaching").as_posix()) for path in (REPO_ROOT / "content" / "teaching").glob("*/*/fr.yaml")) == [
+        "french/hubs/fr.yaml", "french/liaison/fr.yaml"]
     client = _app().test_client()
     for ui_lang in ("de", "en"):
         status, hub = _get(client, f"/{ui_lang}/teaching/spanish")

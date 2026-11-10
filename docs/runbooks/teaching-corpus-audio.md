@@ -7,7 +7,7 @@
 
 ## Zweck
 
-Die kuratierten Hörvergleiche der spanischen Phänomen-Themenseiten (`content/teaching/spanish/*/`) sind zentral in `content/teaching/spanish/audio-slots.yaml` deklariert. Dieses Runbook beschreibt, wie einzelne Sprecher-Item-Kombinationen ersetzt werden, ohne Seitentexte oder Layout anzufassen.
+Die kuratierten Hörvergleiche der spanischen Phänomen-Themenseiten (`content/teaching/spanish/*/`) sind zentral in `content/teaching/spanish/audio-slots.yaml` deklariert. Dieses Runbook beschreibt, wie einzelne Sprecher-Item-Kombinationen ersetzt werden, ohne Seitentexte oder Layout anzufassen. Französisch hat eine eigene Registry `content/teaching/french/audio-slots.yaml` (Themenseite `liaison`); alle Befehle dann mit `--language french` (Sessions `FR-N-…`/`FR-L-…`, Medien unter `content/teaching/french/{topic}/media/audio/corpus/`). Hinweis für Satzausschnitte: Die Item-MP3 beginnen 273 ms vor dem Alignment-Item (Spanisch und Französisch); Schnittpunkte auf der Item-Zeitachse = Alignment-Zeit + 273 ms, dann am Spektrogramm prüfen.
 
 ## Voraussetzungen
 

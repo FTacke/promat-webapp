@@ -45,10 +45,10 @@ _SCHEMA_TYPES: dict[str, Any] = {
     "research_design": "ScholarlyArticle",
     "teaching_topic": ["Article", "LearningResource"],
 }
-_EDITOR_LABELS = {"de": ("Hrsg.", "Hrsg."), "en": ("ed.", "eds."), "es": ("ed.", "eds.")}
-_QUOTES = {"de": ("„", "“"), "en": ("“", "”"), "es": ("«", "»")}
-_DATA_AS_OF_LABELS = {"de": "Datenstand", "en": "data as of", "es": "datos a fecha de"}
-_CONTAINER_LABELS = {"de": "In", "en": "In", "es": "En"}
+_EDITOR_LABELS = {"de": ("Hrsg.", "Hrsg."), "en": ("ed.", "eds."), "es": ("ed.", "eds."), "fr": ("dir.", "dir.")}
+_QUOTES = {"de": ("„", "“"), "en": ("“", "”"), "es": ("«", "»"), "fr": ("« ", " »")}
+_DATA_AS_OF_LABELS = {"de": "Datenstand", "en": "data as of", "es": "datos a fecha de", "fr": "données au"}
+_CONTAINER_LABELS = {"de": "In", "en": "In", "es": "En", "fr": "Dans"}
 
 
 class PublicationRegistryError(RuntimeError):

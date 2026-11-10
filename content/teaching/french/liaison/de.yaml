@@ -1,9 +1,150 @@
 resource_id: promat-teaching-fr-liaison
-status: placeholder
-title: 'Liaison: Wenn stumme Konsonanten hörbar werden'
-summary: 'Warum in *les amis* ein *z*-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.'
-description: 'Warum in *les amis* ein *z*-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.'
+title: 'Die Liaison: Wenn stumme Konsonanten hörbar werden'
+summary: Warum in *les amis* ein [z]-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.
+description: Warum in *les amis* ein [z]-Laut zu hören ist – und wann Wörter im Französischen auf diese Weise verbunden werden.
 equivalents:
   en: liaison
+metadata:
+  creators:
+  - janina-reinhardt
+  created: 2026-11-10
+  updated: 2026-11-10
 blocks:
 - type: topic_meta
+- type: text
+  body: Im Französischen werden viele Buchstaben nicht ausgesprochen, besonders Konsonanten am Wortende. Folgt aber ein Wort, das mit einem Vokal beginnt, werden manche dieser Konsonanten wieder hörbar. Schon ein kleines Wort wie *des* zeigt das.
+- type: audio_contrast
+  title: 'Hörvergleich: *des pâtes – des heures*'
+  lead: Wie wird *des* in den beiden Aufnahmen ausgesprochen? Ist die Wortgrenze zu hören?
+  transcript: '*des pâtes – des heures*'
+  examples:
+  - role: reference
+    subtitle: Frankreich · W55
+    note: '*des pâtes* (‚Nudeln‘)'
+    audio: corpus/fr1-des-pates.mp3
+  - role: reference
+    subtitle: Frankreich · T54
+    note: '*des heures* (‚Stunden‘)'
+    audio: corpus/fr1-des-heures.mp3
+- type: solution
+  title: 'Auflösung: Was ist zu hören?'
+  body: 'Vor *pâtes* bleibt das *s* von *des* stumm: [de.pat]. Vor *heures* wird es dagegen als [z] hörbar: [de.zœʁ]. Zugleich verschwimmt die Wortgrenze: Das [z] schließt nicht die Silbe von *des* ab, sondern eröffnet die erste Silbe von *heures*.'
+- type: section_heading
+  title: Was ist die Liaison?
+- type: text
+  body: |-
+    Als Liaison (‚Bindung‘) bezeichnet man die Aussprache eines Endkonsonanten, der sonst stumm bleibt, vor einem Wort, das mit einem Vokal oder Gleitlaut beginnt: *des* [de], aber *des‿heures* [de.zœʁ].
+
+    Davon zu unterscheiden ist das *enchaînement* (‚Verkettung‘): Ein Konsonant am Wortende wird zur ersten Silbe des folgenden Worts gezogen. Bei der Liaison kommt beides zusammen – der Konsonant wird hörbar und zugleich an das folgende Wort gebunden. Ein *enchaînement* gibt es aber auch bei Konsonanten, die immer gesprochen werden, wie das Beispiel *huit heures* weiter unten zeigt.
+- type: info_box
+  title: Woher kommt die Liaison?
+  body: |-
+    Im Altfranzösischen wurden Konsonanten am Wortende noch regelmäßig ausgesprochen. Im Lauf der Sprachgeschichte verstummten sie zunehmend, blieben aber in bestimmten Kontexten erhalten – vor allem vor Wörtern, die mit einem Vokal beginnen. Eine mögliche Erklärung ist die Vermeidung von Hiaten, also des unmittelbaren Aufeinandertreffens zweier Vokale an der Wortgrenze.
+
+    Auch dass ein geschriebenes *s* in der Liaison als stimmhaftes [z] erscheint, ist historisch zu erklären: Zwischen Vokalen wurden Reibelaute wie /s/ und /f/ stimmhaft. Umgekehrt führte die frühere Auslautverhärtung dazu, dass ein geschriebenes *d* in der Liaison als [t] erscheint, etwa in *grand‿ami* [ɡʁɑ̃.ta.mi].
+- type: section_heading
+  title: 'Drei Konsonanten: [z], [t] und [n]'
+- type: text
+  body: 'Für die Liaison im heutigen Französisch sind vor allem drei Konsonanten wichtig: [z], [t] und [n]. Sie machen zusammen nahezu alle Liaisonfälle aus; etwa die Hälfte entfällt auf [z].'
+- type: audio_examples
+  title: 'Hörbeispiele: [z], [t] und [n]'
+  lead: Drei Ausschnitte aus vorgelesenen Sätzen; die Liaison steht jeweils im kursiv gesetzten Teil.
+  examples:
+  - label: '[z]'
+    transcript: '*des heures*'
+    note: '*des‿heures* [de.zœʁ] · Frankreich · T50'
+    audio: corpus/fr1-z-des-heures.mp3
+  - label: '[t]'
+    transcript: elle *est allée* à la bibliothèque
+    note: '*est‿allée* [ɛ.ta.le] · Frankreich · T4'
+    audio: corpus/fr1-t-est-allee.mp3
+  - label: '[n]'
+    transcript: Avait-elle vraiment *un aspect*
+    note: '*un‿aspect* · Frankreich · T33'
+    audio: corpus/fr1-n-un-aspect.mp3
+- type: text
+  body: Andere Liaisonkonsonanten spielen im heutigen Französisch kaum noch eine Rolle. Liaisons mit [ʁ] oder [p] sind in der Regel nicht erforderlich und können in vielen Fällen sogar eigenartig wirken.
+- type: section_heading
+  title: Warum die Liaison schon am Anfang wichtig ist
+- type: text
+  body: Die Liaison kann dazu führen, dass sich verschiedene Ausdrücke zum Verwechseln ähnlich anhören – etwa zwei häufige Verbformen.
+- type: audio_contrast
+  title: 'Hörvergleich: *ils ont – ils sont*'
+  lead: Woran lassen sich *ils ont* und *ils sont* beim Hören unterscheiden?
+  transcript: '*ils ont – ils sont*'
+  examples:
+  - role: reference
+    subtitle: Frankreich · W45
+    audio: corpus/fr1-ils-ont.mp3
+  - role: reference
+    subtitle: Frankreich · W9
+    audio: corpus/fr1-ils-sont.mp3
+- type: solution
+  title: 'Auflösung: Was ist zu hören?'
+  body: 'In der ersten Aufnahme ist *ils‿ont* (‚sie haben‘) zu hören: Das *s* von *ils* wird als stimmhaftes [z] gebunden, [il.zɔ̃]. In der zweiten Aufnahme ist *ils sont* (‚sie sind‘) zu hören: Das *s* von *ils* bleibt stumm, *sont* beginnt mit stimmlosem [s], [il.sɔ̃].'
+- type: text
+  body: Hier entscheidet allein die Stimmhaftigkeit eines Konsonanten über die Bedeutung. Wer den Unterschied zwischen [z] und [s] nicht hört oder nicht ausspricht, riskiert Missverständnisse.
+- type: section_heading
+  title: Liaison und Zahlwörter
+- type: text
+  body: |-
+    Bei Zahlwörtern lohnt sich ein genauer Blick. Nach vielen Zahlwörtern wird vor einem Wort, das mit einem Vokal beginnt, gebunden: *un‿enfant*, *deux‿enfants* [dø.zɑ̃.fɑ̃], *trois‿enfants* [tʁwa.zɑ̃.fɑ̃]. Vor Zahlwörtern wie *onze* und *huit* wird dagegen in der Regel nicht gebunden: *les onze* [le.ɔ̃z]. Ist *un* nicht Zahlwort, sondern Pronomen, wird gebunden: *les‿uns*.
+
+    Außerdem klingen manche Zahlwörter isoliert, vor Konsonant und vor Vokal unterschiedlich; das ist für jedes Zahlwort einzeln zu lernen. So sagt man *six* [sis], aber *six copains* [si.ko.pɛ̃].
+- type: audio_contrast
+  title: 'Hörbeispiel: *les onze*'
+  lead: 'Vor dem Zahlwort *onze* wird nicht gebunden: *les onze* [le.ɔ̃z].'
+  transcript: '*Blanche-Neige et les onze poissons bleus*'
+  examples:
+  - role: reference
+    subtitle: Frankreich · T5
+    audio: corpus/fr1-les-onze.mp3
+- type: audio_contrast
+  title: 'Hörbeispiel: *Il était huit heures*'
+  lead: Wo werden in dieser Aufnahme Wörter miteinander verbunden?
+  transcript: '*Il était huit heures*'
+  examples:
+  - role: reference
+    subtitle: Frankreich · T22
+    audio: corpus/fr1-huit-heures.mp3
+- type: solution
+  title: 'Auflösung: Was ist zu hören?'
+  body: 'Vor *huit* wird nicht gebunden: Das *t* von *était* bleibt stumm. Nach *huit* ist ein [t] zu hören, das die erste Silbe von *heures* eröffnet: *Il était huit heures* [i.le.tɛ.ɥi.tœʁ]. Ob es sich dabei um eine Liaison handelt, zeigt die nächste Aufnahme.'
+- type: audio_contrast
+  title: 'Hörbeispiel: *huit*'
+  lead: Ist das *t* von *huit* auch ohne folgendes Wort zu hören?
+  transcript: '*huit*'
+  examples:
+  - role: reference
+    subtitle: Frankreich · W58
+    audio: corpus/fr1-huit.mp3
+- type: solution
+  title: 'Auflösung: Was ist zu hören?'
+  body: 'Ja: *huit* wird auch isoliert mit [t] gesprochen, [ɥit]. In *huit heures* wird also kein sonst stummer Konsonant hörbar; das [t] wird lediglich mit der folgenden Silbe verbunden. Das ist ein *enchaînement*, keine Liaison im engeren Sinn. Vor einem Konsonanten fällt das [t] dagegen in der Regel weg, etwa in *huit cents* [ɥi.sɑ̃].'
+- type: audio_contrast
+  title: 'Hörbeispiel: *neuf heures*'
+  lead: Wie wird das *f* von *neuf* vor *heures* ausgesprochen?
+  transcript: '*vers neuf heures*'
+  examples:
+  - role: reference
+    subtitle: Frankreich · T43
+    audio: corpus/fr1-neuf-heures.mp3
+- type: solution
+  title: 'Auflösung: Was ist zu hören?'
+  body: 'Stimmhaft, als [v]: *neuf heures* [nœ.vœʁ]. Streng genommen ist auch das keine gewöhnliche Liaison, denn das *f* von *neuf* wird auch isoliert gesprochen: [nœf]. Besonders ist, dass es nur in wenigen festen Verbindungen stimmhaft wird, vor allem vor *heures* und *ans*. In *neuf enfants* oder *neuf élèves* bleibt es dagegen stimmloses [f].'
+- type: section_heading
+  title: Impulse für den Unterricht
+- type: teaching_impulses
+  items:
+  - title: Erst hören, dann lesen
+    body: '*des pâtes* und *des heures* zunächst ohne Schriftbild vorspielen: Wo verläuft die Wortgrenze? Erst danach die Schreibung zeigen und das stumme bzw. gebundene *s* markieren.'
+  - title: '*ils ont* oder *ils sont*?'
+    body: Die beiden Aufnahmen in wechselnder Reihenfolge vorspielen und zuordnen lassen. Dabei auf den Unterschied zwischen stimmhaftem [z] und stimmlosem [s] achten, etwa indem die Lernenden die Stimmlippenschwingung mit der Hand am Kehlkopf erspüren.
+  - title: Liaisons im Satz entdecken
+    body: In den Satzausschnitten (*des heures*, *elle est allée à la bibliothèque*, *Avait-elle vraiment un aspect*) die gebundenen Konsonanten heraushören und [z], [t] oder [n] zuordnen.
+- type: further_reading
+  title: Vertiefung
+  description: Weiterführende Literatur zur Liaison.
+  items:
+  - title: 'Pustka (2026): *Einführung in die Phonetik und Phonologie des Französischen*'
+    text: 'Elissa Pustka: *Einführung in die Phonetik und Phonologie des Französischen*, 3., neu bearbeitete und erweiterte Auflage, Erich Schmidt Verlag 2026. Kapitel 9 behandelt die Liaison ausführlich.'

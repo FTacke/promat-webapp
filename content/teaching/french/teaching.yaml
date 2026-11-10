@@ -3,3 +3,6 @@ default_ui_lang: de
 available_ui_langs:
   - de
   - en
+# Additional content edition of the French topic pages (docs/spec/platform-data-files.md, "Teaching content editions").
+content_editions:
+  - fr

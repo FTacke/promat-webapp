@@ -742,7 +742,7 @@ def _format_topic_date(ui_lang: str, value: Any) -> str:
         return ""
     if ui_lang == "de":
         return parsed.strftime("%d.%m.%Y")
-    if ui_lang == "es":
+    if ui_lang in ("es", "fr"):
         return parsed.strftime("%d/%m/%Y")
     return parsed.isoformat()
 
@@ -871,7 +871,8 @@ def _further_reading_item_entries(values: Any) -> list[dict[str, str]]:
         text = _as_text(item.get("text"))
         cta = _as_text(item.get("cta"))
         href = _as_text(item.get("href"))
-        if title and text and cta and href:
+        # a bibliographic reference without a link (a printed book) has title and text only
+        if title and text and ((cta and href) or (not cta and not href)):
             entries.append(_set_inline_markdown_fields({"title": title, "text": text, "cta": cta, "href": href}, "title", "text", "cta"))
     return entries
 

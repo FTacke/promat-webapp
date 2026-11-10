@@ -59,24 +59,41 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONTENT_ROOT = REPO_ROOT / "content" / "teaching"
 DEFAULT_SESSIONS_ROOT = REPO_ROOT / "data" / "sessions"
-SLOTS_FILE = CONTENT_ROOT / "spanish" / "audio-slots.yaml"
-CORPUS = "spanish"
 CATEGORIES = ("reference", "learner")
-SESSION_PREFIX = {"reference": "ES-N-", "learner": "ES-L-"}
 SPEAKER_TYPE = {"reference": "native_speaker", "learner": "learner"}
-ITEM_ID = {"wordlist": re.compile(r"^wl_\d{3}$"), "text": re.compile(r"^(d|qy|qw)_\d{2}$")}
-# Sessions that must never be used on a Teaching page, with the reason. A session leaves this list only by a
-# deliberate edit after a new, verifiable Teaching consent (the metadata flag alone is not enough).
-EXCLUDED_SESSIONS = {
-    "ES-L-0014-2026-S01": "teaching_consent_signed: no (no new Teaching release documented)",
-    "ES-N-0003-2026-S01": "teaching_consent_signed: no",
-    "ES-L-0023-2026-S01": "first language Portuguese (not a German-L1 learner comparison)",
+# One registry per teaching language (`content/teaching/{language}/audio-slots.yaml`) and its corpus. `configure()`
+# switches the module to a language; the default is Spanish.
+LANGUAGES: dict[str, dict[str, Any]] = {
+    "spanish": {
+        "session_prefix": {"reference": "ES-N-", "learner": "ES-L-"},
+        "item_id": {"wordlist": re.compile(r"^wl_\d{3}$"), "text": re.compile(r"^(d|qy|qw)_\d{2}$")},
+        # Sessions that must never be used on a Teaching page, with the reason. A session leaves this list only by a
+        # deliberate edit after a new, verifiable Teaching consent (the metadata flag alone is not enough).
+        "excluded": {
+            "ES-L-0014-2026-S01": "teaching_consent_signed: no (no new Teaching release documented)",
+            "ES-N-0003-2026-S01": "teaching_consent_signed: no",
+            "ES-L-0023-2026-S01": "first language Portuguese (not a German-L1 learner comparison)",
+        },
+        "title": "Spanish",
+    },
+    "french": {
+        "session_prefix": {"reference": "FR-N-", "learner": "FR-L-"},
+        "item_id": {"wordlist": re.compile(r"^wl_\d{3}$"), "text": re.compile(r"^t_\d{2}$")},
+        "excluded": {},
+        "title": "French",
+    },
 }
+LANGUAGE = "spanish"
+SLOTS_FILE = CONTENT_ROOT / LANGUAGE / "audio-slots.yaml"
+CORPUS = LANGUAGE
+SESSION_PREFIX = LANGUAGES[LANGUAGE]["session_prefix"]
+ITEM_ID = LANGUAGES[LANGUAGE]["item_id"]
+EXCLUDED_SESSIONS = LANGUAGES[LANGUAGE]["excluded"]
 CROP_KEYS = ("start_ms", "end_ms")
 FFMPEG_AUDIO = ["-c:a", "libmp3lame", "-b:a", "160k", "-ar", "48000", "-ac", "1"]
-HEADER = """# Curated corpus recordings of the Spanish Teaching topic pages (declaration; see scripts/teaching_audio_slots.py).
+HEADER = """# Curated corpus recordings of the {title} Teaching topic pages (declaration; see scripts/teaching_audio_slots.py).
 #
-# Edit a recording (session / item) here, then run `python scripts/teaching_audio_slots.py --export` and commit the changed
+# Edit a recording (session / item) here, then run `python scripts/teaching_audio_slots.py {option}--export` and commit the changed
 # media file and its `sha256`. The topic pages name only the media file, never a session, so replacing a recording
 # needs no change to the page texts. All recordings come from sessions with `teaching_consent_signed: yes` (checked by
 # `--release-report`). The `selection` of the first release was made automatically; the combinations of
@@ -86,6 +103,29 @@ HEADER = """# Curated corpus recordings of the Spanish Teaching topic pages (dec
 # A `crop` entry renders the target word sequence out of the item MP3 (cut points fixed here, see the script docstring).
 # `reserves` document curatorial alternatives that are NOT integrated (no media, no audio box).
 """
+HEADER_NOTES = {
+    "spanish": HEADER.format(title="Spanish", option=""),
+    "french": """# Curated corpus recordings of the French Teaching topic pages (declaration; see scripts/teaching_audio_slots.py).
+#
+# Edit a recording (session / item) here, then run `python scripts/teaching_audio_slots.py --language french --export` and commit
+# the changed media file and its `sha256`. The topic pages name only the media file, never a session. All recordings come from
+# sessions with `teaching_consent_signed: yes` and `needs_review: false` (checked by `--release-report`). The `liaison` page was
+# curated by acoustic screening (spectrogram, energy) and is provisional until listened to by its author (Janina Reinhardt).
+# A `crop` entry renders the target word sequence out of the item MP3 (cut points fixed here, see the script docstring).
+""",
+}
+
+
+def configure(language: str) -> None:
+    """Switch the module to the registry and corpus of one teaching language."""
+    global LANGUAGE, SLOTS_FILE, CORPUS, SESSION_PREFIX, ITEM_ID, EXCLUDED_SESSIONS
+    config = LANGUAGES[language]
+    LANGUAGE = language
+    SLOTS_FILE = CONTENT_ROOT / language / "audio-slots.yaml"
+    CORPUS = language
+    SESSION_PREFIX = config["session_prefix"]
+    ITEM_ID = config["item_id"]
+    EXCLUDED_SESSIONS = config["excluded"]
 
 
 def sha256_of(path: Path) -> str:
@@ -93,17 +133,18 @@ def sha256_of(path: Path) -> str:
 
 
 def runtime_available(sessions_root: Path) -> bool:
-    """True when ``sessions_root`` holds Spanish corpus sessions (the folder alone may exist as an empty placeholder)."""
-    return any((sessions_root / CORPUS).glob("ES-*/metadata.json"))
+    """True when ``sessions_root`` holds corpus sessions of the configured language (the folder may be an empty placeholder)."""
+    prefix = SESSION_PREFIX["reference"].split("-")[0]
+    return any((sessions_root / CORPUS).glob(f"{prefix}-*/metadata.json"))
 
 
-def load_slots(path: Path = SLOTS_FILE) -> dict[str, Any]:
-    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+def load_slots(path: Path | None = None) -> dict[str, Any]:
+    return yaml.safe_load((path or SLOTS_FILE).read_text(encoding="utf-8")) or {}
 
 
-def dump_slots(data: dict[str, Any], path: Path = SLOTS_FILE) -> None:
+def dump_slots(data: dict[str, Any], path: Path | None = None) -> None:
     body = yaml.safe_dump(data, allow_unicode=True, sort_keys=False, width=120)
-    path.write_text(HEADER + "\n" + body, encoding="utf-8", newline="\n")
+    (path or SLOTS_FILE).write_text(HEADER_NOTES[LANGUAGE] + "\n" + body, encoding="utf-8", newline="\n")
 
 
 def media_path(topic: str, file: str) -> Path:
@@ -454,7 +495,9 @@ def main() -> int:
     parser.add_argument("--release-report", action="store_true", help="print the Teaching release check (session, item, consent) as a table")
     parser.add_argument("--sessions-root", type=Path, default=DEFAULT_SESSIONS_ROOT, help="runtime sessions root (default: data/sessions)")
     parser.add_argument("--marele-root", type=Path, default=os.environ.get("PROMAT_MARELE_ROOT"), help="root of the MAR.ELE webapp backup (only for MAR.ELE montages)")
+    parser.add_argument("--language", choices=sorted(LANGUAGES), default="spanish", help="teaching language whose registry is used (default: spanish)")
     args = parser.parse_args()
+    configure(args.language)
     data = load_slots()
     sessions_root = args.sessions_root if runtime_available(args.sessions_root) else None
     if args.release_report:

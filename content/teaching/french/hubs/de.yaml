@@ -2,15 +2,7 @@ title: Französische Aussprache verstehen
 overview_intro: Die Themenseiten bieten fachliche Orientierung, Hörbeispiele und Anregungen für kurze Ausspracheimpulse im Französischunterricht. Oft genügen dafür zehn Minuten zwischendurch – und viele Phänomene lassen sich mit passenden Beispielen schon ab A1 aufgreifen.
 card_columns: 2
 groups:
-- title: Zum Einstieg
-  description: Ein erster Einblick in ein charakteristisches Aussprachephänomen des Französischen.
+- title: Die Liaison
+  description: Wann stumme Konsonanten am Wortende hörbar werden – und was das für Aussprache und Hörverstehen bedeutet.
   topics:
-  - nasal-vowels
-- title: Aussprachephänomene entdecken
-  description: Konkrete Aussprachemuster verstehen und im Unterricht aufgreifen.
-  topics:
-  - u-or-ou
   - liaison
-  - schwa
-  - spelling-and-pronunciation
-  - french-stress

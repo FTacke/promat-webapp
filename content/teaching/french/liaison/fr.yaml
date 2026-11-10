@@ -1,0 +1,151 @@
+resource_id: promat-teaching-fr-liaison
+title: 'La liaison : quand les consonnes muettes se font entendre'
+summary: Pourquoi on entend un son [z] dans *les amis* – et quand les mots se lient ainsi en français.
+description: Pourquoi on entend un son [z] dans *les amis* – et quand les mots se lient ainsi en français.
+equivalents:
+  de: liaison
+  en: liaison
+metadata:
+  creators:
+  - janina-reinhardt
+  created: 2026-11-10
+  updated: 2026-11-10
+blocks:
+- type: topic_meta
+- type: text
+  body: En français, beaucoup de lettres ne se prononcent pas, en particulier les consonnes en fin de mot. Mais lorsque le mot suivant commence par une voyelle, certaines de ces consonnes redeviennent audibles. Un petit mot comme *des* le montre déjà.
+- type: audio_contrast
+  title: 'Comparaison auditive : *des pâtes – des heures*'
+  lead: Comment *des* est-il prononcé dans les deux enregistrements ? Entend-on la frontière entre les mots ?
+  transcript: '*des pâtes – des heures*'
+  examples:
+  - role: reference
+    subtitle: France · W55
+    note: '*des pâtes*'
+    audio: corpus/fr1-des-pates.mp3
+  - role: reference
+    subtitle: France · T54
+    note: '*des heures*'
+    audio: corpus/fr1-des-heures.mp3
+- type: solution
+  title: 'Solution : qu’entend-on ?'
+  body: 'Devant *pâtes*, le *s* de *des* reste muet : [de.pat]. Devant *heures*, en revanche, il se fait entendre comme [z] : [de.zœʁ]. En même temps, la frontière entre les mots s’estompe : le [z] ne termine pas la syllabe de *des*, mais ouvre la première syllabe de *heures*.'
+- type: section_heading
+  title: Qu’est-ce que la liaison ?
+- type: text
+  body: |-
+    On appelle liaison la prononciation d’une consonne finale, muette par ailleurs, devant un mot commençant par une voyelle ou une semi-voyelle : *des* [de], mais *des‿heures* [de.zœʁ].
+
+    Il faut la distinguer de l’*enchaînement* : une consonne finale est rattachée à la première syllabe du mot suivant. Dans la liaison, les deux se combinent : la consonne se fait entendre et se rattache en même temps au mot suivant. Mais l’*enchaînement* se produit aussi avec des consonnes toujours prononcées, comme le montre plus bas l’exemple *huit heures*.
+- type: info_box
+  title: D’où vient la liaison ?
+  body: |-
+    En ancien français, les consonnes finales étaient encore régulièrement prononcées. Au fil de l’histoire de la langue, elles se sont progressivement amuïes, mais se sont maintenues dans certains contextes – surtout devant des mots commençant par une voyelle. Une explication possible est l’évitement de l’hiatus, c’est-à-dire de la rencontre directe de deux voyelles à la frontière entre deux mots.
+
+    Le fait qu’un *s* écrit apparaisse comme [z] sonore dans la liaison s’explique lui aussi par l’histoire : entre deux voyelles, les fricatives comme /s/ et /f/ se sont sonorisées. À l’inverse, l’ancien assourdissement des consonnes finales explique qu’un *d* écrit apparaisse comme [t] dans la liaison, par exemple dans *grand‿ami* [ɡʁɑ̃.ta.mi].
+- type: section_heading
+  title: 'Trois consonnes : [z], [t] et [n]'
+- type: text
+  body: 'Trois consonnes comptent surtout pour la liaison en français contemporain : [z], [t] et [n]. Ensemble, elles représentent presque tous les cas de liaison ; environ la moitié concerne [z].'
+- type: audio_examples
+  title: 'Exemples sonores : [z], [t] et [n]'
+  lead: Trois extraits de phrases lues ; la liaison se trouve dans la partie en italique.
+  examples:
+  - label: '[z]'
+    transcript: '*des heures*'
+    note: '*des‿heures* [de.zœʁ] · France · T50'
+    audio: corpus/fr1-z-des-heures.mp3
+  - label: '[t]'
+    transcript: elle *est allée* à la bibliothèque
+    note: '*est‿allée* [ɛ.ta.le] · France · T4'
+    audio: corpus/fr1-t-est-allee.mp3
+  - label: '[n]'
+    transcript: Avait-elle vraiment *un aspect*
+    note: '*un‿aspect* · France · T33'
+    audio: corpus/fr1-n-un-aspect.mp3
+- type: text
+  body: Les autres consonnes de liaison ne jouent presque plus de rôle en français contemporain. Les liaisons en [ʁ] ou en [p] ne sont en général pas nécessaires et peuvent même paraître étranges dans de nombreux cas.
+- type: section_heading
+  title: Pourquoi la liaison compte dès le début
+- type: text
+  body: La liaison peut rendre des expressions différentes presque impossibles à distinguer à l’oreille – par exemple deux formes verbales fréquentes.
+- type: audio_contrast
+  title: 'Comparaison auditive : *ils ont – ils sont*'
+  lead: Comment distinguer *ils ont* et *ils sont* à l’oreille ?
+  transcript: '*ils ont – ils sont*'
+  examples:
+  - role: reference
+    subtitle: France · W45
+    audio: corpus/fr1-ils-ont.mp3
+  - role: reference
+    subtitle: France · W9
+    audio: corpus/fr1-ils-sont.mp3
+- type: solution
+  title: 'Solution : qu’entend-on ?'
+  body: 'Le premier enregistrement fait entendre *ils‿ont* : le *s* de *ils* est lié sous la forme d’un [z] sonore, [il.zɔ̃]. Le second fait entendre *ils sont* : le *s* de *ils* reste muet et *sont* commence par un [s] sourd, [il.sɔ̃].'
+- type: text
+  body: Ici, seule la sonorité d’une consonne décide du sens. Ne pas entendre ou ne pas produire la différence entre [z] et [s] peut entraîner des malentendus.
+- type: section_heading
+  title: La liaison et les numéraux
+- type: text
+  body: |-
+    Les numéraux méritent qu’on s’y arrête. Après de nombreux numéraux, on fait la liaison devant un mot commençant par une voyelle : *un‿enfant*, *deux‿enfants* [dø.zɑ̃.fɑ̃], *trois‿enfants* [tʁwa.zɑ̃.fɑ̃]. Devant des numéraux comme *onze* et *huit*, en revanche, on ne fait généralement pas la liaison : *les onze* [le.ɔ̃z]. Lorsque *un* n’est pas un numéral mais un pronom, on fait la liaison : *les‿uns*.
+
+    Par ailleurs, certains numéraux se prononcent différemment isolément, devant une consonne et devant une voyelle ; cela s’apprend numéral par numéral. Ainsi, *six* se prononce [sis], mais *six copains* [si.ko.pɛ̃].
+- type: audio_contrast
+  title: 'Exemple sonore : *les onze*'
+  lead: 'Devant le numéral *onze*, on ne fait pas la liaison : *les onze* [le.ɔ̃z].'
+  transcript: '*Blanche-Neige et les onze poissons bleus*'
+  examples:
+  - role: reference
+    subtitle: France · T5
+    audio: corpus/fr1-les-onze.mp3
+- type: audio_contrast
+  title: 'Exemple sonore : *Il était huit heures*'
+  lead: Où les mots sont-ils liés dans cet enregistrement ?
+  transcript: '*Il était huit heures*'
+  examples:
+  - role: reference
+    subtitle: France · T22
+    audio: corpus/fr1-huit-heures.mp3
+- type: solution
+  title: 'Solution : qu’entend-on ?'
+  body: 'Devant *huit*, il n’y a pas de liaison : le *t* de *était* reste muet. Après *huit*, on entend un [t] qui ouvre la première syllabe de *heures* : *Il était huit heures* [i.le.tɛ.ɥi.tœʁ]. L’enregistrement suivant montre s’il s’agit d’une liaison.'
+- type: audio_contrast
+  title: 'Exemple sonore : *huit*'
+  lead: Entend-on le *t* de *huit* même sans mot qui suit ?
+  transcript: '*huit*'
+  examples:
+  - role: reference
+    subtitle: France · W58
+    audio: corpus/fr1-huit.mp3
+- type: solution
+  title: 'Solution : qu’entend-on ?'
+  body: 'Oui : *huit* se prononce aussi avec [t] isolément, [ɥit]. Dans *huit heures*, aucune consonne habituellement muette ne se fait donc entendre ; le [t] est simplement rattaché à la syllabe suivante. Il s’agit d’un *enchaînement*, et non d’une liaison au sens strict. Devant une consonne, en revanche, le [t] tombe généralement, comme dans *huit cents* [ɥi.sɑ̃].'
+- type: audio_contrast
+  title: 'Exemple sonore : *neuf heures*'
+  lead: Comment le *f* de *neuf* est-il prononcé devant *heures* ?
+  transcript: '*vers neuf heures*'
+  examples:
+  - role: reference
+    subtitle: France · T43
+    audio: corpus/fr1-neuf-heures.mp3
+- type: solution
+  title: 'Solution : qu’entend-on ?'
+  body: 'Sonore, comme [v] : *neuf heures* [nœ.vœʁ]. À strictement parler, il ne s’agit pas non plus d’une liaison ordinaire, puisque le *f* de *neuf* se prononce aussi isolément : [nœf]. Ce qui est particulier, c’est qu’il ne devient sonore que dans quelques combinaisons figées, surtout devant *heures* et *ans*. Dans *neuf enfants* ou *neuf élèves*, en revanche, il reste un [f] sourd.'
+- type: section_heading
+  title: Pistes pour la classe
+- type: teaching_impulses
+  items:
+  - title: Écouter d’abord, lire ensuite
+    body: 'Faire écouter *des pâtes* et *des heures* sans montrer l’écrit : où passe la frontière entre les mots ? Montrer ensuite seulement l’orthographe et marquer le *s* muet ou lié.'
+  - title: '*ils ont* ou *ils sont* ?'
+    body: Faire écouter les deux enregistrements dans un ordre variable et les faire attribuer. Attirer l’attention sur la différence entre le [z] sonore et le [s] sourd, par exemple en faisant sentir la vibration des cordes vocales, la main posée sur le larynx.
+  - title: Repérer les liaisons dans la phrase
+    body: Dans les extraits de phrases (*des heures*, *elle est allée à la bibliothèque*, *Avait-elle vraiment un aspect*), repérer les consonnes de liaison et les classer en [z], [t] ou [n].
+- type: further_reading
+  title: Pour aller plus loin
+  description: Lecture complémentaire sur la liaison.
+  items:
+  - title: 'Pustka (2026): *Einführung in die Phonetik und Phonologie des Französischen*'
+    text: 'Elissa Pustka : *Einführung in die Phonetik und Phonologie des Französischen*, 3e édition revue et augmentée, Erich Schmidt Verlag, 2026 (en allemand). Le chapitre 9 est consacré à la liaison.'

@@ -1912,8 +1912,8 @@ def test_teaching_overview_keeps_language_selection_label(url_app: Flask, releas
     for slug in ("spanish", "english", "french", "german"):
         assert f'href="/de/teaching/{slug}"' in html
     assert 'aria-disabled' not in html
-    # counts of the announced topic pages, from the content index: 7 / 5 / 6 / 4
-    assert html.index('>Spanisch<') < html.index('7 Themenseiten') < html.index('>Englisch<') < html.index('5 Themenseiten') < html.index('>Französisch<') < html.index('6 Themenseiten') < html.index('>Deutsch<') < html.index('4 Themenseiten')
+    # counts of the public topic pages, from the content index: 7 / 5 / 1 / 4
+    assert html.index('>Spanisch<') < html.index('7 Themenseiten') < html.index('>Englisch<') < html.index('5 Themenseiten') < html.index('>Französisch<') < html.index('1 Themenseite') < html.index('>Deutsch<') < html.index('4 Themenseiten')
     assert 'In Vorbereitung' not in html
     assert html.index('>Spanisch<') < html.index('>Englisch<') < html.index('>Französisch<') < html.index('>Deutsch<')
     assert 'Korpus wählen' not in html
@@ -2018,7 +2018,7 @@ def test_pending_topic_cards_do_not_repeat_the_status_in_their_description(url_a
     for ui_lang, status in (("de", "In Vorbereitung"), ("en", "In preparation")):
         html = client.get(f"/{ui_lang}/teaching/french").get_data(as_text=True)
         assert html.count('<article class="pm-teaching-topic-card pm-teaching-topic-card--pending') == 0
-        assert html.count("pm-teaching-topic-card--available") == 6
+        assert html.count("pm-teaching-topic-card--available") == 1  # the liaison page; the former placeholders are gone
         assert f'class="pm-teaching-topic-card__status">{status}</p>' not in html and f"{status}: " not in html
 
 

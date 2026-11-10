@@ -238,7 +238,8 @@ def test_hreflang_is_reciprocal_and_only_for_real_equivalents(client) -> None:
         alternates = dict(re.findall(r'<link rel="alternate" hreflang="([a-z]+)" href="([^"]*)">', _head(client, path)))
         # Spanish teaching pages also have a published Spanish content edition (canonical under the default UI prefix)
         spanish_edition = path.split("/")[2:4] == ["teaching", "spanish"] and path.rstrip("/").split("/")[-1] != "accent-changes-everything"
-        assert set(alternates) == ({"de", "en", "es"} if spanish_edition else {"de", "en"}), path
+        french_edition = path.split("/")[2:4] == ["teaching", "french"]  # hub and liaison page have a French content edition
+        assert set(alternates) == ({"de", "en", "es"} if spanish_edition else {"de", "en", "fr"} if french_edition else {"de", "en"}), path
         if spanish_edition:
             assert alternates["es"].startswith(ORIGIN + "/de/teaching/spanish/es"), path
         assert ORIGIN + canonical_path in alternates.values(), path

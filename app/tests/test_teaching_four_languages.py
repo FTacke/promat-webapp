@@ -38,14 +38,6 @@ NEW_TOPICS = {
         "weak-forms-and-schwa": ("Warum kleine Wörter plötzlich anders klingen", "Why small words suddenly sound different"),
         "english-stress": ("Englisch betont anders", "Stress works differently in English"),
     },
-    "french": {
-        "nasal-vowels": ("Was die Nase mit französischen Vokalen zu tun hat", "What the nose has to do with French vowels"),
-        "u-or-ou": ("*u* oder *ou*? Zwei Schreibungen, zwei Vokale", "*u* or *ou*? Two spellings, two vowels"),
-        "liaison": ("Liaison: Wenn stumme Konsonanten hörbar werden", "Liaison: when silent consonants become audible"),
-        "schwa": ("Das flüchtige *e*: Wo bleibt das Schwa?", "The fleeting *e*: where does the schwa go?"),
-        "spelling-and-pronunciation": ("Französisch klingt anders, als es geschrieben wird", "French sounds different from how it is spelled"),
-        "french-stress": ("Wo liegt die Betonung im Französischen?", "Where does the stress fall in French?"),
-    },
     "german": {
         "miete-or-mitte": ("*Miete* oder *Mitte*? Wenn Vokale Wörter unterscheiden", "*Miete* or *Mitte*? When vowels tell words apart"),
         "ich-or-ach": ("*Ich* oder *ach*? Zwei Laute für *ch*", "*Ich* or *ach*? Two sounds for *ch*"),
@@ -53,7 +45,7 @@ NEW_TOPICS = {
         "german-stress": ("Was die Betonung im Deutschen verändert", "What stress changes in German"),
     },
 }
-START = {"english": "which-english-pronunciation", "french": "nasal-vowels", "german": "miete-or-mitte"}
+START = {"english": "which-english-pronunciation", "german": "miete-or-mitte"}
 
 
 @pytest.fixture(scope="module")
@@ -80,7 +72,8 @@ def test_language_selection_shows_four_active_languages_with_their_counts(client
     assert html.count("pm-teaching-language-row--available") == 4 and "pm-teaching-language-row--pending" not in html
     text = _text(html)
     labels = ("Spanisch", "Englisch", "Französisch", "Deutsch") if ui_lang == "de" else ("Spanish", "English", "French", "German")
-    positions = [text.index(f"{label} {count} {unit}") for label, count in zip(labels, (7, 5, 6, 4))]
+    counts = [f"{count} {unit if count > 1 else unit[:-1]}" for count in (7, 5, 1, 4)]  # French: the one written liaison page
+    positions = [text.index(f"{label} {count}") for label, count in zip(labels, counts)]
     assert positions == sorted(positions)  # order Spanish, English, French, German
     for slug in HUB_TITLES:
         assert f'href="/{ui_lang}/teaching/{slug}"' in html
@@ -94,6 +87,11 @@ def test_hub_titles_and_structure(client, teaching_lang: str, ui_lang: str) -> N
     assert re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S).group(1).strip() == title
     assert re.search(r"<title>([^<]*)</title>", html).group(1).startswith(title)
     groups = re.findall(r'class="pm-teaching-topic-group__title">([^<]+)<', html)
+    if teaching_lang == "french":
+        # one section "Die Liaison" with the one written page; no empty sections
+        assert groups == (["Die Liaison"] if ui_lang == "de" else ["Liaison"]) and html.count('pm-teaching-topic-grid pm-teaching-topic-grid--compact') == 1
+        assert re.findall(rf'href="/{ui_lang}/teaching/french/([a-z0-9-]+)"', html) == ["liaison"]
+        return
     assert groups == (["Zum Einstieg", "Aussprachephänomene entdecken"] if ui_lang == "de" else ["Getting started", "Exploring pronunciation features"])
     assert html.count('pm-teaching-topic-grid pm-teaching-topic-grid--compact') == 2  # the Spanish two-column grid
     cards = re.findall(rf'href="/{ui_lang}/teaching/{teaching_lang}/([a-z0-9-]+)"', html)
@@ -155,8 +153,8 @@ def test_every_spanish_topic_page_returns_to_all_topics(client, slug: str, ui_la
     assert f'href="/{ui_lang}/teaching/spanish/es?from={ui_lang}"' in es
 
 
-def test_old_french_scaffolds_with_german_slugs_are_gone(client) -> None:
-    for slug in ("gleitlaute", "nasalvokale"):
+def test_old_french_scaffolds_and_placeholders_are_gone(client) -> None:
+    for slug in ("gleitlaute", "nasalvokale", "nasal-vowels", "u-or-ou", "schwa", "spelling-and-pronunciation", "french-stress"):
         assert not (TEACHING / "french" / slug).exists()
         assert client.get(f"/de/teaching/french/{slug}").status_code == 404
 
