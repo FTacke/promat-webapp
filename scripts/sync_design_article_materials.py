@@ -3,7 +3,7 @@
 Contract: docs/spec/platform-data-files.md, "Research design articles"; procedure: docs/runbooks/design-article-import.md.
 
 A design article must render without the operator-owned runtime catalogs (CI, image smoke), so it ships its own copy of
-the wordlist, exactly as the task catalog stores it: same order, item ids, item numbers and spellings,
+the wordlist (and, where shown, the sentence list), exactly as the task catalogs store them: same order, item ids, item numbers and spellings,
 nothing corrected or merged. ``app/tests/test_design_page_catalog_parity.py`` fails as soon as copy and catalog diverge.
 
 Usage::
@@ -20,8 +20,9 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-#: Catalog tasks shown with the article (the reading text is shown as the author's own example, not from the catalog).
-TASKS = ("wordlist",)
+#: Catalog tasks shown with each article. English: the reading text is shown as the author's own example, not from the
+#: catalog; German: the sentence list is shown from the catalog like the Spanish sentence list.
+CORPUS_TASKS: dict[str, tuple[str, ...]] = {"english": ("wordlist",), "german": ("wordlist", "text")}
 
 
 def catalog_dir(corpus: str) -> Path:
@@ -30,7 +31,7 @@ def catalog_dir(corpus: str) -> Path:
 
 def build_materials(corpus: str) -> dict[str, object]:
     materials: dict[str, object] = {}
-    for task in TASKS:
+    for task in CORPUS_TASKS[corpus]:
         path = catalog_dir(corpus) / f"{task}.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
         if payload.get("task") != task or payload.get("language") != corpus:
@@ -47,7 +48,7 @@ def build_materials(corpus: str) -> dict[str, object]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
-    parser.add_argument("--corpus", required=True, help="corpus slug, e.g. english")
+    parser.add_argument("--corpus", required=True, choices=sorted(CORPUS_TASKS), help="corpus slug, e.g. english")
     parser.add_argument("--check", action="store_true", help="do not write; fail if the content copy differs")
     args = parser.parse_args(argv)
 

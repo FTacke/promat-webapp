@@ -7,7 +7,7 @@
 
 ## Zweck
 
-Ein wissenschaftlicher Design-Aufsatz wird wort- und formatgetreu aus dem DOCX-Manuskript übernommen, ohne Lektorat. Der Ablauf gilt auch für eine neue Fassung desselben Manuskripts. Derzeit ist das der englische Aufsatz von Rolf Kreyer.
+Ein wissenschaftlicher Design-Aufsatz wird wort- und formatgetreu aus dem DOCX-Manuskript übernommen, ohne Lektorat. Der Ablauf gilt auch für eine neue Fassung desselben Manuskripts. Derzeit sind das der englische Aufsatz von Rolf Kreyer und der deutsche Aufsatz von Theresa Fischer und Kathrin Siebold (mit englischer Fassung).
 
 ## Voraussetzungen
 
@@ -21,16 +21,20 @@ Ein wissenschaftlicher Design-Aufsatz wird wort- und formatgetreu aus dem DOCX-M
    Redaktionelle Auffälligkeiten des Manuskripts gehören nicht in den öffentlichen Run-Bericht, sondern in eine lokale Notiz unter `tmp/author-review/`.
 2. Importieren:
    `python scripts/import_design_article_docx.py --docx docs/author-sources/english-design/kreyer-english-design-original.docx --out content/research/english/design.json`
+   Deutscher Aufsatz (Struktur über direkte Fettung, Tabellen mit Beschriftung darunter):
+   `python scripts/import_design_article_docx.py --profile bold-headings --docx docs/author-sources/german-design/fischer-siebold-german-design-original.docx --corrections docs/author-sources/german-design/fischer-siebold-german-design-corrections.yaml --references-heading Literatur --out content/research/german/design.json`
+   Offensichtliche Tippfehler und typografische Versehen, die auf der Seite korrigiert werden dürfen, stehen ausschließlich in der lokalen Korrekturdatei neben dem Manuskript (`source`, `old`, `new`, `kind`); inhaltliche Punkte gehören in die lokale Notiz unter `tmp/author-review/`. Danach den SHA-256 in `app/tests/test_german_design_article.py` (`DOCX_SHA256`) prüfen.
 3. Materialien aus den Katalogen kopieren:
-   `python scripts/sync_design_article_materials.py --corpus english`
+   `python scripts/sync_design_article_materials.py --corpus english` bzw. `--corpus german` (Wortliste und Satzliste)
 4. Bei einem neuen Korpus:
    - in `app/src/app/routes/public_content.py::RESEARCH_DESIGN_ARTICLES` den Ordner und die Ergänzungen eintragen;
    - die einbettenden Texte der Ergänzungen in `public_page_content_data.py` anlegen (`after_source` = DOCX-Referenz des Absatzes, hinter dem das Material erscheint);
    - in `content/publication/resources.yaml` einen `research_design`-Eintrag mit den Autor:innen anlegen;
    - falls der Aufsatz nur in einer Sprache erscheint, die Seite in `app/src/app/page_languages.py::PAGE_UI_LANGUAGES` eintragen.
-5. Tests: `cd app && python -m pytest tests/test_english_design_article.py` und mit Laufzeitdaten `python -m pytest -m data tests/test_design_page_catalog_parity.py`.
+   Übersetzte Fassung (Deutsch → Englisch): `content/research/german/design.en.md` von Hand pflegen. Jeder Block beginnt mit dem Marker der Manuskriptstelle (`<!-- p21 -->`); eine Korrektur der Autorinnen ändert nur den Text unter dem betreffenden Marker. Tabellenzellen und Literatur ohne Marker werden unverändert aus dem Original gezeigt. Nach einem Neuimport des Originals meldet der Test fehlende, überzählige oder umsortierte Marker.
+5. Tests: `cd app && python -m pytest tests/test_english_design_article.py tests/test_german_design_article.py` und mit Laufzeitdaten `python -m pytest -m data tests/test_design_page_catalog_parity.py`.
 6. Browser-Durchgang Desktop/Mobil in Hell und Dunkel (`docs/runbooks/ui-change-workflow.md`), außerdem eine Stichprobe gegen die Word-Darstellung. Die Word-PDF lässt sich lokal per Word-COM-Export (`SaveAs2 … 17`) erzeugen.
-7. Nichts korrigieren. Abweichungen zwischen Manuskript und Katalogen kommen in den Run-Log, redaktionelle Auffälligkeiten im Text nur in die lokale Notiz (siehe Schritt 1).
+7. Inhaltlich nichts korrigieren (nur vereinbarte offensichtliche Tippfehler über die lokale Korrekturdatei, siehe Schritt 2). Abweichungen zwischen Manuskript und Katalogen kommen in den Run-Log, redaktionelle Auffälligkeiten im Text nur in die lokale Notiz (siehe Schritt 1).
 
 ## Verifikation
 

@@ -256,7 +256,7 @@ def test_topic_without_a_public_equivalent_gets_no_hreflang(alias_content, real_
 
 
 def test_unpublished_and_protected_pages_are_not_indexable_and_carry_no_resource_metadata(client) -> None:
-    for path in ("/en/research/french/design", "/de/research/german/design", "/login", "/access-request"):
+    for path in ("/en/research/french/design", "/de/research/french/design", "/login", "/access-request"):
         head = _head(client, path)
         assert _attr(head, r'<meta name="robots" content="([^"]*)">') == ["noindex"], path
         assert "rel=\"canonical\"" not in head and "hreflang" not in head and "application/ld+json" not in head, path

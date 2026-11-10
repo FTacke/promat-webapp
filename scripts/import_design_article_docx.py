@@ -25,11 +25,28 @@ Structure recognition (anything the rules do not cover aborts the import instead
   heading, rows without any text are layout spacers and are listed in ``skipped_empty_rows``;
 - after the references heading every non-empty paragraph is one bibliography entry.
 
+Profile ``bold-headings`` (manuscripts set entirely in the ``Normal`` style with the structure given by direct bold formatting,
+e.g. the German design article): the first paragraph with text, set entirely in bold, is the title; a bold ``Abstract``
+paragraph is the abstract label (no keywords); a paragraph set entirely in bold whose text is ``{n}. {heading}`` opens section
+``{n}.``, one whose text is the references heading opens the bibliography; a paragraph set entirely in bold that starts with
+``Tab. {n}`` and directly follows a table is that table's caption. Tables are plain two-column tables (label cell, items cell;
+a cell may hold several paragraphs) and become ``expandable_table`` blocks. Bold that only marks such a structural paragraph
+is not kept as ``<strong>``; everything else is kept exactly as in the styled profile.
+
+Corrections (``--corrections``, a YAML file kept next to the manuscript and git-ignored like it): obvious typos and
+typographic slips agreed to be corrected on the published page, as exact ``old`` -> ``new`` replacements in the imported HTML
+of one element (``source``). Every ``old`` must occur exactly once (or ``count`` times) in that element, otherwise nothing is
+written. The generated article records the file's SHA-256 and number of entries, never their content.
+
 Usage::
 
     python scripts/import_design_article_docx.py \
         --docx docs/author-sources/english-design/kreyer-english-design-original.docx \
         --out content/research/english/design.json
+    python scripts/import_design_article_docx.py --profile bold-headings \\
+        --docx docs/author-sources/german-design/fischer-siebold-german-design-original.docx \\
+        --corrections docs/author-sources/german-design/fischer-siebold-german-design-corrections.yaml \\
+        --references-heading Literatur --out content/research/german/design.json
 """
 
 from __future__ import annotations
@@ -37,6 +54,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 import zipfile
 from dataclasses import dataclass, field
@@ -52,6 +70,9 @@ FORMAT_TAGS: tuple[tuple[str, str], ...] = (("b", "strong"), ("i", "em"), ("u", 
 #: Minimum left indent (twips) for a paragraph that continues the numbered example above it.
 EXAMPLE_CONTINUATION_INDENT = 600
 KEYWORD_SEPARATOR = " · "
+PROFILES = ("styled", "bold-headings")
+SECTION_HEADING = re.compile(r"^(\d+\.)\s+(\S.*?)\s*$")
+TABLE_CAPTION = re.compile(r"^Tab\.\s*\d+")
 
 
 class ImportError_(RuntimeError):
@@ -441,26 +462,185 @@ def build_article(docx_path: Path, references_heading: str) -> dict[str, object]
     return article
 
 
+def _fully_bold(paragraph: Paragraph) -> bool:
+    filled = [segment for segment in paragraph.segments if segment.text.strip()]
+    return bool(filled) and all("b" in segment.formats for segment in filled)
+
+
+def _without_bold(segments: list[Segment]) -> list[Segment]:
+    merged: list[Segment] = []
+    for segment in segments:
+        formats = segment.formats - {"b"}
+        if merged and merged[-1].formats == formats:
+            merged[-1] = Segment(merged[-1].text + segment.text, formats)
+        else:
+            merged.append(Segment(segment.text, formats))
+    return merged
+
+
+def _row_table_block(table: Table) -> dict[str, object]:
+    """Plain two-column table: a label cell and an items cell per row; a cell keeps every paragraph."""
+    rows: list[list[dict[str, object]]] = []
+    for r, row in enumerate(table.rows):
+        if len(row) != 2 or any(span != 1 for _, span in row):
+            raise ImportError_(f"table {table.index} row {r} is not a plain two-cell row")
+        cells = []
+        for c, (paragraphs, _) in enumerate(row):
+            filled = [p for p in paragraphs if p.text.strip()]
+            if not filled:
+                raise ImportError_(f"table cell t{table.index}r{r}c{c} is empty")
+            cells.append({"source": f"t{table.index}r{r}c{c}", "paragraphs": [segments_html(p.segments) for p in filled]})
+        rows.append(cells)
+    return {"type": "expandable_table", "source": f"t{table.index}", "caption": None, "rows": rows}
+
+
+def build_article_bold_headings(docx_path: Path, references_heading: str) -> dict[str, object]:
+    doc = Docx(docx_path)
+    article: dict[str, object] = {"keywords": []}
+    sections: list[dict[str, object]] = []
+    pending_abstract = False
+    in_references = False
+    for item in doc.body():
+        if isinstance(item, Table):
+            if not sections or in_references:
+                raise ImportError_(f"table {item.index} outside a body section")
+            sections[-1]["blocks"].append(_row_table_block(item))  # type: ignore[union-attr]
+            continue
+        paragraph = item
+        ref = f"p{paragraph.index}"
+        text = paragraph.text
+        if not text.strip():
+            continue
+        if doc.style_name(paragraph.style) != "Normal" or paragraph.num_id is not None:
+            raise ImportError_(f"paragraph {ref} uses style {doc.style_name(paragraph.style)!r} or list numbering")
+        bold = _fully_bold(paragraph)
+        if "title" not in article:
+            if not bold:
+                raise ImportError_(f"the first paragraph with text ({ref}) is not a bold title")
+            article["title_html"] = segments_html(_without_bold(paragraph.segments)).strip()
+            article["title"] = text.strip()
+            article["title_source"] = ref
+            continue
+        if pending_abstract:
+            article["abstract_html"] = segments_html(paragraph.segments)
+            article["abstract_source"] = ref
+            pending_abstract = False
+            continue
+        if bold and text.strip() == "Abstract" and not sections:
+            pending_abstract = True
+            article["abstract_label"] = {"text": "Abstract", "source": ref}
+            continue
+        if bold and text.strip() == references_heading:
+            in_references = True
+            sections.append({"heading": text.strip(), "heading_number": "", "heading_source": ref, "list_class": "pm-literature", "references": []})
+            continue
+        heading = SECTION_HEADING.match(text) if bold else None
+        if heading and not in_references:
+            sections.append({"heading": heading.group(2), "heading_number": heading.group(1), "heading_source": ref, "blocks": []})
+            continue
+        if bold and TABLE_CAPTION.match(text):
+            blocks = sections[-1].get("blocks") if sections else None
+            previous = blocks[-1] if blocks else None  # type: ignore[index]
+            if not previous or previous.get("type") != "expandable_table" or previous.get("caption"):
+                raise ImportError_(f"caption {ref} does not directly follow a table")
+            previous["caption"] = {"html": segments_html(_without_bold(paragraph.segments)).strip(), "source": ref}
+            continue
+        if bold:
+            raise ImportError_(f"bold paragraph {ref} is neither title, label, section heading nor table caption")
+        if in_references:
+            sections[-1]["references"].append({"html": segments_html(paragraph.segments), "source": ref})  # type: ignore[union-attr]
+            continue
+        if not sections:
+            raise ImportError_(f"body text {ref} before the first section heading")
+        sections[-1]["blocks"].append({"type": "paragraph_html", "html": segments_html(paragraph.segments), "source": ref})  # type: ignore[union-attr]
+    for required in ("title", "abstract_html"):
+        if required not in article:
+            raise ImportError_(f"manuscript has no {required}")
+    for section in sections:
+        for block in section.get("blocks", []):  # type: ignore[union-attr]
+            if block.get("type") == "expandable_table" and not block.get("caption"):
+                raise ImportError_(f"table {block['source']} has no caption")
+    if not sections or not sections[-1].get("references"):
+        raise ImportError_(f"manuscript has no references section headed {references_heading!r}")
+    article["sections"] = sections
+    return article
+
+
+def _correctable_fields(article: dict[str, object]):
+    """(source, container, key) of every imported HTML string of the article."""
+    yield article["title_source"], article, "title_html"
+    yield article["abstract_source"], article, "abstract_html"
+    for section in article["sections"]:  # type: ignore[union-attr]
+        for entry in section.get("references", []):
+            yield entry["source"], entry, "html"
+        for block in section.get("blocks", []):
+            if block["type"] == "expandable_table":
+                yield block["caption"]["source"], block["caption"], "html"
+                for row in block["rows"]:
+                    for cell in row:
+                        for index in range(len(cell["paragraphs"])):
+                            yield cell["source"], cell["paragraphs"], index
+            elif "html" in block:
+                yield block["source"], block, "html"
+
+
+def apply_corrections(article: dict[str, object], corrections: list[dict[str, object]]) -> None:
+    """Apply agreed typo corrections; any correction that does not match exactly aborts the import."""
+    fields: dict[str, list[tuple[object, object]]] = {}
+    for source, container, key in _correctable_fields(article):
+        fields.setdefault(source, []).append((container, key))
+    for entry in corrections:
+        source, old, new = str(entry["source"]), str(entry["old"]), str(entry["new"])
+        targets = fields.get(source)
+        if not targets:
+            raise ImportError_(f"correction for unknown element {source}")
+        found = sum(container[key].count(old) for container, key in targets)  # type: ignore[index]
+        if found != int(entry.get("count", 1)):
+            raise ImportError_(f"correction {old!r} occurs {found} times in {source}, expected {entry.get('count', 1)}")
+        for container, key in targets:
+            container[key] = container[key].replace(old, new)  # type: ignore[index]
+    article["title"] = re.sub(r"<[^>]+>", "", str(article["title_html"]))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     parser.add_argument("--docx", required=True, type=Path, help="author manuscript (never modified)")
     parser.add_argument("--out", required=True, type=Path, help="article JSON to write, e.g. content/research/english/design.json")
     parser.add_argument("--references-heading", default="References", help="text of the bibliography section heading")
+    parser.add_argument("--profile", choices=PROFILES, default="styled", help="manuscript structure (see the module docstring)")
+    parser.add_argument("--corrections", type=Path, help="YAML list of agreed typo corrections, kept next to the manuscript")
     parser.add_argument("--check", action="store_true", help="do not write; fail if --out differs from a fresh import")
     args = parser.parse_args(argv)
 
     docx_path = args.docx if args.docx.is_absolute() else REPO_ROOT / args.docx
     out_path = args.out if args.out.is_absolute() else REPO_ROOT / args.out
-    article = build_article(docx_path, args.references_heading)
-    payload = {
-        "_generated": {
-            "by": "scripts/import_design_article_docx.py",
+    if args.profile == "bold-headings":
+        article = build_article_bold_headings(docx_path, args.references_heading)
+    else:
+        article = build_article(docx_path, args.references_heading)
+    generated: dict[str, object] = {"by": "scripts/import_design_article_docx.py"}
+    if args.profile != "styled":
+        generated["profile"] = args.profile
+    generated.update(
+        {
             "source": docx_path.relative_to(REPO_ROOT).as_posix(),
             "source_sha256": hashlib.sha256(docx_path.read_bytes()).hexdigest(),
             "note": "Verbatim import of the author's manuscript. Do not edit by hand; correct the manuscript and re-run the importer.",
-        },
-        **article,
-    }
+        }
+    )
+    if args.corrections:
+        import yaml  # only needed for a corrections file
+
+        corrections_path = args.corrections if args.corrections.is_absolute() else REPO_ROOT / args.corrections
+        corrections = yaml.safe_load(corrections_path.read_text(encoding="utf-8"))["corrections"]
+        apply_corrections(article, corrections)
+        generated["corrections"] = {
+            "source": corrections_path.relative_to(REPO_ROOT).as_posix(),
+            "sha256": hashlib.sha256(corrections_path.read_bytes()).hexdigest(),
+            "count": len(corrections),
+            "note": "Obvious typos and typographic slips corrected on the published page; the list stays with the manuscript.",
+        }
+    payload = {"_generated": generated, **article}
     rendered = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     if args.check:
         current = out_path.read_text(encoding="utf-8") if out_path.is_file() else ""

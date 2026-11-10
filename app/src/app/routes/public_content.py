@@ -11,6 +11,7 @@ from typing import Any
 from markdown_it import MarkdownIt
 
 from .. import publication
+from ..design_translation import load_translated_article
 from ..i18n import DEFAULT_UI_LANGUAGE, SUPPORTED_UI_LANGUAGES, translate
 from ..research_capabilities import get_research_page_capability, get_research_page_order
 from ..research_sessions import load_language_sessions
@@ -23,6 +24,7 @@ from ..teaching_content import (
 )
 from .public_page_content_data import (
     ENGLISH_DESIGN_SUPPLEMENTS,
+    GERMAN_DESIGN_SUPPLEMENTS,
     PROJECT_PAGES_CONTENT,
     SPANISH_DESIGN_PAGE_CONTENT,
 )
@@ -537,12 +539,21 @@ RESEARCH_DESIGN_PAGES: dict[str, dict[str, Any]] = {"spanish": SPANISH_DESIGN_PA
 #: Design articles imported verbatim from an author's manuscript (docs/spec/platform-data-files.md, "Research design
 #: articles"): `design.json` from scripts/import_design_article_docx.py, `design_materials.json` (the corpus task
 #: catalogs) from scripts/sync_design_article_materials.py, and the platform copy that frames those materials.
+#: `translations` maps a UI language to the hand-maintained translated edition (app/src/app/design_translation.py); the
+#: original edition is shown in every other UI language the page has.
 RESEARCH_DESIGN_ARTICLES: dict[str, dict[str, Any]] = {
     "english": {
         "content_dir": Path("content/research/english"),
         "supplements": ENGLISH_DESIGN_SUPPLEMENTS,
     },
+    "german": {
+        "content_dir": Path("content/research/german"),
+        "supplements": GERMAN_DESIGN_SUPPLEMENTS,
+        "translations": {"en": "design.en.md"},
+    },
 }
+#: A wordlist item is a minimal pair when a dash stands next to a space ("Bett – Beet", "Weg - weg", "sagen -sägen").
+_PAIR_SEPARATOR = re.compile(r"\s[-–]|[-–]\s")
 
 
 def _content_source_path(relative: Path) -> Path:
@@ -555,9 +566,13 @@ def _content_source_path(relative: Path) -> Path:
 
 
 @lru_cache(maxsize=None)
-def _load_design_article_files(language_slug: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    content_dir = RESEARCH_DESIGN_ARTICLES[language_slug]["content_dir"]
+def _load_design_article_files(language_slug: str, ui_lang: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    config = RESEARCH_DESIGN_ARTICLES[language_slug]
+    content_dir = config["content_dir"]
     article = json.loads(_content_source_path(content_dir / "design.json").read_text(encoding="utf-8"))
+    translation = (config.get("translations") or {}).get(ui_lang)
+    if translation:
+        article = load_translated_article(article, _content_source_path(content_dir / translation))
     materials = json.loads(_content_source_path(content_dir / "design_materials.json").read_text(encoding="utf-8"))
     return article, materials
 
@@ -569,7 +584,7 @@ def _supplement_element(supplement: dict[str, Any], material: dict[str, Any], ui
     records the catalog it was copied from (`data-supplement`, not visible).
     """
     items = material["items"]
-    pairs = [item for item in items if " – " in item["text"] or " - " in item["text"]]
+    pairs = [item for item in items if _PAIR_SEPARATOR.search(item["text"])]
     singles = [item for item in items if item not in pairs]
     counts = {
         "item_count": len(items),
@@ -590,10 +605,17 @@ def _supplement_element(supplement: dict[str, Any], material: dict[str, Any], ui
     }
 
 
+def _same_label_source(label: dict[str, Any] | None, key: str, ui_lang: str) -> str | None:
+    if not label or label.get("text") != get_text(ui_lang, key):
+        return None
+    return label.get("source")
+
+
 def _imported_design_page(language_slug: str, ui_lang: str) -> dict[str, Any]:
     """Page payload of an imported design article: manuscript blocks unchanged, corpus materials inserted after them."""
-    article, materials = _load_design_article_files(language_slug)
+    article, materials = _load_design_article_files(language_slug, ui_lang)
     supplements = RESEARCH_DESIGN_ARTICLES[language_slug]["supplements"]
+    table_count = 0
     sections: list[dict[str, Any]] = []
     for section in article["sections"]:
         heading = {
@@ -607,6 +629,17 @@ def _imported_design_page(language_slug: str, ui_lang: str) -> dict[str, Any]:
         blocks: list[dict[str, Any]] = []
         content_elements: list[dict[str, Any]] = []
         for block in section["blocks"]:
+            if block["type"] == "expandable_table":
+                # A manuscript table in the standard expandable of the design articles: its caption is the visible title.
+                table_count += 1
+                block = {
+                    "type": "expandable_table",
+                    "id": f"{language_slug}-design-table-{table_count}",
+                    "source": block["source"],
+                    "title_html": block["caption"]["html"],
+                    "title_source": block["caption"]["source"],
+                    "rows": block["rows"],
+                }
             blocks.append(block)
             block_source = block.get("number_source") or block.get("source")
             for supplement in supplements:
@@ -620,12 +653,13 @@ def _imported_design_page(language_slug: str, ui_lang: str) -> dict[str, Any]:
         "title_source": article["title_source"],
         "article_header": {
             "abstract_html": article["abstract_html"],
-            "keywords": article["keywords"],
+            "keywords": article.get("keywords") or [],
             "abstract_source": article["abstract_source"],
-            "keywords_source": article["keywords_source"],
-            # The manuscript's own "Abstract"/"Keywords" labels coincide with the platform labels that are shown.
-            "abstract_label_source": article["abstract_label"]["source"],
-            "keywords_label_source": article["keywords_label"]["source"],
+            "keywords_source": article.get("keywords_source"),
+            # The manuscript's own "Abstract"/"Keywords" label keeps its reference only where it coincides with the platform
+            # label that is shown (the German edition shows "Zusammenfassung", which is platform text).
+            "abstract_label_source": _same_label_source(article.get("abstract_label"), "research.design.article.abstract", ui_lang),
+            "keywords_label_source": _same_label_source(article.get("keywords_label"), "research.design.article.keywords", ui_lang),
         },
         "page_kind": "reading",
         "access": "public",

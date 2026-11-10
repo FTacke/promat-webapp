@@ -1080,8 +1080,11 @@ textarea:focus-visible {
 }
 
 .promat-content-block .pm-expandable__title {
+  min-width: 0;
   margin: 0;
   font-weight: var(--pm-type-reading-h3-weight);
+  /* Long titles (e.g. German table captions) wrap instead of pushing the toggle out of the panel. */
+  overflow-wrap: break-word;
 }
 
 .pm-expandable__toggle {
@@ -1209,6 +1212,30 @@ textarea:focus-visible {
   .pm-article-example {
     grid-template-columns: 2.2rem minmax(0, 1fr);
   }
+}
+
+/* Two-column manuscript table inside the standard expandable (imported design article, e.g. the German phenomenon
+   tables): the caption is the expandable title, the label column stays narrow (IPA symbols), long item lists wrap, a cell
+   may hold several paragraphs; below 720px the rows stack like the grouped table above. */
+.pm-article-row-table col:nth-child(1) { width: 24%; }
+.pm-article-row-table col:nth-child(2) { width: 76%; }
+
+.pm-expandable--table .pm-article-row-table {
+  margin-top: var(--pm-space-sm);
+}
+
+.pm-research-table.pm-article-row-table th,
+.pm-research-table.pm-article-row-table td {
+  vertical-align: top;
+}
+
+.pm-article-row-table .pm-article-row-table__paragraph {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pm-article-row-table .pm-article-row-table__paragraph + .pm-article-row-table__paragraph {
+  margin-top: 0.4rem;
 }
 
 /* Scholarly article front matter (design article): title, byline and dates, abstract and keywords set as plain article

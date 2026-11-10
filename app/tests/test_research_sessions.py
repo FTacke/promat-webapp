@@ -2992,7 +2992,7 @@ def test_spanish_design_editions_share_structure_lists_and_references() -> None:
     assert len(sections) == 9
 
 
-@pytest.mark.parametrize("language_slug", ["french", "german"])
+@pytest.mark.parametrize("language_slug", ["french"])
 @pytest.mark.parametrize(("ui_lang", "label"), [("de", "Erhebungsdesign"), ("en", "Data Collection Design")])
 def test_design_navigation_label_is_shared_by_all_corpora_without_changing_urls(url_app: Flask, ui_lang: str, label: str, language_slug: str) -> None:
     """Corpora without a design article: the pending page is titled with the shared label."""
@@ -3005,6 +3005,15 @@ def test_design_navigation_label_is_shared_by_all_corpora_without_changing_urls(
     assert f'aria-current="page">{label}</span>' in html
     assert f"{label}: " in html[html.index("<h1"):html.index("</h1>")]
     assert f'href="/{ui_lang}/research/{language_slug}/design"' in html
+
+
+@pytest.mark.parametrize(("ui_lang", "label"), [("de", "Erhebungsdesign"), ("en", "Data Collection Design")])
+def test_german_design_article_uses_the_shared_design_label(url_app: Flask, ui_lang: str, label: str) -> None:
+    """The German article (both editions) keeps the shared navigation label; its own title is the article title."""
+    html = url_app.test_client().get(f"/{ui_lang}/research/german/design").get_data(as_text=True)
+    assert f'aria-current="page">{label}</span>' in html
+    assert f'href="/{ui_lang}/research/german/design"' in html
+    assert f"{label}: " not in html[html.index("<h1"):html.index("</h1>")]
 
 
 def test_english_design_article_uses_the_shared_design_label(url_app: Flask) -> None:

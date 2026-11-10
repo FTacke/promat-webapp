@@ -140,6 +140,15 @@ languages:
       data_as_of: null
       license: null
       doi: null
+    research_design:
+      # Theresa Fischer's and Kathrin Siebold's article, imported from their manuscript (content/research/german/design.json);
+      # English edition: content/research/german/design.en.md.
+      resource_id: promat-design-de
+      status: published
+      creators: [theresa-fischer, kathrin-siebold]
+      date_published: "2026"
+      license: null
+      doi: null
     teaching_resource:
       resource_id: promat-teaching-de
       title: "Pronunciation Matters: German Pronunciation Teaching Resources"

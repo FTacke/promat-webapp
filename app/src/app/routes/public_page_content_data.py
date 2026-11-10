@@ -1201,3 +1201,28 @@ ENGLISH_DESIGN_SUPPLEMENTS: tuple[dict[str, object], ...] = (
         },
     },
 )
+
+#: Corpus materials of the German design article (authors: content/publication/resources.yaml): the wordlist after the paragraph that
+#: describes it, the sentence list after the paragraph on the sentence list; both copied from the task catalogs.
+GERMAN_DESIGN_SUPPLEMENTS: tuple[dict[str, object], ...] = (
+    {
+        "id": "german-wordlist",
+        "material": "wordlist",
+        "after_source": "p21",
+        "title": {"de": "Wortliste", "en": "Wordlist"},
+        "summary_html": {
+            "de": "Die deutsche Wortliste umfasst {item_count} Aufgabenitems: {single_count} Einzelwörter und {pair_count} Minimalpaare. Ergänzt aus dem Aufgabenkatalog des Korpus.",
+            "en": "The German wordlist comprises {item_count} task items: {single_count} individual words and {pair_count} minimal pairs. Added from the corpus task catalogue.",
+        },
+    },
+    {
+        "id": "german-sentence-list",
+        "material": "text",
+        "after_source": "p22",
+        "title": {"de": "Satzliste", "en": "Sentence list"},
+        "summary_html": {
+            "de": "Die deutsche Satzliste umfasst {item_count} Sätze ({first_number}–{last_number}). Ergänzt aus dem Aufgabenkatalog des Korpus.",
+            "en": "The German sentence list comprises {item_count} sentences ({first_number}–{last_number}). Added from the corpus task catalogue.",
+        },
+    },
+)

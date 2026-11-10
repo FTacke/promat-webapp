@@ -1,12 +1,14 @@
 <section
-  class="pm-expandable"
+  class="pm-expandable{{ ' pm-expandable--table' if content_element.rows else '' }}"
   aria-labelledby="{{ content_element.id }}-title"
   data-pm-expandable
   {%- if content_element.supplement %} data-supplement="{{ content_element.supplement }}"{% endif %}
 >
-  {#- `supplement` = the corpus task catalog a list was copied from (platform material, not article manuscript text). -#}
+  {#- `supplement` = the corpus task catalog a list was copied from (platform material, not article manuscript text).
+      `rows` = a two-column manuscript table (imported design article): the caption is the title, each cell keeps its
+      manuscript reference (`data-source`). -#}
   <div class="pm-expandable__header">
-    <h3 class="pm-expandable__title" id="{{ content_element.id }}-title">{{ content_element.title }}</h3>
+    <h3 class="pm-expandable__title" id="{{ content_element.id }}-title"{% if content_element.title_source %} data-source="{{ content_element.title_source }}"{% endif %}>{{ content_element.title_html | safe if content_element.title_html else content_element.title }}</h3>
     <button
       class="pm-action-button pm-action-button--tertiary pm-action-button--small pm-expandable__toggle"
       type="button"
@@ -20,8 +22,33 @@
       <span class="material-symbols-rounded pm-interaction__icon pm-expandable__toggle-icon" aria-hidden="true">expand_more</span>
     </button>
   </div>
+  {% if content_element.summary_html %}
   <p class="pm-expandable__summary">{{ content_element.summary_html | safe }}</p>
+  {% endif %}
   <div class="pm-expandable__viewport" id="{{ content_element.id }}-content" data-pm-expandable-viewport>
+    {% if content_element.rows %}
+    <table class="pm-research-table promat-content-block__table pm-article-grouped-table pm-article-row-table" data-source="{{ content_element.source }}" aria-labelledby="{{ content_element.id }}-title">
+      <colgroup><col><col></colgroup>
+      <thead class="sr-only">
+        <tr>
+          <th scope="col">{{ t('research.design.table.phenomenon') }}</th>
+          <th scope="col">{{ t('research.design.table.items') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in content_element.rows %}
+        <tr>
+          <th scope="row" class="pm-article-grouped-table__phenomenon" data-source="{{ row[0].source }}">
+            {%- for paragraph in row[0].paragraphs %}{% if not loop.first %} {% endif %}<p class="pm-article-row-table__paragraph">{{ paragraph | safe }}</p>{% endfor -%}
+          </th>
+          <td class="pm-article-grouped-table__evidence" data-source="{{ row[1].source }}">
+            {%- for paragraph in row[1].paragraphs %}{% if not loop.first %} {% endif %}<p class="pm-article-row-table__paragraph">{{ paragraph | safe }}</p>{% endfor -%}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
     <ol class="pm-expandable__list">
       {% for item in content_element['items'] %}
       <li class="pm-expandable__item"{% if item.item_id %} data-item-id="{{ item.item_id }}"{% endif %}>
@@ -30,5 +57,6 @@
       </li>
       {% endfor %}
     </ol>
+    {% endif %}
   </div>
 </section>

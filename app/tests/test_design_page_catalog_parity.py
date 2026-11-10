@@ -1,4 +1,4 @@
-"""Drift guard: the Spanish design article quotes the task catalogs verbatim.
+"""Drift guard: the design articles quote the task catalogs verbatim (Spanish in code, English and German imported).
 
 The article keeps its own item lists (it is a citable publication and must render without the
 operator-owned runtime catalogs, e.g. in CI and the image smoke). This test, which needs the real
@@ -64,20 +64,20 @@ def test_design_article_items_match_the_canonical_task_catalogs(element_id: str,
     assert len(article) == len(catalog), f"article lists {len(article)} items, catalog {len(catalog)}"
 
 
-ENGLISH_MATERIALS = REPO_ROOT / "content" / "research" / "english" / "design_materials.json"
-ENGLISH_CATALOG_DIR = REPO_ROOT / "data" / "config" / "research_player" / "english" / "task_catalogs"
+#: Imported design articles ship a verbatim copy of their corpus materials (scripts/sync_design_article_materials.py).
+IMPORTED_ARTICLE_TASKS = [("english", "wordlist"), ("german", "wordlist"), ("german", "text")]
 
 
 @pytest.mark.data
-@pytest.mark.parametrize("task", ["wordlist"])
-def test_english_design_materials_match_the_canonical_task_catalogs(task: str) -> None:
-    """The English article's corpus materials are a verbatim copy (scripts/sync_design_article_materials.py)."""
-    catalog_path = ENGLISH_CATALOG_DIR / f"{task}.json"
+@pytest.mark.parametrize(("corpus", "task"), IMPORTED_ARTICLE_TASKS)
+def test_imported_design_materials_match_the_canonical_task_catalogs(corpus: str, task: str) -> None:
+    catalog_path = REPO_ROOT / "data" / "config" / "research_player" / corpus / "task_catalogs" / f"{task}.json"
     if not catalog_path.is_file():
         pytest.skip(f"{catalog_path.name} is operator-owned runtime config and not present here")
 
-    copy = json.loads(ENGLISH_MATERIALS.read_text(encoding="utf-8"))[task]["items"]
-    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))["items"]
-    assert copy == [
-        {"item_id": item["item_id"], "item_number": str(item["item_number"]), "text": item["text"]} for item in catalog
+    materials = json.loads((REPO_ROOT / "content" / "research" / corpus / "design_materials.json").read_text(encoding="utf-8"))
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    assert materials[task]["source"] == catalog_path.relative_to(REPO_ROOT).as_posix()
+    assert materials[task]["items"] == [
+        {"item_id": item["item_id"], "item_number": str(item["item_number"]), "text": item["text"]} for item in catalog["items"]
     ]

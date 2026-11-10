@@ -1,0 +1,751 @@
+{
+  "_generated": {
+    "by": "scripts/sync_design_article_materials.py",
+    "note": "Verbatim copy of the corpus task catalogs. Do not edit by hand; re-run the sync after a catalog change."
+  },
+  "wordlist": {
+    "source": "data/config/research_player/german/task_catalogs/wordlist.json",
+    "items": [
+      {
+        "item_id": "wl_001",
+        "item_number": "1",
+        "text": "Sprache"
+      },
+      {
+        "item_id": "wl_002",
+        "item_number": "2",
+        "text": "Burg"
+      },
+      {
+        "item_id": "wl_003",
+        "item_number": "3",
+        "text": "Tante"
+      },
+      {
+        "item_id": "wl_004",
+        "item_number": "4",
+        "text": "Tochter"
+      },
+      {
+        "item_id": "wl_005",
+        "item_number": "5",
+        "text": "kochen"
+      },
+      {
+        "item_id": "wl_006",
+        "item_number": "6",
+        "text": "Stück"
+      },
+      {
+        "item_id": "wl_007",
+        "item_number": "7",
+        "text": "Bad"
+      },
+      {
+        "item_id": "wl_008",
+        "item_number": "8",
+        "text": "Mädchen"
+      },
+      {
+        "item_id": "wl_009",
+        "item_number": "9",
+        "text": "Herbst"
+      },
+      {
+        "item_id": "wl_010",
+        "item_number": "10",
+        "text": "meistens"
+      },
+      {
+        "item_id": "wl_011",
+        "item_number": "11",
+        "text": "aufhören"
+      },
+      {
+        "item_id": "wl_012",
+        "item_number": "12",
+        "text": "Wunsch"
+      },
+      {
+        "item_id": "wl_013",
+        "item_number": "13",
+        "text": "Paar"
+      },
+      {
+        "item_id": "wl_014",
+        "item_number": "14",
+        "text": "Dorf"
+      },
+      {
+        "item_id": "wl_015",
+        "item_number": "15",
+        "text": "streiten"
+      },
+      {
+        "item_id": "wl_016",
+        "item_number": "16",
+        "text": "Glas"
+      },
+      {
+        "item_id": "wl_017",
+        "item_number": "17",
+        "text": "lieb"
+      },
+      {
+        "item_id": "wl_018",
+        "item_number": "18",
+        "text": "Bahn"
+      },
+      {
+        "item_id": "wl_019",
+        "item_number": "19",
+        "text": "Milch"
+      },
+      {
+        "item_id": "wl_020",
+        "item_number": "20",
+        "text": "Blut"
+      },
+      {
+        "item_id": "wl_021",
+        "item_number": "21",
+        "text": "hüten"
+      },
+      {
+        "item_id": "wl_022",
+        "item_number": "22",
+        "text": "Gans"
+      },
+      {
+        "item_id": "wl_023",
+        "item_number": "23",
+        "text": "Sonne"
+      },
+      {
+        "item_id": "wl_024",
+        "item_number": "24",
+        "text": "Katze"
+      },
+      {
+        "item_id": "wl_025",
+        "item_number": "25",
+        "text": "Mutter"
+      },
+      {
+        "item_id": "wl_026",
+        "item_number": "26",
+        "text": "Nase"
+      },
+      {
+        "item_id": "wl_027",
+        "item_number": "27",
+        "text": "Brot"
+      },
+      {
+        "item_id": "wl_028",
+        "item_number": "28",
+        "text": "Reise"
+      },
+      {
+        "item_id": "wl_029",
+        "item_number": "29",
+        "text": "Laub"
+      },
+      {
+        "item_id": "wl_030",
+        "item_number": "30",
+        "text": "Haus"
+      },
+      {
+        "item_id": "wl_031",
+        "item_number": "31",
+        "text": "Hund"
+      },
+      {
+        "item_id": "wl_032",
+        "item_number": "32",
+        "text": "Feuer"
+      },
+      {
+        "item_id": "wl_033",
+        "item_number": "33",
+        "text": "Theater"
+      },
+      {
+        "item_id": "wl_034",
+        "item_number": "34",
+        "text": "Stern"
+      },
+      {
+        "item_id": "wl_035",
+        "item_number": "35",
+        "text": "Butter"
+      },
+      {
+        "item_id": "wl_036",
+        "item_number": "36",
+        "text": "Bett"
+      },
+      {
+        "item_id": "wl_037",
+        "item_number": "37",
+        "text": "Rad"
+      },
+      {
+        "item_id": "wl_038",
+        "item_number": "38",
+        "text": "Bach"
+      },
+      {
+        "item_id": "wl_039",
+        "item_number": "39",
+        "text": "und"
+      },
+      {
+        "item_id": "wl_040",
+        "item_number": "40",
+        "text": "singst"
+      },
+      {
+        "item_id": "wl_041",
+        "item_number": "41",
+        "text": "riecht"
+      },
+      {
+        "item_id": "wl_042",
+        "item_number": "42",
+        "text": "Frühling"
+      },
+      {
+        "item_id": "wl_043",
+        "item_number": "43",
+        "text": "beachten"
+      },
+      {
+        "item_id": "wl_044",
+        "item_number": "44",
+        "text": "Boot"
+      },
+      {
+        "item_id": "wl_045",
+        "item_number": "45",
+        "text": "reiten"
+      },
+      {
+        "item_id": "wl_046",
+        "item_number": "46",
+        "text": "stehlen"
+      },
+      {
+        "item_id": "wl_047",
+        "item_number": "47",
+        "text": "Spiel"
+      },
+      {
+        "item_id": "wl_048",
+        "item_number": "48",
+        "text": "See"
+      },
+      {
+        "item_id": "wl_049",
+        "item_number": "49",
+        "text": "groß"
+      },
+      {
+        "item_id": "wl_050",
+        "item_number": "50",
+        "text": "Fällen"
+      },
+      {
+        "item_id": "wl_051",
+        "item_number": "51",
+        "text": "Dach"
+      },
+      {
+        "item_id": "wl_052",
+        "item_number": "52",
+        "text": "fühlen"
+      },
+      {
+        "item_id": "wl_053",
+        "item_number": "53",
+        "text": "schön"
+      },
+      {
+        "item_id": "wl_054",
+        "item_number": "54",
+        "text": "Wasser"
+      },
+      {
+        "item_id": "wl_055",
+        "item_number": "55",
+        "text": "zeigst"
+      },
+      {
+        "item_id": "wl_056",
+        "item_number": "56",
+        "text": "tief"
+      },
+      {
+        "item_id": "wl_057",
+        "item_number": "57",
+        "text": "Zug"
+      },
+      {
+        "item_id": "wl_058",
+        "item_number": "58",
+        "text": "Weg"
+      },
+      {
+        "item_id": "wl_059",
+        "item_number": "59",
+        "text": "überall"
+      },
+      {
+        "item_id": "wl_060",
+        "item_number": "60",
+        "text": "Buch"
+      },
+      {
+        "item_id": "wl_061",
+        "item_number": "61",
+        "text": "Schule"
+      },
+      {
+        "item_id": "wl_062",
+        "item_number": "62",
+        "text": "täusche"
+      },
+      {
+        "item_id": "wl_063",
+        "item_number": "63",
+        "text": "zwölf"
+      },
+      {
+        "item_id": "wl_064",
+        "item_number": "64",
+        "text": "Kind"
+      },
+      {
+        "item_id": "wl_065",
+        "item_number": "65",
+        "text": "bitte"
+      },
+      {
+        "item_id": "wl_066",
+        "item_number": "66",
+        "text": "lang"
+      },
+      {
+        "item_id": "wl_067",
+        "item_number": "67",
+        "text": "Liebe"
+      },
+      {
+        "item_id": "wl_068",
+        "item_number": "68",
+        "text": "Gabe"
+      },
+      {
+        "item_id": "wl_069",
+        "item_number": "69",
+        "text": "offen"
+      },
+      {
+        "item_id": "wl_070",
+        "item_number": "70",
+        "text": "Ding"
+      },
+      {
+        "item_id": "wl_071",
+        "item_number": "71",
+        "text": "fünf"
+      },
+      {
+        "item_id": "wl_072",
+        "item_number": "72",
+        "text": "hübsch"
+      },
+      {
+        "item_id": "wl_073",
+        "item_number": "73",
+        "text": "Tag"
+      },
+      {
+        "item_id": "wl_074",
+        "item_number": "74",
+        "text": "König"
+      },
+      {
+        "item_id": "wl_075",
+        "item_number": "75",
+        "text": "Vater"
+      },
+      {
+        "item_id": "wl_076",
+        "item_number": "76",
+        "text": "Tisch"
+      },
+      {
+        "item_id": "wl_077",
+        "item_number": "77",
+        "text": "Mitte"
+      },
+      {
+        "item_id": "wl_078",
+        "item_number": "78",
+        "text": "Hölle"
+      },
+      {
+        "item_id": "wl_079",
+        "item_number": "79",
+        "text": "viele"
+      },
+      {
+        "item_id": "wl_080",
+        "item_number": "80",
+        "text": "können"
+      },
+      {
+        "item_id": "wl_081",
+        "item_number": "81",
+        "text": "Gruppe"
+      },
+      {
+        "item_id": "wl_082",
+        "item_number": "82",
+        "text": "Morgen"
+      },
+      {
+        "item_id": "wl_083",
+        "item_number": "83",
+        "text": "ruhig"
+      },
+      {
+        "item_id": "wl_084",
+        "item_number": "84",
+        "text": "wichtig"
+      },
+      {
+        "item_id": "wl_085",
+        "item_number": "85",
+        "text": "Küche"
+      },
+      {
+        "item_id": "wl_086",
+        "item_number": "86",
+        "text": "Hölle – Höhle"
+      },
+      {
+        "item_id": "wl_087",
+        "item_number": "87",
+        "text": "Liebe – Lippe"
+      },
+      {
+        "item_id": "wl_088",
+        "item_number": "88",
+        "text": "Bett – Beet"
+      },
+      {
+        "item_id": "wl_089",
+        "item_number": "89",
+        "text": "offen – Ofen"
+      },
+      {
+        "item_id": "wl_090",
+        "item_number": "90",
+        "text": "Paar – Bar"
+      },
+      {
+        "item_id": "wl_091",
+        "item_number": "91",
+        "text": "Blut – Blüte"
+      },
+      {
+        "item_id": "wl_092",
+        "item_number": "92",
+        "text": "Lied – Leid"
+      },
+      {
+        "item_id": "wl_093",
+        "item_number": "93",
+        "text": "sagen -sägen"
+      },
+      {
+        "item_id": "wl_094",
+        "item_number": "94",
+        "text": "Kirche – Kirsche"
+      },
+      {
+        "item_id": "wl_095",
+        "item_number": "95",
+        "text": "Tasche – Tasse"
+      },
+      {
+        "item_id": "wl_096",
+        "item_number": "96",
+        "text": "Weg - weg"
+      }
+    ]
+  },
+  "text": {
+    "source": "data/config/research_player/german/task_catalogs/text.json",
+    "items": [
+      {
+        "item_id": "t_01",
+        "item_number": "T1",
+        "text": "Meine Tochter geht gerne in die Schule."
+      },
+      {
+        "item_id": "t_02",
+        "item_number": "T2",
+        "text": "Mein Vater mag es, am Abend etwas Warmes zu kochen."
+      },
+      {
+        "item_id": "t_03",
+        "item_number": "T3",
+        "text": "Im Herbst liegt das bunte Laub auf den Straßen."
+      },
+      {
+        "item_id": "t_04",
+        "item_number": "T4",
+        "text": "Der Hund und die Gans leben friedlich zusammen."
+      },
+      {
+        "item_id": "t_05",
+        "item_number": "T5",
+        "text": "Im Frühling scheint die Sonne schon ein bisschen mehr."
+      },
+      {
+        "item_id": "t_06",
+        "item_number": "T6",
+        "text": "Das Mädchen hat hat eine hübsche neue Tasche."
+      },
+      {
+        "item_id": "t_07",
+        "item_number": "T7",
+        "text": "Der König wohnte früher in einer mächtigen Burg am Fluss."
+      },
+      {
+        "item_id": "t_08",
+        "item_number": "T8",
+        "text": "Meine Mutter kauft jeden Morgen Brot beim Bäcker."
+      },
+      {
+        "item_id": "t_09",
+        "item_number": "T9",
+        "text": "Das Paar sitzt abends ruhig am Feuer."
+      },
+      {
+        "item_id": "t_10",
+        "item_number": "T10",
+        "text": "Die beiden hören endlich auf, zu streiten."
+      },
+      {
+        "item_id": "t_11",
+        "item_number": "T11",
+        "text": "Unsere Katze ist sehr lieb, aber trinkt immer aus meiner Tasse."
+      },
+      {
+        "item_id": "t_12",
+        "item_number": "T12",
+        "text": "Das Boot liegt am Ufer und der Weg dorthin ist nicht weit."
+      },
+      {
+        "item_id": "t_13",
+        "item_number": "T13",
+        "text": "Die Milch steht auf dem Küchentisch."
+      },
+      {
+        "item_id": "t_14",
+        "item_number": "T14",
+        "text": "Es riecht überall nach Blüten und Kirschen."
+      },
+      {
+        "item_id": "t_15",
+        "item_number": "T15",
+        "text": "Sie fährt meistens mit der Bahn zur Arbeit."
+      },
+      {
+        "item_id": "t_16",
+        "item_number": "T16",
+        "text": "Er isst jeden Abend ein Stück Käse und Butter."
+      },
+      {
+        "item_id": "t_17",
+        "item_number": "T17",
+        "text": "Nach dem Sturz hatte er Blut an Nase und Lippe."
+      },
+      {
+        "item_id": "t_18",
+        "item_number": "T18",
+        "text": "Meine Oma liebt ihr Blumenbeet."
+      },
+      {
+        "item_id": "t_19",
+        "item_number": "T19",
+        "text": "Seine Liebe zur deutschen Sprache ist stark."
+      },
+      {
+        "item_id": "t_20",
+        "item_number": "T20",
+        "text": "Sie hütet die kleinen Kinder, während die Eltern weg sind."
+      },
+      {
+        "item_id": "t_21",
+        "item_number": "T21",
+        "text": "Der Kuchen ist noch im Ofen."
+      },
+      {
+        "item_id": "t_22",
+        "item_number": "T22",
+        "text": "Um acht Uhr beginnt die Vorstellung im Theater."
+      },
+      {
+        "item_id": "t_23",
+        "item_number": "T23",
+        "text": "Das Geschäft hat noch nicht offen."
+      },
+      {
+        "item_id": "t_24",
+        "item_number": "T24",
+        "text": "Sie reiten zusammen bis ins Dorf."
+      },
+      {
+        "item_id": "t_25",
+        "item_number": "T25",
+        "text": "Das neue Gebäude in der Stadtmitte ist wirklich sehr groß."
+      },
+      {
+        "item_id": "t_26",
+        "item_number": "T26",
+        "text": "Sie fühlen sich heute nicht gut und bleiben zu Hause."
+      },
+      {
+        "item_id": "t_27",
+        "item_number": "T27",
+        "text": "Ich täusche mich selten, wenn ich ein schlechtes Gefühl bei etwas habe."
+      },
+      {
+        "item_id": "t_28",
+        "item_number": "T28",
+        "text": "Es ist schon lange ihr Wunsch, auf dem Land zu leben."
+      },
+      {
+        "item_id": "t_29",
+        "item_number": "T29",
+        "text": "Es waren nur fünf Leute da, aber der Abend war trotzdem sehr schön."
+      },
+      {
+        "item_id": "t_30",
+        "item_number": "T30",
+        "text": "Die Gabe, anderen gut zuhören zu können, ist sehr wichtig."
+      },
+      {
+        "item_id": "t_31",
+        "item_number": "T31",
+        "text": "Er arbeitet jeden Tag sehr hart und macht trotzdem niemals Fehler."
+      },
+      {
+        "item_id": "t_32",
+        "item_number": "T32",
+        "text": "Liest du abends noch ein Buch, bevor du ins Bett gehst?"
+      },
+      {
+        "item_id": "t_33",
+        "item_number": "T33",
+        "text": "Fahrt ihr auf eurer Reise auch mit dem Zug?"
+      },
+      {
+        "item_id": "t_34",
+        "item_number": "T34",
+        "text": "Ist das alte Dach noch in gutem Zustand?"
+      },
+      {
+        "item_id": "t_35",
+        "item_number": "T35",
+        "text": "Fährst du mit dem Rad am Bach entlang?"
+      },
+      {
+        "item_id": "t_36",
+        "item_number": "T36",
+        "text": "Zeigst du mir heute, wie man Holz sägt?"
+      },
+      {
+        "item_id": "t_37",
+        "item_number": "T37",
+        "text": "Kannst du bitte die Hinweise am Eingang beachten?"
+      },
+      {
+        "item_id": "t_38",
+        "item_number": "T38",
+        "text": "Kannst du mir sagen, ob alle aus der Gruppe heute da waren?"
+      },
+      {
+        "item_id": "t_39",
+        "item_number": "T39",
+        "text": "Weißt du, wie man sich die Hölle früher vorgestellt hat?"
+      },
+      {
+        "item_id": "t_40",
+        "item_number": "T40",
+        "text": "Machen wir noch ein Spiel zusammen?"
+      },
+      {
+        "item_id": "t_41",
+        "item_number": "T41",
+        "text": "Treffen wir uns alle morgen um zwölf Uhr in der Bar?"
+      },
+      {
+        "item_id": "t_42",
+        "item_number": "T42",
+        "text": "Wie tief ist das Wasser hier an dieser Stelle im Fluss?"
+      },
+      {
+        "item_id": "t_43",
+        "item_number": "T43",
+        "text": "Wer hat das volle Glas auf den Tisch gestellt?"
+      },
+      {
+        "item_id": "t_44",
+        "item_number": "T44",
+        "text": "Wie viele Sterne kann man nachts über dem See erkennen?"
+      },
+      {
+        "item_id": "t_45",
+        "item_number": "T45",
+        "text": "Wann besucht ihr eure Tante, die in Berlin wohnt?"
+      },
+      {
+        "item_id": "t_46",
+        "item_number": "T46",
+        "text": "In wie vielen Fällen stehlen Leute an der Kasse?"
+      },
+      {
+        "item_id": "t_47",
+        "item_number": "T47",
+        "text": "Was verstehst du unter Leid?"
+      },
+      {
+        "item_id": "t_48",
+        "item_number": "T48",
+        "text": "Welches Lied singst du am liebsten?"
+      },
+      {
+        "item_id": "t_49",
+        "item_number": "T49",
+        "text": "Was ist das für ein komisches Ding, das dort in der Ecke steht?"
+      },
+      {
+        "item_id": "t_50",
+        "item_number": "T50",
+        "text": "Wo genau liegt diese Höhle?"
+      },
+      {
+        "item_id": "t_51",
+        "item_number": "T51",
+        "text": "Wo ist euer Bad?"
+      }
+    ]
+  }
+}

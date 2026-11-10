@@ -161,6 +161,9 @@
           {{ render_grouped_table(block, label=(section.heading_number ~ ' ' ~ section.heading) if section.heading_number else section.heading) }}
           {% elif block.type == 'table' %}
           {{ render_content_table(block, html_cells=true, label=section.heading) }}
+          {% elif block.type == 'expandable_table' %}
+          {#- Manuscript table in the standard expandable: caption as title, the full table in the viewport. -#}
+          {% with content_element = block %}{% include 'partials/_reading_expandable.html' %}{% endwith %}
           {% elif block.type == 'content_element' %}
             {% for content_element in section.content_elements | default([]) if content_element.id == block.ref %}
               {% if content_element.type == 'pm_expandable_text' %}

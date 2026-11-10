@@ -1,0 +1,794 @@
+{
+  "_generated": {
+    "by": "scripts/import_design_article_docx.py",
+    "profile": "bold-headings",
+    "source": "docs/author-sources/german-design/fischer-siebold-german-design-original.docx",
+    "source_sha256": "108d722ea80d12775fa3eabe7edf3549c72c09c17e1edefe84ebd06e0d67d213",
+    "note": "Verbatim import of the author's manuscript. Do not edit by hand; correct the manuscript and re-run the importer.",
+    "corrections": {
+      "source": "docs/author-sources/german-design/fischer-siebold-german-design-corrections.yaml",
+      "sha256": "7382e41b03d970e17ba365899c3f7646d1ec92953b332c52df6527ce0fcb721a",
+      "count": 40,
+      "note": "Obvious typos and typographic slips corrected on the published page; the list stays with the manuscript."
+    }
+  },
+  "keywords": [],
+  "title_html": "Die Aussprache von Deutschlernenden erfassen: Das Erhebungsdesign des deutschen Korpus von <em>Pronunciation Matters</em>",
+  "title": "Die Aussprache von Deutschlernenden erfassen: Das Erhebungsdesign des deutschen Korpus von Pronunciation Matters",
+  "title_source": "p0",
+  "abstract_label": {
+    "text": "Abstract",
+    "source": "p2"
+  },
+  "abstract_html": "Dieser Beitrag stellt das Erhebungsdesign des deutschen Lernendenkorpus von <em>Pronunciation Matters</em> vor. Ziel des Korpus ist es, häufige Ausspracheschwierigkeiten von Deutschlernenden mit verschiedenen sprachlichen Hintergründen für Forschung und Lehre besser erfahrbar und zugänglich zu machen. Im Folgenden wird die Konzeption der Elizitierungsmaterialien – einer Wort- und Satzliste sowie eines leitfadengestützten Interviews – basierend auf ihrer phonetisch-phonologischen Motivation und Relevanz für das Projekt sowie den DaFZ-Unterricht erläutert. ",
+  "abstract_source": "p3",
+  "sections": [
+    {
+      "heading": "Zielsetzung",
+      "heading_number": "1.",
+      "heading_source": "p5",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "Das Erwerben der „korrekten“ Aussprache einer Fremdsprache ist ein Thema, das im Fremdsprachenunterricht zwar omnipräsent ist – ist es doch unmittelbar mit allen anderen Eigenschaften einer Sprache verknüpft –, welches aber dennoch aus verschiedenen Gründen oft gegenüber anderen Fertigkeiten vernachlässigt wird. Die Aussprache-Forschung im Bereich DaFZ hat seit den 90er Jahren einen starken Anstieg verzeichnet, dennoch fehlt es an konkreten Datenbanken und Korpora, die die Aussprache von Lernenden systematisch dokumentieren und zugänglich machen. <em>Pronunciation Matters</em> möchte deswegen dazu beitragen, diese Lücke zu schließen, und eine Plattform mit kontrolliert erhobenen Aussprachedaten zur Verfügung stellen, die Ausspracheforschung und Professionalisierung von Lehrkräften unterstützen soll.",
+          "source": "p6"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Durch eine standardisierte Wort- und Satzliste soll hierbei nicht nur der Fokus auf die Probleme, die aus einer bestimmten L1 resultieren, gelegt werden, sondern auch Ausspracheprobleme von Lernenden mit unterschiedlichen Erstsprachen können verglichen werden. ",
+          "source": "p7"
+        }
+      ]
+    },
+    {
+      "heading": "Auswahl der Phänomene: (Un)typische Ausspracheschwierigkeiten von Deutschlernenden",
+      "heading_number": "2.",
+      "heading_source": "p9",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "Da im deutschen Korpus nicht nur Lernende mit einer bestimmten L1 erfasst werden sollten, stand bei der Konzeption des Korpus die Frage im Mittelpunkt, wie sich die Aussprache von Lernenden mit verschiedenen L1 systematisch erfassen und für unterschiedliche Forschungsfragen zugänglich machen lässt. Damit also Lernender aller sprachlichen Hintergründe und auch eventuell unerwartete Probleme erhoben werden können, berücksichtigt das Korpus daher gezielt eine größere Bandbreite an phonetisch-phonologischen Phänomenen, die in der deutschen Sprache markant sind. Hierbei wurde sich an der standardisierten Aussprache des Hochdeutschen orientiert, wie sie z. B. bei Krech et al. (2009) beschrieben wird. ",
+          "source": "p10"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Da das deutsche Vokalsystem mit 16 Phonemen sehr komplex ist (die durchschnittliche Größe eines Vokalinventars im weltweiten Vergleich beträgt 4–5 Phoneme (vgl. Maddieson 2013)), stellt dieses eine große Hürde für Deutschlernende dar. Aus diesem Grund wurden alle 16 Vokalphoneme des Deutschen in die Erstellung der Materialien integriert. Je nach L1 können sich unterschiedliche Aspekte als schwierig erweisen, z. B. sind die Umlaute für Italiener*innen eher schwerer zu erwerben als für französischsprachige Lernende, die diese Phoneme ebenfalls in ihrem Lautinventar haben (vgl. Dahmen et al. 2021). Viele Lernende haben bspw. Probleme bei der Distinktion der Vokallänge, die im Deutschen immer mit bestimmten Vokalphonemen (Qualität) korreliert (vgl. Krech et al. 2009: 25). Die Kurzvokale werden grundsätzlich leicht weniger gespannt artikuliert, was für Lernende nicht immer leicht zu hören ist. Deshalb wurde bei allen Vokalen darauf geachtet, dass diese jeweils mit den korrelierenden Merkmalen [+lang] und/oder [+kurz] vorliegen, um auch eventuelle Probleme bei der Unterscheidung der Vokalquantität hervorheben zu können. Zusätzlich gibt es in der Standardaussprache noch drei Diphthonge: [aɛ̯], [aɔ̯] und [ɔœ̯] (vgl. Krech et al., 2009, S. 26), die ebenfalls bei der Materialerstellung inkludiert wurden.",
+          "source": "p11"
+        },
+        {
+          "type": "expandable_table",
+          "source": "t0",
+          "caption": {
+            "html": "Tab. 1: Übersicht über alle inkludierten Vokalphänomene und die dazugehörigen Items",
+            "source": "p12"
+          },
+          "rows": [
+            [
+              {
+                "source": "t0r0c0",
+                "paragraphs": [
+                  "<strong>[øː]</strong>"
+                ]
+              },
+              {
+                "source": "t0r0c1",
+                "paragraphs": [
+                  "<em>aufhören (11), schön (53), König (74), Höhle (86)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r1c0",
+                "paragraphs": [
+                  "<strong>[œ]</strong>"
+                ]
+              },
+              {
+                "source": "t0r1c1",
+                "paragraphs": [
+                  "<em>zwölf (63), Hölle (78/86), können (80)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r2c0",
+                "paragraphs": [
+                  "<strong>[aː]</strong>"
+                ]
+              },
+              {
+                "source": "t0r2c1",
+                "paragraphs": [
+                  "<em>Sprache (1), Paar (13), Glas (16), Bahn (13), Nase (26), Rad (37), Tag (73), Vater (75), Bar (90), sagen (93)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r3c0",
+                "paragraphs": [
+                  "<strong>[a]</strong>"
+                ]
+              },
+              {
+                "source": "t0r3c1",
+                "paragraphs": [
+                  "<em>Tante (3), Gans (22), Katze (24), Bach (38), beachten (43), Dach (51), Wasser (54), überall (59), lang (66), Tasche (95), Tasse (95)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r4c0",
+                "paragraphs": [
+                  "<strong>[ə]</strong>"
+                ]
+              },
+              {
+                "source": "t0r4c1",
+                "paragraphs": [
+                  "<em>Sprache (1), Tante (3), Sonne (23), Katze (24), Nase (26), Reise (28), beachten (43), Fälle (50), Schule (61), täusche (62), Bitte (65), Gabe (68), Liebe (67), Mitte (77), Hölle (78)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r5c0",
+                "paragraphs": [
+                  "<strong>[ɪ]</strong>"
+                ]
+              },
+              {
+                "source": "t0r5c1",
+                "paragraphs": [
+                  "<em>Milch (19), singst (40), Frühling (42), Kind (64), Bitte (65), Ding (70), König (74), Tisch (76), Mitte (77), ruhig (83), wichtig (84), Lippe (87), Kirche (94), Kirsche (94)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r6c0",
+                "paragraphs": [
+                  "<strong>[i]</strong>"
+                ]
+              },
+              {
+                "source": "t0r6c1",
+                "paragraphs": [
+                  "<em>lieb (17), riecht (41), Spiel (47), tief (56), Liebe (67/87), viel (79), Lied (92)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r7c0",
+                "paragraphs": [
+                  "<strong>[ɛ]</strong>"
+                ]
+              },
+              {
+                "source": "t0r7c1",
+                "paragraphs": [
+                  "<em>Herbst (9), Stern (34), Bett (36/88), Fälle (50), weg (96)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r8c0",
+                "paragraphs": [
+                  "<strong>[ɛː]</strong>"
+                ]
+              },
+              {
+                "source": "t0r8c1",
+                "paragraphs": [
+                  "<em>Mädchen (8), sägen (93)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r9c0",
+                "paragraphs": [
+                  "<strong>[eː]</strong>"
+                ]
+              },
+              {
+                "source": "t0r9c1",
+                "paragraphs": [
+                  "<em>stehlen (46), See (48), Weg (58/96), Beet (88)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r10c0",
+                "paragraphs": [
+                  "<strong>[ɔ]</strong>"
+                ]
+              },
+              {
+                "source": "t0r10c1",
+                "paragraphs": [
+                  "<em>Tochter (4), kochen (5), Dorf (14), Sonne (23), offen (69/89)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r11c0",
+                "paragraphs": [
+                  "<strong>[oː]</strong>"
+                ]
+              },
+              {
+                "source": "t0r11c1",
+                "paragraphs": [
+                  "<em>Brot (27), Boot (44), groß (49), Ofen (89)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r12c0",
+                "paragraphs": [
+                  "<strong>[yː]</strong>"
+                ]
+              },
+              {
+                "source": "t0r12c1",
+                "paragraphs": [
+                  "<em>hüten (21), Frühling (42), fühlen (52), überall (59), Blüte (91)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r13c0",
+                "paragraphs": [
+                  "<strong>[ʏ]</strong>"
+                ]
+              },
+              {
+                "source": "t0r13c1",
+                "paragraphs": [
+                  "<em>Stück (6), fünf (71), hübsch (72), Küche (85)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r14c0",
+                "paragraphs": [
+                  "<strong>[uː]</strong>"
+                ]
+              },
+              {
+                "source": "t0r14c1",
+                "paragraphs": [
+                  "<em>Blut (20/91), Zug (57), Buch (60), Schule (61), ruhig (83)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r15c0",
+                "paragraphs": [
+                  "<strong>[ʊ]</strong>"
+                ]
+              },
+              {
+                "source": "t0r15c1",
+                "paragraphs": [
+                  "<em>Burg (2), Wunsch (12), Mutter (25), Hund (31), und (39), Butter (35)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r16c0",
+                "paragraphs": [
+                  "<strong>[aɛ̯]</strong>"
+                ]
+              },
+              {
+                "source": "t0r16c1",
+                "paragraphs": [
+                  "<em>meistens (10), streiten (15), Reise (28), reiten (45), zeigst (55), Leid (92)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r17c0",
+                "paragraphs": [
+                  "<strong>[aɔ̯]</strong>"
+                ]
+              },
+              {
+                "source": "t0r17c1",
+                "paragraphs": [
+                  "<em>aufhören (11), Laub (29), Haus (30)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t0r18c0",
+                "paragraphs": [
+                  "<strong>[ɔœ̯]</strong>"
+                ]
+              },
+              {
+                "source": "t0r18c1",
+                "paragraphs": [
+                  "<em>Feuer (32), täusche (62)</em>"
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Auch bei den Konsonanten lag das Augenmerk darauf, eine möglichst große Bandbreite an verschiedenen Phonemen und Phonemkombinationen zu integrieren. So wurde u. a. das &lt;r&gt; in seiner konsonantischen und vokalischen Form verwendet, genauso wie andere Laute, die Lernenden häufig Probleme machen, z. B. beide &lt;ch&gt;-Allophone und der Glottisschlag [ʔ]. Zuletzt wurden auch häufige phonologische Prozesse wie die Auslautverhärtung und die Schwa-Elision mit eingebunden, da diese integrale Bestandteile der deutschen Aussprache darstellen. ",
+          "source": "p13"
+        },
+        {
+          "type": "expandable_table",
+          "source": "t1",
+          "caption": {
+            "html": "Tab. 2: Übersicht über alle inkludierten Konsonantenphänomene und die dazugehörigen Items",
+            "source": "p14"
+          },
+          "rows": [
+            [
+              {
+                "source": "t1r0c0",
+                "paragraphs": [
+                  "<strong>[ʁ]</strong>"
+                ]
+              },
+              {
+                "source": "t1r0c1",
+                "paragraphs": [
+                  "<em>Sprache (1), streiten (15), Brot (27), Reise (28), Rad (37), riecht (41), Frühling (42), reiten (45), groß (49), Gruppe (81), ruhig (83)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r1c0",
+                "paragraphs": [
+                  "<strong>[ɐ / ɐ̯]</strong>"
+                ]
+              },
+              {
+                "source": "t1r1c1",
+                "paragraphs": [
+                  "<em>Burg (2), Tochter (4), Herbst (9), aufhören (11), Paar (13), Dorf (14), Mutter (25), Feuer (32), Theater (33), Stern (34), Butter (35), Wasser (54), überall (59), Vater (75), Morgen (82), bar (90), Kirche (94), Kirsche (94)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r2c0",
+                "paragraphs": [
+                  "<strong>[z]</strong>"
+                ]
+              },
+              {
+                "source": "t1r2c1",
+                "paragraphs": [
+                  "<em>Sonne (23), Nase (26), Reise (28), singst (40), See (48), sagen (93), sägen (93)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r3c0",
+                "paragraphs": [
+                  "<strong>[s]</strong>"
+                ]
+              },
+              {
+                "source": "t1r3c1",
+                "paragraphs": [
+                  "<em>Glas (16), Haus (30), groß (49), Wasser (54), Tasse (95)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r4c0",
+                "paragraphs": [
+                  "<strong>[ʃ]</strong>"
+                ]
+              },
+              {
+                "source": "t1r4c1",
+                "paragraphs": [
+                  "<em>Wunsch (12), schön (53), Schule (61), täusche (62), hübsch (72), Tisch (76), Kirsche (94), Tasche (95)</em>",
+                  "<em>im Cluster: Sprache (1), Stück (6), Streit (15), Stern (34), stehlen (46), Spiel (47)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r5c0",
+                "paragraphs": [
+                  "<strong>[f]</strong>"
+                ]
+              },
+              {
+                "source": "t1r5c1",
+                "paragraphs": [
+                  "<em>aufhören (11), Dorf (14), Feuer (32), Frühling (42), Fällen (50), fühlen (52), tief (56), zwölf (63), offen (69/89), fünf (71), Vater (75), viele (79), Ofen (89)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r6c0",
+                "paragraphs": [
+                  "<strong>[v]</strong>"
+                ]
+              },
+              {
+                "source": "t1r6c1",
+                "paragraphs": [
+                  "<em>Wunsch (12), Wasser (54), Weg (58/96), zwölf (63), wichtig (84), weg (96)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r7c0",
+                "paragraphs": [
+                  "<strong>[ç]</strong>"
+                ]
+              },
+              {
+                "source": "t1r7c1",
+                "paragraphs": [
+                  "<em>Mädchen (8), Milch (19), riecht (41), König (74), wichtig (84), Küche (85)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r8c0",
+                "paragraphs": [
+                  "<strong>[x / χ]</strong>"
+                ]
+              },
+              {
+                "source": "t1r8c1",
+                "paragraphs": [
+                  "<em>Sprache (1), Tochter (4), kochen (5), Bach (38), beachten (43), Dach (51), Buch (60)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r9c0",
+                "paragraphs": [
+                  "<strong>[h]</strong>"
+                ]
+              },
+              {
+                "source": "t1r9c1",
+                "paragraphs": [
+                  "<em>Herbst (9), hüten (21), Haus (30), Hund (31), hübsch (72), Hölle (78/86), Höhle (86)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r10c0",
+                "paragraphs": [
+                  "<strong>[ʔ]</strong>"
+                ]
+              },
+              {
+                "source": "t1r10c1",
+                "paragraphs": [
+                  "<em>aufhören (11), Theater (33), und (39), beachten (43), überall (59), offen (69)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r11c0",
+                "paragraphs": [
+                  "<strong>[ŋ]</strong>"
+                ]
+              },
+              {
+                "source": "t1r11c1",
+                "paragraphs": [
+                  "<em>singst (40), Frühling (42), lang (66), Ding (70)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r12c0",
+                "paragraphs": [
+                  "<strong>[m]</strong>"
+                ]
+              },
+              {
+                "source": "t1r12c1",
+                "paragraphs": [
+                  "<em>Mädchen (8), meistens (10), Mutter (25), Mitte (77), Morgen (82)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r13c0",
+                "paragraphs": [
+                  "<strong>[n]</strong>"
+                ]
+              },
+              {
+                "source": "t1r13c1",
+                "paragraphs": [
+                  "<em>Tante (3), kochen (5), Mädchen (8), meistens (10), aufhören (11), Wunsch (12), streiten (15), Bahn (18), hüten (21), Gans (22), Sonne (23), Nase (26), Hund (31), Stern (34), und (39), beachten (43), reiten (45), stehlen (46), Fällen (50), fühlen (52), schön (53), Kind (64), offen (69), fünf* (71), König (74), können (80), Gruppe (82), Ofen (89), sagen (93), sägen (93)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r14c0",
+                "paragraphs": [
+                  "<strong>n̩ (Schwa-Elision):</strong>"
+                ]
+              },
+              {
+                "source": "t1r14c1",
+                "paragraphs": [
+                  "<em>meistens (10), aufhören (11), hüten (21), stehlen (46), reiten (45), fühlen (52), können (80), sagen (93), sägen (93)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r15c0",
+                "paragraphs": [
+                  "<strong>[p]</strong>"
+                ]
+              },
+              {
+                "source": "t1r15c1",
+                "paragraphs": [
+                  "<em>Sprache (1), Paar (13), Lippe (87)</em>",
+                  "<em>Auslautverhärtung: Herbst (9), lieb (17), Laub (29), hübsch (72)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r16c0",
+                "paragraphs": [
+                  "<strong>[b]</strong>"
+                ]
+              },
+              {
+                "source": "t1r16c1",
+                "paragraphs": [
+                  "<em>Bad (7), Bahn (18), Blut (20), Brot (27), Butter (35), Bett (36), Boot (44), Bitte (65), Liebe (87), Bar (90), Blüte (91)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r17c0",
+                "paragraphs": [
+                  "<strong>[t]</strong>"
+                ]
+              },
+              {
+                "source": "t1r17c1",
+                "paragraphs": [
+                  "<em>Tante (3), Tochter (4), Stück (6), Herbst (9), meistens (10), streiten (15), Blut (20/91), hüten (21), Katze (24), Mutter (25), Brot (27), Theater (33), Stern (34), Butter (35), Bett (36/88), singst (40), riecht (41), beachten (43), Boot (44), reiten (45), stehlen (46), zeigst (55), tief (56), täusche (62), bitte (65), Tag (73), Vater (75), Tisch (76), Mitte (77), wichtig (84), Beet (88), Blüte (91), Tasche (95), Tasse (95)</em>",
+                  "<em>Auslautverhärtung: Bad (7), Hund (31), Rad (37), und (39), Kind (64), Lied (92), Leid (92)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r18c0",
+                "paragraphs": [
+                  "<strong>[d]</strong>"
+                ]
+              },
+              {
+                "source": "t1r18c1",
+                "paragraphs": [
+                  "<em>Dorf (14), Dach (51), Ding (70)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r19c0",
+                "paragraphs": [
+                  "<strong>[k]</strong>"
+                ]
+              },
+              {
+                "source": "t1r19c1",
+                "paragraphs": [
+                  "<em>Stück (6), Katze (24), Kind (64), lang (66), Tag (73), können (80), Küche (85)</em>",
+                  "<em>Auslautverhärtung: Burg (2), Zug (57), Weg (58/96), lang (66), Tag (73), weg (96)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r20c0",
+                "paragraphs": [
+                  "<strong>[g]</strong>"
+                ]
+              },
+              {
+                "source": "t1r20c1",
+                "paragraphs": [
+                  "<em>Glas (16), Gans (22), groß (49), Gabe (68), Gruppe (81), sagen (93), sägen (93)</em>"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t1r21c0",
+                "paragraphs": [
+                  "<strong>[l]</strong>"
+                ]
+              },
+              {
+                "source": "t1r21c1",
+                "paragraphs": [
+                  "<em>Glas (16), lieb (17), Milch (19), Blut (20/91), Laub (29), Frühling (42), stehlen (46), Spiel (47), Fällen (50), fühlen (52), überall (59), Schule (61), zwölf (63), lang (66), Liebe (67/87), Hölle (78/86), viele (79), Höhle (86), Lippe (87), Blüte (91), Lied (92), Leid (92)</em>"
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Zuletzt wurde noch darauf geachtet, Konsonanten auch in Kombination miteinander zu verwenden, da die deutsche Sprache ebenfalls im Vergleich zu vielen anderen Sprachen relativ große Konsonantencluster bilden kann. Hierbei konnten aufgrund der Frequenz der einzelnen Cluster und dem Umfang der Liste oft nicht mehrere Phänomene wiederholt werden, sondern der Fokus wurde stattdessen auf vielfältige Kombinationen gelegt. ",
+          "source": "p15"
+        },
+        {
+          "type": "expandable_table",
+          "source": "t2",
+          "caption": {
+            "html": "Tab. 3: Übersicht über alle Konsonantencluster und die dazugehörigen Items",
+            "source": "p16"
+          },
+          "rows": [
+            [
+              {
+                "source": "t2r0c0",
+                "paragraphs": [
+                  "<strong>Anlautcluster</strong>"
+                ]
+              },
+              {
+                "source": "t2r0c1",
+                "paragraphs": [
+                  "[t͡s]: Katze (24), zeigst (55), Zug (57), zwölf (63) ",
+                  "[ʃt-]: Stück (6), Stern (34), stehlen (46)",
+                  "[ʃtʁ-]: Streit (15) · [ʃp-]: Spiel (47) · [ʃpʁ-]: Sprache (1) · [gʁ-]: groß (49) · [bʁ-]: Brot (27) · [fʁ-]: Frühling (42) · [bl-]: Blut (20) · [gl-]: Glas (16)"
+                ]
+              }
+            ],
+            [
+              {
+                "source": "t2r1c0",
+                "paragraphs": [
+                  "<strong>Auslautcluster</strong>"
+                ]
+              },
+              {
+                "source": "t2r1c1",
+                "paragraphs": [
+                  "-⁠kst: zeigst (55) · -⁠ŋkst: singst (40) · -⁠pst: Herbst (9) · -⁠pʃ: hübsch (72) · -⁠lf: zwölf (63)"
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Eine ausführliche kontrastive Beschreibung des phonetischen Systems des Deutschen und ein Vergleich mit anderen Sprachen findet sich bei Hirschfeld &amp; Reinke (2018) sowie bei Dahmen et al. (2021).",
+          "source": "p17"
+        }
+      ]
+    },
+    {
+      "heading": "Konzeption der Materialien",
+      "heading_number": "3.",
+      "heading_source": "p19",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "Zur Elizitierung der Phänomene wurde sich für eine standardisierte Wort- und Satzliste entschieden, um zum einen die Vergleichbarkeit unter den Sprecher*innen selbst zu gewährleisten und zum anderen alle erforderlichen Phänomene sowohl isoliert als auch im Kontext aufnehmen zu können. ",
+          "source": "p20"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Die Wortliste des deutschen Korpus umfasst insgesamt 96 Items, davon 85 Einzelwörter und 11 Minimalpaare. Die Minimalpaare sollen häufige Fehler abdecken, die u. a. durch Schwierigkeiten bei der Diskrimination oder Produktion zweier ähnlicher Laute entstehen (z. B. [o] vs. [ɔ] oder [ç] vs. [ʃ]). Daher wurde bei der Auswahl der Wörter auch die Graphem-Phonem-Beziehung bedacht, die im Deutschen z. B. bei der Vokallänge eine starke Rolle spielt. So wurden nach Möglichkeit auch immer mehrere Schreibweisen eines Phonems verwendet, z. B. &lt;f&gt; und &lt;v&gt; für [f]. Da u. a. Munro (2021) festgestellt hat, dass die richtige Aussprache oft mit dem Erlernen eines Wortes einhergeht, wurden zudem bevorzugt überwiegend hochfrequente und nicht zu komplexe Wörter ausgewählt, die auch von Lernenden auf niedrigeren Lernniveaus gelesen werden können. Alle ausgewählten Phänomene sind hierbei auch mehrfach durch mind. 2–3 Items vertreten, um die Reliabilität der Ergebnisse zu sichern, da die Produktion eines Lautes auch von Wort zu Wort variieren kann (vgl. Munro 2022). Bei einigen Phonemen, wie [t] oder [n], kommt es jedoch zu einem häufigeren Auftreten in der Wortliste, da diese durch ihre hohe Frequenz häufiger in Wörtern auftreten, die ein anderes Zielphonem haben. Zudem wurde auch ein Augenmerk auf die Verteilung der einzelnen Phänomene innerhalb der jeweiligen Wörter gelegt, sodass Vokale und Konsonanten in verschiedenen Items teils wortinitial und teils wortmittig / -final auftreten, um daraus Rückschlüsse auf den Einfluss der Position auf die Aussprache ziehen zu können. Zur Qualitätssicherung wurde die abschließende Auswahl der Items von der Phonetik-Expertin Dr. Gea de Jong-Lendle (https://www.uni-marburg.de/en/fb09/institutes/german-linguistics/phonetics/team/dejong) fachlich geprüft. ",
+          "source": "p21"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Um zu überprüfen, ob die Einbettung in einen syntaktischen Kontext Einfluss auf die Aussprache der Items aus der Wortliste hat, war zudem ein zweites Elizitierungsinstrument notwendig. Hierzu standen ein Lesetext oder eine Satzliste zur Debatte. Ein authentischer Lesetext barg hierbei sowohl die Gefahr, zu viele neue Items einzuführen, als auch gleichzeitig nicht alle gewünschten Phänomene abzudecken. Zugleich kann ein zu langer, zusammenhängender Text lexikalisch und syntaktisch potenziell zu anspruchsvoll für Lernende auf niedrigeren Lernniveaus sein, was ebenfalls die Aussprache beeinflussen könnte, wenn die Konzentration zu sehr auf den Inhalt gelenkt wird (vgl. Tacke 2026). Auch ein Text, der mit den Items aus der Wortliste geschrieben wird, war denkbar, jedoch wäre es schwierig gewesen, eine semantisch kohärente Geschichte daraus zu spinnen, was ebenfalls wiederum ablenkend sein könnte. Um also die Sprecher*innen nicht zu überfordern und trotzdem alle Phänomene elizitieren zu können, wurde sich für eine Satzliste entschieden. Dazu wurden die Items im Satzkontext rekombiniert, sodass jeder Satz ca. zwei Items aus der Wortliste enthält. Diese Items sind dabei lexikalisch identisch übernommen. Es wurde hierbei ebenfalls darauf geachtet, die Sätze nicht zu lang und zu komplex zu gestalten und auf semantische Auffälligkeiten weitestgehend zu verzichten. Der Umfang liegt bei 50 Sätzen: 31 Aussagesätze, 10 Entscheidungsfragen und 10 W-Fragen. Die Fragesätze wurden integriert, um auch eventuelle Erkenntnisse über die Prosodie zu gewinnen, ohne ein weiteres Elizitierungsinstrument einführen zu müssen.",
+          "source": "p22"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Abschließend wurde ein leitfadengestütztes Interview durchgeführt, um herauszufinden, wie der Leseprozess für die Lernenden war und wie sie ihre Fehler empfunden haben. Diese Selbsteinschätzung kann helfen, einen Einblick in die möglichen Ursprünge der jeweiligen Ausspracheprobleme zu bekommen.",
+          "source": "p23"
+        }
+      ]
+    },
+    {
+      "heading": "Fazit",
+      "heading_number": "4.",
+      "heading_source": "p25",
+      "blocks": [
+        {
+          "type": "paragraph_html",
+          "html": "Das deutsche Korpus von <em>Pronunciation Matters</em> bietet durch sein systematisches Design einen guten Einblick in die authentische Aussprache von Deutschlernenden und erschließt dadurch vielfältige Möglichkeiten für die empirische Erforschung der L2-Aussprache sowie die Lernenden- und Lehrendenbildung. Das Modell ist durch sein weitgefasstes Design auf Lernende mit unterschiedlichsten linguistischen Hintergründen anwendbar und somit vielfältig einsetzbar. Natürlich muss bedacht werden, dass die Reichweite durch die Länge der Wortliste limitiert ist und so, obwohl ein sehr breites Spektrum an Phonemen eingesetzt wurde, nicht alle Kombinationen, die einen Einfluss auf die Aussprache haben können, eingebunden werden können.",
+          "source": "p26"
+        },
+        {
+          "type": "paragraph_html",
+          "html": "Das Korpus stellt jedoch – vor allem durch sein mehrschrittiges Design – ein vielseitiges und praktisches Tool für Forschung und Lehre dar und kann so einen wertvollen Beitrag zur Aussprachebildung im Fremdsprachenunterricht leisten. ",
+          "source": "p27"
+        }
+      ]
+    },
+    {
+      "heading": "Literatur",
+      "heading_number": "",
+      "heading_source": "p29",
+      "list_class": "pm-literature",
+      "references": [
+        {
+          "html": "Dahmen, S., Hirschfeld, U., Meißner, S., &amp; Reinke, K. (2021). <em>Kontrastive Phonetik für Deutsch als Fremd- und Zweitsprache</em>. Berlin: Erich Schmidt Verlag. ",
+          "source": "p30"
+        },
+        {
+          "html": "Hirschfeld, U., &amp; Reinke, K. (2018). <em>Phonetik im Fach Deutsch als Fremd- und Zweitsprache</em>. Berlin: Erich Schmidt Verlag.",
+          "source": "p31"
+        },
+        {
+          "html": "Krech, E.-M., Stock, E., Hirschfeld, U., &amp; Anders, L.-C. (2009). <em>Deutsches Aussprachewörterbuch.</em> Berlin, New York: De Gruyter Mouton.",
+          "source": "p32"
+        },
+        {
+          "html": "Maddieson, I. (2013). Vowel Quality Inventories. In: Dryer, Matthew S. &amp; Haspelmath, Martin (eds.) <em>WALS Online</em> (v2020.6). https://doi.org/10.5281/zenodo.23010827 ",
+          "source": "p33"
+        },
+        {
+          "html": "Munro, M. J. (2021). On the difficulty of defining “difficult” in second-language vowel acquisition. In: <em>Front. Commun. 6</em>. doi: 10.3389/fcomm.2021.639398",
+          "source": "p34"
+        },
+        {
+          "html": "Munro, M. J. (2022). Variability in L2 Vowel Production: Different Elicitation Methods Affect Individual Speakers Differently. In: <em>Frontiers in Psychology</em> 13.",
+          "source": "p35"
+        },
+        {
+          "html": "Tacke, F. (2026): Capturing the Pronunciation of Learners of Spanish: Data Collection Design for the Spanish Corpus of <em>Pronunciation Matters</em>. Philipps-Universität Marburg.",
+          "source": "p36"
+        }
+      ]
+    }
+  ]
+}

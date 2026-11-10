@@ -1,7 +1,7 @@
 """A corpus without runtime sessions (the fixture runtime has none for German) must say so plainly on its protected pages.
 
 Contract: ``docs/spec/research-capabilities.md`` (Corpus-Specific Surface Modes): no planning placeholders or dummy
-cards for an empty runtime, and the public ``design`` page is an honest "in preparation" state.
+cards for an empty runtime. The public ``design`` page is the published design article (it needs no sessions).
 """
 
 from __future__ import annotations
@@ -43,9 +43,10 @@ def test_german_protected_pages_render_final_empty_states_without_planning_copy(
 
 
 @pytest.mark.parametrize("ui_lang", ["de", "en"])
-def test_german_design_page_is_an_honest_in_preparation_state(german_client, ui_lang: str) -> None:
+def test_german_design_page_is_the_published_article_even_without_sessions(german_client, ui_lang: str) -> None:
     html = german_client.get(f"/{ui_lang}/research/german/design").get_data(as_text=True)
 
-    assert 'name="robots" content="noindex' in html
+    assert 'name="robots" content="noindex' not in html
+    assert 'data-source="p0"' in html and "pm-expandable--table" in html
     for copy in FORBIDDEN_PLANNING_COPY:
         assert copy not in html
